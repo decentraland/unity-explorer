@@ -1,16 +1,9 @@
-﻿using CommunityToolkit.HighPerformance;
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
+﻿using DCL.Diagnostics;
 using DCL.Profiling;
-using ECS.StreamableLoading.Cache.Disk;
 using System;
-using System.Buffers;
-using System.IO;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility;
-using Utility.Memory;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -20,33 +13,6 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        /// <summary>
-        ///     Represents the ownership over the stream the asset bundle was created from
-        /// </summary>
-        internal struct MemoryStream : IDisposable
-        {
-            internal static MemoryStream empty => new () { disposed = true };
-
-            private bool disposed;
-
-            internal readonly MemoryChain memoryChain;
-
-            public MemoryStream(MemoryChain memoryChain)
-            {
-                this.memoryChain = memoryChain;
-                disposed = false;
-            }
-
-            public void Dispose()
-            {
-                if (disposed)
-                    return;
-
-                disposed = true;
-                memoryChain.Dispose();
-            }
-        }
-
         private readonly Object? mainAsset;
         private readonly Type? assetType;
 
@@ -57,8 +23,6 @@ namespace ECS.StreamableLoading.AssetBundles
         public readonly AssetBundleMetrics? Metrics;
 
         private readonly string description;
-
-        private MemoryStream underlyingMemory = MemoryStream.empty;
 
         private bool unloaded;
 
@@ -78,7 +42,7 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <summary>
         ///     Constructor for dependencies (with the unknown asset type)
         /// </summary>
-        internal AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies, MemoryStream underlyingMemory) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
+        internal AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             // Dependencies cant be unloaded, since we don't know who will need them =(
             Metrics = metrics;
@@ -86,7 +50,6 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = null;
             this.assetType = null;
             Dependencies = dependencies;
-            this.underlyingMemory = underlyingMemory;
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
@@ -100,14 +63,15 @@ namespace ECS.StreamableLoading.AssetBundles
         //Very hacky, because the asset will remain in cache as AssetBundle == null
         //When DestroyObject is invoked, it will do nothing.
         //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
-        internal void UnloadAB(ref MemoryStream ownedStream)
+        internal void UnloadAB()
         {
             if (unloaded)
                 return;
 
             unloaded = true;
-            AssetBundle?.UnloadAsync(false);
-            ownedStream.Dispose();
+
+            if (AssetBundle)
+                AssetBundle.UnloadAsync(false);
         }
 
         protected override void DestroyObject()
@@ -120,9 +84,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (AssetBundle)
                 AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
-
-            // Underlying memory for dependencies is released when the dependency itself is fully disposed of
-            underlyingMemory.Dispose();
         }
 
         public T GetMainAsset<T>() where T: Object

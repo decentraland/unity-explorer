@@ -45,13 +45,22 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
+        private long performedCount;
+
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedDataAsync(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
-            using var memoryStream = new AssetBundleData.MemoryStream(memoryChain);
+            AssetBundle? assetBundle;
+            long count = Interlocked.Increment(ref performedCount);
 
-            await UniTask.SwitchToMainThread();
-            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream.memoryChain.AsStream())!;
+            {
+                ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Processing: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
+                using var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
+                using var memoryStream = memoryChain.AsStream();
+
+                await UniTask.SwitchToMainThread();
+                assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream)!;
+                ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
+            }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
@@ -96,7 +105,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string version = intention.Manifest != null ? intention.Manifest.GetVersion() : string.Empty;
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
-                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, memoryStream, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
                 return result;
             }
             catch (Exception)
@@ -107,7 +116,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (assetBundle)
                     assetBundle.Unload(true);
 
-                memoryStream.Dispose();
                 throw;
             }
         }
@@ -125,19 +133,21 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         internal static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
+            AssetBundle assetBundle,
+            AssetBundleMetrics? metrics,
+            Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
-            AssetBundleData.MemoryStream memoryStream,
             ReportData reportCategory,
             string version,
             string source,
             bool lookForShaderAssets,
-            CancellationToken ct)
+            CancellationToken ct
+        )
         {
             // if the type was not specified don't load any assets (we don't know when they will be indirectly requested)
             if (expectedObjType == null)
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies, memoryStream));
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
 
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
@@ -154,7 +164,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 version: version,
                 source: source);
 
-            assetBundleData.UnloadAB(ref memoryStream);
+            assetBundleData.UnloadAB();
 
             // After this point it's no longer possible to load other assets from the asset bundle
 

@@ -16,6 +16,10 @@ namespace Utility.Memory
         private readonly List<SlabItem> slabs;
         private int leftSpaceInLast;
 
+#if UNITY_EDITOR || DEBUG
+        private string? disposedBy;
+#endif
+
         public MemoryChain(ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator) : this()
         {
             this.allocator = allocator;
@@ -23,10 +27,20 @@ namespace Utility.Memory
             leftSpaceInLast = 0;
         }
 
-        public readonly void Dispose()
+        public void Dispose()
         {
+#if UNITY_EDITOR || DEBUG
+            if (disposedBy != null)
+                throw new InvalidOperationException($"MemoryChain was already disposed by {disposedBy}");
+#endif
+
             if (allocator == null)
                 return;
+
+#if UNITY_EDITOR || DEBUG
+            if (disposedBy != null)
+                disposedBy = Environment.StackTrace;
+#endif
 
             for (int i = 0; i < slabs.Count; i++) allocator.Release(slabs[i]);
             ListPool<SlabItem>.Release(slabs);
@@ -250,9 +264,6 @@ namespace Utility.Memory
                 base.Dispose(disposing);
 
                 if (!disposing)
-                {
-                    chain.Dispose();
-
                     lock (INSTANCES)
                     {
                         chain = EMPTY;
@@ -261,7 +272,6 @@ namespace Utility.Memory
                         totalRead = 0;
                         INSTANCES.Add(this);
                     }
-                }
             }
 
             public override bool CanRead => true;
