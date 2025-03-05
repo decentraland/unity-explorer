@@ -10,7 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class ChatMessagesBusAnalyticsDecorator : IChatMessagesBus
     {
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IChatMessagesBus core;
         private readonly IAnalyticsController analytics;
