@@ -55,7 +55,7 @@ namespace DCL.Profiles
         /// <summary>
         ///     The color calculated for this username
         /// </summary>
-        public Color UserNameColor { get; internal set; }
+        public Color UserNameColor { get; internal set; } = Color.white;
 
         /// <summary>
         ///     The name of the user after passing character validation, without the # part
