@@ -3,8 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
+using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 
@@ -15,20 +17,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly List<BlockedProfile> blockedProfiles = new ();
+        private readonly LoopListView2 loopListView;
 
         public event Action<BlockedProfile>? UnblockClicked;
         public event Action<BlockedProfile, Vector2, BlockedUserView>? ContextMenuClicked;
+        public event Action? NoUserInCollection;
+        public event Action? AtLeastOneUserInCollection;
 
         public BlockedRequestManager(
             IFriendsService friendsService,
             IFriendsEventBus friendsEventBus,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
+            LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
         {
             this.friendsService = friendsService;
             this.friendsEventBus = friendsEventBus;
+            this.loopListView = loopListView;
 
             friendsEventBus.OnYouBlockedProfile += BlockProfile;
             friendsEventBus.OnYouUnblockedProfile += UnblockProfile;
@@ -44,14 +51,32 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         private void BlockProfile(BlockedProfile profile)
         {
+            int previousCount = blockedProfiles.Count;
             if (blockedProfiles.Contains(profile)) return;
 
             blockedProfiles.Add(profile);
             FriendsSorter.SortFriendList(blockedProfiles);
+
+            RefreshLoopList();
+
+            if (previousCount == 0)
+                AtLeastOneUserInCollection?.Invoke();
         }
 
-        private void UnblockProfile(BlockedProfile profile) =>
+        private void UnblockProfile(BlockedProfile profile)
+        {
             blockedProfiles.Remove(profile);
+            RefreshLoopList();
+
+            if (blockedProfiles.Count == 0)
+                NoUserInCollection?.Invoke();
+        }
+
+        private void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetCollectionCount(), false);
+            loopListView.RefreshAllShownItem();
+        }
 
         public override int GetCollectionCount() =>
             blockedProfiles.Count;

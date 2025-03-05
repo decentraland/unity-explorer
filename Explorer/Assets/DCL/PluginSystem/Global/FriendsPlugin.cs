@@ -189,7 +189,6 @@ namespace DCL.PluginSystem.Global
                 injectableFriendService,
                 friendEventBus,
                 mvcManager,
-                web3IdentityCache,
                 profileRepository,
                 systemClipboard,
                 webRequestController,

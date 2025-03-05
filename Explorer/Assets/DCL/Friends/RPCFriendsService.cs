@@ -325,6 +325,9 @@ namespace DCL.Friends
             {
                 BlockedProfile blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
                 eventBus.BroadcastYouBlockedProfile(blockedProfile);
+                eventBus.BroadcastThatYouRemovedFriend(response.Ok.Profile.Address);
+                eventBus.BroadcastThatYouCancelledFriendRequestSentToOtherUser(response.Ok.Profile.Address);
+                eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(response.Ok.Profile.Address);
             }
             else
                 throw new Exception($"Cannot block user {userId}: {response.ResponseCase}");
@@ -455,6 +458,8 @@ namespace DCL.Friends
                             return FriendshipStatus.REQUEST_RECEIVED;
                         case Decentraland.SocialService.V2.FriendshipStatus.RequestSent:
                             return FriendshipStatus.REQUEST_SENT;
+                        case Decentraland.SocialService.V2.FriendshipStatus.BlockedBy:
+                            return FriendshipStatus.BLOCKED_BY;
                     }
 
                     break;

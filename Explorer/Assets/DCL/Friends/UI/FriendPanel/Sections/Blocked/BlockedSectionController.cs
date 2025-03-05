@@ -40,6 +40,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
             requestManager.UnblockClicked += UnblockUserClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
+            requestManager.NoUserInCollection += ShowEmptyState;
+            requestManager.AtLeastOneUserInCollection += HideEmptyState;
         }
 
         public override void Dispose()
@@ -47,6 +49,20 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             base.Dispose();
             requestManager.UnblockClicked -= UnblockUserClicked;
             requestManager.ContextMenuClicked -= ContextMenuClicked;
+            requestManager.NoUserInCollection -= ShowEmptyState;
+            requestManager.AtLeastOneUserInCollection -= HideEmptyState;
+        }
+
+        private void ShowEmptyState()
+        {
+            view.SetEmptyState(true);
+            view.SetScrollViewState(false);
+        }
+
+        private void HideEmptyState()
+        {
+            view.SetEmptyState(false);
+            view.SetScrollViewState(true);
         }
 
         private void UnblockUserClicked(BlockedProfile profile) =>

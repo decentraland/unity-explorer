@@ -7,7 +7,6 @@ using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.Sidebar.SidebarActionsBus;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -59,7 +58,6 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
-            IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
@@ -117,7 +115,7 @@ namespace DCL.Friends.UI.FriendPanel
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,
-                new BlockedRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new BlockedRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, instantiatedView.BlockedSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 systemClipboard,
                 passportBridge,
                 profileThumbnailCache);

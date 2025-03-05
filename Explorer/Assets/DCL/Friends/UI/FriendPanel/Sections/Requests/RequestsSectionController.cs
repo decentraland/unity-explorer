@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -85,10 +86,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             CheckShouldInit();
         }
 
-        private void BlockUserClicked(FriendProfile profile)
-        {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
-        }
+        private void BlockUserClicked(FriendProfile profile) =>
+            FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
