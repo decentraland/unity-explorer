@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Optimization.Pools;
 using DCL.Rendering.GPUInstancing;
+using DCL.Roads;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -33,8 +34,7 @@ namespace DCL.LOD.Systems
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
         private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
-        private GPUInstancingService gpuInstancingService;
-        private RealmData realmData;
+        private RoadsPresence roadsPresence;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
 
@@ -61,8 +61,7 @@ namespace DCL.LOD.Systems
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
-            container.gpuInstancingService = gpuInstancingService;
-            container.realmData = realmData;
+            container.roadsPresence = new RoadsPresence(realmData, gpuInstancingService);
 
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
@@ -107,8 +106,7 @@ namespace DCL.LOD.Systems
         {
             roadSettingsAsset.Dispose();
             lodSettingsAsset.Dispose();
-
-            realmData.RealmType.OnUpdate -= SwitchRoadsInstancedRendering;
+            roadsPresence.Dispose();
         }
 
         protected override async UniTask InitializeInternalAsync(LODContainerSettings lodContainerSettings, CancellationToken ct)
@@ -123,15 +121,7 @@ namespace DCL.LOD.Systems
                 roadAssetsPrefabList.Add(prefab.Value);
             }
 
-            realmData.RealmType.OnUpdate += SwitchRoadsInstancedRendering;
-        }
-
-        private void SwitchRoadsInstancedRendering(RealmKind realmKind)
-        {
-            if (realmKind == RealmKind.GenesisCity)
-                gpuInstancingService.AddToIndirect(roadSettingsAsset.Value.IndirectLODGroups);
-            else
-                gpuInstancingService.Remove(roadSettingsAsset.Value.IndirectLODGroups);
+            roadsPresence.Initialize(roadSettingsAsset.Value);
         }
 
         [Serializable]

@@ -60,7 +60,7 @@ namespace DCL.Rendering.GPUInstancing
             new (Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE));
 
         private readonly Dictionary<GPUInstancingLODGroupWithBuffer, GPUInstancingBuffers> candidatesBuffersTable = new ();
-        private readonly Dictionary<Material, Material> instancingMaterials = new ();
+        private readonly GPUInstancingMaterialsCache instancingMaterials = new ();
 
         private readonly ComputeShader FrustumCullingAndLODGenComputeShader;
         private readonly string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
@@ -130,13 +130,14 @@ namespace DCL.Rendering.GPUInstancing
             foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
                 buffers?.Dispose();
 
-            candidatesBuffersTable?.Clear();
-            instancingMaterials?.Clear();
+            candidatesBuffersTable.Clear();
+            instancingMaterials.Dispose();
         }
 
         public void RenderIndirect()
         {
-            if(renderCamera == null) return;
+            if (renderCamera == null)
+                return;
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
@@ -173,7 +174,7 @@ namespace DCL.Rendering.GPUInstancing
                     CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                     int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-                    Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
+                    Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i * lodCount);
                 }
             }
         }
@@ -184,10 +185,10 @@ namespace DCL.Rendering.GPUInstancing
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers _) in candidatesBuffersTable)
             foreach (var renderer in candidate.LODGroup.CombinedLodsRenderers)
-                    renderer.RenderParamsArray.camera = renderCamera;
+                renderer.RenderParamsArray.camera = renderCamera;
         }
 
-        public void AddToIndirect(List<GPUInstancingLODGroupWithBuffer> candidates)
+        public void AddToIndirect(IReadOnlyList<GPUInstancingLODGroupWithBuffer> candidates)
         {
             foreach (GPUInstancingLODGroupWithBuffer candidate in candidates)
             {
@@ -228,16 +229,13 @@ namespace DCL.Rendering.GPUInstancing
                     {
                         if (lodLevel < combinedMesh.subMeshCount)
                         {
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].instanceCount = 0;
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].startIndex = combinedMesh.GetIndexStart(lodLevel);
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].instanceCount = 0;
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startIndex = combinedMesh.GetIndexStart(lodLevel);
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
                         }
-                        else
-                        {
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)] = zeroDrawArgs;
-                        }
+                        else { buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)] = zeroDrawArgs; }
                     }
 
                     buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
@@ -259,7 +257,7 @@ namespace DCL.Rendering.GPUInstancing
         {
             foreach (GPUInstancingLODGroupWithBuffer candidate in candidates)
             {
-                if (candidate!= null && candidatesBuffersTable.Remove(candidate, out GPUInstancingBuffers buffers))
+                if (candidate != null && candidatesBuffersTable.Remove(candidate, out GPUInstancingBuffers buffers))
                     buffers.Dispose();
             }
         }

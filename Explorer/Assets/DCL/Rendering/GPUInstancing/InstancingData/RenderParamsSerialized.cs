@@ -9,7 +9,6 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     [Serializable]
     public struct RenderParamsSerialized
     {
-        private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
 
         public Renderer RefRenderer;
 
@@ -45,23 +44,10 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             motionVectorMode = rend.motionVectorGenerationMode;
         }
 
-        public RenderParams ToRenderParams(Material sharedMat, Dictionary<Material, Material> instancingMaterials)
-        {
-            if (!instancingMaterials.TryGetValue(sharedMat, out Material instancedMat))
+        public RenderParams ToRenderParams(Material sharedMat, GPUInstancingMaterialsCache materialsCache) =>
+            new()
             {
-                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Creating new GPU Instanced sharedMaterial based on material: {sharedMat.name}");
-
-                var keyword = new LocalKeyword(sharedMat.shader, GPU_INSTANCING_KEYWORD);
-                sharedMat.DisableKeyword(keyword);
-
-                instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
-                instancedMat.EnableKeyword(keyword);
-                instancingMaterials.Add(sharedMat, instancedMat);
-            }
-
-            return new RenderParams
-            {
-                material = instancedMat,
+                material = materialsCache.GetInstancedMaterial(sharedMat),
 
                 layer = layer,
                 renderingLayerMask = renderingLayerMask,
@@ -72,6 +58,5 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
                 lightProbeUsage = lightProbeUsage,
                 motionVectorMode = motionVectorMode,
             };
-        }
     }
 }

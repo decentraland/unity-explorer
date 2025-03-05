@@ -31,9 +31,9 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             CombinedMesh = meshFilter.sharedMesh;
         }
 
-        public void InitializeRenderParams(Dictionary<Material, Material> instancingMaterials)
+        public void InitializeRenderParams(GPUInstancingMaterialsCache materialsCache)
         {
-            RenderParamsArray = RenderParamsSerialized.ToRenderParams(SharedMaterial, instancingMaterials);
+            RenderParamsArray = RenderParamsSerialized.ToRenderParams(SharedMaterial, materialsCache);
         }
     }
 }
