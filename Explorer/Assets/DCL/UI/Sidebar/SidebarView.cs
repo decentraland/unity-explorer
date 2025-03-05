@@ -50,6 +50,9 @@ namespace DCL.UI.Sidebar
         [field: Header("Emotes")]
         [field: SerializeField] internal Button emotesWheelButton { get; private set; }
 
+        [field: Header("Friends")]
+        [field: SerializeField] internal Button friendsButton { get; private set; }
+
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; }
 

@@ -17,7 +17,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -114,10 +113,11 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
-            viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClicked);
+            viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
@@ -141,11 +141,6 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
         }
 
-        private void OnEmotesWheelButtonClicked()
-        {
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
-        }
-
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
@@ -161,43 +156,9 @@ namespace DCL.UI.Sidebar
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
 
-        private void OnUnreadMessagesButtonClicked()
-        {
-            sidebarBus.BlockSidebar();
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
-        }
-
-        private void OnHelpButtonClicked()
-        {
-            webBrowser.OpenUrl(DecentralandUrl.Help);
-            HelpOpened?.Invoke();
-        }
-
-        private void OnControlsButtonClicked()
-        {
-            mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
-        }
-
         private void OnAutoHideToggleChanged(bool value)
         {
             sidebarBus.SetAutoHideSidebarStatus(value);
-        }
-
-        private void OpenSidebarSettings()
-        {
-            sidebarBus.BlockSidebar();
-
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings).Forget();
-            viewInstance.sidebarSettingsButton.OnSelect(null);
-            viewInstance.sidebarSettingsWidget.Closed += OnSidebarSettingsClosed;
-        }
-
-        private void OnSidebarSettingsClosed()
-        {
-            viewInstance.sidebarSettingsWidget.Closed -= OnSidebarSettingsClosed;
-            sharedSpaceManager.HideAsync(PanelsSharingSpace.SidebarSettings).Forget();
-            sidebarBus.UnblockSidebar();
-            viewInstance!.sidebarSettingsButton.OnDeselect(null);
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
@@ -219,6 +180,15 @@ namespace DCL.UI.Sidebar
             UpdateFrameColorAsync().Forget();
         }
 
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+            profileWidgetCts.SafeCancelAndDispose();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
+
         private async UniTaskVoid UpdateFrameColorAsync()
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
@@ -227,34 +197,65 @@ namespace DCL.UI.Sidebar
                 viewInstance!.FaceFrame.color = profile.UserNameColor;
         }
 
-        protected override void OnViewClose()
+        #region Sidebar button handlers
+
+        private void OnUnreadMessagesButtonClicked()
         {
-            base.OnViewClose();
-            profileWidgetCts.SafeCancelAndDispose();
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true)).Forget();
         }
 
-        private void OpenProfileMenu()
+        private async void OnEmotesWheelButtonClicked()
+        {
+            sidebarBus.BlockSidebar();
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+            sidebarBus.UnblockSidebar();
+        }
+
+        private async void OnFriendsButtonClicked()
+        {
+            sidebarBus.BlockSidebar();
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends);
+            sidebarBus.UnblockSidebar();
+        }
+
+        private void OnHelpButtonClicked()
+        {
+            webBrowser.OpenUrl(DecentralandUrl.Help);
+            HelpOpened?.Invoke();
+        }
+
+        private void OnControlsButtonClicked()
+        {
+            mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
+        }
+
+        private async void OpenSidebarSettings()
+        {
+            sidebarBus.BlockSidebar();
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
+            sidebarBus.UnblockSidebar();
+
+            viewInstance!.sidebarSettingsButton.OnDeselect(null);
+        }
+
+        private async void OpenProfileMenu()
         {
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
 
                 //Profile is already open
                 return;
 
-            sidebarBus.BlockSidebar();
-
             viewInstance!.ProfileMenuView.gameObject.SetActive(true);
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile).Forget();
+
+            sidebarBus.BlockSidebar();
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
+            sidebarBus.UnblockSidebar();
         }
 
         private async void OpenSkyboxSettings()
         {
             sidebarBus.BlockSidebar();
-
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-        }
-
-        private void OnSkyboxSettingsClosed()
-        {
             sidebarBus.UnblockSidebar();
         }
 
@@ -262,6 +263,7 @@ namespace DCL.UI.Sidebar
         {
             sidebarBus.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
+            sidebarBus.UnblockSidebar();
         }
 
         private async void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
@@ -269,7 +271,6 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        #endregion
     }
 }

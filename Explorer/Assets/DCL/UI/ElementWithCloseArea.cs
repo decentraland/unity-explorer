@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.UI
 {
@@ -17,16 +18,23 @@ namespace DCL.UI
 
         public bool IsVisibleInSharedSpace => gameObject.activeSelf;
 
+        private CancellationTokenSource showingCts = new ();
+
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
             gameObject.SetActive(true);
             await PlayShowAnimationAsync(ct);
             ViewShowingComplete?.Invoke(this);
+            showingCts = showingCts.SafeRestart();
+            await UniTask.WaitUntilCanceled(showingCts.Token);
+            await HideAsync(ct);
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            await HideAsync(ct);
+            showingCts.Cancel();
+
+            await UniTask.WaitUntil(() => !gameObject.activeSelf, PlayerLoopTiming.Update, ct);
         }
 
         private void Awake()
@@ -36,6 +44,7 @@ namespace DCL.UI
 
         private void OnCloseAreaButtonClicked()
         {
+            showingCts.Cancel();
             Closed?.Invoke();
         }
     }

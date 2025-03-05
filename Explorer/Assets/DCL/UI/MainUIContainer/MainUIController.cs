@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.EmotesWheel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
@@ -19,7 +18,6 @@ namespace DCL.UI.MainUI
 {
     public class MainUIController : ControllerBase<MainUIView>
     {
-        private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
         private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 46;
         private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 0;
         private const float HIDE_SIDEBAR_WAIT_TIME = 0.3f;

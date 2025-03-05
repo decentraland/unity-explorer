@@ -76,7 +76,10 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Chat:
                     {
                         if ((controllerInSharedSpace as IController).State == ControllerState.ViewHidden)
-                            await mvcManager.ShowAsync(ChatController.IssueCommand((ChatController.ShowParams)parameters), cts.Token);
+                        {
+                            ChatController.ShowParams chatParams = parameters == null ? default(ChatController.ShowParams) : (ChatController.ShowParams)parameters;
+                            await mvcManager.ShowAsync(ChatController.IssueCommand(chatParams), cts.Token);
+                        }
                         else if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                             await controllerInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
@@ -91,7 +94,8 @@ namespace DCL.UI.SharedSpaceManager
                             // The chat is hidden while the friends panel is present
                             (controllers[PanelsSharingSpace.Chat] as ChatController).SetViewVisibility(false);
 
-                            await mvcManager.ShowAsync(FriendsPanelController.IssueCommand((FriendsPanelParameter)parameters), cts.Token);
+                            FriendsPanelParameter friendsParams = parameters == null ? default(FriendsPanelParameter) : (FriendsPanelParameter)parameters;
+                            await mvcManager.ShowAsync(FriendsPanelController.IssueCommand(friendsParams), cts.Token);
 
                             // Once the friends panel is hidden, chat must appear
                             bool isShowingChat = panelBeingShown == PanelsSharingSpace.Chat;
@@ -123,7 +127,10 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Explore:
                     {
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace) // Fullscreen views work differently...
-                            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand((ExplorePanelParameter)parameters), cts.Token);
+                        {
+                            ExplorePanelParameter exploreParams = parameters == null ? default(ExplorePanelParameter) : (ExplorePanelParameter)parameters;
+                            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(exploreParams), cts.Token);
+                        }
                         else
                             isShowing = false;
 
@@ -292,7 +299,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnInputShortcutsMainMenuPerformed(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
-                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter()); // No section provided, the panel will decide
+                await ShowAsync(PanelsSharingSpace.Explore); // No section provided, the panel will decide
         }
 
         private async void OnInputShortcutsEmoteWheelPerformed(InputAction.CallbackContext obj)

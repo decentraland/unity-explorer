@@ -49,7 +49,6 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.Dispose();
 
-            viewInstance?.OpenFriendPanelButton.onClick.RemoveListener(ToggleFriendsPanel);
             friendRequestReceivedCts.SafeCancelAndDispose();
         }
 
@@ -85,7 +84,8 @@ namespace DCL.Friends.UI.FriendPanel
                         if (friendsPanelController!.State != ControllerState.ViewHidden)
                             friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
                         else
-                            ToggleFriendsPanel();
+                            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Friends);
+
                         break;
                     case FriendshipStatus.REQUEST_RECEIVED:
                         mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
@@ -110,17 +110,5 @@ namespace DCL.Friends.UI.FriendPanel
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
-
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-
-            viewInstance!.OpenFriendPanelButton.onClick.AddListener(ToggleFriendsPanel);
-        }
-
-        private async void ToggleFriendsPanel()
-        {
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
-        }
     }
 }
