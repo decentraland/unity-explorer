@@ -39,10 +39,22 @@ namespace ECS.StreamableLoading.Cache.Disk
                 {
                     await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
 
-                    while (data.MoveNext())
+                    try
                     {
-                        var chunk = data.Current;
-                        await stream.WriteAsync(chunk, token);
+                        while (data.MoveNext())
+                        {
+                            var chunk = data.Current;
+                            await stream.WriteAsync(chunk, token);
+                        }
+
+                        await stream.FlushAsync(token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        //Ensure no semi-complete data is written
+                        stream.Close();
+                        File.Delete(path);
+                        throw;
                     }
                 }
 
