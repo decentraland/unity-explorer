@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Friends.UI.BlockUserPrompt
@@ -10,6 +11,7 @@ namespace DCL.Friends.UI.BlockUserPrompt
     public class BlockUserPromptController : ControllerBase<BlockUserPromptView, BlockUserPromptParams>
     {
         private readonly IFriendsService friendsService;
+        private readonly DCLInput dclInput;
 
         private UniTaskCompletionSource closePopupTask = new ();
         private CancellationTokenSource blockOperationsCts = new ();
@@ -17,10 +19,12 @@ namespace DCL.Friends.UI.BlockUserPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public BlockUserPromptController(ViewFactoryMethod viewFactory,
-            IFriendsService friendsService)
+            IFriendsService friendsService,
+            DCLInput dclInput)
             : base(viewFactory)
         {
             this.friendsService = friendsService;
+            this.dclInput = dclInput;
         }
 
         public override void Dispose()
@@ -29,6 +33,7 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             viewInstance?.BlockButton.onClick.RemoveAllListeners();
             viewInstance?.UnblockButton.onClick.RemoveAllListeners();
+            dclInput.UI.Close.performed -= ClosePopup;
         }
 
         protected override void OnViewInstantiated()
@@ -47,7 +52,19 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             viewInstance!.ConfigureButtons(inputData.Action);
             viewInstance.SetTitle(inputData.Action, inputData.TargetUserName);
+
+            dclInput.UI.Close.performed += ClosePopup;
         }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+
+            dclInput.UI.Close.performed -= ClosePopup;
+        }
+
+        private void ClosePopup(InputAction.CallbackContext obj) =>
+            ClosePopup();
 
         private void ClosePopup() =>
             closePopupTask.TrySetResult();

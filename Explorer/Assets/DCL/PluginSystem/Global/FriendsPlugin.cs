@@ -245,7 +245,8 @@ namespace DCL.PluginSystem.Global
 
                 var blockUserPromptController = new BlockUserPromptController(
                     BlockUserPromptController.CreateLazily(blockUserPromptPrefab, null),
-                    injectableFriendService);
+                    injectableFriendService,
+                    dclInput);
 
                 mvcManager.RegisterController(blockUserPromptController);
             }
