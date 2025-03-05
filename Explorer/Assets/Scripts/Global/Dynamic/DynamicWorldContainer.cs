@@ -798,7 +798,8 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder,
-                    nametagsData));
+                    nametagsData,
+                    viewDependencies));
 
             if (includeFriends)
             {

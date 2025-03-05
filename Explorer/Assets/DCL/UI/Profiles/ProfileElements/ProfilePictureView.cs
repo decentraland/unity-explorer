@@ -30,6 +30,17 @@ namespace DCL.UI.ProfileElements
             Setup(userColor, faceSnapshotUrl, userId);
         }
 
+        public void SetupOnlyColor(Color userColor)
+        {
+            thumbnailBackground.color = userColor;
+            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+        }
+
+        public void SetDefaultThumbnail()
+        {
+            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+        }
+
         private async UniTaskVoid LoadThumbnailAsync(string faceSnapshotUrl, string userId)
         {
             try

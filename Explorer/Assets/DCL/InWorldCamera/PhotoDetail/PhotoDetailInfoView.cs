@@ -18,6 +18,5 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: Header("Prefabs")]
         [field: SerializeField] internal VisiblePersonView visiblePersonViewPrefab { get; private set; }
         [field: SerializeField] internal EquippedWearableView equippedWearablePrefab { get; private set; }
-        [field: SerializeField] internal Sprite emptyProfileImage { get; private set; }
     }
 }
