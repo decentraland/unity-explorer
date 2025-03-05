@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.SidebarBus;
+using DCL.UI;
 using DCL.UI.MainUI;
 using MVC;
 using System.Threading;
@@ -13,17 +14,20 @@ namespace DCL.PluginSystem.Global
         private readonly ISidebarBus sidebarBus;
         private readonly MainUIView mainUIView;
         private readonly bool isFriendsEnabled;
+        private readonly SharedUIArea sharedArea;
 
         public MainUIPlugin(
             IMVCManager mvcManager,
             ISidebarBus sidebarBus,
             MainUIView mainUIView,
-            bool isFriendsEnabled)
+            bool isFriendsEnabled,
+            SharedUIArea sharedArea)
         {
             this.mvcManager = mvcManager;
             this.sidebarBus = sidebarBus;
             this.mainUIView = mainUIView;
             this.isFriendsEnabled = isFriendsEnabled;
+            this.sharedArea = sharedArea;
         }
 
         public void Dispose()
@@ -44,7 +48,8 @@ namespace DCL.PluginSystem.Global
                 },
                 sidebarBus,
                 mvcManager,
-                isFriendsEnabled
+                isFriendsEnabled,
+                sharedArea
             );
 
             mvcManager.RegisterController(mainUIController);

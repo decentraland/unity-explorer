@@ -3,6 +3,8 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using MVC;
 using System;
@@ -18,9 +20,10 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly DCLInput dclInput;
         private readonly IPassportBridge passportBridge;
         private readonly IFriendsService friendsService;
+        private readonly SharedUIArea sharedArea;
 
         private FriendsPanelController? friendsPanelController;
-        private bool isFriendPanelControllerOpen;
+//        private bool isFriendPanelControllerOpen;
         private CancellationTokenSource? friendRequestReceivedCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -32,19 +35,21 @@ namespace DCL.Friends.UI.FriendPanel
             DCLInput dclInput,
             INotificationsBusController notificationsBusController,
             IPassportBridge passportBridge,
-            IFriendsService friendsService)
+            IFriendsService friendsService,
+            SharedUIArea sharedArea)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
             this.passportBridge = passportBridge;
             this.friendsService = friendsService;
+            this.sharedArea = sharedArea;
 
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
             mvcManager.OnViewShowed += OnViewShowed;
-            mvcManager.OnViewClosed += OnViewClosed;
-            RegisterHotkey();
+//            mvcManager.OnViewClosed += OnViewClosed;
+//            RegisterHotkey();
         }
 
         public override void Dispose()
@@ -52,9 +57,9 @@ namespace DCL.Friends.UI.FriendPanel
             base.Dispose();
 
             mvcManager.OnViewShowed -= OnViewShowed;
-            mvcManager.OnViewClosed -= OnViewClosed;
-            viewInstance?.OpenFriendPanelButton.onClick.RemoveListener(ToggleFriendsPanel);
-            UnregisterHotkey();
+//            mvcManager.OnViewClosed -= OnViewClosed;
+//            viewInstance?.OpenFriendPanelButton.onClick.RemoveListener(ToggleFriendsPanel);
+//            UnregisterHotkey();
             friendRequestReceivedCts.SafeCancelAndDispose();
         }
 
@@ -82,18 +87,22 @@ namespace DCL.Friends.UI.FriendPanel
 
             async UniTaskVoid ManageFriendRequestReceivedNotificationAsync(FriendRequestReceivedNotification notification, CancellationToken ct)
             {
+                if(friendsPanelController == null)
+                    return;
+
                 FriendshipStatus friendshipStatus = await friendsService.GetFriendshipStatusAsync(notification.Metadata.Sender.Address, ct);
 
                 switch (friendshipStatus)
                 {
                     case FriendshipStatus.FRIEND:
-                        if (isFriendPanelControllerOpen)
+ //                       if (isFriendPanelControllerOpen)
+                        if(friendsPanelController.State != ControllerState.ViewHidden)
                             friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
                         else
                             ToggleFriendsPanel();
                         break;
                     case FriendshipStatus.REQUEST_RECEIVED:
-                        mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                        sharedArea.ShowControllerAsync("FriendRequest", new FriendRequestParams
                         {
                             Request = new FriendRequest(
                                 friendRequestId: notification.Metadata.RequestId,
@@ -101,7 +110,7 @@ namespace DCL.Friends.UI.FriendPanel
                                 from: notification.Metadata.Sender.ToFriendProfile(),
                                 to: notification.Metadata.Receiver.ToFriendProfile(),
                                 messageBody: notification.Metadata.Message)
-                        }), ct).Forget();
+                        }).Forget();
                         break;
                     default:
                         passportBridge.ShowAsync(new Web3Address(notification.Metadata.Sender.Address)).Forget();
@@ -112,7 +121,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private DateTime GetDateTimeFromString(string epochString) =>
             !long.TryParse(epochString, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeMilliseconds(unixTimestamp).ToLocalTime().DateTime;
-
+/*
         private void RegisterHotkey()
         {
             dclInput.Shortcuts.FriendPanel.performed += OpenFriendsPanel;
@@ -122,7 +131,7 @@ namespace DCL.Friends.UI.FriendPanel
         {
             dclInput.Shortcuts.FriendPanel.performed -= OpenFriendsPanel;
         }
-
+*/
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -138,10 +147,11 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void ToggleFriendsPanel()
         {
-            if (isFriendPanelControllerOpen)
-                friendsPanelController?.CloseFriendsPanel(default(InputAction.CallbackContext));
+ //           if (isFriendPanelControllerOpen)
+            if(friendsPanelController.State != ControllerState.ViewHidden)
+                sharedArea.ShowControllerAsync("Chat", null).Forget();
             else
-                mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter()));
+                sharedArea.ShowControllerAsync("Friends", new FriendsPanelParameter()).Forget();
         }
 
         private void OnViewShowed(IController controller)
@@ -149,9 +159,9 @@ namespace DCL.Friends.UI.FriendPanel
             if (controller is not FriendsPanelController friendsController) return;
 
             friendsPanelController ??= friendsController;
-            isFriendPanelControllerOpen = true;
+ //           isFriendPanelControllerOpen = true;
             viewInstance!.SetButtonStatePanelShow(true);
-            UnregisterHotkey();
+//            UnregisterHotkey();
         }
 
         private void OnViewClosed(IController controller)
@@ -159,8 +169,8 @@ namespace DCL.Friends.UI.FriendPanel
             if (controller is not FriendsPanelController) return;
 
             viewInstance!.SetButtonStatePanelShow(false);
-            isFriendPanelControllerOpen = false;
-            RegisterHotkey();
+//            isFriendPanelControllerOpen = false;
+//            RegisterHotkey();
         }
     }
 }

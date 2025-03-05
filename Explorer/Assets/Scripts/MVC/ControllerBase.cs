@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Optimization;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -158,5 +159,8 @@ namespace MVC
         protected abstract UniTask WaitForCloseIntentAsync(CancellationToken ct);
 
         public virtual void Dispose() { }
+
+        public async UniTask LaunchViewLifeCycleAsync(CanvasOrdering ordering, CancellationToken ct) =>
+            await LaunchViewLifeCycleAsync(ordering, default!, ct);
     }
 }

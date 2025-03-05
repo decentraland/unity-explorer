@@ -13,6 +13,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using MVC;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
+        private readonly SharedUIArea sharedArea;
 
         private ChatController chatController;
 
@@ -59,7 +61,8 @@ namespace DCL.PluginSystem.Global
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            SharedUIArea sharedArea)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -78,6 +81,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.roomHub = roomHub;
+            this.sharedArea = sharedArea;
         }
 
         public void Dispose() { }
@@ -110,6 +114,29 @@ namespace DCL.PluginSystem.Global
                 hyperlinkTextFormatter,
                 profileCache
             );
+
+            sharedArea.RegisterController("Chat", chatController,
+                                          async (parameters, token) =>
+                                          {
+                                                // When it is already visible, it just folds / unfolds it
+                                                if (chatController.State != ControllerState.ViewHidden)
+                                                {
+                                                    ChatView chatView = mainUIView.ChatView;
+
+                                                    if (chatView.IsUnfolded)
+                                                    {
+                                                        chatView.IsUnfolded = false;
+                                                    }
+                                                    else
+                                                    {
+                                                        chatView.IsUnfolded = true;
+                                                        chatView.ShowNewMessages();
+                                                    }
+                                                }
+                                                else
+                                                    await mvcManager.ShowAsync(ChatController.IssueCommand(), token);
+                                          },
+                                          async (parameters, token) => await chatController.HideViewAsync(token));
 
             mvcManager.RegisterController(chatController);
         }

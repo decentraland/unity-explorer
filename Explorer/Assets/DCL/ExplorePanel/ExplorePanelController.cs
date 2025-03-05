@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.ExplorePanel.Components;
 using DCL.Input;
 using DCL.Input.Component;
@@ -31,6 +33,7 @@ namespace DCL.ExplorePanel
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
+        private readonly IChatLifecycleBusController chatLifecycleBusController;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -59,7 +62,8 @@ namespace DCL.ExplorePanel
             INotificationsBusController notificationBusController,
             IMVCManager mvcManager,
             IInputBlock inputBlock,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            IChatLifecycleBusController chatLifecycleBusController)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -74,6 +78,7 @@ namespace DCL.ExplorePanel
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
+            this.chatLifecycleBusController = chatLifecycleBusController;
         }
 
         private void OnRewardAssigned(object[] parameters)
@@ -178,7 +183,13 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.OpenChat.performed += OnOpenChatHotkeyPressed;
             dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
+        }
+
+        private void OnOpenChatHotkeyPressed(InputAction.CallbackContext obj)
+        {
+       //     chatLifecycleBusController.ToggleChat();
         }
 
         private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
@@ -264,6 +275,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.OpenChat.performed -= OnOpenChatHotkeyPressed;
             dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 

@@ -39,6 +39,7 @@ namespace DCL.UI.Sidebar
         private readonly bool includeFriends;
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
+        private readonly SharedUIArea sharedArea;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -64,7 +65,8 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             ChatView chatView,
-            IChatHistory chatHistory)
+            IChatHistory chatHistory,
+            SharedUIArea sharedArea)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -83,6 +85,7 @@ namespace DCL.UI.Sidebar
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.sharedArea = sharedArea;
 
             sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
         }
@@ -151,17 +154,9 @@ namespace DCL.UI.Sidebar
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
 
-        private void OnUnreadMessagesButtonClicked()
+        private async void OnUnreadMessagesButtonClicked()
         {
-            if (!chatView.IsUnfolded)
-            {
-                chatView.IsUnfolded = true;
-                chatView.ShowNewMessages();
-            }
-            else
-            {
-                chatView.IsUnfolded = false;
-            }
+            await sharedArea.ShowControllerAsync("Chat", null);
         }
 
         private void OnHelpButtonClicked()

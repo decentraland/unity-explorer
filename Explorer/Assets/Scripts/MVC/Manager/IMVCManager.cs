@@ -21,6 +21,8 @@ namespace MVC
         /// <typeparam name="TInputData"></typeparam>
         UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView;
 
+      //  UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView;
+
         void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: IView;
 
         void SetAllViewsCanvasActive(bool isActive);

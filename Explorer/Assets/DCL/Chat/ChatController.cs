@@ -13,11 +13,13 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -27,7 +29,7 @@ using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView>, IControllerInSharedArea
     {
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
@@ -90,7 +92,8 @@ namespace DCL.Chat
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
-            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
+            chatLifecycleBusController.ChatHideRequested += OnLifecycleBusChatHideRequested;
+  //          chatLifecycleBusController.ChatToggleRequested += OnLifecycleBusChatToggleRequested;
         }
 
         public void Clear() // Called by a command
@@ -130,7 +133,12 @@ namespace DCL.Chat
             memberListCts.SafeCancelAndDispose();
         }
 
-        private void HideBusCommandReceived()
+        private void OnLifecycleBusChatHideRequested()
+        {
+            HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void OnLifecycleBusChatToggleRequested()
         {
             HideViewAsync(CancellationToken.None).Forget();
         }
@@ -465,6 +473,12 @@ namespace DCL.Chat
                 if(profile != null)
                     outProfiles.Add(profile);
             }
+        }
+
+        public async UniTask<bool> HidingRequestedAsync(object parameters, CancellationToken token)
+        {
+            await HideViewAsync(token);
+            return true;
         }
     }
 }

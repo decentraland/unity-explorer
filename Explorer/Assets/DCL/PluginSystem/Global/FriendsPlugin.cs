@@ -18,6 +18,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Utilities;
@@ -61,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly IAnalyticsController? analyticsController;
         private readonly bool useAnalytics;
+        private readonly SharedUIArea sharedArea;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -94,7 +96,8 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
-            IAnalyticsController? analyticsController)
+            IAnalyticsController? analyticsController,
+            SharedUIArea sharedArea)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -122,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.sidebarActionsBus = sidebarActionsBus;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
+            this.sharedArea = sharedArea;
         }
 
         public void Dispose()
@@ -171,7 +175,7 @@ namespace DCL.PluginSystem.Global
                     return panelView;
                 },
                 mainUIView.FriendsPanelViewView,
-                chatLifecycleBusController,
+                sharedArea,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 injectableFriendService,
                 friendEventBus,
@@ -190,6 +194,11 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 isConnectivityStatusEnabled);
 
+
+            sharedArea.RegisterController("Friends", friendsPanelController,
+                                          async (parameters, token) => { await mvcManager.ShowAsync(FriendsPanelController.IssueCommand((FriendsPanelParameter)parameters!), token); },
+                                          async (parameters, token) => await friendsPanelController.HideViewAsync(token));
+
             mvcManager.RegisterController(friendsPanelController);
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
@@ -197,7 +206,8 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 notificationsBusController,
                 passportBridge,
-                injectableFriendService);
+                injectableFriendService,
+                sharedArea);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
@@ -207,6 +217,10 @@ namespace DCL.PluginSystem.Global
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
                 inputBlock, profileThumbnailCache);
+
+            sharedArea.RegisterController("FriendRequest", friendRequestController,
+                                          async (parameters, token) => { await mvcManager.ShowAsync(FriendRequestController.IssueCommand((FriendRequestParams)parameters!), token); },
+                                          async (parameters, token) => await friendRequestController.HideViewAsync(token));
 
             mvcManager.RegisterController(friendRequestController);
 

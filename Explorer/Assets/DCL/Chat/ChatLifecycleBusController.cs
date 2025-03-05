@@ -9,7 +9,8 @@ namespace DCL.Chat
     {
         private readonly IMVCManager mvcManager;
 
-        private event Action? ChatHideAction;
+        public event Action? ChatToggleRequested;
+        public event Action? ChatHideRequested;
 
         public ChatLifecycleBusController(IMVCManager mvcManager)
         {
@@ -20,12 +21,12 @@ namespace DCL.Chat
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
 
         public void HideChat() =>
-            ChatHideAction?.Invoke();
+            ChatHideRequested?.Invoke();
 
-        public void SubscribeToHideChatCommand(Action action) =>
-            ChatHideAction += action;
+        public void ToggleChat() =>
+            ChatToggleRequested?.Invoke();
 
         public void Dispose() =>
-            ChatHideAction = null;
+            ChatHideRequested = null;
     }
 }

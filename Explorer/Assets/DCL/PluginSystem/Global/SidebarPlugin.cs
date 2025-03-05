@@ -11,6 +11,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
+using DCL.UI;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
@@ -50,6 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
+        private readonly SharedUIArea sharedArea;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -71,7 +73,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool includeCameraReel,
             bool includeFriends,
-            IChatHistory chatHistory)
+            IChatHistory chatHistory,
+            SharedUIArea sharedArea)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -93,6 +96,7 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.chatHistory = chatHistory;
+            this.sharedArea = sharedArea;
         }
 
         public void Dispose() { }
@@ -128,7 +132,8 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 mainUIView.ChatView,
-                chatHistory
+                chatHistory,
+                sharedArea
             ));
         }
 

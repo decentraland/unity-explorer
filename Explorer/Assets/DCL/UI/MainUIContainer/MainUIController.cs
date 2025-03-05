@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.EmotesWheel;
-using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
@@ -29,6 +28,7 @@ namespace DCL.UI.MainUI
         private readonly ISidebarBus sidebarBus;
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
+        private readonly SharedUIArea sharedArea;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -44,11 +44,13 @@ namespace DCL.UI.MainUI
             ViewFactoryMethod viewFactory,
             ISidebarBus sidebarBus,
             IMVCManager mvcManager,
-            bool isFriendsEnabled) : base(viewFactory)
+            bool isFriendsEnabled,
+            SharedUIArea sharedArea) : base(viewFactory)
         {
             this.sidebarBus = sidebarBus;
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
+            this.sharedArea = sharedArea;
         }
 
         protected override void OnViewInstantiated()

@@ -71,6 +71,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar.SidebarActionsBus;
@@ -553,6 +554,8 @@ namespace Global.Dynamic
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
+            SharedUIArea mainUIBottomLeftSharedArea = new SharedUIArea();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -603,7 +606,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform),
-                new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends),
+                new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends, mainUIBottomLeftSharedArea),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
@@ -614,7 +617,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory),
+                    chatHistory, mainUIBottomLeftSharedArea),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -634,7 +637,8 @@ namespace Global.Dynamic
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,
-                    profileCache),
+                    profileCache,
+                    mainUIBottomLeftSharedArea),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -824,7 +828,8 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
-                    bootstrapContainer.Analytics));
+                    bootstrapContainer.Analytics,
+                    mainUIBottomLeftSharedArea));
             }
 
             if (dynamicWorldParams.EnableAnalytics)
@@ -875,6 +880,8 @@ namespace Global.Dynamic
                 profileBroadcast,
                 roomHub
             );
+
+
 
             // Init itself
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();

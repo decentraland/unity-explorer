@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.Friends.UI.Requests
 {
-    public class FriendRequestController : ControllerBase<FriendRequestView, FriendRequestParams>
+    public class FriendRequestController : ControllerBase<FriendRequestView, FriendRequestParams>, IControllerInSharedArea
     {
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
         private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
@@ -389,5 +389,8 @@ namespace DCL.Friends.UI.Requests
             CONFIRMED_REJECTED,
             CONFIRMED_SENT,
         }
+
+        public async UniTask<bool> HidingRequestedAsync(object? parameters, CancellationToken token) =>
+            true;
     }
 }
