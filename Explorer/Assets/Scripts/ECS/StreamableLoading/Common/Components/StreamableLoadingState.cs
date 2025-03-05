@@ -1,8 +1,7 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.WebRequests.PartialDownload;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
-using System.Buffers;
 using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
@@ -83,11 +82,11 @@ namespace ECS.StreamableLoading.Common.Components
             return PartialDownloadingData!.Value.FullData;
         }
 
-        public IMemoryOwner<byte> ClaimOwnershipOverFullyDownloadedData()
+        public SlicedOwnedMemory<byte> ClaimOwnershipOverFullyDownloadedData()
         {
             Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
             PartialLoadingState value = PartialDownloadingData!.Value;
-            IMemoryOwner<byte> owner = value.TransferMemoryOwnership();
+            SlicedOwnedMemory<byte> owner = value.TransferMemoryOwnership();
             PartialDownloadingData = value;
             return owner;
         }

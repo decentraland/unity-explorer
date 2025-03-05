@@ -15,7 +15,7 @@ namespace DCL.Chat.MessageBus
 {
     public class MultiplayerChatMessagesBus : IChatMessagesBus
     {
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
