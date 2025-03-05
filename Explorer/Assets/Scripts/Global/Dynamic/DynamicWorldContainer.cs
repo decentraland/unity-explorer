@@ -828,7 +828,8 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
-                    bootstrapContainer.Analytics));
+                    bootstrapContainer.Analytics,
+                    viewDependencies));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

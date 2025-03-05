@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly IAnalyticsController? analyticsController;
+        private readonly ViewDependencies viewDependencies;
         private readonly bool useAnalytics;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -91,7 +92,8 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
-            IAnalyticsController? analyticsController)
+            IAnalyticsController? analyticsController,
+            ViewDependencies viewDependencies)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -118,6 +120,7 @@ namespace DCL.PluginSystem.Global
             this.sidebarActionsBus = sidebarActionsBus;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
+            this.viewDependencies = viewDependencies;
         }
 
         public void Dispose()
@@ -183,7 +186,8 @@ namespace DCL.PluginSystem.Global
                 friendsConnectivityStatusTracker,
                 sidebarActionsBus,
                 includeUserBlocking,
-                isConnectivityStatusEnabled);
+                isConnectivityStatusEnabled
+                );
 
             mvcManager.RegisterController(friendsPanelController);
 
@@ -201,7 +205,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache);
+                inputBlock, profileThumbnailCache, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 

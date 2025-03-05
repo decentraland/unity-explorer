@@ -24,6 +24,13 @@ namespace DCL.UI.ProfileElements
             LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
         }
 
+        public async UniTask SetupWithDependenciesAsync(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
+        {
+            viewDependencies = dependencies;
+            thumbnailBackground.color = userColor;
+            await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
+        }
+
         public void SetupWithDependencies(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId)
         {
             viewDependencies = dependencies;
@@ -41,11 +48,12 @@ namespace DCL.UI.ProfileElements
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
         }
 
-        private async UniTaskVoid LoadThumbnailAsync(string faceSnapshotUrl, string userId)
+        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
         {
             try
             {
-                cts = cts.SafeRestart();
+                cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
 

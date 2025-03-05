@@ -56,7 +56,7 @@ namespace DCL.UI.ProfileElements
                     viewInstance.AddressLabel.text = profile.WalletId;
             }
 
-            viewInstance.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
     }
 }
