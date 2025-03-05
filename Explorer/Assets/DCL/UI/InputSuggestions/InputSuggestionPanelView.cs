@@ -171,7 +171,6 @@ namespace DCL.UI.SuggestionPanel
             }
 
             ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, scrollViewHeight);
-            scrollViewComponent.verticalNormalizedPosition = 1;
 
             //if the suggestion type is different, we release all items from the pool,
             //otherwise, we only release the elements that are over the found suggestion amount.
@@ -213,6 +212,8 @@ namespace DCL.UI.SuggestionPanel
                     usedPoolItems.Add(suggestionElement);
                 }
             }
+
+            scrollViewComponent.verticalNormalizedPosition = 1;
         }
 
         private void SetSelection(int index)
