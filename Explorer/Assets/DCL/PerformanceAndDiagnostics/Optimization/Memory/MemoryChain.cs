@@ -1,4 +1,3 @@
-using Sentry;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -104,8 +103,18 @@ namespace DCL.Optimization.Memory
         /// Consumes MemoryChain and returns a stream that reads from it
         /// </summary>
         /// <returns></returns>
-        public Stream ToStream() =>
-            ChainStream.New(this);
+        public Stream ToStream()
+        {
+            //TODO optimise and remove alloc memory stream
+            //Chain stream caused some crashes or the memory used underneath.
+            //The crash is provoked by AB reading. validate that files are not been corrupted on write
+             using var s = ChainStream.New(this);
+
+             var ms = new MemoryStream((int) s.Length);
+             s.CopyTo(ms);
+
+             return ms;
+        }
 
         public readonly ChainMemoryIterator AsMemoryIterator() =>
             new (this);
