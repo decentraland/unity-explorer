@@ -75,13 +75,13 @@ namespace DCL.ExplorePanel
             this.dclInput = dclInput;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.profileMenuController = profileMenuController;
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssignedAsync);
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
-        private async void OnRewardAssigned(object[] parameters)
+        private async void OnRewardAssignedAsync(object[] parameters)
         {
             if(State == ControllerState.ViewHidden)
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack)); // TODO: move to the shared space manager?
@@ -143,7 +143,7 @@ namespace DCL.ExplorePanel
                 );
             }
 
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowProfileMenu);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowProfileMenuAsync);
         }
 
         protected override void OnViewShow()
@@ -308,7 +308,7 @@ namespace DCL.ExplorePanel
                                   viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }
 
-        private async void ShowProfileMenu()
+        private async void ShowProfileMenuAsync()
         {
             if (profileMenuController.State == ControllerState.ViewHidden)
             {

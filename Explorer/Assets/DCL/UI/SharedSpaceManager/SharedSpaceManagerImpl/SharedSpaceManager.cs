@@ -33,16 +33,16 @@ namespace DCL.UI.SharedSpaceManager
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
 
-            dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformed;// TODO: Not subscribe if not enabled
-            dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformed;
-            dclInput.Shortcuts.OpenChat.performed += OnInputShortcutsOpenChatPerformed;
-            dclInput.UI.Submit.performed += OnUISubmitPerformed;
+            dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;// TODO: Not subscribe if not enabled
+            dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.OpenChat.performed += OnInputShortcutsOpenChatPerformedAsync;
+            dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
 
-            dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformed;
-            dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformed;
-            dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformed;
-            dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformed;
-            dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformed;// TODO: Not subscribe if not enabled
+            dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
+            dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
+            dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
+            dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;// TODO: Not subscribe if not enabled
         }
 
         public async UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null)
@@ -239,16 +239,16 @@ namespace DCL.UI.SharedSpaceManager
 
         public void Dispose()
         {
-            dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformed;
-            dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformed;
-            dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformed;
-            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
+            dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
+            dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
+            dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
 
-            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformed;
-            dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformed;
-            dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformed;
-            dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformed;
-            dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformed;
+            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
+            dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
+            dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
+            dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
         }
 
         private bool IsRegistered(PanelsSharingSpace panel)
@@ -270,7 +270,7 @@ namespace DCL.UI.SharedSpaceManager
                 isShowing = false;
         }
 
-        private async void OnUISubmitPerformed(InputAction.CallbackContext obj)
+        private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
             if (IsRegistered(PanelsSharingSpace.Chat) && !IsExplorePanelVisible)
             {
@@ -281,49 +281,49 @@ namespace DCL.UI.SharedSpaceManager
 
         #region Shortcut handlers
 
-        private async void OnInputShortcutsCameraReelPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel));
         }
 
-        private async void OnInputShortcutsBackpackPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack));
         }
 
-        private async void OnInputShortcutsSettingsPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings));
         }
 
-        private async void OnInputShortcutsMapPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap));
         }
 
-        private async void OnInputShortcutsMainMenuPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore); // No section provided, the panel will decide
         }
 
-        private async void OnInputShortcutsEmoteWheelPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
         }
 
-        private async void OnInputShortcutsFriendPanelPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
         }
 
-        private async void OnInputShortcutsOpenChatPerformed(InputAction.CallbackContext obj)
+        private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
             if(!IsExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));

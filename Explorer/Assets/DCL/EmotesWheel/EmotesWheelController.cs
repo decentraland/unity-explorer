@@ -105,7 +105,7 @@ namespace DCL.EmotesWheel
         protected override void OnViewInstantiated()
         {
             viewInstance!.Closed += Close;
-            viewInstance.EditButton.onClick.AddListener(OpenBackpack);
+            viewInstance.EditButton.onClick.AddListener(OpenBackpackAsync);
             viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
@@ -248,9 +248,9 @@ namespace DCL.EmotesWheel
         }
 
         private void OpenBackpack(InputAction.CallbackContext context) =>
-            OpenBackpack();
+            OpenBackpackAsync();
 
-        private async void OpenBackpack()
+        private async void OpenBackpackAsync()
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes));
         }

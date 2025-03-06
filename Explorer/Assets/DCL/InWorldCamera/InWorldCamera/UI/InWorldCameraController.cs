@@ -10,7 +10,6 @@ using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
@@ -63,7 +62,7 @@ namespace DCL.InWorldCamera.UI
         {
             viewInstance!.CloseButton.onClick.AddListener(RequestDisableInWorldCamera);
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
-            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
+            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGalleryAsync);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
         }
 
@@ -73,7 +72,7 @@ namespace DCL.InWorldCamera.UI
             {
                 viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
                 viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
-                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
+                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGalleryAsync);
                 viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
             }
 
@@ -109,7 +108,7 @@ namespace DCL.InWorldCamera.UI
 
         public void Hide(bool isInstant = false)
         {
-            ToggleShortcutsInfo(toOpen: false);
+            ToggleShortcutsInfoAsync(toOpen: false);
 
             sidebarButton.OnDeselect(null);
             viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
@@ -126,7 +125,7 @@ namespace DCL.InWorldCamera.UI
             viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
-        private async void OpenCameraReelGallery()
+        private async void OpenCameraReelGalleryAsync()
         {
             RequestDisableInWorldCamera();
 
@@ -152,9 +151,9 @@ namespace DCL.InWorldCamera.UI
         }
 
         private void ToggleShortcutsInfo() =>
-            ToggleShortcutsInfo(!shortcutPanelIsOpen);
+            ToggleShortcutsInfoAsync(!shortcutPanelIsOpen);
 
-        private void ToggleShortcutsInfo(bool toOpen)
+        private void ToggleShortcutsInfoAsync(bool toOpen)
         {
             if (toOpen)
             {
@@ -178,7 +177,7 @@ namespace DCL.InWorldCamera.UI
 
         private void OnShortcutsInfoPanelClosed()
         {
-            ToggleShortcutsInfo(false);
+            ToggleShortcutsInfoAsync(false);
         }
 
         private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage, string __) =>
