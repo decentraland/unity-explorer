@@ -21,7 +21,6 @@ using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -168,8 +167,8 @@ namespace DCL.Chat
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-              ShowParams showParams = (ShowParams)parameters;
-                viewInstance.IsUnfolded = showParams.ShowUnfolded;
+                ShowParams showParams = (ShowParams)parameters;
+                IsUnfolded = showParams.ShowUnfolded;
 
                 ViewShowingComplete?.Invoke(this);
             }

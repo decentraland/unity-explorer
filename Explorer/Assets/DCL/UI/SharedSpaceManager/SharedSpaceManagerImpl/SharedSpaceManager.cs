@@ -191,7 +191,7 @@ namespace DCL.UI.SharedSpaceManager
                         await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
 
                         // When friends panel is not present, the chat panel must be
-                        await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(true));
+                        await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
                         break;
                     }
                     default:
