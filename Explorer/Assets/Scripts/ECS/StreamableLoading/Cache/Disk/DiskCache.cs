@@ -160,8 +160,8 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
-            T deserializedValue = await serializer.DeserializeAsync(data.Value, token);
-            return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(deserializedValue));
+            Option<T> deserializedValue = await serializer.DeserializeAsync(data.Value, token);
+            return EnumResult<Option<T>, TaskError>.SuccessResult(deserializedValue);
         }
 
         public UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token) =>

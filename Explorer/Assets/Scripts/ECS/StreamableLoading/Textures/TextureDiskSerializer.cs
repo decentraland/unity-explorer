@@ -1,12 +1,11 @@
 using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using Object = UnityEngine.Object;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -15,7 +14,7 @@ namespace ECS.StreamableLoading.Textures
         public SerializeMemoryIterator<State> Serialize(Texture2DData data) =>
             ToArray(data);
 
-        public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public async UniTask<Option<Texture2DData>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
 
@@ -31,7 +30,7 @@ namespace ECS.StreamableLoading.Textures
             // LoadRawTextureData copies the data
             data.Dispose();
 
-            return new Texture2DData(texture);
+            return Option<Texture2DData>.Some(new Texture2DData(texture));
         }
 
         private static SerializeMemoryIterator<State> ToArray(Texture2DData data)

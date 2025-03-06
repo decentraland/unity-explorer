@@ -6,6 +6,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -21,7 +22,7 @@ namespace ECS.StreamableLoading.Common
             return new PartialMemoryIterator(meta, memory, false);
         }
 
-        public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<Option<PartialLoadingState>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             using (data)
             {
@@ -31,12 +32,12 @@ namespace ECS.StreamableLoading.Common
                 if (meta.WrittenBytesSize != fileData.Length)
                 {
                     ReportHub.LogError(ReportCategory.DISK_CACHE, $"Actual length {fileData.Length} not equals to declared length {meta.WrittenBytesSize}");
-                    return UniTask.FromResult(new PartialLoadingState(meta.MaxFileSize));
+                    return UniTask.FromResult(Option<PartialLoadingState>.None);
                 }
 
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
-                return UniTask.FromResult(partialLoadingState);
+                return UniTask.FromResult(Option<PartialLoadingState>.Some(partialLoadingState));
             }
         }
 
