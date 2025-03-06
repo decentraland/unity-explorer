@@ -39,7 +39,6 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly RequestsSectionController requestsSectionController;
         private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -70,13 +69,11 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             bool includeUserBlocking,
-            bool isConnectivityStatusEnabled,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            bool isConnectivityStatusEnabled) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             if (isConnectivityStatusEnabled)
             {

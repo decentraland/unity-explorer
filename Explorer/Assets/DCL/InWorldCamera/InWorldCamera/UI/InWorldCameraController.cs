@@ -157,18 +157,18 @@ namespace DCL.InWorldCamera.UI
         {
             if (toOpen)
             {
-                viewInstance?.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
-                viewInstance!.ShortcutsInfoPanel.Closed += OnShortcutsInfoPanelClosed;
-                viewInstance?.ShortcutsInfoButton.OnSelect(null);
+                viewInstance!.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
+                viewInstance.ShortcutsInfoPanel.Closed += OnShortcutsInfoPanelClosed;
+                viewInstance.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
                 if (viewInstance != null)
                 {
-                    viewInstance!.ShortcutsInfoPanel.Closed -= OnShortcutsInfoPanelClosed;
-                    viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
-                    viewInstance?.ShortcutsInfoButton.OnDeselect(null);
+                    viewInstance.ShortcutsInfoPanel.Closed -= OnShortcutsInfoPanelClosed;
+                    viewInstance.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
+                    viewInstance.ShortcutsInfoButton.OnDeselect(null);
                 }
 
                 shortcutPanelIsOpen = false;

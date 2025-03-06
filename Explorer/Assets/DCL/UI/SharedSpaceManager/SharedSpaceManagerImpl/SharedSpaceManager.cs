@@ -28,12 +28,19 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool IsExplorePanelVisible => controllers[PanelsSharingSpace.Explore].IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput)
+        private bool isFriendsFeatureEnabled;
+        private bool isCameraReelFeatureEnabled;
+
+        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
+            this.isFriendsFeatureEnabled = isFriendsEnabled;
+            this.isCameraReelFeatureEnabled = isCameraReelEnabled;
 
-            dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;// TODO: Not subscribe if not enabled
+            if(isFriendsEnabled)
+                dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
+
             dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.OpenChat.performed += OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
@@ -42,7 +49,9 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
-            dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;// TODO: Not subscribe if not enabled
+
+            if(isCameraReelEnabled)
+                dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
         }
 
         public async UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null)
@@ -90,7 +99,7 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.Friends:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                        if (!controllerInSharedSpace.IsVisibleInSharedSpace && isFriendsFeatureEnabled)
                         {
                             // The chat is hidden while the friends panel is present
                             (controllers[PanelsSharingSpace.Chat] as ChatController).SetViewVisibility(false);
@@ -188,10 +197,14 @@ namespace DCL.UI.SharedSpaceManager
                 {
                     case PanelsSharingSpace.Friends:
                     {
-                        await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
+                        if (isFriendsFeatureEnabled)
+                        {
+                            await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
 
-                        // When friends panel is not present, the chat panel must be
-                        await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
+                            // When friends panel is not present, the chat panel must be
+                            await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
+                        }
+
                         break;
                     }
                     default:
@@ -239,8 +252,10 @@ namespace DCL.UI.SharedSpaceManager
 
         public void Dispose()
         {
+            if(isFriendsFeatureEnabled)
+                dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
+
             dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformedAsync;
-            dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
             dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
 
@@ -248,7 +263,9 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
-            dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
+
+            if(isCameraReelFeatureEnabled)
+                dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
         }
 
         private bool IsRegistered(PanelsSharingSpace panel)
@@ -283,7 +300,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!IsExplorePanelVisible && isCameraReelFeatureEnabled)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel));
         }
 
@@ -319,7 +336,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!IsExplorePanelVisible && isFriendsFeatureEnabled)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
         }
 

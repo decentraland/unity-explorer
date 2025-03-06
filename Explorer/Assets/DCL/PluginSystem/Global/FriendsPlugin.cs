@@ -182,8 +182,7 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 includeUserBlocking,
-                isConnectivityStatusEnabled,
-                sharedSpaceManager);
+                isConnectivityStatusEnabled);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
 
