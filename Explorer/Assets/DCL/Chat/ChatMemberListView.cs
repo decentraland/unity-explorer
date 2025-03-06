@@ -1,3 +1,4 @@
+using DCL.Web3;
 using MVC;
 using SuperScrollView;
 using System;
@@ -33,7 +34,7 @@ namespace DCL.Chat
         [SerializeField]
         private LoopListView2 loopListView;
 
-        private List<MemberData> members = new();
+        private List<MemberData> members = new ();
 
         private ViewDependencies viewDependencies;
         private bool isInitialized;
@@ -58,7 +59,7 @@ namespace DCL.Chat
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
-            this.viewDependencies = dependencies;
+            viewDependencies = dependencies;
         }
 
         /// <summary>
@@ -101,7 +102,7 @@ namespace DCL.Chat
         private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition, Action onMenuHide)
         {
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(listItem.Id, buttonPosition.position, contextMenuCts.Token, onMenuHide);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, contextMenuCts.Token, onMenuHide);
         }
     }
 }

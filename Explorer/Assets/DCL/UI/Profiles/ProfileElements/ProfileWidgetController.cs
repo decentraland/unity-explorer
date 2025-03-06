@@ -15,7 +15,6 @@ namespace DCL.UI.ProfileElements
         private readonly IProfileRepository profileRepository;
         private readonly ViewDependencies viewDependencies;
 
-        private ImageController? profileImageController;
         private CancellationTokenSource? loadProfileCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -51,10 +50,8 @@ namespace DCL.UI.ProfileElements
             if (viewInstance!.NameLabel != null) viewInstance.NameLabel.text = profile.ValidatedName ?? GUEST_NAME;
 
             if (viewInstance.AddressLabel != null)
-            {
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
-            }
 
             await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }

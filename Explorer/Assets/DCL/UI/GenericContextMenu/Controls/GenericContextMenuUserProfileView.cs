@@ -22,7 +22,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         private enum CopyUserInfoSection
         {
             NAME,
-            ADDRESS
+            ADDRESS,
         }
 
         [field: SerializeField] public TMP_Text UserName { get; private set; }
@@ -36,7 +36,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
         [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
-        [field: SerializeField] public GameObject FriendsButtonsContainer  { get; private set; }
+        [field: SerializeField] public GameObject FriendsButtonsContainer { get; private set; }
 
         [field: Header("Friendship Button")]
         [field: SerializeField] public Button AddFriendButton { get; private set; }
@@ -51,8 +51,33 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] private RectTransform buttonContainerRectTransform;
         [field: SerializeField] private Sprite defaultEmptyThumbnail;
 
-        private CancellationTokenSource copyAnimationCts = new();
+        private CancellationTokenSource copyAnimationCts = new ();
         private ViewDependencies viewDependencies;
+
+        public override void UnregisterListeners()
+        {
+            CopyNameButton.onClick.RemoveAllListeners();
+            CopyAddressButton.onClick.RemoveAllListeners();
+            AddFriendButton.onClick.RemoveAllListeners();
+            AcceptFriendButton.onClick.RemoveAllListeners();
+            RemoveFriendButton.onClick.RemoveAllListeners();
+            CancelFriendButton.onClick.RemoveAllListeners();
+            copyAnimationCts.SafeCancelAndDispose();
+        }
+
+        public override void RegisterCloseListener(Action listener)
+        {
+            AddFriendButton.onClick.AddListener(new UnityAction(listener));
+            AcceptFriendButton.onClick.AddListener(new UnityAction(listener));
+            RemoveFriendButton.onClick.AddListener(new UnityAction(listener));
+            CancelFriendButton.onClick.AddListener(new UnityAction(listener));
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+            ProfilePictureView.InjectDependencies(dependencies);
+        }
 
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
@@ -76,7 +101,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            viewDependencies.ClipboardManager.Copy(this,section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
@@ -101,8 +126,6 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             CopyAddressToast.Hide(true);
             CopyNameToast.Hide(true);
-
-            //ProfilePictureView.Setup(userColor);
         }
 
         private float CalculateComponentHeight()
@@ -113,6 +136,7 @@ namespace DCL.UI.GenericContextMenu.Controls
                                 + HorizontalLayoutComponent.padding.bottom
                                 + HorizontalLayoutComponent.padding.top
                                 + (ContentVerticalLayout.spacing * 2);
+
             if (AddFriendButton.gameObject.activeSelf || AcceptFriendButton.gameObject.activeSelf || RemoveFriendButton.gameObject.activeSelf || CancelFriendButton.gameObject.activeSelf)
                 totalHeight += Math.Max(buttonContainerRectTransform.rect.height, FRIEND_BUTTON_MIN_HEIGHT) + ContentVerticalLayout.spacing;
 
@@ -135,41 +159,16 @@ namespace DCL.UI.GenericContextMenu.Controls
             AcceptFriendButton.gameObject.SetActive(false);
 
             Button buttonToActivate = settings.friendshipStatus switch
-            {
-                UserProfileContextMenuControlSettings.FriendshipStatus.NONE => AddFriendButton,
-                UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND => RemoveFriendButton,
-                UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT => CancelFriendButton,
-                UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED => AcceptFriendButton,
-                _ => null
-            };
+                                      {
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.NONE => AddFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND => RemoveFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT => CancelFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED => AcceptFriendButton,
+                                          _ => null,
+                                      };
 
             buttonToActivate?.gameObject.SetActive(true);
             buttonToActivate?.onClick.AddListener(() => InvokeSettingsAction(settings));
-        }
-
-        public override void UnregisterListeners()
-        {
-            CopyNameButton.onClick.RemoveAllListeners();
-            CopyAddressButton.onClick.RemoveAllListeners();
-            AddFriendButton.onClick.RemoveAllListeners();
-            AcceptFriendButton.onClick.RemoveAllListeners();
-            RemoveFriendButton.onClick.RemoveAllListeners();
-            CancelFriendButton.onClick.RemoveAllListeners();
-            copyAnimationCts.SafeCancelAndDispose();
-        }
-
-        public override void RegisterCloseListener(Action listener)
-        {
-            AddFriendButton.onClick.AddListener(new UnityAction(listener));
-            AcceptFriendButton.onClick.AddListener(new UnityAction(listener));
-            RemoveFriendButton.onClick.AddListener(new UnityAction(listener));
-            CancelFriendButton.onClick.AddListener(new UnityAction(listener));
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            this.viewDependencies = dependencies;
-            ProfilePictureView.InjectDependencies(dependencies);
         }
     }
 }
