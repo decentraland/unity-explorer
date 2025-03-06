@@ -67,6 +67,7 @@ namespace DCL.UI.ProfileNames
 
             claimedConfig.cancelButton.onClick.AddListener(Close);
             claimedConfig.saveButton.onClick.AddListener(() => Save(claimedConfig));
+            claimedConfig.claimedNameDropdown.onValueChanged.AddListener(i => claimedConfig.dropdownVerifiedIcon.SetActive(i != -1));
 
             return;
 
@@ -125,7 +126,9 @@ namespace DCL.UI.ProfileNames
                     dropdownOptions.Add(new TMP_Dropdown.OptionData(name));
 
                 config.claimedNameDropdown.options = dropdownOptions;
-                config.claimedNameDropdown.value = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
+
+                int selectedIndex = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
+                config.claimedNameDropdown.value = selectedIndex;
             }
 
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)

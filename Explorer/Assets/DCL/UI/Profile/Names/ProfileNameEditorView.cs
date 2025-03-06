@@ -36,6 +36,7 @@ namespace DCL.UI.ProfileNames
             public Button saveButton;
             public Button cancelButton;
             public TMP_Dropdown claimedNameDropdown;
+            public GameObject dropdownVerifiedIcon;
 
             [Serializable]
             public struct TabHeaderOption
