@@ -37,13 +37,15 @@ namespace DCL.Optimization.Memory
         public readonly int ChunkSize;
         public readonly int ChunksCount;
         public readonly int ChunksInUseCount;
+        public readonly ulong ReturnedTimes;
 
-        public SlabAllocatorInfo(int totalAllocatedMemory, int chunkSize, int chunksCount, int chunksInUseCount)
+        public SlabAllocatorInfo(int totalAllocatedMemory, int chunkSize, int chunksCount, int chunksInUseCount, ulong returnedTimes)
         {
             TotalAllocatedMemory = totalAllocatedMemory;
             ChunkSize = chunkSize;
             ChunksCount = chunksCount;
             ChunksInUseCount = chunksInUseCount;
+            ReturnedTimes = returnedTimes;
         }
     }
 
@@ -72,6 +74,8 @@ namespace DCL.Optimization.Memory
         private int freeCount;
         private bool disposed;
 
+        private ulong returnedTimes;
+
         public SlabAllocator(int chunkSize, int chunksCount) : this()
         {
             ptr = NativeAlloc.Malloc((nuint)(chunkSize * chunksCount));
@@ -86,7 +90,7 @@ namespace DCL.Optimization.Memory
                 freeIndexes[i] = i;
         }
 
-        public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeCount);
+        public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeCount, returnedTimes);
 
         public bool CanAllocate => freeCount > 0;
 
@@ -113,6 +117,7 @@ namespace DCL.Optimization.Memory
 
             freeIndexes[freeCount] = item.index;
             freeCount++;
+            returnedTimes++;
         }
 
         public void Dispose()
@@ -177,6 +182,7 @@ namespace DCL.Optimization.Memory
                 int count = allocators.Length;
                 int totalAllocatedMemory = 0;
                 int chunksInUseCount = 0;
+                ulong totalReturnedTimes = 0;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -184,9 +190,10 @@ namespace DCL.Optimization.Memory
                     var info = allocator.Info;
                     totalAllocatedMemory += info.TotalAllocatedMemory;
                     chunksInUseCount += info.ChunksInUseCount;
+                    totalReturnedTimes += info.ReturnedTimes;
                 }
 
-                return new SlabAllocatorInfo(totalAllocatedMemory, chunkSize, chunksCount * count, chunksInUseCount);
+                return new SlabAllocatorInfo(totalAllocatedMemory, chunkSize, chunksCount * count, chunksInUseCount, totalReturnedTimes);
             }
         }
 
