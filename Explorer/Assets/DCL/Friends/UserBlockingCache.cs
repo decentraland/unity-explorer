@@ -53,8 +53,11 @@ namespace DCL.Friends
             web3IdentityCache.OnIdentityChanged -= IdentityChanged;
         }
 
-        public bool UserIsBlocked(string userId) =>
-            BlockedUsers.Contains(userId) || BlockedByUsers.Contains(userId);
+        public bool UserIsBlocked(string userId)
+        {
+            string lowerUserId = userId.ToLower();
+            return BlockedUsers.Contains(lowerUserId) || BlockedByUsers.Contains(lowerUserId);
+        }
 
         private void IdentityChanged()
         {
@@ -68,15 +71,15 @@ namespace DCL.Friends
                 blockedByUsers.Clear();
 
                 foreach (string user in blockingStatus.BlockedUsers)
-                    blockedUsers.Add(user);
+                    blockedUsers.Add(user.ToLower());
                 foreach (string user in blockingStatus.BlockedByUsers)
-                    blockedByUsers.Add(user);
+                    blockedByUsers.Add(user.ToLower());
             }
         }
 
-        private void UserBlockedByYou(BlockedProfile user) => blockedUsers.Add(user.Address);
-        private void UserUnblockedByYou(BlockedProfile user) => blockedUsers.Remove(user.Address);
-        private void YouBlockedByUser(string userAddress) => blockedByUsers.Add(userAddress);
-        private void YouUnblockedByUser(string userAddress) => blockedByUsers.Remove(userAddress);
+        private void UserBlockedByYou(BlockedProfile user) => blockedUsers.Add(user.Address.ToString().ToLower());
+        private void UserUnblockedByYou(BlockedProfile user) => blockedUsers.Remove(user.Address.ToString().ToLower());
+        private void YouBlockedByUser(string userAddress) => blockedByUsers.Add(userAddress.ToLower());
+        private void YouUnblockedByUser(string userAddress) => blockedByUsers.Remove(userAddress.ToLower());
     }
 }
