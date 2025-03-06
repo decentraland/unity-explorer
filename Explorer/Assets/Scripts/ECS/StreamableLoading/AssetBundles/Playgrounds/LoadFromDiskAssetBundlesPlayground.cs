@@ -17,7 +17,9 @@ namespace ECS.StreamableLoading.AssetBundles.Playgrounds
 {
     public class FromDiskAssetBundlesPlayground : MonoBehaviour
     {
+        [SerializeField] private bool exactPath;
         [SerializeField] private string dirPath;
+        [Space]
         [SerializeField] private bool withMemoryChain;
         [SerializeField] private int byIndex;
 
@@ -38,15 +40,21 @@ namespace ECS.StreamableLoading.AssetBundles.Playgrounds
             }
         }
 
-        [ContextMenu(nameof(LoadByCacheAsync))]
-        private async UniTaskVoid LoadByCacheAsync()
+        private (IDiskCache<PartialLoadingState> diskCache, FilesLock filesLock, CacheDirectory cacheDirectory) New()
         {
-            var dir = CacheDirectory.NewExact(dirPath);
+            var dir = exactPath ? CacheDirectory.NewExact(dirPath) : CacheDirectory.New(dirPath);
             var filesLock = new FilesLock();
             var cache = new DiskCache(dir, new FilesLock(), new LRUDiskCleanUp(dir, filesLock));
             IDiskCache<PartialLoadingState> diskCache = new DiskCache<PartialLoadingState, PartialDiskSerializer.PartialMemoryIterator>(cache, new PartialDiskSerializer());
+            return (diskCache, filesLock, dir);
+        }
 
-            foreach (string file in Directory.EnumerateFiles(dirPath))
+        [ContextMenu(nameof(LoadByCacheAsync))]
+        private async UniTaskVoid LoadByCacheAsync()
+        {
+            (IDiskCache<PartialLoadingState> diskCache, FilesLock filesLock, CacheDirectory directory) = New();
+
+            foreach (string file in Directory.EnumerateFiles(directory.Path))
             {
                 print($"Load file successfully: {file}");
                 (HashKey hash, string ext) = HashNamings.UnpackedFromPath(file);
@@ -71,12 +79,9 @@ namespace ECS.StreamableLoading.AssetBundles.Playgrounds
         [ContextMenu(nameof(LoadByCacheSingleIndexAsync))]
         private async UniTaskVoid LoadByCacheSingleIndexAsync()
         {
-            var dir = CacheDirectory.NewExact(dirPath);
-            var filesLock = new FilesLock();
-            var cache = new DiskCache(dir, new FilesLock(), new LRUDiskCleanUp(dir, filesLock));
-            IDiskCache<PartialLoadingState> diskCache = new DiskCache<PartialLoadingState, PartialDiskSerializer.PartialMemoryIterator>(cache, new PartialDiskSerializer());
+            (IDiskCache<PartialLoadingState> diskCache, FilesLock filesLock, CacheDirectory directory) = New();
 
-            string file = Directory.EnumerateFiles(dirPath).ToList()[byIndex];
+            string file = Directory.EnumerateFiles(directory.Path).ToList()[byIndex];
 
             {
                 print($"Load file successfully: {file}");
