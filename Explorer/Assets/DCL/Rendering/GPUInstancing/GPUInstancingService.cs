@@ -63,22 +63,22 @@ namespace DCL.Rendering.GPUInstancing
         private readonly GPUInstancingMaterialsCache instancingMaterials = new ();
 
         private readonly ComputeShader FrustumCullingAndLODGenComputeShader;
-        private readonly string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
-        private readonly int FrustumCullingAndLODGenComputeShader_KernelIDs;
+        private static readonly string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
+        private int FrustumCullingAndLODGenComputeShader_KernelIDs;
         private uint FrustumCullingAndLODGen_ThreadGroupSize_X = 1;
         private uint FrustumCullingAndLODGen_ThreadGroupSize_Y = 1;
         private uint FrustumCullingAndLODGen_ThreadGroupSize_Z = 1;
 
         private readonly ComputeShader IndirectBufferGenerationComputeShader;
-        private readonly string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
-        private readonly int IndirectBufferGenerationComputeShader_KernelIDs;
+        private static readonly string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
+        private int IndirectBufferGenerationComputeShader_KernelIDs;
         private uint IndirectBufferGeneration_ThreadGroupSize_X = 1;
         private uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
         private uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
 
         private readonly ComputeShader DrawArgsInstanceCountTransferComputeShader;
-        private readonly string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
-        private readonly int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
+        private static readonly string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
+        private int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
         private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_X = 1;
         private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Y = 1;
         private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Z = 1;
