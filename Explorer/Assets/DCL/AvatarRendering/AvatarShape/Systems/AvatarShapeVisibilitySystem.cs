@@ -21,15 +21,22 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private SingleInstanceEntity camera;
         private Plane[] planes;
 
-        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature) : base(world)
+        private GameObject playerCamera;
+        private readonly float ditheringLimit;
+
+        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature, float startFadeDithering) : base(world)
         {
             this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
             planes = new Plane[6];
+
+            //Add a small delta to be able to set the correct start value
+            ditheringLimit = startFadeDithering + 0.1f;
         }
 
         public override void Initialize()
         {
             camera = World.CacheCamera();
+            playerCamera = camera.GetCameraComponent(World).Camera.gameObject;
         }
 
         protected override void Update(float t)
@@ -88,14 +95,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
         {
-            skinningComponent.SetFadingDistance((playerComponent.CameraFocus.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+            float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
+
+            if (currentDistance <= ditheringLimit)
+                skinningComponent.SetFadingDistance(currentDistance);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
         private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
         {
-            skinningComponent.SetFadingDistance((avatarBase.HeadAnchorPoint.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+            float currentDistance = (avatarBase.HeadAnchorPoint.position - playerCamera.transform.position).magnitude;
+
+            if (currentDistance <= ditheringLimit)
+                skinningComponent.SetFadingDistance(currentDistance);
         }
 
         [Query]
