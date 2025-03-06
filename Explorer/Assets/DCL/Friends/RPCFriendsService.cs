@@ -322,13 +322,7 @@ namespace DCL.Friends
                                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             if (response.ResponseCase == BlockUserResponse.ResponseOneofCase.Ok)
-            {
-                BlockedProfile blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
-                eventBus.BroadcastYouBlockedProfile(blockedProfile);
-                eventBus.BroadcastThatYouRemovedFriend(response.Ok.Profile.Address);
-                eventBus.BroadcastThatYouCancelledFriendRequestSentToOtherUser(response.Ok.Profile.Address);
-                eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(response.Ok.Profile.Address);
-            }
+                eventBus.BroadcastYouBlockedProfile(ToClientBlockedProfile(response.Ok.Profile));
             else
                 throw new Exception($"Cannot block user {userId}: {response.ResponseCase}");
         }

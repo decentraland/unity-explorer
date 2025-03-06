@@ -85,7 +85,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             InstantiateMainPlayerAvatarQuery(World);
-            BlockNewAvatarsQuery(World);
+            BlockAvatarsQuery(World);
             InstantiateNewAvatarQuery(World);
             BlockExistingAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
@@ -93,7 +93,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private void BlockNewAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
+        private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
             if (!userBlockingCacheProxy.Configured) return;
 
@@ -155,10 +155,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(CharacterTransform))]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(BlockedPlayerComponent))]
         private void BlockExistingAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
-            BlockNewAvatars(in entity, ref avatarShapeComponent);
+            BlockAvatars(in entity, ref avatarShapeComponent);
         }
 
         [Query]

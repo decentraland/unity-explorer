@@ -65,8 +65,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         private void UnblockProfile(BlockedProfile profile)
         {
-            blockedProfiles.Remove(profile);
-            RefreshLoopList();
+            if (blockedProfiles.Remove(profile))
+                RefreshLoopList();
+            else
+                return;
 
             if (blockedProfiles.Count == 0)
                 NoUserInCollection?.Invoke();
