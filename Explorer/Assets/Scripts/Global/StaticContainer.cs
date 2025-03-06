@@ -232,7 +232,7 @@ namespace Global
             });
 
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
-            if (renderFeature != null)
+            if (renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
                 container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
                 renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
