@@ -58,10 +58,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 bool isQualifiedForDiskCache = intention.IsQualifiedForDiskCache();
 
-                diskHashKey = diskHashCompute.ComputeHash(intention);
-
-                //TODO commented yet to explore the issue with the crash
-                if (false)
+                if (isQualifiedForDiskCache)
                 {
                     diskHashKey = diskHashCompute.ComputeHash(intention);
 

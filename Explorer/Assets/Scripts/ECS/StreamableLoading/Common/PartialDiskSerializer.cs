@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.Memory;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace ECS.StreamableLoading.Common
@@ -14,8 +16,9 @@ namespace ECS.StreamableLoading.Common
 
         private static PartialMemoryIterator SerializeInternal(PartialLoadingState data)
         {
-            var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
-            return new PartialMemoryIterator(meta, data.PeekMemory(), false);
+            var memory = data.PeekMemory();
+            var meta = new Meta(data.FullFileSize, memory.TotalLength, data.IsFileFullyDownloaded);
+            return new PartialMemoryIterator(meta, memory, false);
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -24,6 +27,12 @@ namespace ECS.StreamableLoading.Common
             {
                 var meta = Meta.FromSpan(data.Memory.Span);
                 var fileData = data.Memory.Slice(Meta.META_SIZE).Span;
+
+                if (meta.WrittenBytesSize != fileData.Length)
+                {
+                    ReportHub.LogError(ReportCategory.DISK_CACHE, $"Actual length {fileData.Length} not equals to declared length {meta.WrittenBytesSize}");
+                    return UniTask.FromResult(new PartialLoadingState(meta.MaxFileSize));
+                }
 
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
@@ -44,7 +53,7 @@ namespace ECS.StreamableLoading.Common
             {
                 unsafe
                 {
-                    ptr = NativeAlloc.Malloc(Meta.META_SIZE);
+                    ptr = NativeAlloc.Malloc((nuint)Meta.META_SIZE);
                     metaMemory = UnmanagedMemoryManager<byte>.New(ptr.ToPointer(), Meta.META_SIZE);
                     var span = metaMemory.Memory.Span;
                     meta.ToSpan(span);
@@ -106,34 +115,36 @@ namespace ECS.StreamableLoading.Common
 
         public readonly struct Meta
         {
-            public const int META_SIZE = 5;
+            public static int META_SIZE
+            {
+                get
+                {
+                    unsafe { return sizeof(Meta); }
+                }
+            }
+
             public readonly int MaxFileSize;
+            public readonly int WrittenBytesSize;
             public readonly bool IsFullyDownloaded;
 
-            public Meta(int maxFileSize, bool isFullyDownloaded)
+            public Meta(int maxFileSize, int writtenBytesSize, bool isFullyDownloaded)
             {
                 this.MaxFileSize = maxFileSize;
+                this.WrittenBytesSize = writtenBytesSize;
                 this.IsFullyDownloaded = isFullyDownloaded;
             }
 
             public void ToSpan(Span<byte> span)
             {
-                span[0] = (byte)(IsFullyDownloaded ? 1 : 0);
+                var self = this;
+                var origin = MemoryMarshal.CreateReadOnlySpan(ref self, 1);
+                var raw = MemoryMarshal.AsBytes(origin);
 
-                for (int i = 1; i < 5; i++)
-                    span[i] = (byte)((MaxFileSize >> (i * 8)) & 0xFF);
+                raw.CopyTo(span);
             }
 
-            public static Meta FromSpan(ReadOnlySpan<byte> array)
-            {
-                var maxFileSize = 0;
-                var isFullyDownloaded = array[0] == 1;
-
-                for (var i = 1; i < 5; i++)
-                    maxFileSize |= array[i] << (i * 8);
-
-                return new Meta(maxFileSize, isFullyDownloaded);
-            }
+            public static Meta FromSpan(ReadOnlySpan<byte> array) =>
+                MemoryMarshal.Read<Meta>(array);
         }
     }
 }

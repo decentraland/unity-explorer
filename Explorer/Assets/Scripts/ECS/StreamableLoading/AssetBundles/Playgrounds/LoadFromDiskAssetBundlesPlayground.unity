@@ -229,7 +229,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   exactPath: 0
-  dirPath: DiskCacheV1/partials
+  dirPath: DiskCacheV2/partials
   withMemoryChain: 0
   byIndex: 0
 --- !u!114 &917619050
