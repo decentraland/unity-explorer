@@ -300,7 +300,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 672635447}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f70a003c6db824600b89ef1c4014305c, type: 3}
+  m_Script: {fileID: 11500000, guid: a9c824c891b443e88f1a6b77ce6466e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   cacheDirectory: Assets/DCL/Caches/Playgrounds/CacheTest
