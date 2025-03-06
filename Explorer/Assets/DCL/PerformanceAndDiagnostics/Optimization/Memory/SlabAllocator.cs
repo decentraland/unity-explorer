@@ -32,19 +32,28 @@ namespace DCL.Optimization.Memory
 
     public readonly struct SlabAllocatorInfo
     {
-        public readonly int TotalAllocatedMemory;
+        public readonly ulong TotalAllocatedMemory;
         public readonly int ChunkSize;
         public readonly int ChunksCount;
         public readonly int ChunksInUseCount;
         public readonly ulong ReturnedTimes;
+        public readonly ulong AllocatedTimes;
 
-        public SlabAllocatorInfo(int totalAllocatedMemory, int chunkSize, int chunksCount, int chunksInUseCount, ulong returnedTimes)
+        public SlabAllocatorInfo(
+            ulong totalAllocatedMemory,
+            int chunkSize,
+            int chunksCount,
+            int chunksInUseCount,
+            ulong returnedTimes,
+            ulong allocatedTimes
+        )
         {
             TotalAllocatedMemory = totalAllocatedMemory;
             ChunkSize = chunkSize;
             ChunksCount = chunksCount;
             ChunksInUseCount = chunksInUseCount;
             ReturnedTimes = returnedTimes;
+            AllocatedTimes = allocatedTimes;
         }
     }
 
@@ -73,6 +82,7 @@ namespace DCL.Optimization.Memory
         private bool disposed;
 
         private ulong returnedTimes;
+        private ulong allocatedTimes;
 
         public SlabAllocator(int chunkSize, int chunksCount) : this()
         {
@@ -85,9 +95,12 @@ namespace DCL.Optimization.Memory
 
             for (int i = 0; i < chunksCount; i++)
                 freeIndexes.Add(i);
+
+            returnedTimes = 0;
+            allocatedTimes = 0;
         }
 
-        public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeIndexes.Count, returnedTimes);
+        public readonly SlabAllocatorInfo Info => new (((ulong)chunkSize) * (ulong)chunksCount, chunkSize, chunksCount, chunksCount - freeIndexes.Count, returnedTimes, allocatedTimes);
 
         public bool CanAllocate => freeIndexes.Count > 0;
 
@@ -98,6 +111,7 @@ namespace DCL.Optimization.Memory
 
             int index = freeIndexes.FirstItem();
             freeIndexes.Remove(index);
+            allocatedTimes++;
             return new SlabItem(ptr, index, chunkSize);
         }
 
@@ -174,9 +188,10 @@ namespace DCL.Optimization.Memory
             get
             {
                 int count = allocators.Length;
-                int totalAllocatedMemory = 0;
+                ulong totalAllocatedMemory = 0;
                 int chunksInUseCount = 0;
                 ulong totalReturnedTimes = 0;
+                ulong totalAllocatedTimes = 0;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -185,9 +200,10 @@ namespace DCL.Optimization.Memory
                     totalAllocatedMemory += info.TotalAllocatedMemory;
                     chunksInUseCount += info.ChunksInUseCount;
                     totalReturnedTimes += info.ReturnedTimes;
+                    totalAllocatedTimes += info.AllocatedTimes;
                 }
 
-                return new SlabAllocatorInfo(totalAllocatedMemory, chunkSize, chunksCount * count, chunksInUseCount, totalReturnedTimes);
+                return new SlabAllocatorInfo(totalAllocatedMemory, chunkSize, chunksCount * count, chunksInUseCount, totalReturnedTimes, totalAllocatedTimes);
             }
         }
 

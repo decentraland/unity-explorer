@@ -19,6 +19,7 @@ namespace DCL.Allocators
         private readonly ElementBinding<ulong> chunksCount;
         private readonly ElementBinding<ulong> chunksInUseCount;
         private readonly ElementBinding<ulong> totalReturnedTimes;
+        private readonly ElementBinding<ulong> totalAllocatedTimes;
 
         public DebugAllocatorsSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -29,6 +30,7 @@ namespace DCL.Allocators
             chunksCount = new ElementBinding<ulong>(0);
             chunksInUseCount = new ElementBinding<ulong>(0);
             totalReturnedTimes = new ElementBinding<ulong>(0);
+            totalAllocatedTimes = new ElementBinding<ulong>(0);
 
             var widget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ALLOCATORS);
 
@@ -41,6 +43,7 @@ namespace DCL.Allocators
             widget.AddMarker("ChunksCount", chunksCount, DebugLongMarkerDef.Unit.NoFormat);
             widget.AddMarker("ChunksInUseCount", chunksInUseCount, DebugLongMarkerDef.Unit.NoFormat);
             widget.AddMarker("TotalReturnedTimes", totalReturnedTimes, DebugLongMarkerDef.Unit.NoFormat);
+            widget.AddMarker("TotalAllocatedTimes", totalAllocatedTimes, DebugLongMarkerDef.Unit.NoFormat);
         }
 
         protected override void Update(float t)
@@ -50,11 +53,12 @@ namespace DCL.Allocators
 
             var info = ISlabAllocator.SHARED.Info;
 
-            totalAllocatedMemory.SetAndUpdate((ulong)info.TotalAllocatedMemory);
+            totalAllocatedMemory.SetAndUpdate(info.TotalAllocatedMemory);
             chunkSize.SetAndUpdate((ulong)info.ChunkSize);
             chunksCount.SetAndUpdate((ulong)info.ChunksCount);
             chunksInUseCount.SetAndUpdate((ulong)info.ChunksInUseCount);
             totalReturnedTimes.SetAndUpdate(info.ReturnedTimes);
+            totalAllocatedTimes.SetAndUpdate(info.AllocatedTimes);
         }
     }
 }
