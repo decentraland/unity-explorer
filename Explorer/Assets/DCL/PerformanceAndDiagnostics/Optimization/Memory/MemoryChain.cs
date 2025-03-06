@@ -5,9 +5,9 @@ using UnityEngine.Pool;
 
 namespace DCL.Optimization.Memory
 {
-    public struct MemoryChain : IDisposable
+    public class MemoryChain : IDisposable
     {
-        public static readonly MemoryChain EMPTY = new ();
+        public static readonly MemoryChain EMPTY = new (null!);
 
         /// <summary>
         /// Doesn't own allocator
@@ -20,7 +20,7 @@ namespace DCL.Optimization.Memory
         private string? disposedBy;
 #endif
 
-        public readonly int TotalLength
+        public int TotalLength
         {
             get
             {
@@ -38,7 +38,7 @@ namespace DCL.Optimization.Memory
             }
         }
 
-        public MemoryChain(ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator) : this()
+        public MemoryChain(ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator)
         {
             this.allocator = allocator;
             slabs = ListPool<SlabItem>.Get()!;
@@ -103,20 +103,10 @@ namespace DCL.Optimization.Memory
         /// Consumes MemoryChain and returns a stream that reads from it
         /// </summary>
         /// <returns></returns>
-        public Stream ToStream()
-        {
-            //TODO optimise and remove alloc memory stream
-            //Chain stream caused some crashes or the memory used underneath.
-            //The crash is provoked by AB reading. validate that files are not been corrupted on write
-             using var s = ChainStream.New(this);
+        public Stream ToStream() =>
+            ChainStream.New(this);
 
-             var ms = new MemoryStream((int) s.Length);
-             s.CopyTo(ms);
-
-             return ms;
-        }
-
-        public readonly ChainMemoryIterator AsMemoryIterator() =>
+        public ChainMemoryIterator AsMemoryIterator() =>
             new (this);
 
         private void AllocateNewSlab()
@@ -126,10 +116,10 @@ namespace DCL.Optimization.Memory
             leftSpaceInLast = LastSpan().Length;
         }
 
-        private readonly bool IsLastSlab(int index) =>
+        private bool IsLastSlab(int index) =>
             index == slabs.Count - 1;
 
-        private readonly Span<byte> LastSpan()
+        private Span<byte> LastSpan()
         {
             int lastSlabIndex = slabs.Count - 1;
             SlabItem targetSlab = slabs[lastSlabIndex];
@@ -304,7 +294,7 @@ namespace DCL.Optimization.Memory
 
     public struct ChainMemoryIterator : IMemoryIterator
     {
-        public static readonly ChainMemoryIterator EMPTY = new (null);
+        public static readonly ChainMemoryIterator EMPTY = new ((UnmanagedMemoryManager<byte>)null!);
 
         private readonly SlabItem buffer;
         private readonly UnmanagedMemoryManager<byte> unmanagedMemoryManager;

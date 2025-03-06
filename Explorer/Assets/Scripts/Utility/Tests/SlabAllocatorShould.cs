@@ -18,6 +18,19 @@ namespace Utility.Tests
         }
 
         [Test]
+        public void DoubleFreeFail()
+        {
+            Assert.Throws<Exception>(() =>
+            {
+                using var a = new SlabAllocator(128, 8);
+                var item = a.Allocate();
+
+                a.Release(item);
+                a.Release(item);
+            });
+        }
+
+        [Test]
         public void AllocateFail()
         {
             Assert.Throws<Exception>(() =>

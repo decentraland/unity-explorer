@@ -21,7 +21,7 @@ namespace Utility.Tests
 
             void* data = NewRandomData(SIZE);
             Span<byte> span = new Span<byte>(data, SIZE);
-            using var chain = new MemoryChain(a);
+            var chain = new MemoryChain(a);
 
             chain.AppendData(span);
 

@@ -102,6 +102,15 @@ namespace DCL.Optimization.Memory
 
         public void Release(SlabItem item)
         {
+#if UNITY_EDITOR
+            if (freeCount == freeIndexes.Length)
+                throw new Exception("Slab is already free");
+
+            for (int i = 0; i < freeCount; i++)
+                if (freeIndexes[i] == item.index)
+                    throw new Exception($"Index {item.index} is already freed");
+#endif
+
             freeIndexes[freeCount] = item.index;
             freeCount++;
         }
