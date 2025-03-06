@@ -58,6 +58,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
             friendEventBus.OnOtherUserCancelledTheRequest += PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouBlockedProfile += PropagateRequestReceived;
+            friendEventBus.OnYouBlockedByUser += PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
         }
@@ -73,6 +75,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
             friendEventBus.OnOtherUserCancelledTheRequest -= PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouBlockedProfile -= PropagateRequestReceived;
+            friendEventBus.OnYouBlockedByUser -= PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
@@ -113,6 +117,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             passportBridge.ShowAsync(profile.Address).Forget();
 
         private void PropagateRequestReceived(FriendRequest request) =>
+            PropagateReceivedRequestsCountChanged();
+
+        private void PropagateRequestReceived(BlockedProfile profile) =>
             PropagateReceivedRequestsCountChanged();
 
         private void PropagateReceivedRequestsCountChanged(string userId) =>

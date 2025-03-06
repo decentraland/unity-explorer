@@ -51,6 +51,8 @@ namespace DCL.Friends
             eventBus.OnYouUnblockedByUser -= YouUnblockedByUser;
 
             web3IdentityCache.OnIdentityChanged -= IdentityChanged;
+
+            fetchCts.SafeCancelAndDispose();
         }
 
         public bool UserIsBlocked(string userId)
