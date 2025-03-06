@@ -193,7 +193,7 @@ namespace DCL.Nametags
             nametagView.Id = avatarShape.ID;
 
             if (profile != null)
-                nametagView.Username.color = profile.UserNameColor != Color.white? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+                nametagView.Username.color = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(avatarShape.Name);
             else
                 nametagView.Username.color = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
 
