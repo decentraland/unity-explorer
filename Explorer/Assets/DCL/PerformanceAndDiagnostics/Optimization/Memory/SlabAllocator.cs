@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -70,8 +69,7 @@ namespace DCL.Optimization.Memory
         internal readonly IntPtr ptr;
         private readonly int chunkSize;
         private readonly int chunksCount;
-        private NativeArray<int> freeIndexes;
-        private int freeCount;
+        private NativeHashSet<int> freeIndexes;
         private bool disposed;
 
         private ulong returnedTimes;
@@ -83,40 +81,36 @@ namespace DCL.Optimization.Memory
             this.chunkSize = chunkSize;
             this.chunksCount = chunksCount;
 
-            freeIndexes = new NativeArray<int>(chunksCount, Allocator.Persistent);
-            freeCount = chunksCount;
+            freeIndexes = new NativeHashSet<int>(chunksCount, Allocator.Persistent);
 
-            for (int i = 0; i < freeCount; i++)
-                freeIndexes[i] = i;
+            for (int i = 0; i < chunksCount; i++)
+                freeIndexes.Add(i);
         }
 
-        public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeCount, returnedTimes);
+        public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeIndexes.Count, returnedTimes);
 
-        public bool CanAllocate => freeCount > 0;
+        public bool CanAllocate => freeIndexes.Count > 0;
 
         public SlabItem Allocate()
         {
             if (CanAllocate == false)
                 throw new Exception($"{nameof(SlabAllocator)} on {ptr.ToInt64()} cannot allocate, check {nameof(CanAllocate)} before use");
 
-            freeCount--;
-            int freeChunkIndex = freeIndexes[freeCount];
-            return new SlabItem(ptr, freeChunkIndex, chunkSize);
+            int index = freeIndexes.FirstItem();
+            freeIndexes.Remove(index);
+            return new SlabItem(ptr, index, chunkSize);
         }
 
         public void Release(SlabItem item)
         {
 #if UNITY_EDITOR
-            if (freeCount == freeIndexes.Length)
+            if (chunksCount == freeIndexes.Count)
                 throw new Exception("Slab is already free");
 
-            for (int i = 0; i < freeCount; i++)
-                if (freeIndexes[i] == item.index)
-                    throw new Exception($"Index {item.index} is already freed");
+            if (freeIndexes.Contains(item.index))
+                throw new Exception($"Index {item.index} is already freed");
 #endif
-
-            freeIndexes[freeCount] = item.index;
-            freeCount++;
+            freeIndexes.Add(item.index);
             returnedTimes++;
         }
 
@@ -137,7 +131,6 @@ namespace DCL.Optimization.Memory
         private readonly int chunkSize;
         private readonly int chunksCount;
         private NativeList<SlabAllocator> allocators;
-        private NativeList<int> freeAllocators;
         private NativeHashSet<int> freeAllocatorsLookUp;
         private NativeHashMap<IntPtr, int> ptrToAllocatorIndex;
 
@@ -146,7 +139,6 @@ namespace DCL.Optimization.Memory
             this.chunkSize = chunkSize;
             this.chunksCount = chunksCount;
             allocators = new NativeList<SlabAllocator>(Allocator.Persistent);
-            freeAllocators = new NativeList<int>(8, Allocator.Persistent);
             freeAllocatorsLookUp = new NativeHashSet<int>(8, Allocator.Persistent);
             ptrToAllocatorIndex = new NativeHashMap<IntPtr, int>(8, Allocator.Persistent);
 
@@ -162,7 +154,6 @@ namespace DCL.Optimization.Memory
             }
 
             allocators.Dispose();
-            freeAllocators.Dispose();
             freeAllocatorsLookUp.Dispose();
             ptrToAllocatorIndex.Dispose();
         }
@@ -174,7 +165,6 @@ namespace DCL.Optimization.Memory
             int index = allocators.Length;
 
             allocators.Add(allocator);
-            freeAllocators.Add(index);
             freeAllocatorsLookUp.Add(index);
             ptrToAllocatorIndex.Add(allocator.ptr, index);
         }
@@ -205,20 +195,13 @@ namespace DCL.Optimization.Memory
 
         public SlabItem Allocate()
         {
-            if (freeAllocators.Length == 0)
-                AddNewAllocator();
+            int index = NextFreeAllocatorIndex();
 
-            int index = freeAllocators.Length - 1;
-            int allocatorIndex = freeAllocators[index];
-
-            ref SlabAllocator allocator = ref AllocatorAt(allocatorIndex);
+            ref SlabAllocator allocator = ref AllocatorAt(index);
             SlabItem item = allocator.Allocate();
 
             if (allocator.CanAllocate == false)
-            {
-                freeAllocators.RemoveAt(index);
                 freeAllocatorsLookUp.Remove(index);
-            }
 
             return item;
         }
@@ -227,14 +210,14 @@ namespace DCL.Optimization.Memory
         {
             int index = ptrToAllocatorIndex[item.ptr];
             ref SlabAllocator allocator = ref AllocatorAt(index);
-
             allocator.Release(item);
+            freeAllocatorsLookUp.Add(index);
+        }
 
-            if (freeAllocatorsLookUp.Contains(index) == false && allocator.CanAllocate)
-            {
-                freeAllocators.Add(index);
-                freeAllocatorsLookUp.Add(index);
-            }
+        private int NextFreeAllocatorIndex()
+        {
+            if (freeAllocatorsLookUp.Count == 0) AddNewAllocator();
+            return freeAllocatorsLookUp.FirstItem();
         }
 
         private ref SlabAllocator AllocatorAt(int index)
@@ -285,6 +268,16 @@ namespace DCL.Optimization.Memory
         public void Release(SlabItem item)
         {
             lock (this) { allocator.Release(item); }
+        }
+    }
+
+    public static class NativeExtensions
+    {
+        public static T FirstItem<T>(this ref NativeHashSet<T> set) where T: unmanaged, IEquatable<T>
+        {
+            using var enumerator = set.GetEnumerator();
+            enumerator.MoveNext();
+            return enumerator.Current;
         }
     }
 }
