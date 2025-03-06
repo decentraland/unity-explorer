@@ -123,7 +123,12 @@ namespace ECS.StreamableLoading.Common.Systems
                     partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount].Span);
 
                     if (isQualifiedForDiskCache)
-                        PutToDisk(diskHashKey.Value, partialState, ct).Forget();
+                    {
+                        //TODO implement reference counting to avoid copying
+                        // without copying it causes crash due some race condition
+                        var copy = partialState.DeepCopy();
+                        PutToDisk(diskHashKey.Value, copy, ct).Forget();
+                    }
 
                     state.SetChunkData(partialState);
 
@@ -147,14 +152,12 @@ namespace ECS.StreamableLoading.Common.Systems
         }
 
         /// <summary>
-        /// Makes copy and puts it to disk without blocking the main load flow
+        /// Takes the copy and puts it to disk without blocking the main load flow
         /// </summary>
-        private async UniTaskVoid PutToDisk(HashKey diskHashKey, PartialLoadingState partialState, CancellationToken ct)
+        private async UniTaskVoid PutToDisk(HashKey diskHashKey, PartialLoadingState copy, CancellationToken ct)
         {
-            //TODO implement reference counting to avoid copying
-            // without copying it causes crash due a race condition
-            var copy = partialState.DeepCopy();
             await partialDiskCache.PutAsync(diskHashKey, PARTIALS_FILES_EXTENSION, copy, ct);
+            copy.TransferMemoryOwnership().Dispose();
         }
 
         protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedDataAsync(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);

@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,6 +39,7 @@ namespace DCL.Optimization.Memory
             }
         }
 
+        //TODO pooling
         public MemoryChain(ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator)
         {
             this.allocator = allocator;
@@ -296,19 +298,21 @@ namespace DCL.Optimization.Memory
     {
         public static readonly ChainMemoryIterator EMPTY = new ((UnmanagedMemoryManager<byte>)null!);
 
-        private readonly SlabItem buffer;
+        private readonly IntPtr buffer;
         private readonly UnmanagedMemoryManager<byte> unmanagedMemoryManager;
         private readonly IReadOnlyList<SlabItem> slabItems;
         private readonly int slabsCount;
         private readonly int leftInLastSlab;
         private readonly int totalLength;
         private int index;
+        private bool disposed;
 
         internal ChainMemoryIterator(MemoryChain memoryChain) : this()
         {
-            buffer = ISlabAllocator.SHARED.Allocate();
+            int size = ISlabAllocator.SHARED.Info.ChunkSize;
+            buffer = NativeAlloc.Malloc((nuint)size);
 
-            unsafe { unmanagedMemoryManager = UnmanagedMemoryManager<byte>.New(buffer.ptr.ToPointer()!, buffer.chunkSize); }
+            unsafe { unmanagedMemoryManager = UnmanagedMemoryManager<byte>.New(buffer.ToPointer()!, size); }
 
             slabItems = memoryChain.slabs;
             slabsCount = memoryChain.slabs.Count;
@@ -316,6 +320,7 @@ namespace DCL.Optimization.Memory
             totalLength = memoryChain.TotalLength;
 
             index = -1;
+            disposed = false;
 
             if (memoryChain.slabs.Count > 0 && memoryChain.slabs[0].chunkSize != unmanagedMemoryManager.Memory.Length)
                 throw new Exception("Buffers have different sizes");
@@ -323,8 +328,7 @@ namespace DCL.Optimization.Memory
 
         private ChainMemoryIterator(UnmanagedMemoryManager<byte>? empty)
         {
-            buffer = new SlabItem();
-
+            buffer = IntPtr.Zero;
             unmanagedMemoryManager = empty!;
 
             slabItems = ArraySegment<SlabItem>.Empty;
@@ -333,14 +337,22 @@ namespace DCL.Optimization.Memory
             totalLength = 0;
 
             index = -1;
+            disposed = false;
         }
 
-        public readonly void Dispose()
+        public void Dispose()
         {
             if (unmanagedMemoryManager == null)
                 return;
 
-            ISlabAllocator.SHARED.Release(buffer);
+            if (disposed)
+            {
+                ReportHub.LogError(ReportCategory.ALLOCATORS, $"Attempt to dispose twice {nameof(ChainMemoryIterator)}");
+                return;
+            }
+
+            disposed = true;
+            NativeAlloc.Free(buffer);
             UnmanagedMemoryManager<byte>.Release(unmanagedMemoryManager);
         }
 
