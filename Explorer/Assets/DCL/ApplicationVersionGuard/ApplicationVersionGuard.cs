@@ -179,7 +179,17 @@ namespace DCL.ApplicationVersionGuard
                 throw new Win32Exception(error, message.TrimEnd());
             }
 #elif UNITY_STANDALONE_OSX
-                // TODO: Do the same thing on OSX.
+            string cmd = "open \"" + fileName + "\"";
+            int code = System(cmd);
+            if (code != 0)
+            {
+                var sb = new StringBuilder(1024);
+
+                string message = code == -1 && strerror_r(code, sb, sb.Capacity) == 0
+                    ? sb.ToString()
+                    : "Unknown error";
+                throw new Exception($"error {code}: {message}");
+            }
 #endif
         }
 
@@ -196,7 +206,11 @@ namespace DCL.ApplicationVersionGuard
 
         private const int SW_NORMAL = 1;
 #elif UNITY_STANDALONE_OSX
-        // TODO: OSX dynlib imports go here.
+        [DllImport("__Internal", EntryPoint = "system")]
+        private static extern int System(string command);
+
+        [DllImport("libc")]
+        private static extern int strerror_r(int errnum, StringBuilder buf, int buflen);
 #endif
 
         [Serializable]
