@@ -14,8 +14,8 @@ namespace DCL.Friends
         private readonly IFriendsEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
-        private readonly HashSet<string> blockedUsers = new ();
-        private readonly HashSet<string> blockedByUsers = new ();
+        private readonly HashSet<string> blockedUsers = new (StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> blockedByUsers = new (StringComparer.OrdinalIgnoreCase);
 
         private CancellationTokenSource fetchCts = new ();
 
@@ -55,11 +55,8 @@ namespace DCL.Friends
             fetchCts.SafeCancelAndDispose();
         }
 
-        public bool UserIsBlocked(string userId)
-        {
-            string lowerUserId = userId.ToLower();
-            return BlockedUsers.Contains(lowerUserId) || BlockedByUsers.Contains(lowerUserId);
-        }
+        public bool UserIsBlocked(string userId) =>
+            BlockedUsers.Contains(userId) || BlockedByUsers.Contains(userId);
 
         private void IdentityChanged()
         {
@@ -79,9 +76,9 @@ namespace DCL.Friends
             }
         }
 
-        private void UserBlockedByYou(BlockedProfile user) => blockedUsers.Add(user.Address.ToString().ToLower());
-        private void UserUnblockedByYou(BlockedProfile user) => blockedUsers.Remove(user.Address.ToString().ToLower());
-        private void YouBlockedByUser(string userAddress) => blockedByUsers.Add(userAddress.ToLower());
-        private void YouUnblockedByUser(string userAddress) => blockedByUsers.Remove(userAddress.ToLower());
+        private void UserBlockedByYou(BlockedProfile user) => blockedUsers.Add(user.Address);
+        private void UserUnblockedByYou(BlockedProfile user) => blockedUsers.Remove(user.Address);
+        private void YouBlockedByUser(string userAddress) => blockedByUsers.Add(userAddress);
+        private void YouUnblockedByUser(string userAddress) => blockedByUsers.Remove(userAddress);
     }
 }
