@@ -105,8 +105,12 @@ namespace DCL.Passport.Modules
             async UniTaskVoid ShowNameEditorAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(ProfileNameEditorController.IssueCommand(), ct);
+
+                Profile? profile = await selfProfile.ProfileAsync(ct);
+
                 // Re-configure ui
-                Setup(currentProfile!);
+                if (profile != null)
+                    Setup(profile);
             }
         }
     }
