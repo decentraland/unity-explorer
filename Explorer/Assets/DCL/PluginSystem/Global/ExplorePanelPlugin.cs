@@ -361,7 +361,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, null),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                     dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);

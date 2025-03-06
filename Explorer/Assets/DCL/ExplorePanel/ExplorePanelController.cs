@@ -12,10 +12,10 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
@@ -168,6 +168,8 @@ namespace DCL.ExplorePanel
                                         new ControllerNoData(), profileWidgetCts.Token)
                                    .Forget();
 
+            profileMenuCts = profileMenuCts.SafeRestart();
+
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
                 profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
@@ -306,22 +308,22 @@ namespace DCL.ExplorePanel
                                   viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
         }
 
-        private void ShowProfileMenu()
+        private async void ShowProfileMenu()
         {
-            profileMenuCts = profileMenuCts.SafeRestart();
-
-            async UniTaskVoid ShowProfileMenuAsync(CancellationToken ct)
+            if (profileMenuController.State == ControllerState.ViewHidden)
             {
-                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
-                    new ControllerNoData(), ct);
+                try
+                {
+                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0),
+                                                                         new ControllerNoData(), profileMenuCts.Token);
 
-                await profileMenuController.HideViewAsync(ct);
+                    await profileMenuController.HideViewAsync(profileMenuCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Cancellations ignored
+                }
             }
-
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                profileMenuController.HideViewAsync(profileMenuCts.Token).Forget();
-            else
-                ShowProfileMenuAsync(profileMenuCts.Token).Forget();
         }
     }
 

@@ -134,6 +134,7 @@ namespace DCL.UI.Sidebar
             chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             mvcManager.RegisterController(skyboxMenuController);
+            mvcManager.RegisterController(profileMenuController);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);

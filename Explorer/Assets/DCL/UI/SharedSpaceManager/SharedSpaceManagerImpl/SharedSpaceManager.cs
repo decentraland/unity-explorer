@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
+using DCL.UI.ProfileElements;
 using DCL.UI.Skybox;
 using MVC;
 using System;
@@ -126,7 +127,7 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.Explore:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace) // Fullscreen views work differently...
+                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                         {
                             ExplorePanelParameter exploreParams = parameters == null ? default(ExplorePanelParameter) : (ExplorePanelParameter)parameters;
                             await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(exploreParams), cts.Token);
@@ -136,8 +137,16 @@ namespace DCL.UI.SharedSpaceManager
 
                         break;
                     }
-                    case PanelsSharingSpace.Notifications:
                     case PanelsSharingSpace.SidebarProfile:
+                    {
+                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                            await mvcManager.ShowAsync(ProfileMenuController.IssueCommand(), cts.Token);
+                        else
+                            isShowing = false;
+
+                        break;
+                    }
+                    case PanelsSharingSpace.Notifications:
                     case PanelsSharingSpace.SidebarSettings:
                     {
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace)

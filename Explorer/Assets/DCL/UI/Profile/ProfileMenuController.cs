@@ -18,7 +18,6 @@ namespace DCL.UI.ProfileElements
     {
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
-        private readonly ISharedSpaceManager? sharedSpaceManager;
 
         private CancellationTokenSource profileMenuCts = new ();
 
@@ -33,13 +32,10 @@ namespace DCL.UI.ProfileElements
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager,
-            ISharedSpaceManager? sharedSpaceManager
-        ) : base(viewFactory)
+            IMVCManager mvcManager) : base(viewFactory)
         {
             profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController);
             systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
-            this.sharedSpaceManager = sharedSpaceManager;
             systemSectionController.OnClosed += OnClose;
         }
 
@@ -49,21 +45,19 @@ namespace DCL.UI.ProfileElements
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>
-            await LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), ct);
+            await UniTask.CompletedTask;
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct) =>
-            await HideViewAsync(ct);
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            profileMenuCts.Cancel();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+        }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             ViewShowingComplete?.Invoke(this);
-            await UniTask.Never(ct);
-        }
-
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
+            await UniTask.WhenAny(UniTask.WaitUntilCanceled(profileMenuCts.Token), UniTask.WaitUntilCanceled(ct));
         }
 
         protected override void OnBeforeViewShow()
@@ -74,21 +68,16 @@ namespace DCL.UI.ProfileElements
             systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
         }
 
-        private void OnClose()
+        protected override void OnViewInstantiated()
         {
-            CloseAsync().Forget();
+            base.OnViewInstantiated();
+
+            viewInstance.CloseButton.onClick.AddListener(OnClose);
         }
 
-        private async UniTaskVoid CloseAsync()
+        private void OnClose()
         {
-            await systemSectionController.HideViewAsync(profileMenuCts.Token);
-            await profileSectionController.HideViewAsync(profileMenuCts.Token);
-
-            if (sharedSpaceManager == null)
-                await HideViewAsync(profileMenuCts.Token);
-            else
-                // When called by the sidebar
-                await sharedSpaceManager.HideAsync(PanelsSharingSpace.SidebarProfile);
+            profileMenuCts.Cancel();
         }
 
         public override void Dispose()
