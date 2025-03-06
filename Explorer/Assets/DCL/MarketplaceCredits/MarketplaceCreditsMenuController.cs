@@ -1,4 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
 using System;
@@ -15,23 +18,27 @@ namespace DCL.MarketplaceCredits
         private readonly ISidebarBus sidebarBus;
         private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
+        private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource showHideMenuCts;
 
         public MarketplaceCreditsMenuController(
             MarketplaceCreditsMenuView view,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
-            ISidebarBus sidebarBus)
+            ISidebarBus sidebarBus,
+            IWebBrowser webBrowser,
+            IInputBlock inputBlock)
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
             this.sidebarBus = sidebarBus;
+            this.inputBlock = inputBlock;
 
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.AddListener(ClosePanel);
 
-            marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(view.WelcomeView, this);
-            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, this);
+            marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(view.WelcomeView, this, webBrowser);
+            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, this, webBrowser);
         }
 
         public void OpenPanel()
@@ -41,7 +48,8 @@ namespace DCL.MarketplaceCredits
 
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.ShowAsync(showHideMenuCts.Token).Forget();
-            OpenSectionView(MarketplaceCreditsSection.WELCOME);
+            OpenSection(MarketplaceCreditsSection.WELCOME);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         public void ClosePanel()
@@ -53,10 +61,25 @@ namespace DCL.MarketplaceCredits
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
-        public void OpenSectionView(MarketplaceCreditsSection section) =>
-            view.OpenSectionView(section);
+        public void OpenSection(MarketplaceCreditsSection section)
+        {
+            switch (section)
+            {
+                case MarketplaceCreditsSection.WELCOME:
+                    view.WelcomeView.gameObject.SetActive(true);
+                    view.GoalsOfTheWeekView.gameObject.SetActive(false);
+                    marketplaceCreditsWelcomeController.OnOpenSection();
+                    break;
+                case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
+                    view.WelcomeView.gameObject.SetActive(false);
+                    view.GoalsOfTheWeekView.gameObject.SetActive(true);
+                    marketplaceCreditsGoalsOfTheWeekController.OnOpenSection();
+                    break;
+            }
+        }
 
         public void Dispose()
         {

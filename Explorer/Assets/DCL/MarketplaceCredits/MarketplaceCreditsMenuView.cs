@@ -21,20 +21,5 @@ namespace DCL.MarketplaceCredits
 
         [field: SerializeField]
         public MarketplaceCreditsGoalsOfTheWeekView GoalsOfTheWeekView { get; private set; }
-
-        public void OpenSectionView(MarketplaceCreditsSection section)
-        {
-            switch (section)
-            {
-                case MarketplaceCreditsSection.WELCOME:
-                    WelcomeView.gameObject.SetActive(true);
-                    GoalsOfTheWeekView.gameObject.SetActive(false);
-                    break;
-                case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
-                    WelcomeView.gameObject.SetActive(false);
-                    GoalsOfTheWeekView.gameObject.SetActive(true);
-                    break;
-            }
-        }
     }
 }
