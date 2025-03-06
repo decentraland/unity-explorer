@@ -207,16 +207,12 @@ namespace DCL.UI.Sidebar
 
         private async void OnEmotesWheelButtonClicked()
         {
-            sidebarBus.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
-            sidebarBus.UnblockSidebar();
         }
 
         private async void OnFriendsButtonClicked()
         {
-            sidebarBus.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends);
-            sidebarBus.UnblockSidebar();
         }
 
         private void OnHelpButtonClicked()
