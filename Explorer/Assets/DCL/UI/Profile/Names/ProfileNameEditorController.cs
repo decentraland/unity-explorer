@@ -5,6 +5,7 @@ using DCL.Profiles.Self;
 using DCL.Web3;
 using MVC;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using TMPro;
 using Utility;
@@ -19,6 +20,7 @@ namespace DCL.UI.ProfileNames
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
+        private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? saveCancellationToken;
         private CancellationTokenSource? setupCancellationToken;
@@ -104,8 +106,17 @@ namespace DCL.UI.ProfileNames
             {
                 SetUpNonClaimed(config.NonClaimedNameTabConfig, profile);
 
-                config.ClaimedNameTabHeader.Select();
-                config.NonClaimedNameTabHeader.Deselect();
+                if (profile.HasClaimedName)
+                {
+                    config.ClaimedNameTabHeader.Select();
+                    config.NonClaimedNameTabHeader.Deselect();
+                }
+                else
+                {
+                    config.ClaimedNameTabHeader.Deselect();
+                    config.NonClaimedNameTabHeader.Select();
+                }
+
                 config.saveButton.interactable = true;
 
                 dropdownOptions.Clear();
@@ -114,19 +125,29 @@ namespace DCL.UI.ProfileNames
                     dropdownOptions.Add(new TMP_Dropdown.OptionData(name));
 
                 config.claimedNameDropdown.options = dropdownOptions;
+                config.claimedNameDropdown.value = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
             }
 
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)
             {
                 config.userHashLabel.text = $"#{profile.UserId[^4..]}";
                 config.input.text = string.Empty;
-                config.saveButton.interactable = true;
+                config.saveButton.interactable = false;
             }
         }
 
         private void OnInputValueChanged(string value, ProfileNameEditorView.NonClaimedNameConfig config)
         {
             config.characterCountLabel.text = $"{value.Length}/{config.input.characterLimit}";
+            config.saveButton.interactable = IsValidName();
+            return;
+
+            bool IsValidName()
+            {
+                if (string.IsNullOrEmpty(value)) return false;
+                if (!validNameRegex.IsMatch(value)) return false;
+                return true;
+            }
         }
 
         private void ClaimNewName() =>
