@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
             planes = new Plane[6];
 
-            //Add a small delta to be able to set the correct start value
+            //Add a small delta to be able to avoid rounding problems
             ditheringLimit = startFadeDithering + 0.1f;
         }
 
