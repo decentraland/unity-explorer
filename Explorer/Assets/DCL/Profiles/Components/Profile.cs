@@ -45,7 +45,7 @@ namespace DCL.Profiles
         public string Name
         {
             get => name;
-            internal set
+            set
             {
                 name = value;
                 GenerateAndValidateName();
@@ -84,7 +84,7 @@ namespace DCL.Profiles
         {
             get => hasClaimedName;
 
-            internal set
+            set
             {
                 hasClaimedName = value;
                 GenerateAndValidateName();

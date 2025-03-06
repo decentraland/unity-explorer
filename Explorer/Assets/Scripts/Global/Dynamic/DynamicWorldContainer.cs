@@ -555,6 +555,9 @@ namespace Global.Dynamic
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
+            var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
+                staticContainer.RealmData);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -761,6 +764,7 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     realmNavigator,
                     identityCache,
+                    realmNftNamesProvider,
                     includeFriends,
                     includeUserBlocking
                 ),

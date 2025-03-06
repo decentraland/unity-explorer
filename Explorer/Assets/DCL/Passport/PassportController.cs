@@ -98,6 +98,7 @@ namespace DCL.Passport
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly INftNamesProvider nftNamesProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -159,6 +160,7 @@ namespace DCL.Passport
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
+            INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
@@ -191,6 +193,7 @@ namespace DCL.Passport
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
+            this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
@@ -213,7 +216,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager));
+            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider));
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));

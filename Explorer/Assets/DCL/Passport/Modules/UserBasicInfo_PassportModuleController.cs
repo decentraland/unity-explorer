@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileElements;
 using DCL.UI.ProfileNames;
+using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
@@ -21,19 +22,23 @@ namespace DCL.Passport.Modules
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
+        private readonly INftNamesProvider nftNamesProvider;
 
-        private CancellationTokenSource? editNameCancellationToken;
+        private CancellationTokenSource? checkNameEditionCancellationToken;
+        private CancellationTokenSource? showNameEditorCancellationToken;
         private Profile? currentProfile;
 
         public UserBasicInfo_PassportModuleController(
             UserBasicInfo_PassportModuleView view,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            INftNamesProvider nftNamesProvider)
         {
             this.view = view;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
+            this.nftNamesProvider = nftNamesProvider;
             nameElementController = new UserNameElementController(view.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
 
@@ -48,8 +53,8 @@ namespace DCL.Passport.Modules
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
 
-            editNameCancellationToken = editNameCancellationToken.SafeRestart();
-            CheckForEditionAvailabilityAsync(editNameCancellationToken.Token).Forget();
+            checkNameEditionCancellationToken = checkNameEditionCancellationToken.SafeRestart();
+            CheckForEditionAvailabilityAsync(checkNameEditionCancellationToken.Token).Forget();
         }
 
         public void Clear()
@@ -79,7 +84,10 @@ namespace DCL.Passport.Modules
                 if (ownProfile.UserId == currentProfile?.UserId)
                 {
                     view.EditNameButton.gameObject.SetActive(true);
-                    view.ClaimNameButton.gameObject.SetActive(!currentProfile.HasClaimedName);
+                    view.ClaimNameButton.gameObject.SetActive(false);
+
+                    using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);
+                    view.ClaimNameButton.gameObject.SetActive(names.TotalAmount <= 0);
                 }
             }
             catch (OperationCanceledException) { }
@@ -90,10 +98,16 @@ namespace DCL.Passport.Modules
         {
             if (currentProfile == null) return;
 
-            mvcManager.ShowAsync(EditProfileNameController.IssueCommand(new EditProfileNameParams
+            showNameEditorCancellationToken = showNameEditorCancellationToken.SafeRestart();
+            ShowNameEditorAsync(showNameEditorCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowNameEditorAsync(CancellationToken ct)
             {
-                Profile = currentProfile,
-            }));
+                await mvcManager.ShowAsync(ProfileNameEditorController.IssueCommand(), ct);
+                // Re-configure ui
+                Setup(currentProfile!);
+            }
         }
     }
 }
