@@ -59,19 +59,14 @@ namespace DCL.UI.ProfileElements
 
                 Sprite sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
-                thumbnailImageView.ImageEnabled = (bool) sprite;
-
-                if (sprite)
-                    thumbnailImageView.SetImage(sprite);
+                thumbnailImageView.SetImage(sprite ? sprite : defaultEmptyThumbnail);
+                thumbnailImageView.ImageEnabled = true;
             }
             catch (Exception)
             {
                 thumbnailImageView.SetImage(defaultEmptyThumbnail);
             }
-            finally
-            {
-                thumbnailImageView.IsLoading = false;
-            }
+
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
