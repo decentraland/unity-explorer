@@ -125,6 +125,7 @@ namespace DCL.Landscape.Systems
                     Terrain terrain = terrains[i];
                     terrain.drawHeightmap = visibility.IsVisible && landscapeData.drawTerrain;
                     terrain.drawTreesAndFoliage = visibility is { IsVisible: true, IsAtDistance: true } && landscapeData.drawTerrainDetails;
+                    terrain.drawInstanced = true;
                 }
 
                 Profiler.EndSample();
