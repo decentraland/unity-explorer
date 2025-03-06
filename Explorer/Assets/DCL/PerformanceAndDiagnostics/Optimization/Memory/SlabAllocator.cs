@@ -138,6 +138,7 @@ namespace DCL.Optimization.Memory
         private readonly int chunksCount;
         private NativeList<SlabAllocator> allocators;
         private NativeList<int> freeAllocators;
+        private NativeHashSet<int> freeAllocatorsLookUp;
         private NativeHashMap<IntPtr, int> ptrToAllocatorIndex;
 
         public DynamicSlabAllocator(int chunkSize, int chunksCount) : this()
@@ -146,6 +147,7 @@ namespace DCL.Optimization.Memory
             this.chunksCount = chunksCount;
             allocators = new NativeList<SlabAllocator>(Allocator.Persistent);
             freeAllocators = new NativeList<int>(8, Allocator.Persistent);
+            freeAllocatorsLookUp = new NativeHashSet<int>(8, Allocator.Persistent);
             ptrToAllocatorIndex = new NativeHashMap<IntPtr, int>(8, Allocator.Persistent);
 
             AddNewAllocator();
@@ -161,6 +163,7 @@ namespace DCL.Optimization.Memory
 
             allocators.Dispose();
             freeAllocators.Dispose();
+            freeAllocatorsLookUp.Dispose();
             ptrToAllocatorIndex.Dispose();
         }
 
@@ -172,6 +175,7 @@ namespace DCL.Optimization.Memory
 
             allocators.Add(allocator);
             freeAllocators.Add(index);
+            freeAllocatorsLookUp.Add(index);
             ptrToAllocatorIndex.Add(allocator.ptr, index);
         }
 
@@ -211,7 +215,10 @@ namespace DCL.Optimization.Memory
             SlabItem item = allocator.Allocate();
 
             if (allocator.CanAllocate == false)
+            {
                 freeAllocators.RemoveAt(index);
+                freeAllocatorsLookUp.Remove(index);
+            }
 
             return item;
         }
@@ -221,10 +228,13 @@ namespace DCL.Optimization.Memory
             int index = ptrToAllocatorIndex[item.ptr];
             ref SlabAllocator allocator = ref AllocatorAt(index);
 
-            if (allocator.CanAllocate == false)
-                freeAllocators.Add(index);
-
             allocator.Release(item);
+
+            if (freeAllocatorsLookUp.Contains(index) == false && allocator.CanAllocate)
+            {
+                freeAllocators.Add(index);
+                freeAllocatorsLookUp.Add(index);
+            }
         }
 
         private ref SlabAllocator AllocatorAt(int index)
