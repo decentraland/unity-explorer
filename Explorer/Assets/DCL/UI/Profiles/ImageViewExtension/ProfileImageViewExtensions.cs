@@ -1,12 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.UI;
+using DCL.Profiles;
 using DCL.Web3;
 using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.Friends
+namespace DCL.UI.Profiles
 {
     public static class ProfileImageViewExtensions
     {

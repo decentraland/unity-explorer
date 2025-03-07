@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using DCL.WebRequests;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -10,7 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Friends
+namespace DCL.Profiles
 {
     public class ProfileThumbnailCache : IProfileThumbnailCache
     {

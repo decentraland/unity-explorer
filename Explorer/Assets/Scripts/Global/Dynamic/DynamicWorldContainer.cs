@@ -553,9 +553,9 @@ namespace Global.Dynamic
             IChatInputBus chatInputBus = new ChatInputBus();
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
-            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
+            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus);
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -618,7 +618,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory),
+                    chatHistory, viewDependencies),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -661,7 +661,6 @@ namespace Global.Dynamic
                     equippedEmotes,
                     webBrowser,
                     emotesCache,
-                    realmNavigator,
                     forceRender,
                     dclInput,
                     staticContainer.RealmData,
@@ -686,7 +685,8 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
-                    appArgs
+                    appArgs,
+                    viewDependencies
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -767,7 +767,7 @@ namespace Global.Dynamic
                     includeUserBlocking
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
-                new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
 
@@ -802,7 +802,8 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder,
-                    nametagsData));
+                    nametagsData,
+                    viewDependencies));
 
             if (includeFriends)
             {
@@ -813,7 +814,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     identityCache,
                     profileRepository,
-                    clipboard,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
@@ -832,7 +832,8 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
-                    bootstrapContainer.Analytics));
+                    bootstrapContainer.Analytics,
+                    viewDependencies));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

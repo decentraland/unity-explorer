@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using MVC;
 using System.Threading;
 using UnityEngine;

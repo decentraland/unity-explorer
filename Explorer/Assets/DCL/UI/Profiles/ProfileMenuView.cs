@@ -1,9 +1,10 @@
-﻿using DCL.UI.SystemMenu;
+﻿using DCL.UI.ProfileElements;
+using DCL.UI.SystemMenu;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.ProfileElements
+namespace DCL.UI.Profiles
 {
     public class ProfileMenuView : ViewBaseWithAnimationElement, IView
     {
