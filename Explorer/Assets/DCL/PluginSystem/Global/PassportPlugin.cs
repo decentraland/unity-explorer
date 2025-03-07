@@ -65,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
+        private readonly bool isNameEditorEnabled;
 
         private PassportController? passportController;
 
@@ -99,7 +100,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             INftNamesProvider nftNamesProvider,
             bool enableFriends,
-            bool includeUserBlocking
+            bool includeUserBlocking,
+            bool isNameEditorEnabled
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -133,6 +135,7 @@ namespace DCL.PluginSystem.Global
             this.nftNamesProvider = nftNamesProvider;
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
+            this.isNameEditorEnabled = isNameEditorEnabled;
         }
 
         public void Dispose()
@@ -190,7 +193,8 @@ namespace DCL.PluginSystem.Global
                 passportSettings.ThumbnailWidth,
                 enableCameraReel,
                 enableFriends,
-                includeUserBlocking
+                includeUserBlocking,
+                isNameEditorEnabled
             );
 
             mvcManager.RegisterController(passportController);

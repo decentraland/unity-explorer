@@ -23,6 +23,7 @@ namespace DCL.Passport.Modules
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly bool isNameEditorEnabled;
 
         private CancellationTokenSource? checkNameEditionCancellationToken;
         private CancellationTokenSource? showNameEditorCancellationToken;
@@ -33,12 +34,14 @@ namespace DCL.Passport.Modules
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            bool isNameEditorEnabled)
         {
             this.view = view;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.nftNamesProvider = nftNamesProvider;
+            this.isNameEditorEnabled = isNameEditorEnabled;
             nameElementController = new UserNameElementController(view.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
 
@@ -83,11 +86,21 @@ namespace DCL.Passport.Modules
 
                 if (ownProfile.UserId == currentProfile?.UserId)
                 {
-                    view.EditNameButton.gameObject.SetActive(true);
+                    view.EditNameButton.gameObject.SetActive(isNameEditorEnabled);
                     view.ClaimNameButton.gameObject.SetActive(false);
 
-                    using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);
-                    view.ClaimNameButton.gameObject.SetActive(names.TotalAmount <= 0);
+                    if (isNameEditorEnabled)
+                    {
+                        using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);
+                        view.ClaimNameButton.gameObject.SetActive(names.TotalAmount <= 0);
+                    }
+                    else
+                        view.ClaimNameButton.gameObject.SetActive(false);
+                }
+                else
+                {
+                    view.EditNameButton.gameObject.SetActive(false);
+                    view.ClaimNameButton.gameObject.SetActive(false);
                 }
             }
             catch (OperationCanceledException) { }
