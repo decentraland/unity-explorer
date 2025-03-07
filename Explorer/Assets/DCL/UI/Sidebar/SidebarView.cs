@@ -1,6 +1,7 @@
 ﻿using DCL.EmotesWheel;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
+using DCL.MarketplaceCredits;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.Controls;
@@ -15,7 +16,7 @@ namespace DCL.UI.Sidebar
     public class SidebarView : ViewBase, IView
     {
         [field: Header("Notifications")]
-        [field: SerializeField] internal Button notificationsButton { get; private set; }
+        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator notificationsButton { get; private set; }
         [field: SerializeField] public NotificationsMenuView NotificationsMenuView { get; private set; }
         [field: SerializeField] internal GameObject backpackNotificationIndicator { get; private set; }
 
@@ -25,6 +26,10 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal GameObject profileMenu { get; private set; }
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; }
         [field: SerializeField] public Image FaceFrame { get; private set; }
+
+        [field: Header("Marketplace Credits")]
+        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator MarketplaceCreditsButton { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsMenuView MarketplaceCreditsMenuView { get; private set; }
 
 
         [field: Header("Explore Panel Shortcuts")]

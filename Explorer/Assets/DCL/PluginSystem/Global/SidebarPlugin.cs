@@ -5,6 +5,8 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
+using DCL.Input;
+using DCL.MarketplaceCredits;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -50,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
+        private readonly IInputBlock inputBlock;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -71,7 +74,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool includeCameraReel,
             bool includeFriends,
-            IChatHistory chatHistory)
+            IChatHistory chatHistory,
+            IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -93,6 +97,7 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.chatHistory = chatHistory;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose() { }
@@ -115,7 +120,8 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, mainUIView.SidebarView.notificationsButton, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
+                new MarketplaceCreditsMenuController(mainUIView.SidebarView.MarketplaceCreditsMenuView, mainUIView.SidebarView.MarketplaceCreditsButton, sidebarBus, webBrowser, inputBlock),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),

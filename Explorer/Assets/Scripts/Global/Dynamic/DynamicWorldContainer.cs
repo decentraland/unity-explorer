@@ -616,7 +616,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory),
+                    chatHistory, staticContainer.InputBlock),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
