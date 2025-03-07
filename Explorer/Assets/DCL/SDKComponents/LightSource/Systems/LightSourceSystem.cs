@@ -119,11 +119,11 @@ namespace DCL.SDKComponents.LightSource.Systems
                 if (usesShadowMask)
                 {
                     TextureComponent? shadowTexture = pbLightSource.Spot.ShadowMaskTexture.CreateTextureComponent(sceneData);
-                    TryCreateGetTexturePromise(in shadowTexture, ref lightSourceComponent.TextureMaskPromise);
+                    TryCreateGetTexturePromise(ref lightSourceComponent, in shadowTexture);
                 }
                 else
                 {
-                    DereferenceTexture(ref lightSourceComponent.TextureMaskPromise);
+                    CleanupPromise(ref lightSourceComponent);
                     lightSourceInstance.cookie = null;
                 }
             }
@@ -132,28 +132,29 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceInstance.enabled = true;
         }
 
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
+        private bool TryCreateGetTexturePromise(ref LightSourceComponent lightSourceComponent, in TextureComponent? textureComponent)
         {
             if (textureComponent == null)
                 return false;
 
             TextureComponent textureComponentValue = textureComponent.Value;
+            var intention = new GetTextureIntention(
+                textureComponentValue.Src,
+                textureComponentValue.FileHash,
+                textureComponentValue.WrapMode,
+                textureComponentValue.FilterMode,
+                textureComponentValue.TextureType,
+                attemptsCount: ATTEMPTS_COUNT
+            );
 
-            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
+            if (TextureComponentUtils.Equals(textureComponentValue, intention))
                 return false;
 
-            DereferenceTexture(ref promise);
+            CleanupPromise(ref lightSourceComponent);
 
-            promise = Promise.Create(
+            lightSourceComponent.TextureMaskPromise = Promise.Create(
                 World,
-                new GetTextureIntention(
-                    textureComponentValue.Src,
-                    textureComponentValue.FileHash,
-                    textureComponentValue.WrapMode,
-                    textureComponentValue.FilterMode,
-                    textureComponentValue.TextureType,
-                    attemptsCount: ATTEMPTS_COUNT
-                ),
+                intention,
                 partitionComponent
             );
 
@@ -161,29 +162,30 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void ResolveTexturePromise(in Entity entity, ref LightSourceComponent lightSourceComponent)
+        private void ResolveTexturePromise(ref LightSourceComponent lightSourceComponent)
         {
             if (lightSourceComponent.TextureMaskPromise is null || lightSourceComponent.TextureMaskPromise.Value.IsConsumed) return;
 
-            if (lightSourceComponent.TextureMaskPromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
-            {
-                lightSourceComponent.TextureMaskPromise = null;
+            if (lightSourceComponent.TextureMaskPromise.Value.TryGetResult(World, out StreamableLoadingResult<Texture2DData> texture))
                 lightSourceComponent.lightSourceInstance.cookie = texture.Asset;
-            }
         }
 
-        private void DereferenceTexture(ref Promise? promise)
+        private void CleanupPromise(ref LightSourceComponent lightSourceComponent)
         {
-            if (promise == null)
+            if (lightSourceComponent.TextureMaskPromise == null)
                 return;
 
-            Promise promiseValue = promise.Value;
+            Promise promiseValue = lightSourceComponent.TextureMaskPromise.Value;
+            promiseValue.ForgetLoading(World);
             promiseValue.TryDereference(World);
+            promiseValue.Consume(World);
+            lightSourceComponent.TextureMaskPromise = null;
         }
 
         [Query]
         private void FinalizeLightSourceComponents(in LightSourceComponent lightSourceComponent)
         {
+
             poolRegistry.Release(lightSourceComponent.lightSourceInstance);
         }
 

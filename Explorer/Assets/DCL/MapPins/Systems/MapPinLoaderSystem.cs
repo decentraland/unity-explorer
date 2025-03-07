@@ -143,7 +143,7 @@ namespace DCL.SDKComponents.MapPins.Systems
 
             TextureComponent textureComponentValue = textureComponent.Value;
 
-            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
+            if (TextureComponentUtils.Equals(textureComponentValue, promise))
                 return false;
 
             DereferenceTexture(ref promise);
