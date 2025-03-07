@@ -1,3 +1,4 @@
+using DCL.MarketplaceCredits.Models;
 using DCL.MarketplaceCreditsAPIService;
 using System;
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Models
 {
     [Serializable]
     public class GoalsOfTheWeekInfo
