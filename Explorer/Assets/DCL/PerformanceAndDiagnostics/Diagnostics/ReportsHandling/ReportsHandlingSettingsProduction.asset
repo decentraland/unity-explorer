@@ -187,8 +187,6 @@ MonoBehaviour:
     - Category: TEXTURES
       Severity: 0
     - Category: ALWAYS
-      Severity: 3
-    - Category: ALWAYS
       Severity: 2
     - Category: ALWAYS
       Severity: 0
@@ -200,12 +198,10 @@ MonoBehaviour:
       Severity: 4
     - Category: FRIENDS
       Severity: 1
+    - Category: ALWAYS
+      Severity: 3
     - Category: FRIENDS
       Severity: 0
-    - Category: FRIENDS
-      Severity: 2
-    - Category: FRIENDS
-      Severity: 3
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -456,6 +452,10 @@ MonoBehaviour:
       Severity: 1
     - Category: WEARABLE
       Severity: 1
+    - Category: FRIENDS
+      Severity: 1
+    - Category: FRIENDS
+      Severity: 4
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1
