@@ -71,12 +71,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
             avatarMaterial.renderQueue = (int)RenderQueue.Geometry;
 
-            // this should really check for keyword _EMISSION, however for some reason it's rather inconsistent.
-            if (originalMaterial.IsKeywordEnabled("_EMISSION"))
-            {
-                var emissionColor = originalMaterial.GetColor("_EmissionColor");
-                avatarMaterial.SetColor("_Emissive_Color", emissionColor);
-            }
+            var emissionColor = originalMaterial.GetColor("_EmissionColor");
+            avatarMaterial.SetColor("_Emissive_Color", emissionColor);
 
             avatarMaterial.DisableKeyword("_IS_CLIPPING_MODE");
             avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");

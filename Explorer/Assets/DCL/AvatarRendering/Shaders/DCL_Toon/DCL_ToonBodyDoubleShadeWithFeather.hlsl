@@ -423,7 +423,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     
     int nEmissive_TexArrID = _Emissive_TexArr_ID;
     float4 _Emissive_Tex_var = SAMPLE_EMISSIVE(TRANSFORM_TEX(Set_UV0, _Emissive_Tex), nEmissive_TexArrID);
-    float3 emissive = _Emissive_Tex_var.rgb * _Emissive_Color.rgb;
+    float3 emissive = _Emissive_Tex_var.rgb * _Emissive_Color.rgb * 5.0f;
     
     //Final Composition
     finalColor = SATURATE_IF_SDR(finalColor) + (envLightColor*envLightIntensity*_GI_Intensity*smoothstep(1,0,envLightIntensity/2)) + emissive;
