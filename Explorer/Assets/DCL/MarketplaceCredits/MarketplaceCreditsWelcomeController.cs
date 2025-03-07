@@ -22,50 +22,49 @@ namespace DCL.MarketplaceCredits
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.webBrowser = webBrowser;
 
-            welcomeView.StartButton.onClick.AddListener(StartCreditsProgram);
             welcomeView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
+            welcomeView.StartButton.onClick.AddListener(GoToGoalsOfTheWeek);
+            welcomeView.StartWithEmailButton.onClick.AddListener(RegisterEmail);
             welcomeView.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
         }
 
         public void OnOpenSection()
         {
-            // TODO (SANTI): Check if we have to show the login email section or not (depending on if the user already has an email registered or not)
+            // TODO (SANTI): Check if we have already an email registered
+            // ...
+
             welcomeView.IsEmailLoginActive = false;
             welcomeView.CleanEmail();
-            CheckStartButtonState();
+            CheckStartWithEmailButtonState();
         }
 
         public void Dispose()
         {
             welcomeView.StartButton.onClick.RemoveAllListeners();
+            welcomeView.StartWithEmailButton.onClick.RemoveAllListeners();
             welcomeView.LearnMoreLinkButton.onClick.RemoveAllListeners();
             welcomeView.EmailInput.onValueChanged.RemoveAllListeners();
-        }
-
-        private void StartCreditsProgram()
-        {
-            // TODO (SANTI): Send the email to the server (if it exists)
-            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
         }
 
         private void OpenLearnMoreLink() =>
             webBrowser.OpenUrl(LEARN_MORE_LINK);
 
+        private void GoToGoalsOfTheWeek() =>
+            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+
+        private void RegisterEmail()
+        {
+            // TODO (SANTI): Implement Email Login flow
+        }
+
         private void OnEmailInputValueChanged(string email)
         {
             welcomeView.ShowEmailError(!IsValidEmail(email));
-            CheckStartButtonState();
+            CheckStartWithEmailButtonState();
         }
 
-        private void CheckStartButtonState()
-        {
-            var canStart = true;
-
-            if (welcomeView.IsEmailLoginActive)
-                canStart = IsValidEmail(welcomeView.EmailInput.text);
-
-            welcomeView.SetStartButtonInteractable(canStart);
-        }
+        private void CheckStartWithEmailButtonState() =>
+            welcomeView.SetStartWithEmailButtonInteractable(IsValidEmail(welcomeView.EmailInput.text));
 
         private static bool IsValidEmail(string email) =>
             !string.IsNullOrEmpty(email) && Regex.IsMatch(email, EMAIL_PATTERN);
