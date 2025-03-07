@@ -29,6 +29,7 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
+using DCL.MarketplaceCreditsAPIService;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -526,6 +527,7 @@ namespace Global.Dynamic
             var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
@@ -616,7 +618,8 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory, staticContainer.InputBlock),
+                    chatHistory, staticContainer.InputBlock, marketplaceCreditsAPIClient,
+                    selfProfile),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),

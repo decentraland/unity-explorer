@@ -34,7 +34,7 @@ namespace DCL.MarketplaceCredits
             // ...
 
             welcomeView.IsEmailLoginActive = false;
-            welcomeView.CleanEmail();
+            welcomeView.CleanSection();
             CheckStartWithEmailButtonState();
         }
 

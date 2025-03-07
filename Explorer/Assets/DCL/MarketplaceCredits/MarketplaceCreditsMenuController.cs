@@ -2,6 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MarketplaceCreditsAPIService;
+using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
 using System;
@@ -27,7 +29,9 @@ namespace DCL.MarketplaceCredits
             HoverableAndSelectableButtonWithAnimator sidebarButton,
             ISidebarBus sidebarBus,
             IWebBrowser webBrowser,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            ISelfProfile selfProfile)
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
@@ -38,7 +42,7 @@ namespace DCL.MarketplaceCredits
                 closeButton.onClick.AddListener(ClosePanel);
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(view.WelcomeView, this, webBrowser);
-            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, this, webBrowser);
+            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, this, webBrowser, marketplaceCreditsAPIClient, selfProfile);
         }
 
         public void OpenPanel()

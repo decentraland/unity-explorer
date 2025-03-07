@@ -7,10 +7,12 @@ using DCL.Browser;
 using DCL.Chat.History;
 using DCL.Input;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCreditsAPIService;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
@@ -53,6 +55,8 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
         private readonly IInputBlock inputBlock;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly ISelfProfile selfProfile;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -75,7 +79,9 @@ namespace DCL.PluginSystem.Global
             bool includeCameraReel,
             bool includeFriends,
             IChatHistory chatHistory,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            ISelfProfile selfProfile)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -98,6 +104,8 @@ namespace DCL.PluginSystem.Global
             this.includeFriends = includeFriends;
             this.chatHistory = chatHistory;
             this.inputBlock = inputBlock;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose() { }
@@ -121,7 +129,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 notificationsBusController,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, mainUIView.SidebarView.notificationsButton, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
-                new MarketplaceCreditsMenuController(mainUIView.SidebarView.MarketplaceCreditsMenuView, mainUIView.SidebarView.MarketplaceCreditsButton, sidebarBus, webBrowser, inputBlock),
+                new MarketplaceCreditsMenuController(mainUIView.SidebarView.MarketplaceCreditsMenuView, mainUIView.SidebarView.MarketplaceCreditsButton, sidebarBus, webBrowser, inputBlock, marketplaceCreditsAPIClient, selfProfile),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),

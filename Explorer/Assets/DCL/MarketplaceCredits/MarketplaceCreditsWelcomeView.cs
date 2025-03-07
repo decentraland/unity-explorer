@@ -44,7 +44,7 @@ namespace DCL.MarketplaceCredits
             EmailErrorMark.SetActive(show);
         }
 
-        public void CleanEmail() =>
+        public void CleanSection() =>
             EmailInput.text = string.Empty;
 
         public void SetStartWithEmailButtonInteractable(bool isInteractable) =>
