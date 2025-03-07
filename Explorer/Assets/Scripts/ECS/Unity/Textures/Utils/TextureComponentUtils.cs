@@ -6,18 +6,18 @@ namespace DCL.SDKComponents.Utils
 {
     public static class TextureComponentUtils
     {
-        public static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
+        public static bool Equals(in TextureComponent textureComponent, in Promise? promise)
         {
             if (promise == null)
                 return false;
 
-            Promise promiseValue = promise.Value;
-            GetTextureIntention intention = promiseValue.LoadingIntention;
-
-            return textureComponent.FileHash == promiseValue.LoadingIntention.FileHash &&
-                   textureComponent.Src == intention.Src &&
-                   textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode;
+            return Equals(textureComponent, promise.Value.LoadingIntention);
         }
+
+        public static bool Equals(in TextureComponent textureComponent, in GetTextureIntention intention) =>
+            textureComponent.FileHash == intention.FileHash &&
+            textureComponent.Src == intention.Src &&
+            textureComponent.WrapMode == intention.WrapMode &&
+            textureComponent.FilterMode == intention.FilterMode;
     }
 }

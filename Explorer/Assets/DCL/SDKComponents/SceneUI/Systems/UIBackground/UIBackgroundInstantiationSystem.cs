@@ -138,7 +138,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // If data inside promise has not changed just reuse the same promise
             // as creating and waiting for a new one can be expensive
-            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
+            if (TextureComponentUtils.Equals(textureComponentValue, promise))
                 return;
 
             // If component is being reused forget the previous promise
