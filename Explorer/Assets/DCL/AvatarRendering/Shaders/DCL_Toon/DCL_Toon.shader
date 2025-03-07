@@ -7,29 +7,10 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] [PerRendererData] _HighlightWidth ("Highlight Width", Float) = 1.0
         
         [HideInInspector] [PerRendererData] _MainTexArr_ID ("MainTex Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _NormalMapArr_ID ("Normal Map Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _Set_1st_ShadePositionArr_ID ("Set 1st Shade Position Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _Set_2nd_ShadePositionArr_ID ("Set 2nd Shade Position Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _ShadingGradeMapArr_ID ("Shading Grade Map Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _HighColor_TexArr_ID ("High Color Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _Set_HighColorMaskArr_ID ("Set High Color Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _Set_RimLightMaskArr_ID ("Set Rim Light Mask Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _MatCap_SamplerArr_ID ("MatCap Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _NormalMapForMatCapArr_ID ("Normal Map for MatCap Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _Set_MatcapMaskArr_ID ("Set MatCap Mask Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _Emissive_TexArr_ID ("Emissive Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _ClippingMaskArr_ID ("Clipping Mask Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _AngelRing_SamplerArr_ID ("Angel Ring Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _Outline_SamplerArr_ID ("Outline Sampler Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _OutlineTexArr_ID ("Outline Texture Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _BakedNormalArr_ID ("Baked Normal Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _OcclusionMapArr_ID ("Occlusion Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _MetallicGlossMapArr_ID ("MetallicGlossMap Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
-//        [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("Emission Map Array ID", Integer) = -1
 
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
@@ -43,12 +24,6 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] _Emissive_TexArr ("Emissive Texture Array", 2DArray) = "black" {}
         
         [HideInInspector] _simpleUI ("SimpleUI", Int ) = 0
-//        [HideInInspector][Enum(OFF, 0, ON, 1)] _isUnityToonshader("Material is touched by Unity Toon Shader", Int) = 1
-//        [HideInInspector] _utsVersionX("VersionX", Float) = 0
-//        [HideInInspector] _utsVersionY("VersionY", Float) = 9
-//        [HideInInspector] _utsVersionZ("VersionZ", Float) = 5
-//        [HideInInspector] _utsTechnique ("Technique", int ) = 0 //DWF
-//        _AutoRenderQueue("Automatic Render Queue ", int) = 1
 
         [Enum(OFF, 0, StencilOut, 1, StencilMask, 2)] _StencilMode("StencilMode", int) = 0
         // these are set in UniversalToonGUI.cs in accordance with _StencilMode
@@ -73,14 +48,10 @@ Shader "DCL/DCL_Toon"
         // ClippingMask paramaters from Here.
         _ClippingMask("ClippingMask", 2D) = "white" {}
 
-        //_IsBaseMapAlphaAsClippingMask("IsBaseMapAlphaAsClippingMask", Float) = 0
-        //
         [Toggle(_)] _Inverse_Clipping("Inverse_Clipping", Float) = 0
         _Clipping_Level("Clipping_Level", Range(0, 1)) = 0
         _Tweak_transparency("Tweak_transparency", Range(-1, 1)) = 0
         // ClippingMask paramaters to Here.
-        
-        //[Enum(OFF,0,FRONT,1,BACK,2)] _CullMode("Cull Mode", int) = 2  //OFF/FRONT/BACK
         
         _MainTex ("BaseMap", 2D) = "white" {}
         _BaseMap ("BaseMap", 2D) = "white" {}
@@ -88,7 +59,7 @@ Shader "DCL/DCL_Toon"
         //v.2.0.5 : Clipping/TransClipping for SSAO Problems in PostProcessing Stack.
         //If you want to go back the former SSAO results, comment out the below line.
         _Color ("Color", Color) = (1,1,1,1)
-        //
+        
         [Toggle(_)] _Is_LightColor_Base ("Is_LightColor_Base", Float ) = 1
         _1st_ShadeMap ("1st_ShadeMap", 2D) = "white" {}
         //v.2.0.5
@@ -181,6 +152,7 @@ Shader "DCL/DCL_Toon"
         [Toggle(_)] _Inverse_MatcapMask ("Inverse_MatcapMask", Float ) = 0
         //v.2.0.5
         [Toggle(_)] _Is_Ortho ("Orthographic Projection for MatCap", Float ) = 0
+        [Toggle(_)] _IsEmissive ("Is Emissive", Float) = 0
         _Emissive_Tex ("Emissive_Tex", 2D) = "white" {}
         [HDR]_Emissive_Color ("Emissive_Color", Color) = (0,0,0,1)
 
