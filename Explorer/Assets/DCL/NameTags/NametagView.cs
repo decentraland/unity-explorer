@@ -78,6 +78,10 @@ namespace DCL.Nametags
             messageContentAnchoredPosition = new Vector2(0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
         }
 
+        public bool IsName(string username) =>
+            // Check if starts as it can be either {username} or {username}#{walletId}
+            Username.text.StartsWith(username);
+
         public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon)
         {
             ResetElement();

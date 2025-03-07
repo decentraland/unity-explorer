@@ -9,6 +9,7 @@ namespace DCL.Profiles.Self
         UniTask<Profile?> ProfileAsync(CancellationToken ct);
 
         UniTask<Profile?> UpdateProfileAsync(bool publish, CancellationToken ct);
+        UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct);
 
         /// <summary>
         /// It only updates the basic info of the profile and ignore the rest of the data.

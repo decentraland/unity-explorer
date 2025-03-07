@@ -21,6 +21,8 @@
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
 
+        public const string PROFILE_NAME_EDITOR = "profile-name-editor";
+
         public const string CAMERA_REEL = "camera-reel";
         public const string FRIENDS = "friends";
         public const string FRIENDS_API_URL = "friends-api-url";

@@ -6,9 +6,9 @@ namespace DCL.UI.ProfileElements
 {
     public class UserNameElementController : IDisposable
     {
-        public readonly UserNameElement Element;
+        private Profile? currentProfile;
 
-        private Profile currentProfile;
+        public readonly UserNameElement Element;
 
         public UserNameElementController(
             UserNameElement element)

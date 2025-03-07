@@ -8,7 +8,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Friends;
 using DCL.Input;
@@ -20,6 +19,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.ProfileNames;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -62,8 +62,10 @@ namespace DCL.PluginSystem.Global
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly INftNamesProvider nftNamesProvider;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
+        private readonly bool isNameEditorEnabled;
 
         private PassportController? passportController;
 
@@ -96,8 +98,10 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
+            INftNamesProvider nftNamesProvider,
             bool enableFriends,
-            bool includeUserBlocking
+            bool includeUserBlocking,
+            bool isNameEditorEnabled
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -128,8 +132,10 @@ namespace DCL.PluginSystem.Global
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
+            this.nftNamesProvider = nftNamesProvider;
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
+            this.isNameEditorEnabled = isNameEditorEnabled;
         }
 
         public void Dispose()
@@ -181,15 +187,23 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 web3IdentityCache,
+                nftNamesProvider,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
                 enableCameraReel,
                 enableFriends,
-                includeUserBlocking
+                includeUserBlocking,
+                isNameEditorEnabled
             );
 
             mvcManager.RegisterController(passportController);
+
+            ProfileNameEditorView profileNameEditorView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.NameEditorPrefab, ct)).Value.GetComponent<ProfileNameEditorView>();
+
+            mvcManager.RegisterController(new ProfileNameEditorController(
+                ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
+                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider));
         }
 
         public class PassportSettings : IDCLPluginSettings
@@ -219,6 +233,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public int ThumbnailWidth { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceGameObject NameEditorPrefab;
         }
     }
 }
