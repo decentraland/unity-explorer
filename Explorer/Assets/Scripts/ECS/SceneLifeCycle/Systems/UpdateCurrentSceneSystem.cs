@@ -30,7 +30,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject sceneBoundsCube;
-        private ISceneFacade currentActiveScene;
+        private ISceneFacade? currentActiveScene;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
             Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
@@ -66,7 +66,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
                 RefreshSceneDebugInfo();
         }
-        
+
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
             if (scenesCache.TryGetByParcel(parcel, out var currentScene))
@@ -74,12 +74,9 @@ namespace ECS.SceneLifeCycle.Systems
                 if (currentActiveScene != currentScene)
                 {
                     currentActiveScene?.SetIsCurrent(false);
-
                     currentActiveScene = currentScene;
-                
                     currentActiveScene.SetIsCurrent(true);
-                    currentSceneInfo.Update(currentActiveScene);
-                    scenesCache.SetCurrentScene(currentActiveScene);
+                    UpdateCurrentScene();
                 }
             }
             else
@@ -88,8 +85,15 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     currentActiveScene.SetIsCurrent(false);
                     currentActiveScene = null;
+                    UpdateCurrentScene();
                 }
             }
+        }
+
+        private void UpdateCurrentScene()
+        {
+            currentSceneInfo.Update(currentActiveScene);
+            scenesCache.SetCurrentScene(currentActiveScene);
         }
 
         protected override void OnDispose()
@@ -99,27 +103,27 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void RefreshSceneDebugInfo()
         {
-            if (scenesCache.CurrentScene != null)
+            if (currentActiveScene != null)
             {
                 sceneBoundsCube?.SetActive(showDebugCube);
 
-                if (sceneNameBinding.Value != scenesCache.CurrentScene.Info.Name)
+                if (sceneNameBinding.Value != currentActiveScene.Info.Name)
                 {
-                    sceneNameBinding.Value = scenesCache.CurrentScene.Info.Name;
+                    sceneNameBinding.Value = currentActiveScene.Info.Name;
 
-                    if (scenesCache.CurrentScene.SceneData.Parcels != null)
+                    if (currentActiveScene.SceneData.Parcels != null)
                     {
-                        sceneParcelsBinding.Value = scenesCache.CurrentScene.SceneData.Parcels.Count.ToString();
+                        sceneParcelsBinding.Value = currentActiveScene.SceneData.Parcels.Count.ToString();
                     }
 
-                    sceneHeightBinding.Value = scenesCache.CurrentScene.SceneData.Geometry.Height.ToString();
+                    sceneHeightBinding.Value = currentActiveScene.SceneData.Geometry.Height.ToString();
 
                     if (sceneBoundsCube == null)
                     {
                         sceneBoundsCube = CreateDebugCube();
                     }
 
-                    UpdateDebugCube(scenesCache.CurrentScene.SceneData.Geometry, sceneBoundsCube);
+                    UpdateDebugCube(currentActiveScene.SceneData.Geometry, sceneBoundsCube);
                 }
             }
             else
