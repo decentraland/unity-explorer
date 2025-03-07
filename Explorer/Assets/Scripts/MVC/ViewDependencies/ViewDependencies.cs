@@ -1,5 +1,10 @@
-﻿using DCL.Clipboard;
+using Cysharp.Threading.Tasks;
+using DCL.Clipboard;
 using DCL.Input;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Profiles;
+using System.Threading;
+using UnityEngine;
 
 namespace MVC
 {
@@ -11,17 +16,31 @@ namespace MVC
     {
         public readonly DCLInput DclInput;
         public readonly IEventSystem EventSystem;
-        public readonly MVCManagerMenusAccessFacade GlobalUIViews;
+        public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
 
-        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor)
+        private readonly IProfileThumbnailCache thumbnailCache;
+        private readonly IProfileRepository profileRepository;
+        private readonly IRemoteMetadata remoteMetadata;
+
+        public async UniTask<Sprite> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
+            await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
+
+        public async UniTask<Profile> GetProfileAsync(string walletId, CancellationToken ct) =>
+            await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
+
+        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
+            IProfileThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
             Cursor = cursor;
+            this.thumbnailCache = thumbnailCache;
+            this.profileRepository = profileRepository;
+            this.remoteMetadata = remoteMetadata;
         }
 
     }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,30 +17,21 @@ namespace DCL.UI.LoadingSpinner
 
         private Material material;
 
+        private void Awake()
+        {
+            InitializeMaterial();
+        }
+
         private void Update()
         {
-            if (!material)
-                InitializeMaterial();
-
             UpdateValues();
         }
 
         private void InitializeMaterial()
         {
-            if (img.maskable)
-            {
-#if UNITY_EDITOR
-                // Copy material in editor so we don't get asset changes
-                material = new Material(img.materialForRendering);
-#else
-                material = img.materialForRendering;
-#endif
-            }
-            else
-            {
-                material = new Material(img.material);
-                img.material = material;
-            }
+            material = img.maskable ? new Material(img.materialForRendering) : new Material(img.material);
+
+            img.material = material;
         }
 
         private void UpdateValues()

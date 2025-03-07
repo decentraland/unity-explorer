@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using Utility;
@@ -12,9 +11,7 @@ namespace DCL.UI.ProfileElements
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly IWebRequestController webRequestController;
-
-        private ImageController profileImageController;
+        private readonly ViewDependencies viewDependencies;
         private UserNameElementController nameElementController;
         private UserWalletAddressElementController walletAddressElementController;
         private CancellationTokenSource cts;
@@ -23,12 +20,11 @@ namespace DCL.UI.ProfileElements
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.webRequestController = webRequestController;
+            this.viewDependencies = viewDependencies;
         }
 
         protected override void OnViewInstantiated()
@@ -36,7 +32,6 @@ namespace DCL.UI.ProfileElements
             base.OnViewInstantiated();
             nameElementController = new UserNameElementController(viewInstance!.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(viewInstance.UserWalletAddressElement);
-            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
         }
 
         protected override void OnBeforeViewShow()
@@ -54,13 +49,7 @@ namespace DCL.UI.ProfileElements
 
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
-            viewInstance!.FaceFrame.color = profile.UserNameColor;
-
-            profileImageController!.StopLoading();
-
-            //temporarily disabled the profile image request until we have the correct
-            //picture deployment
-            //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+            viewInstance!.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -71,7 +60,6 @@ namespace DCL.UI.ProfileElements
         public new void Dispose()
         {
             cts.SafeCancelAndDispose();
-            profileImageController.StopLoading();
             nameElementController.Dispose();
             walletAddressElementController.Dispose();
         }
