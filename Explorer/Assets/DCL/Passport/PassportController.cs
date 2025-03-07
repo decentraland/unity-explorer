@@ -565,8 +565,16 @@ namespace DCL.Passport
                 thumbnailSprite);
         }
 
-        private void BlockUserClicked() =>
-            FriendListSectionUtilities.BlockUserClicked(mvcManager, targetProfile!.UserId, targetProfile.Name);
+        private void BlockUserClicked()
+        {
+            BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();
+            async UniTaskVoid BlockUserClickedAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetProfile!.UserId, targetProfile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct);
+
+                ShowFriendshipInteraction();
+            }
+        }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
         {
