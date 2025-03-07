@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ECSComponents;
-using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Interaction.HoverCanvas;
 using DCL.Interaction.HoverCanvas.Systems;
@@ -11,7 +10,6 @@ using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
-using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -35,7 +33,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IEventSystem eventSystem;
         private readonly IMVCManager mvcManager;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -49,8 +46,7 @@ namespace DCL.PluginSystem.Global
             GlobalInputEvents globalInputEvents,
             ICursor cursor,
             IEventSystem eventSystem,
-            IMVCManager mvcManager,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            IMVCManager mvcManager)
         {
             this.dclInput = dclInput;
             this.canvas = canvas;
@@ -60,7 +56,6 @@ namespace DCL.PluginSystem.Global
             this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.mvcManager = mvcManager;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
         }
 
         public void Dispose() { }
@@ -108,7 +103,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, mvcManager, userBlockingCacheProxy);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, mvcManager);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

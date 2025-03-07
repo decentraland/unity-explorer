@@ -99,9 +99,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea;
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<BlockedPlayerComponent>(entity);
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 

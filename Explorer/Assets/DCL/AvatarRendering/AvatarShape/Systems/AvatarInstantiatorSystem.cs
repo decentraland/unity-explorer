@@ -85,24 +85,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             InstantiateMainPlayerAvatarQuery(World);
-            BlockAvatarsQuery(World);
             InstantiateNewAvatarQuery(World);
-            BlockExistingAvatarQuery(World);
+            BlockAvatarsQuery(World);
             InstantiateExistingAvatarQuery(World);
         }
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
-        {
-            if (!userBlockingCacheProxy.Configured) return;
-
-            if (userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID))
-                World.Add(entity, new BlockedPlayerComponent());
-        }
-
-        [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(BlockedPlayerComponent))]
         private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
@@ -155,15 +144,22 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(CharacterTransform))]
-        [None(typeof(DeleteEntityIntention), typeof(BlockedPlayerComponent))]
-        private void BlockExistingAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
+        [None(typeof(DeleteEntityIntention))]
+        private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
-            BlockAvatars(in entity, ref avatarShapeComponent);
+            if (!userBlockingCacheProxy.Configured) return;
+
+            bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
+
+            if (isBlocked && !World.Has<BlockedPlayerComponent>(entity))
+                World.Add(entity, new BlockedPlayerComponent());
+            else if (!isBlocked && World.Has<BlockedPlayerComponent>(entity))
+                World.Remove<BlockedPlayerComponent>(entity);
         }
 
         [Query]
         [All(typeof(CharacterTransform))]
-        [None(typeof(DeleteEntityIntention), typeof(BlockedPlayerComponent))]
+        [None(typeof(DeleteEntityIntention))]
         private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
             ref AvatarCustomSkinningComponent skinningComponent,
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
