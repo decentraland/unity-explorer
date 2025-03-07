@@ -254,8 +254,6 @@ MonoBehaviour:
       Severity: 4
     - Category: GENERIC_WEB_REQUEST
       Severity: 4
-    - Category: GLTF_CONTAINER
-      Severity: 4
     - Category: HIGHLIGHTS
       Severity: 4
     - Category: INPUT
@@ -281,8 +279,6 @@ MonoBehaviour:
     - Category: MVC
       Severity: 4
     - Category: NFT_INFO_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_SHAPE_WEB_REQUEST
       Severity: 4
     - Category: PLAYER_SDK_DATA
       Severity: 4
@@ -374,8 +370,6 @@ MonoBehaviour:
       Severity: 1
     - Category: GENERIC_WEB_REQUEST
       Severity: 1
-    - Category: GLTF_CONTAINER
-      Severity: 1
     - Category: HIGHLIGHTS
       Severity: 1
     - Category: INPUT
@@ -401,8 +395,6 @@ MonoBehaviour:
     - Category: MVC
       Severity: 1
     - Category: NFT_INFO_WEB_REQUEST
-      Severity: 1
-    - Category: NFT_SHAPE_WEB_REQUEST
       Severity: 1
     - Category: PLAYER_SDK_DATA
       Severity: 1
