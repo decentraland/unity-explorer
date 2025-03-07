@@ -53,6 +53,9 @@ namespace DCL.UI.ProfileNames
             ProfileNameEditorView.ClaimedNameConfig claimedConfig = viewInstance.ClaimedNameContainer;
             Initialize(claimedConfig.NonClaimedNameTabConfig);
 
+            claimedConfig.ClaimedNameTabHeader.Select();
+            claimedConfig.NonClaimedNameTabHeader.Deselect();
+
             claimedConfig.ClaimedNameTabHeader.SelectButton.onClick.AddListener(() =>
             {
                 claimedConfig.ClaimedNameTabHeader.Select();
@@ -67,7 +70,11 @@ namespace DCL.UI.ProfileNames
 
             claimedConfig.cancelButton.onClick.AddListener(Close);
             claimedConfig.saveButton.onClick.AddListener(() => Save(claimedConfig));
-            claimedConfig.claimedNameDropdown.onValueChanged.AddListener(i => claimedConfig.dropdownVerifiedIcon.SetActive(i != -1));
+            claimedConfig.claimedNameDropdown.onValueChanged.AddListener(i =>
+            {
+                claimedConfig.dropdownVerifiedIcon.SetActive(i != -1);
+                claimedConfig.saveButton.interactable = i != -1;
+            });
 
             return;
 
@@ -90,35 +97,50 @@ namespace DCL.UI.ProfileNames
 
             async UniTaskVoid SetUpAsync(CancellationToken ct)
             {
+                ProfileNameEditorView.ClaimedNameConfig claimedConfig = viewInstance!.ClaimedNameContainer;
+                claimedConfig.claimedNameDropdown.ClearOptions();
+                claimedConfig.claimedNameDropdown.value = -1;
+                claimedConfig.dropdownVerifiedIcon.SetActive(false);
+                claimedConfig.saveButton.interactable = false;
+                claimedConfig.NonClaimedNameTabConfig.input.text = string.Empty;
+                claimedConfig.NonClaimedNameTabConfig.saveButton.interactable = false;
+                claimedConfig.dropdownLoadingSpinner.SetActive(true);
+                claimedConfig.claimedNameDropdown.gameObject.SetActive(false);
+
+                ProfileNameEditorView.NonClaimedNameConfig nonClaimedConfig = viewInstance!.NonClaimedNameContainer;
+                nonClaimedConfig.input.text = string.Empty;
+                nonClaimedConfig.saveButton.interactable = false;
+
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
                 using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile!.UserId), 1, 100, ct);
 
-                viewInstance!.NonClaimedNameContainer.root.SetActive(names.TotalAmount <= 0);
-                viewInstance!.ClaimedNameContainer.NonClaimedNameTabConfig.root.SetActive(names.TotalAmount > 0);
+                nonClaimedConfig.root.SetActive(names.TotalAmount <= 0);
+                claimedConfig.NonClaimedNameTabConfig.root.SetActive(names.TotalAmount > 0);
+                claimedConfig.dropdownLoadingSpinner.SetActive(false);
+                claimedConfig.claimedNameDropdown.gameObject.SetActive(true);
 
                 if (names.TotalAmount > 0)
-                    SetUpClaimed(viewInstance!.ClaimedNameContainer, profile, names);
+                    SetUpClaimed(claimedConfig, profile, names);
                 else
-                    SetUpNonClaimed(viewInstance!.NonClaimedNameContainer, profile);
+                    SetUpNonClaimed(nonClaimedConfig, profile);
             }
 
             void SetUpClaimed(ProfileNameEditorView.ClaimedNameConfig config, Profile profile, INftNamesProvider.PaginatedNamesResponse names)
             {
                 SetUpNonClaimed(config.NonClaimedNameTabConfig, profile);
 
-                if (profile.HasClaimedName)
-                {
-                    config.ClaimedNameTabHeader.Select();
-                    config.NonClaimedNameTabHeader.Deselect();
-                }
-                else
-                {
-                    config.ClaimedNameTabHeader.Deselect();
-                    config.NonClaimedNameTabHeader.Select();
-                }
-
-                config.saveButton.interactable = true;
+                // This provokes an undesired change in the tab navigation. Just keep the last state..
+                // if (profile.HasClaimedName)
+                // {
+                //     config.ClaimedNameTabHeader.Select();
+                //     config.NonClaimedNameTabHeader.Deselect();
+                // }
+                // else
+                // {
+                //     config.ClaimedNameTabHeader.Deselect();
+                //     config.NonClaimedNameTabHeader.Select();
+                // }
 
                 dropdownOptions.Clear();
 
