@@ -1,12 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.StylizedSkybox.Scripts;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using Utility;
 
 namespace DCL.UI.Skybox
 {
-    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>
+    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IPanelInSharedSpace
     {
         private const int SECONDS_IN_DAY = 86400;
 
@@ -15,13 +16,32 @@ namespace DCL.UI.Skybox
 
         private CancellationTokenSource skyboxMenuCts = new ();
 
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
         public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            skyboxMenuCts.Cancel();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.WaitUntilCanceled(skyboxMenuCts.Token);
+        }
 
         protected override void OnViewInstantiated()
         {
@@ -86,7 +106,7 @@ namespace DCL.UI.Skybox
 
         private void OnClose()
         {
-            HideViewAsync(skyboxMenuCts.Token).Forget();
+            skyboxMenuCts.Cancel();
         }
 
         public override void Dispose()

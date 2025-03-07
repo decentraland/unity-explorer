@@ -1,12 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.EmotesWheel;
-using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
 using DCL.SidebarBus;
 using DCL.UI.ConnectionStatusPanel;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -19,7 +18,6 @@ namespace DCL.UI.MainUI
 {
     public class MainUIController : ControllerBase<MainUIView>
     {
-        private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
         private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 46;
         private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 0;
         private const float HIDE_SIDEBAR_WAIT_TIME = 0.3f;
@@ -29,6 +27,7 @@ namespace DCL.UI.MainUI
         private readonly ISidebarBus sidebarBus;
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -44,11 +43,13 @@ namespace DCL.UI.MainUI
             ViewFactoryMethod viewFactory,
             ISidebarBus sidebarBus,
             IMVCManager mvcManager,
-            bool isFriendsEnabled) : base(viewFactory)
+            bool isFriendsEnabled,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.sidebarBus = sidebarBus;
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         protected override void OnViewInstantiated()
@@ -59,9 +60,8 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
-            mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true)).Forget();
             mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
-            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {

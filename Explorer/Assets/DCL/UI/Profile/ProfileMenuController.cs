@@ -10,10 +10,11 @@ using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using Utility;
+using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileMenuController : ControllerBase<ProfileMenuView>
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>, IPanelInSharedSpace
     {
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
@@ -31,8 +32,7 @@ namespace DCL.UI.ProfileElements
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager
-        ) : base(viewFactory)
+            IMVCManager mvcManager) : base(viewFactory)
         {
             profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController);
             systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
@@ -40,14 +40,24 @@ namespace DCL.UI.ProfileElements
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        protected override void OnViewInstantiated()
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>
+            await UniTask.CompletedTask;
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            base.OnViewInstantiated();
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
+            profileMenuCts.Cancel();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.WhenAny(UniTask.WaitUntilCanceled(profileMenuCts.Token), UniTask.WaitUntilCanceled(ct));
         }
 
         protected override void OnBeforeViewShow()
@@ -58,16 +68,16 @@ namespace DCL.UI.ProfileElements
             systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
         }
 
-        private void OnClose()
+        protected override void OnViewInstantiated()
         {
-            CloseAsync().Forget();
+            base.OnViewInstantiated();
+
+            viewInstance.CloseButton.onClick.AddListener(OnClose);
         }
 
-        private async UniTaskVoid CloseAsync()
+        private void OnClose()
         {
-            await systemSectionController.HideViewAsync(profileMenuCts.Token);
-            await profileSectionController.HideViewAsync(profileMenuCts.Token);
-            await HideViewAsync(profileMenuCts.Token);
+            profileMenuCts.Cancel();
         }
 
         public override void Dispose()

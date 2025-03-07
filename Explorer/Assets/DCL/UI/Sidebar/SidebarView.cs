@@ -28,7 +28,6 @@ namespace DCL.UI.Sidebar
 
 
         [field: Header("Explore Panel Shortcuts")]
-        [field: SerializeField] public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }
         [field: SerializeField] public Button InWorldCameraButton { get; private set; }
         [field: SerializeField] internal Button mapButton { get; private set; }
         [field: SerializeField] internal Button backpackButton { get; private set; }
@@ -48,6 +47,11 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal ElementWithCloseArea sidebarSettingsWidget { get; private set; }
         [field: SerializeField] internal Toggle autoHideToggle { get; private set; }
 
+        [field: Header("Emotes")]
+        [field: SerializeField] internal Button emotesWheelButton { get; private set; }
+
+        [field: Header("Friends")]
+        [field: SerializeField] internal Button friendsButton { get; private set; }
 
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; }
