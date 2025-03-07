@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.MarketplaceCreditsAPIService
@@ -30,7 +31,7 @@ namespace DCL.MarketplaceCreditsAPIService
             return goalsOfTheWeekResponse;
         }
 
-        private async UniTask<GoalsOfTheWeekResponse> MockGoalsOfTheWeekAsync(CancellationToken ct)
+        private static async UniTask<GoalsOfTheWeekResponse> MockGoalsOfTheWeekAsync(CancellationToken ct)
         {
             await UniTask.Delay(3000, cancellationToken: ct);
 
@@ -38,8 +39,59 @@ namespace DCL.MarketplaceCreditsAPIService
             {
                 data = new GoalsOfTheWeekData
                 {
-                    endOfTheWeekDate = "2025-03-09T12:00:00Z",
-                    totalCredits = 2.35948f,
+                    endOfTheWeekDate = "2025-03-16T12:00:00Z",
+                    totalCredits = 3.2f,
+                    goals = new List<GoalData>
+                    {
+                        new()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "Jump Into Decentraland On 3 Separate Days (Min. 10 min)",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 3,
+                                stepsDone = 0,
+                            },
+                            credits = 4,
+                            isClaimed = false,
+                        },
+                        new()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "Attend 2 Events (Min. 10 min)",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 2,
+                                stepsDone = 1,
+                            },
+                            credits = 2,
+                            isClaimed = false,
+                        },
+                        new()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "View 3 New Profiles",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 3,
+                                stepsDone = 1,
+                            },
+                            credits = 1,
+                            isClaimed = false,
+                        },
+                        new()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "Visit 3 New Parcels",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 3,
+                                stepsDone = 3,
+                            },
+                            credits = 1,
+                            isClaimed = true,
+                        },
+                    },
                     creditsAvailableToClaim = true,
                 },
             };

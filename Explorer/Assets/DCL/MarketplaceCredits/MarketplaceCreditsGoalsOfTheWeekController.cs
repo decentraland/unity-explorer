@@ -69,11 +69,9 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile != null)
                 {
                     var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.FetchGoalsOfTheWeekAsync(ownProfile.UserId, ct);
-                    var goalsOfTheWeekInfo = MarketplaceCreditsUtils.GoalsOfTheWeekResponseToGoalsOfTheWeekInfo(goalsOfTheWeekResponse);
-
-                    view.TimeLeftText.text = goalsOfTheWeekInfo.timeLeft;
-                    view.TotalCreditsText.text = goalsOfTheWeekInfo.totalCredits;
-                    view.ShowCaptcha(goalsOfTheWeekInfo.creditsAvailableToClaim);
+                    view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
+                    view.TotalCreditsText.text = MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits);
+                    view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
                 }
 
                 view.SetAsLoading(false);
