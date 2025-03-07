@@ -28,5 +28,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         //Material properties
         public static readonly int BASE_COLOUR_SHADER_ID = Shader.PropertyToID("_BaseColor");
+        public static readonly int SHADER_FADINGDISTANCE_PARAM_ID = Shader.PropertyToID("_FadeDistance");
+        public static readonly int SHADER_FADINGDISTANCE_START_PARAM_ID = Shader.PropertyToID("_StartFadeDistance");
+
+
     }
 }
