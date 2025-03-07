@@ -68,6 +68,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -233,6 +234,7 @@ namespace Global.Dynamic
                               defaultTexturesContainer.TextureArrayContainerFactory,
                               debugBuilder,
                               dynamicWorldParams.EnableLOD,
+                              staticContainer.GPUInstancingService,
                               ct
                           )
                          .ThrowOnFail();
@@ -767,6 +769,8 @@ namespace Global.Dynamic
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
                 realmNavigatorContainer.CreatePlugin(),
+                new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
+
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
