@@ -78,6 +78,8 @@ namespace DCL.PluginSystem.Global
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
 
+        private float startFadeDistanceDithering;
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -127,6 +129,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             chatBubbleConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatBubbleConfiguration, ct)).Value;
+            startFadeDistanceDithering = settings.startFadeDistanceDithering;
 
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
@@ -165,7 +168,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
                 avatarTransformMatrixJobWrapper);
 
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, rendererFeaturesCache);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, rendererFeaturesCache, startFadeDistanceDithering);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
@@ -212,6 +215,13 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
             ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
 
+            //Set initial dither properties obtained through settings
+            toonMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADINGDISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADINGDISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+
+            toonMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADINGDISTANCE_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADINGDISTANCE_PARAM_ID, startFadeDistanceDithering);
+
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
                 toonMaterial.Value, faceFeatureMaterial.Value
@@ -247,6 +257,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             private AssetReferenceMaterial? faceFeatureMaterial;
+
+            [field: SerializeField]
+            public float startFadeDistanceDithering = 2;
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;

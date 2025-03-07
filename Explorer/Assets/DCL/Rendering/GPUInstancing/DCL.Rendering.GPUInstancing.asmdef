@@ -1,0 +1,21 @@
+{
+    "name": "DCL.Rendering.GPUInstancing",
+    "rootNamespace": "",
+    "references": [
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:21c2e77c042a2d34d8cfbf58f8217053",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

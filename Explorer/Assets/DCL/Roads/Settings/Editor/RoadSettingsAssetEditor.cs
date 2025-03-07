@@ -17,6 +17,9 @@ namespace DCL.Roads.Settings.Editor
         private bool showNotFoundMessage;
         private bool showUpdatedMessage;
 
+        private Vector2Int parcelsMin = new (-175, -175);
+        private Vector2Int parcelsMax = new (175, 175);
+
         public override void OnInspectorGUI()
         {
             EditorGUILayout.LabelField("Search for a Road description by its coordinates:");
@@ -63,11 +66,11 @@ namespace DCL.Roads.Settings.Editor
 
                 if (GUILayout.Button("Update road"))
                 {
-                    roadSettingsAsset.RoadDescriptions[foundElementIndex] = new RoadDescription()
-                        {
+                    roadSettingsAsset.RoadDescriptions[foundElementIndex] = new RoadDescription
+                    {
                             RoadModel = foundElementModel,
                             RoadCoordinate = foundElementCoordinates,
-                            Rotation = Quaternion.Euler(foundElementRotation.x, foundElementRotation.y, foundElementRotation.z)
+                            Rotation = foundElementRotation == Vector3.zero? Quaternion.identity : Quaternion.Euler(foundElementRotation.x, foundElementRotation.y, foundElementRotation.z)
                         };
 
                     showUpdatedMessage = true;
@@ -82,7 +85,30 @@ namespace DCL.Roads.Settings.Editor
 
             EditorGUILayout.Separator();
 
+            // Add GPU Instancing LOD Groups Collection section
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("GPU Instancing LOD Groups Collection", EditorStyles.boldLabel);
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            parcelsMin = EditorGUILayout.Vector2IntField("Parcels Min", parcelsMin);
+            parcelsMax = EditorGUILayout.Vector2IntField("Parcels Max", parcelsMax);
+
+            if (GUILayout.Button("Collect GPU Instancing LOD Groups"))
+            {
+                RoadConfigCollect();
+            }
+
+            EditorGUILayout.EndVertical();
+
+
             base.OnInspectorGUI();
+        }
+
+        private void RoadConfigCollect()
+        {
+            RoadSettingsAsset roadsConfig = target as RoadSettingsAsset;
+            roadsConfig.CollectGPUInstancingLODGroups(parcelsMin, parcelsMax);
         }
     }
 }
