@@ -66,11 +66,11 @@ namespace DCL.Roads.Settings.Editor
 
                 if (GUILayout.Button("Update road"))
                 {
-                    roadSettingsAsset.RoadDescriptions[foundElementIndex] = new RoadDescription()
-                        {
+                    roadSettingsAsset.RoadDescriptions[foundElementIndex] = new RoadDescription
+                    {
                             RoadModel = foundElementModel,
                             RoadCoordinate = foundElementCoordinates,
-                            Rotation = Quaternion.Euler(foundElementRotation.x, foundElementRotation.y, foundElementRotation.z)
+                            Rotation = foundElementRotation == Vector3.zero? Quaternion.identity : Quaternion.Euler(foundElementRotation.x, foundElementRotation.y, foundElementRotation.z)
                         };
 
                     showUpdatedMessage = true;

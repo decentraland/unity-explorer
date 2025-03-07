@@ -43,9 +43,16 @@ namespace DCL.Roads.Settings
                     prefab = loadedPrefabs[RoadAssetsPool.DEFAULT_ROAD_KEY];
                 }
 
+                var rotation = roadDescription.Rotation;
+                if (roadDescription.Rotation is { x: 0, y: 0, z: 0, w: 0 })
+                {
+                    ReportHub.LogError(ReportCategory.GPU_INSTANCING, $"Road {roadDescription.RoadModel} at {roadDescription.RoadCoordinate} has zero rotation! Change it to {Quaternion.identity}");
+                    rotation = Quaternion.identity;
+                }
+
                 var roadRoot = Matrix4x4.TRS(
                     roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation,
-                    roadDescription.Rotation.SelfOrIdentity(),
+                    rotation,
                     Vector3.one);
 
                 ProcessCandidates(prefab.IndirectCandidates, roadRoot, tempIndirectCandidates);
