@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -57,6 +58,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
             friendEventBus.OnOtherUserCancelledTheRequest += PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouBlockedProfile += PropagateRequestReceived;
+            friendEventBus.OnYouBlockedByUser += PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
         }
@@ -72,6 +75,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
             friendEventBus.OnOtherUserCancelledTheRequest -= PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouBlockedProfile -= PropagateRequestReceived;
+            friendEventBus.OnYouBlockedByUser -= PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
@@ -85,10 +90,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             CheckShouldInit();
         }
 
-        private void BlockUserClicked(FriendProfile profile)
-        {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
-        }
+        private void BlockUserClicked(FriendProfile profile) =>
+            FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
@@ -114,6 +117,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             passportBridge.ShowAsync(profile.Address).Forget();
 
         private void PropagateRequestReceived(FriendRequest request) =>
+            PropagateReceivedRequestsCountChanged();
+
+        private void PropagateRequestReceived(BlockedProfile profile) =>
             PropagateReceivedRequestsCountChanged();
 
         private void PropagateReceivedRequestsCountChanged(string userId) =>

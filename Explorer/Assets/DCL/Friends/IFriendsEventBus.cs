@@ -25,6 +25,12 @@ namespace DCL.Friends
         event Action<FriendProfile> OnFriendDisconnected;
         event Action<FriendProfile> OnFriendAway;
 
+        event Action<BlockedProfile> OnYouBlockedProfile;
+        event Action<BlockedProfile> OnYouUnblockedProfile;
+
+        event Action<string> OnYouBlockedByUser;
+        event Action<string> OnYouUnblockedByUser;
+
         void BroadcastFriendRequestReceived(FriendRequest request);
 
         void BroadcastThatOtherUserAcceptedYourRequest(string userId);
@@ -50,5 +56,10 @@ namespace DCL.Friends
         void BroadcastThatYouCancelledFriendRequestSentToOtherUser(string userId);
 
         void BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(string userId);
+
+        void BroadcastYouBlockedProfile(BlockedProfile profile);
+        void BroadcastYouUnblockedProfile(BlockedProfile profile);
+        void BroadcastOtherUserBlockedYou(string userId);
+        void BroadcastOtherUserUnblockedYou(string userId);
     }
 }

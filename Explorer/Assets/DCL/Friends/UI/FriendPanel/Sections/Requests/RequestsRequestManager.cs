@@ -39,10 +39,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
             this.friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
             this.friendEventBus.OnOtherUserCancelledTheRequest += ReceivedRemoved;
+            this.friendEventBus.OnYouBlockedProfile += ReceivedRemoved;
+            this.friendEventBus.OnYouBlockedByUser += ReceivedRemoved;
 
             this.friendEventBus.OnOtherUserRejectedYourRequest += SentRemoved;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += SentRemoved;
             this.friendEventBus.OnYouCancelledFriendRequestSentToOtherUser += SentRemoved;
+            this.friendEventBus.OnYouBlockedProfile += SentRemoved;
+            this.friendEventBus.OnYouBlockedByUser += SentRemoved;
 
             this.friendEventBus.OnYouSentFriendRequestToOtherUser += CreateNewSentRequest;
             this.friendEventBus.OnFriendRequestReceived += CreateNewReceivedRequest;
@@ -53,10 +57,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= ReceivedRemoved;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= ReceivedRemoved;
             friendEventBus.OnOtherUserCancelledTheRequest -= ReceivedRemoved;
+            friendEventBus.OnYouBlockedProfile -= ReceivedRemoved;
+            friendEventBus.OnYouBlockedByUser -= ReceivedRemoved;
 
             friendEventBus.OnOtherUserRejectedYourRequest -= SentRemoved;
             friendEventBus.OnOtherUserAcceptedYourRequest -= SentRemoved;
             friendEventBus.OnYouCancelledFriendRequestSentToOtherUser -= SentRemoved;
+            friendEventBus.OnYouBlockedProfile -= SentRemoved;
+            friendEventBus.OnYouBlockedByUser -= SentRemoved;
 
             friendEventBus.OnYouSentFriendRequestToOtherUser -= CreateNewSentRequest;
             friendEventBus.OnFriendRequestReceived -= CreateNewReceivedRequest;
@@ -81,16 +89,24 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RefreshLoopList();
         }
 
+        private void SentRemoved(BlockedProfile profile) =>
+            SentRemoved(profile.Address);
+
         private void SentRemoved(string friendId)
         {
-            sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
+            if (sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId)) <= 0) return;
+
             RefreshLoopList();
             loopListView.ResetListView();
         }
 
+        private void ReceivedRemoved(BlockedProfile profile) =>
+            ReceivedRemoved(profile.Address);
+
         private void ReceivedRemoved(string friendId)
         {
-            receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId));
+            if (receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId)) <= 0) return;
+
             RefreshLoopList();
             loopListView.ResetListView();
         }

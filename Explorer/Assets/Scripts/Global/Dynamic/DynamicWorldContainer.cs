@@ -25,6 +25,7 @@ using DCL.Chat;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
@@ -490,7 +491,9 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
+            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>(), userBlockingCacheProxy)
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands)
@@ -539,19 +542,20 @@ namespace Global.Dynamic
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
-            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
+            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)) || Application.isEditor;
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
+
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
             IChatInputBus chatInputBus = new ChatInputBus();
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
-            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
+            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus, includeUserBlocking);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
@@ -604,7 +608,8 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     remoteEntities,
-                    staticContainer.CharacterContainer.Transform),
+                    staticContainer.CharacterContainer.Transform,
+                    userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -818,6 +823,7 @@ namespace Global.Dynamic
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
+                    userBlockingCacheProxy,
                     profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,

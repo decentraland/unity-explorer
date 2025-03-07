@@ -1,33 +1,83 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
-using DCL.Web3.Identities;
+using DCL.UI.Profiles.Helpers;
+using DCL.Web3;
 using DCL.WebRequests;
+using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 {
     public class BlockedRequestManager : FriendPanelRequestManager<BlockedUserView>
     {
-        private readonly IProfileRepository profileRepository;
-        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IFriendsService friendsService;
+        private readonly IFriendsEventBus friendsEventBus;
+        private readonly List<BlockedProfile> blockedProfiles = new ();
+        private readonly LoopListView2 loopListView;
 
-        private FriendProfile? userProfile;
-        private List<FriendProfile> blockedProfiles = new ();
+        public event Action<BlockedProfile>? UnblockClicked;
+        public event Action<BlockedProfile, Vector2, BlockedUserView>? ContextMenuClicked;
+        public event Action? NoUserInCollection;
+        public event Action? AtLeastOneUserInCollection;
 
-        public event Action<FriendProfile>? UnblockClicked;
-        public event Action<FriendProfile>? ContextMenuClicked;
-
-        public BlockedRequestManager(IProfileRepository profileRepository,
-            IWeb3IdentityCache web3IdentityCache,
+        public BlockedRequestManager(
+            IFriendsService friendsService,
+            IFriendsEventBus friendsEventBus,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
+            LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
         {
-            this.profileRepository = profileRepository;
-            this.web3IdentityCache = web3IdentityCache;
+            this.friendsService = friendsService;
+            this.friendsEventBus = friendsEventBus;
+            this.loopListView = loopListView;
+
+            friendsEventBus.OnYouBlockedProfile += BlockProfile;
+            friendsEventBus.OnYouUnblockedProfile += UnblockProfile;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            friendsEventBus.OnYouBlockedProfile -= BlockProfile;
+            friendsEventBus.OnYouUnblockedProfile -= UnblockProfile;
+        }
+
+        private void BlockProfile(BlockedProfile profile)
+        {
+            int previousCount = blockedProfiles.Count;
+            if (blockedProfiles.Contains(profile)) return;
+
+            blockedProfiles.Add(profile);
+            FriendsSorter.SortFriendList(blockedProfiles);
+
+            RefreshLoopList();
+
+            if (previousCount == 0)
+                AtLeastOneUserInCollection?.Invoke();
+        }
+
+        private void UnblockProfile(BlockedProfile profile)
+        {
+            if (blockedProfiles.Remove(profile))
+                RefreshLoopList();
+            else
+                return;
+
+            if (blockedProfiles.Count == 0)
+                NoUserInCollection?.Invoke();
+        }
+
+        private void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetCollectionCount(), false);
+            loopListView.RefreshAllShownItem();
         }
 
         public override int GetCollectionCount() =>
@@ -38,17 +88,36 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override void CustomiseElement(BlockedUserView elementView, int index)
         {
+            BlockedProfile element = blockedProfiles[index];
+
             elementView.UnblockButton.onClick.RemoveAllListeners();
-            elementView.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(elementView.UserProfile));
+            elementView.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(element));
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
-            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element, elementView.ContextMenuButton.transform.position, elementView));
+
+            elementView.BlockedDate = element.Timestamp;
         }
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            //TODO: Implement this with the new social service logic
-            return 0;
+            // return MockedData();
+
+            using PaginatedBlockedProfileResult result = await friendsService.GetBlockedUsersAsync(pageNumber, pageSize, ct);
+
+            foreach (var blockedProfile in result.BlockedProfiles)
+                if (!blockedProfiles.Contains(blockedProfile))
+                    blockedProfiles.Add(blockedProfile);
+
+            FriendsSorter.SortFriendList(blockedProfiles);
+
+            return result.TotalAmount;
+        }
+
+        private int MockedData()
+        {
+            blockedProfiles.Add(new BlockedProfile(new Web3Address("0xbdfdd873d70fbf9273180f98ee30404115a1a674"), "NftIsland", true, URLAddress.FromString("http://profile-images.decentraland.org/entities/bafkreigb23roa4vsdhzrvqxw7xllbviota45yu3j3htduudbcjx2wiztny/face.png"), new DateTime(), ProfileNameColorHelper.GetNameColor("NftIsland")));
+            return blockedProfiles.Count;
         }
 
         protected override void ResetCollection() =>

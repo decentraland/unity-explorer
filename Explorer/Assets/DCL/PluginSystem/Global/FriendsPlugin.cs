@@ -7,9 +7,11 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
@@ -50,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -84,6 +87,7 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
@@ -111,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -159,6 +164,14 @@ namespace DCL.PluginSystem.Global
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
+            //TODO: developments need to be deployed in order to activate this feature
+            if (includeUserBlocking)
+            {
+                friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
+                IUserBlockingCache userBlockingCache = new UserBlockingCache(friendsService, friendEventBus, web3IdentityCache);
+                userBlockingCacheProxy.SetObject(userBlockingCache);
+            }
+
             // We need to restart the connection to the service as identity changes
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
@@ -176,7 +189,6 @@ namespace DCL.PluginSystem.Global
                 injectableFriendService,
                 friendEventBus,
                 mvcManager,
-                web3IdentityCache,
                 profileRepository,
                 systemClipboard,
                 webRequestController,
@@ -225,6 +237,18 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
+
+            if (includeUserBlocking)
+            {
+                BlockUserPromptView blockUserPromptPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.BlockUserPromptPrefab, ct)).Value;
+
+                var blockUserPromptController = new BlockUserPromptController(
+                    BlockUserPromptController.CreateLazily(blockUserPromptPrefab, null),
+                    injectableFriendService,
+                    dclInput);
+
+                mvcManager.RegisterController(blockUserPromptController);
+            }
         }
 
         private void PreWarmFriends(LoadingStatus.LoadingStage stage)
@@ -304,6 +328,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; set; }
 
+        [field: SerializeField]
+        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; set; }
+
         [Serializable]
         public class FriendRequestAssetReference : ComponentReference<FriendRequestView>
         {
@@ -314,6 +341,12 @@ namespace DCL.PluginSystem.Global
         public class UnfriendConfirmationPopupAssetReference : ComponentReference<UnfriendConfirmationPopupView>
         {
             public UnfriendConfirmationPopupAssetReference(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class BlockUserPromptPopupAssetReference : ComponentReference<BlockUserPromptView>
+        {
+            public BlockUserPromptPopupAssetReference(string guid) : base(guid) { }
         }
     }
 }

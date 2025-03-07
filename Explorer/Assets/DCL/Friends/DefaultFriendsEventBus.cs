@@ -18,6 +18,12 @@ namespace DCL.Friends
         public event Action<FriendProfile>? OnFriendDisconnected;
         public event Action<FriendProfile>? OnFriendAway;
 
+        public event Action<BlockedProfile>? OnYouBlockedProfile;
+        public event Action<BlockedProfile>? OnYouUnblockedProfile;
+
+        public event Action<string>? OnYouBlockedByUser;
+        public event Action<string>? OnYouUnblockedByUser;
+
         public void BroadcastFriendRequestReceived(FriendRequest request) =>
             OnFriendRequestReceived?.Invoke(request);
 
@@ -56,5 +62,17 @@ namespace DCL.Friends
 
         public void BroadcastFriendAsAway(FriendProfile friend) =>
             OnFriendAway?.Invoke(friend);
+
+        public void BroadcastYouBlockedProfile(BlockedProfile profile) =>
+            OnYouBlockedProfile?.Invoke(profile);
+
+        public void BroadcastYouUnblockedProfile(BlockedProfile profile) =>
+            OnYouUnblockedProfile?.Invoke(profile);
+
+        public void BroadcastOtherUserBlockedYou(string userId) =>
+            OnYouBlockedByUser?.Invoke(userId);
+
+        public void BroadcastOtherUserUnblockedYou(string userId) =>
+            OnYouUnblockedByUser?.Invoke(userId);
     }
 }

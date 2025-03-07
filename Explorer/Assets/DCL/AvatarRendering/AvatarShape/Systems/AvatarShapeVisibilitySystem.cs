@@ -112,15 +112,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea;
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<BlockedPlayerComponent>(entity);
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 
         private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
         {
-            if (avatarCachedVisibility.IsVisible == shouldBeHidden)
+            if (avatarCachedVisibility.IsVisible == !shouldBeHidden)
                 return;
 
             if (shouldBeHidden)
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             else
                 Show(ref avatarShape);
 
-            avatarCachedVisibility.IsVisible = shouldBeHidden;
+            avatarCachedVisibility.IsVisible = !shouldBeHidden;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
