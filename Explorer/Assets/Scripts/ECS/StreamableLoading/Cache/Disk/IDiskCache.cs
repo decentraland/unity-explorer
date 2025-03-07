@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
+using DCL.Optimization.Memory;
 using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Buffers;
@@ -64,7 +65,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         Ti Serialize(T data);
 
         /// <param name="data">Takes ownership of Memory and is responsible for its disposal</param>
-        UniTask<T> DeserializeAsync([TakesOwnership] SlicedOwnedMemory<byte> data, CancellationToken token);
+        UniTask<Option<T>> DeserializeAsync([TakesOwnership] SlicedOwnedMemory<byte> data, CancellationToken token);
     }
 
     public readonly struct SlicedOwnedMemory<T> : IDisposable where T: unmanaged
@@ -103,45 +104,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         }
     }
 
-    public unsafe class UnmanagedMemoryManager<T> : MemoryManager<T> where T: unmanaged
-    {
-        private static readonly ThreadSafeObjectPool<UnmanagedMemoryManager<T>> POOL = new (() => new UnmanagedMemoryManager<T>());
 
-        private void* ptr;
-        private int length;
-
-        public static UnmanagedMemoryManager<T> New(void* ptr, int length)
-        {
-            var instance = POOL.Get();
-            instance.ptr = ptr;
-            instance.length = length;
-            return instance;
-        }
-
-        public static void Release(UnmanagedMemoryManager<T> instance)
-        {
-            POOL.Release(instance);
-        }
-
-        public override Span<T> GetSpan() =>
-            new (ptr, length);
-
-        public override MemoryHandle Pin(int elementIndex = 0) =>
-            new ((byte*)ptr + (elementIndex * sizeof(T)));
-
-        public override void Unpin() { }
-
-        protected override void Dispose(bool disposing) { }
-    }
-
-    public interface IMemoryIterator : IDisposable
-    {
-        ReadOnlyMemory<byte> Current { get; }
-
-        int? TotalSize { get; }
-
-        bool MoveNext();
-    }
 
     public static class SerializeMemoryIterator
     {

@@ -1,4 +1,4 @@
-﻿using ECS.StreamableLoading.Cache.Disk;
+﻿using DCL.Optimization.Memory;
 using System;
 
 namespace ECS.StreamableLoading.Common.Components
@@ -6,11 +6,11 @@ namespace ECS.StreamableLoading.Common.Components
     public struct PartialLoadingState
     {
         public readonly int FullFileSize;
-        private SlicedOwnedMemory<byte> memoryOwner;
+        private MemoryChain memoryOwner;
 
         public PartialLoadingState(int fullFileSize, bool isFileFullyDownloaded = false)
         {
-            memoryOwner = new SlicedOwnedMemory<byte>(fullFileSize);
+            memoryOwner = new MemoryChain(ISlabAllocator.SHARED);
             NextRangeStart = 0;
             FullFileSize = fullFileSize;
             IsFileFullyDownloaded = isFileFullyDownloaded;
@@ -18,31 +18,41 @@ namespace ECS.StreamableLoading.Common.Components
 
         public PartialLoadingState(in PartialLoadingState otherInstance, bool isFileFullyDownloaded = false) : this(otherInstance.FullFileSize, isFileFullyDownloaded)
         {
-            AppendData(otherInstance.FullData[..otherInstance.NextRangeStart]);
+            memoryOwner.AppendData(otherInstance.memoryOwner);
         }
 
         public int NextRangeStart { get; private set; }
 
-        public bool IsFileFullyDownloaded;
-        public readonly bool FullyDownloaded => NextRangeStart >= FullFileSize;
-        public readonly ReadOnlyMemory<byte> FullData => memoryOwner.Memory;
+        public bool IsFileFullyDownloaded { get; private set; }
 
-        internal void AppendData(ReadOnlyMemory<byte> data)
+        private readonly bool IsFullyLoaded() =>
+            NextRangeStart >= FullFileSize;
+
+        internal void AppendData(ReadOnlySpan<byte> data)
         {
-            data.CopyTo(memoryOwner.Memory[NextRangeStart..]);
+            memoryOwner.AppendData(data);
             NextRangeStart += data.Length;
-            IsFileFullyDownloaded = FullyDownloaded;
+            IsFileFullyDownloaded = IsFullyLoaded();
         }
+
+        internal MemoryChain PeekMemory() =>
+            memoryOwner;
 
         /// <summary>
         ///     When the memory ownership is transferred, the responsibility to dispose of the memory will be on the external caller
         /// </summary>
-        internal SlicedOwnedMemory<byte> TransferMemoryOwnership()
+        internal MemoryChain TransferMemoryOwnership()
         {
             var memoryOwnerToReturn = memoryOwner;
-            memoryOwner = SlicedOwnedMemory<byte>.EMPTY;
+            memoryOwner = MemoryChain.EMPTY;
             return memoryOwnerToReturn;
         }
+
+        public PartialLoadingState DeepCopy() =>
+            new (this, IsFileFullyDownloaded);
+
+        public readonly ChainMemoryIterator AsIterator() =>
+            memoryOwner.AsMemoryIterator();
 
         public void Dispose()
         {

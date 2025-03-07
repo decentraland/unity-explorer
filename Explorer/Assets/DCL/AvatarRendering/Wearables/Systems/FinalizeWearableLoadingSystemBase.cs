@@ -217,7 +217,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             in BodyShape bodyShape,
             int index,
             Func<StreamableLoadingResult<TAsset>, StreamableLoadingResult<AttachmentAssetBase>> toWearableAsset
-        ) where TLoadingIntention : IAssetIntention, IEquatable<TLoadingIntention>
+        ) where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -233,7 +233,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
                     SetWearableResult(wearable, toWearableAsset(result), in bodyShape, index);
                 else
+                {
+                    ReportHub.LogException(result.Exception ?? StreamableLoadingResult<TAsset>.Empty, GetReportCategory());
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+                }
 
                 wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
                 World.Destroy(entity);

@@ -1,106 +1,151 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Optimization.Memory;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common
 {
-    public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>
+    public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState, PartialDiskSerializer.PartialMemoryIterator>
     {
-        public SerializeMemoryIterator<State> Serialize(PartialLoadingState data) =>
+        public PartialMemoryIterator Serialize(PartialLoadingState data) =>
             SerializeInternal(data);
 
-        private static SerializeMemoryIterator<State> SerializeInternal(PartialLoadingState data)
+        private static PartialMemoryIterator SerializeInternal(PartialLoadingState data)
         {
-            var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
-            var slice = data.FullData.Slice(0, data.NextRangeStart);
-            var state = new State(meta, slice);
-
-            return SerializeMemoryIterator<State>.New(
-                state,
-                static (source, index, buffer) =>
-                {
-                    if (index == 0)
-                    {
-                        source.Meta.ToSpan(buffer.Span);
-                        return Meta.META_SIZE;
-                    }
-
-                    // Address meta offset
-                    index -= 1;
-
-                    var span = source.FullData.Span;
-                    return SerializeMemoryIterator.ReadNextData(index, span, buffer);
-                },
-                static (source, index, bufferLength) =>
-                {
-                    if (index == 0)
-                        return true;
-
-                    // Address meta offset
-                    index -= 1;
-
-                    return SerializeMemoryIterator.CanReadNextData(index, source.FullData.Length, bufferLength);
-                }
-            );
+            var memory = data.PeekMemory();
+            var meta = new Meta(data.FullFileSize, memory.TotalLength, data.IsFileFullyDownloaded);
+            return new PartialMemoryIterator(meta, memory, false);
         }
 
-        public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<Option<PartialLoadingState>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             using (data)
             {
                 var meta = Meta.FromSpan(data.Memory.Span);
-                var fileData = data.Memory.Slice(Meta.META_SIZE);
+                var fileData = data.Memory.Slice(Meta.META_SIZE).Span;
+
+                if (meta.WrittenBytesSize != fileData.Length)
+                {
+                    ReportHub.LogError(ReportCategory.DISK_CACHE, $"Actual length {fileData.Length} not equals to declared length {meta.WrittenBytesSize}");
+                    return UniTask.FromResult(Option<PartialLoadingState>.None);
+                }
 
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
-                return UniTask.FromResult(partialLoadingState);
+                return UniTask.FromResult(Option<PartialLoadingState>.Some(partialLoadingState));
             }
         }
 
-        public readonly struct State
+        public struct PartialMemoryIterator : IMemoryIterator
         {
-            public readonly Meta Meta;
-            public readonly ReadOnlyMemory<byte> FullData;
+            private readonly IntPtr ptr;
+            private readonly UnmanagedMemoryManager<byte> metaMemory;
+            private readonly MemoryChain ownedChain;
+            private readonly bool ownChain;
+            private ChainMemoryIterator iterator;
+            private int index;
 
-            public State(Meta meta, ReadOnlyMemory<byte> fullData)
+            public PartialMemoryIterator(Meta meta, MemoryChain ownedChain, bool ownChain) : this()
             {
-                Meta = meta;
-                FullData = fullData;
+                unsafe
+                {
+                    ptr = NativeAlloc.Malloc((nuint)Meta.META_SIZE);
+                    metaMemory = UnmanagedMemoryManager<byte>.New(ptr.ToPointer(), Meta.META_SIZE);
+                    var span = metaMemory.Memory.Span;
+                    meta.ToSpan(span);
+                }
+
+                this.ownedChain = ownedChain;
+                this.ownChain = ownChain;
+                iterator = ownedChain.AsMemoryIterator();
+                index = -1;
+            }
+
+            public void Dispose()
+            {
+                NativeAlloc.Free(ptr);
+
+                UnmanagedMemoryManager<byte>.Release(metaMemory);
+                iterator.Dispose();
+
+                if (ownChain)
+                    ownedChain.Dispose();
+            }
+
+            public readonly ReadOnlyMemory<byte> Current
+            {
+                get
+                {
+                    if (index == -1)
+                        throw new InvalidOperationException("Current is not valid before MoveNext is called");
+
+                    if (index == 0)
+                        return metaMemory.Memory;
+
+                    if (index == 1)
+                        return iterator.Current;
+
+                    throw new InvalidOperationException("Current is not valid after MoveNext returns false");
+                }
+            }
+
+            public readonly int? TotalSize => Meta.META_SIZE + iterator.TotalSize;
+
+            public bool MoveNext()
+            {
+                switch (index)
+                {
+                    case -1:
+                        index = 0;
+                        return true;
+                    case 0:
+                        index = 1;
+                        return iterator.MoveNext();
+                    case 1:
+                        return iterator.MoveNext();
+                }
+
+                return false;
             }
         }
 
         public readonly struct Meta
         {
-            public const int META_SIZE = 5;
+            public static int META_SIZE
+            {
+                get
+                {
+                    unsafe { return sizeof(Meta); }
+                }
+            }
+
             public readonly int MaxFileSize;
+            public readonly int WrittenBytesSize;
             public readonly bool IsFullyDownloaded;
 
-            public Meta(int maxFileSize, bool isFullyDownloaded)
+            public Meta(int maxFileSize, int writtenBytesSize, bool isFullyDownloaded)
             {
                 this.MaxFileSize = maxFileSize;
+                this.WrittenBytesSize = writtenBytesSize;
                 this.IsFullyDownloaded = isFullyDownloaded;
             }
 
             public void ToSpan(Span<byte> span)
             {
-                span[0] = (byte)(IsFullyDownloaded ? 1 : 0);
+                var self = this;
+                var origin = MemoryMarshal.CreateReadOnlySpan(ref self, 1);
+                var raw = MemoryMarshal.AsBytes(origin);
 
-                for (int i = 1; i < 5; i++)
-                    span[i] = (byte)((MaxFileSize >> (i * 8)) & 0xFF);
+                raw.CopyTo(span);
             }
 
-            public static Meta FromSpan(ReadOnlySpan<byte> array)
-            {
-                var maxFileSize = 0;
-                var isFullyDownloaded = array[0] == 1;
-
-                for (var i = 1; i < 5; i++)
-                    maxFileSize |= array[i] << (i * 8);
-
-                return new Meta(maxFileSize, isFullyDownloaded);
-            }
+            public static Meta FromSpan(ReadOnlySpan<byte> array) =>
+                MemoryMarshal.Read<Meta>(array);
         }
     }
 }

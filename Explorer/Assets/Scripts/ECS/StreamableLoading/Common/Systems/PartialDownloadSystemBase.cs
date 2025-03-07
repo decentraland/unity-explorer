@@ -1,5 +1,4 @@
 using Arch.Core;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
@@ -69,6 +68,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     {
                         PartialLoadingState cachedState = cachedPartial.Value.Value;
                         state.SetChunkData(cachedState);
+
                         // If the cached data is complete, process it directly
                         if (cachedState.IsFileFullyDownloaded)
                             return await ProcessCompletedDataAsync(state, intention, partition, ct);
@@ -117,25 +117,28 @@ namespace ECS.StreamableLoading.Common.Systems
                         finalBytesCount = downloadedData.FullFileSize - chunkRange.RangeStart;
 
                     // Write the downloaded data to the full data stream by starting from the last range start
-                    partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount]);
+                    partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount].Span);
 
                     if (isQualifiedForDiskCache)
-                        partialDiskCache.PutAsync(diskHashKey!.Value, PARTIALS_FILES_EXTENSION, partialState, ct).Forget();
+                    {
+                        //TODO implement reference counting to avoid copying
+                        // without copying it causes crash due some race condition
+                        var copy = partialState.DeepCopy();
+                        PutToDisk(diskHashKey.Value, copy, ct).Forget();
+                    }
 
                     state.SetChunkData(partialState);
 
                     // Check if the download is complete
-                    if (partialState.FullyDownloaded)
+                    if (partialState.IsFileFullyDownloaded)
                         return await ProcessCompletedDataAsync(state, intention, partition, ct);
 
                     return default(StreamableLoadingResult<TData>);
                 }
+
                 //This catch is a workaround for the loading breaking bug caused by multiple scenes having same asset hash
                 //but with different file sizes, it won't load the asset but won't block the loading
-                catch (UnityWebRequestException e) when (e.ResponseCode == 416)
-                {
-                    return new StreamableLoadingResult<TData>(new ReportData(), e);
-                }
+                catch (UnityWebRequestException e) when (e.ResponseCode == 416) { return new StreamableLoadingResult<TData>(new ReportData(), e); }
                 finally
                 {
                     if (downloadedData.DestinationArray != null)
@@ -143,6 +146,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
             }
             finally { diskHashKey?.Dispose(); }
+        }
+
+        /// <summary>
+        /// Takes the copy and puts it to disk without blocking the main load flow
+        /// </summary>
+        private async UniTaskVoid PutToDisk(HashKey diskHashKey, PartialLoadingState copy, CancellationToken ct)
+        {
+            await partialDiskCache.PutAsync(diskHashKey, PARTIALS_FILES_EXTENSION, copy, ct);
+            copy.TransferMemoryOwnership().Dispose();
         }
 
         protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedDataAsync(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);
