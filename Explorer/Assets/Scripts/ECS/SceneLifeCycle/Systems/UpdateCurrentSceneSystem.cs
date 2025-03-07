@@ -30,7 +30,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject sceneBoundsCube;
-        private ISceneFacade currentActiveScene;
+        private ISceneFacade? currentActiveScene;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
             Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
@@ -74,12 +74,9 @@ namespace ECS.SceneLifeCycle.Systems
                 if (currentActiveScene != currentScene)
                 {
                     currentActiveScene?.SetIsCurrent(false);
-
                     currentActiveScene = currentScene;
                     currentActiveScene.SetIsCurrent(true);
-
-                    currentSceneInfo.Update(currentActiveScene);
-                    scenesCache.SetCurrentScene(currentActiveScene);
+                    UpdateCurrentScene();
                 }
             }
             else
@@ -88,11 +85,15 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     currentActiveScene.SetIsCurrent(false);
                     currentActiveScene = null;
-
-                    currentSceneInfo.Update(currentActiveScene);
-                    scenesCache.SetCurrentScene(currentActiveScene);
+                    UpdateCurrentScene();
                 }
             }
+        }
+
+        private void UpdateCurrentScene()
+        {
+            currentSceneInfo.Update(currentActiveScene);
+            scenesCache.SetCurrentScene(currentActiveScene);
         }
 
         protected override void OnDispose()
