@@ -157,7 +157,8 @@ namespace Global
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
 
@@ -232,7 +233,7 @@ namespace Global
             });
 
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
-            if (renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
+            if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
                 container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
                 renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
