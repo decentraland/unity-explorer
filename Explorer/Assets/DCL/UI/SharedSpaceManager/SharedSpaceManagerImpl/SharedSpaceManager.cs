@@ -1,15 +1,19 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
+using DCL.InWorldCamera;
 using DCL.UI.ProfileElements;
 using DCL.UI.Skybox;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.UI.SharedSpaceManager
@@ -20,23 +24,25 @@ namespace DCL.UI.SharedSpaceManager
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
         private readonly Dictionary<PanelsSharingSpace, IPanelInSharedSpace> controllers = new ();
+        private readonly World ecsWorld;
 
         private CancellationTokenSource cts = new ();
         private bool isShowing; // true whenever a view is being shown, so other calls wait for them to finish
         private bool isHiding; // true whenever a view is being hidden, so other calls wait for them to finish
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
 
-        private bool IsExplorePanelVisible => controllers[PanelsSharingSpace.Explore].IsVisibleInSharedSpace;
+        private bool isExplorePanelVisible => controllers[PanelsSharingSpace.Explore].IsVisibleInSharedSpace;
 
-        private bool isFriendsFeatureEnabled;
-        private bool isCameraReelFeatureEnabled;
+        private readonly bool isFriendsFeatureEnabled;
+        private readonly bool isCameraReelFeatureEnabled;
 
-        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, bool isFriendsEnabled, bool isCameraReelEnabled)
+        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
             this.isFriendsFeatureEnabled = isFriendsEnabled;
             this.isCameraReelFeatureEnabled = isCameraReelEnabled;
+            this.ecsWorld = world;
 
             if(isFriendsEnabled)
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
@@ -49,6 +55,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
+            dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
 
             if(isCameraReelEnabled)
                 dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
@@ -167,7 +174,13 @@ namespace DCL.UI.SharedSpaceManager
                     }
                 }
             }
+            catch (OperationCanceledException ex2)
+            {
+                isShowing = false;
+                isHiding = false;
+            }
             catch (Exception ex)
+
             {
                 isShowing = false;
                 isHiding = false;
@@ -184,6 +197,8 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask HideAsync(PanelsSharingSpace panel, object parameters = null)
         {
+            Debug.Log("HIdING: " + panel);
+
             if (!IsRegistered(panel))
                 return;
 
@@ -289,7 +304,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (IsRegistered(PanelsSharingSpace.Chat) && !IsExplorePanelVisible)
+            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
             {
                 await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
                 (controllers[PanelsSharingSpace.Chat] as ChatController).FocusInputBox();
@@ -300,50 +315,65 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible && isCameraReelFeatureEnabled)
+            if(!isExplorePanelVisible && isCameraReelFeatureEnabled)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel));
         }
 
         private async void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack));
         }
 
         private async void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings));
         }
 
         private async void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap));
         }
 
         private async void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore); // No section provided, the panel will decide
         }
 
         private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!isExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
         }
 
         private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible && isFriendsFeatureEnabled)
+            if(!isExplorePanelVisible && isFriendsFeatureEnabled)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
         }
 
         private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!IsExplorePanelVisible)
+            if(!isExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
+        }
+
+        private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
+        {
+            // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
+            if(isShowing || isHiding)
+                return;
+
+            Entity camera = ecsWorld.CacheCamera();
+
+            if(!ecsWorld.Has<InWorldCameraComponent>(camera))
+                await HideAllAsync();
+
+            const string SOURCE_SHORTCUT = "Shortcut";
+            ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
         }
 
         #endregion
