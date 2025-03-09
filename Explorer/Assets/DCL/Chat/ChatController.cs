@@ -512,7 +512,7 @@ namespace DCL.Chat
             if (profile != null)
             {
                 newMemberData.Name = profile.ValidatedName;
-                newMemberData.ProfilePicture = profile.ProfilePicture.Value.Asset.Sprite;
+                newMemberData.FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
                 newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
                 newMemberData.WalletId = profile.WalletId;
                 newMemberData.ProfileColor = profile.UserNameColor;

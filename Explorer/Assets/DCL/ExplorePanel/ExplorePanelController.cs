@@ -11,6 +11,7 @@ using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
+using DCL.UI.Profiles;
 using MVC;
 using System;
 using System.Collections.Generic;

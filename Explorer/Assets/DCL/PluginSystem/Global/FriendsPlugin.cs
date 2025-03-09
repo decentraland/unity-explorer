@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Clipboard;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -40,7 +39,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ISystemClipboard systemClipboard;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
@@ -57,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IAnalyticsController? analyticsController;
+        private readonly ViewDependencies viewDependencies;
         private readonly bool useAnalytics;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -73,7 +72,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
@@ -91,6 +89,7 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
+            ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.mainUIView = mainUIView;
@@ -99,7 +98,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
-            this.systemClipboard = systemClipboard;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
@@ -117,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.featureFlagsCache = featureFlagsCache;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
+            this.viewDependencies = viewDependencies;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -173,7 +172,6 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 web3IdentityCache,
                 profileRepository,
-                systemClipboard,
                 webRequestController,
                 profileThumbnailCache,
                 dclInput,
@@ -182,7 +180,8 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 includeUserBlocking,
-                isConnectivityStatusEnabled);
+                isConnectivityStatusEnabled
+                );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
 
@@ -203,7 +202,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache);
+                inputBlock, profileThumbnailCache, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 

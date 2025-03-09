@@ -74,17 +74,18 @@ namespace Global.Tests.PlayMode
                 identityCache,
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
-                false,
+                useRemoteAssetBundles: false,
                 World.Create(),
                 new Entity(),
                 new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
                 new WorldVolumeMacBus(),
-                false,
+                enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
-                ct
+                ct,
+                enableGPUInstancing: false
             );
 
             if (!success)

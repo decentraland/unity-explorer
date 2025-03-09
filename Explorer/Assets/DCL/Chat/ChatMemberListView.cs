@@ -1,3 +1,4 @@
+using DCL.Web3;
 using MVC;
 using SuperScrollView;
 using System;
@@ -17,8 +18,8 @@ namespace DCL.Chat
         {
             public string Id;
             public string Name;
+            public string FaceSnapshotUrl;
             public string WalletId;
-            public Sprite ProfilePicture;
             public ChatMemberConnectionStatus ConnectionStatus;
             public Color ProfileColor;
         }
@@ -33,7 +34,7 @@ namespace DCL.Chat
         [SerializeField]
         private LoopListView2 loopListView;
 
-        private List<MemberData> members = new();
+        private List<MemberData> members = new ();
 
         private ViewDependencies viewDependencies;
         private bool isInitialized;
@@ -58,7 +59,7 @@ namespace DCL.Chat
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
-            this.viewDependencies = dependencies;
+            viewDependencies = dependencies;
         }
 
         /// <summary>
@@ -88,10 +89,10 @@ namespace DCL.Chat
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
             memberItem.Id = members[index].Id;
             memberItem.Name = members[index].Name;
-            memberItem.ProfilePicture = members[index].ProfilePicture;
+            memberItem.SetupProfilePicture(viewDependencies, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].Id);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
-            memberItem.ProfileColor = members[index].ProfileColor;
+            memberItem.NameTextColor = members[index].ProfileColor;
             memberItem.ContextMenuButtonClicked -= OnContextMenuButtonClickedAsync;
             memberItem.ContextMenuButtonClicked += OnContextMenuButtonClickedAsync;
 
@@ -101,7 +102,7 @@ namespace DCL.Chat
         private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition, Action onMenuHide)
         {
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(listItem.Id, buttonPosition.position, contextMenuCts.Token, onMenuHide);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, contextMenuCts.Token, onMenuHide);
         }
     }
 }

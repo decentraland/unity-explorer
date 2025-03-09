@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;

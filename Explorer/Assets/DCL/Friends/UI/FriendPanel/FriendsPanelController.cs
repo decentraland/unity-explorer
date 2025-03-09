@@ -60,7 +60,6 @@ namespace DCL.Friends.UI.FriendPanel
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             DCLInput dclInput,
@@ -83,10 +82,8 @@ namespace DCL.Friends.UI.FriendPanel
                     mvcManager,
                     new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
-                    systemClipboard,
                     friendsConnectivityStatusTracker,
                     includeUserBlocking);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
@@ -95,10 +92,8 @@ namespace DCL.Friends.UI.FriendPanel
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                     mvcManager,
-                    systemClipboard,
                     new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking);
@@ -106,10 +101,8 @@ namespace DCL.Friends.UI.FriendPanel
                 friendsService,
                 friendEventBus,
                 mvcManager,
-                systemClipboard,
                 new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                profileThumbnailCache,
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,

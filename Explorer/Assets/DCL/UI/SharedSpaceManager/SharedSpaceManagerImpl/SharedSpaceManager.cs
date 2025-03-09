@@ -7,7 +7,7 @@ using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
-using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
 using System;
