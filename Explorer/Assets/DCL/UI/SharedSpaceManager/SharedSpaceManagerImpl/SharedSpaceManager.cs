@@ -174,11 +174,6 @@ namespace DCL.UI.SharedSpaceManager
                     }
                 }
             }
-            catch (OperationCanceledException ex2)
-            {
-                isShowing = false;
-                isHiding = false;
-            }
             catch (Exception ex)
 
             {
@@ -197,8 +192,6 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask HideAsync(PanelsSharingSpace panel, object parameters = null)
         {
-            Debug.Log("HIdING: " + panel);
-
             if (!IsRegistered(panel))
                 return;
 
