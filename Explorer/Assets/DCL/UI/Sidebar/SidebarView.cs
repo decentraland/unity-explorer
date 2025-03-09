@@ -5,6 +5,7 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
 using UnityEngine;
@@ -24,8 +25,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; }
         [field: SerializeField] internal GameObject profileMenu { get; private set; }
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; }
-        [field: SerializeField] public Image FaceFrame { get; private set; }
-
 
         [field: Header("Explore Panel Shortcuts")]
         [field: SerializeField] public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }

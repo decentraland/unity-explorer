@@ -11,9 +11,9 @@ namespace MVC
         public event Action? OnViewHidden;
         public event Action? OnViewShown;
 
+        [field: Header("Can be Null")]
         [field: SerializeField] protected Canvas? canvas { get; private set; }
         [field: SerializeField] protected GraphicRaycaster? raycaster { get; private set; }
-
         public void SetDrawOrder(CanvasOrdering order)
         {
             if (canvas != null)

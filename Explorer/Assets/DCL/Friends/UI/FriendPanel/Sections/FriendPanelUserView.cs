@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
