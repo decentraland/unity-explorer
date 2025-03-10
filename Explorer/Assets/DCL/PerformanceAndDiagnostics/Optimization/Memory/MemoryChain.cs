@@ -139,6 +139,8 @@ namespace DCL.Optimization.Memory
 
             private int totalLength;
 
+            private bool disposed;
+
             private ChainStream() { }
 
             public static ChainStream New(in MemoryChain chain)
@@ -162,6 +164,8 @@ namespace DCL.Optimization.Memory
                     instance.totalRead = 0;
 
                     instance.totalLength = chain.TotalLength;
+
+                    instance.disposed = false;
 
                     return instance;
                 }
@@ -268,7 +272,7 @@ namespace DCL.Optimization.Memory
                 {
                     base.Dispose(disposing);
 
-                    if (disposing)
+                    if (disposed)
                         return;
 
                     chain.Dispose();
@@ -278,6 +282,8 @@ namespace DCL.Optimization.Memory
                     slabOffset = 0;
                     totalRead = 0;
                     INSTANCES.Add(this);
+
+                    disposed = true;
                 }
             }
 

@@ -85,6 +85,33 @@ namespace Utility.Tests
             UnsafeUtility.Free(data, Allocator.Persistent);
         }
 
+        [Test]
+        public unsafe void MemoryChainRelease()
+        {
+            const int SIZE = 128 * 1024;
+            using var a = new ThreadSafeSlabAllocator<DynamicSlabAllocator>(new DynamicSlabAllocator(SIZE, 2));
+
+            int count = Random.Range(10, 100);
+            var memoryChain = new MemoryChain(a);
+
+            for (int i = 0; i < count; i++)
+            {
+                int size = Random.Range(10000, 50000);
+                void* data = MemoryChainShould.NewRandomData(size);
+                memoryChain.AppendData(data, size);
+                UnsafeUtility.Free(data, Allocator.Persistent);
+            }
+
+            var stream = memoryChain.ToStream();
+
+            stream.Dispose();
+
+            var info = a.Info;
+
+            Assert.AreEqual(0, info.ChunksInUseCount);
+            Assert.AreEqual(info.AllocatedTimes, info.ReturnedTimes);
+        }
+
         private static unsafe void* NewRandomData(int size)
         {
             void* randomData = UnsafeUtility.Malloc(size, 64, Allocator.Persistent);
