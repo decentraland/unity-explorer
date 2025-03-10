@@ -71,7 +71,7 @@ namespace Utility.Tests
             using var chain = new MemoryChain(a);
             chain.AppendData(span);
 
-            using var second = new MemoryChain(a);
+            var second = new MemoryChain(a);
             using var iterator = chain.AsMemoryIterator();
 
             while (iterator.MoveNext())

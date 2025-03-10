@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
 using DCL.Diagnostics;
 using DCL.Optimization.Memory;
 using DCL.Profiling;
@@ -27,18 +26,18 @@ namespace ECS.StreamableLoading.AssetBundles
             private const string METADATA_FILENAME = "metadata.json";
             private const string METRICS_FILENAME = "metrics.json";
 
-            internal readonly AssetBundle Bundle;
+            internal readonly AssetBundle bundle;
             private readonly Stream stream;
             private bool unloaded;
 
             private InMemoryAssetBundle(AssetBundle bundle, Stream stream)
             {
-                this.Bundle = bundle;
+                this.bundle = bundle;
                 this.stream = stream;
                 unloaded = false;
             }
 
-            public bool IsEmpty => Bundle == null;
+            public bool IsEmpty => bundle == null;
 
             public static async UniTask<InMemoryAssetBundle> NewAsync(MemoryChain memoryChain, string key)
             {
@@ -60,24 +59,25 @@ namespace ECS.StreamableLoading.AssetBundles
 
             public async UniTask UnloadNotAllObjectsAsync()
             {
-                if (Bundle)
+                if (bundle)
                 {
+                    if (unloaded)
+                        return;
+
+                    unloaded = true;
                     await UniTask.SwitchToMainThread();
-                    await Bundle.UnloadAsync(false)!;
+                    await bundle.UnloadAsync(false)!;
                 }
             }
 
             public async UniTask UnloadAsync()
             {
                 if (unloaded)
-                {
-                    ReportHub.LogError(ReportCategory.ASSET_BUNDLES, "Asset bundle already unloaded");
                     return;
-                }
 
                 unloaded = true;
                 await UniTask.SwitchToMainThread();
-                if (Bundle) await Bundle.UnloadAsync(true)!;
+                if (bundle) await bundle.UnloadAsync(true)!;
                 stream.Dispose();
             }
 
@@ -91,8 +91,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
-                    metricsJson = Bundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
-                    metadataJson = Bundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                    metricsJson = bundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
+                    metadataJson = bundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
                 }
 
                 return (metricsJson, metadataJson);
@@ -101,19 +101,17 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly Object? mainAsset;
         private readonly Type? assetType;
-        private readonly InMemoryAssetBundle inMemoryAssetBundle;
+        private readonly InMemoryAssetBundle? inMemoryAssetBundle;
 
         public readonly AssetBundleData[] Dependencies;
 
         public readonly AssetBundleMetrics? Metrics;
 
-        private readonly string description;
+        private readonly string? description;
 
-        private bool unloaded;
-
-        public AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
+        public AssetBundleData(InMemoryAssetBundle? assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
             string version = "", string source = "")
-            : base(assetBundle.Bundle, ReportCategory.ASSET_BUNDLES)
+            : base(assetBundle?.bundle!, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
 
@@ -129,7 +127,7 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <summary>
         ///     Constructor for dependencies (with the unknown asset type)
         /// </summary>
-        internal AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle.Bundle, ReportCategory.ASSET_BUNDLES)
+        internal AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle.bundle, ReportCategory.ASSET_BUNDLES)
         {
             // Dependencies cant be unloaded, since we don't know who will need them =(
             Metrics = metrics;
@@ -140,7 +138,7 @@ namespace ECS.StreamableLoading.AssetBundles
             Dependencies = dependencies;
         }
 
-        public AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
+        public AssetBundleData(InMemoryAssetBundle? assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
             : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies) { }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
@@ -153,9 +151,7 @@ namespace ECS.StreamableLoading.AssetBundles
         //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
         internal void UnloadAB()
         {
-            if (unloaded) return;
-            unloaded = true;
-            inMemoryAssetBundle.UnloadNotAllObjectsAsync().Forget();
+            inMemoryAssetBundle?.UnloadNotAllObjectsAsync().Forget();
         }
 
         protected override void DestroyObject()
@@ -166,7 +162,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (mainAsset != null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            inMemoryAssetBundle.UnloadAsync().Forget();
+            inMemoryAssetBundle?.UnloadAsync().Forget();
         }
 
         public T GetMainAsset<T>() where T: Object
@@ -180,6 +176,6 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public string GetInstanceName() =>
-            description;
+            description ?? string.Empty;
     }
 }

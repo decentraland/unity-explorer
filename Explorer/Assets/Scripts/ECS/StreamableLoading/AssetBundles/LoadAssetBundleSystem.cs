@@ -140,10 +140,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 //All gameobject asset bundles should at least have the dependency on the shader.
                 //This will cause a material leak, as the same material will be loaded again. This needs to be solved at asset bundle level
                 if (dependencies.Length == 0)
-                    throw new AssetBundleContainsShaderException(inMemoryAssetBundle.Bundle.name);
+                    throw new AssetBundleContainsShaderException(inMemoryAssetBundle.bundle.name);
             }
 
-            Object? asset = await LoadAllAssetsAsync(inMemoryAssetBundle.Bundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
+            Object? asset = await LoadAllAssetsAsync(inMemoryAssetBundle.bundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
             var assetBundleData = new AssetBundleData(inMemoryAssetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,

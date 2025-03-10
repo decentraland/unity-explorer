@@ -124,7 +124,7 @@ namespace ECS.StreamableLoading.Common.Systems
                         //TODO implement reference counting to avoid copying
                         // without copying it causes crash due some race condition
                         var copy = partialState.DeepCopy();
-                        PutToDisk(diskHashKey.Value, copy, ct).Forget();
+                        PutToDiskAsync(diskHashKey.Value, copy, ct).Forget();
                     }
 
                     state.SetChunkData(partialState);
@@ -151,7 +151,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         /// Takes the copy and puts it to disk without blocking the main load flow
         /// </summary>
-        private async UniTaskVoid PutToDisk(HashKey diskHashKey, PartialLoadingState copy, CancellationToken ct)
+        private async UniTaskVoid PutToDiskAsync(HashKey diskHashKey, PartialLoadingState copy, CancellationToken ct)
         {
             await partialDiskCache.PutAsync(diskHashKey, PARTIALS_FILES_EXTENSION, copy, ct);
             copy.TransferMemoryOwnership().Dispose();
