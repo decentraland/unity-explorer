@@ -34,6 +34,9 @@ namespace DCL.MarketplaceCredits
         public GameObject CaptchaContainer { get; private set; }
 
         [field: SerializeField]
+        public MarketplaceCreditsCaptchaView CaptchaControl { get; private set; }
+
+        [field: SerializeField]
         public MarketplaceCreditsGoalRowView GoalRowPrefab { get; private set; }
 
         public void SetAsLoading(bool isLoading)
@@ -53,9 +56,13 @@ namespace DCL.MarketplaceCredits
         {
             TotalCreditsText.text = "-";
             TimeLeftText.text = "-";
+            CaptchaControl.SetCaptchaValue(0f);
         }
 
         public void ShowCaptcha(bool show) =>
             CaptchaContainer.SetActive(show);
+
+        public void SetCaptchaTargetValue(float value) =>
+            CaptchaControl.SetTargetAreaValue(value);
     }
 }

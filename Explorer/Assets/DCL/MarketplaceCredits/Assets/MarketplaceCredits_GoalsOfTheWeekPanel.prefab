@@ -1286,6 +1286,7 @@ MonoBehaviour:
   <MainLoadingContainer>k__BackingField: {fileID: 3550911463415723755}
   <GoalsContainer>k__BackingField: {fileID: 5699006330021557838}
   <CaptchaContainer>k__BackingField: {fileID: 4803315691261139444}
+  <CaptchaControl>k__BackingField: {fileID: 7279172496388326305}
   <GoalRowPrefab>k__BackingField: {fileID: 789829308341211883, guid: 09d58514bbbc1824cab2f4d741a03dc3, type: 3}
 --- !u!114 &3013161098313264346
 MonoBehaviour:
@@ -2405,6 +2406,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7279172496388326305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8030764196251620914, guid: 0b08133b1173a2245811ea3160c99af6, type: 3}
+  m_PrefabInstance: {fileID: 754302004683462035}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352018022483823611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3653e7311371400aba6917ce64c3ffad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &7518112504696587648 stripped
