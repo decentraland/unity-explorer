@@ -8,6 +8,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;

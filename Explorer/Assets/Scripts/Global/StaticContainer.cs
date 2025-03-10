@@ -41,12 +41,15 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
+using DCL.Rendering.GPUInstancing;
+using DCL.Roads.GPUInstancing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.Dynamic.LaunchModes;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
+using SceneRunner.Mapping;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -107,6 +110,8 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
+        public GPUInstancingService GPUInstancingService { get; private set; }
+
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
 
@@ -117,6 +122,7 @@ namespace Global
             QualityContainer.Dispose();
             Profiler.Dispose();
             texturesFuse.Dispose();
+            SceneRestrictionBusController.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -152,7 +158,8 @@ namespace Global
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
 
@@ -213,8 +220,8 @@ namespace Global
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
-            var buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
-            var textureDiskCache = new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer());
+            ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
+            var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode);
 
@@ -225,6 +232,16 @@ namespace Global
                 if (container.ScenesCache.CurrentScene != null)
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
+
+            var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
+            {
+                container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
+                renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
+            }
+            else
+                ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
+
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 

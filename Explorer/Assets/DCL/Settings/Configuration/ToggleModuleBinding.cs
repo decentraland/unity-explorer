@@ -30,6 +30,7 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
+            ChatAudioSettingsAsset chatAudioSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
@@ -38,7 +39,6 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
                                                    {
-                                                       ToggleFeatures.CHAT_SOUNDS_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer),
                                                        ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))

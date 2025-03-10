@@ -33,14 +33,22 @@ namespace CrdtEcsBridge.RestrictedActions
             this.messageBus = messageBus;
         }
 
-        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
+        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
         {
-            // Move player to new position (through InterpolateCharacterSystem -> TeleportPlayerQuery)
+            // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero, CancellationToken.None));
 
-            // Rotate player to look at camera target (through RotateCharacterSystem -> ForceLookAtQuery)
-            if (newCameraTarget != null)
+            // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
+            if (newAvatarTarget != null)
+            {
+                Vector3 lookAtDirection = newAvatarTarget.Value - newPlayerPosition;
+                lookAtDirection.y = 0;
+                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
+            }
+            else if (newCameraTarget != null)
+            {
                 world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
+            }
         }
 
         public void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)

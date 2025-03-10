@@ -1,0 +1,4 @@
+{
+	"name": "SceneRunner.Debugging.WorldInfo",
+	"references":[ "GUID:3640f3c0b42946b0b8794a1ed8e06ca5", "GUID:c80c82a8f4e04453b85fbab973d6774a", "GUID:9e0c19936e9bd53478e7870b4785f0ee", "GUID:fa7b3fdbb04d67549916da7bd2af58ab" ]
+}

@@ -11,6 +11,6 @@ namespace Global.Dynamic
     {
         [field: SerializeField] public List<string> Realms { get; private set; }
         [field: SerializeField] public List<string> Web3WhitelistMethods { get; private set; }
-
+        [field: SerializeField] public List<string> Web3ReadOnlyMethods { get; private set; }
     }
 }

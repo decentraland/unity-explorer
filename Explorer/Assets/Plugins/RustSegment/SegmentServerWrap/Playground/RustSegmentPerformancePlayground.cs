@@ -42,7 +42,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
                 net = new SegmentAnalyticsService(new Configuration(key));
 #pragma warning restore CS0618
             if (mode is Mode.Rust)
-                rust = new RustSegmentAnalyticsService(key);
+                rust = new RustSegmentAnalyticsService(key, null);
         }
 
         private async UniTaskVoid TrackAsync(CancellationToken token)

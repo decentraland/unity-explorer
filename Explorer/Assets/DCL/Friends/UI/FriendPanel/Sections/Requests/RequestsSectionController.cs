@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
@@ -21,7 +20,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IPassportBridge passportBridge;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private FriendProfile? lastClickedProfileCtx;
@@ -32,18 +30,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
-            ISystemClipboard systemClipboard,
             RequestsRequestManager requestManager,
             IPassportBridge passportBridge,
-            IProfileThumbnailCache profileThumbnailCache,
             bool includeUserBlocking)
             : base(view, friendsService, friendEventBus, mvcManager, requestManager)
         {
             this.passportBridge = passportBridge;
-            this.profileThumbnailCache = profileThumbnailCache;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!)), includeUserBlocking));
@@ -155,9 +150,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             lastClickedProfileCtx = friendProfile;
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                view.ChatEntryConfiguration.GetNameColor(friendProfile.Name),
+                friendProfile.UserNameColor,
                 elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
+                friendProfile.FacePictureUrl);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                 actionOnHide: () => elementView.CanUnHover = true,

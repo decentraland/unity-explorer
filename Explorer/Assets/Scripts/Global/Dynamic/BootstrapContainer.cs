@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
@@ -161,16 +162,8 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
-                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, container.ApplicationParametersParser, ct);
-
-                appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
-                appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
-
-                LauncherTraits launcherTraits = new LauncherTraits
-                {
-                    LauncherAnonymousId = launcherAnonymousId!,
-                    SessionId = sessionId!,
-                };
+                LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
+                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, launcherTraits, container.ApplicationParametersParser, ct);
 
                 var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData, dclVersion);
                 var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
@@ -181,53 +174,51 @@ namespace Global.Dynamic
             return (coreBootstrap, IAnalyticsController.Null);
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, IAppArgs args, CancellationToken token)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, CancellationToken token)
         {
             // Force segment in release
             if (!args.HasDebugFlag())
-                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token);
+                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token),
+                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token),
                        AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
                        AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 
-        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, CancellationToken token)
+        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, CancellationToken token)
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!)
-                      .WithCountFlush(analyticsConfig.FlushSize)
-                      .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
+                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
+                   .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
             // Fall back to debug if segment is not configured
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
             return new DebugAnalyticsService();
         }
 
-        private static (
-            IVerifiedEthereumApi web3VerifiedAuthenticator,
-            IWeb3VerifiedAuthenticator web3Authenticator
-            )
+        private static (IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
                 IWeb3IdentityCache identityCache,
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
-                IDecentralandUrlsSource decentralandUrlsSource
-            )
+                IDecentralandUrlsSource decentralandUrlsSource)
         {
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
-                decentralandUrlsSource.Url(DecentralandUrl.ApiAuth),
-                decentralandUrlsSource.Url(DecentralandUrl.AuthSignature),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
                 identityCache,
                 web3AccountFactory,
-                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods)
+                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+                decentralandUrlsSource.Environment
             );
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);

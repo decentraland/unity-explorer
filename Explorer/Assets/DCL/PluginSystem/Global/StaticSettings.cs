@@ -48,7 +48,9 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
-        [field: SerializeField] public int WebRequestsBudget { get; private set; } = 20;
+        [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
+        [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>

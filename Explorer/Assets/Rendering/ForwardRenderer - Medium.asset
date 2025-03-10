@@ -20,6 +20,24 @@ MonoBehaviour:
     enable: 0
     range: 250
     cellSize: 0.25
+--- !u!114 &-2161158766388826272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff2a98f790a0453da51b245c6caf70c3, type: 3}
+  m_Name: GPUInstancingRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  m_Settings:
+    FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
+    IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
+    DrawArgsInstanceCountTransferComputeShader: {fileID: 7200000, guid: 1581f9e286d943f4aa378de7282cd920, type: 3}
+    MaxDistanceScaleFactor: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41,7 +59,8 @@ MonoBehaviour:
   - {fileID: 3276125648839237000}
   - {fileID: 2152243025009476847}
   - {fileID: 1798844783772877419}
-  m_RendererFeatureMap: 228dedc75e290e946f167000f309a32688dd9b82eb22772def8400d0a04dde1d6bc2d8d6ccc7f618
+  - {fileID: -2161158766388826272}
+  m_RendererFeatureMap: 228dedc75e290e946f167000f309a32688dd9b82eb22772def8400d0a04dde1d6bc2d8d6ccc7f618602f2c628d0502e2
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}

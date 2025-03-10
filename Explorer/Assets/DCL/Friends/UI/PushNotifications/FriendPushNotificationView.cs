@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
@@ -19,7 +18,6 @@ namespace DCL.Friends.UI.PushNotifications
         [field: SerializeField] public TMP_Text UserAddressText { get; private set; }
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
         [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; }
-        [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
 
         [field:Header("Toast Animation")]
         [field: SerializeField] public float toastFadeInDuration = 0.3f;
@@ -41,7 +39,7 @@ namespace DCL.Friends.UI.PushNotifications
 
         internal void ConfigureForFriend(FriendProfile friendProfile, Sprite? profileThumbnail)
         {
-            Color userColor = ChatEntryConfiguration.GetNameColor(friendProfile.Name);
+            Color userColor = friendProfile.UserNameColor;
             ThumbnailBackground.color = userColor;
             UserNameText.color = userColor;
 

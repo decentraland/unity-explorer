@@ -67,24 +67,25 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, false),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, 1000, false),
                 ITexturesFuse.NewTestInstance(),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
-                false,
+                useRemoteAssetBundles: false,
                 World.Create(),
                 new Entity(),
                 new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
                 new WorldVolumeMacBus(),
-                false,
+                enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
-                ct
+                ct,
+                enableGPUInstancing: false
             );
 
             if (!success)

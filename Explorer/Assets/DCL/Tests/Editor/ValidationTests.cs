@@ -27,7 +27,7 @@ namespace DCL.Tests.Editor
 
         private readonly string[] excludedFolders = { "Editor", "Stylized Grass Shader" };
         private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs" };
-        private readonly string[] fileNameExclusionKeywords = { "Test", "Sentry" };
+        private readonly string[] fileNameExclusionKeywords = { "Playground", "Test", "Sentry" };
 
         private readonly IReadOnlyCollection<string> pathIgnores = new List<string>
         {
