@@ -14,6 +14,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
@@ -49,10 +50,24 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId);
-            if (!result.Success) return;
+            AvatarBase avatarBase;
 
-            AvatarAttachComponent component = AvatarAttachUtils.GetAnchorPointTransform(pbAvatarAttach.AnchorPointId, result.Result);
+            if (string.IsNullOrEmpty(pbAvatarAttach.AvatarId))
+            {
+                avatarBase = mainPlayerAvatarBaseProxy.Object!;
+            }
+            else
+            {
+                LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId);
+                if (!result.Success)
+                {
+                    ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId} for entity {entity}");
+                    return;
+                }
+                avatarBase = result.Result;
+            }
+
+            AvatarAttachComponent component = AvatarAttachUtils.GetAnchorPointTransform(pbAvatarAttach.AnchorPointId, avatarBase);
 
             AvatarAttachUtils.ApplyAnchorPointTransformValues(transformComponent, component);
             transformComponent.UpdateCache();

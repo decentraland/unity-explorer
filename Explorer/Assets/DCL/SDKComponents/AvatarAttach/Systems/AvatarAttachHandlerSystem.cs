@@ -14,6 +14,7 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
@@ -68,7 +69,10 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             {
                 AvatarBase? avatarBase = null;
 
-                if (string.IsNullOrEmpty(pbAvatarAttach.AvatarId)) { avatarBase = mainPlayerAvatarBaseProxy.Object!; }
+                if (string.IsNullOrEmpty(pbAvatarAttach.AvatarId))
+                {
+                    avatarBase = mainPlayerAvatarBaseProxy.Object!;
+                }
                 else
                 {
                     LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId);
@@ -77,18 +81,36 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                         avatarBase = result.Result;
                     else
                     {
+                        ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId}");
                         transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
                         return;
                     }
                 }
 
-                avatarAttachComponent = AvatarAttachUtils.GetAnchorPointTransform(pbAvatarAttach.AnchorPointId,
-                    avatarBase
-                );
+                try
+                {
+                    avatarAttachComponent = AvatarAttachUtils.GetAnchorPointTransform(pbAvatarAttach.AnchorPointId,
+                        avatarBase
+                    );
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Error getting anchor point transform: {ex.Message}");
+                    transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
+                    return;
+                }
             }
 
-            if (AvatarAttachUtils.ApplyAnchorPointTransformValues(transformComponent, avatarAttachComponent))
-                transformComponent.UpdateCache();
+            try
+            {
+                if (AvatarAttachUtils.ApplyAnchorPointTransformValues(transformComponent, avatarAttachComponent))
+                    transformComponent.UpdateCache();
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Error applying anchor point transform values: {ex.Message}");
+                transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
+            }
         }
 
         [Query]
