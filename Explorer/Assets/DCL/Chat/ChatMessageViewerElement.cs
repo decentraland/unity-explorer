@@ -23,7 +23,6 @@ namespace DCL.Chat
     {
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
-        public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
 
         /// <summary>
         /// The prefab to use when instantiating a new item.

@@ -111,6 +111,7 @@ GameObject:
   - component: {fileID: 9158259766351833083}
   - component: {fileID: 4245113296482900967}
   - component: {fileID: 1178520590754626081}
+  - component: {fileID: 3456175066332570696}
   m_Layer: 5
   m_Name: ChatTitlebarDefault
   m_TagString: Untagged
@@ -177,6 +178,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!225 &3456175066332570696
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1335492148165115527}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3213436673144109913
 GameObject:
   m_ObjectHideFlags: 0

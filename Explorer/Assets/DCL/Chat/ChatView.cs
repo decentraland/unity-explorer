@@ -59,18 +59,10 @@ namespace DCL.Chat
         [SerializeField]
         private CanvasGroup panelBackgroundCanvasGroup;
 
-        [FormerlySerializedAs("CloseChatButton")]
-        [SerializeField]
-        private Button closeChatButton;
-
-        [SerializeField]
-        private Button closeMemberListButton;
-
         [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
 
-        [SerializeField]
-        private Button memberListButton;
+        [SerializeField] private ChatTitleBarView chatTitleBar;
 
         [SerializeField]
         private TMP_Text memberListNumberText;
@@ -80,18 +72,6 @@ namespace DCL.Chat
 
         [SerializeField]
         private ChatMemberListView memberListView;
-
-        [SerializeField]
-        private Button memberListOpeningButton;
-
-        [SerializeField]
-        private Button memberListClosingButton;
-
-        [SerializeField]
-        private GameObject defaultChatTitlebar;
-
-        [SerializeField]
-        private GameObject memberListTitlebar;
 
         [SerializeField]
         private GameObject chatPanel;
@@ -331,10 +311,13 @@ namespace DCL.Chat
         )
         {
             this.channels = chatChannels;
-            closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
-            closeMemberListButton.onClick.AddListener(OnCloseChatButtonClicked);
-            memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
-            memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
+            chatTitleBar.Initialize();
+            chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
+            chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
+            chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
+            chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
+
+
             chatMessageViewer.Initialize();
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
@@ -661,8 +644,7 @@ namespace DCL.Chat
 
         private void OnMemberListViewVisibilityChanged(bool isVisible)
         {
-            memberListTitlebar.gameObject.SetActive(isVisible);
-            defaultChatTitlebar.gameObject.SetActive(!isVisible);
+            chatTitleBar.ChangeTitleBarVisibility(isVisible);
             chatPanel.SetActive(!isVisible);
             chatInputBox.gameObject.SetActive(!isVisible);
 
