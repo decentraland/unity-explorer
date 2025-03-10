@@ -35,6 +35,7 @@ namespace DCL.Chat
             Padding,
             SystemChatEntry,
             Separator,
+            BlockedUser,
         }
 
         /// <summary>
@@ -317,6 +318,8 @@ namespace DCL.Chat
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
+                else if (viewDependencies.UserBlockingCacheProxy.Configured && viewDependencies.UserBlockingCacheProxy.Object!.UserIsBlocked(itemData.WalletAddress))
+                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
                     item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
