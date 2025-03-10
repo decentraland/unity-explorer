@@ -60,7 +60,7 @@ namespace DCL.Chat.MessageBus
             using (receivedMessage)
             {
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
-                    || (userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(receivedMessage.FromWalletId)))
+                    || (userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(receivedMessage.FromWalletId)))
                     return;
 
                 Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);

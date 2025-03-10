@@ -691,7 +691,8 @@ namespace Global.Dynamic
                     explorePanelNavmapBus,
                     includeCameraReel,
                     appArgs,
-                    viewDependencies
+                    viewDependencies,
+                    userBlockingCacheProxy
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

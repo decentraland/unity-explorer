@@ -21,6 +21,7 @@ namespace DCL.Friends
 
         public ReadOnlyHashSet<string> BlockedUsers { get; }
         public ReadOnlyHashSet<string> BlockedByUsers { get; }
+        public bool HideChatMessages { get; set; }
 
         public UserBlockingCache(IFriendsService friendsService,
             IFriendsEventBus eventBus,

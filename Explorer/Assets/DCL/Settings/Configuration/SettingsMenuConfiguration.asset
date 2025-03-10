@@ -14,7 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
   <GeneralSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField: []
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: Chat
+      <Modules>k__BackingField:
+      - rid: 7563415379946504194
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Graphics Quality
@@ -257,6 +260,16 @@ MonoBehaviour:
           - 144
           defaultOptionIndex: 0
         <Feature>k__BackingField: 5
+    - rid: 7563415379946504194
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Hide blocked users chat messages
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 2
     - rid: 7621844939572510720
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
