@@ -57,27 +57,14 @@ namespace ECS.StreamableLoading.AssetBundles
             public static InMemoryAssetBundle FromAssetBundle(AssetBundle assetBundle) =>
                 new (assetBundle, Stream.Null!);
 
-            public async UniTask UnloadNotAllObjectsAsync()
-            {
-                if (bundle)
-                {
-                    if (unloaded)
-                        return;
-
-                    unloaded = true;
-                    await UniTask.SwitchToMainThread();
-                    await bundle.UnloadAsync(false)!;
-                }
-            }
-
-            public async UniTask UnloadAsync()
+            public async UniTask UnloadAsync(bool unloadAllLoadedObjects)
             {
                 if (unloaded)
                     return;
 
                 unloaded = true;
                 await UniTask.SwitchToMainThread();
-                if (bundle) await bundle.UnloadAsync(true)!;
+                if (bundle) await bundle.UnloadAsync(unloadAllLoadedObjects)!;
                 stream.Dispose();
             }
 
@@ -149,10 +136,8 @@ namespace ECS.StreamableLoading.AssetBundles
         //Very hacky, because the asset will remain in cache as AssetBundle == null
         //When DestroyObject is invoked, it will do nothing.
         //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
-        internal void UnloadAB()
-        {
-            inMemoryAssetBundle?.UnloadNotAllObjectsAsync().Forget();
-        }
+        internal UniTask UnloadABAsync() =>
+            inMemoryAssetBundle?.UnloadAsync(false) ?? UniTask.CompletedTask;
 
         protected override void DestroyObject()
         {
@@ -162,7 +147,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (mainAsset != null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            inMemoryAssetBundle?.UnloadAsync().Forget();
+            inMemoryAssetBundle?.UnloadAsync(true).Forget();
         }
 
         public T GetMainAsset<T>() where T: Object
