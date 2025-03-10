@@ -24,6 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         public event Action<FriendRequest>? DeleteRequestClicked;
         public event Action<FriendRequest>? AcceptRequestClicked;
+        public event Action<FriendRequest>? CancelRequestClicked;
         public event Action<FriendProfile, Vector2, RequestUserView>? ContextMenuClicked;
         public event Action<FriendRequest>? RequestClicked;
 
@@ -144,6 +145,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
                 elementView.AcceptButton.onClick.RemoveAllListeners();
                 elementView.AcceptButton.onClick.AddListener(() => AcceptRequestClicked?.Invoke(receivedRequests[collectionIndex]));
+            }
+            else
+            {
+                elementView.CancelButton.onClick.RemoveAllListeners();
+                elementView.CancelButton.onClick.AddListener(() => CancelRequestClicked?.Invoke(sentRequests[collectionIndex]));
             }
 
             elementView.SafelyResetMainButtonListeners();

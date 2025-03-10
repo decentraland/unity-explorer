@@ -46,6 +46,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
+            requestManager.CancelRequestClicked += CancelRequestClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.RequestClicked += RequestClicked;
 
@@ -64,6 +65,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             base.Dispose();
             requestManager.DeleteRequestClicked -= DeleteRequestClicked;
             requestManager.AcceptRequestClicked -= AcceptRequestClicked;
+            requestManager.CancelRequestClicked -= CancelRequestClicked;
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.RequestClicked -= RequestClicked;
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
@@ -137,6 +139,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 try
                 {
                     await friendsService.RejectFriendshipAsync(request.From.Address, ct);
+                }
+                catch(Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+            }
+        }
+
+        private void CancelRequestClicked(FriendRequest request)
+        {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+
+            CancelFriendshipAsync(friendshipOperationCts.Token).Forget();
+
+            async UniTaskVoid CancelFriendshipAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await friendsService.CancelFriendshipAsync(request.To.Address, ct);
                 }
                 catch(Exception e)
                 {
