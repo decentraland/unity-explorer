@@ -1,4 +1,5 @@
 ﻿using DCL.Optimization.Memory;
+using DCL.Utilities.Extensions;
 using System;
 
 namespace ECS.StreamableLoading.Common.Components
@@ -6,7 +7,7 @@ namespace ECS.StreamableLoading.Common.Components
     public struct PartialLoadingState
     {
         public readonly int FullFileSize;
-        private MemoryChain memoryOwner;
+        private MemoryChain? memoryOwner;
 
         public PartialLoadingState(int fullFileSize, bool isFileFullyDownloaded = false)
         {
@@ -18,7 +19,8 @@ namespace ECS.StreamableLoading.Common.Components
 
         public PartialLoadingState(in PartialLoadingState otherInstance, bool isFileFullyDownloaded = false) : this(otherInstance.FullFileSize, isFileFullyDownloaded)
         {
-            memoryOwner.AppendData(otherInstance.memoryOwner);
+            if (otherInstance.memoryOwner != null)
+                memoryOwner!.AppendData(otherInstance.memoryOwner);
         }
 
         public int NextRangeStart { get; private set; }
@@ -30,33 +32,36 @@ namespace ECS.StreamableLoading.Common.Components
 
         internal void AppendData(ReadOnlySpan<byte> data)
         {
-            memoryOwner.AppendData(data);
+            memoryOwner.EnsureNotNull().AppendData(data);
             NextRangeStart += data.Length;
             IsFileFullyDownloaded = IsFullyLoaded();
         }
 
-        internal MemoryChain PeekMemory() =>
-            memoryOwner;
+        internal readonly MemoryChain PeekMemory() =>
+            memoryOwner.EnsureNotNull();
 
         /// <summary>
         ///     When the memory ownership is transferred, the responsibility to dispose of the memory will be on the external caller
         /// </summary>
         internal MemoryChain TransferMemoryOwnership()
         {
+            if (memoryOwner == null)
+                throw new InvalidOperationException("Memory owner is null");
+
             var memoryOwnerToReturn = memoryOwner;
-            memoryOwner = MemoryChain.EMPTY;
+            memoryOwner = null;
             return memoryOwnerToReturn;
         }
 
-        public PartialLoadingState DeepCopy() =>
+        public readonly PartialLoadingState DeepCopy() =>
             new (this, IsFileFullyDownloaded);
 
         public readonly ChainMemoryIterator AsIterator() =>
-            memoryOwner.AsMemoryIterator();
+            memoryOwner.EnsureNotNull().AsMemoryIterator();
 
-        public void Dispose()
+        public readonly void Dispose()
         {
-            memoryOwner.Dispose();
+            memoryOwner?.Dispose();
         }
     }
 }
