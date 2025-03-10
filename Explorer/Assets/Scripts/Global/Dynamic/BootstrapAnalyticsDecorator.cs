@@ -16,6 +16,7 @@ using Segment.Serialization;
 using System.Threading;
 using DCL.FeatureFlags;
 using Global.Versioning;
+using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -59,7 +60,8 @@ namespace Global.Dynamic
             CancellationToken ct
         )
         {
-            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, scenesUIRoot, ct);
+            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, scenesUIRoot, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 

@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
@@ -102,7 +103,6 @@ namespace DCL.UI.HyperlinkHandler
             linkHandlers.Add(HyperlinkConstants.PROFILE, HandleUserLink);
         }
 
-        // Expected format is "linkType=linkValue"
         private void ProcessLink(string linkType, string linkValue)
         {
             if (linkHandlers.TryGetValue(linkType, out Action<string> linkHandler))
@@ -116,7 +116,7 @@ namespace DCL.UI.HyperlinkHandler
             if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 url = "https://" + url;
 
-            OpenUrlAsync(url, cancellationTokenSource.Token).Forget();
+            OpenUrlAsync(URLAddress.FromString(url), cancellationTokenSource.Token).Forget();
         }
 
         private void HandleWorldLink(string sceneName)
@@ -135,7 +135,6 @@ namespace DCL.UI.HyperlinkHandler
         {
             OpenUserProfileContextMenuAsync(userName.Substring(1)).Forget();
         }
-
 
         private Vector2 GetLastCharacterPosition(TMP_LinkInfo linkInfo)
         {
@@ -156,7 +155,7 @@ namespace DCL.UI.HyperlinkHandler
             await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
         }
 
-        private async UniTaskVoid OpenUrlAsync(string url, CancellationToken ct) =>
+        private async UniTaskVoid OpenUrlAsync(URLAddress url, CancellationToken ct) =>
             await viewDependencies.GlobalUIViews.ShowExternalUrlPromptAsync(url, ct);
 
         private async UniTaskVoid TeleportAsync(Vector2Int coords, CancellationToken ct)

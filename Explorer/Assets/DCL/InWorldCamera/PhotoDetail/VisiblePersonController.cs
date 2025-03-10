@@ -29,7 +29,6 @@ namespace DCL.InWorldCamera.PhotoDetail
     public class VisiblePersonController : IDisposable
     {
         internal readonly VisiblePersonView view;
-        private readonly ImageController imageController;
         private readonly IProfileRepository profileRepository;
         private readonly IMVCManager mvcManager;
         private readonly IWearableStorage wearableStorage;
@@ -37,6 +36,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
+        private readonly ViewDependencies viewDependencies;
 
         private VisiblePerson? visiblePerson;
         private bool isShowingWearables;
@@ -44,13 +44,13 @@ namespace DCL.InWorldCamera.PhotoDetail
         private CancellationTokenSource loadWearablesCts = new();
 
         public VisiblePersonController(VisiblePersonView view,
-            IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             IPassportBridge passportBridge,
-            PhotoDetailPoolManager photoDetailPoolManager)
+            PhotoDetailPoolManager photoDetailPoolManager,
+            ViewDependencies viewDependencies)
         {
             this.view = view;
             this.profileRepository = profileRepository;
@@ -59,8 +59,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.wearablesProvider = wearablesProvider;
             this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
+            this.viewDependencies = viewDependencies;
 
-            this.imageController = new ImageController(view.profileImage, webRequestController);
             this.view.userProfileButton.onClick.AddListener(ShowPersonPassportClicked);
             this.view.expandWearableButton.onClick.AddListener(WearableListButtonClicked);
         }
@@ -82,19 +82,17 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
+
             if (profile is not null)
+            {
                 view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
+                view.profilePictureView.SetupWithDependencies(viewDependencies, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress);
+            }
             else
+            {
                 view.userNameTag.gameObject.SetActive(false);
-
-            view.faceFrame.color = userColor;
-            userColor.r += 0.3f;
-            userColor.g += 0.3f;
-            userColor.b += 0.3f;
-            view.faceRim.color = userColor;
-
-            //Check: ProfileWidgetController.cs @ line 68
-            // await imageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+                view.profilePictureView.SetupOnlyColor(userColor);
+            }
         }
 
         public void Release()

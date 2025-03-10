@@ -13,7 +13,7 @@ namespace DCL.LOD
 {
     public class RoadAssetsPool : IRoadAssetPool, IDisposable
     {
-        private const string DEFAULT_ROAD_KEY = "OpenRoad_0";
+        public const string DEFAULT_ROAD_KEY = "OpenRoad_0";
 
         /// <summary>
         /// The amount of instances of each type of road asset that will be created from the beginning in the pools.
