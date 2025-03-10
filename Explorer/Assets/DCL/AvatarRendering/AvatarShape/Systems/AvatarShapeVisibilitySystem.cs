@@ -22,15 +22,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private Plane[] planes;
 
         private GameObject playerCamera;
-        private readonly float ditheringLimit;
 
-        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature, float startFadeDithering) : base(world)
+        private readonly float startFadeDithering;
+        private readonly float endFadeDithering;
+
+        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering) : base(world)
         {
             this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
             planes = new Plane[6];
 
-            //Add a small delta to be able to avoid rounding problems
-            ditheringLimit = startFadeDithering + 0.1f;
+            this.startFadeDithering = startFadeDithering;
+            this.endFadeDithering = endFadeDithering;
         }
 
         public override void Initialize()
@@ -93,21 +95,21 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
+        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
 
-            if (currentDistance <= ditheringLimit)
+            if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
                 skinningComponent.SetFadingDistance(currentDistance);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
+        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             float currentDistance = (avatarBase.HeadAnchorPoint.position - playerCamera.transform.position).magnitude;
 
-            if (currentDistance <= ditheringLimit)
+            if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
                 skinningComponent.SetFadingDistance(currentDistance);
         }
 
