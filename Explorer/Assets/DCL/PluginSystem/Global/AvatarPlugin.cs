@@ -215,19 +215,26 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
-            ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
+            Material toonMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct)).Value;
+            Material faceFeatureMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct)).Value;
+
+#if UNITY_EDITOR
+
+            //Avoid generating noise in editor git by creating a copy of the material
+            toonMaterial = new Material(toonMaterial);
+            faceFeatureMaterial = new Material(faceFeatureMaterial);
+#endif
 
             //Set initial dither properties obtained through settings
-            toonMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
-            faceFeatureMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
 
-            toonMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_END_PARAM_ID, endFadeDistanceDithering);
-            faceFeatureMaterial.Value.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_END_PARAM_ID, endFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
 
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
-                toonMaterial.Value, faceFeatureMaterial.Value
+                toonMaterial, faceFeatureMaterial,
             }, settings.defaultMaterialCapacity, textureArrayContainerFactory);
         }
 

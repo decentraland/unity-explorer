@@ -440,11 +440,11 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnableGeometricSpecularAA: 0
-    - _EndFadeDistance: 0.8
+    - _EndFadeDistance: 0
     - _EnergyConservingSpecularColor: 1
     - _EnvironmentReflections: 1
     - _FadeDirection: 0
-    - _FadeDistance: 1
+    - _FadeDistance: 0
     - _FadeThickness: 5
     - _Farthest_Distance: 100
     - _FirstShadeOverridden: 0
@@ -564,7 +564,7 @@ Material:
     - _SpecularRampOuterMin: 0.702
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _StartFadeDistance: 2
+    - _StartFadeDistance: 0
     - _StencilComp: 0
     - _StencilMode: 0
     - _StencilNo: 1
