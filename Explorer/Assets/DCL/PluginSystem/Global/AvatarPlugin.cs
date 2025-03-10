@@ -232,6 +232,10 @@ namespace DCL.PluginSystem.Global
             toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_END_PARAM_ID, endFadeDistanceDithering);
             faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
 
+            //Default should be visible
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
                 toonMaterial, faceFeatureMaterial,

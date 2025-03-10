@@ -444,7 +444,6 @@ Material:
     - _EnergyConservingSpecularColor: 1
     - _EnvironmentReflections: 1
     - _FadeDirection: 0
-    - _FadeDistance: 0
     - _FadeThickness: 5
     - _Farthest_Distance: 100
     - _FirstShadeOverridden: 0
