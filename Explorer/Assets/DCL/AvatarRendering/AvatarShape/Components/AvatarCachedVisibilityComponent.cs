@@ -27,6 +27,11 @@
 
             return false;
         }
+
+        public void ResetDitherState()
+        {
+            currentDitherState = DITHER_STATE.UNINITIALIZED;
+        }
     }
 
     public enum DITHER_STATE

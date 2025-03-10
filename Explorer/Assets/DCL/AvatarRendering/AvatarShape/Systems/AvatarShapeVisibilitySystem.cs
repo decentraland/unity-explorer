@@ -95,8 +95,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent, ref AvatarCachedVisibilityComponent avatarCachedVisibility, ref AvatarShapeComponent avatarShapeComponent)
         {
+            if (avatarShapeComponent.IsDirty)
+            {
+                avatarCachedVisibility.ResetDitherState();
+                return;
+            }
+
             float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
 
             if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
@@ -105,8 +111,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase, ref AvatarCachedVisibilityComponent avatarCachedVisibility, ref AvatarShapeComponent avatarShapeComponent)
         {
+            if (avatarShapeComponent.IsDirty)
+            {
+                avatarCachedVisibility.ResetDitherState();
+                return;
+            }
+
             float currentDistance = (avatarBase.HeadAnchorPoint.position - playerCamera.transform.position).magnitude;
 
             if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
