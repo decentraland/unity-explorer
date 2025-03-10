@@ -76,6 +76,8 @@ namespace DCL.UI.ProfileNames
                 claimedConfig.saveButton.interactable = i != -1;
             });
 
+            claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrl(url);
+
             return;
 
             void Initialize(ProfileNameEditorView.NonClaimedNameConfig config)

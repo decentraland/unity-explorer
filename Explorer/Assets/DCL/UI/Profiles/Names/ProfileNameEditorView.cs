@@ -38,6 +38,7 @@ namespace DCL.UI.ProfileNames
             public TMP_Dropdown claimedNameDropdown;
             public GameObject dropdownLoadingSpinner;
             public GameObject dropdownVerifiedIcon;
+            public TMP_Text_ClickeableLink clickeableLink;
 
             [Serializable]
             public struct TabHeaderOption
