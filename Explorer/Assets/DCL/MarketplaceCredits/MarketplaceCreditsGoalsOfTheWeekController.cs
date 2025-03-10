@@ -131,12 +131,11 @@ namespace DCL.MarketplaceCredits
             var goalRow = goalRowsPool.Get();
 
             goalRow.SetupGoalImage(goalData.thumbnail);
-            goalRow.GoalTitleText.text = goalData.title;
-            goalRow.ProgressValueText.text = $"{goalData.progress.stepsDone}/{goalData.progress.totalSteps}";
-            goalRow.GoalCreditsValueText.text = $"+{goalData.credits}";
+            goalRow.SetTitle(goalData.title);
+            goalRow.SetCredits(goalData.credits);
             goalRow.SetAsCompleted(goalData.progress.stepsDone == goalData.progress.totalSteps);
             goalRow.SetAsPendingToClaim(goalData.progress.stepsDone == goalData.progress.totalSteps && !goalData.isClaimed);
-            goalRow.SetProgressBarPercentage(goalData.progress.GetProgressPercentage());
+            goalRow.SetProgress(goalData.progress.GetProgressPercentage(), goalData.progress.stepsDone, goalData.progress.totalSteps);
 
             return goalRow;
         }

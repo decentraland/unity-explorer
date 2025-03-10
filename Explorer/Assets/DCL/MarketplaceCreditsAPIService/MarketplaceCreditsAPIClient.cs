@@ -50,7 +50,7 @@ namespace DCL.MarketplaceCreditsAPIService
                             progress = new GoalProgressData
                             {
                                 totalSteps = 3,
-                                stepsDone = 0,
+                                stepsDone = 1,
                             },
                             credits = 4,
                             isClaimed = false,

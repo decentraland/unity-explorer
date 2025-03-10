@@ -1,3 +1,4 @@
+using DCL.MarketplaceCreditsAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
@@ -58,6 +59,12 @@ namespace DCL.MarketplaceCredits
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
         }
 
+        public void SetTitle(string goalTitle) =>
+            GoalTitleText.text = goalTitle;
+
+        public void SetCredits(int credits) =>
+            GoalCreditsValueText.text = $"+{credits}";
+
         public void SetAsCompleted(bool isCompleted)
         {
             CompletedMark.SetActive(isCompleted);
@@ -70,7 +77,10 @@ namespace DCL.MarketplaceCredits
             PendingToClaimOutline.SetActive(isPendingToClaim);
         }
 
-        public void SetProgressBarPercentage(int progressPercentage) =>
+        public void SetProgress(int progressPercentage, int stepsDone, int totalSteps)
+        {
             ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(progressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+            ProgressValueText.text = $"{stepsDone}/{totalSteps}";
+        }
     }
 }

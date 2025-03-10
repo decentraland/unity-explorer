@@ -544,6 +544,7 @@ namespace Global.Dynamic
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
+            bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.MARKETPLACE_CREDITS)) || Application.isEditor;
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
@@ -619,8 +620,8 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory, viewDependencies, staticContainer.InputBlock, 
+                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
+                    chatHistory, viewDependencies, staticContainer.InputBlock,
                     marketplaceCreditsAPIClient,selfProfile),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,

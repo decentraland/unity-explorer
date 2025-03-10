@@ -36,6 +36,7 @@ namespace DCL.UI.Sidebar
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly bool includeMarketplaceCredits;
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
 
@@ -61,6 +62,7 @@ namespace DCL.UI.Sidebar
             ISidebarActionsBus sidebarActionsBus,
             bool includeCameraReel,
             bool includeFriends,
+            bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory)
             : base(viewFactory)
@@ -80,6 +82,7 @@ namespace DCL.UI.Sidebar
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
 
             sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
         }
@@ -129,6 +132,7 @@ namespace DCL.UI.Sidebar
             }
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+            viewInstance.MarketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;

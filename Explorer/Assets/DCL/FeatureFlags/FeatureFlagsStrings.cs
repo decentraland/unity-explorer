@@ -26,5 +26,6 @@
         public const string FRIENDS = "alfa-friends";
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
         public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
+        public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
     }
 }

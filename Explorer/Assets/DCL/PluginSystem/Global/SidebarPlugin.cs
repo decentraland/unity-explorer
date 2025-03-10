@@ -54,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ViewDependencies viewDependencies;
         private readonly IInputBlock inputBlock;
@@ -80,6 +81,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool includeCameraReel,
             bool includeFriends,
+            bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ViewDependencies viewDependencies,
             IInputBlock inputBlock,
@@ -105,6 +107,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
             this.viewDependencies = viewDependencies;
             this.inputBlock = inputBlock;
@@ -143,6 +146,7 @@ namespace DCL.PluginSystem.Global
                 sidebarActionsBus,
                 includeCameraReel,
                 includeFriends,
+                includeMarketplaceCredits,
                 mainUIView.ChatView,
                 chatHistory
             ));
