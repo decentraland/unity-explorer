@@ -9,7 +9,6 @@ using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Profiles;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -49,7 +48,6 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public PhotoDetailInfoController(PhotoDetailInfoView view,
             ICameraReelStorageService cameraReelStorageService,
-            IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
@@ -61,7 +59,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             IPassportBridge passportBridge,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
-            NftTypeIconSO categoryIcons)
+            NftTypeIconSO categoryIcons,
+            ViewDependencies viewDependencies)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -71,10 +70,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,
-                view.emptyProfileImage,
                 view.visiblePersonContainer,
                 view.unusedEquippedWearableViewContainer,
-                webRequestController,
                 profileRepository,
                 mvcManager,
                 webBrowser,
@@ -90,7 +87,8 @@ namespace DCL.InWorldCamera.PhotoDetail
                 VISIBLE_PERSON_MAX_POOL_CAPACITY,
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
                 EQUIPPED_WEARABLE_MAX_POOL_CAPACITY,
-                () => WearableMarketClicked?.Invoke());
+                () => WearableMarketClicked?.Invoke(),
+                viewDependencies);
 
             this.view.jumpInButton.onClick.AddListener(JumpInClicked);
             this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);

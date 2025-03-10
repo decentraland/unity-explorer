@@ -1,3 +1,5 @@
+using DCL.UI.ProfileElements;
+using MVC;
 using System;
 using TMPro;
 using UnityEngine;
@@ -22,10 +24,7 @@ namespace DCL.Chat
         private TMP_Text tagText;
 
         [SerializeField]
-        private Image profilePicture;
-
-        [SerializeField]
-        private Image profilePictureBackground;
+        private ProfilePictureView profilePictureView;
 
         [SerializeField]
         private TMP_Text connectionStatusText;
@@ -47,25 +46,16 @@ namespace DCL.Chat
             set => tagText.text = value;
         }
 
-        public Sprite ProfilePicture
-        {
-            set => profilePicture.sprite = value;
-        }
-
         public ChatMemberConnectionStatus ConnectionStatus
         {
             set => connectionStatusText.text = value.ToString(); // TODO: Localize this
         }
 
-        public Color ProfileColor
+        public Color NameTextColor
         {
-            get => profilePictureBackground.color;
+            get => nameText.color;
 
-            set
-            {
-                nameText.color = value;
-                profilePictureBackground.color = value;
-            }
+            set => nameText.color = value;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -77,6 +67,11 @@ namespace DCL.Chat
         {
             if (!isContextMenuOpen)
                 contextMenuButton.gameObject.SetActive(false);
+        }
+
+        public void SetupProfilePicture(ViewDependencies viewDependencies, Color userColor, string faceSnapshotUrl, string userId)
+        {
+            profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
         }
 
         private void Start()
