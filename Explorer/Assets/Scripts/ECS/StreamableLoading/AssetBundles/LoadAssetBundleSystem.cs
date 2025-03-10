@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (inMemoryAssetBundle.IsEmpty)
             {
-                await inMemoryAssetBundle.UnloadAsync();
+                await inMemoryAssetBundle.UnloadAsync(true);
                 throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
             }
 
@@ -100,7 +100,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
             catch (Exception)
             {
-                await inMemoryAssetBundle.UnloadAsync();
+                await inMemoryAssetBundle.UnloadAsync(true);
                 throw;
             }
         }
