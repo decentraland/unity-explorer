@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using UnityEngine.Pool;
 
 namespace DCL.Optimization.Memory
@@ -9,6 +10,12 @@ namespace DCL.Optimization.Memory
     public class MemoryChain : IDisposable
     {
         public static readonly MemoryChain EMPTY = new (null!);
+
+        private static long instancesCount;
+        private static long instancesMemory;
+
+        public static long InstancesCount => instancesCount;
+        public static long InstancesMemory => instancesMemory;
 
         /// <summary>
         /// Doesn't own allocator
@@ -45,6 +52,9 @@ namespace DCL.Optimization.Memory
             this.allocator = allocator;
             slabs = ListPool<SlabItem>.Get()!;
             leftSpaceInLast = 0;
+
+            if (allocator != null)
+                Interlocked.Increment(ref instancesCount);
         }
 
         public void Dispose()
@@ -61,9 +71,14 @@ namespace DCL.Optimization.Memory
             if (disposedBy != null)
                 disposedBy = Environment.StackTrace;
 #endif
+            int total = this.TotalLength;
 
             for (int i = 0; i < slabs.Count; i++) allocator.Release(slabs[i]);
+            slabs.Clear();
             ListPool<SlabItem>.Release(slabs);
+
+            Interlocked.Decrement(ref instancesCount);
+            Interlocked.Add(ref instancesMemory, -total);
         }
 
         public void AppendData(ReadOnlySpan<byte> data)
@@ -83,6 +98,8 @@ namespace DCL.Optimization.Memory
                 data.Slice(dataOffset, copySize).CopyTo(span.Slice(span.Length - leftSpaceInLast));
                 dataOffset += copySize;
                 leftSpaceInLast -= copySize;
+
+                Interlocked.Add(ref instancesMemory, copySize);
 
                 if (leftSpaceInLast == 0 && dataOffset < data.Length)
                     AllocateNewSlab();
