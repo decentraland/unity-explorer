@@ -16,15 +16,18 @@ namespace DCL.PluginSystem
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly ViewDependencies viewDependencies;
 
         private GenericContextMenuController? genericContextMenuController;
 
         public GenericContextMenuPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ViewDependencies viewDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.viewDependencies = viewDependencies;
         }
 
         public void Dispose()
@@ -51,7 +54,7 @@ namespace DCL.PluginSystem
             GenericContextMenuBlockUserButtonView blockUserButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuViewBlockUserButtonPrefab, ct)).GetComponent<GenericContextMenuBlockUserButtonView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
-                new ControlsPoolManager(panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, userProfilePrefab, viewUserProfileButtonPrefab, mentionUserButtonPrefab, blockUserButtonPrefab));
+                new ControlsPoolManager(viewDependencies, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, userProfilePrefab, viewUserProfileButtonPrefab, mentionUserButtonPrefab, blockUserButtonPrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 

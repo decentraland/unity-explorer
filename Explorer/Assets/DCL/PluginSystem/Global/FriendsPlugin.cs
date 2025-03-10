@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Clipboard;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat.ChatLifecycleBus;
@@ -43,7 +42,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ISystemClipboard systemClipboard;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
@@ -63,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly IAnalyticsController? analyticsController;
+        private readonly ViewDependencies viewDependencies;
         private readonly bool useAnalytics;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -78,7 +77,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
@@ -98,7 +96,8 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
-            IAnalyticsController? analyticsController)
+            IAnalyticsController? analyticsController,
+            ViewDependencies viewDependencies)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -106,7 +105,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
-            this.systemClipboard = systemClipboard;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
@@ -127,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.sidebarActionsBus = sidebarActionsBus;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
+            this.viewDependencies = viewDependencies;
         }
 
         public void Dispose()
@@ -190,7 +189,6 @@ namespace DCL.PluginSystem.Global
                 friendEventBus,
                 mvcManager,
                 profileRepository,
-                systemClipboard,
                 webRequestController,
                 profileThumbnailCache,
                 dclInput,
@@ -200,7 +198,8 @@ namespace DCL.PluginSystem.Global
                 friendsConnectivityStatusTracker,
                 sidebarActionsBus,
                 includeUserBlocking,
-                isConnectivityStatusEnabled);
+                isConnectivityStatusEnabled
+                );
 
             mvcManager.RegisterController(friendsPanelController);
 
@@ -218,7 +217,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache);
+                inputBlock, profileThumbnailCache, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 

@@ -1,5 +1,6 @@
 using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using MVC;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,6 +21,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
+            ViewDependencies viewDependencies,
             Transform controlsParent,
             GenericContextMenuSeparatorView separatorPrefab,
             GenericContextMenuButtonWithTextView buttonPrefab,
@@ -48,7 +50,12 @@ namespace DCL.UI.GenericContextMenu
                 actionOnDestroy: toggleView => GameObject.Destroy(toggleView.gameObject));
 
             userProfilePool = new ObjectPool<GenericContextMenuUserProfileView>(
-                createFunc: () => GameObject.Instantiate(userProfilePrefab, controlsParent),
+                createFunc: () =>
+                {
+                    var profileView = GameObject.Instantiate(userProfilePrefab, controlsParent);
+                    profileView.InjectDependencies(viewDependencies);
+                    return profileView;
+                },
                 actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),
                 actionOnRelease: userProfileView => userProfileView.gameObject.SetActive(false),
                 actionOnDestroy: userProfileView => GameObject.Destroy(userProfileView.gameObject));
@@ -125,10 +132,10 @@ namespace DCL.UI.GenericContextMenu
 
         private GenericContextMenuComponentBase GetMentionUserButton(MentionUserButtonContextMenuControlSettings settings)
         {
-            GenericContextMenuMentionUserButtonView userProfileView = mentionUserButtonPool.Get();
-            userProfileView.Configure(settings);
+            GenericContextMenuMentionUserButtonView mentionUserButton = mentionUserButtonPool.Get();
+            mentionUserButton.Configure(settings);
 
-            return userProfileView;
+            return mentionUserButton;
         }
 
         private GenericContextMenuComponentBase GetOpenUserProfileButton(OpenUserProfileButtonContextMenuControlSettings settings)

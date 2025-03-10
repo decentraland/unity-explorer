@@ -1,12 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 

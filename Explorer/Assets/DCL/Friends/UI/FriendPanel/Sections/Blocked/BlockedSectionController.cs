@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -18,23 +17,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private BlockedProfile? lastClickedProfileCtx;
 
         public BlockedSectionController(BlockedSectionView view,
             IMVCManager mvcManager,
             BlockedRequestManager requestManager,
-            ISystemClipboard systemClipboard,
-            IPassportBridge passportBridge,
-            IProfileThumbnailCache profileThumbnailCache) : base(view, requestManager)
+            IPassportBridge passportBridge) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
-            this.profileThumbnailCache = profileThumbnailCache;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, (userId, friendshipStatus) => { }))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((userId, friendshipStatus) => { }))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => ElementClicked(lastClickedProfileCtx!)));
 
@@ -74,7 +69,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
                 friendProfile.UserNameColor,
                 UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
+                friendProfile.FacePictureUrl);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,

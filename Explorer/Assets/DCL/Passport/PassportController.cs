@@ -31,6 +31,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Profiles;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -204,7 +205,7 @@ namespace DCL.Passport
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, ExecuteFriendshipOperationFromContextMenu);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(ExecuteFriendshipOperationFromContextMenu);
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -552,8 +553,6 @@ namespace DCL.Passport
                 return;
             }
 
-            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(targetProfile, ct);
-
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
             contextMenuJumpInButton.Enabled = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
@@ -562,7 +561,7 @@ namespace DCL.Passport
 
             userProfileContextMenuControlSettings.SetInitialData(targetProfile.Name, targetProfile.UserId, targetProfile.HasClaimedName,
                 targetProfile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
-                thumbnailSprite);
+                targetProfile.Avatar.FaceSnapshotUrl);
         }
 
         private void BlockUserClicked()

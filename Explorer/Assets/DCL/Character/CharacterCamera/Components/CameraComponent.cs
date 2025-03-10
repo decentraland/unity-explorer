@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.CharacterCamera
 {
@@ -9,10 +8,23 @@ namespace DCL.CharacterCamera
     /// </summary>
     public struct CameraComponent
     {
-        public CameraMode Mode;
+        public CameraMode Mode
+        {
+            get => currentMode;
+            set
+            {
+                if (value == currentMode) return;
+
+                PreviousMode = currentMode;
+                currentMode = value;
+            }
+        }
+        public CameraMode PreviousMode { get; private set; }
         public ThirdPersonCameraShoulder Shoulder;
         public readonly Camera Camera;
         public bool IsDirty;
+
+        private CameraMode currentMode;
 
         public CameraComponent(Camera camera) : this()
         {
