@@ -18,6 +18,7 @@ using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Sidebar;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
@@ -54,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
+        private readonly ViewDependencies viewDependencies;
         private readonly IInputBlock inputBlock;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -79,6 +81,7 @@ namespace DCL.PluginSystem.Global
             bool includeCameraReel,
             bool includeFriends,
             IChatHistory chatHistory,
+            ViewDependencies viewDependencies,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile)
@@ -103,6 +106,7 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.chatHistory = chatHistory;
+            this.viewDependencies = viewDependencies;
             this.inputBlock = inputBlock;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
@@ -128,15 +132,13 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, mainUIView.SidebarView.notificationsButton, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
-                new MarketplaceCreditsMenuController(mainUIView.SidebarView.MarketplaceCreditsMenuView, mainUIView.SidebarView.MarketplaceCreditsButton, sidebarBus, webBrowser, inputBlock, marketplaceCreditsAPIClient, selfProfile),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
+                new MarketplaceCreditsMenuController(mainUIView.SidebarView.MarketplaceCreditsMenuView, mainUIView.SidebarView.MarketplaceCreditsButton, sidebarBus, webBrowser, inputBlock, marketplaceCreditsAPIClient, selfProfile),
                 sidebarBus,
-                web3IdentityCache,
-                profileRepository,
                 webBrowser,
                 sidebarActionsBus,
                 includeCameraReel,

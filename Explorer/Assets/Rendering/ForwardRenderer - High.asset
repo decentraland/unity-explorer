@@ -79,7 +79,8 @@ MonoBehaviour:
   - {fileID: -3288772034090369892}
   - {fileID: -2448322177020252403}
   - {fileID: 1757973802043764545}
-  m_RendererFeatureMap: 14e63e94147b3fe0de31d4cb4dbd21769cfccd7842ef5bd20d2fffa6f3cf05de41ef42dbdb936518
+  - {fileID: 4908790961291395409}
+  m_RendererFeatureMap: 14e63e94147b3fe0de31d4cb4dbd21769cfccd7842ef5bd20d2fffa6f3cf05de41ef42dbdb93651851016c145f871f44
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -160,6 +161,24 @@ MonoBehaviour:
       restoreCamera: 1
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 60
+--- !u!114 &4908790961291395409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff2a98f790a0453da51b245c6caf70c3, type: 3}
+  m_Name: GPUInstancingRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  m_Settings:
+    FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
+    IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
+    DrawArgsInstanceCountTransferComputeShader: {fileID: 7200000, guid: 1581f9e286d943f4aa378de7282cd920, type: 3}
+    MaxDistanceScaleFactor: 1
 --- !u!114 &8512292912536760798
 MonoBehaviour:
   m_ObjectHideFlags: 0

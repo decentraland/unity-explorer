@@ -8,13 +8,12 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
-using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -33,8 +32,6 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
-        private readonly IProfileRepository profileRepository;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeCameraReel;
@@ -60,8 +57,6 @@ namespace DCL.UI.Sidebar
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
             ISidebarBus sidebarBus,
-            IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
             IWebBrowser webBrowser,
             ISidebarActionsBus sidebarActionsBus,
             bool includeCameraReel,
@@ -79,8 +74,6 @@ namespace DCL.UI.Sidebar
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
-            this.identityCache = identityCache;
-            this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
             this.sidebarActionsBus = sidebarActionsBus;
             this.includeCameraReel = includeCameraReel;
@@ -234,15 +227,6 @@ namespace DCL.UI.Sidebar
 
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-            UpdateFrameColorAsync().Forget();
-        }
-
-        private async UniTaskVoid UpdateFrameColorAsync()
-        {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
-
-            if (profile != null)
-                viewInstance!.FaceFrame.color = profile.UserNameColor;
         }
 
         protected override void OnViewClose()

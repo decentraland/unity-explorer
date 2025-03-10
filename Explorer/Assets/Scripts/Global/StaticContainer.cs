@@ -36,16 +36,13 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
-using Global.AppArgs;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
+using DCL.Rendering.GPUInstancing;
+using DCL.Roads.GPUInstancing;
 using ECS.StreamableLoading.Cache.Disk;
-using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.Dynamic.LaunchModes;
@@ -53,7 +50,6 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
 using SceneRunner.Mapping;
 using System.Buffers;
-using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -113,6 +109,8 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
+        public GPUInstancingService GPUInstancingService { get; private set; }
+
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
 
@@ -159,7 +157,8 @@ namespace Global
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
 
@@ -232,6 +231,16 @@ namespace Global
                 if (container.ScenesCache.CurrentScene != null)
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
+
+            var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
+            {
+                container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
+                renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
+            }
+            else
+                ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
+
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 

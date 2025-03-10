@@ -72,6 +72,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
+        private readonly ViewDependencies viewDependencies;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -94,7 +95,8 @@ namespace DCL.PluginSystem.Global
             UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
-            NametagsData nametagsData)
+            NametagsData nametagsData,
+            ViewDependencies viewDependencies)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -122,6 +124,7 @@ namespace DCL.PluginSystem.Global
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
+            this.viewDependencies = viewDependencies;
             factory = new InWorldCameraFactory();
         }
 
@@ -151,7 +154,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
                     cameraReelStorageService,
-                    webRequestController,
                     profileRepository,
                     mvcManager,
                     webBrowser,
@@ -163,7 +165,8 @@ namespace DCL.PluginSystem.Global
                     new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
-                    categoryIconsMapping
+                    categoryIconsMapping,
+                    viewDependencies
                     ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,

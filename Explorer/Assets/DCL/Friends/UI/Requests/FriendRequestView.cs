@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.UI;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
 using System;
@@ -97,7 +97,7 @@ namespace DCL.Friends.UI.Requests
         [Serializable]
         public struct UserAndMutualFriendsConfig
         {
-            public ImageView UserThumbnail;
+            public ProfilePictureView UserThumbnail;
             public TMP_Text UserName;
             public TMP_Text UserNameHash;
             public GameObject UserNameVerification;
@@ -109,7 +109,7 @@ namespace DCL.Friends.UI.Requests
             public struct MutualThumbnail
             {
                 public GameObject Root;
-                public ImageView Image;
+                public ProfilePictureView Image;
             }
         }
 
@@ -117,8 +117,8 @@ namespace DCL.Friends.UI.Requests
         public struct OperationConfirmedConfig
         {
             public GameObject Root;
-            public ImageView FriendThumbnail;
-            public ImageView? MyThumbnail;
+            public ProfilePictureView FriendThumbnail;
+            public ProfilePictureView? MyThumbnail;
             public TMP_Text Label;
             public Button CloseButton;
             public Transform Rays;

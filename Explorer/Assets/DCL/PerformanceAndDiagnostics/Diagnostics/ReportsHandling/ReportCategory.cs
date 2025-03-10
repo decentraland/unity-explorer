@@ -311,6 +311,8 @@ namespace DCL.Diagnostics
 
         public const string ALWAYS = nameof(ALWAYS);
 
+        public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
+
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
     }
 }

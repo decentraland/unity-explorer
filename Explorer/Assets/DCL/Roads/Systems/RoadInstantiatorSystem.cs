@@ -72,6 +72,10 @@ namespace DCL.Roads.Systems
                 roadAsset.localRotation = roadDescription.Rotation;
                 roadAsset.gameObject.SetActive(true);
 
+#if UNITY_EDITOR
+                roadAsset.gameObject.name = $"{roadAsset.gameObject.name}_{roadDescription.RoadCoordinate.x},{roadDescription.RoadCoordinate.y}";
+#endif
+
                 roadInfo.CurrentAsset = roadAsset;
                 roadInfo.CurrentKey = roadDescription.RoadModel;
             }
