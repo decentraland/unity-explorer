@@ -14,6 +14,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using AssetManagement;
+using DCL.Optimization.Hashing;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
@@ -51,7 +52,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Processing: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
             var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
-            AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle = await AssetBundleData.InMemoryAssetBundle.NewAsync(memoryChain);
+            using var key = HashKey.FromString(intention.ToString());
+            string name = HashNamings.HashNameFrom(key, "ab");
+            AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle = await AssetBundleData.InMemoryAssetBundle.NewAsync(memoryChain, name);
             ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
