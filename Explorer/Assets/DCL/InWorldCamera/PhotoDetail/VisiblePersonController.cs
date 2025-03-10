@@ -81,6 +81,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userName.color = userColor;
             view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
             view.profilePictureView.SetupOnlyColor(userColor);
+            view.profilePictureView.SetLoadingState(true);
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
 
@@ -92,6 +93,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             else
             {
                 view.userNameTag.gameObject.SetActive(false);
+                view.profilePictureView.SetDefaultThumbnail();
             }
         }
 

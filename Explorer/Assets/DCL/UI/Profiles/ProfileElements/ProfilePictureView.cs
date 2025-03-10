@@ -40,7 +40,12 @@ namespace DCL.UI.ProfileElements
         public void SetupOnlyColor(Color userColor)
         {
             thumbnailBackground.color = userColor;
-            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+        }
+
+        public void SetLoadingState(bool isLoading)
+        {
+            thumbnailImageView.IsLoading = isLoading;
+            thumbnailImageView.ImageEnabled = !isLoading;
         }
 
         public void SetDefaultThumbnail()
