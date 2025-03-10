@@ -63,7 +63,7 @@ namespace DCL.WebRequests
                 return ExecuteNoCompressionAsync(webRequest, ct);
             }
 
-            private async UniTask<IOwnedTexture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<IOwnedTexture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 Texture2D? texture;
 
@@ -90,7 +90,7 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return new IOwnedTexture2D.Const(texture);
+                return UniTask.FromResult((IOwnedTexture2D)new IOwnedTexture2D.Const(texture));
             }
 
             private async UniTask<IOwnedTexture2D?> ExecuteWithCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
