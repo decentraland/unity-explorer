@@ -48,10 +48,6 @@ namespace DCL.Chat
         private float scrollToBottomButtonFadeOutDuration = 0.5f;
 
         [Header("UI elements")]
-        [FormerlySerializedAs("ChatBubblesToggle")]
-        [SerializeField]
-        private ToggleView chatBubblesToggle;
-
         [SerializeField]
         private ChatInputBoxElement chatInputBox;
 
@@ -63,12 +59,6 @@ namespace DCL.Chat
         private ChatMessageViewerElement chatMessageViewer;
 
         [SerializeField] private ChatTitleBarView chatTitleBar;
-
-        [SerializeField]
-        private TMP_Text memberListNumberText;
-
-        [SerializeField]
-        private TMP_Text memberListNumberText2;
 
         [SerializeField]
         private ChatMemberListView memberListView;
@@ -176,19 +166,7 @@ namespace DCL.Chat
         /// </summary>
         public bool EnableChatBubblesVisibilityField
         {
-            get => chatBubblesToggle.Toggle.interactable;
-
-            set
-            {
-                if (chatBubblesToggle.Toggle.interactable != value)
-                {
-                    chatBubblesToggle.Toggle.interactable = value;
-
-                    chatBubblesToggle.IsSoundEnabled = false;
-                    chatBubblesToggle.Toggle.isOn = chatBubblesToggle.Toggle.interactable;
-                    chatBubblesToggle.IsSoundEnabled = true;
-                }
-            }
+            set => chatTitleBar.SetToggleChatBubblesValue(value);
         }
 
         /// <summary>
@@ -231,8 +209,21 @@ namespace DCL.Chat
                 if (currentChannel == null || !currentChannel.Id.Equals(value))
                 {
                     currentChannel = channels![value];
-
                     chatMessageViewer.SetData(currentChannel.Messages);
+
+                    switch (currentChannel.Id.Type)
+                    {
+                        case ChatChannel.ChatChannelType.NearBy:
+                            chatTitleBar.SetNearbyChannelImage();
+                            chatTitleBar.SetChannelNameText(currentChannel.Id.Name);
+                            break;
+                        case ChatChannel.ChatChannelType.User:
+                            // Get user profile from data in the channel? and set up
+                            //chatTitleBar.SetupProfilePictureView(viewDependencies,);
+                            //chatTitleBar.SetChannelNameText(username);
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -288,8 +279,7 @@ namespace DCL.Chat
 
             if (isMemberListDirty || (isMemberListCountDirty && !IsMemberListVisible)) // Once the member list is visible, the number does not change
             {
-                memberListNumberText.text = memberListCount.ToString();
-                memberListNumberText2.text = memberListNumberText.text;
+                chatTitleBar.SetMemberListNumberText(memberListCount.ToString());
             }
 
             isMemberListDirty = false;
@@ -316,6 +306,10 @@ namespace DCL.Chat
             chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
+            chatTitleBar.ChatBubbleVisibilityChanged += OnToggleChatBubblesValueChanged;
+            //chatBubblesToggle.IsSoundEnabled = false;
+            //chatBubblesToggle.Toggle.isOn = areChatBubblesVisible;
+            //chatBubblesToggle.IsSoundEnabled = true;
 
 
             chatMessageViewer.Initialize();
@@ -324,10 +318,6 @@ namespace DCL.Chat
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
             memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
-            chatBubblesToggle.IsSoundEnabled = false;
-            chatBubblesToggle.Toggle.isOn = areChatBubblesVisible;
-            chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
-            chatBubblesToggle.IsSoundEnabled = true;
 
             chatInputBox.Initialize(chatAudioSettings, getParticipantProfilesDelegate);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;

@@ -35,17 +35,14 @@ namespace DCL.Chat.History
         public struct ChannelId
         {
             public string Id { get; }
+            public ChatChannelType Type { get; }
+            public string Name { get; }
 
             public ChannelId(ChatChannelType type, string name)
             {
+                Type = type;
+                Name = name;
                 Id = type + ":" + name;
-            }
-
-            public static void GetTypeAndNameFromId(string id, out ChatChannelType channelType, out string channelName)
-            {
-                channelName = id.Substring(id.LastIndexOf(':') + 1);
-                string channelIdType = id.Substring(0, id.LastIndexOf(':'));
-                Enum.TryParse(channelIdType, out channelType);
             }
         }
 
