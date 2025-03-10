@@ -9,8 +9,6 @@ namespace DCL.Optimization.Memory
 {
     public class MemoryChain : IDisposable
     {
-        public static readonly MemoryChain EMPTY = new (null!);
-
         private static long instancesCount;
         private static long instancesMemory;
 
@@ -22,11 +20,9 @@ namespace DCL.Optimization.Memory
         /// </summary>
         private readonly ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator;
         internal readonly List<SlabItem> slabs;
-        internal int leftSpaceInLast { get; private set; }
+        private bool disposed;
 
-#if UNITY_EDITOR || DEBUG
-        private string? disposedBy;
-#endif
+        internal int leftSpaceInLast { get; private set; }
 
         public int TotalLength
         {
@@ -53,24 +49,21 @@ namespace DCL.Optimization.Memory
             slabs = ListPool<SlabItem>.Get()!;
             leftSpaceInLast = 0;
 
-            if (allocator != null)
-                Interlocked.Increment(ref instancesCount);
+            Interlocked.Increment(ref instancesCount);
         }
 
         public void Dispose()
         {
-#if UNITY_EDITOR || DEBUG
-            if (disposedBy != null)
-                throw new InvalidOperationException($"MemoryChain was already disposed by {disposedBy}");
-#endif
-
             if (allocator == null)
                 return;
 
-#if UNITY_EDITOR || DEBUG
-            if (disposedBy != null)
-                disposedBy = Environment.StackTrace;
-#endif
+            if (disposed)
+            {
+                ReportHub.LogError(ReportCategory.ALLOCATORS, $"Attempt to dispose {nameof(MemoryChain)} twice");
+                return;
+            }
+
+            disposed = true;
             int total = this.TotalLength;
 
             for (int i = 0; i < slabs.Count; i++) allocator.Release(slabs[i]);
@@ -293,8 +286,7 @@ namespace DCL.Optimization.Memory
                         return;
 
                     chain.Dispose();
-
-                    chain = EMPTY;
+                    chain = null!;
                     slabIndex = 0;
                     slabOffset = 0;
                     totalRead = 0;
