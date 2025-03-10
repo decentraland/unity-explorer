@@ -83,7 +83,7 @@ namespace ECS.StreamableLoading.Common.Components
             Assert.IsTrue(PartialDownloadingData is { IsFileFullyDownloaded: true });
             PartialLoadingState value = PartialDownloadingData!.Value;
             MemoryChain owner = value.TransferMemoryOwnership();
-            PartialDownloadingData = value;
+            PartialDownloadingData = null;
             return owner;
         }
 

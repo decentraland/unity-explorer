@@ -1,9 +1,9 @@
 using DCL.Diagnostics;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using UnityEngine.Pool;
 
 namespace DCL.Optimization.Memory
 {
@@ -19,7 +19,7 @@ namespace DCL.Optimization.Memory
         /// Doesn't own allocator
         /// </summary>
         private readonly ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator;
-        internal readonly List<SlabItem> slabs;
+        private readonly List<SlabItem> slabs;
         private bool disposed;
 
         internal int leftSpaceInLast { get; private set; }
@@ -46,7 +46,7 @@ namespace DCL.Optimization.Memory
         public MemoryChain(ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator)
         {
             this.allocator = allocator;
-            slabs = ListPool<SlabItem>.Get()!;
+            slabs = ThreadSafeListPool<SlabItem>.SHARED.Get();
             leftSpaceInLast = 0;
 
             Interlocked.Increment(ref instancesCount);
@@ -67,8 +67,7 @@ namespace DCL.Optimization.Memory
             int total = this.TotalLength;
 
             for (int i = 0; i < slabs.Count; i++) allocator.Release(slabs[i]);
-            slabs.Clear();
-            ListPool<SlabItem>.Release(slabs);
+            ThreadSafeListPool<SlabItem>.SHARED.Release(slabs);
 
             Interlocked.Decrement(ref instancesCount);
             Interlocked.Add(ref instancesMemory, -total);
@@ -119,7 +118,7 @@ namespace DCL.Optimization.Memory
             ChainStream.New(this);
 
         public ChainMemoryIterator AsMemoryIterator() =>
-            new (this);
+            new (this, slabs);
 
         private void AllocateNewSlab()
         {
@@ -322,22 +321,22 @@ namespace DCL.Optimization.Memory
         private int index;
         private bool disposed;
 
-        internal ChainMemoryIterator(MemoryChain memoryChain) : this()
+        internal ChainMemoryIterator(MemoryChain memoryChain, IReadOnlyList<SlabItem> slabs) : this()
         {
             int size = ISlabAllocator.SHARED.Info.ChunkSize;
             buffer = NativeAlloc.Malloc((nuint)size);
 
             unsafe { unmanagedMemoryManager = UnmanagedMemoryManager<byte>.New(buffer.ToPointer()!, size); }
 
-            slabItems = memoryChain.slabs;
-            slabsCount = memoryChain.slabs.Count;
+            slabItems = slabs;
+            slabsCount = slabs.Count;
             leftInLastSlab = memoryChain.leftSpaceInLast;
             totalLength = memoryChain.TotalLength;
 
             index = -1;
             disposed = false;
 
-            if (memoryChain.slabs.Count > 0 && memoryChain.slabs[0].chunkSize != unmanagedMemoryManager.Memory.Length)
+            if (slabs.Count > 0 && slabs[0].chunkSize != unmanagedMemoryManager.Memory.Length)
                 throw new Exception("Buffers have different sizes");
         }
 
