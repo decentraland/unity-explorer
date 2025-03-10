@@ -19,10 +19,20 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
                 ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Creating new GPU Instanced sharedMaterial based on material: {sharedMat.name}");
 
                 var keyword = new LocalKeyword(sharedMat.shader, GPU_INSTANCING_KEYWORD);
-                sharedMat.DisableKeyword(keyword);
 
-                instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
+                if (Application.isEditor && sharedMat.parent != null)
+                {
+                    sharedMat.parent.EnableKeyword(keyword);
+
+                    instancedMat = new Material(sharedMat.parent.shader);
+                    instancedMat.CopyPropertiesFromMaterial(sharedMat);
+                }
+                else
+                    instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
+
+                sharedMat.DisableKeyword(keyword);
                 instancedMat.EnableKeyword(keyword);
+
                 instancingMaterials.Add(sharedMat, instancedMat);
             }
 
