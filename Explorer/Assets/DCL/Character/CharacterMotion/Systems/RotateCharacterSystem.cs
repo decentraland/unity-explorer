@@ -10,7 +10,6 @@ using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -59,12 +58,13 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(PBAvatarShape))]
         private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, in PlayerLookAtIntent lookAtIntent)
         {
-            // Rotate player to look at camera target
+            // Rotate player to look at target
             Vector3 newLookDirection = lookAtIntent.From != null
                 ? lookAtIntent.LookAtTarget - lookAtIntent.From.Value
                 : lookAtIntent.LookAtTarget - transform.Position;
             newLookDirection.y = rigidTransform.LookDirection.y;
             newLookDirection.Normalize();
+
             rigidTransform.LookDirection = newLookDirection;
             transform.Transform.forward = newLookDirection;
 

@@ -10,6 +10,16 @@ Features:
 3. RGBA32, ASTC, BC5 texture formats support
 4. Easy access high-level API
 
+## Dependencies
+
+These repositories are required to compile TextureFuse:
+ - https://github.com/decentraland/astc-encoder
+   - Previous path: `TexturesFuse/textures-server/astc-encoder`
+ - https://github.com/decentraland/compressonator
+   - Previous path: `TexturesFuse/textures-server/CompressonatorWorkaround/compressonator`
+ - https://github.com/decentraland/simde
+   - Previous path: `TexturesFuse/textures-server/CompressonatorWorkaround/externals_repos/simde`
+
 ### C# API
 
 To use this plugin you need an instance of object with `ITexturesUnzip` interface.
@@ -51,13 +61,13 @@ It's not recommended to use if you are able to use ASTC or BC5 format on the tar
 Format provides ASTC compression.
 It is used as a general purpose format for albedo textures.
 TexturesFuse provides an access to adjust settings via `InitOptions` and `Swizzle` structs.
-To get more specific info visit encoder's git-page: https://github.com/ARM-software/astc-encoder.
+To get more specific info visit encoder's git-page: https://github.com/ARM-software/astc-encoder or our [fork](https://github.com/decentraland/astc-encoder).
 
 #### BC5
 
 Format provides BC5 compression.
 It is used as a format for normal maps.
-To get more specific info visit compressonator's git-page: https://github.com/GPUOpen-Tools/compressonator.
+To get more specific info visit compressonator's git-page: https://github.com/GPUOpen-Tools/compressonator or our [fork](https://github.com/decentraland/compressonator).
 
 ### Native API
 

@@ -3,6 +3,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
@@ -25,6 +27,7 @@ namespace DCL.Friends.UI.Requests
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly ViewDependencies viewDependencies;
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
         private CancellationTokenSource? showPreCancelToastCancellationToken;
@@ -37,13 +40,15 @@ namespace DCL.Friends.UI.Requests
             IFriendsService friendsService,
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
-            IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
+            IProfileThumbnailCache profileThumbnailCache,
+            ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.profileThumbnailCache = profileThumbnailCache;
+            this.viewDependencies = viewDependencies;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -156,7 +161,7 @@ namespace DCL.Friends.UI.Requests
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
                 config.UserNameHash.text = $"#{user.ToString()[^4..]}";
 
-                await config.UserThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, user, profile.Avatar.FaceSnapshotUrl, ct);
+                await config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor,profile.Avatar.FaceSnapshotUrl,user, ct);
             }
         }
 
@@ -210,7 +215,7 @@ namespace DCL.Friends.UI.Requests
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
 
-            await UniTask.WhenAll(config.UserThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, user.Address, user.FacePictureUrl, ct),
+            await UniTask.WhenAll(config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, user.UserNameColor, user.FacePictureUrl,user.Address, ct),
                 LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
@@ -236,8 +241,8 @@ namespace DCL.Friends.UI.Requests
                 mutualConfig[i].Root.SetActive(friendExists);
                 if (!friendExists) continue;
                 FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                ImageView view = mutualConfig[i].Image;
-                view.LoadThumbnailSafeAsync(profileThumbnailCache, mutualFriend.Address, mutualFriend.FacePictureUrl, ct).Forget();
+                ProfilePictureView view = mutualConfig[i].Image;
+                view.SetupWithDependenciesAsync(viewDependencies, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address, ct).Forget();
             }
         }
 
@@ -362,14 +367,14 @@ namespace DCL.Friends.UI.Requests
             FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
             config.Label.text = string.Format(textWithUserNameParam, profile.Name);
-            config.FriendThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, profile.Address, profile.FacePictureUrl, ct).Forget();
+            config.FriendThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.FacePictureUrl,  profile.Address, ct).Forget();
 
             if (config.MyThumbnail != null)
             {
                 Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
 
                 if (myProfile != null)
-                    config.MyThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, new Web3Address(myProfile.UserId), myProfile.Avatar.FaceSnapshotUrl, ct).Forget();
+                    config.MyThumbnail.SetupWithDependenciesAsync(viewDependencies, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
             }
 
             Toggle(state);
