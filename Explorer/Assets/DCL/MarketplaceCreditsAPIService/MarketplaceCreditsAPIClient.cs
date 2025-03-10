@@ -89,10 +89,10 @@ namespace DCL.MarketplaceCreditsAPIService
                                 stepsDone = 3,
                             },
                             credits = 1,
-                            isClaimed = true,
+                            isClaimed = false,
                         },
                     },
-                    creditsAvailableToClaim = false,
+                    creditsAvailableToClaim = true,
                 },
             };
 

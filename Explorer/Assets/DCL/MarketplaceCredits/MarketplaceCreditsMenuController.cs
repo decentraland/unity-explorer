@@ -6,6 +6,7 @@ using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly IInputBlock inputBlock;
+        private readonly IWebRequestController webRequestController;
 
         private CancellationTokenSource showHideMenuCts;
 
@@ -31,7 +33,8 @@ namespace DCL.MarketplaceCredits
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IWebRequestController webRequestController)
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
@@ -42,7 +45,7 @@ namespace DCL.MarketplaceCredits
                 closeButton.onClick.AddListener(ClosePanel);
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(view.WelcomeView, this, webBrowser);
-            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, this, webBrowser, marketplaceCreditsAPIClient, selfProfile);
+            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, webBrowser, marketplaceCreditsAPIClient, selfProfile, webRequestController);
         }
 
         public void OpenPanel()

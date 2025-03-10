@@ -28,10 +28,13 @@ namespace DCL.MarketplaceCredits
         public GameObject MainLoadingContainer { get; private set; }
 
         [field: SerializeField]
-        public GameObject TasksContainer { get; private set; }
+        public RectTransform GoalsContainer { get; private set; }
 
         [field: SerializeField]
         public GameObject CaptchaContainer { get; private set; }
+
+        [field: SerializeField]
+        public MarketplaceCreditsGoalRowView GoalRowPrefab { get; private set; }
 
         public void SetAsLoading(bool isLoading)
         {
@@ -40,7 +43,7 @@ namespace DCL.MarketplaceCredits
             MainLoadingContainer.SetActive(isLoading);
             TimeLeftText.gameObject.SetActive(!isLoading);
             TotalCreditsText.gameObject.SetActive(!isLoading);
-            TasksContainer.SetActive(!isLoading);
+            GoalsContainer.gameObject.SetActive(!isLoading);
 
             if (isLoading)
                 CaptchaContainer.SetActive(false);
