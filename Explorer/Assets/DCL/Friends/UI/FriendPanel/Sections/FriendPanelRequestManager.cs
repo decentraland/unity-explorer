@@ -90,7 +90,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public async UniTask InitAsync(CancellationToken ct)
         {
-            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes
+            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes 
             if (isInitializing) return;
 
             isInitializing = true;
