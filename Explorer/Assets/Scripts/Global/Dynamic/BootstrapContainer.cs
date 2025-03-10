@@ -193,7 +193,7 @@ namespace Global.Dynamic
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
                 return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
-                      .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
+                   .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
             // Fall back to debug if segment is not configured
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
