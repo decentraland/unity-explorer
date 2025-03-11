@@ -1,12 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
-using DCL.Optimization.Memory;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using System;
 using System.IO;
 using System.Linq;
@@ -38,22 +35,29 @@ namespace ECS.StreamableLoading.AssetBundles.Playgrounds
 
             foreach (string file in Directory.EnumerateFiles(directory.Path))
             {
-                // print($"Load file successfully: {file}");
-                // (HashKey hash, string ext) = HashNamings.UnpackedFromPath(file);
-                // var content = await diskCache.PartialFileAsync(hash, ext, CancellationToken.None);
-                // var result = content.Unwrap();
-                // using var stream = chain.ToStream();
-                //
-                // if (result.MetaData.IsFullyDownloaded == false)
-                // {
-                //     ReportHub.LogException(new Exception("Not fully loaded"), ReportData.UNSPECIFIED);
-                //     continue;
-                // }
-                //
-                // await UniTask.SwitchToMainThread();
-                // var ab = AssetBundle.LoadFromStream(stream);
-                // print($"Asset: {(ab ? ab.name : string.Empty)}");
-                // if (ab) ab.Unload(true);
+                print($"Load file successfully: {file}");
+                (HashKey hash, string ext) = HashNamings.UnpackedFromPath(file);
+                var content = await diskCache.PartialFileAsync(hash, ext, CancellationToken.None);
+                var result = content.Unwrap();
+
+                var meta = await result.AccessAsync(static async p => p.MetaData);
+
+                if (meta.IsFullyDownloaded == false)
+                {
+                    ReportHub.LogException(new Exception($"Not fully loaded: {meta.MaxFileSize} but {meta.WrittenBytesSize}"), ReportData.UNSPECIFIED);
+                    continue;
+                }
+
+                await UniTask.SwitchToMainThread();
+
+                await result.AccessAsync(p =>
+                    {
+                        var stream = p.ReadOnlyStream;
+                        var ab = AssetBundle.LoadFromStream(stream);
+                        print($"Asset: {(ab ? ab.name : string.Empty)}");
+                        if (ab) ab.Unload(true);
+                    }
+                );
             }
         }
 
@@ -65,18 +69,24 @@ namespace ECS.StreamableLoading.AssetBundles.Playgrounds
             string file = Directory.EnumerateFiles(directory.Path).ToList()[byIndex];
 
             {
-                // print($"Load file successfully: {file}");
-                // (HashKey hash, string ext) = HashNamings.UnpackedFromPath(file);
-                // var content = await diskCache.PartialFileAsync(hash, ext, CancellationToken.None);
-                // var result = content.Unwrap();
-                // using var stream = partialFile.ToStream();
-                //
-                // if (result.MetaData.IsFullyDownloaded == false)
-                //     throw new Exception("Not fully loaded");
-                //
-                // await UniTask.SwitchToMainThread();
-                // var ab = AssetBundle.LoadFromStream(stream);
-                // if (ab) ab.Unload(true);
+                print($"Load file successfully: {file}");
+                (HashKey hash, string ext) = HashNamings.UnpackedFromPath(file);
+                var content = await diskCache.PartialFileAsync(hash, ext, CancellationToken.None);
+                var result = content.Unwrap();
+
+                await UniTask.SwitchToMainThread();
+
+                await result.AccessAsync(p =>
+                    {
+                        if (p.MetaData.IsFullyDownloaded == false)
+                            throw new Exception("Not fully loaded");
+
+                        var stream = p.ReadOnlyStream;
+                        var ab = AssetBundle.LoadFromStream(stream);
+                        print($"Asset: {(ab ? ab.name : string.Empty)}");
+                        if (ab) ab.Unload(true);
+                    }
+                );
             }
 
             byIndex++;
