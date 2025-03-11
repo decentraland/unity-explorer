@@ -12,7 +12,7 @@ namespace DCL.UI.SuggestionPanel
         protected override void SetupContinuation(ProfileInputSuggestionData data)
         {
             SuggestionId = data.ProfileData.DisplayName;
-            simpleUserNameElement.Setup(data.ProfileData, data.ProfileData.UserNameColor);
+            simpleUserNameElement.Setup(data.ProfileData);
             profilePictureView.SetupWithDependencies(data.ViewDependencies, data.ProfileData.UserNameColor, data.ProfileData.Avatar.FaceSnapshotUrl, data.ProfileData.UserId);
         }
     }

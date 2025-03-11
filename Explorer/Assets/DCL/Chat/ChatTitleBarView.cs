@@ -1,9 +1,13 @@
 using DCL.UI.ProfileElements;
+using DCL.Web3;
 using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -32,8 +36,8 @@ namespace DCL.Chat
         [SerializeField] private GameObject defaultChatTitlebar;
         [SerializeField] private GameObject memberListTitlebar;
 
-        [SerializeField] private GameObject nearbyChannelImage;
-        [SerializeField] private ProfilePictureView profilePictureView;
+        [FormerlySerializedAs("nearbyChannelImage")] [SerializeField] private GameObject nearbyChannelContainer;
+        [SerializeField] private SimpleProfileView profileView;
 
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
@@ -41,10 +45,12 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private bool chatBubblesVisibility;
+        private CancellationTokenSource cts;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
+            profileView.InjectDependencies(dependencies);
         }
 
         public void Initialize(bool chatBubblesVisibility)
@@ -77,15 +83,16 @@ namespace DCL.Chat
 
         public void SetNearbyChannelImage()
         {
-            nearbyChannelImage.SetActive(true);
-            profilePictureView.gameObject.SetActive(false);
+            nearbyChannelContainer.SetActive(true);
+            profileView.gameObject.SetActive(false);
         }
 
-        public void SetupProfilePictureView(Color userColor, string faceSnapshotUrl, string userId)
+        public void SetupProfilePictureView(Web3Address userId )
         {
-            profilePictureView.gameObject.SetActive(true);
-            profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
-            nearbyChannelImage.SetActive(false);
+            cts = cts.SafeRestart();
+            profileView.gameObject.SetActive(true);
+            profileView.SetupAsync(userId, cts.Token).Forget();
+            nearbyChannelContainer.SetActive(false);
         }
 
         public void SetToggleChatBubblesValue(bool value)
