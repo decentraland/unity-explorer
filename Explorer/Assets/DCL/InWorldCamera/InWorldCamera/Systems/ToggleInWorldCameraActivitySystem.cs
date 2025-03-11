@@ -35,9 +35,7 @@ namespace DCL.InWorldCamera.Systems
         private readonly CharacterController followTarget;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ICursor cursor;
-        private readonly IMVCManager mvcManager;
         private readonly DCLInput.InWorldCameraActions inputSchema;
-        private readonly UIDocument sceneUIRoot;
         private readonly NametagsData nametagsData;
 
         private SingleInstanceEntity camera;
@@ -54,9 +52,7 @@ namespace DCL.InWorldCamera.Systems
             CharacterController followTarget,
             IDebugContainerBuilder debugContainerBuilder,
             ICursor cursor,
-            IMVCManager mvcManager,
             DCLInput.InWorldCameraActions inputSchema,
-            UIDocument sceneUIRoot,
             NametagsData nametagsData) : base(world)
         {
             this.settings = settings;
@@ -64,9 +60,7 @@ namespace DCL.InWorldCamera.Systems
             this.followTarget = followTarget;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cursor = cursor;
-            this.mvcManager = mvcManager;
             this.inputSchema = inputSchema;
-            this.sceneUIRoot = sceneUIRoot;
             this.nametagsData = nametagsData;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;

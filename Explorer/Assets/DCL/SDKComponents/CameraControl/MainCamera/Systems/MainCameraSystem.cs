@@ -6,6 +6,7 @@ using Cinemachine;
 using CRDT;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.InWorldCamera;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
@@ -188,6 +189,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 if (cameraComponent.Mode != CameraMode.SDKCamera)
                 {
                     lastNonSDKCameraMode = cameraComponent.Mode;
+                    globalWorld.Add(cameraData.CameraEntityProxy.Object, new ToggleInWorldCameraRequest { IsEnable = false });
+
                     cameraComponent.Mode = CameraMode.SDKCamera;
                 }
             }
