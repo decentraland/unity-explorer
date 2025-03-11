@@ -58,7 +58,7 @@ namespace DCL.UI.ProfileElements
             try
             {
                 cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
-
+                thumbnailImageView.SetImage(defaultEmptyThumbnail);
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
 
