@@ -13,7 +13,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.UI.SharedSpaceManager
@@ -55,10 +54,12 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
-            dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
 
-            if(isCameraReelEnabled)
+            if (isCameraReelEnabled)
+            {
                 dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
+                dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
+            }
         }
 
         public async UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null)
