@@ -23,7 +23,6 @@ namespace DCL.Roads.Settings
         IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
-
 #if UNITY_EDITOR
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
