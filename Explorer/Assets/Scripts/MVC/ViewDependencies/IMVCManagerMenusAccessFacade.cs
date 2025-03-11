@@ -22,6 +22,17 @@ namespace MVC
 
         UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, CancellationToken ct, Action onHide = null);
 
-        UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct);
+        UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct, Action onHide = null);
+
+        UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility);
+    }
+
+    [Serializable]
+    public struct ChatOptionsContextMenuData
+    {
+        public string ChatBubblesToggleText;
+        public Sprite ChatBubblesToggleIcon;
+        public string PinChatToggleText;
+        public Sprite PinChatToggleTextIcon;
     }
 }

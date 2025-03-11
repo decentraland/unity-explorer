@@ -5,24 +5,24 @@ using DCL.Friends.UI;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace MVC
+namespace DCL.UI.GenericContextMenu.Controllers
 {
     public class GenericUserProfileContextMenuController
     {
-        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
-        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5,-10);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
+        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IMVCManager mvcManager;
@@ -31,7 +31,7 @@ namespace MVC
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
         private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
-        private readonly GenericContextMenu contextMenu;
+        private readonly Controls.Configs.GenericContextMenu contextMenu;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -44,7 +44,8 @@ namespace MVC
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
+
+            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
                          .AddControl(userProfileContextMenuControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(openUserProfileButtonContextMenuControlSettings)
@@ -59,17 +60,18 @@ namespace MVC
 
             if (friendServiceProxy.Configured)
             {
-                var friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
+                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
 
             userProfileContextMenuControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
+
             mentionUserButtonContextMenuControlSettings.SetData(profile.MentionName);
             openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide:onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
@@ -81,7 +83,7 @@ namespace MVC
                        FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
                        FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
                        FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
-                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
                    };
         }
 
@@ -105,7 +107,6 @@ namespace MVC
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
             }
-
         }
 
         private void RemoveFriend(string userAddress)
@@ -175,12 +176,12 @@ namespace MVC
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
+
             //Per design request we need to add an extra character after adding the mention to the chat.
             chatInputBus.InsertText(userName + " ");
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
-
     }
 }

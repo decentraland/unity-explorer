@@ -7,6 +7,7 @@ using DCL.Friends;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
+using DCL.UI.GenericContextMenu.Controllers;
 using DCL.Utilities;
 using DCL.Web3;
 using System;
@@ -16,16 +17,18 @@ using UnityEngine;
 namespace MVC
 {
     /// <summary>
-    /// Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
+    ///     Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
     /// </summary>
     public class MVCManagerMenusAccessFacade : IMVCManagerMenusAccessFacade
     {
         private readonly IMVCManager mvcManager;
         private readonly IProfileCache profileCache;
-        private readonly GenericUserProfileContextMenuController genericUserProfileContextMenuController;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IChatInputBus chatInputBus;
 
-        private UniTaskCompletionSource closeContextMenuTask;
         private CancellationTokenSource cancellationTokenSource;
+        private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
+        private ChatOptionsContextMenuController chatOptionsContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
@@ -36,7 +39,8 @@ namespace MVC
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
-            genericUserProfileContextMenuController = new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager);
+            this.friendServiceProxy = friendServiceProxy;
+            this.chatInputBus = chatInputBus;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -54,14 +58,6 @@ namespace MVC
         public async UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct) =>
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
-        {
-            closeContextMenuTask?.TrySetResult();
-            closeContextMenuTask = new UniTaskCompletionSource();
-
-            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
-        }
-
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, CancellationToken ct, Action onHide = null)
         {
             Profile profile = profileCache.Get(walletId);
@@ -69,11 +65,25 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
         }
 
-        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct)
+        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct, Action onHide = null)
         {
             Profile profile = profileCache.GetByUserName(userName);
             if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct);
+            await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
+        }
+
+        public async UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility)
+        {
+            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.ChatBubblesToggleIcon, data.ChatBubblesToggleText, data.PinChatToggleTextIcon, data.PinChatToggleText);
+            chatOptionsContextMenuController.ChatBubblesVisibilityChanged = null;
+            chatOptionsContextMenuController.ChatBubblesVisibilityChanged += onToggleChatBubblesVisibility;
+            await chatOptionsContextMenuController.ShowContextMenuAsync(chatBubblesVisibility, transformPosition);
+        }
+
+        private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide)
+        {
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
         }
     }
 }

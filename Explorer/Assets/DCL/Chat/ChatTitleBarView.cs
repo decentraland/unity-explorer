@@ -3,20 +3,13 @@ using MVC;
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Chat
 {
-    public class ChatTitleBarView : MonoBehaviour
+    public class ChatTitleBarView : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
-
-        public Action CloseChatButtonClicked;
-        public Action CloseMemberListButtonClicked;
-        public Action ShowMemberListButtonClicked;
-        public Action HideMemberListButtonClicked;
-        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
+        public delegate void ChatBubblesVisibilityChangedDelegate(bool isVisible);
 
         [SerializeField] private Button closeChatButton;
         [SerializeField] private Button closeMemberListButton;
@@ -35,17 +28,32 @@ namespace DCL.Chat
         [SerializeField] private GameObject nearbyChannelImage;
         [SerializeField] private ProfilePictureView profilePictureView;
 
-        public void Initialize()
+        [Header("Context Menu Data")]
+        [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
+        private bool chatBubblesVisibility;
+
+        public Action CloseChatButtonClicked;
+        public Action CloseMemberListButtonClicked;
+        public Action HideMemberListButtonClicked;
+        public Action ShowMemberListButtonClicked;
+
+        private ViewDependencies viewDependencies;
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+        }
+
+        public event ChatBubblesVisibilityChangedDelegate? ChatBubblesVisibilityChanged;
+
+        public void Initialize(bool chatBubblesVisibility)
         {
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
             closeMemberListButton.onClick.AddListener(OnCloseMemberListButtonClicked);
             showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
             hideMemberListButton.onClick.AddListener(OnHideMemberListButtonClicked);
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
-        }
-
-        private void OnOpenContextMenuButtonClicked()
-        {
+            this.chatBubblesVisibility = chatBubblesVisibility;
         }
 
         public void ChangeTitleBarVisibility(bool isMemberListVisible)
@@ -72,33 +80,26 @@ namespace DCL.Chat
             profilePictureView.gameObject.SetActive(false);
         }
 
-        public void SetupProfilePictureView(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId)
+        public void SetupProfilePictureView(Color userColor, string faceSnapshotUrl, string userId)
         {
             profilePictureView.gameObject.SetActive(true);
-            profilePictureView.SetupWithDependencies(dependencies, userColor, faceSnapshotUrl, userId);
+            profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
             nearbyChannelImage.SetActive(false);
         }
 
         public void SetToggleChatBubblesValue(bool value)
         {
-            /*get => chatBubblesToggle.Toggle.interactable;
+            chatBubblesVisibility = value;
+        }
 
-          set
-          {
-              if (chatBubblesToggle.Toggle.interactable != value)
-              {
-                  chatBubblesToggle.Toggle.interactable = value;
-
-                  chatBubblesToggle.IsSoundEnabled = false;
-                  chatBubblesToggle.Toggle.isOn = chatBubblesToggle.Toggle.interactable;
-                  chatBubblesToggle.IsSoundEnabled = true;
-              }
-          }*/
+        private void OnOpenContextMenuButtonClicked()
+        {
+            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged).Forget();
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
-            ChatBubbleVisibilityChanged?.Invoke(isToggled);
+            ChatBubblesVisibilityChanged?.Invoke(isToggled);
         }
 
         private void OnCloseMemberListButtonClicked()
