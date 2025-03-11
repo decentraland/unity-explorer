@@ -60,12 +60,32 @@ namespace DCL.WebRequests
                 if (webRequest.isTextureCompressionEnabled)
                     return ExecuteWithCompressionAsync(webRequest, ct);
 
-                return ExecuteNoCompressionAsync(webRequest, ct)!;
+                return ExecuteNoCompressionAsync(webRequest, ct);
             }
 
             private UniTask<IOwnedTexture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                Texture2D? texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
+                Texture2D? texture;
+
+                if (webRequest.UnityWebRequest.downloadHandler is DownloadHandlerTexture)
+                {
+                    texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
+                }
+                else
+                {
+                    // If there's no DownloadHandlerTexture the texture needs to be created from scratch with the
+                    // downloaded tex data
+                    var data = webRequest.UnityWebRequest.downloadHandler?.data;
+                    if (data == null)
+                        throw new Exception("Texture content is empty");
+
+                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (!texture.LoadImage(data))
+                    {
+                        throw new Exception($"Failed to load image from data: {webRequest.url}");
+                    }
+                }
+
                 texture.wrapMode = wrapMode;
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
@@ -89,8 +109,9 @@ namespace DCL.WebRequests
                                                   ct
                                               );
 
+                // Fallback to uncompressed texture if compression fails
                 if (result.Success == false)
-                    throw new Exception($"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");
+                    return await ExecuteNoCompressionAsync(webRequest, ct);
 
                 var texture = result.Value.Texture;
 
