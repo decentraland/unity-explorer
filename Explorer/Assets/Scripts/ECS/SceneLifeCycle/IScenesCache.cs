@@ -35,7 +35,7 @@ namespace ECS.SceneLifeCycle
 
         void ClearScenes(bool clearPortableExperiences = false);
 
-        void SetCurrentScene(ISceneFacade sceneFacade);
+        void SetCurrentScene(ISceneFacade? sceneFacade);
     }
 
     public class ScenesCache : IScenesCache
@@ -129,7 +129,7 @@ namespace ECS.SceneLifeCycle
             scenes.Clear();
         }
 
-        public void SetCurrentScene(ISceneFacade sceneFacade)
+        public void SetCurrentScene(ISceneFacade? sceneFacade)
         {
             if (CurrentScene != sceneFacade)
                 CurrentScene = sceneFacade;
