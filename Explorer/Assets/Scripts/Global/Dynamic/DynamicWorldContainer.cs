@@ -639,7 +639,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     hyperlinkTextFormatter,
                     profileCache,
-                    chatInputBus),
+                    chatInputBus,
+                    staticContainer.LoadingStatus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
