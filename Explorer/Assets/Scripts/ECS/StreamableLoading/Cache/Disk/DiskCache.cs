@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
             try
             {
-                string path = PathFrom(key, extension);
+                string path = directory.PathFor(key, extension);
                 using var _ = filesLock.TryLock(path, out bool success);
 
                 if (success == false)
@@ -74,7 +74,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             try
             {
                 string fileName = HashNamings.HashNameFrom(key, extension);
-                string path = PathFrom(fileName);
+                string path =directory.PathFor(fileName);
 
                 using var fileScope = filesLock.TryLock(path, out bool success);
 
@@ -106,7 +106,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
             try
             {
-                string path = PathFrom(key, extension);
+                string path = directory.PathFor(key, extension);
                 using var fileScope = filesLock.TryLock(path, out bool success);
 
                 if (success == false)
@@ -116,18 +116,6 @@ namespace ECS.StreamableLoading.Cache.Disk
                 return EnumResult<TaskError>.SuccessResult();
             }
             catch (Exception e) { return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
-        }
-
-        private string PathFrom(HashKey key, string extension)
-        {
-            string hashName = HashNamings.HashNameFrom(key, extension);
-            return PathFrom(hashName);
-        }
-
-        private string PathFrom(string fileName)
-        {
-            string fullPath = Path.Combine(directory.Path, fileName);
-            return fullPath;
         }
     }
 

@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.AssetBundles
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
             AssetBundleLoadingMutex loadingMutex,
-            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache, webRequestController, buffersPool, partialDiskCache, GetAssetBundleIntention.DiskHashCompute.INSTANCE)
+            IPartialDiskCache partialDiskCache) : base(world, cache, webRequestController, buffersPool, partialDiskCache, GetAssetBundleIntention.DiskHashCompute.INSTANCE)
         {
             this.loadingMutex = loadingMutex;
         }
@@ -51,8 +51,8 @@ namespace ECS.StreamableLoading.AssetBundles
             long count = Interlocked.Increment(ref performedCount);
 
             ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Processing: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
-            var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
-            AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle = await AssetBundleData.InMemoryAssetBundle.NewAsync(memoryChain);
+            var partialFile = state.ClaimOwnershipOverFullyDownloadedData();
+            AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle = await AssetBundleData.InMemoryAssetBundle.NewAsync(partialFile);
             ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock

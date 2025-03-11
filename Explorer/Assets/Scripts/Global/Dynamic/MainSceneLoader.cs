@@ -323,20 +323,20 @@ namespace Global.Dynamic
                 InputMapComponent.Kind.EMOTE_WHEEL);
         }
 
-        private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
+        private static IPartialDiskCache NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
-            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
-            {
-                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
-                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
-            }
-
-
-            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
-            {
-                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
-                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
-            }
+            // TODO support
+            // if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
+            // {
+            //     ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
+            //     return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            // }
+            //
+            // if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            // {
+            //     ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+            //     return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            // }
 
             var cacheDirectory = CacheDirectory.NewDefaultSubdirectory("partials");
             var filesLock = new FilesLock();
@@ -351,7 +351,7 @@ namespace Global.Dynamic
             else
                 diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
-            var partialCache = new DiskCache<PartialLoadingState, PartialDiskSerializer.PartialMemoryIterator>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
+            var partialCache = new PartialDiskCache(cacheDirectory, filesLock, diskCleanUp);
             return partialCache;
         }
 

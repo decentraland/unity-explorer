@@ -8,7 +8,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
 {
     public class PartialDownloadHandler : DownloadHandlerScript
     {
-        private readonly ArrayPool<byte> buffersPool;
+        internal readonly ArrayPool<byte> buffersPool;
         private int bufferPointer = 0;
         public byte[]? PartialData;
         public int DownloadedSize;

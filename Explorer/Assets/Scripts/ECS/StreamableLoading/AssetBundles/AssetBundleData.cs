@@ -1,14 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.Memory;
 using DCL.Profiling;
 using DCL.WebRequests;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
-using System.IO;
 using System.Threading;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility.Multithreading;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -33,33 +33,37 @@ namespace ECS.StreamableLoading.AssetBundles
             public static long UnStreamedActiveCount => unStreamedCount;
 
             internal readonly AssetBundle bundle;
-            private readonly Stream? stream;
+            private readonly MutexSlim<PartialFile>? partialFile;
             private bool unloaded;
 
-            private InMemoryAssetBundle(AssetBundle bundle, Stream? stream)
+            private InMemoryAssetBundle(AssetBundle bundle, MutexSlim<PartialFile>? partialFile)
             {
                 this.bundle = bundle;
-                this.stream = stream;
+                this.partialFile = partialFile;
                 unloaded = false;
 
-                if (stream == null) Interlocked.Increment(ref unStreamedCount);
+                if (partialFile == null) Interlocked.Increment(ref unStreamedCount);
                 else Interlocked.Increment(ref streamedCount);
             }
 
             public bool IsEmpty => bundle == null;
 
-            public static async UniTask<InMemoryAssetBundle> NewAsync(MemoryChain memoryChain)
+            public static async UniTask<InMemoryAssetBundle> NewAsync(MutexSlim<PartialFile> partialFile)
             {
-                var memoryStream = memoryChain.ToStream();
-
                 await UniTask.SwitchToMainThread();
+                var ab = await partialFile.AccessAsync(LoadFromPartialFile);
+                return new InMemoryAssetBundle(ab, partialFile);
+            }
 
-                var assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream)!;
-                return new InMemoryAssetBundle(assetBundle, memoryStream);
+            private static async UniTask<AssetBundle> LoadFromPartialFile(PartialFile partialFile)
+            {
+                var stream = partialFile.ReadOnlyStream;
+                var ab = await AssetBundle.LoadFromStreamAsync(stream)!;
+                return ab;
             }
 
             public static InMemoryAssetBundle FromAssetBundle(AssetBundle assetBundle) =>
-                new (assetBundle, Stream.Null!);
+                new (assetBundle, null);
 
             public async UniTask UnloadAsync(bool unloadAllLoadedObjects)
             {
@@ -68,12 +72,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 unloaded = true;
 
-                if (stream == null) Interlocked.Increment(ref unStreamedCount);
-                else Interlocked.Increment(ref streamedCount);
+                if (partialFile == null) Interlocked.Decrement(ref unStreamedCount);
+                else Interlocked.Decrement(ref streamedCount);
 
                 await UniTask.SwitchToMainThread();
                 if (bundle) await bundle.UnloadAsync(unloadAllLoadedObjects)!;
-                stream?.Dispose();
+                partialFile?.Dispose();
             }
 
             public async UniTask<(string? metrics, string? metadata)> MetricsAndMetadataJsonAsync(AssetBundleLoadingMutex loadingMutex, CancellationToken ct)

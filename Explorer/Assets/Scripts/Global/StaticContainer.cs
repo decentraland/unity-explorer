@@ -155,7 +155,7 @@ namespace Global
             bool enableAnalytics,
             IAnalyticsController analyticsController,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
+            IPartialDiskCache partialsDiskCache,
             UIDocument scenesUIRoot,
             CancellationToken ct,
             bool enableGPUInstancing = true)

@@ -1,10 +1,12 @@
 using DCL.Optimization.Memory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -78,11 +80,11 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; private set; }
 
-        public MemoryChain ClaimOwnershipOverFullyDownloadedData()
+        public MutexSlim<PartialFile> ClaimOwnershipOverFullyDownloadedData()
         {
             Assert.IsTrue(PartialDownloadingData is { IsFileFullyDownloaded: true });
             PartialLoadingState value = PartialDownloadingData!.Value;
-            MemoryChain owner = value.TransferMemoryOwnership();
+            MutexSlim<PartialFile> owner = value.TransferMemoryOwnership();
             PartialDownloadingData = null;
             return owner;
         }
@@ -156,11 +158,12 @@ namespace ECS.StreamableLoading.Common.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SyncOrReplaceChunkData<T>(in OngoingRequestResult<T> ongoingRequestResult)
         {
-            PartialDownloadingData?.Dispose();
-            PartialDownloadingData = null;
-
-            if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
-                PartialDownloadingData = ongoingRequestResult.PartialDownloadingData.Value.DeepCopy();
+            // TODO sync with Mutex and Reference Counting
+            // PartialDownloadingData?.Dispose();
+            // PartialDownloadingData = null;
+            //
+            // if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
+            //     PartialDownloadingData = ongoingRequestResult.PartialDownloadingData.Value.DeepCopy();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

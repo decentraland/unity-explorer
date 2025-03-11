@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
 using System.IO;
 using UnityEngine;
 
@@ -59,5 +60,16 @@ namespace ECS.StreamableLoading.Cache.Disk
         public static CacheDirectory NewDefaultSubdirectory(string subdirectory) =>
             New($"{DISK_CACHE_FOLDER}/{subdirectory}");
 
+        public string PathFor(HashKey key, string extension)
+        {
+            string hashName = HashNamings.HashNameFrom(key, extension);
+            return PathFor(hashName);
+        }
+
+        public string PathFor(string fileName)
+        {
+            string fullPath = System.IO.Path.Combine(Path, fileName);
+            return fullPath;
+        }
     }
 }
