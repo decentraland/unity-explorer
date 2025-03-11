@@ -120,7 +120,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
         {
-            if (avatarCachedVisibility.IsVisible == !shouldBeHidden)
+            if (avatarCachedVisibility.IsVisible == shouldBeHidden)
                 return;
 
             if (shouldBeHidden)
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             else
                 Show(ref avatarShape);
 
-            avatarCachedVisibility.IsVisible = !shouldBeHidden;
+            avatarCachedVisibility.IsVisible = shouldBeHidden;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

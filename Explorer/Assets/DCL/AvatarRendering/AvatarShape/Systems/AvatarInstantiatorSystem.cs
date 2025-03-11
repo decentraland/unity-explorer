@@ -86,8 +86,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
-            BlockAvatarsQuery(World);
             InstantiateExistingAvatarQuery(World);
+            BlockAvatarsQuery(World);
         }
 
         [Query]
@@ -148,6 +148,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
             if (!userBlockingCacheProxy.Configured) return;
+
+            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
 
             bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
 
