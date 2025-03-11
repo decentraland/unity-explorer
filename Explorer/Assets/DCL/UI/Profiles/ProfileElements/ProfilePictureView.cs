@@ -58,17 +58,18 @@ namespace DCL.UI.ProfileElements
             try
             {
                 cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
-                thumbnailImageView.SetImage(defaultEmptyThumbnail);
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
 
                 Sprite sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
                 thumbnailImageView.SetImage(sprite ? sprite : defaultEmptyThumbnail);
+                thumbnailImageView.ImageEnabled = true;
             }
             catch (Exception)
             {
                 thumbnailImageView.SetImage(defaultEmptyThumbnail);
+                thumbnailImageView.ImageEnabled = true;
             }
 
         }
