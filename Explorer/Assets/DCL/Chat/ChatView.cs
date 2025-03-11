@@ -332,7 +332,7 @@ namespace DCL.Chat
             chatInputBox.InputChanged -= OnInputChanged;
             chatInputBox.InputSubmitted -= OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
+            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
