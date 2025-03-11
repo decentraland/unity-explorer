@@ -45,7 +45,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6515705194649211935}
-  - component: {fileID: 6591137366900643345}
   m_Layer: 5
   m_Name: Left Side Layout Container
   m_TagString: Untagged
@@ -74,32 +73,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &6591137366900643345
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 788822443112516356}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 9
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 3
-  m_Spacing: 10
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!1 &1335492148165115527
 GameObject:
   m_ObjectHideFlags: 0
@@ -222,11 +195,11 @@ RectTransform:
   - {fileID: 7773932338776267906}
   m_Father: {fileID: 6515705194649211935}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 101.21588, y: 28}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 9, y: 0}
+  m_SizeDelta: {x: 150, y: 28}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!1 &3213436673144109913
 GameObject:
   m_ObjectHideFlags: 0
@@ -589,7 +562,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_Pivot.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_Pivot.y
@@ -601,7 +574,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_AnchorMin.x
@@ -609,7 +582,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_SizeDelta.x
@@ -649,7 +622,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
       propertyPath: m_AnchoredPosition.y
