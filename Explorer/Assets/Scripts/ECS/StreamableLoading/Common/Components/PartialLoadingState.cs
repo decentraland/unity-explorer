@@ -1,9 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Utilities.Extensions;
+﻿using DCL.Utilities.Extensions;
 using DCL.WebRequests.PartialDownload;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
-using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 

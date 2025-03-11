@@ -158,12 +158,8 @@ namespace ECS.StreamableLoading.Common.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SyncOrReplaceChunkData<T>(in OngoingRequestResult<T> ongoingRequestResult)
         {
-            // TODO sync with Mutex and Reference Counting
-            // PartialDownloadingData?.Dispose();
-            // PartialDownloadingData = null;
-            //
-            // if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
-            //     PartialDownloadingData = ongoingRequestResult.PartialDownloadingData.Value.DeepCopy();
+            if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
+                PartialDownloadingData = ongoingRequestResult.PartialDownloadingData.Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
