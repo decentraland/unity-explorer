@@ -8,7 +8,7 @@ namespace DCL.MarketplaceCredits
 {
     public class MarketplaceCreditsCaptchaView : MonoBehaviour
     {
-        public event Action<bool> OnCaptchaSolved;
+        public event Action<float> OnCaptchaSolved;
 
         [field: SerializeField]
         public GameObject ControlContainer { get; private set; }
@@ -85,9 +85,9 @@ namespace DCL.MarketplaceCredits
             if (Mathf.Approximately(MainSlider.Slider.value, lastCaptchaValue))
                 return;
 
-            float targetAreaPositionValue = TargetArea.anchoredPosition.x / MaxTargetAreaXPos;
-            bool isCaptchaSolved = MainSlider.Slider.value >= targetAreaPositionValue - MatchTargetOffset && MainSlider.Slider.value <= targetAreaPositionValue + MatchTargetOffset;
-            OnCaptchaSolved?.Invoke(isCaptchaSolved);
+            //float targetAreaPositionValue = TargetArea.anchoredPosition.x / MaxTargetAreaXPos;
+            //bool isCaptchaSolved = MainSlider.Slider.value >= targetAreaPositionValue - MatchTargetOffset && MainSlider.Slider.value <= targetAreaPositionValue + MatchTargetOffset;
+            OnCaptchaSolved?.Invoke(MainSlider.Slider.value);
             lastCaptchaValue = MainSlider.Slider.value;
         }
     }

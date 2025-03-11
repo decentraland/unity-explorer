@@ -30,6 +30,7 @@ namespace DCL.MarketplaceCredits
         private Profile ownProfile;
         private CancellationTokenSource fetchGoalsOfTheWeekInfoCts;
         private CancellationTokenSource fetchCaptchaCts;
+        private CancellationTokenSource claimCreditsCts;
 
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
@@ -46,7 +47,7 @@ namespace DCL.MarketplaceCredits
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             view.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
-            view.CaptchaControl.OnCaptchaSolved += OnCaptchaSolved;
+            view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
 
             goalRowsPool = new ObjectPool<MarketplaceCreditsGoalRowView>(
                 InstantiateGoalRowPrefab,
@@ -71,9 +72,10 @@ namespace DCL.MarketplaceCredits
             view.InfoLinkButton.onClick.RemoveAllListeners();
             view.GoShoppingButton.onClick.RemoveAllListeners();
             view.CaptchaControl.ReloadButton.onClick.RemoveAllListeners();
-            view.CaptchaControl.OnCaptchaSolved -= OnCaptchaSolved;
+            view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
             fetchGoalsOfTheWeekInfoCts.SafeCancelAndDispose();
             fetchCaptchaCts.SafeCancelAndDispose();
+            claimCreditsCts.SafeCancelAndDispose();
         }
 
         private void OpenInfoLink() =>
@@ -179,15 +181,39 @@ namespace DCL.MarketplaceCredits
             }
         }
 
-        private void OnCaptchaSolved(bool isSolved)
+        private void ClaimCredits(float captchaValue)
         {
-            if (isSolved)
+            if (ownProfile == null)
+                return;
+
+            claimCreditsCts = claimCreditsCts.SafeRestart();
+            ClaimCreditsAsync(ownProfile.UserId, captchaValue, claimCreditsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
+        {
+            try
             {
-                // TODO (Santi) Send captcha value to the server
-                // ...
+                view.SetCaptchaAsLoading(true);
+                var claimCreditsResponse = await marketplaceCreditsAPIClient.ClaimCreditsAsync(walletId, captchaValue, ct);
+                view.SetCaptchaAsLoading(false);
+
+                if (claimCreditsResponse.success)
+                {
+                    // TODO (Santi): Show REWARD screen
+                    // ...
+
+                    OnOpenSection();
+                }
+                else
+                    view.SetCaptchaAsErrorState(true);
             }
-            else
-                view.SetCaptchaAsErrorState(true);
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error claiming the credits. Please try again!";
+                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
     }
 }

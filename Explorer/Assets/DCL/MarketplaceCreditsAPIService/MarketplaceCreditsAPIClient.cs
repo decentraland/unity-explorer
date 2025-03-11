@@ -42,6 +42,19 @@ namespace DCL.MarketplaceCreditsAPIService
             return captchaResponse;
         }
 
+        public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/claim";
+
+            // ClaimCreditsResponse responseData = await webRequestController
+            //                                          .SignedFetchPostAsync(url, captchaValue.ToString(), ct)
+            //                                          .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
+
+            ClaimCreditsResponse claimCreditsResponseData = await MockClaimCreditsAsync(ct);
+
+            return claimCreditsResponseData;
+        }
+
         private static async UniTask<GoalsOfTheWeekResponse> MockGoalsOfTheWeekAsync(CancellationToken ct)
         {
             int randomDelay = new System.Random().Next(1000, 3000);
@@ -123,6 +136,20 @@ namespace DCL.MarketplaceCreditsAPIService
             };
 
             return captchaResponse;
+        }
+
+        private static async UniTask<ClaimCreditsResponse> MockClaimCreditsAsync(CancellationToken ct)
+        {
+            bool randomSuccess = new System.Random().Next(0, 2) == 1;
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
+
+            ClaimCreditsResponse responseData = new ClaimCreditsResponse
+            {
+                success = randomSuccess,
+            };
+
+            return responseData;
         }
     }
 }
