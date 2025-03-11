@@ -72,12 +72,12 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
         }
 
-        public async UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility)
+        public async UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility, Action onContextMenuHide)
         {
             chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.ChatBubblesToggleIcon, data.ChatBubblesToggleText, data.PinChatToggleTextIcon, data.PinChatToggleText);
             chatOptionsContextMenuController.ChatBubblesVisibilityChanged = null;
             chatOptionsContextMenuController.ChatBubblesVisibilityChanged += onToggleChatBubblesVisibility;
-            await chatOptionsContextMenuController.ShowContextMenuAsync(chatBubblesVisibility, transformPosition);
+            await chatOptionsContextMenuController.ShowContextMenuAsync(chatBubblesVisibility, transformPosition, onContextMenuHide);
         }
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide)

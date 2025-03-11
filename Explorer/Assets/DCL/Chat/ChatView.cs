@@ -33,8 +33,7 @@ namespace DCL.Chat
         public delegate void PointerEventDelegate();
         public delegate void ScrollBottomReachedDelegate();
         public delegate void UnreadMessagesSeparatorViewedDelegate();
-
-
+        
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -145,6 +144,7 @@ namespace DCL.Chat
         private bool isMemberListCountDirty;
         private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private int memberListCount;
+        private bool isChatContextMenuOpen;
         private CancellationTokenSource popupCts;
 
         private ViewDependencies viewDependencies;
@@ -305,6 +305,8 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (isChatContextMenuOpen) return;
+            
             PointerExit?.Invoke();
             panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
             chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
@@ -341,6 +343,7 @@ namespace DCL.Chat
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ChatBubblesVisibilityChanged += OnToggleChatBubblesValueChanged;
+            chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
 
             chatMessageViewer.Initialize();
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
@@ -358,6 +361,11 @@ namespace DCL.Chat
             closePopupTask = new UniTaskCompletionSource();
 
             CurrentChannel = defaultChannelId;
+        }
+
+        private void OnChatContextMenuVisibilityChanged(bool isvisible)
+        {
+            isChatContextMenuOpen = isvisible;
         }
 
         private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)

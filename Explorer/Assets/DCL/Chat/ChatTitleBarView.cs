@@ -9,7 +9,14 @@ namespace DCL.Chat
 {
     public class ChatTitleBarView : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void ChatBubblesVisibilityChangedDelegate(bool isVisible);
+        public delegate void VisibilityChangedDelegate(bool isVisible);
+
+        public Action CloseChatButtonClicked;
+        public Action CloseMemberListButtonClicked;
+        public Action HideMemberListButtonClicked;
+        public Action ShowMemberListButtonClicked;
+        public event VisibilityChangedDelegate? ChatBubblesVisibilityChanged;
+        public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
 
         [SerializeField] private Button closeChatButton;
         [SerializeField] private Button closeMemberListButton;
@@ -30,21 +37,15 @@ namespace DCL.Chat
 
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
-        private bool chatBubblesVisibility;
 
-        public Action CloseChatButtonClicked;
-        public Action CloseMemberListButtonClicked;
-        public Action HideMemberListButtonClicked;
-        public Action ShowMemberListButtonClicked;
 
         private ViewDependencies viewDependencies;
+        private bool chatBubblesVisibility;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
         }
-
-        public event ChatBubblesVisibilityChangedDelegate? ChatBubblesVisibilityChanged;
 
         public void Initialize(bool chatBubblesVisibility)
         {
@@ -94,11 +95,18 @@ namespace DCL.Chat
 
         private void OnOpenContextMenuButtonClicked()
         {
-            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged).Forget();
+            ContextMenuVisibilityChanged?.Invoke(true);
+            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed).Forget();
+        }
+
+        private void OnContextMenuClosed()
+        {
+            ContextMenuVisibilityChanged?.Invoke(false);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
+            chatBubblesVisibility = isToggled;
             ChatBubblesVisibilityChanged?.Invoke(isToggled);
         }
 

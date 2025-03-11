@@ -35,25 +35,25 @@ namespace DCL.UI.GenericContextMenu
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
                 actionOnGet: separatorView => separatorView.gameObject.SetActive(true),
-                actionOnRelease: separatorView => separatorView.gameObject.SetActive(false),
+                actionOnRelease: separatorView => separatorView?.gameObject.SetActive(false),
                 actionOnDestroy: separatorView => Object.Destroy(separatorView.gameObject));
 
             buttonPool = new ObjectPool<GenericContextMenuButtonWithTextView>(
                 createFunc: () => Object.Instantiate(buttonPrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
+                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
 
             togglePool = new ObjectPool<GenericContextMenuToggleView>(
                 createFunc: () => Object.Instantiate(togglePrefab, controlsParent),
                 actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
-                actionOnRelease: toggleView => toggleView.gameObject.SetActive(false),
+                actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
                 actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
 
             toggleWithIconPool = new ObjectPool<GenericContextMenuToggleWithIconView>(
                 createFunc: () => Object.Instantiate(toggleWithIconPrefab, controlsParent),
                 actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
-                actionOnRelease: toggleView => toggleView.gameObject.SetActive(false),
+                actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
                 actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
 
             userProfilePool = new ObjectPool<GenericContextMenuUserProfileView>(
@@ -64,19 +64,19 @@ namespace DCL.UI.GenericContextMenu
                     return profileView;
                 },
                 actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),
-                actionOnRelease: userProfileView => userProfileView.gameObject.SetActive(false),
+                actionOnRelease: userProfileView => userProfileView?.gameObject.SetActive(false),
                 actionOnDestroy: userProfileView => Object.Destroy(userProfileView.gameObject));
 
             openUserProfileButtonPool = new ObjectPool<GenericContextMenuOpenUserProfileButtonView>(
                 createFunc: () => Object.Instantiate(openUserProfileButtonPrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
+                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
 
             mentionUserButtonPool = new ObjectPool<GenericContextMenuMentionUserButtonView>(
                 createFunc: () => Object.Instantiate(mentionUserButtonPrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
+                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
         }
 

@@ -1,4 +1,5 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,5 +14,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             base.Configure(settings, initialValue);
             ImageComponent.sprite = settings.toggleIcon;
         }
+
+        public override void RegisterCloseListener(Action listener) {}
     }
 }
