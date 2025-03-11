@@ -39,19 +39,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
             public bool IsEmpty => bundle == null;
 
-            public static async UniTask<InMemoryAssetBundle> NewAsync(MemoryChain memoryChain, string key)
+            public static async UniTask<InMemoryAssetBundle> NewAsync(MemoryChain memoryChain)
             {
+                var memoryStream = memoryChain.ToStream();
+
                 await UniTask.SwitchToMainThread();
-                using var memoryStream = memoryChain.ToStream();
 
-                string path = Path.Combine(Application.persistentDataPath!, key);
-                path = Path.ChangeExtension(path, "ab");
-                var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
-                await memoryStream.CopyToAsync(fileStream)!;
-
-                var assetBundle = await AssetBundle.LoadFromStreamAsync(fileStream)!;
-
-                return new InMemoryAssetBundle(assetBundle, fileStream);
+                var assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream)!;
+                return new InMemoryAssetBundle(assetBundle, memoryStream);
             }
 
             public static InMemoryAssetBundle FromAssetBundle(AssetBundle assetBundle) =>
