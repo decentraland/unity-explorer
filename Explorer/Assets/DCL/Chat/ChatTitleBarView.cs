@@ -95,12 +95,14 @@ namespace DCL.Chat
 
         private void OnOpenContextMenuButtonClicked()
         {
+            openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
             viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed).Forget();
         }
 
         private void OnContextMenuClosed()
         {
+            openContextMenuButton.OnDeselect(null);
             ContextMenuVisibilityChanged?.Invoke(false);
         }
 
