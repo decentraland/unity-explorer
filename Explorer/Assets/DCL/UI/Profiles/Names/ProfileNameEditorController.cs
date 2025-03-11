@@ -78,6 +78,8 @@ namespace DCL.UI.ProfileNames
 
             claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrl(url);
 
+            viewInstance.OverlayCloseButton.onClick.AddListener(Close);
+
             return;
 
             void Initialize(ProfileNameEditorView.NonClaimedNameConfig config)

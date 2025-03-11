@@ -14,6 +14,9 @@ namespace DCL.UI.ProfileNames
         [field: SerializeField]
         public ClaimedNameConfig ClaimedNameContainer { get; set; }
 
+        [field: SerializeField]
+        public Button OverlayCloseButton { get; set; }
+
         [Serializable]
         public struct NonClaimedNameConfig
         {
