@@ -33,7 +33,7 @@ namespace DCL.Chat
         public delegate void PointerEventDelegate();
         public delegate void ScrollBottomReachedDelegate();
         public delegate void UnreadMessagesSeparatorViewedDelegate();
-        
+
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -306,7 +306,7 @@ namespace DCL.Chat
         public void OnPointerExit(PointerEventData eventData)
         {
             if (isChatContextMenuOpen) return;
-            
+
             PointerExit?.Invoke();
             panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
             chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);

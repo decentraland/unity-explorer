@@ -13,7 +13,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private const int CONTEXT_MENU_WIDTH = 280;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 8;
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 14, 14);
-        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, 0);
+        private static readonly RectOffset HORIZONTAL_LAYOUT_PADDING = new (0, 0, 0, 0);
+        private static readonly int HORIZONTAL_LAYOUT_SPACING = 8;
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, -15);
 
         private readonly IMVCManager mvcManager;
         private readonly Controls.Configs.GenericContextMenu contextMenu;
@@ -26,12 +28,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
         public ChatOptionsContextMenuController(IMVCManager mvcManager, Sprite chatBubblesToggleIcon, string chatBubblesToggleText, Sprite pinChatToggleTextIcon, string pinChatToggleText)
         {
             this.mvcManager = mvcManager;
-            toggleWithIconContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(chatBubblesToggleIcon, chatBubblesToggleText, OnChatBubbleToggle);
+            toggleWithIconContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(chatBubblesToggleIcon, chatBubblesToggleText, OnChatBubbleToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING);
 
             contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.TOP_LEFT)
                          .AddControl(toggleWithIconContextMenuControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnChatBubbleToggle));
+                         .AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnChatBubbleToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING));
         }
 
         public async UniTask ShowContextMenuAsync(bool chatBubblesToggleValue, Vector2 position, Action onContextMenuHide = null)
