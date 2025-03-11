@@ -55,29 +55,26 @@ namespace ECS.StreamableLoading.Common.Systems
             //
             // if (isQualifiedForDiskCache)
             // make separate flow later for files which are stored on disk
-            {
-                using HashKey diskHashKey = diskHashCompute.ComputeHash(intention);
+            using HashKey diskHashKey = diskHashCompute.ComputeHash(intention);
 
+            PartialLoadingState partialState;
+
+            {
                 EnumResult<MutexSlim<PartialFile>, TaskError> cachedPartial = await partialDiskCache.PartialFileAsync(diskHashKey, PARTIALS_FILES_EXTENSION, ct);
 
                 if (cachedPartial.Success == false)
                     throw new Exception($"Failed to get partial file from disk cache {intention}: {cachedPartial}");
 
                 var file = cachedPartial.Value;
-                PartialLoadingState cachedState = new PartialLoadingState(file);
-                state.SetChunkData(cachedState);
+                partialState = new PartialLoadingState(file);
+                state.SetChunkData(partialState);
 
                 // If the cached data is complete, process it directly
-                if (cachedState.IsFileFullyDownloaded)
+                if (partialState.IsFileFullyDownloaded)
                     return await ProcessCompletedDataAsync(state, intention, partition, ct);
 
                 // If no cache or incomplete cached data, proceed with normal flow
             }
-
-            PartialLoadingState partialState = default;
-
-            if (state.PartialDownloadingData.HasValue)
-                partialState = state.PartialDownloadingData.Value;
 
             try
             {
@@ -85,7 +82,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 await partialState
                      .PeekOwner()
-                     .AccessAsync((webRequestController, intention, buffersPool, ct), LoadAsync, ct);
+                     .AccessAsync((webRequestController, intention, buffersPool, diskHashKey, ct), LoadAsync, ct);
 
                 state.SetChunkData(partialState);
 
@@ -103,7 +100,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedDataAsync(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);
 
-        private static async UniTask LoadAsync(PartialFile file, (IWebRequestController webRequestController, TIntention intention, ArrayPool<byte> bufferPool, CancellationToken token) tuple)
+        private static async UniTask LoadAsync(PartialFile file, (IWebRequestController webRequestController, TIntention intention, ArrayPool<byte> bufferPool, HashKey key, CancellationToken token) tuple)
         {
             if (file.MetaData.IsFullyDownloaded)
                 return;
@@ -112,6 +109,7 @@ namespace ECS.StreamableLoading.Common.Systems
             var buffersPool = tuple.bufferPool!;
             var intention = tuple.intention;
             var ct = tuple.token;
+            var key = tuple.key;
             PartialDownloadingRange chunkRange = file.NewPartialDownloadingRange();
 
             using PartialDownloadedData downloadedData = await webRequestController.GetPartialAsync(
@@ -130,7 +128,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 finalBytesCount = downloadedData.FullFileSize - chunkRange.RangeStart;
 
             // Write the downloaded data to the full data stream by starting from the last range start
-            await file.AppendDataAsync(downloadedData.DestinationArray!.AsMemory()[..finalBytesCount]);
+            await file.AppendDataAsync(downloadedData.DestinationArray!.AsMemory()[..finalBytesCount], key);
         }
     }
 }

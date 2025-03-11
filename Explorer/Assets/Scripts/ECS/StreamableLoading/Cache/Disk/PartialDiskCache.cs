@@ -53,7 +53,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
                 // TODO ensure no concurrency
                 // diskCleanUp.CleanUpIfNeeded();
-                var file = new PartialFile(stream, meta);
+                var fileKey = key.Copy();
+                var file = new PartialFile(fileKey, stream, meta);
                 var mutex = new MutexSlim<PartialFile>(file);
 
                 cache[path] = mutex;

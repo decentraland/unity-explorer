@@ -17,8 +17,9 @@ namespace ECS.StreamableLoading.Cache.Disk
 
     public class PartialFile : IDisposable
     {
-        private FileStream stream;
-        private ReadOnlyViewStream readOnlyViewStream;
+        private readonly FileStream stream;
+        private readonly ReadOnlyViewStream readOnlyViewStream;
+        private readonly HashKey hashKey;
         private Meta meta;
 
         public Meta MetaData => meta;
@@ -27,17 +28,21 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public int NextRangeStart => (int)stream.Length - Meta.MetaSize;
 
-        internal PartialFile(FileStream stream, Meta meta)
+        internal PartialFile(HashKey hashKey, FileStream stream, Meta meta)
         {
+            this.hashKey = hashKey;
             this.stream = stream;
             this.meta = meta;
             readOnlyViewStream = new ReadOnlyViewStream(stream, Meta.MetaSize);
         }
 
-        public async UniTask AppendDataAsync(ReadOnlyMemory<byte> data)
+        public async UniTask AppendDataAsync(ReadOnlyMemory<byte> data, HashKey forFile)
         {
             if (meta.IsFullyDownloaded)
                 throw new InvalidOperationException("File is already fully downloaded");
+
+            if (hashKey.Equals(forFile) == false)
+                throw new InvalidOperationException($"HashKey does not match: {hashKey.ToString()} and {forFile.ToString()}");
 
             stream.Seek(0, SeekOrigin.End);
             await stream.WriteAsync(data);
@@ -75,6 +80,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         public void Dispose()
         {
             stream.Dispose();
+            hashKey.Dispose();
         }
 
         public readonly struct Meta

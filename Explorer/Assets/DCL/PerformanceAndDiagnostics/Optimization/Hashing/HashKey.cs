@@ -1,11 +1,12 @@
 using DCL.Utilities.Extensions;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Buffers;
 using System.Text;
 
 namespace DCL.Optimization.Hashing
 {
-    public readonly struct HashKey : IDisposable
+    public readonly struct HashKey : IDisposable, IEquatable<HashKey>
     {
         public readonly OwnedMemory Hash;
 
@@ -21,6 +22,13 @@ namespace DCL.Optimization.Hashing
             return new HashKey(computedHash);
         }
 
+        public HashKey Copy()
+        {
+            using var copy = OwnedMemory.FromPool(Hash.Memory!.Length);
+            Hash.Memory.CopyTo(copy.Memory, 0);
+            return new HashKey(copy);
+        }
+
         /// <summary>
         /// Takes ownership of ownedMemory
         /// </summary>
@@ -31,6 +39,27 @@ namespace DCL.Optimization.Hashing
         {
             Hash.Dispose();
         }
+
+        public bool Equals(HashKey other)
+        {
+            if (Hash.Memory.Length != other.Hash.Memory.Length)
+                return false;
+
+            return Hash.Memory.AsSpan().SequenceEqual(other.Hash.Memory.AsSpan());
+        }
+
+        public override bool Equals(object obj) =>
+            obj is HashKey other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            HashCode hashCode = new HashCode();
+            foreach (byte b in Hash.Memory!) hashCode.Add(b);
+            return hashCode.ToHashCode();
+        }
+
+        public override string ToString() =>
+            HashNamings.HashNameFrom(this, "debug");
     }
 
     public readonly struct OwnedMemory : IDisposable
