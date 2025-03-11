@@ -226,6 +226,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
                 computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTexture);
 
+            if (!avatarShapeComponent.IsVisible)
+                foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
+                    foreach (var renderer in cachedAttachment.Renderers)
+                        renderer.enabled = false;
+
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
 
