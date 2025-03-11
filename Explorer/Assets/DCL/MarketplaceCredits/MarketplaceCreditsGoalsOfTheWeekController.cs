@@ -208,6 +208,7 @@ namespace DCL.MarketplaceCredits
                 else
                     view.SetCaptchaAsErrorState(true);
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error claiming the credits. Please try again!";
