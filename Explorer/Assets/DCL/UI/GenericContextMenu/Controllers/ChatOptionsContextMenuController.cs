@@ -32,8 +32,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.TOP_LEFT)
                          .AddControl(toggleWithIconContextMenuControlSettings)
-                         .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnChatBubbleToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING));
+                         .AddControl(new SeparatorContextMenuControlSettings());
+                         //.AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnPinChatToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING));
         }
 
         public async UniTask ShowContextMenuAsync(bool chatBubblesToggleValue, Vector2 position, Action onContextMenuHide = null)
