@@ -4,6 +4,7 @@ using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.Web3;
 using MVC;
 using DG.Tweening;
 using System;
@@ -146,6 +147,7 @@ namespace DCL.Chat
         private int memberListCount;
         private bool isChatContextMenuOpen;
         private CancellationTokenSource popupCts;
+        private bool pointerExit;
 
         private ViewDependencies viewDependencies;
 
@@ -216,7 +218,8 @@ namespace DCL.Chat
                     switch (currentChannel.Id.Type)
                     {
                         case ChatChannel.ChatChannelType.NearBy:
-                            chatTitleBar.SetNearbyChannelImage();
+                            chatTitleBar.SetupProfileView(new Web3Address("0x1b8ba74cc34c2927aac0a8af9c3b1ba2e61352f2"));
+                            //chatTitleBar.SetNearbyChannelImage(); TESTING PURPOSES - REVERT BEFORE MERGING
                             break;
                         case ChatChannel.ChatChannelType.User:
                         // Get user profile from data in the channel? and set up
@@ -362,9 +365,12 @@ namespace DCL.Chat
             CurrentChannel = defaultChannelId;
         }
 
-        private void OnChatContextMenuVisibilityChanged(bool isvisible)
+        private void OnChatContextMenuVisibilityChanged(bool isVisible)
         {
-            isChatContextMenuOpen = isvisible;
+            isChatContextMenuOpen = isVisible;
+
+            if (!isChatContextMenuOpen)
+                OnPointerExit(null);
         }
 
         private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)

@@ -36,7 +36,7 @@ namespace DCL.Chat
         [SerializeField] private GameObject defaultChatTitlebar;
         [SerializeField] private GameObject memberListTitlebar;
 
-        [FormerlySerializedAs("nearbyChannelImage")] [SerializeField] private GameObject nearbyChannelContainer;
+        [SerializeField] private GameObject nearbyChannelContainer;
         [SerializeField] private SimpleProfileView profileView;
 
         [Header("Context Menu Data")]
@@ -60,6 +60,8 @@ namespace DCL.Chat
             showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
             hideMemberListButton.onClick.AddListener(OnHideMemberListButtonClicked);
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
+            profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
+            profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
             this.chatBubblesVisibility = chatBubblesVisibility;
         }
 
@@ -137,6 +139,16 @@ namespace DCL.Chat
         private void OnCloseChatButtonClicked()
         {
             CloseChatButtonClicked?.Invoke();
+        }
+
+        private void OnProfileContextMenuClosed()
+        {
+            ContextMenuVisibilityChanged?.Invoke(false);
+        }
+
+        private void OnProfileContextMenuOpened()
+        {
+            ContextMenuVisibilityChanged?.Invoke(true);
         }
     }
 }
