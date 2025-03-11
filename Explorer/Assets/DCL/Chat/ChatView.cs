@@ -217,7 +217,6 @@ namespace DCL.Chat
                     {
                         case ChatChannel.ChatChannelType.NearBy:
                             chatTitleBar.SetNearbyChannelImage();
-                            chatTitleBar.SetChannelNameText(currentChannel.Id.Name);
                             break;
                         case ChatChannel.ChatChannelType.User:
                         // Get user profile from data in the channel? and set up

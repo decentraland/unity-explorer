@@ -87,7 +87,7 @@ namespace DCL.Chat
             profileView.gameObject.SetActive(false);
         }
 
-        public void SetupProfilePictureView(Web3Address userId )
+        public void SetupProfileView(Web3Address userId )
         {
             cts = cts.SafeRestart();
             profileView.gameObject.SetActive(true);
