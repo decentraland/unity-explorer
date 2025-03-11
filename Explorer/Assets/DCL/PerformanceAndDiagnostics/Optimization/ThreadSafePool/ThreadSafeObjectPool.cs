@@ -33,7 +33,11 @@ namespace DCL.Optimization.ThreadSafePool
 
         public PooledObject<T> Get(out T v)
         {
-            lock (objectPoolImplementation) { return objectPoolImplementation.Get(out v); }
+            lock (objectPoolImplementation)
+            {
+                v = objectPoolImplementation.Get()!;
+                return new PooledObject<T>(v, this);
+            }
         }
 
         public void Release(T element)
