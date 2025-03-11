@@ -112,6 +112,7 @@ namespace ECS.StreamableLoading.AssetBundles
             SceneAssetBundleManifest? manifest = parentIntent.Manifest;
             URLSubdirectory customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
+            //TODO remove linq, be carefull with multithreading
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
