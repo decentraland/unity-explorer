@@ -14,7 +14,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
@@ -61,7 +60,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                 LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId);
                 if (!result.Success)
                 {
-                    ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId} for entity {entity}");
+                    ReportHub.Log(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId} for entity {entity}");
                     return;
                 }
                 avatarBase = result.Result;

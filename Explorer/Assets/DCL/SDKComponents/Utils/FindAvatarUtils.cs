@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Multiplayer.Profiles.Tables;
 using System.Diagnostics;
 using UnityEngine;
 using Utility.Multithreading;
@@ -12,6 +13,7 @@ namespace DCL.SDKComponents.Utils
     {
         private static readonly QueryDescription AVATAR_BASE_AND_SHAPE_QUERY = new QueryDescription().WithAll<AvatarBase, AvatarShapeComponent>();
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
+        public static IReadOnlyEntityParticipantTable? EntityParticipantTable;
 
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]
@@ -22,6 +24,17 @@ namespace DCL.SDKComponents.Utils
         {
             AssertMainThread();
 
+            // Try to find the avatar using the EntityParticipantTable
+            if (EntityParticipantTable != null)
+            {
+                if (EntityParticipantTable.TryGet(id, out IReadOnlyEntityParticipantTable.Entry entry)
+                    && globalWorld.TryGet(entry.Entity, out AvatarBase? avatarBase))
+                    return new LightResult<AvatarBase>(avatarBase!);
+
+                return LightResult<AvatarBase>.FAILURE;
+            }
+
+            // Fall back to the less performant ECS query approach if the entity participant table is not available
             AvatarBase? foundEntity = null;
 
             globalWorld.Query(in AVATAR_BASE_AND_SHAPE_QUERY, entity =>

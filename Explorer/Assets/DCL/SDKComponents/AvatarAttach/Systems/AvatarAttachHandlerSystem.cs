@@ -81,7 +81,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                         avatarBase = result.Result;
                     else
                     {
-                        ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId}");
+                        ReportHub.Log(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId}");
                         transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
                         return;
                     }
@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Error getting anchor point transform: {ex.Message}");
+                    ReportHub.Log(ReportCategory.AVATAR_ATTACH, $"Error getting anchor point transform: {ex.Message}");
                     transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
                     return;
                 }
@@ -108,7 +108,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             }
             catch (Exception ex)
             {
-                ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"Error applying anchor point transform values: {ex.Message}");
+                ReportHub.Log(ReportCategory.AVATAR_ATTACH, $"Error applying anchor point transform values: {ex.Message}");
                 transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
             }
         }

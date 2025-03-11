@@ -6,7 +6,11 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.SDKComponents.AvatarAttach.Systems;
+using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -55,6 +59,9 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             sceneStateProvider.IsCurrent.Returns(true);
             var mainPlayerAvatarBase = new ObjectProxy<AvatarBase>();
             mainPlayerAvatarBase.SetObject(playerAvatarBase);
+
+            // Reset the static property to ensure tests are isolated
+            FindAvatarUtils.EntityParticipantTable = null;
 
             system = new AvatarAttachHandlerSystem(world,
                 globalWorld,
@@ -519,7 +526,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Object.DestroyImmediate(disconnectingPlayerAvatarBase.gameObject);
             globalWorld.Destroy(disconnectingPlayerEntity);
 
-            LogAssert.Expect(LogType.Error, $"Failed to find avatar with ID {disconnectingPlayerIdString}");
+            LogAssert.Expect(LogType.Log, $"Failed to find avatar with ID {disconnectingPlayerIdString}");
 
             system.Update(0);
 
@@ -639,6 +646,97 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             {
                 Object.DestroyImmediate(attachTransforms[i].Transform.gameObject);
             }
+        }
+
+        [Test]
+        public async Task UseEntityParticipantTableForOptimizedLookup()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Create a mock EntityParticipantTable
+            var entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
+
+            // Create a target avatar
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var targetAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            targetAvatarBase.gameObject.transform.position = new Vector3(20, 20, 20);
+
+            string targetAvatarId = "test-avatar-id";
+            Entity targetEntity = globalWorld.Create(
+                targetAvatarBase,
+                new AvatarShapeComponent { ID = targetAvatarId }
+            );
+
+            // Set up the EntityParticipantTable mock to return the target entity
+            var entry = new IReadOnlyEntityParticipantTable.Entry(targetAvatarId, targetEntity, RoomSource.GATEKEEPER);
+            entityParticipantTable.TryGet(targetAvatarId, out _).Returns(x => {
+                x[1] = entry;
+                return true;
+            });
+
+            // Set the mock table
+            FindAvatarUtils.EntityParticipantTable = entityParticipantTable;
+
+            // Create an avatar attach component that references the target avatar
+            var pbAvatarAttachComponent = new PBAvatarAttach {
+                AnchorPointId = AvatarAnchorPointType.AaptPosition,
+                AvatarId = targetAvatarId,
+                IsDirty = true
+            };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Run the systems
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify that the EntityParticipantTable was used for lookup
+            // Both the setup system and the handler system call FindAvatarUtils.AvatarWithID
+            entityParticipantTable.Received(2).TryGet(targetAvatarId, out _);
+
+            // Clean up
+            Object.DestroyImmediate(targetAvatarBase.gameObject);
+            FindAvatarUtils.EntityParticipantTable = null;
+        }
+
+        [Test]
+        public async Task FallbackToQueryWhenEntityParticipantTableIsNotAvailable()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Create a target avatar
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var targetAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            targetAvatarBase.gameObject.transform.position = new Vector3(20, 20, 20);
+
+            string targetAvatarId = "test-avatar-id";
+            Entity targetEntity = globalWorld.Create(
+                targetAvatarBase,
+                new AvatarShapeComponent { ID = targetAvatarId }
+            );
+
+            // Ensure the EntityParticipantTable is not available (null)
+            FindAvatarUtils.EntityParticipantTable = null;
+
+            // Create an avatar attach component that references the target avatar
+            var pbAvatarAttachComponent = new PBAvatarAttach {
+                AnchorPointId = AvatarAnchorPointType.AaptPosition,
+                AvatarId = targetAvatarId,
+                IsDirty = true
+            };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Run the systems
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify that the avatar was found via the fallback query mechanism
+            Assert.IsTrue(world.Has<AvatarAttachComponent>(entity),
+                "The AvatarAttachComponent should have been added, indicating the avatar was found via fallback query");
+
+            // Clean up
+            Object.DestroyImmediate(targetAvatarBase.gameObject);
         }
     }
 }
