@@ -25,6 +25,9 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             private const string METADATA_FILENAME = "metadata.json";
             private const string METRICS_FILENAME = "metrics.json";
+            private static long count;
+
+            public static long ActiveCount => count;
 
             internal readonly AssetBundle bundle;
             private readonly Stream stream;
@@ -35,6 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 this.bundle = bundle;
                 this.stream = stream;
                 unloaded = false;
+                Interlocked.Increment(ref count);
             }
 
             public bool IsEmpty => bundle == null;
@@ -58,6 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
 
                 unloaded = true;
+                Interlocked.Decrement(ref count);
                 await UniTask.SwitchToMainThread();
                 if (bundle) await bundle.UnloadAsync(unloadAllLoadedObjects)!;
                 stream.Dispose();

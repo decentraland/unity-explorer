@@ -6,6 +6,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Optimization.Memory;
 using ECS.Abstract;
+using ECS.StreamableLoading.AssetBundles;
 
 namespace DCL.Allocators
 {
@@ -22,6 +23,7 @@ namespace DCL.Allocators
         private readonly ElementBinding<ulong> totalAllocatedTimes;
         private readonly ElementBinding<ulong> memoryChainInstances;
         private readonly ElementBinding<ulong> memoryChainMemory;
+        private readonly ElementBinding<ulong> inMemoryAssetBundleCount;
 
         public DebugAllocatorsSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -35,6 +37,7 @@ namespace DCL.Allocators
             totalAllocatedTimes = new ElementBinding<ulong>(0);
             memoryChainInstances = new ElementBinding<ulong>(0);
             memoryChainMemory = new ElementBinding<ulong>(0);
+            inMemoryAssetBundleCount = new ElementBinding<ulong>(0);
 
             var widget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ALLOCATORS);
 
@@ -50,6 +53,7 @@ namespace DCL.Allocators
             widget.AddMarker("TotalAllocatedTimes", totalAllocatedTimes, DebugLongMarkerDef.Unit.NoFormat);
             widget.AddMarker("MemoryChainInstances", memoryChainInstances, DebugLongMarkerDef.Unit.NoFormat);
             widget.AddMarker("MemoryChainMemory", memoryChainMemory, DebugLongMarkerDef.Unit.Bytes);
+            widget.AddMarker("InMemoryAssetBundleCount", inMemoryAssetBundleCount, DebugLongMarkerDef.Unit.Bytes);
         }
 
         protected override void Update(float t)
@@ -68,6 +72,8 @@ namespace DCL.Allocators
 
             memoryChainInstances.SetAndUpdate((ulong)MemoryChain.InstancesCount);
             memoryChainMemory.SetAndUpdate((ulong)MemoryChain.InstancesMemory);
+
+            inMemoryAssetBundleCount.SetAndUpdate((ulong)AssetBundleData.InMemoryAssetBundle.ActiveCount);
         }
     }
 }
