@@ -91,7 +91,7 @@ namespace DCL.InWorldCamera.Systems
                     nametagsData.showNameTags = !nametagsData.showNameTags;
             }
 
-            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
+            if (World.TryGet(camera, out ToggleInWorldCameraRequest request) && World.Get<CameraComponent>(camera).Mode != CameraMode.SDKCamera)
                 ToggleCamera(request.IsEnable);
         }
 

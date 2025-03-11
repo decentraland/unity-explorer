@@ -183,22 +183,17 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
         {
-            var cameraComponent = globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
+            ref CameraComponent cameraComponent = ref globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
             if (isAnyVirtualCameraActive)
             {
                 if (cameraComponent.Mode != CameraMode.SDKCamera)
                 {
                     lastNonSDKCameraMode = cameraComponent.Mode;
-                    globalWorld.Add(cameraData.CameraEntityProxy.Object, new ToggleInWorldCameraRequest { IsEnable = false });
-
                     cameraComponent.Mode = CameraMode.SDKCamera;
                 }
             }
             else if (cameraComponent.Mode == CameraMode.SDKCamera)
-            {
                 cameraComponent.Mode = lastNonSDKCameraMode;
-            }
-            globalWorld.Set(cameraData.CameraEntityProxy.Object, cameraComponent);
         }
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
