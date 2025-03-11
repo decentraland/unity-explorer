@@ -56,13 +56,22 @@ namespace DCL.MarketplaceCredits
         {
             TotalCreditsText.text = "-";
             TimeLeftText.text = "-";
-            CaptchaControl.SetCaptchaValue(0f);
+            CaptchaControl.SetCaptchaPercentageValue(0f);
         }
 
         public void ShowCaptcha(bool show) =>
             CaptchaContainer.SetActive(show);
 
-        public void SetCaptchaTargetValue(float value) =>
-            CaptchaControl.SetTargetAreaValue(value);
+        public void SetCaptchaAsLoading(bool isLoading) =>
+            CaptchaControl.SetAsLoading(isLoading);
+
+        public void SetCaptchaPercentageValue(float value) =>
+            CaptchaControl.SetCaptchaPercentageValue(value);
+
+        public void SetCaptchaTargetAreaPercentageValue(float value) =>
+            CaptchaControl.SetTargetAreaPercentageValue(value);
+
+        public void SetCaptchaAsErrorState(bool isError) =>
+            CaptchaControl.SetAsErrorState(isError);
     }
 }

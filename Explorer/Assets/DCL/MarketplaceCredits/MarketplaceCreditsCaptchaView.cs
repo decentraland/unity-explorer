@@ -1,11 +1,27 @@
 using DCL.UI;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits
 {
     public class MarketplaceCreditsCaptchaView : MonoBehaviour
     {
+        public event Action<bool> OnCaptchaSolved;
+
+        [field: SerializeField]
+        public GameObject ControlContainer { get; private set; }
+
+        [field: SerializeField]
+        public GameObject ErrorContainer { get; private set; }
+
+        [field: SerializeField]
+        public GameObject HandlersContainer { get; private set; }
+
+        [field: SerializeField]
+        public GameObject LoadingSpinner { get; private set; }
+
         [field: SerializeField]
         public SliderView MainSlider { get; private set; }
 
@@ -17,6 +33,11 @@ namespace DCL.MarketplaceCredits
 
         [field: SerializeField]
         public float MatchTargetOffset { get; private set; }
+
+        [field: SerializeField]
+        public Button ReloadButton { get; private set; }
+
+        private float lastCaptchaValue = 0;
 
         private void Awake()
         {
@@ -33,28 +54,41 @@ namespace DCL.MarketplaceCredits
                 trigger.triggers.Clear();
         }
 
-        public void SetCaptchaValue(float value) =>
-            MainSlider.Slider.value = value;
+        public void SetAsLoading(bool isLoading)
+        {
+            SetAsErrorState(false);
+            HandlersContainer.SetActive(!isLoading);
+            LoadingSpinner.SetActive(isLoading);
+        }
+
+        public void SetCaptchaPercentageValue(float percentageValue)
+        {
+            MainSlider.Slider.value = percentageValue / 100f;
+            lastCaptchaValue = MainSlider.Slider.value;
+        }
+
+        public void SetTargetAreaPercentageValue(float percentageValue)
+        {
+            TargetArea.anchoredPosition = new Vector2(
+                Mathf.Clamp(percentageValue / 100f * MaxTargetAreaXPos, 0f, MaxTargetAreaXPos),
+                TargetArea.anchoredPosition.y);
+        }
+
+        public void SetAsErrorState(bool isError)
+        {
+            ControlContainer.SetActive(!isError);
+            ErrorContainer.SetActive(isError);
+        }
 
         private void OnSliderPointerUp()
         {
-            float targetAreaPositionValue = GetTargetAreaPositionValue();
+            if (Mathf.Approximately(MainSlider.Slider.value, lastCaptchaValue))
+                return;
 
-            if (MainSlider.Slider.value >= targetAreaPositionValue - MatchTargetOffset && MainSlider.Slider.value <= targetAreaPositionValue + MatchTargetOffset)
-                Debug.Log("SANTI LOG --> CAPTCHA SOLVED!");
-            else
-                Debug.Log("SANTI LOG --> CAPTCHA NOT SOLVED!");
-        }
-
-        private float GetTargetAreaPositionValue() =>
-            TargetArea.anchoredPosition.x / MaxTargetAreaXPos;
-
-        public void SetTargetAreaValue(float value)
-        {
-            TargetArea.position = new Vector3(
-                Mathf.Clamp(value * MaxTargetAreaXPos, 0f, MaxTargetAreaXPos),
-                TargetArea.position.y,
-                TargetArea.position.z);
+            float targetAreaPositionValue = TargetArea.anchoredPosition.x / MaxTargetAreaXPos;
+            bool isCaptchaSolved = MainSlider.Slider.value >= targetAreaPositionValue - MatchTargetOffset && MainSlider.Slider.value <= targetAreaPositionValue + MatchTargetOffset;
+            OnCaptchaSolved?.Invoke(isCaptchaSolved);
+            lastCaptchaValue = MainSlider.Slider.value;
         }
     }
 }

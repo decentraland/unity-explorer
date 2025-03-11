@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
 using System;
@@ -26,7 +27,9 @@ namespace DCL.MarketplaceCredits
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
 
+        private Profile ownProfile;
         private CancellationTokenSource fetchGoalsOfTheWeekInfoCts;
+        private CancellationTokenSource fetchCaptchaCts;
 
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
@@ -42,6 +45,8 @@ namespace DCL.MarketplaceCredits
 
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             view.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
+            view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
+            view.CaptchaControl.OnCaptchaSolved += OnCaptchaSolved;
 
             goalRowsPool = new ObjectPool<MarketplaceCreditsGoalRowView>(
                 InstantiateGoalRowPrefab,
@@ -65,7 +70,10 @@ namespace DCL.MarketplaceCredits
         {
             view.InfoLinkButton.onClick.RemoveAllListeners();
             view.GoShoppingButton.onClick.RemoveAllListeners();
+            view.CaptchaControl.ReloadButton.onClick.RemoveAllListeners();
+            view.CaptchaControl.OnCaptchaSolved -= OnCaptchaSolved;
             fetchGoalsOfTheWeekInfoCts.SafeCancelAndDispose();
+            fetchCaptchaCts.SafeCancelAndDispose();
         }
 
         private void OpenInfoLink() =>
@@ -88,7 +96,7 @@ namespace DCL.MarketplaceCredits
                 view.CleanSection();
                 ClearGoals();
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
+                ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
                     var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.FetchGoalsOfTheWeekAsync(ownProfile.UserId, ct);
@@ -97,11 +105,14 @@ namespace DCL.MarketplaceCredits
 
                     foreach (GoalData goalData in goalsOfTheWeekResponse.data.goals)
                     {
-                        var goalRow = CreateSetupGoal(goalData);
+                        var goalRow = CreateAndSetupGoal(goalData);
                         instantiatedGoalRows.Add(goalRow);
                     }
 
                     view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
+
+                    if (goalsOfTheWeekResponse.data.creditsAvailableToClaim)
+                        ReloadCaptcha();
                 }
 
                 view.SetAsLoading(false);
@@ -115,18 +126,7 @@ namespace DCL.MarketplaceCredits
             }
         }
 
-        private void ClearGoals()
-        {
-            foreach (var goalRow in instantiatedGoalRows)
-            {
-                goalRow.StopLoadingImage();
-                goalRowsPool.Release(goalRow);
-            }
-
-            instantiatedGoalRows.Clear();
-        }
-
-        private MarketplaceCreditsGoalRowView CreateSetupGoal(GoalData goalData)
+        private MarketplaceCreditsGoalRowView CreateAndSetupGoal(GoalData goalData)
         {
             var goalRow = goalRowsPool.Get();
 
@@ -138,6 +138,56 @@ namespace DCL.MarketplaceCredits
             goalRow.SetProgress(goalData.progress.GetProgressPercentage(), goalData.progress.stepsDone, goalData.progress.totalSteps);
 
             return goalRow;
+        }
+
+        private void ClearGoals()
+        {
+            foreach (var goalRow in instantiatedGoalRows)
+            {
+                goalRow.StopLoadingImage();
+                goalRowsPool.Release(goalRow);
+            }
+
+            instantiatedGoalRows.Clear();
+        }
+
+        private void ReloadCaptcha()
+        {
+            if (ownProfile == null)
+                return;
+
+            fetchCaptchaCts = fetchCaptchaCts.SafeRestart();
+            LoadCaptchaAsync(ownProfile.UserId, fetchCaptchaCts.Token).Forget();
+        }
+
+        private async UniTaskVoid LoadCaptchaAsync(string walletId, CancellationToken ct)
+        {
+            try
+            {
+                view.SetCaptchaAsLoading(true);
+                var captchaResponse = await marketplaceCreditsAPIClient.FetchCaptchaAsync(walletId, ct);
+                view.SetCaptchaTargetAreaPercentageValue(captchaResponse.captchaValue);
+                view.SetCaptchaAsLoading(false);
+                view.SetCaptchaPercentageValue(0f);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading the captcha. Please try again!";
+                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+        }
+
+        private void OnCaptchaSolved(bool isSolved)
+        {
+            if (isSolved)
+            {
+                // TODO (Santi) Send captcha value to the server
+                // ...
+            }
+            else
+                view.SetCaptchaAsErrorState(true);
         }
     }
 }

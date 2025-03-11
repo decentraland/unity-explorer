@@ -31,9 +31,21 @@ namespace DCL.MarketplaceCreditsAPIService
             return goalsOfTheWeekResponse;
         }
 
+        public async UniTask<CaptchaResponse> FetchCaptchaAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
+
+            //CaptchaResponse captchaResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
+            //                                                            .CreateFromJson<CaptchaResponse>(WRJsonParser.Newtonsoft);
+            CaptchaResponse captchaResponse = await MockCaptchaAsync(ct);
+
+            return captchaResponse;
+        }
+
         private static async UniTask<GoalsOfTheWeekResponse> MockGoalsOfTheWeekAsync(CancellationToken ct)
         {
-            await UniTask.Delay(3000, cancellationToken: ct);
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
 
             GoalsOfTheWeekResponse goalsOfTheWeekResponse = new GoalsOfTheWeekResponse
             {
@@ -97,6 +109,20 @@ namespace DCL.MarketplaceCreditsAPIService
             };
 
             return goalsOfTheWeekResponse;
+        }
+
+        private static async UniTask<CaptchaResponse> MockCaptchaAsync(CancellationToken ct)
+        {
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
+
+            int randomCaptchaValue = new System.Random().Next(40, 100);
+            CaptchaResponse captchaResponse = new CaptchaResponse
+            {
+                captchaValue = randomCaptchaValue,
+            };
+
+            return captchaResponse;
         }
     }
 }
