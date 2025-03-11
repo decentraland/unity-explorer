@@ -23,9 +23,9 @@ namespace DCL.UI
 
         public void SetImage(Sprite sprite)
         {
+            Image.enabled = true;
             Image.sprite = sprite;
             LoadingObject.SetActive(false);
-            Image.enabled = true;
         }
 
         public void SetColor(Color color) =>
