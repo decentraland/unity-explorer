@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
@@ -100,9 +101,9 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier)
+        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(inputModifier.DisableEmote) return;
+            if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible) return;
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
