@@ -34,6 +34,7 @@ namespace MVC
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
@@ -48,7 +49,7 @@ namespace MVC
             bool includeUserBlocking,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator, ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
@@ -59,6 +60,7 @@ namespace MVC
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -100,7 +102,7 @@ namespace MVC
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
         }
     }

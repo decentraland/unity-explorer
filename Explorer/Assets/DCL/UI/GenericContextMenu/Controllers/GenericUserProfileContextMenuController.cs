@@ -65,7 +65,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IAnalyticsController analytics,
             bool includeUserBlocking,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
@@ -74,6 +75,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
