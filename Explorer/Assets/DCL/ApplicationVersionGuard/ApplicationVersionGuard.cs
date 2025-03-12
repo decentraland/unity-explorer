@@ -180,7 +180,7 @@ namespace DCL.ApplicationVersionGuard
             }
 #elif UNITY_STANDALONE_OSX
             string cmd = "open \"" + fileName + "\"";
-            int code = System(cmd);
+            int code = ExecuteSystemCommand(cmd);
             if (code != 0)
             {
                 var sb = new StringBuilder(1024);
@@ -206,8 +206,8 @@ namespace DCL.ApplicationVersionGuard
 
         private const int SW_NORMAL = 1;
 #elif UNITY_STANDALONE_OSX
-        [DllImport("__Internal", EntryPoint = "system")]
-        private static extern int System(string command);
+        [DllImport("libc", EntryPoint = "system")]
+        private static extern int ExecuteSystemCommand([MarshalAs(UnmanagedType.LPStr)] string command);
 
         [DllImport("libc")]
         private static extern int strerror_r(int errnum, StringBuilder buf, int buflen);
