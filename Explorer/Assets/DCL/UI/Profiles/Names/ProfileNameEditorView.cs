@@ -28,8 +28,21 @@ namespace DCL.UI.ProfileNames
             public TMP_Text characterCountLabel;
             public TMP_Text userHashLabel;
             public Button saveButton;
+            public TMP_Text saveButtonText;
             public Button cancelButton;
             public Button claimNameButton;
+
+            public bool saveButtonInteractable
+            {
+                set
+                {
+                    saveButton.interactable = value;
+
+                    saveButtonText.color = value
+                        ? new Color(0.99f, 0.99f, 0.99f)
+                        : new Color(0.99f, 0.99f, 0.99f, 0.5f);
+                }
+            }
         }
 
         [Serializable]
@@ -40,11 +53,24 @@ namespace DCL.UI.ProfileNames
             public NonClaimedNameConfig NonClaimedNameTabConfig;
 
             public Button saveButton;
+            public TMP_Text saveButtonText;
             public Button cancelButton;
             public TMP_Dropdown claimedNameDropdown;
             public GameObject dropdownLoadingSpinner;
             public GameObject dropdownVerifiedIcon;
             public TMP_Text_ClickeableLink clickeableLink;
+
+            public bool saveButtonInteractable
+            {
+                set
+                {
+                    saveButton.interactable = value;
+
+                    saveButtonText.color = value
+                        ? new Color(0.99f, 0.99f, 0.99f)
+                        : new Color(0.99f, 0.99f, 0.99f, 0.5f);
+                }
+            }
 
             [Serializable]
             public struct TabHeaderOption

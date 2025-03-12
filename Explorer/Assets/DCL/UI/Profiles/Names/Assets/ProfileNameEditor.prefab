@@ -5825,6 +5825,7 @@ MonoBehaviour:
     characterCountLabel: {fileID: 1277248159234509126}
     userHashLabel: {fileID: 565996306165029391}
     saveButton: {fileID: 3409750476257560574}
+    saveButtonText: {fileID: 7556228982782109254}
     cancelButton: {fileID: 6692131577879485700}
     claimNameButton: {fileID: 1133580657103286168}
   <ClaimedNameContainer>k__BackingField:
@@ -5847,9 +5848,11 @@ MonoBehaviour:
       characterCountLabel: {fileID: 8671880590379211505}
       userHashLabel: {fileID: 6523892486560764148}
       saveButton: {fileID: 4461231275704148618}
+      saveButtonText: {fileID: 6254982870524766458}
       cancelButton: {fileID: 7781127266285624803}
       claimNameButton: {fileID: 265646793554055390}
     saveButton: {fileID: 7087510805673827069}
+    saveButtonText: {fileID: 6801968109697369729}
     cancelButton: {fileID: 479441163899877716}
     claimedNameDropdown: {fileID: 1692430254817703089}
     dropdownLoadingSpinner: {fileID: 8572858557149426441}

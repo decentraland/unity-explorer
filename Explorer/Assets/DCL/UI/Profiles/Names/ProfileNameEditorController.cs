@@ -83,7 +83,7 @@ namespace DCL.UI.ProfileNames
             claimedConfig.claimedNameDropdown.onValueChanged.AddListener(i =>
             {
                 claimedConfig.dropdownVerifiedIcon.SetActive(i != -1);
-                claimedConfig.saveButton.interactable = i != -1;
+                claimedConfig.saveButtonInteractable = i != -1;
             });
 
             claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrl(url);
@@ -116,15 +116,15 @@ namespace DCL.UI.ProfileNames
                 claimedConfig.claimedNameDropdown.ClearOptions();
                 claimedConfig.claimedNameDropdown.value = -1;
                 claimedConfig.dropdownVerifiedIcon.SetActive(false);
-                claimedConfig.saveButton.interactable = false;
+                claimedConfig.saveButtonInteractable = false;
                 claimedConfig.NonClaimedNameTabConfig.input.text = string.Empty;
-                claimedConfig.NonClaimedNameTabConfig.saveButton.interactable = false;
+                claimedConfig.NonClaimedNameTabConfig.saveButtonInteractable = false;
                 claimedConfig.dropdownLoadingSpinner.SetActive(true);
                 claimedConfig.claimedNameDropdown.gameObject.SetActive(false);
 
                 ProfileNameEditorView.NonClaimedNameConfig nonClaimedConfig = viewInstance!.NonClaimedNameContainer;
                 nonClaimedConfig.input.text = string.Empty;
-                nonClaimedConfig.saveButton.interactable = false;
+                nonClaimedConfig.saveButtonInteractable = false;
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -172,7 +172,7 @@ namespace DCL.UI.ProfileNames
             {
                 config.userHashLabel.text = $"#{profile.UserId[^4..]}";
                 config.input.text = string.Empty;
-                config.saveButton.interactable = false;
+                config.saveButtonInteractable = false;
             }
         }
 
@@ -183,7 +183,7 @@ namespace DCL.UI.ProfileNames
             bool isEmpty = string.IsNullOrEmpty(value);
 
             config.characterCountLabel.text = $"{value.Length}/{MAX_NAME_LENGTH}";
-            config.saveButton.interactable = !isEmpty && isValidName && isValidLength;
+            config.saveButtonInteractable = !isEmpty && isValidName && isValidLength;
 
             if ((!isValidLength || !isValidName) && !isEmpty)
             {
@@ -220,7 +220,7 @@ namespace DCL.UI.ProfileNames
 
             async UniTaskVoid SaveAsync(CancellationToken ct)
             {
-                config.saveButton.interactable = false;
+                config.saveButtonInteractable = false;
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -237,7 +237,7 @@ namespace DCL.UI.ProfileNames
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
-                config.saveButton.interactable = true;
+                config.saveButtonInteractable = true;
 
                 Close();
             }
@@ -251,7 +251,7 @@ namespace DCL.UI.ProfileNames
 
             async UniTaskVoid SaveAsync(CancellationToken ct)
             {
-                config.saveButton.interactable = false;
+                config.saveButtonInteractable = false;
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -268,7 +268,7 @@ namespace DCL.UI.ProfileNames
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
-                config.saveButton.interactable = true;
+                config.saveButtonInteractable = true;
 
                 Close();
             }
