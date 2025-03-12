@@ -529,13 +529,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 5
     targetScene: {x: 0, y: 0}
     predefinedScenes:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: olavra.dcl.eth
+    targetWorld: franfranfran.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -561,8 +561,8 @@ MonoBehaviour:
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
-    showSplash: 1
-    showAuthentication: 1
+    showSplash: 0
+    showAuthentication: 0
     showLoading: 1
     enableLandscape: 0
     enableLOD: 0
@@ -595,6 +595,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <CursorSettings>k__BackingField:
       m_AssetGUID: 7382805fd18299d41925547efbad99f0
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <GenericUserProfileContextMenuSettings>k__BackingField:
+      m_AssetGUID: 73508ff6530a0194c8f7d9c17963ef9a
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
