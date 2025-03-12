@@ -7,19 +7,13 @@ namespace DCL.MarketplaceCredits
     public class MarketplaceCreditsGoalsOfTheWeekView : MonoBehaviour
     {
         [field: SerializeField]
-        public Button GoShoppingButton { get; private set; }
+        public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; }
 
         [field: SerializeField]
         public TMP_Text TimeLeftText { get; private set; }
 
         [field: SerializeField]
         public GameObject TimeLeftLoadingSpinner { get; private set; }
-
-        [field: SerializeField]
-        public TMP_Text TotalCreditsText { get; private set; }
-
-        [field: SerializeField]
-        public GameObject TotalCreditsLoadingSpinner { get; private set; }
 
         [field: SerializeField]
         public GameObject MainLoadingContainer { get; private set; }
@@ -38,11 +32,10 @@ namespace DCL.MarketplaceCredits
 
         public void SetAsLoading(bool isLoading)
         {
+            TotalCreditsWidget.SetAsLoading(isLoading);
             TimeLeftLoadingSpinner.SetActive(isLoading);
-            TotalCreditsLoadingSpinner.SetActive(isLoading);
             MainLoadingContainer.SetActive(isLoading);
             TimeLeftText.gameObject.SetActive(!isLoading);
-            TotalCreditsText.gameObject.SetActive(!isLoading);
             GoalsContainer.gameObject.SetActive(!isLoading);
 
             if (isLoading)
@@ -51,7 +44,7 @@ namespace DCL.MarketplaceCredits
 
         public void CleanSection()
         {
-            TotalCreditsText.text = "-";
+            TotalCreditsWidget.SetCredits("-");
             TimeLeftText.text = "-";
             CaptchaControl.SetCaptchaPercentageValue(0f);
         }

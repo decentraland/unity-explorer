@@ -9,6 +9,7 @@ namespace DCL.MarketplaceCredits
     {
         WELCOME,
         GOALS_OF_THE_WEEK,
+        WEEK_GOALS_COMPLETED,
     }
 
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement
@@ -24,5 +25,8 @@ namespace DCL.MarketplaceCredits
 
         [field: SerializeField]
         public MarketplaceCreditsGoalsOfTheWeekView GoalsOfTheWeekView { get; private set; }
+
+        [field: SerializeField]
+        public MarketplaceCreditsWeekGoalsCompletedView WeekGoalsCompletedView { get; private set; }
     }
 }
