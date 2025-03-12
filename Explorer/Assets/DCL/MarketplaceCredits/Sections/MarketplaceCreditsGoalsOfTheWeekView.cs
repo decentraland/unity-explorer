@@ -1,14 +1,11 @@
+using DCL.MarketplaceCredits.Fields;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsGoalsOfTheWeekView : MonoBehaviour
     {
-        [field: SerializeField]
-        public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; }
-
         [field: SerializeField]
         public TMP_Text TimeLeftText { get; private set; }
 
@@ -32,7 +29,6 @@ namespace DCL.MarketplaceCredits
 
         public void SetAsLoading(bool isLoading)
         {
-            TotalCreditsWidget.SetAsLoading(isLoading);
             TimeLeftLoadingSpinner.SetActive(isLoading);
             MainLoadingContainer.SetActive(isLoading);
             TimeLeftText.gameObject.SetActive(!isLoading);
@@ -40,13 +36,6 @@ namespace DCL.MarketplaceCredits
 
             if (isLoading)
                 CaptchaContainer.SetActive(false);
-        }
-
-        public void CleanSection()
-        {
-            TotalCreditsWidget.SetCredits("-");
-            TimeLeftText.text = "-";
-            CaptchaControl.SetCaptchaPercentageValue(0f);
         }
 
         public void ShowCaptcha(bool show) =>

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -13,13 +14,14 @@ using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsGoalsOfTheWeekController : IDisposable
     {
         private const int GOALS_POOL_DEFAULT_CAPACITY = 4;
 
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
+        private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -35,6 +37,7 @@ namespace DCL.MarketplaceCredits
 
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
+            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
@@ -43,13 +46,13 @@ namespace DCL.MarketplaceCredits
             MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController)
         {
             this.view = view;
+            this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.marketplaceCreditsWeekGoalsCompletedController = marketplaceCreditsWeekGoalsCompletedController;
 
-            view.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
 
@@ -67,22 +70,19 @@ namespace DCL.MarketplaceCredits
 
         public void OnOpenSection()
         {
+            totalCreditsWidgetView.gameObject.SetActive(true);
             fetchGoalsOfTheWeekInfoCts = fetchGoalsOfTheWeekInfoCts.SafeRestart();
             LoadGoalsOfTheWeekInfoAsync(fetchGoalsOfTheWeekInfoCts.Token).Forget();
         }
 
         public void Dispose()
         {
-            view.TotalCreditsWidget.GoShoppingButton.onClick.RemoveAllListeners();
-            view.CaptchaControl.ReloadButton.onClick.RemoveAllListeners();
+            view.CaptchaControl.ReloadButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
             fetchGoalsOfTheWeekInfoCts.SafeCancelAndDispose();
             fetchCaptchaCts.SafeCancelAndDispose();
             claimCreditsCts.SafeCancelAndDispose();
         }
-
-        private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(MarketplaceCreditsUtils.GO_SHOPPING_LINK);
 
         private MarketplaceCreditsGoalRowView InstantiateGoalRowPrefab()
         {
@@ -95,33 +95,34 @@ namespace DCL.MarketplaceCredits
             try
             {
                 view.SetAsLoading(true);
-                view.CleanSection();
+                totalCreditsWidgetView.SetAsLoading(true);
                 ClearGoals();
 
                 ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
                     var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.FetchGoalsOfTheWeekAsync(ownProfile.UserId, ct);
+                    totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
 
-                    if (JumpToWeekGoalsCompletedCheck(goalsOfTheWeekResponse.data))
-                        return;
-
-                    view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
-                    view.TotalCreditsWidget.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
-
-                    foreach (GoalData goalData in goalsOfTheWeekResponse.data.goals)
+                    if (!JumpToWeekGoalsCompletedCheck(goalsOfTheWeekResponse.data))
                     {
-                        var goalRow = CreateAndSetupGoal(goalData);
-                        instantiatedGoalRows.Add(goalRow);
+                        view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
+
+                        foreach (GoalData goalData in goalsOfTheWeekResponse.data.goals)
+                        {
+                            var goalRow = CreateAndSetupGoal(goalData);
+                            instantiatedGoalRows.Add(goalRow);
+                        }
+
+                        view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
+
+                        if (goalsOfTheWeekResponse.data.creditsAvailableToClaim)
+                            ReloadCaptcha();
                     }
-
-                    view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
-
-                    if (goalsOfTheWeekResponse.data.creditsAvailableToClaim)
-                        ReloadCaptcha();
                 }
 
                 view.SetAsLoading(false);
+                totalCreditsWidgetView.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -138,7 +139,7 @@ namespace DCL.MarketplaceCredits
                 return false;
 
             marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
-            marketplaceCreditsWeekGoalsCompletedController.Setup(goalsOfTheWeekData.totalCredits, goalsOfTheWeekData.endOfTheWeekDate);
+            marketplaceCreditsWeekGoalsCompletedController.Setup(goalsOfTheWeekData.endOfTheWeekDate);
 
             return true;
 

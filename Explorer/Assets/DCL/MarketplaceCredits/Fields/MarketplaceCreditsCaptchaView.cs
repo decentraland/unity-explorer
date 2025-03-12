@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Fields
 {
     public class MarketplaceCreditsCaptchaView : MonoBehaviour
     {

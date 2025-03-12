@@ -1,49 +1,55 @@
 using DCL.Browser;
+using DCL.MarketplaceCredits.Fields;
 using System;
 using System.Text.RegularExpressions;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsWelcomeController : IDisposable
     {
         private const string LEARN_MORE_LINK = "https://docs.decentraland.org/";
         private const string EMAIL_PATTERN = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
 
-        private readonly MarketplaceCreditsWelcomeView welcomeView;
+        private readonly MarketplaceCreditsWelcomeView view;
+        private MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly IWebBrowser webBrowser;
 
         public MarketplaceCreditsWelcomeController(
-            MarketplaceCreditsWelcomeView welcomeView,
+            MarketplaceCreditsWelcomeView view,
+            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             IWebBrowser webBrowser)
         {
-            this.welcomeView = welcomeView;
+            this.view = view;
+            this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.webBrowser = webBrowser;
 
-            welcomeView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
-            welcomeView.StartButton.onClick.AddListener(GoToGoalsOfTheWeek);
-            welcomeView.StartWithEmailButton.onClick.AddListener(RegisterEmail);
-            welcomeView.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
+            view.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
+            view.StartButton.onClick.AddListener(GoToGoalsOfTheWeek);
+            view.StartWithEmailButton.onClick.AddListener(RegisterEmail);
+            view.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
         }
 
         public void OnOpenSection()
         {
+            totalCreditsWidgetView.gameObject.SetActive(false);
+
             // TODO (SANTI): Check if we have already an email registered
             // ...
 
-            welcomeView.IsEmailLoginActive = false;
-            welcomeView.CleanSection();
+            view.IsEmailLoginActive = false;
+            view.CleanSection();
             CheckStartWithEmailButtonState();
         }
 
         public void Dispose()
         {
-            welcomeView.StartButton.onClick.RemoveAllListeners();
-            welcomeView.StartWithEmailButton.onClick.RemoveAllListeners();
-            welcomeView.LearnMoreLinkButton.onClick.RemoveAllListeners();
-            welcomeView.EmailInput.onValueChanged.RemoveAllListeners();
+            view.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
+            view.StartButton.onClick.RemoveListener(GoToGoalsOfTheWeek);
+            view.StartWithEmailButton.onClick.RemoveListener(RegisterEmail);
+            view.EmailInput.onValueChanged.RemoveListener(OnEmailInputValueChanged);
         }
 
         private void OpenLearnMoreLink() =>
@@ -59,12 +65,12 @@ namespace DCL.MarketplaceCredits
 
         private void OnEmailInputValueChanged(string email)
         {
-            welcomeView.ShowEmailError(!IsValidEmail(email));
+            view.ShowEmailError(!IsValidEmail(email));
             CheckStartWithEmailButtonState();
         }
 
         private void CheckStartWithEmailButtonState() =>
-            welcomeView.SetStartWithEmailButtonInteractable(IsValidEmail(welcomeView.EmailInput.text));
+            view.SetStartWithEmailButtonInteractable(IsValidEmail(view.EmailInput.text));
 
         private static bool IsValidEmail(string email) =>
             !string.IsNullOrEmpty(email) && Regex.IsMatch(email, EMAIL_PATTERN);

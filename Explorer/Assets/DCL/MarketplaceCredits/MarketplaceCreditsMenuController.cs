@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles.Self;
 using DCL.SidebarBus;
@@ -45,22 +46,23 @@ namespace DCL.MarketplaceCredits
             this.inputBlock = inputBlock;
 
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
+            view.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.AddListener(ClosePanel);
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
+                view.TotalCreditsWidget,
                 this,
                 webBrowser);
 
             marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(
                 view.WeekGoalsCompletedView,
-                webBrowser,
-                marketplaceCreditsAPIClient,
-                selfProfile);
+                view.TotalCreditsWidget);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 view.GoalsOfTheWeekView,
+                view.TotalCreditsWidget,
                 webBrowser,
                 marketplaceCreditsAPIClient,
                 selfProfile,
@@ -121,10 +123,11 @@ namespace DCL.MarketplaceCredits
         {
             showHideMenuCts.SafeCancelAndDispose();
 
-            view.InfoLinkButton.onClick.RemoveAllListeners();
+            view.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
+            view.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
 
             foreach (Button closeButton in view.CloseButtons)
-                closeButton.onClick.RemoveAllListeners();
+                closeButton.onClick.RemoveListener(ClosePanel);
 
             marketplaceCreditsWelcomeController.Dispose();
             marketplaceCreditsGoalsOfTheWeekController.Dispose();
@@ -133,5 +136,8 @@ namespace DCL.MarketplaceCredits
 
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(MarketplaceCreditsUtils.INFO_LINK);
+
+        private void OpenLearnMoreLink() =>
+            webBrowser.OpenUrl(MarketplaceCreditsUtils.GO_SHOPPING_LINK);
     }
 }

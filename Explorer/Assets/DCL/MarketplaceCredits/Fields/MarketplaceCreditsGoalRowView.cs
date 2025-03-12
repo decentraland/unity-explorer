@@ -1,10 +1,9 @@
-using DCL.MarketplaceCreditsAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Fields
 {
     public class MarketplaceCreditsGoalRowView : MonoBehaviour
     {

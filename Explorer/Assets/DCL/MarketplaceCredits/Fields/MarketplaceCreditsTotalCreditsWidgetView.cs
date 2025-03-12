@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.MarketplaceCredits
+namespace DCL.MarketplaceCredits.Fields
 {
     public class MarketplaceCreditsTotalCreditsWidgetView : MonoBehaviour
     {

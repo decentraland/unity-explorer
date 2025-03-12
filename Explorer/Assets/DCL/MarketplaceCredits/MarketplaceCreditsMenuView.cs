@@ -1,3 +1,5 @@
+using DCL.MarketplaceCredits.Fields;
+using DCL.MarketplaceCredits.Sections;
 using MVC;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +16,9 @@ namespace DCL.MarketplaceCredits
 
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement
     {
+        [field: SerializeField]
+        public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; }
+
         [field: SerializeField]
         public Button InfoLinkButton { get; private set; }
 
