@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -18,7 +20,7 @@ namespace DCL.UI.ProfileNames
         private const string CLAIM_NAME_URL = "https://decentraland.org/marketplace/names/claim";
         private const int MAX_NAME_LENGTH = 15;
         private const string CHARACTER_LIMIT_REACHED_MESSAGE = "Character limit reached";
-        private const string VALID_CHARACTERS_ARE_ALLOWED_MESSAGE = "Only alphanumeric characters are allowed";
+        private const string VALID_CHARACTERS_ARE_ALLOWED_MESSAGE = "Please use only letters and numbers";
 
         private readonly IWebBrowser webBrowser;
         private readonly ISelfProfile selfProfile;
@@ -30,6 +32,9 @@ namespace DCL.UI.ProfileNames
         private CancellationTokenSource? setupCancellationToken;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        public event Action? NameChanged;
+        public event Action? NameClaimRequested;
 
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
@@ -74,6 +79,7 @@ namespace DCL.UI.ProfileNames
 
             claimedConfig.cancelButton.onClick.AddListener(Close);
             claimedConfig.saveButton.onClick.AddListener(() => Save(claimedConfig));
+
             claimedConfig.claimedNameDropdown.onValueChanged.AddListener(i =>
             {
                 claimedConfig.dropdownVerifiedIcon.SetActive(i != -1);
@@ -200,8 +206,11 @@ namespace DCL.UI.ProfileNames
             }
         }
 
-        private void ClaimNewName() =>
+        private void ClaimNewName()
+        {
             webBrowser.OpenUrl(CLAIM_NAME_URL);
+            NameClaimRequested?.Invoke();
+        }
 
         private void Save(ProfileNameEditorView.NonClaimedNameConfig config)
         {
@@ -220,7 +229,12 @@ namespace DCL.UI.ProfileNames
                     profile.Name = config.input.text;
                     profile.HasClaimedName = false;
 
-                    await selfProfile.UpdateProfileAsync(profile, ct);
+                    try
+                    {
+                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        NameChanged?.Invoke();
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
                 config.saveButton.interactable = true;
@@ -246,7 +260,12 @@ namespace DCL.UI.ProfileNames
                     profile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
                     profile.HasClaimedName = true;
 
-                    await selfProfile.UpdateProfileAsync(profile, ct);
+                    try
+                    {
+                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        NameChanged?.Invoke();
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
                 config.saveButton.interactable = true;

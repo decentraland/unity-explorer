@@ -29,6 +29,8 @@ namespace DCL.Passport.Modules
         private CancellationTokenSource? showNameEditorCancellationToken;
         private Profile? currentProfile;
 
+        public event Action? NameClaimRequested;
+
         public UserBasicInfo_PassportModuleController(
             UserBasicInfo_PassportModuleView view,
             ISelfProfile selfProfile,
@@ -45,7 +47,11 @@ namespace DCL.Passport.Modules
             nameElementController = new UserNameElementController(view.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
 
-            view.ClaimNameButton.onClick.AddListener(() => webBrowser.OpenUrl(CLAIM_NAME_URL));
+            view.ClaimNameButton.onClick.AddListener(() =>
+            {
+                webBrowser.OpenUrl(CLAIM_NAME_URL);
+                NameClaimRequested?.Invoke();
+            });
             view.EditNameButton.onClick.AddListener(ShowNameEditor);
         }
 
