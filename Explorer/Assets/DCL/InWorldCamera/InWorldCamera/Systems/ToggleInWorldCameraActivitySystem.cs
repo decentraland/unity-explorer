@@ -91,16 +91,16 @@ namespace DCL.InWorldCamera.Systems
                     nametagsData.showNameTags = !nametagsData.showNameTags;
             }
 
-            if (World.TryGet(camera, out ToggleInWorldCameraRequest request) && World.Get<CameraComponent>(camera).Mode != CameraMode.SDKCamera)
-                ToggleCamera(request.IsEnable);
+            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
+                ToggleCamera(request.IsEnable, request.TargetCameraMode);
         }
 
-        private void ToggleCamera(bool enable)
+        private void ToggleCamera(bool enable, CameraMode targetMode)
         {
             if (enable)
                 EnableCamera();
             else
-                DisableCamera();
+                DisableCamera(targetMode);
         }
 
         private void SetFollowTarget()
@@ -122,7 +122,7 @@ namespace DCL.InWorldCamera.Systems
             aim.m_Damping = settings.AimDamping;
         }
 
-        private void DisableCamera()
+        private void DisableCamera(CameraMode targetMode)
         {
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
@@ -134,7 +134,7 @@ namespace DCL.InWorldCamera.Systems
                 Except = hudController
             });
 
-            SwitchToThirdPersonCamera();
+            SwitchToThirdPersonCamera(targetMode);
 
             cursor.Unlock();
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
@@ -178,7 +178,7 @@ namespace DCL.InWorldCamera.Systems
                 new InWorldCameraInput());
         }
 
-        private void SwitchToThirdPersonCamera()
+        private void SwitchToThirdPersonCamera(CameraMode targetMode)
         {
             inWorldVirtualCamera.Follow = null;
             inWorldVirtualCamera.LookAt = null;
@@ -190,7 +190,9 @@ namespace DCL.InWorldCamera.Systems
             float distanceToDroneCameraView =
                 Mathf.Abs(cinemachinePreset.DroneViewCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
 
-            camera.GetCameraComponent(World).Mode = distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson;
+            camera.GetCameraComponent(World).Mode = targetMode; //CameraMode.FirstPerson;
+                // distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson;
+            //targetMode;
         }
 
         private void SwitchToInWorldCamera()
