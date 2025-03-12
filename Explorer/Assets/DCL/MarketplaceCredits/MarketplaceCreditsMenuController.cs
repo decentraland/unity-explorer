@@ -23,6 +23,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
+        private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
         private readonly IInputBlock inputBlock;
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
@@ -58,6 +59,10 @@ namespace DCL.MarketplaceCredits
 
             marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(
                 view.WeekGoalsCompletedView,
+                view.TotalCreditsWidget);
+
+            marketplaceCreditsProgramEndedController = new MarketplaceCreditsProgramEndedController(
+                view.ProgramEndedView,
                 view.TotalCreditsWidget);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
@@ -102,19 +107,29 @@ namespace DCL.MarketplaceCredits
                     view.WelcomeView.gameObject.SetActive(true);
                     view.GoalsOfTheWeekView.gameObject.SetActive(false);
                     view.WeekGoalsCompletedView.gameObject.SetActive(false);
+                    view.ProgramEndedView.gameObject.SetActive(false);
                     marketplaceCreditsWelcomeController.OnOpenSection();
                     break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
                     view.WelcomeView.gameObject.SetActive(false);
                     view.GoalsOfTheWeekView.gameObject.SetActive(true);
                     view.WeekGoalsCompletedView.gameObject.SetActive(false);
+                    view.ProgramEndedView.gameObject.SetActive(false);
                     marketplaceCreditsGoalsOfTheWeekController.OnOpenSection();
                     break;
                 case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
                     view.WelcomeView.gameObject.SetActive(false);
                     view.GoalsOfTheWeekView.gameObject.SetActive(false);
                     view.WeekGoalsCompletedView.gameObject.SetActive(true);
+                    view.ProgramEndedView.gameObject.SetActive(false);
                     marketplaceCreditsWeekGoalsCompletedController.OnOpenSection();
+                    break;
+                case MarketplaceCreditsSection.PROGRAM_ENDED:
+                    view.WelcomeView.gameObject.SetActive(false);
+                    view.GoalsOfTheWeekView.gameObject.SetActive(false);
+                    view.WeekGoalsCompletedView.gameObject.SetActive(false);
+                    view.ProgramEndedView.gameObject.SetActive(true);
+                    marketplaceCreditsProgramEndedController.OnOpenSection();
                     break;
             }
         }
@@ -132,6 +147,7 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsWelcomeController.Dispose();
             marketplaceCreditsGoalsOfTheWeekController.Dispose();
             marketplaceCreditsWeekGoalsCompletedController.Dispose();
+            marketplaceCreditsProgramEndedController.Dispose();
         }
 
         private void OpenInfoLink() =>

@@ -104,7 +104,8 @@ namespace DCL.MarketplaceCredits.Sections
                     var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.FetchGoalsOfTheWeekAsync(ownProfile.UserId, ct);
                     totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
 
-                    if (!JumpToWeekGoalsCompletedCheck(goalsOfTheWeekResponse.data))
+                    if (!JumpToProgramEndedCheck(goalsOfTheWeekResponse.data) &&
+                        !JumpToWeekGoalsCompletedCheck(goalsOfTheWeekResponse.data))
                     {
                         view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
 
@@ -133,6 +134,16 @@ namespace DCL.MarketplaceCredits.Sections
             }
         }
 
+        private bool JumpToProgramEndedCheck(GoalsOfTheWeekData goalsOfTheWeekData)
+        {
+            if (goalsOfTheWeekData.goals is { Count: > 0 })
+                return false;
+
+            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
+
+            return true;
+        }
+
         private bool JumpToWeekGoalsCompletedCheck(GoalsOfTheWeekData goalsOfTheWeekData)
         {
             if (goalsOfTheWeekData.creditsAvailableToClaim || goalsOfTheWeekData.goals.Count(x => x.isClaimed) != goalsOfTheWeekData.goals.Count)
@@ -142,7 +153,6 @@ namespace DCL.MarketplaceCredits.Sections
             marketplaceCreditsWeekGoalsCompletedController.Setup(goalsOfTheWeekData.endOfTheWeekDate);
 
             return true;
-
         }
 
         private MarketplaceCreditsGoalRowView CreateAndSetupGoal(GoalData goalData)
