@@ -1,8 +1,27 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
+
+    [Serializable]
+    public struct GenericContextMenuControlConfig
+    {
+        public Sprite Sprite;
+        public string Text;
+    }
+
+    [CreateAssetMenu(fileName = "GenericUserProfileContextMenuSettings", menuName = "DCL/UI/Generic User Profile ContextMenu Settings")]
+    public class GenericUserProfileContextMenuSettings : ScriptableObject
+    {
+        [field: SerializeField] public GenericContextMenuControlConfig BlockButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig JumpInButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig MentionButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig OpenUserProfileButtonConfig { get; private set; }
+    }
+
+
     /// <summary>
     ///     Main generic context menu class, used to invoke the MVC manager
     /// </summary>
@@ -16,7 +35,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly float width;
         internal readonly RectOffset verticalLayoutPadding;
         internal readonly int elementsSpacing;
-        internal readonly GenericContextMenuAnchorPoint anchorPoint;
+        internal GenericContextMenuAnchorPoint anchorPoint;
 
         /// <summary>
         ///     Main context menu class.
@@ -42,6 +61,11 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         {
             contextMenuSettings.Add(element);
             return this;
+        }
+
+        public void ChangeAnchorPoint(GenericContextMenuAnchorPoint newAnchorPoint)
+        {
+            this.anchorPoint = newAnchorPoint;
         }
     }
 
@@ -72,5 +96,6 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         BOTTOM_RIGHT,
         CENTER_LEFT,
         CENTER_RIGHT,
+        DEFAULT
     }
 }

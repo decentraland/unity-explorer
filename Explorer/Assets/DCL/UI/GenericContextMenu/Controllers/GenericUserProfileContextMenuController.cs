@@ -18,6 +18,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
 {
     public class GenericUserProfileContextMenuController
     {
+        private delegate void StringDelegate(string id);
+
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
@@ -28,31 +30,48 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly IMVCManager mvcManager;
         private readonly IChatInputBus chatInputBus;
 
-        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
-        private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
-        private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
+        private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
         private readonly Controls.Configs.GenericContextMenu contextMenu;
+        private readonly ButtonContextMenuControlSettings jumpInButtonControlSettings;
+        private readonly ButtonContextMenuControlSettings blockButtonControlSettings;
+        private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly GenericContextMenuElement contextMenuBlockUserButton;
+
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
 
-        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy, IChatInputBus chatInputBus, IMVCManager mvcManager)
+        public GenericUserProfileContextMenuController(
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            IChatInputBus chatInputBus,
+            IMVCManager mvcManager,
+            GenericUserProfileContextMenuSettings contextMenuSettings
+            )
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
             this.mvcManager = mvcManager;
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
-            openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
-            mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
+            userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
+            openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
+            mentionUserButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.MentionButtonConfig.Text, contextMenuSettings.MentionButtonConfig.Sprite, new StringDelegate(OnMentionUserClicked));
+            jumpInButtonControlSettings = new ButtonContextMenuControlSettings(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, OnJumpInClicked);
+            blockButtonControlSettings = new ButtonContextMenuControlSettings(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, OnBlockUserClicked);
+            contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
+            contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
 
             contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
-                         .AddControl(userProfileContextMenuControlSettings)
+                         .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(openUserProfileButtonContextMenuControlSettings)
-                         .AddControl(mentionUserButtonContextMenuControlSettings);
+                         .AddControl(openUserProfileButtonControlSettings)
+                         .AddControl(contextMenuJumpInButton)
+                         .AddControl(contextMenuBlockUserButton)
+                         .AddControl(mentionUserButtonControlSettings);
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position,
+            CancellationToken ct, Action onContextMenuHide = null, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.DEFAULT)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -64,11 +83,14 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
+            userProfileControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
 
-            mentionUserButtonContextMenuControlSettings.SetData(profile.MentionName);
-            openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
+            mentionUserButtonControlSettings.SetData(profile.MentionName);
+            openUserProfileButtonControlSettings.SetData(profile.UserId);
+
+            if (anchorPoint != GenericContextMenuAnchorPoint.DEFAULT)
+                contextMenu.ChangeAnchorPoint(anchorPoint);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
@@ -176,9 +198,18 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
-
             //Per design request we need to add an extra character after adding the mention to the chat.
             chatInputBus.InsertText(userName + " ");
+        }
+
+        private void OnBlockUserClicked()//Web3Address userId)
+        {
+
+        }
+
+        private void OnJumpInClicked()
+        {
+            //() => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel)));
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>

@@ -16,8 +16,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuToggleView> togglePool;
         private readonly IObjectPool<GenericContextMenuToggleWithIconView> toggleWithIconPool;
         private readonly IObjectPool<GenericContextMenuUserProfileView> userProfilePool;
-        private readonly IObjectPool<GenericContextMenuOpenUserProfileButtonView> openUserProfileButtonPool;
-        private readonly IObjectPool<GenericContextMenuMentionUserButtonView> mentionUserButtonPool;
+        private readonly IObjectPool<GenericContextMenuButtonWithStringDelegateView> buttonWithStringDelegatePool;
 
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
@@ -29,8 +28,7 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuToggleView togglePrefab,
             GenericContextMenuToggleWithIconView toggleWithIconPrefab,
             GenericContextMenuUserProfileView userProfilePrefab,
-            GenericContextMenuOpenUserProfileButtonView openUserProfileButtonPrefab,
-            GenericContextMenuMentionUserButtonView mentionUserButtonPrefab)
+            GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab)
         {
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
@@ -67,14 +65,8 @@ namespace DCL.UI.GenericContextMenu
                 actionOnRelease: userProfileView => userProfileView?.gameObject.SetActive(false),
                 actionOnDestroy: userProfileView => Object.Destroy(userProfileView.gameObject));
 
-            openUserProfileButtonPool = new ObjectPool<GenericContextMenuOpenUserProfileButtonView>(
-                createFunc: () => Object.Instantiate(openUserProfileButtonPrefab, controlsParent),
-                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
-                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
-
-            mentionUserButtonPool = new ObjectPool<GenericContextMenuMentionUserButtonView>(
-                createFunc: () => Object.Instantiate(mentionUserButtonPrefab, controlsParent),
+            buttonWithStringDelegatePool = new ObjectPool<GenericContextMenuButtonWithStringDelegateView>(
+                createFunc: () => Object.Instantiate(buttonWithDelegatePrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
                 actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
@@ -92,8 +84,7 @@ namespace DCL.UI.GenericContextMenu
                                                             ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
                                                             ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
                                                             UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
-                                                            MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings => GetMentionUserButton(mentionUserButtonContextMenuControlSettings),
-                                                            OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings => GetOpenUserProfileButton(openUserProfileButtonContextMenuControlSettings),
+                                                            ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
                                                             _ => throw new ArgumentOutOfRangeException(),
                                                         };
 
@@ -135,20 +126,11 @@ namespace DCL.UI.GenericContextMenu
             return separatorView;
         }
 
-        private GenericContextMenuComponentBase GetMentionUserButton(MentionUserButtonContextMenuControlSettings settings)
+        private GenericContextMenuComponentBase GetButtonWithStringDelegate(ButtonWithDelegateContextMenuControlSettings<string> settings)
         {
-            GenericContextMenuMentionUserButtonView mentionUserButton = mentionUserButtonPool.Get();
-            mentionUserButton.Configure(settings);
-
-            return mentionUserButton;
-        }
-
-        private GenericContextMenuComponentBase GetOpenUserProfileButton(OpenUserProfileButtonContextMenuControlSettings settings)
-        {
-            GenericContextMenuOpenUserProfileButtonView userProfileView = openUserProfileButtonPool.Get();
-            userProfileView.Configure(settings);
-
-            return userProfileView;
+            GenericContextMenuButtonWithStringDelegateView button = buttonWithStringDelegatePool.Get();
+            button.Configure(settings);
+            return button;
         }
 
         private GenericContextMenuComponentBase GetToggleWithIcon(ToggleWithIconContextMenuControlSettings settings)
@@ -182,11 +164,8 @@ namespace DCL.UI.GenericContextMenu
                     case GenericContextMenuUserProfileView userProfileView:
                         userProfilePool.Release(userProfileView);
                         break;
-                    case GenericContextMenuMentionUserButtonView buttonView:
-                        mentionUserButtonPool.Release(buttonView);
-                        break;
-                    case GenericContextMenuOpenUserProfileButtonView buttonView:
-                        openUserProfileButtonPool.Release(buttonView);
+                    case GenericContextMenuButtonWithStringDelegateView buttonView:
+                        buttonWithStringDelegatePool.Release(buttonView);
                         break;
                 }
             }

@@ -8,6 +8,7 @@ using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
 using DCL.UI.GenericContextMenu.Controllers;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
 using System;
@@ -25,6 +26,7 @@ namespace MVC
         private readonly IProfileCache profileCache;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IChatInputBus chatInputBus;
+        private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
@@ -34,13 +36,15 @@ namespace MVC
             IMVCManager mvcManager,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatInputBus chatInputBus
+            IChatInputBus chatInputBus,
+            GenericUserProfileContextMenuSettings contextMenuSettings
         )
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
+            this.contextMenuSettings = contextMenuSettings;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -82,7 +86,7 @@ namespace MVC
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
         }
     }

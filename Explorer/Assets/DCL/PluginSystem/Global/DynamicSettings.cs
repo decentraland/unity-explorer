@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public Light DirectionalLight { get; private set; }
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
+        [field: SerializeField] public AssetReferenceT<GenericUserProfileContextMenuSettings> GenericUserProfileContextMenuSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }
