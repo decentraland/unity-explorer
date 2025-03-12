@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using TMPro;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.ProfileNames
@@ -15,6 +16,9 @@ namespace DCL.UI.ProfileNames
     public class ProfileNameEditorController : ControllerBase<ProfileNameEditorView>
     {
         private const string CLAIM_NAME_URL = "https://decentraland.org/marketplace/names/claim";
+        private const int MAX_NAME_LENGTH = 15;
+        private const string CHARACTER_LIMIT_REACHED_MESSAGE = "Character limit reached";
+        private const string VALID_CHARACTERS_ARE_ALLOWED_MESSAGE = "Only alphanumeric characters are allowed";
 
         private readonly IWebBrowser webBrowser;
         private readonly ISelfProfile selfProfile;
@@ -88,6 +92,7 @@ namespace DCL.UI.ProfileNames
                 config.saveButton.onClick.AddListener(() => Save(config));
                 config.claimNameButton.onClick.AddListener(ClaimNewName);
                 config.input.onValueChanged.AddListener(s => OnInputValueChanged(s, config));
+                config.errorContainer.SetActive(false);
             }
         }
 
@@ -167,15 +172,31 @@ namespace DCL.UI.ProfileNames
 
         private void OnInputValueChanged(string value, ProfileNameEditorView.NonClaimedNameConfig config)
         {
-            config.characterCountLabel.text = $"{value.Length}/{config.input.characterLimit}";
-            config.saveButton.interactable = IsValidName();
-            return;
+            bool isValidLength = value.Length <= MAX_NAME_LENGTH;
+            bool isValidName = validNameRegex.IsMatch(value);
+            bool isEmpty = string.IsNullOrEmpty(value);
 
-            bool IsValidName()
+            config.characterCountLabel.text = $"{value.Length}/{MAX_NAME_LENGTH}";
+            config.saveButton.interactable = !isEmpty && isValidName && isValidLength;
+
+            if ((!isValidLength || !isValidName) && !isEmpty)
             {
-                if (string.IsNullOrEmpty(value)) return false;
-                if (!validNameRegex.IsMatch(value)) return false;
-                return true;
+                config.characterCountLabel.color = Color.red;
+                config.inputOutline.color = Color.red;
+                config.errorContainer.SetActive(true);
+
+                if (!isValidLength)
+                    config.inputErrorMessage.text = CHARACTER_LIMIT_REACHED_MESSAGE;
+                else if (!isValidName)
+                    config.inputErrorMessage.text = VALID_CHARACTERS_ARE_ALLOWED_MESSAGE;
+            }
+            else
+            {
+                Color color = Color.white;
+                color.a = 0.5f;
+                config.inputOutline.color = color;
+                config.characterCountLabel.color = color;
+                config.errorContainer.SetActive(false);
             }
         }
 

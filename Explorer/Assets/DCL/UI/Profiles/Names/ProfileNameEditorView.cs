@@ -22,6 +22,9 @@ namespace DCL.UI.ProfileNames
         {
             public GameObject root;
             public TMP_InputField input;
+            public Image inputOutline;
+            public TMP_Text inputErrorMessage;
+            public GameObject errorContainer;
             public TMP_Text characterCountLabel;
             public TMP_Text userHashLabel;
             public Button saveButton;
