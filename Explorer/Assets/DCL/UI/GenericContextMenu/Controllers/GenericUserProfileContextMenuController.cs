@@ -97,8 +97,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(mentionUserButtonControlSettings);
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position,
-            CancellationToken ct, Action onContextMenuHide = null, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.DEFAULT)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
+            CancellationToken ct, Action onContextMenuHide = null,
+            GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.DEFAULT)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -121,8 +122,16 @@ namespace DCL.UI.GenericContextMenu.Controllers
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
 
-            if (anchorPoint != GenericContextMenuAnchorPoint.DEFAULT)
-                contextMenu.ChangeAnchorPoint(anchorPoint);
+            if (anchorPoint == GenericContextMenuAnchorPoint.DEFAULT)
+                anchorPoint = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
+
+            contextMenu.ChangeAnchorPoint(anchorPoint);
+
+            if (offset == default(Vector2))
+                offset = CONTEXT_MENU_OFFSET;
+
+            contextMenu.ChangeOffsetFromTarget(offset);
+
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);

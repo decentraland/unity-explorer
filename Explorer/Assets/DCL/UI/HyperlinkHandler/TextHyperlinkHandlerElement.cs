@@ -152,7 +152,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private async UniTaskVoid OpenUserProfileContextMenuAsync(string userName)
         {
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), default(Vector2), cancellationTokenSource.Token);
         }
 
         private async UniTaskVoid OpenUrlAsync(URLAddress url, CancellationToken ct) =>

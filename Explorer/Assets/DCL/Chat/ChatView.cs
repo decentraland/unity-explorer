@@ -218,8 +218,7 @@ namespace DCL.Chat
                     switch (currentChannel.Id.Type)
                     {
                         case ChatChannel.ChatChannelType.NearBy:
-                            chatTitleBar.SetupProfileView(new Web3Address("0x1b8ba74cc34c2927aac0a8af9c3b1ba2e61352f2"));
-                            //chatTitleBar.SetNearbyChannelImage(); TESTING PURPOSES - REVERT BEFORE MERGING
+                            chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.User:
                         // Get user profile from data in the channel? and set up

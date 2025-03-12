@@ -21,11 +21,11 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         private static readonly Vector2 DEFAULT_OFFSET_FROM_TARGET = new (11, 18);
 
         internal readonly List<GenericContextMenuElement> contextMenuSettings = new ();
-        internal readonly Vector2 offsetFromTarget;
         internal readonly float width;
         internal readonly RectOffset verticalLayoutPadding;
         internal readonly int elementsSpacing;
         internal GenericContextMenuAnchorPoint anchorPoint;
+        internal Vector2 offsetFromTarget;
 
         /// <summary>
         ///     Main context menu class.
@@ -56,6 +56,11 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         public void ChangeAnchorPoint(GenericContextMenuAnchorPoint newAnchorPoint)
         {
             this.anchorPoint = newAnchorPoint;
+        }
+
+        public void ChangeOffsetFromTarget(Vector2 offsetFromTarget)
+        {
+            this.offsetFromTarget = offsetFromTarget;
         }
     }
 

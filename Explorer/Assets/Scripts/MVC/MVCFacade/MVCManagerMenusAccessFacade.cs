@@ -78,18 +78,18 @@ namespace MVC
         public async UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct) =>
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
-        public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, CancellationToken ct, Action onHide = null)
+        public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
             Profile profile = profileCache.Get(walletId);
             if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
+            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, anchorPoint);
         }
 
-        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct, Action onHide = null)
+        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, Action onHide = null)
         {
             Profile profile = profileCache.GetByUserName(userName);
             if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
+            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide);
         }
 
         public async UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility, Action onContextMenuHide)
@@ -100,10 +100,32 @@ namespace MVC
             await chatOptionsContextMenuController.ShowContextMenuAsync(chatBubblesVisibility, transformPosition, onContextMenuHide);
         }
 
-        private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide)
+        private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
             genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
-            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
+        }
+
+        private GenericContextMenuAnchorPoint ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
+        {
+            switch (anchorPoint)
+            {
+                case MenuAnchorPoint.TOP_LEFT:
+                    return GenericContextMenuAnchorPoint.TOP_LEFT;
+                case MenuAnchorPoint.TOP_RIGHT:
+                    return GenericContextMenuAnchorPoint.TOP_RIGHT;
+                case MenuAnchorPoint.BOTTOM_LEFT:
+                    return GenericContextMenuAnchorPoint.BOTTOM_LEFT;
+                case MenuAnchorPoint.BOTTOM_RIGHT:
+                    return GenericContextMenuAnchorPoint.BOTTOM_RIGHT;
+                case MenuAnchorPoint.CENTER_LEFT:
+                    return GenericContextMenuAnchorPoint.CENTER_LEFT;
+                case MenuAnchorPoint.CENTER_RIGHT:
+                    return GenericContextMenuAnchorPoint.CENTER_RIGHT;
+                default:
+                case MenuAnchorPoint.DEFAULT:
+                    return GenericContextMenuAnchorPoint.DEFAULT;
+            }
         }
     }
 }

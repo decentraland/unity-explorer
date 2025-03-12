@@ -102,7 +102,7 @@ namespace DCL.Chat
         private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition, Action onMenuHide)
         {
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, contextMenuCts.Token, onMenuHide);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, onMenuHide);
         }
     }
 }

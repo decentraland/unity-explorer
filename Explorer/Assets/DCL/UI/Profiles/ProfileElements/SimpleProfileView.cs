@@ -12,6 +12,8 @@ namespace DCL.UI.ProfileElements
 {
     public class SimpleProfileView : MonoBehaviour, IViewWithGlobalDependencies
     {
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, -20);
+
         public Action ProfileContextMenuOpened;
         public Action ProfileContextMenuClosed;
 
@@ -53,7 +55,7 @@ namespace DCL.UI.ProfileElements
             cts = cts.SafeRestart();
             ProfileContextMenuOpened?.Invoke();
             openProfileButton.OnSelect(null);
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(currentWalledId, openProfileButton.transform.position, cts.Token, OnProfileContextMenuClosed).Forget();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(currentWalledId, openProfileButton.transform.position, CONTEXT_MENU_OFFSET, cts.Token, OnProfileContextMenuClosed, MenuAnchorPoint.TOP_LEFT).Forget();
         }
 
         private void OnProfileContextMenuClosed()
