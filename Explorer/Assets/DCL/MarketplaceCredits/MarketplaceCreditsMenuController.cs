@@ -23,6 +23,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly IInputBlock inputBlock;
         private readonly IWebRequestController webRequestController;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource showHideMenuCts;
 
@@ -39,8 +40,10 @@ namespace DCL.MarketplaceCredits
             this.sidebarButton = sidebarButton;
             this.view = view;
             this.sidebarBus = sidebarBus;
+            this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
 
+            view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.AddListener(ClosePanel);
 
@@ -92,11 +95,16 @@ namespace DCL.MarketplaceCredits
         {
             showHideMenuCts.SafeCancelAndDispose();
 
+            view.InfoLinkButton.onClick.RemoveAllListeners();
+
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.RemoveAllListeners();
 
             marketplaceCreditsWelcomeController.Dispose();
             marketplaceCreditsGoalsOfTheWeekController.Dispose();
         }
+
+        private void OpenInfoLink() =>
+            webBrowser.OpenUrl(MarketplaceCreditsUtils.INFO_LINK);
     }
 }

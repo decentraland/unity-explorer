@@ -5,6 +5,9 @@ namespace DCL.MarketplaceCredits
 {
     public static class MarketplaceCreditsUtils
     {
+        public const string INFO_LINK = "https://docs.decentraland.org/";
+        public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace/";
+
         public static string FormatEndOfTheWeekDateTimestamp(string timestamp)
         {
             if (!DateTime.TryParse(timestamp, out DateTime targetTime))

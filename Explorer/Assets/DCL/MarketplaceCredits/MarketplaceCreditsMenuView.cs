@@ -14,6 +14,9 @@ namespace DCL.MarketplaceCredits
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement
     {
         [field: SerializeField]
+        public Button InfoLinkButton { get; private set; }
+
+        [field: SerializeField]
         public List<Button> CloseButtons { get; private set; }
 
         [field: SerializeField]

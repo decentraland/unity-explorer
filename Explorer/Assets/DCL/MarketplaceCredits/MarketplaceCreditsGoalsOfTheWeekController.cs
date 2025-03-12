@@ -16,8 +16,6 @@ namespace DCL.MarketplaceCredits
 {
     public class MarketplaceCreditsGoalsOfTheWeekController : IDisposable
     {
-        private const string INFO_LINK = "https://docs.decentraland.org/";
-        private const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace/";
         private const int GOALS_POOL_DEFAULT_CAPACITY = 4;
 
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
@@ -44,7 +42,6 @@ namespace DCL.MarketplaceCredits
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
 
-            view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             view.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
@@ -69,7 +66,6 @@ namespace DCL.MarketplaceCredits
 
         public void Dispose()
         {
-            view.InfoLinkButton.onClick.RemoveAllListeners();
             view.GoShoppingButton.onClick.RemoveAllListeners();
             view.CaptchaControl.ReloadButton.onClick.RemoveAllListeners();
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
@@ -78,11 +74,8 @@ namespace DCL.MarketplaceCredits
             claimCreditsCts.SafeCancelAndDispose();
         }
 
-        private void OpenInfoLink() =>
-            webBrowser.OpenUrl(INFO_LINK);
-
         private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(GO_SHOPPING_LINK);
+            webBrowser.OpenUrl(MarketplaceCreditsUtils.GO_SHOPPING_LINK);
 
         private MarketplaceCreditsGoalRowView InstantiateGoalRowPrefab()
         {
@@ -136,7 +129,7 @@ namespace DCL.MarketplaceCredits
             goalRow.SetTitle(goalData.title);
             goalRow.SetCredits(goalData.credits);
             goalRow.SetAsCompleted(goalData.progress.stepsDone == goalData.progress.totalSteps);
-            goalRow.SetAsPendingToClaim(goalData.progress.stepsDone == goalData.progress.totalSteps && !goalData.isClaimed);
+            goalRow.SetClaimStatus(goalData.progress.stepsDone == goalData.progress.totalSteps && !goalData.isClaimed, goalData.isClaimed);
             goalRow.SetProgress(goalData.progress.GetProgressPercentage(), goalData.progress.stepsDone, goalData.progress.totalSteps);
 
             return goalRow;

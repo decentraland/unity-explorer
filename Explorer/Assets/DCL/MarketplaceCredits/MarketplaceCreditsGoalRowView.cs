@@ -38,6 +38,12 @@ namespace DCL.MarketplaceCredits
         [field: SerializeField]
         public TMP_Text GoalCreditsValueText { get; private set; }
 
+        [field: SerializeField]
+        public CanvasGroup CreditsCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public float AlphaValueForClaimedCredits { get; private set; }
+
         private ImageController imageController;
 
         public void ConfigureImageController(IWebRequestController webRequestController)
@@ -71,10 +77,11 @@ namespace DCL.MarketplaceCredits
             ProgressBar.gameObject.SetActive(!isCompleted);
         }
 
-        public void SetAsPendingToClaim(bool isPendingToClaim)
+        public void SetClaimStatus(bool isPendingToClaim, bool isClaimed)
         {
             PendingToClaimMark.SetActive(isPendingToClaim);
             PendingToClaimOutline.SetActive(isPendingToClaim);
+            CreditsCanvasGroup.alpha = isClaimed ? AlphaValueForClaimedCredits : 1f;
         }
 
         public void SetProgress(int progressPercentage, int stepsDone, int totalSteps)
