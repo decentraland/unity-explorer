@@ -106,6 +106,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             {
                 FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+                blockButtonControlSettings.SetData(profile.UserId);
+                jumpInButtonControlSettings.SetData(profile.UserId);
                 contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
                 contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
@@ -113,7 +115,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             userProfileControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
-
 
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);

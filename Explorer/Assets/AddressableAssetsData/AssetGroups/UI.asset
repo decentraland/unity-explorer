@@ -22,6 +22,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 19167fed20773434b8bb06d4ca81f60c
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/GenericUserProfileContextMenuSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
     m_Address: LogoDCL154x154SpriteAtlas.spriteatlas
     m_ReadOnly: 0
@@ -79,11 +84,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6dfe28bda416549a9b6598e822044ba1
     m_Address: CommonTexturesAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 73508ff6530a0194c8f7d9c17963ef9a
-    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/GenericUserProfileContextMenuSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
