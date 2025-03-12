@@ -17,7 +17,6 @@ using ECS.Unity.Transforms.Components;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveVisualSceneStateSystem))]
     [UpdateAfter(typeof(PartitionSceneEntitiesSystem))]
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
@@ -136,8 +135,8 @@ namespace ECS.SceneLifeCycle.Systems
             ref SceneDefinitionComponent sceneDefinitionComponent, ref VisualSceneState visualSceneState)
         {
             if (partitionComponent.IsDirty && !sceneDefinitionComponent.IsPortableExperience) // Visual State is never changed for Portable Experiences
-                visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partitionComponent,
-                    sceneDefinitionComponent, lodSettingsAsset, realmData);
+                VisualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partitionComponent,
+                    sceneDefinitionComponent);
         }
     }
 }

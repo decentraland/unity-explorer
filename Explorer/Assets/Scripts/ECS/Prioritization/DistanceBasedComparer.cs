@@ -9,7 +9,7 @@ namespace ECS.Prioritization
         public static readonly DistanceBasedComparer INSTANCE = new ();
 
         public int Compare(IPartitionComponent x, IPartitionComponent y) =>
-            Compare(new DataSurrogate(x.RawSqrDistance, x.IsBehind), new DataSurrogate(y.RawSqrDistance, y.IsBehind));
+            Compare(new DataSurrogate(x.RawSqrDistance, x.IsBehind, false), new DataSurrogate(y.RawSqrDistance, y.IsBehind, false));
 
         public static int Compare(DataSurrogate x, DataSurrogate y)
         {
@@ -20,7 +20,14 @@ namespace ECS.Prioritization
             float yParcelBucket = y.RawSqrDistance / ParcelMathHelper.SQR_PARCEL_SIZE;
 
             int bucketComparison = xParcelBucket.CompareTo(yParcelBucket);
-            return bucketComparison != 0 ? bucketComparison : x.IsBehind.CompareTo(y.IsBehind);
+
+            if (bucketComparison != 0)
+                return bucketComparison;
+
+            if (x.IsPlayerInsideParcel && !y.IsPlayerInsideParcel) return -1;
+            if (y.IsPlayerInsideParcel && !x.IsPlayerInsideParcel) return 1;
+
+            return x.IsBehind.CompareTo(y.IsBehind);
         }
 
         /// <summary>
@@ -30,11 +37,13 @@ namespace ECS.Prioritization
         {
             public readonly bool IsBehind;
             public readonly float RawSqrDistance;
+            public readonly bool IsPlayerInsideParcel;
 
-            public DataSurrogate(float rawSqrDistance, bool isBehind)
+            public DataSurrogate(float rawSqrDistance, bool isBehind, bool isPlayerInsideParcel)
             {
                 RawSqrDistance = rawSqrDistance;
                 IsBehind = isBehind;
+                IsPlayerInsideParcel = isPlayerInsideParcel;
             }
         }
     }

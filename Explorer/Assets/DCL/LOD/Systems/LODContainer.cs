@@ -70,7 +70,9 @@ namespace DCL.LOD.Systems
                 foreach (RoadDescription roadDescription in c.roadSettingsAsset.Value.RoadDescriptions)
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
-                var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
+                VisualSceneStateResolver.realmData = staticContainer.RealmData;
+                VisualSceneStateResolver.lodSettingsAsset = c.lodSettingsAsset.Value;
+                VisualSceneStateResolver.roadCoordinates = roadDataDictionary.Keys.ToHashSet();
 
                 var roadAssetPool = new RoadAssetsPool(realmData, c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
                 container.RoadAssetsPool = roadAssetPool;
@@ -95,7 +97,7 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value,
+                    null, textureArrayContainerFactory, c.lodSettingsAsset.Value,
                     staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, decentralandUrlsSource, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;

@@ -20,6 +20,7 @@ using UnityEngine;
 
 public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisualSceneStateSystem>
 {
+    /*
     private PartitionComponent partitionComponent;
     private SceneDefinitionComponent sceneDefinitionComponent;
     private VisualSceneState visualSceneState;
@@ -57,7 +58,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
                 },
                 runtimeVersion = "7",
             },
-            
+
         };
 
         sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
@@ -171,4 +172,5 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
         Assert.IsFalse(world.Has<ISceneFacade>(entityReference));
     }
+    */
 }

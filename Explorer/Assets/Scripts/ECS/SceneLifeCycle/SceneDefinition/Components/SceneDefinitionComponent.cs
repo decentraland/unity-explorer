@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -38,6 +39,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
         }
+
+        public bool ContainsParcel(Vector2Int playerParcel) =>
+            Parcels.Contains(playerParcel);
     }
 
     public static class SceneDefinitionComponentFactory

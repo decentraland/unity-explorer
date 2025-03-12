@@ -9,15 +9,12 @@ namespace DCL.LOD
 {
     public class VisualSceneStateResolver
     {
-        private readonly HashSet<Vector2Int> roadCoordinates;
+        public static HashSet<Vector2Int> roadCoordinates;
+        public static ILODSettingsAsset lodSettingsAsset;
+        public static IRealmData realmData;
 
-        public VisualSceneStateResolver(HashSet<Vector2Int> roadCoordinates)
-        {
-            this.roadCoordinates = roadCoordinates;
-        }
-
-        public void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition,
-            SceneDefinitionComponent sceneDefinitionComponent, ILODSettingsAsset lodSettingsAsset, IRealmData realmData)
+        public static void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition,
+            SceneDefinitionComponent sceneDefinitionComponent)
         {
             // For PX scenes, we always show the scene
             if (sceneDefinitionComponent.IsPortableExperience) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;

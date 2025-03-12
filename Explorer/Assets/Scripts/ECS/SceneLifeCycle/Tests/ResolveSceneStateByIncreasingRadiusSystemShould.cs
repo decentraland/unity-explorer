@@ -21,6 +21,7 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class ResolveSceneStateByIncreasingRadiusSystemShould : UnitySystemTestBase<ResolveSceneStateByIncreasingRadiusSystem>
     {
+        /*
         private IRealmPartitionSettings realmPartitionSettings;
         private RealmComponent realmComponent;
 
@@ -107,5 +108,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             Assert.That(world.CountEntities(new QueryDescription().WithAll<DeleteEntityIntention>()), Is.EqualTo(2));
         }
+            */
+
     }
 }

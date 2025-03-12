@@ -1,8 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
+using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.RealmNavigation;
 using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -10,7 +14,6 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.SceneFacade;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -18,7 +21,9 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine;
 using Utility;
+using Utility.Arch;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
@@ -31,18 +36,22 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private static readonly Comparer COMPARER_INSTANCE = new ();
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
-                                                                       .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo, EmptySceneComponent>();
+           .WithAll<SceneDefinitionComponent, PartitionComponent>();
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
-
         internal JobHandle? sortingJobHandle;
-
         private NativeList<OrderedData> orderedData;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
+        private readonly Entity playerEntity;
+        private readonly ILoadingStatus loadingStatus;
+
+        private bool firstTeleportRequested;
+
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity, ILoadingStatus loadingStatus) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
+            this.playerEntity = playerEntity;
+            this.loadingStatus = loadingStatus;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             orderedData = new NativeList<OrderedData>(
@@ -57,6 +66,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         protected override void Update(float t)
         {
+            if (!firstTeleportRequested)
+            {
+                if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.PlayerTeleporting)
+                    firstTeleportRequested = true;
+
+                return;
+            }
+
             // Start a new loading if the previous batch is finished
             var anyNonEmpty = false;
             CheckAnyLoadingInProgressQuery(World, ref anyNonEmpty);
@@ -123,22 +140,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             orderedData.Clear();
 
+            Vector2Int playerParcel = World.Get<CharacterTransform>(playerEntity).Transform.position.ToParcel();
+
             foreach (ref Chunk chunk in World.Query(in START_SCENES_LOADING))
             {
                 ref Entity entityFirstElement = ref chunk.Entity(0);
                 ref PartitionComponent partitionComponentFirst = ref chunk.GetFirst<PartitionComponent>();
+                ref SceneDefinitionComponent sceneDefinitionComponentFirst = ref chunk.GetFirst<SceneDefinitionComponent>();
 
                 foreach (int entityIndex in chunk)
                 {
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
+                    ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref sceneDefinitionComponentFirst, entityIndex);
 
                     if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance) continue;
 
                     orderedData.Add(new OrderedData
                     {
                         Entity = entity,
-                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
+                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind, sceneDefinitionComponent.ContainsParcel(playerParcel)),
                     });
                 }
             }
@@ -148,11 +169,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
+        private readonly int scenesToLoad = 1;
+
+
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
             var promisesCreated = 0;
 
-            for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
+            for (var i = 0; i < orderedData.Length; i++)
             {
                 OrderedData data = orderedData[i];
 
@@ -162,22 +186,66 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 // We can't save component to data as sorting is throttled and components could change
                 var components
-                    = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
+                    = World.Get<SceneDefinitionComponent, PartitionComponent>(data.Entity);
 
-                switch (components.t2.Value.CurrentVisualSceneState)
+                //If there is a teleport intent, only allow to load the teleport intent
+                if (TeleportOccuring(ipfsRealm, data, components))
+                    continue;
+
+                if (i < scenesToLoad)
+                    TryLoad(ipfsRealm, data, components);
+                else
                 {
-                    case VisualSceneStateEnum.SHOWING_LOD:
-                        World.Add(data.Entity, SceneLODInfo.Create());
-                        break;
-                    case VisualSceneStateEnum.ROAD:
-                        World.Add(data.Entity, RoadInfo.Create());
-                        break;
-                    default:
-                        CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
-                        break;
+                    TryUnload(data);
+
+                    //We are wanting to load more scenes than we are memory allowed. What to do?
+                    //1. Wait for a scene to unload
                 }
 
                 promisesCreated++;
+            }
+        }
+
+        private bool TeleportOccuring(IIpfsRealm ipfsRealm, OrderedData data, Components<SceneDefinitionComponent, PartitionComponent> components)
+        {
+            if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
+            {
+                if (components.t0.Value.ContainsParcel(playerTeleportIntent.Parcel))
+                    TryLoad(ipfsRealm, data, components);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void TryUnload(OrderedData data)
+        {
+            if (World.Has<VisualSceneState>(data.Entity))
+                World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
+        }
+
+        private void TryLoad(IIpfsRealm ipfsRealm, OrderedData data, Components<SceneDefinitionComponent, PartitionComponent> components)
+        {
+            if (!World.Has<VisualSceneState>(data.Entity))
+            {
+                var visualSceneState = new VisualSceneState();
+                VisualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, components.t1, components.t0);
+
+                switch (visualSceneState.CurrentVisualSceneState)
+                {
+                    case VisualSceneStateEnum.SHOWING_LOD:
+                        World.Add(data.Entity, visualSceneState, SceneLODInfo.Create());
+                        break;
+                    case VisualSceneStateEnum.ROAD:
+                        World.Add(data.Entity, visualSceneState, RoadInfo.Create());
+                        break;
+                    default:
+                        World.Add(data.Entity, visualSceneState, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                            new GetSceneFacadeIntention(ipfsRealm, components.t0.Value), components.t1.Value));
+
+                        break;
+                }
             }
         }
 
@@ -188,7 +256,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.OutOfRange)
+            {
                 World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+            }
         }
 
         /// <summary>
