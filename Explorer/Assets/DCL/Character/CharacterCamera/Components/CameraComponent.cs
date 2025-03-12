@@ -8,23 +8,22 @@ namespace DCL.CharacterCamera
     /// </summary>
     public struct CameraComponent
     {
+        private CameraMode mode;
         public CameraMode Mode
         {
-            get => currentMode;
+            get => mode;
             set
             {
-                if (value == currentMode) return;
+                if (value == mode) return;
 
-                PreviousMode = currentMode;
-                currentMode = value;
+                PreviousMode = mode;
+                mode = value;
             }
         }
         public CameraMode PreviousMode { get; private set; }
         public ThirdPersonCameraShoulder Shoulder;
         public readonly Camera Camera;
         public bool IsDirty;
-
-        private CameraMode currentMode;
 
         public CameraComponent(Camera camera) : this()
         {
