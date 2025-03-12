@@ -71,9 +71,9 @@ namespace DCL.Friends
                 blockedByUsers.Clear();
 
                 foreach (string user in blockingStatus.BlockedUsers)
-                    blockedUsers.Add(user.ToLower());
+                    blockedUsers.Add(user);
                 foreach (string user in blockingStatus.BlockedByUsers)
-                    blockedByUsers.Add(user.ToLower());
+                    blockedByUsers.Add(user);
             }
         }
 
