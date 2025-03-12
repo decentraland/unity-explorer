@@ -7,7 +7,13 @@ namespace DCL.MarketplaceCredits.Fields
     public class MarketplaceCreditsTotalCreditsWidgetView : MonoBehaviour
     {
         [field: SerializeField]
+        public GameObject TotalCreditsContainer { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text TotalCreditsText { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text DaysToExpireText { get; private set; }
 
         [field: SerializeField]
         public Button GoShoppingButton { get; private set; }
@@ -18,10 +24,16 @@ namespace DCL.MarketplaceCredits.Fields
         public void SetAsLoading(bool isLoading)
         {
             TotalCreditsLoadingSpinner.SetActive(isLoading);
-            TotalCreditsText.gameObject.SetActive(!isLoading);
+            TotalCreditsContainer.SetActive(!isLoading);
         }
 
-        public void SetCredits(string credits) =>
-            TotalCreditsText.text = credits;
+        public void SetCredits(string creditsText) =>
+            TotalCreditsText.text = creditsText;
+
+        public void SetDaysToExpire(string daysToExpireText) =>
+            DaysToExpireText.text = daysToExpireText;
+
+        public void SetDaysToExpireVisible(bool isVisible) =>
+            DaysToExpireText.gameObject.SetActive(isVisible);
     }
 }

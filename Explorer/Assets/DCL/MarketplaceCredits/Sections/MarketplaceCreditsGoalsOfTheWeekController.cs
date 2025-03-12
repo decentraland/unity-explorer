@@ -103,6 +103,8 @@ namespace DCL.MarketplaceCredits.Sections
                 {
                     var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.FetchGoalsOfTheWeekAsync(ownProfile.UserId, ct);
                     totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
+                    totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatDaysToCreditsExpire(goalsOfTheWeekResponse.data.daysToExpire));
+                    totalCreditsWidgetView.SetDaysToExpireVisible(goalsOfTheWeekResponse.data.totalCredits > 0);
 
                     if (!JumpToProgramEndedCheck(goalsOfTheWeekResponse.data) &&
                         !JumpToWeekGoalsCompletedCheck(goalsOfTheWeekResponse.data))

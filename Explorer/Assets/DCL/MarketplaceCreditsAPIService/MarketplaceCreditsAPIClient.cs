@@ -66,6 +66,7 @@ namespace DCL.MarketplaceCreditsAPIService
                 {
                     endOfTheWeekDate = "2025-03-16T12:00:00Z",
                     totalCredits = 3.2f,
+                    daysToExpire = 15,
                     goals = new List<GoalData>
                     {
                         new()

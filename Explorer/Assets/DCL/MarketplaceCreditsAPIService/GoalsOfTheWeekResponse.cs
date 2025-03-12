@@ -14,6 +14,7 @@ namespace DCL.MarketplaceCreditsAPIService
     {
         public string endOfTheWeekDate;
         public float totalCredits;
+        public int daysToExpire;
         public List<GoalData> goals;
         public bool creditsAvailableToClaim;
     }

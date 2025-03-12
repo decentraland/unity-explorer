@@ -24,6 +24,9 @@ namespace DCL.MarketplaceCredits
         public static string FormatTotalCredits(float totalCredits) =>
             totalCredits % 1 == 0 ? totalCredits.ToString("F0") : totalCredits.ToString("F2");
 
+        public static string FormatDaysToCreditsExpire(int daysToExpire) =>
+            $"Expire in {daysToExpire} days";
+
         public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
             goalProgress.stepsDone * 100 / goalProgress.totalSteps;
     }
