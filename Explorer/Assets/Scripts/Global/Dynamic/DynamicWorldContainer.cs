@@ -376,6 +376,7 @@ namespace Global.Dynamic
             );
 
             var entityParticipantTable = new EntityParticipantTable();
+            staticContainer.EntityParticipantTableProxy.SetObject(entityParticipantTable);
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
