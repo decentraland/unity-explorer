@@ -4,6 +4,8 @@ using DCL.ChangeRealmPrompt;
 using DCL.Chat.InputBus;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
+using DCL.Multiplayer.Connectivity;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
@@ -11,6 +13,7 @@ using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -27,6 +30,10 @@ namespace MVC
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IChatInputBus chatInputBus;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
+        private readonly bool includeUserBlocking;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
@@ -37,14 +44,21 @@ namespace MVC
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatInputBus chatInputBus,
-            GenericUserProfileContextMenuSettings contextMenuSettings
-        )
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            bool includeUserBlocking,
+            IAnalyticsController analytics,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
             this.contextMenuSettings = contextMenuSettings;
+            this.includeUserBlocking = includeUserBlocking;
+            this.analytics = analytics;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -86,7 +100,7 @@ namespace MVC
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
         }
     }

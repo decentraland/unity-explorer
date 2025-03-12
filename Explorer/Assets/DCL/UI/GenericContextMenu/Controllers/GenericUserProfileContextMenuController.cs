@@ -1,14 +1,21 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.InputBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
+using Segment.Serialization;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -27,15 +34,22 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
         private readonly IChatInputBus chatInputBus;
+        private readonly bool includeUserBlocking;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
 
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private readonly Controls.Configs.GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
-        private readonly Controls.Configs.GenericContextMenu contextMenu;
-        private readonly ButtonContextMenuControlSettings jumpInButtonControlSettings;
-        private readonly ButtonContextMenuControlSettings blockButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
 
@@ -47,17 +61,28 @@ namespace DCL.UI.GenericContextMenu.Controllers
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatInputBus chatInputBus,
             IMVCManager mvcManager,
-            GenericUserProfileContextMenuSettings contextMenuSettings
-            )
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            IAnalyticsController analytics,
+            bool includeUserBlocking,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
             this.mvcManager = mvcManager;
+            this.analytics = analytics;
+            this.includeUserBlocking = includeUserBlocking;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.includeUserBlocking = includeUserBlocking;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
             mentionUserButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.MentionButtonConfig.Text, contextMenuSettings.MentionButtonConfig.Sprite, new StringDelegate(OnMentionUserClicked));
-            jumpInButtonControlSettings = new ButtonContextMenuControlSettings(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, OnJumpInClicked);
-            blockButtonControlSettings = new ButtonContextMenuControlSettings(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, OnBlockUserClicked);
+            jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
+            blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
 
@@ -81,10 +106,14 @@ namespace DCL.UI.GenericContextMenu.Controllers
             {
                 FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+                contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
             }
 
             userProfileControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
+
 
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
@@ -202,17 +231,26 @@ namespace DCL.UI.GenericContextMenu.Controllers
             chatInputBus.InsertText(userName + " ");
         }
 
-        private void OnBlockUserClicked()//Web3Address userId)
+        private void OnBlockUserClicked(string userId)
         {
-
+            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
         }
 
-        private void OnJumpInClicked()
+        private void OnJumpInClicked(string userId)
         {
-            //() => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel)));
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
+
+        private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            {
+                {"receiver_id", targetAddress},
+                {"friend_position", parcel.ToString()},
+            });
+
     }
 }

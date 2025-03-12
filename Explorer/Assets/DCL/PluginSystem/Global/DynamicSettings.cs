@@ -1,16 +1,12 @@
-using DCL.AssetsProvision;
-using DCL.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.Profiles.Helpers;
+using DCL.UI.GenericContextMenu.Controllers;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
-using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem.Global
 {
