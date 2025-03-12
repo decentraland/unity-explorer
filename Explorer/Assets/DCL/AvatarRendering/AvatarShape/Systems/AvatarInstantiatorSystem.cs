@@ -13,7 +13,6 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Diagnostics;
-using DCL.Friends.UserBlocking;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -49,7 +48,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
 
@@ -58,8 +56,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IWearableStorage wearableStorage, AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy) : base(world)
+            IWearableStorage wearableStorage, AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -74,7 +71,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.wearableStorage = wearableStorage;
             this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
         }
 
         protected override void OnDispose()
@@ -87,7 +83,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
-            BlockAvatarsQuery(World);
         }
 
         [Query]
@@ -140,23 +135,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 avatarBase.RigBuilder.enabled = true;
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
             }
-        }
-
-        [Query]
-        [All(typeof(CharacterTransform))]
-        [None(typeof(DeleteEntityIntention))]
-        private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
-        {
-            if (!userBlockingCacheProxy.Configured) return;
-
-            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
-
-            bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
-
-            if (isBlocked && !World.Has<BlockedPlayerComponent>(entity))
-                World.Add(entity, new BlockedPlayerComponent());
-            else if (!isBlocked && World.Has<BlockedPlayerComponent>(entity))
-                World.Remove<BlockedPlayerComponent>(entity);
         }
 
         [Query]
