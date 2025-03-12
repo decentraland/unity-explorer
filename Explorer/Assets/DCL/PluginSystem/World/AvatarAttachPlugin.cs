@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarAttach.Systems;
@@ -17,14 +18,18 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly Arch.Core.World globalWorld;
+        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
 
-        public AvatarAttachPlugin(Arch.Core.World globalWorld,
+        public AvatarAttachPlugin(
+            Arch.Core.World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            IComponentPoolsRegistry componentPoolsRegistry)
+            IComponentPoolsRegistry componentPoolsRegistry,
+            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.componentPoolsRegistry = componentPoolsRegistry;
+            this.entityParticipantTableProxy = entityParticipantTableProxy;
         }
 
         public void Dispose()
@@ -41,14 +46,16 @@ namespace DCL.PluginSystem.World
             var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder,
                 globalWorld,
                 mainPlayerAvatarBaseProxy,
-                sharedDependencies.SceneStateProvider);
+                sharedDependencies.SceneStateProvider,
+                entityParticipantTableProxy);
 
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
 
             AvatarAttachHandlerSetupSystem.InjectToWorld(ref builder,
                 globalWorld,
                 mainPlayerAvatarBaseProxy,
-                sharedDependencies.SceneStateProvider);
+                sharedDependencies.SceneStateProvider,
+                entityParticipantTableProxy);
         }
     }
 }

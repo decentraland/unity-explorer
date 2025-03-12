@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.SDKComponents.AvatarAttach.Systems;
@@ -37,6 +38,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         private AvatarBase playerAvatarBase;
         private ISceneStateProvider sceneStateProvider;
         private AvatarAttachHandlerSetupSystem setupSystem;
+        private IReadOnlyEntityParticipantTable entityParticipantTable;
+        private ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
 
         [SetUp]
         public async void Setup()
@@ -60,18 +63,22 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             var mainPlayerAvatarBase = new ObjectProxy<AvatarBase>();
             mainPlayerAvatarBase.SetObject(playerAvatarBase);
 
-            // Reset the static property to ensure tests are isolated
-            FindAvatarUtils.EntityParticipantTable = null;
+            // Create a mock EntityParticipantTable
+            entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
+            entityParticipantTableProxy = new ObjectProxy<IReadOnlyEntityParticipantTable>();
+            entityParticipantTableProxy.SetObject(entityParticipantTable);
 
             system = new AvatarAttachHandlerSystem(world,
                 globalWorld,
                 mainPlayerAvatarBase,
-                sceneStateProvider);
+                sceneStateProvider,
+                entityParticipantTableProxy);
 
             setupSystem = new AvatarAttachHandlerSetupSystem(world,
                 globalWorld,
                 mainPlayerAvatarBase,
-                sceneStateProvider);
+                sceneStateProvider,
+                entityParticipantTableProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             entityTransformComponent = AddTransformToEntity(entity);
@@ -82,6 +89,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Object.DestroyImmediate(playerAvatarBase.gameObject);
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
             setupSystem?.Dispose();
+            globalWorld.Dispose();
+            base.OnTearDown();
         }
 
         [Test]
@@ -649,13 +658,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         }
 
         [Test]
-        public async Task UseEntityParticipantTableForOptimizedLookup()
+        public async Task UseEntityParticipantTableForLookup()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
-
-            // Create a mock EntityParticipantTable
-            var entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
 
             // Create a target avatar
             GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
@@ -675,9 +681,6 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 return true;
             });
 
-            // Set the mock table
-            FindAvatarUtils.EntityParticipantTable = entityParticipantTable;
-
             // Create an avatar attach component that references the target avatar
             var pbAvatarAttachComponent = new PBAvatarAttach {
                 AnchorPointId = AvatarAnchorPointType.AaptPosition,
@@ -696,11 +699,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
 
             // Clean up
             Object.DestroyImmediate(targetAvatarBase.gameObject);
-            FindAvatarUtils.EntityParticipantTable = null;
         }
 
         [Test]
-        public async Task FallbackToQueryWhenEntityParticipantTableIsNotAvailable()
+        public async Task FallbackToQueryWhenAvatarNotFoundInEntityParticipantTable()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -716,8 +718,9 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 new AvatarShapeComponent { ID = targetAvatarId }
             );
 
-            // Ensure the EntityParticipantTable is not available (null)
-            FindAvatarUtils.EntityParticipantTable = null;
+            // Set up the EntityParticipantTable mock to return false for TryGet
+            // This simulates the avatar not being found in the table
+            entityParticipantTable.TryGet(targetAvatarId, out _).Returns(false);
 
             // Create an avatar attach component that references the target avatar
             var pbAvatarAttachComponent = new PBAvatarAttach {
@@ -730,6 +733,9 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Run the systems
             setupSystem.Update(0);
             system.Update(0);
+
+            // Verify that the EntityParticipantTable was queried
+            entityParticipantTable.Received(2).TryGet(targetAvatarId, out _);
 
             // Verify that the avatar was found via the fallback query mechanism
             Assert.IsTrue(world.Has<AvatarAttachComponent>(entity),

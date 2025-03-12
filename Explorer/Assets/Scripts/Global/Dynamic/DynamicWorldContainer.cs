@@ -375,7 +375,7 @@ namespace Global.Dynamic
             );
 
             var entityParticipantTable = new EntityParticipantTable();
-            DCL.SDKComponents.Utils.FindAvatarUtils.EntityParticipantTable = entityParticipantTable;
+            staticContainer.EntityParticipantTableProxy.SetObject(entityParticipantTable);
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),

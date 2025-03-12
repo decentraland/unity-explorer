@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.SDKComponents.Utils;
 using DCL.Utilities;
@@ -28,21 +29,24 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
 
-        public AvatarAttachHandlerSystem(World world,
+        public AvatarAttachHandlerSystem(
+            World world,
             World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            ISceneStateProvider sceneStateProvider) : base(world)
+            ISceneStateProvider sceneStateProvider,
+            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy) : base(world)
         {
             this.globalWorld = globalWorld;
-
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
+            this.entityParticipantTableProxy = entityParticipantTableProxy;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerAvatarBaseProxy.Configured) return;
+            if (!mainPlayerAvatarBaseProxy.Configured || !entityParticipantTableProxy.Configured) return;
 
             UpdateAvatarAttachTransformQuery(World);
             HideDetachedQuery(World);
@@ -75,7 +79,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                 }
                 else
                 {
-                    LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId);
+                    LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId, entityParticipantTableProxy.Object);
 
                     if (result.Success)
                         avatarBase = result.Result;

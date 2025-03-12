@@ -13,28 +13,22 @@ namespace DCL.SDKComponents.Utils
     {
         private static readonly QueryDescription AVATAR_BASE_AND_SHAPE_QUERY = new QueryDescription().WithAll<AvatarBase, AvatarShapeComponent>();
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
-        public static IReadOnlyEntityParticipantTable? EntityParticipantTable;
-
+        
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]
         private static void AssertMainThread() =>
             MultithreadingUtility.AssertMainThread(nameof(FindAvatarUtils), true);
 
-        public static LightResult<AvatarBase> AvatarWithID(World globalWorld, string id)
+        public static LightResult<AvatarBase> AvatarWithID(World globalWorld, string id, IReadOnlyEntityParticipantTable entityParticipantTable)
         {
             AssertMainThread();
 
             // Try to find the avatar using the EntityParticipantTable
-            if (EntityParticipantTable != null)
-            {
-                if (EntityParticipantTable.TryGet(id, out IReadOnlyEntityParticipantTable.Entry entry)
-                    && globalWorld.TryGet(entry.Entity, out AvatarBase? avatarBase))
-                    return new LightResult<AvatarBase>(avatarBase!);
+            if (entityParticipantTable.TryGet(id, out IReadOnlyEntityParticipantTable.Entry entry)
+                && globalWorld.TryGet(entry.Entity, out AvatarBase? avatarBase))
+                return new LightResult<AvatarBase>(avatarBase!);
 
-                return LightResult<AvatarBase>.FAILURE;
-            }
-
-            // Fall back to the less performant ECS query approach if the entity participant table is not available
+            // Fall back to the less performant ECS query approach if the entity participant table lookup failed
             AvatarBase? foundEntity = null;
 
             globalWorld.Query(in AVATAR_BASE_AND_SHAPE_QUERY, entity =>
