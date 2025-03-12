@@ -19,11 +19,14 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
+using Random = UnityEngine.Random;
 
 namespace DCL.Chat
 {
@@ -57,6 +60,8 @@ namespace DCL.Chat
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
 
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
 
@@ -110,8 +115,8 @@ namespace DCL.Chat
 
             if (viewInstance != null)
             {
-                viewInstance.PointerEnter -= OnChatViewPointerEnter;
-                viewInstance.PointerExit -= OnChatViewPointerExit;
+                viewInstance.PointerEnter -= OnViewPointerEnter;
+                viewInstance.PointerExit -= OnViewPointerExit;
                 viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
                 viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
                 viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
@@ -119,7 +124,8 @@ namespace DCL.Chat
                 viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
                 viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
                 viewInstance.FoldingChanged -= OnViewFoldingChanged;
-                viewInstance.MemberListVisibilityChanged -= OnMemberListVisibilityChanged;
+                viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
+                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChanged;
                 viewInstance.Dispose();
             }
 
@@ -149,28 +155,47 @@ namespace DCL.Chat
             chatInputBus.InsertTextInChat += OnInputTextInserted;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
+            viewInstance!.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
 
-            viewInstance.PointerEnter += OnChatViewPointerEnter;
-            viewInstance.PointerExit += OnChatViewPointerExit;
+            viewInstance.PointerEnter += OnViewPointerEnter;
+            viewInstance.PointerExit += OnViewPointerExit;
 
             viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
-            viewInstance.MemberListVisibilityChanged += OnMemberListVisibilityChanged;
+            viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
+            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChanged;
 
             OnFocus();
 
             // Intro message
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL].MarkAllMessagesAsRead();
+
+            chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
+            chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+
+chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "xxx");
+chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "xxx2");
+chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "xxx3");
+
+viewDependencies.DclInput.TESTS.Action1.performed += (x) => { chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, new ChatMessage("Test1 " + Random.Range(0, 100), "Test1", "Address", false, "senderID", false, false)); };
+viewDependencies.DclInput.TESTS.Action2.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "xxx"), new ChatMessage("Test2 " + Random.Range(0, 100), "Test2", "Address", false, "senderID", false, false)); };
+viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "xxx2"), new ChatMessage("Test3 " + Random.Range(0, 100), "Test3", "Address", false, "senderID", false, false)); };
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
+        }
+
+        private void OnViewCurrentChannelChanged()
+        {
+ //           hasToResetUnreadMessagesWhenNewMessageArrive = true;
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -191,16 +216,23 @@ namespace DCL.Chat
             }
             else
             {
-                // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
-                //       Once a new message arrives, the separator moves to the position of that new message and the count of
-                //       unread messages is set to 1.
-                if (hasToResetUnreadMessagesWhenNewMessageArrive)
+                if (destinationChannel.Id.Equals(viewInstance.CurrentChannel))
                 {
-                    hasToResetUnreadMessagesWhenNewMessageArrive = false;
-                    destinationChannel.ReadMessages = messageCountWhenSeparatorViewed;
-                }
+                    // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
+                    //       Once a new message arrives, the separator moves to the position of that new message and the count of
+                    //       unread messages is set to 1.
+                    if (hasToResetUnreadMessagesWhenNewMessageArrive)
+                    {
+                        hasToResetUnreadMessagesWhenNewMessageArrive = false;
+                        destinationChannel.ReadMessages = messageCountWhenSeparatorViewed;
+                    }
 
-                viewInstance.RefreshMessages();
+                    viewInstance.RefreshMessages();
+                }
+                else // Messages arrived to other conversations
+                {
+                    viewInstance.RefreshUnreadMessages(destinationChannel.Id);
+                }
             }
         }
 
@@ -212,7 +244,10 @@ namespace DCL.Chat
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
         {
-            viewInstance!.RefreshMessages();
+            if(changedChannel.Id.Equals(viewInstance.CurrentChannel))
+                viewInstance!.RefreshMessages();
+            else
+                viewInstance.RefreshUnreadMessages(changedChannel.Id);
         }
 
         private void OnViewUnreadMessagesSeparatorViewed()
@@ -287,8 +322,6 @@ namespace DCL.Chat
             messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
         }
 
-        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
-
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
@@ -360,10 +393,10 @@ namespace DCL.Chat
                 EnableUnwantedInputs();
         }
 
-        private void OnChatViewPointerExit() =>
+        private void OnViewPointerExit() =>
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
 
-        private void OnChatViewPointerEnter() =>
+        private void OnViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
 
         private void OnOpenChatShortcutPerformed(InputAction.CallbackContext obj)
@@ -410,7 +443,7 @@ namespace DCL.Chat
                 chatHistory.AddMessage(channelId, chatMessage);
         }
 
-        private void OnMemberListVisibilityChanged(bool isVisible)
+        private void OnViewMemberListVisibilityChanged(bool isVisible)
         {
             if (isVisible && canUpdateParticipants)
             {
@@ -474,6 +507,18 @@ namespace DCL.Chat
                 if(profile != null)
                     outProfiles.Add(profile);
             }
+        }
+
+        private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
+        {
+            Debug.Log("CONVERSATION REMOVED");
+            viewInstance!.RemoveConversation(removedChannel);
+        }
+
+        private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
+        {
+            Debug.Log("CONVERSATION ADDED");
+            viewInstance!.AddConversation(addedChannel);
         }
     }
 }

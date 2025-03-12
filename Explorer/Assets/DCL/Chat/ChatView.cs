@@ -13,7 +13,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -33,6 +32,7 @@ namespace DCL.Chat
         public delegate void PointerEventDelegate();
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         public delegate void UnreadMessagesSeparatorViewedDelegate();
+        public delegate void CurrentChannelChangedDelegate();
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -47,27 +47,39 @@ namespace DCL.Chat
         [SerializeField]
         private float scrollToBottomButtonFadeOutDuration = 0.5f;
 
+        [Tooltip("The icon to use for the Nearby conversation.")]
+        [SerializeField]
+        private Sprite nearbyConversationIcon;
+
         [Header("UI elements")]
-        [FormerlySerializedAs("ChatBubblesToggle")]
+
         [SerializeField]
         private ToggleView chatBubblesToggle;
 
         [SerializeField]
         private ChatInputBoxElement chatInputBox;
 
-        [FormerlySerializedAs("PanelBackgroundCanvasGroup")]
-        [SerializeField]
-        private CanvasGroup panelBackgroundCanvasGroup;
-
-        [FormerlySerializedAs("CloseChatButton")]
         [SerializeField]
         private Button closeChatButton;
 
         [SerializeField]
-        private Button closeMemberListButton;
+        private Image unfoldedPanelInteractableArea;
+
+        [Header("Messages")]
 
         [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
+
+        [SerializeField]
+        private CanvasGroup messagesPanelBackgroundCanvasGroup;
+
+        [SerializeField]
+        private GameObject messagesPanel;
+
+        [SerializeField]
+        private GameObject chatAndConversationsPanel;
+
+        [Header("Member list")]
 
         [SerializeField]
         private Button memberListButton;
@@ -88,13 +100,20 @@ namespace DCL.Chat
         private Button memberListClosingButton;
 
         [SerializeField]
+        private Button closeMemberListButton;
+
+        [Header("Title bar")]
+
+        [SerializeField]
         private GameObject defaultChatTitlebar;
 
         [SerializeField]
         private GameObject memberListTitlebar;
 
         [SerializeField]
-        private GameObject chatPanel;
+        private CanvasGroup titlebarCanvasGroup;
+
+        [Header("Scroll to bottom")]
 
         [SerializeField]
         private Button scrollToBottomButton;
@@ -105,8 +124,16 @@ namespace DCL.Chat
         [SerializeField]
         private CanvasGroup scrollToBottomCanvasGroup;
 
+        [Header("Conversations toolbar")]
+
+        [SerializeField]
+        private ChatConversationsToolbarView conversationsToolbar;
+
+        [SerializeField]
+        private CanvasGroup conversationsToolbarCanvasGroup;
+
         [Header("Audio")]
-        [SerializeField]private AudioClipConfig chatReceiveMessageAudio;
+        [SerializeField] private AudioClipConfig chatReceiveMessageAudio;
         [SerializeField] private AudioClipConfig chatReceiveMentionMessageAudio;
 
         /// <summary>
@@ -159,6 +186,11 @@ namespace DCL.Chat
         /// </summary>
         public event MemberListVisibilityChangedDelegate MemberListVisibilityChanged;
 
+        /// <summary>
+        /// Raised when a different conversation is displayed and all messages are replaced.
+        /// </summary>
+        public event CurrentChannelChangedDelegate CurrentChannelChanged;
+
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
 
@@ -176,6 +208,7 @@ namespace DCL.Chat
         private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private bool isMemberListCountDirty;
         private int memberListCount;
+        private bool isUnfolded;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -253,6 +286,10 @@ namespace DCL.Chat
                     currentChannel = channels![value];
 
                     chatMessageViewer.SetData(currentChannel.Messages);
+                    ShowNewMessages();
+                    conversationsToolbar.SelectConversation(value);
+
+                    CurrentChannelChanged?.Invoke();
                 }
             }
         }
@@ -267,15 +304,18 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => panelBackgroundCanvasGroup.gameObject.activeInHierarchy;
+            get => isUnfolded;
 
             set
             {
-                if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
+                if(value == isUnfolded)
                     return;
 
+                isUnfolded = value;
+                unfoldedPanelInteractableArea.enabled = value;
                 memberListView.IsVisible = false;
-                panelBackgroundCanvasGroup.gameObject.SetActive(value);
+                SetBackgroundVisibility(value, false);
+
                 chatMessageViewer.IsVisible = value;
 
                 if (!value)
@@ -292,7 +332,8 @@ namespace DCL.Chat
 
         private void Start()
         {
-            panelBackgroundCanvasGroup.alpha = 0;
+            IsUnfolded = true;
+            SetBackgroundVisibility(false, false);
         }
 
         private void Update()
@@ -324,7 +365,6 @@ namespace DCL.Chat
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
-            ChatChannel.ChannelId defaultChannelId,
             bool areChatBubblesVisible,
             ChatAudioSettingsAsset chatAudioSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate
@@ -355,18 +395,11 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
             closePopupTask = new UniTaskCompletionSource();
 
-            CurrentChannel = defaultChannelId;
-        }
+            conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
 
-        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
-        {
-            if (memberListView.IsVisible)
-                OnMemberListClosingButtonClicked();
-        }
-
-        private void OnScrollToEndButtonClicked()
-        {
-            chatMessageViewer.ShowLastMessage(true);
+            // Initializes the conversations toolbar
+            foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
+                AddConversation(channelPair.Value);
         }
 
         /// <summary>
@@ -441,6 +474,8 @@ namespace DCL.Chat
 
             if (pendingMessages > 0)
                 scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
+
+            RefreshUnreadMessages(CurrentChannel);
         }
 
         /// <summary>
@@ -468,17 +503,25 @@ namespace DCL.Chat
         public void OnPointerEnter(PointerEventData eventData)
         {
             PointerEnter?.Invoke();
-            panelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
-            chatMessageViewer.SetScrollbarVisibility(true, BackgroundFadeTime);
-            chatMessageViewer.StopChatEntriesFadeout();
+
+            if (IsUnfolded)
+            {
+                SetBackgroundVisibility(true, true);
+                chatMessageViewer.SetScrollbarVisibility(true, BackgroundFadeTime);
+                chatMessageViewer.StopChatEntriesFadeout();
+            }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             PointerExit?.Invoke();
-            panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
-            chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
-            chatMessageViewer.StartChatEntriesFadeout();
+
+            if (IsUnfolded)
+            {
+                SetBackgroundVisibility(false, true);
+                chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
+                chatMessageViewer.StartChatEntriesFadeout();
+            }
         }
 
         public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
@@ -494,6 +537,7 @@ namespace DCL.Chat
             chatInputBox.InjectDependencies(dependencies);
             chatMessageViewer.InjectDependencies(dependencies);
             memberListView.InjectDependencies(dependencies);
+            conversationsToolbar.InjectDependencies(dependencies);
         }
 
         /// <summary>
@@ -527,6 +571,10 @@ namespace DCL.Chat
                 RefreshMessages();
 
                 chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+
+                // Corner case: The new line is visible without doing scroll, and is positioned at the top of the message list
+                if(IsScrollAtBottom && chatMessageViewer.CurrentSeparatorIndex >= currentChannel.Messages.Count - 2) // -2: There is a padding message at the top of the list, the separator will be beneath it
+                    chatMessageViewer.HideSeparator();
 
                 SetScrollToBottomVisibility(!IsScrollAtBottom);
 
@@ -663,10 +711,83 @@ namespace DCL.Chat
         {
             memberListTitlebar.gameObject.SetActive(isVisible);
             defaultChatTitlebar.gameObject.SetActive(!isVisible);
-            chatPanel.SetActive(!isVisible);
-            chatInputBox.gameObject.SetActive(!isVisible);
+            chatAndConversationsPanel.gameObject.SetActive(!isVisible);
+            unfoldedPanelInteractableArea.enabled = !isVisible;
 
             MemberListVisibilityChanged?.Invoke(isVisible);
+        }
+
+        private void SetBackgroundVisibility(bool isVisible, bool useAnimation)
+        {
+            if(memberListView.IsVisible)
+                return;
+
+            messagesPanelBackgroundCanvasGroup.DOKill();
+            conversationsToolbarCanvasGroup.DOKill();
+            titlebarCanvasGroup.DOKill();
+
+            if (useAnimation)
+            {
+                if (isVisible)
+                {
+                    messagesPanelBackgroundCanvasGroup.gameObject.SetActive(true);
+                    conversationsToolbarCanvasGroup.gameObject.SetActive(true);
+                    titlebarCanvasGroup.gameObject.SetActive(true);
+                    messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                }
+                else
+                {
+                    messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
+                    conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                }
+            }
+            else
+            {
+                messagesPanelBackgroundCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
+                messagesPanelBackgroundCanvasGroup.gameObject.SetActive(isVisible);
+                conversationsToolbarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
+                conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
+                titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
+                titlebarCanvasGroup.gameObject.SetActive(isVisible);
+            }
+        }
+
+        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
+        {
+            if (memberListView.IsVisible)
+                OnMemberListClosingButtonClicked();
+        }
+
+        private void OnScrollToEndButtonClicked()
+        {
+            chatMessageViewer.ShowLastMessage(true);
+        }
+
+        private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
+        {
+            if(currentChannel == null || !CurrentChannel.Equals(channelId))
+                CurrentChannel = channelId;
+        }
+
+        public void AddConversation(ChatChannel channelToAdd)
+        {
+            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL))
+                conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
+            else
+                conversationsToolbar.AddConversation(channelToAdd);
+        }
+
+        public void RemoveConversation(ChatChannel.ChannelId channelToRemove)
+        {
+            conversationsToolbar.RemoveConversation(channelToRemove);
+        }
+
+        public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
+        {
+            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
         }
     }
 }

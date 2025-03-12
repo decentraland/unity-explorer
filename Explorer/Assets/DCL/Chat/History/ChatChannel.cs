@@ -84,6 +84,11 @@ namespace DCL.Chat.History
         public ChannelId Id { get; }
 
         /// <summary>
+        ///
+        /// </summary>
+        public ChatChannelType ChannelType { get; }
+
+        /// <summary>
         /// The amount of messages already read by the local participant in the chat.
         /// </summary>
         public int ReadMessages
@@ -106,6 +111,7 @@ namespace DCL.Chat.History
         public ChatChannel(ChatChannelType channelType, string channelName)
         {
             Id = new ChannelId(channelType, channelName);
+            ChannelType = channelType;
         }
 
         /// <summary>
@@ -120,6 +126,7 @@ namespace DCL.Chat.History
                 // Adding two elements to count as top and bottom padding
                 messages.Add(new ChatMessage(true));
                 messages.Add(new ChatMessage(true));
+                readMessages = 2; // both paddings
             }
 
             // Removing padding element and reversing list due to infinite scroll view behaviour
