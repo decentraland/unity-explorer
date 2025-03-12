@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,10 +21,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         public BlockedRequestManager(IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
+            ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
+            int elementsMissingThreshold) : base(viewDependencies, pageSize, elementsMissingThreshold)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
