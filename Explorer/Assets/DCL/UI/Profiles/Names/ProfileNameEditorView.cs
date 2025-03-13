@@ -66,9 +66,11 @@ namespace DCL.UI.ProfileNames
                 {
                     saveButton.interactable = value;
 
+                    const float RGB = 0.99f;
+
                     saveButtonText.color = value
-                        ? new Color(0.99f, 0.99f, 0.99f)
-                        : new Color(0.99f, 0.99f, 0.99f, 0.5f);
+                        ? new Color(RGB, RGB, RGB)
+                        : new Color(RGB, RGB, RGB, 0.5f);
                 }
             }
 

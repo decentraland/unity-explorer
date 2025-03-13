@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3;
@@ -17,7 +18,6 @@ namespace DCL.UI.ProfileNames
 {
     public class ProfileNameEditorController : ControllerBase<ProfileNameEditorView>
     {
-        private const string CLAIM_NAME_URL = "https://decentraland.org/marketplace/names/claim";
         private const int MAX_NAME_LENGTH = 15;
         private const string CHARACTER_LIMIT_REACHED_MESSAGE = "Character limit reached";
         private const string VALID_CHARACTERS_ARE_ALLOWED_MESSAGE = "Please use only letters and numbers";
@@ -25,6 +25,7 @@ namespace DCL.UI.ProfileNames
         private readonly IWebBrowser webBrowser;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
@@ -39,11 +40,13 @@ namespace DCL.UI.ProfileNames
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             ISelfProfile selfProfile,
-            INftNamesProvider nftNamesProvider) : base(viewFactory)
+            INftNamesProvider nftNamesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -210,7 +213,7 @@ namespace DCL.UI.ProfileNames
 
         private void ClaimNewName()
         {
-            webBrowser.OpenUrl(CLAIM_NAME_URL);
+            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             NameClaimRequested?.Invoke();
         }
 

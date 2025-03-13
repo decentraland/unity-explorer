@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileElements;
@@ -15,14 +16,14 @@ namespace DCL.Passport.Modules
 {
     public class UserBasicInfo_PassportModuleController : IPassportModuleController
     {
-        private const string CLAIM_NAME_URL = "https://decentraland.org/marketplace/names/claim";
-
         private readonly UserNameElementController nameElementController;
         private readonly UserWalletAddressElementController walletAddressElementController;
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
+        private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly bool isNameEditorEnabled;
 
         private CancellationTokenSource? checkNameEditionCancellationToken;
@@ -37,21 +38,20 @@ namespace DCL.Passport.Modules
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
             bool isNameEditorEnabled)
         {
             this.view = view;
             this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.nftNamesProvider = nftNamesProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.isNameEditorEnabled = isNameEditorEnabled;
             nameElementController = new UserNameElementController(view.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
 
-            view.ClaimNameButton.onClick.AddListener(() =>
-            {
-                webBrowser.OpenUrl(CLAIM_NAME_URL);
-                NameClaimRequested?.Invoke();
-            });
+            view.ClaimNameButton.onClick.AddListener(ClaimName);
             view.EditNameButton.onClick.AddListener(ShowNameEditor);
         }
 
@@ -131,6 +131,12 @@ namespace DCL.Passport.Modules
                 if (profile != null)
                     Setup(profile);
             }
+        }
+
+        private void ClaimName()
+        {
+            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
+            NameClaimRequested?.Invoke();
         }
     }
 }

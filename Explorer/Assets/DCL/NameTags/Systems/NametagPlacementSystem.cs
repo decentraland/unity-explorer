@@ -115,7 +115,7 @@ namespace DCL.Nametags
         [None(typeof(PBAvatarShape))]
         private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            if (nametagView.Id == avatarShape.ID && nametagView.IsName(profile.ValidatedName))
+            if (nametagView.Id == avatarShape.ID && nametagView.IsName(profile.ValidatedName, profile.WalletId, profile.HasClaimedName))
                 return;
 
             nametagView.Id = avatarShape.ID;

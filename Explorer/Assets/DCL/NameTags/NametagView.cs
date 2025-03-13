@@ -78,9 +78,12 @@ namespace DCL.Nametags
             messageContentAnchoredPosition = new Vector2(0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
         }
 
-        public bool IsName(string username) =>
-            // Check if starts as it can be either {username} or {username}#{walletId}
-            Username.text.StartsWith(username);
+        public bool IsName(string username, string? walletId, bool hasClaimedName)
+        {
+            // Small performance improvement to prevent to build the name for a valid comparison
+            if (!Username.text.StartsWith(username)) return false;
+            return Username.text == BuildName(username, walletId, hasClaimedName);
+        }
 
         public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon)
         {
@@ -92,7 +95,7 @@ namespace DCL.Nametags
             isClaimedName = hasClaimedName;
             verifiedIcon.gameObject.SetActive(hasClaimedName && useVerifiedIcon);
 
-            Username.text = hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}";
+            Username.text = BuildName(username, walletId, hasClaimedName);
 
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
             messageContent.color = startingTextColor;
@@ -314,5 +317,8 @@ namespace DCL.Nametags
 
             return maxWidth;
         }
+
+        private string BuildName(string username, string? walletId, bool hasClaimedName) =>
+            hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}";
     }
 }

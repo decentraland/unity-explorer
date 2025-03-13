@@ -14,8 +14,6 @@ namespace DCL.Profiles
             public struct NameElement
             {
                 public string name;
-                // public string contractAddress;
-                // public string tokenId;
             }
         }
     }
