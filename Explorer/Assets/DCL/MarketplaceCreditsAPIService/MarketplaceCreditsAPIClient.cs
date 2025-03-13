@@ -12,6 +12,8 @@ namespace DCL.MarketplaceCreditsAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
+        private static int executionNumber = 1;
+
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
@@ -60,6 +62,66 @@ namespace DCL.MarketplaceCreditsAPIService
             int randomDelay = new System.Random().Next(1000, 3000);
             await UniTask.Delay(randomDelay, cancellationToken: ct);
 
+            var nonAllClaimedGoalsList = new List<GoalData>
+            {
+                new ()
+                {
+                    thumbnail = "https://picsum.photos/100/100",
+                    title = "Jump Into Decentraland On 3 Separate Days (Min. 10 min)",
+                    progress = new GoalProgressData
+                    {
+                        totalSteps = 3,
+                        stepsDone = 1,
+                    },
+                    credits = 4,
+                    isClaimed = false,
+                },
+                new ()
+                {
+                    thumbnail = "https://picsum.photos/100/100",
+                    title = "Attend 2 Events (Min. 10 min)",
+                    progress = new GoalProgressData
+                    {
+                        totalSteps = 2,
+                        stepsDone = 1,
+                    },
+                    credits = 2,
+                    isClaimed = false,
+                },
+                new ()
+                {
+                    thumbnail = "https://picsum.photos/100/100",
+                    title = "View 3 New Profiles",
+                    progress = new GoalProgressData
+                    {
+                        totalSteps = 3,
+                        stepsDone = 3,
+                    },
+                    credits = 1,
+                    isClaimed = true,
+                },
+                new ()
+                {
+                    thumbnail = "https://picsum.photos/100/100",
+                    title = "Visit 3 New Parcels",
+                    progress = new GoalProgressData
+                    {
+                        totalSteps = 3,
+                        stepsDone = 3,
+                    },
+                    credits = 1,
+                    isClaimed = false,
+                },
+            };
+
+            var allClaimedGoalsList = new List<GoalData>
+            {
+                new (isClaimed: true),
+                new (isClaimed: true),
+                new (isClaimed: true),
+                new (isClaimed: true),
+            };
+
             GoalsOfTheWeekResponse goalsOfTheWeekResponse = new GoalsOfTheWeekResponse
             {
                 data = new GoalsOfTheWeekData
@@ -67,60 +129,20 @@ namespace DCL.MarketplaceCreditsAPIService
                     endOfTheWeekDate = "2025-03-16T12:00:00Z",
                     totalCredits = 3.2f,
                     daysToExpire = 15,
-                    goals = new List<GoalData>
+                    goals = executionNumber switch
                     {
-                        new()
-                        {
-                            thumbnail = "https://picsum.photos/100/100",
-                            title = "Jump Into Decentraland On 3 Separate Days (Min. 10 min)",
-                            progress = new GoalProgressData
-                            {
-                                totalSteps = 3,
-                                stepsDone = 1,
-                            },
-                            credits = 4,
-                            isClaimed = false,
-                        },
-                        new()
-                        {
-                            thumbnail = "https://picsum.photos/100/100",
-                            title = "Attend 2 Events (Min. 10 min)",
-                            progress = new GoalProgressData
-                            {
-                                totalSteps = 2,
-                                stepsDone = 1,
-                            },
-                            credits = 2,
-                            isClaimed = false,
-                        },
-                        new()
-                        {
-                            thumbnail = "https://picsum.photos/100/100",
-                            title = "View 3 New Profiles",
-                            progress = new GoalProgressData
-                            {
-                                totalSteps = 3,
-                                stepsDone = 1,
-                            },
-                            credits = 1,
-                            isClaimed = false,
-                        },
-                        new()
-                        {
-                            thumbnail = "https://picsum.photos/100/100",
-                            title = "Visit 3 New Parcels",
-                            progress = new GoalProgressData
-                            {
-                                totalSteps = 3,
-                                stepsDone = 3,
-                            },
-                            credits = 1,
-                            isClaimed = false,
-                        },
+                        1 => nonAllClaimedGoalsList,
+                        2 => allClaimedGoalsList,
+                        3 => null,
                     },
-                    creditsAvailableToClaim = true,
+                    creditsAvailableToClaim = executionNumber == 1,
                 },
             };
+
+            if (executionNumber == 3)
+                executionNumber = 1;
+            else
+                executionNumber++;
 
             return goalsOfTheWeekResponse;
         }

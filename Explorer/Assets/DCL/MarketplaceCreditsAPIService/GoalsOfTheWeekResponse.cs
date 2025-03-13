@@ -27,6 +27,15 @@ namespace DCL.MarketplaceCreditsAPIService
         public GoalProgressData progress;
         public int credits;
         public bool isClaimed;
+
+        public GoalData()
+        {
+        }
+
+        public GoalData(bool isClaimed)
+        {
+            this.isClaimed = isClaimed;
+        }
     }
 
     [Serializable]
