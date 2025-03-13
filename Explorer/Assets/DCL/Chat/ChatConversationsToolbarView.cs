@@ -51,16 +51,21 @@ namespace DCL.Chat
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.Id = channel.Id;
 
-            if (icon != null)
+            switch (channel.ChannelType)
             {
-                newItem.SetConversationIcon(icon);
-            }
-            else
-            {
-                UniTask.RunOnThreadPool(() => LoadProfileAsync(newItem)).Forget();
+                case ChatChannel.ChatChannelType.NearBy:
+                    newItem.SetConversationIcon(icon);
+                    newItem.SetConversationName("Near By"); // TODO: Localization
+                    newItem.SetClaimedNameIconVisibility(false);
+                    break;
+                case ChatChannel.ChatChannelType.User:
+                    LoadProfileAsync(newItem).Forget();
+                    break;
+                case ChatChannel.ChatChannelType.Community:
+                    // TODO in future shapes
+                    break;
             }
 
-            newItem.SetConversationName(newItem.Id.Id);
             newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.User);
 
             items.Add(channel.Id, newItem);
@@ -102,10 +107,15 @@ namespace DCL.Chat
 
         private async UniTaskVoid LoadProfileAsync(ChatConversationsToolbarViewItem newItem)
         {
-            Profile? profile = await viewDependencies.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
+            ChatChannel.ChannelId.GetTypeAndNameFromId(newItem.Id.Id, out ChatChannel.ChatChannelType type, out string name);
+            Profile? profile = await viewDependencies.GetProfileAsync(name, CancellationToken.None);
 
             if (profile != null)
+            {
                 newItem.SetProfileData(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                newItem.SetConversationName(profile.ValidatedName);
+                newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
+            }
         }
     }
 }

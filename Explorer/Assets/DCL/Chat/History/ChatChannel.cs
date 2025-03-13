@@ -79,12 +79,12 @@ namespace DCL.Chat.History
         public IReadOnlyList<ChatMessage> Messages => messages;
 
         /// <summary>
-        /// The unique ID of the channel.
+        /// Gets the unique ID of the channel.
         /// </summary>
         public ChannelId Id { get; }
 
         /// <summary>
-        ///
+        /// Gets the type of the channel (nearby, user, community...).
         /// </summary>
         public ChatChannelType ChannelType { get; }
 

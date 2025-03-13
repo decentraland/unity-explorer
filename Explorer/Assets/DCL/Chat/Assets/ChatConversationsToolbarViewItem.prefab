@@ -369,6 +369,7 @@ MonoBehaviour:
   removeButton: {fileID: 769613835558072352}
   unreadMessagesBadge: {fileID: 7151291566315591043}
   selectionMark: {fileID: 1280643333913694863}
+  claimedNameIcon: {fileID: 7909522128765835324}
   customIcon: {fileID: 290259844803260907}
 --- !u!114 &510709296985545676
 MonoBehaviour:
@@ -825,6 +826,11 @@ RectTransform:
 --- !u!225 &7380468159990764232 stripped
 CanvasGroup:
   m_CorrespondingSourceObject: {fileID: 5338217409114655614, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
+  m_PrefabInstance: {fileID: 3204760575221520822}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &7909522128765835324 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4737185079861477770, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
   m_PrefabInstance: {fileID: 3204760575221520822}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8647332162550541538

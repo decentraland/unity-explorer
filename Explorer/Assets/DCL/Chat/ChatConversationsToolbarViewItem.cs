@@ -3,7 +3,6 @@ using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -36,6 +35,9 @@ namespace DCL.Chat
 
         [SerializeField]
         private Image selectionMark;
+
+        [SerializeField]
+        private RectTransform claimedNameIcon;
 
         [SerializeField]
         private Image customIcon;
@@ -92,7 +94,7 @@ namespace DCL.Chat
         public void SetProfileData(ViewDependencies viewDependencies, Color userColor, string faceSnapshotUrl, string userId)
         {
             customIcon.gameObject.SetActive(false);
-            profilePictureView.gameObject.SetActive(false);
+            profilePictureView.gameObject.SetActive(true);
             profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
         }
 
@@ -108,6 +110,11 @@ namespace DCL.Chat
             customIcon.sprite = icon;
             customIcon.gameObject.SetActive(true);
             profilePictureView.gameObject.SetActive(false);
+        }
+
+        public void SetClaimedNameIconVisibility(bool isVisible)
+        {
+            claimedNameIcon.gameObject.SetActive(isVisible);
         }
     }
 }
