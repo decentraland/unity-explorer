@@ -100,7 +100,7 @@ namespace DCL.MarketplaceCredits.Sections
                 ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
-                    var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.FetchGoalsOfTheWeekAsync(ownProfile.UserId, ct);
+                    var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.GetGoalsOfTheWeekAsync(ownProfile.UserId, ct);
                     totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
                     totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatDaysToCreditsExpire(goalsOfTheWeekResponse.data.daysToExpire));
                     totalCreditsWidgetView.SetDaysToExpireVisible(goalsOfTheWeekResponse.data.totalCredits > 0);
@@ -195,7 +195,7 @@ namespace DCL.MarketplaceCredits.Sections
             try
             {
                 view.SetCaptchaAsLoading(true);
-                var captchaResponse = await marketplaceCreditsAPIClient.FetchCaptchaAsync(walletId, ct);
+                var captchaResponse = await marketplaceCreditsAPIClient.GenerateCaptchaAsync(walletId, ct);
                 view.SetCaptchaTargetAreaPercentageValue(captchaResponse.captchaValue);
                 view.SetCaptchaAsLoading(false);
                 view.SetCaptchaPercentageValue(0f);

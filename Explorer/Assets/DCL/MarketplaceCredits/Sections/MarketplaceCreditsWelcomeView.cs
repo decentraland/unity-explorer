@@ -7,6 +7,12 @@ namespace DCL.MarketplaceCredits.Sections
     public class MarketplaceCreditsWelcomeView : MonoBehaviour
     {
         [field: SerializeField]
+        public GameObject ContentContainer { get; private set; }
+
+        [field: SerializeField]
+        public GameObject LoadingContainer { get; private set; }
+
+        [field: SerializeField]
         public Button StartButton { get; private set; }
 
         [field: SerializeField]
@@ -38,13 +44,19 @@ namespace DCL.MarketplaceCredits.Sections
             }
         }
 
+        public void SetAsLoading(bool isLoading)
+        {
+            ContentContainer.SetActive(!isLoading);
+            LoadingContainer.SetActive(isLoading);
+        }
+
         public void ShowEmailError(bool show)
         {
             EmailErrorOutline.SetActive(show);
             EmailErrorMark.SetActive(show);
         }
 
-        public void CleanSection() =>
+        public void CleanEmailInput() =>
             EmailInput.text = string.Empty;
 
         public void SetStartWithEmailButtonInteractable(bool isInteractable) =>

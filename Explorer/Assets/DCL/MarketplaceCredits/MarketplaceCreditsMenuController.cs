@@ -52,7 +52,9 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
                 this,
-                webBrowser);
+                webBrowser,
+                marketplaceCreditsAPIClient,
+                selfProfile);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 view.GoalsOfTheWeekView,

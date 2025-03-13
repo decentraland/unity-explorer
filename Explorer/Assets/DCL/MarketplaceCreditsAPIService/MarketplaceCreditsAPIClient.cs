@@ -12,6 +12,7 @@ namespace DCL.MarketplaceCreditsAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
+        private static bool isAlreadyRegistered;
         private static int executionNumber = 1;
 
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
@@ -22,7 +23,32 @@ namespace DCL.MarketplaceCreditsAPIService
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public async UniTask<GoalsOfTheWeekResponse> FetchGoalsOfTheWeekAsync(string walletId, CancellationToken ct)
+        public async UniTask<ProgramRegistrationResponse> GetProgramRegistrationInfoAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration";
+
+            // ProgramRegistrationResponse programRegistrationResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
+            //                                                                                     .CreateFromJson<ProgramRegistrationResponse>(WRJsonParser.Newtonsoft);
+
+            ProgramRegistrationResponse programRegistrationResponse = await MockProgramRegistrationAsync(ct);
+
+            return programRegistrationResponse;
+        }
+
+        public async UniTask<ProgramRegistrationResponse> RegisterInTheProgramAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration";
+
+            // ProgramRegistrationResponse programRegistrationResponse = await webRequestController
+            //                                                  .SignedFetchPostAsync(url, string.Empty, ct)
+            //                                                 .CreateFromJson<ProgramRegistrationResponse>(WRJsonParser.Unity);
+
+            ProgramRegistrationResponse programRegistrationResponse = await MockRegisterInTheProgramAsync(ct);
+
+            return programRegistrationResponse;
+        }
+
+        public async UniTask<GoalsOfTheWeekResponse> GetGoalsOfTheWeekAsync(string walletId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/goals";
 
@@ -33,7 +59,7 @@ namespace DCL.MarketplaceCreditsAPIService
             return goalsOfTheWeekResponse;
         }
 
-        public async UniTask<CaptchaResponse> FetchCaptchaAsync(string walletId, CancellationToken ct)
+        public async UniTask<CaptchaResponse> GenerateCaptchaAsync(string walletId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
 
@@ -48,13 +74,41 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/claim";
 
-            // ClaimCreditsResponse responseData = await webRequestController
-            //                                          .SignedFetchPostAsync(url, captchaValue.ToString(), ct)
-            //                                          .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
+            // ClaimCreditsResponse claimCreditsResponseData = await webRequestController
+            //                                                      .SignedFetchPostAsync(url, captchaValue.ToString(), ct)
+            //                                                      .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
 
             ClaimCreditsResponse claimCreditsResponseData = await MockClaimCreditsAsync(ct);
 
             return claimCreditsResponseData;
+        }
+
+        private static async UniTask<ProgramRegistrationResponse> MockProgramRegistrationAsync(CancellationToken ct)
+        {
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
+
+            ProgramRegistrationResponse programRegistration = new ProgramRegistrationResponse
+            {
+                isRegistered = isAlreadyRegistered,
+            };
+
+            return programRegistration;
+        }
+
+        private static async UniTask<ProgramRegistrationResponse> MockRegisterInTheProgramAsync(CancellationToken ct)
+        {
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
+
+            ProgramRegistrationResponse programRegistration = new ProgramRegistrationResponse
+            {
+                isRegistered = true,
+            };
+
+            isAlreadyRegistered = true;
+
+            return programRegistration;
         }
 
         private static async UniTask<GoalsOfTheWeekResponse> MockGoalsOfTheWeekAsync(CancellationToken ct)
