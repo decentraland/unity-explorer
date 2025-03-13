@@ -57,8 +57,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject? properties = null)
         {
+            Debug.Log($"PRAVS - AnalyticsController.Track({eventName})");
+
             if (Configuration.EventIsEnabled(eventName))
+            {
                 analytics.Track(eventName, properties);
+            }
+            else
+            {
+                Debug.Log($"PRAVS - AnalyticsController.Track({eventName}) - EVENT NAME NOT CONFIGURED...");
+            }
         }
 
         public void Identify(IWeb3Identity? identity)

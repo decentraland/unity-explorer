@@ -274,6 +274,8 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
+            return false;
+
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 

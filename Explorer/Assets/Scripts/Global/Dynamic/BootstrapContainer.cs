@@ -114,8 +114,10 @@ namespace Global.Dynamic
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
 
+                Debug.Log($"PRAVS - BootstrapContainer - 3");
                 if (container.enableAnalytics)
                 {
+                    Debug.Log($"PRAVS - BootstrapContainer - 4");
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
 
                     CrashDetector.Initialize(container.Analytics);
@@ -154,6 +156,7 @@ namespace Global.Dynamic
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
+            Debug.Log($"PRAVS - BootstrapContainer - 1 - ANALYTICS? {analyticsConfig.Mode}");
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
             {
@@ -162,6 +165,7 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
+                Debug.Log($"PRAVS - BootstrapContainer - 2");
                 LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
                 IAnalyticsService service = CreateAnalyticsService(analyticsConfig, launcherTraits, container.ApplicationParametersParser, ct);
 

@@ -63,6 +63,8 @@ namespace Global.Dynamic
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
                 bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, scenesUIRoot, ct);
 
+            Debug.Log($"PRAVS - BootstrapAnalyticsDecorator.LoadStaticContainerAsync() - SetCommonParam...");
+
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
