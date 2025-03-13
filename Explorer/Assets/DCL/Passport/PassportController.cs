@@ -27,10 +27,8 @@ using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.Profiles;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -87,7 +85,6 @@ namespace DCL.Passport
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
@@ -100,6 +97,7 @@ namespace DCL.Passport
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -158,11 +156,10 @@ namespace DCL.Passport
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISystemClipboard systemClipboard,
-            IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
+            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
@@ -193,10 +190,10 @@ namespace DCL.Passport
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
+            this.viewDependencies = viewDependencies;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -219,6 +216,8 @@ namespace DCL.Passport
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
+
+            viewInstance!.InjectDependencies(viewDependencies);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, isNameEditorEnabled);
@@ -625,8 +624,7 @@ namespace DCL.Passport
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    ImageView view = mutualConfig[i].Image;
-                    view.LoadThumbnailSafeAsync(profileThumbnailCache, mutualFriend.Address, mutualFriend.FacePictureUrl, ct).Forget();
+                    mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
                 }
             }
         }

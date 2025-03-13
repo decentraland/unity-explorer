@@ -12,7 +12,6 @@ jobs:
     if: >
       github.event.pull_request.draft == false &&
       github.event.review.state != 'changes_requested' &&
-      github.event.review.state != 'commented' &&
       github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
     env:
