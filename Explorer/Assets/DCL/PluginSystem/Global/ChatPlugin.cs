@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -42,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
         private readonly IChatInputBus chatInputBus;
+        private readonly ILoadingStatus loadingStatus;
 
         private ChatController chatController;
 
@@ -62,7 +64,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
-            IChatInputBus chatInputBus)
+            IChatInputBus chatInputBus,
+            ILoadingStatus loadingStatus)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -78,6 +81,7 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatInputBus = chatInputBus;
+            this.loadingStatus = loadingStatus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
@@ -113,7 +117,8 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
                 profileCache,
-                chatInputBus
+                chatInputBus,
+                loadingStatus
             );
 
             mvcManager.RegisterController(chatController);

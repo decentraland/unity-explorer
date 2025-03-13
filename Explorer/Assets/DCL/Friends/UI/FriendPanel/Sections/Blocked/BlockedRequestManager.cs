@@ -1,9 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -27,11 +26,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public BlockedRequestManager(
             IFriendsService friendsService,
             IFriendsEventBus friendsEventBus,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
+            ViewDependencies viewDependencies,
             LoopListView2 loopListView,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
+            int elementsMissingThreshold) : base(viewDependencies, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendsEventBus = friendsEventBus;

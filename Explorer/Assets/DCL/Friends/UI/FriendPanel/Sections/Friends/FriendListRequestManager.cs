@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -26,11 +26,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
             LoopListView2 loopListView,
+            ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
+            int elementsMissingThreshold) : base(viewDependencies, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
