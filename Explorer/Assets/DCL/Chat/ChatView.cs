@@ -204,7 +204,7 @@ namespace DCL.Chat
         /// <summary>
         ///     Gets or sets the chat channel to be displayed, using its Id.
         /// </summary>
-        public ChatChannel.ChannelId CurrentChannel
+        public ChatChannel.ChannelId CurrentChannelId
         {
             get => currentChannel!.Id;
 
@@ -215,7 +215,7 @@ namespace DCL.Chat
                     currentChannel = channels![value];
                     chatMessageViewer.SetData(currentChannel.Messages);
 
-                    switch (currentChannel.Id.Type)
+                    switch (currentChannel.Type)
                     {
                         case ChatChannel.ChatChannelType.NearBy:
                             chatTitleBar.SetNearbyChannelImage();
@@ -361,7 +361,7 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
             closePopupTask = new UniTaskCompletionSource();
 
-            CurrentChannel = defaultChannelId;
+            CurrentChannelId = defaultChannelId;
         }
 
         private void OnChatContextMenuVisibilityChanged(bool isVisible)

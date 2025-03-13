@@ -35,14 +35,17 @@ namespace DCL.Chat.History
         public struct ChannelId
         {
             public string Id { get; }
-            public ChatChannelType Type { get; }
-            public string Name { get; }
 
             public ChannelId(ChatChannelType type, string name)
             {
-                Type = type;
-                Name = name;
                 Id = type + ":" + name;
+            }
+
+            public static void GetTypeAndNameFromId(string id, out ChatChannelType channelType, out string channelName)
+            {
+                channelName = id.Substring(id.LastIndexOf(':') + 1);
+                string channelIdType = id.Substring(0, id.LastIndexOf(':'));
+                Enum.TryParse(channelIdType, out channelType);
             }
         }
 
@@ -80,6 +83,8 @@ namespace DCL.Chat.History
         /// </summary>
         public ChannelId Id { get; }
 
+        public ChatChannelType Type { get; }
+
         /// <summary>
         /// The amount of messages already read by the local participant in the chat.
         /// </summary>
@@ -103,6 +108,7 @@ namespace DCL.Chat.History
         public ChatChannel(ChatChannelType channelType, string channelName)
         {
             Id = new ChannelId(channelType, channelName);
+            Type = channelType;
         }
 
         /// <summary>
