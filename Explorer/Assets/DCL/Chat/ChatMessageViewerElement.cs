@@ -73,6 +73,7 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private CancellationTokenSource popupCts;
+        private UniTaskCompletionSource contextMenuTask = new ();
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -106,7 +107,10 @@ namespace DCL.Chat
                 loopList.gameObject.SetActive(value);
 
                 if (!value) // Note: This is necessary to avoid items animating when re-opening the chat window
+                {
                     entriesPendingToAnimate = 0;
+                    contextMenuTask.TrySetResult();
+                }
             }
         }
 
@@ -276,6 +280,7 @@ namespace DCL.Chat
 
         public void Dispose()
         {
+            contextMenuTask.TrySetResult();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
         }
@@ -343,7 +348,9 @@ namespace DCL.Chat
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
             popupCts = popupCts.SafeRestart();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token).Forget();
+            contextMenuTask?.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

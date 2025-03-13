@@ -24,6 +24,7 @@ namespace DCL.UI.ProfileElements
         private ViewDependencies viewDependencies;
         private Web3Address currentWalledId;
         private CancellationTokenSource cts;
+        private UniTaskCompletionSource contextMenuTask = new ();
 
         public async UniTaskVoid SetupAsync(Web3Address playerId, CancellationToken ct)
         {
@@ -52,10 +53,13 @@ namespace DCL.UI.ProfileElements
         private void OnOpenProfileClicked()
         {
             if (currentWalledId == "") return;
+
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
             cts = cts.SafeRestart();
             ProfileContextMenuOpened?.Invoke();
             openProfileButton.OnSelect(null);
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(currentWalledId, openProfileButton.transform.position, CONTEXT_MENU_OFFSET, cts.Token, OnProfileContextMenuClosed, MenuAnchorPoint.TOP_LEFT).Forget();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(currentWalledId, openProfileButton.transform.position, CONTEXT_MENU_OFFSET, cts.Token, contextMenuTask.Task, OnProfileContextMenuClosed, MenuAnchorPoint.TOP_LEFT).Forget();
         }
 
         private void OnProfileContextMenuClosed()
@@ -64,6 +68,9 @@ namespace DCL.UI.ProfileElements
             openProfileButton.OnDeselect(null);
         }
 
-
+        private void OnDisable()
+        {
+            contextMenuTask?.TrySetResult();
+        }
     }
 }

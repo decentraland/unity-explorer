@@ -38,15 +38,16 @@ namespace DCL.UI.GenericContextMenu.Controllers
             //.AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnPinChatToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING));
         }
 
-        public async UniTask ShowContextMenuAsync(bool chatBubblesToggleValue, Vector2 position, Action onContextMenuHide = null)
+        public async UniTask ShowContextMenuAsync(bool chatBubblesToggleValue, Vector2 position, UniTask closeMenuTask, Action onContextMenuHide = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
+            UniTask closeTask = UniTask.WhenAny(closeMenuTask, closeContextMenuTask.Task);
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
             toggleWithIconContextMenuControlSettings.SetInitialValue(chatBubblesToggleValue);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeContextMenuTask.Task)), cancellationTokenSource.Token);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), cancellationTokenSource.Token);
         }
 
         private void OnChatBubbleToggle(bool value)

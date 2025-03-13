@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
 using MVC;
@@ -46,6 +47,7 @@ namespace DCL.Chat
         private ViewDependencies viewDependencies;
         private bool chatBubblesVisibility;
         private CancellationTokenSource cts;
+        private UniTaskCompletionSource contextMenuTask = new ();
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -104,9 +106,11 @@ namespace DCL.Chat
 
         private void OnOpenContextMenuButtonClicked()
         {
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
-            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed).Forget();
+            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed, contextMenuTask.Task).Forget();
         }
 
         private void OnContextMenuClosed()
@@ -149,6 +153,11 @@ namespace DCL.Chat
         private void OnProfileContextMenuOpened()
         {
             ContextMenuVisibilityChanged?.Invoke(true);
+        }
+
+        private void OnDisable()
+        {
+            contextMenuTask.TrySetResult();
         }
     }
 }

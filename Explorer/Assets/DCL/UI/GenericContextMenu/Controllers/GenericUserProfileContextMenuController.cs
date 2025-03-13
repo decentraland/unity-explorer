@@ -98,11 +98,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
-            CancellationToken ct, Action onContextMenuHide = null,
+            CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
             GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.DEFAULT)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
+            UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
             if (friendServiceProxy.Configured)
@@ -134,7 +135,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
