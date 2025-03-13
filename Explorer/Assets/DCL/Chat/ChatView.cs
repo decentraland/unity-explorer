@@ -528,6 +528,10 @@ namespace DCL.Chat
 
                 chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
 
+                // Corner case: The new line is visible without doing scroll, and is positioned at the top of the message list
+                if(IsScrollAtBottom && chatMessageViewer.CurrentSeparatorIndex >= currentChannel.Messages.Count - 2) // -2: There is a padding message at the top of the list, the separator will be beneath it
+                    chatMessageViewer.HideSeparator();
+
                 SetScrollToBottomVisibility(!IsScrollAtBottom);
 
                 if (chatMessageViewer.IsScrollAtBottom)
