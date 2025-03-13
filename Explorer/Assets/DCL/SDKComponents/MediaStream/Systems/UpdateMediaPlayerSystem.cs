@@ -124,7 +124,13 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(PBVideoPlayer))]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
-            if (!playerComponent.IsPlaying || playerComponent.State == VideoState.VsError || !playerComponent.MediaPlayer.MediaOpened)
+            if (!playerComponent.IsPlaying
+                || playerComponent.State == VideoState.VsError
+                || (
+                    playerComponent.MediaAddress.MediaKind is MediaAddress.Kind.URL
+                    && !playerComponent.MediaPlayer.MediaOpened
+                )
+               )
                 return;
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
