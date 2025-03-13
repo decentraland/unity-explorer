@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using DCL.DebugUtilities;
 using DCL.PluginSystem.Global;
+using DCL.WebRequests.GenericDelete;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -22,11 +23,15 @@ namespace DCL.WebRequests.Analytics
         {
             ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, new[]
             {
+                typeof(GetAssetBundleWebRequest),
                 typeof(GenericGetRequest),
                 typeof(GenericPostRequest),
                 typeof(GenericPutRequest),
                 typeof(GenericPatchRequest),
+                typeof(GenericHeadRequest),
+                typeof(GenericDeleteRequest),
                 typeof(GetTextureWebRequest),
+                typeof(GetAudioClipWebRequest),
             });
         }
     }

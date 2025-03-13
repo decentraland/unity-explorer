@@ -2,15 +2,14 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SDKComponents.AvatarModifierArea.Components;
+using DCL.SDKComponents.Utils;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -27,7 +26,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly World globalWorld;
-        private readonly FindAvatarQuery findAvatarQuery;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private Transform? localAvatarTransform;
@@ -35,7 +33,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         public AvatarModifierAreaHandlerSystem(World world, World globalWorld, ISceneRestrictionBusController sceneRestrictionBusController, IWeb3IdentityCache web3IdentityCache) : base(world)
         {
             this.globalWorld = globalWorld;
-            findAvatarQuery = new FindAvatarQuery(globalWorld);
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.web3IdentityCache = web3IdentityCache;
         }
@@ -126,7 +123,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         private void ShowAvatar(Transform avatarTransform)
         {
-            var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
+            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, avatarTransform);
             if (!result.Success) return;
 
             var entity = result.Result;
@@ -144,7 +141,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds)
         {
-            var result = findAvatarQuery.AvatarWithTransform(avatarTransform);
+            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, avatarTransform);
             if (!result.Success) return;
 
             var entity = result.Result;
@@ -161,41 +158,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             {
                 localAvatarTransform = avatarTransform;
                 sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
-            }
-        }
-
-        private class FindAvatarQuery
-        {
-            private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
-
-            private readonly World globalWorld;
-            private readonly ForEach cachedFindEntity;
-
-            private Entity foundEntityOrNull = Entity.Null;
-            private Transform? requiredTransform;
-
-            public FindAvatarQuery(World globalWorld)
-            {
-                this.globalWorld = globalWorld;
-                cachedFindEntity = this.FindEntity;
-            }
-
-            public LightResult<Entity> AvatarWithTransform(Transform avatarTransform)
-            {
-                foundEntityOrNull = Entity.Null;
-                requiredTransform = avatarTransform;
-                globalWorld.Query(in AVATAR_BASE_QUERY, cachedFindEntity);
-
-                return foundEntityOrNull == Entity.Null
-                    ? LightResult<Entity>.FAILURE
-                    : new LightResult<Entity>(foundEntityOrNull);
-            }
-
-            private void FindEntity(Entity entity)
-            {
-                if (foundEntityOrNull != Entity.Null) return;
-                if (globalWorld.Get<AvatarBase>(entity).transform.parent != requiredTransform) return;
-                foundEntityOrNull = entity;
             }
         }
     }
