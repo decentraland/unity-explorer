@@ -7,7 +7,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -60,13 +59,12 @@ namespace DCL.Friends.UI.FriendPanel
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
             DCLInput dclInput,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            ViewDependencies viewDependencies,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled) : base(viewFactory)
         {
@@ -80,7 +78,7 @@ namespace DCL.Friends.UI.FriendPanel
                     friendsService,
                     friendEventBus,
                     mvcManager,
-                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
@@ -92,7 +90,7 @@ namespace DCL.Friends.UI.FriendPanel
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                     mvcManager,
-                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
@@ -101,12 +99,12 @@ namespace DCL.Friends.UI.FriendPanel
                 friendsService,
                 friendEventBus,
                 mvcManager,
-                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
+                new RequestsRequestManager(friendsService, friendEventBus, viewDependencies, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,
-                new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new BlockedRequestManager(profileRepository, web3IdentityCache, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;

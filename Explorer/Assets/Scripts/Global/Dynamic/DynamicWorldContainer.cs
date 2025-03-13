@@ -13,8 +13,11 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
+using DCL.Chat.InputBus;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
@@ -69,9 +72,9 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
-using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
@@ -761,11 +764,10 @@ namespace Global.Dynamic
                     includeCameraReel,
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
-                    clipboard,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     identityCache,
+                    viewDependencies,
                     includeFriends,
                     includeUserBlocking
                 ),
@@ -818,7 +820,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     identityCache,
                     profileRepository,
-                    staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     dclInput,
