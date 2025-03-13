@@ -11,18 +11,15 @@ namespace DCL.MarketplaceCredits.Sections
         private const string EMAIL_PATTERN = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
 
         private readonly MarketplaceCreditsWelcomeView view;
-        private MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly IWebBrowser webBrowser;
 
         public MarketplaceCreditsWelcomeController(
             MarketplaceCreditsWelcomeView view,
-            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             IWebBrowser webBrowser)
         {
             this.view = view;
-            this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.webBrowser = webBrowser;
 
@@ -34,8 +31,6 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void OnOpenSection()
         {
-            totalCreditsWidgetView.gameObject.SetActive(false);
-
             // TODO (SANTI): Check if we have already an email registered
             // ...
 

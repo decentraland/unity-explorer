@@ -22,13 +22,13 @@ namespace DCL.MarketplaceCredits.Sections
 
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
+        private readonly MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
-        private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
 
         private Profile ownProfile;
         private CancellationTokenSource fetchGoalsOfTheWeekInfoCts;
@@ -38,20 +38,20 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
+            MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
-            MarketplaceCreditsMenuController marketplaceCreditsMenuController,
-            MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController)
+            MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
+            this.weekGoalsCompletedView = weekGoalsCompletedView;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
-            this.marketplaceCreditsWeekGoalsCompletedController = marketplaceCreditsWeekGoalsCompletedController;
 
             view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
@@ -70,7 +70,6 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void OnOpenSection()
         {
-            totalCreditsWidgetView.gameObject.SetActive(true);
             fetchGoalsOfTheWeekInfoCts = fetchGoalsOfTheWeekInfoCts.SafeRestart();
             LoadGoalsOfTheWeekInfoAsync(fetchGoalsOfTheWeekInfoCts.Token).Forget();
         }
@@ -152,7 +151,7 @@ namespace DCL.MarketplaceCredits.Sections
                 return false;
 
             marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
-            marketplaceCreditsWeekGoalsCompletedController.Setup(goalsOfTheWeekData.endOfTheWeekDate);
+            weekGoalsCompletedView.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekData.endOfTheWeekDate);
 
             return true;
         }
