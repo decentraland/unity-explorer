@@ -46,6 +46,7 @@ namespace DCL.MarketplaceCredits.Sections
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
 
+            view.TimeLeftLinkButton.onClick.AddListener(OpenTimeLeftInfoLink);
             view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
 
@@ -69,6 +70,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void Dispose()
         {
+            view.TimeLeftLinkButton.onClick.RemoveListener(OpenTimeLeftInfoLink);
             view.CaptchaControl.ReloadButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
             fetchGoalsOfTheWeekInfoCts.SafeCancelAndDispose();
@@ -147,6 +149,9 @@ namespace DCL.MarketplaceCredits.Sections
 
             instantiatedGoalRows.Clear();
         }
+
+        private void OpenTimeLeftInfoLink() =>
+            webBrowser.OpenUrl(MarketplaceCreditsUtils.TIME_LEFT_INFO_LINK);
 
         private void ReloadCaptcha()
         {

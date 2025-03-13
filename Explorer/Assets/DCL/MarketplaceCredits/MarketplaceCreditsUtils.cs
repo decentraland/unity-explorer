@@ -5,7 +5,9 @@ namespace DCL.MarketplaceCredits
 {
     public static class MarketplaceCreditsUtils
     {
-        public const string INFO_LINK = "https://docs.decentraland.org/";
+        public const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org/";
+        public const string LEARN_MORE_LINK = "https://docs.decentraland.org/";
+        public const string TIME_LEFT_INFO_LINK = "https://docs.decentraland.org/";
         public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace/";
 
         public static string FormatEndOfTheWeekDateTimestamp(string timestamp)

@@ -137,7 +137,7 @@ namespace DCL.MarketplaceCredits
         }
 
         private void OpenInfoLink() =>
-            webBrowser.OpenUrl(MarketplaceCreditsUtils.INFO_LINK);
+            webBrowser.OpenUrl(MarketplaceCreditsUtils.WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenLearnMoreLink() =>
             webBrowser.OpenUrl(MarketplaceCreditsUtils.GO_SHOPPING_LINK);

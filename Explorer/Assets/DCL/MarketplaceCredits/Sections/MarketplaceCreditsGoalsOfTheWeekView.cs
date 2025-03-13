@@ -1,16 +1,23 @@
 using DCL.MarketplaceCredits.Fields;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsGoalsOfTheWeekView : MonoBehaviour
     {
         [field: SerializeField]
+        public GameObject TimeLeftContainer { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text TimeLeftText { get; private set; }
 
         [field: SerializeField]
         public GameObject TimeLeftLoadingSpinner { get; private set; }
+
+        [field: SerializeField]
+        public Button TimeLeftLinkButton { get; private set; }
 
         [field: SerializeField]
         public GameObject MainLoadingContainer { get; private set; }
@@ -29,9 +36,9 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void SetAsLoading(bool isLoading)
         {
-            TimeLeftLoadingSpinner.SetActive(isLoading);
             MainLoadingContainer.SetActive(isLoading);
-            TimeLeftText.gameObject.SetActive(!isLoading);
+            TimeLeftLoadingSpinner.SetActive(isLoading);
+            TimeLeftContainer.gameObject.SetActive(!isLoading);
             GoalsContainer.gameObject.SetActive(!isLoading);
 
             if (isLoading)
