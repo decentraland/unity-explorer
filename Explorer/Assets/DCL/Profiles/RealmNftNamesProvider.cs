@@ -35,8 +35,6 @@ namespace DCL.Profiles
 
             RealmNamesResponse jsonResponse = await adapter.CreateFromJson<RealmNamesResponse>(WRJsonParser.Unity);
 
-            // return new INftNamesProvider.PaginatedNamesResponse(3, new[] { "Lorux0r", "Carolo", "Bleh", "Caraculico", "Chambolon", "Cuquito" });
-
             var response = new INftNamesProvider.PaginatedNamesResponse(jsonResponse.totalAmount, jsonResponse.elements.Select(element => element.name));
 
             return response;
