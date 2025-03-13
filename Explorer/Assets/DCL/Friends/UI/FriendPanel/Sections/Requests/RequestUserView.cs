@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using DCL.WebRequests;
 using System;
 using System.Globalization;

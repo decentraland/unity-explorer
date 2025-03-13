@@ -168,6 +168,7 @@ namespace DCL.Chat
             // Intro message
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL].MarkAllMessagesAsRead();
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
@@ -445,7 +446,7 @@ namespace DCL.Chat
             if (profile != null)
             {
                 newMemberData.Name = profile.ValidatedName;
-                newMemberData.ProfilePicture = profile.ProfilePicture.Value.Asset.Sprite;
+                newMemberData.FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
                 newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
                 newMemberData.WalletId = profile.WalletId;
                 newMemberData.ProfileColor = profile.UserNameColor;

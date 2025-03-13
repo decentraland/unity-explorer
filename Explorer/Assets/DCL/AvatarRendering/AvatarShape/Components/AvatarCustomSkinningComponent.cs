@@ -64,7 +64,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         internal readonly List<MaterialSetup> materials;
         internal readonly UnityEngine.ComputeShader computeShaderInstance;
 
-        private static readonly int SHADER_FADINGDISTANCE_PARAM_ID = Shader.PropertyToID("_FadeDistance");
         private bool disposed;
 
         /// <summary>
@@ -93,7 +92,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             for (int i = 0; i < materials.Count; ++i)
             {
-                materials[i].usedMaterial.SetFloat(SHADER_FADINGDISTANCE_PARAM_ID, distance);
+                materials[i].usedMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, distance);
             }
         }
 

@@ -23,6 +23,7 @@ namespace DCL.UI
 
         public void SetImage(Sprite sprite)
         {
+            Image.enabled = true;
             Image.sprite = sprite;
             LoadingObject.SetActive(false);
         }
