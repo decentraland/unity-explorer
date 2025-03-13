@@ -13,17 +13,17 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
+using DCL.Chat.InputBus;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Chat;
-using DCL.Chat.ChatLifecycleBus;
-using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -71,9 +71,9 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
-using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UserInAppInitializationFlow;
@@ -496,7 +496,7 @@ namespace Global.Dynamic
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
-                                                 .WithCommands(chatCommands)
+                                                 .WithCommands(chatCommands, staticContainer.LoadingStatus)
                                                  .WithDebugPanel(debugBuilder);
 
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
@@ -640,7 +640,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     hyperlinkTextFormatter,
                     profileCache,
-                    chatInputBus),
+                    chatInputBus,
+                    staticContainer.LoadingStatus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -759,11 +760,10 @@ namespace Global.Dynamic
                     includeCameraReel,
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
-                    clipboard,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     identityCache,
+                    viewDependencies,
                     includeFriends,
                     includeUserBlocking
                 ),
@@ -815,7 +815,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     identityCache,
                     profileRepository,
-                    staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     dclInput,
