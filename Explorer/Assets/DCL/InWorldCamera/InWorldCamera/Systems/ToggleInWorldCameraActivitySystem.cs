@@ -14,9 +14,7 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
 using DCL.Nametags;
 using ECS.Abstract;
-using MVC;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.Systems
@@ -202,20 +200,20 @@ namespace DCL.InWorldCamera.Systems
             ref CinemachineCameraState cameraState = ref World.Get<CinemachineCameraState>(camera);
             cameraState.CurrentCamera.enabled = false;
 
-            SetCameraTransition(cameraComponent.Mode);
+            SetCameraTransition(cameraComponent.Mode, cameraComponent.Camera.transform);
 
             cameraState.CurrentCamera = inWorldVirtualCamera;
             cameraState.CurrentCamera.enabled = true;
             cameraComponent.Mode = CameraMode.InWorld;
         }
 
-        private void SetCameraTransition(CameraMode currentCameraMode)
+        private void SetCameraTransition(CameraMode currentCameraMode, Transform currentCameraTransform)
         {
             if (currentCameraMode == CameraMode.FirstPerson)
             {
                 inWorldVirtualCamera.m_Transitions.m_InheritPosition = false;
-                inWorldVirtualCamera.transform.position = CalculateBehindPosition();
-                inWorldVirtualCamera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
+                inWorldVirtualCamera.transform.position = CalculateBehindPosition(currentCameraTransform);
+                inWorldVirtualCamera.transform.rotation = currentCameraTransform.rotation;
             }
             else
                 inWorldVirtualCamera.m_Transitions.m_InheritPosition = true;
@@ -232,11 +230,8 @@ namespace DCL.InWorldCamera.Systems
                 _ => 60f,
             };
 
-        private Vector3 CalculateBehindPosition()
-        {
-            Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
-            return cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * settings.BehindDirectionOffset) + behindUpOffset;
-        }
+        private Vector3 CalculateBehindPosition(Transform currentCameraTransform) =>
+            currentCameraTransform.position - (currentCameraTransform.forward * settings.BehindDirectionOffset) + behindUpOffset;
 
         private void SwitchCameraInput(Kind to)
         {
