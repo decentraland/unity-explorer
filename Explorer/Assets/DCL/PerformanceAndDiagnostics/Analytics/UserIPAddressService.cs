@@ -69,7 +69,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                                    .GetAsync(commonArguments, cancellationToken, ReportCategory.GENERIC_WEB_REQUEST)
                                    .StoreTextAsync();
 
-                    if (!string.IsNullOrWhiteSpace(publicIP) && IsValidIPAddress(publicIP))
+                    publicIP = publicIP.Trim('\r', '\n', ' ', '\t');
+
+                    if (!string.IsNullOrWhiteSpace(publicIP) && IPAddress.TryParse(publicIP, out _))
                         return publicIP;
 
                     publicIP = string.Empty;
@@ -85,12 +87,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             ReportHub.LogWarning(ReportCategory.ANALYTICS, "Failed to get public IP address from any service");
             return string.Empty;
-        }
-
-        private bool IsValidIPAddress(string ipAddress)
-        {
-            ipAddress = ipAddress.Trim();
-            return IPAddress.TryParse(ipAddress, out _);
         }
     }
 }
