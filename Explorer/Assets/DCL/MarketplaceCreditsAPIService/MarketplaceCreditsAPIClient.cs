@@ -91,7 +91,19 @@ namespace DCL.MarketplaceCreditsAPIService
             ProgramRegistrationResponse programRegistration = new ProgramRegistrationResponse
             {
                 isRegistered = isAlreadyRegistered,
+                totalCredits = 2.1f,
+                daysToExpire = 23,
+                areWeekGoalsCompleted = executionNumber == 2,
+                isProgramEnded = executionNumber == 3,
             };
+
+            if (isAlreadyRegistered)
+            {
+                if (executionNumber == 3)
+                    executionNumber = 1;
+                else
+                    executionNumber++;
+            }
 
             return programRegistration;
         }
@@ -104,9 +116,14 @@ namespace DCL.MarketplaceCreditsAPIService
             ProgramRegistrationResponse programRegistration = new ProgramRegistrationResponse
             {
                 isRegistered = true,
+                totalCredits = 2.1f,
+                daysToExpire = 20,
+                areWeekGoalsCompleted = false,
+                isProgramEnded = false,
             };
 
             isAlreadyRegistered = true;
+            executionNumber++;
 
             return programRegistration;
         }
@@ -116,87 +133,67 @@ namespace DCL.MarketplaceCreditsAPIService
             int randomDelay = new System.Random().Next(1000, 3000);
             await UniTask.Delay(randomDelay, cancellationToken: ct);
 
-            var nonAllClaimedGoalsList = new List<GoalData>
-            {
-                new ()
-                {
-                    thumbnail = "https://picsum.photos/100/100",
-                    title = "Jump Into Decentraland On 3 Separate Days (Min. 10 min)",
-                    progress = new GoalProgressData
-                    {
-                        totalSteps = 3,
-                        stepsDone = 1,
-                    },
-                    credits = 4,
-                    isClaimed = false,
-                },
-                new ()
-                {
-                    thumbnail = "https://picsum.photos/100/100",
-                    title = "Attend 2 Events (Min. 10 min)",
-                    progress = new GoalProgressData
-                    {
-                        totalSteps = 2,
-                        stepsDone = 1,
-                    },
-                    credits = 2,
-                    isClaimed = false,
-                },
-                new ()
-                {
-                    thumbnail = "https://picsum.photos/100/100",
-                    title = "View 3 New Profiles",
-                    progress = new GoalProgressData
-                    {
-                        totalSteps = 3,
-                        stepsDone = 3,
-                    },
-                    credits = 1,
-                    isClaimed = true,
-                },
-                new ()
-                {
-                    thumbnail = "https://picsum.photos/100/100",
-                    title = "Visit 3 New Parcels",
-                    progress = new GoalProgressData
-                    {
-                        totalSteps = 3,
-                        stepsDone = 3,
-                    },
-                    credits = 1,
-                    isClaimed = false,
-                },
-            };
-
-            var allClaimedGoalsList = new List<GoalData>
-            {
-                new (isClaimed: true),
-                new (isClaimed: true),
-                new (isClaimed: true),
-                new (isClaimed: true),
-            };
-
             GoalsOfTheWeekResponse goalsOfTheWeekResponse = new GoalsOfTheWeekResponse
             {
                 data = new GoalsOfTheWeekData
                 {
                     endOfTheWeekDate = "2025-03-16T12:00:00Z",
-                    totalCredits = 3.2f,
+                    totalCredits = 2.1f,
                     daysToExpire = 15,
-                    goals = executionNumber switch
+                    goals = new List<GoalData>
                     {
-                        1 => nonAllClaimedGoalsList,
-                        2 => allClaimedGoalsList,
-                        3 => null,
+                        new ()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "Jump Into Decentraland On 3 Separate Days (Min. 10 min)",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 3,
+                                stepsDone = 1,
+                            },
+                            credits = 4,
+                            isClaimed = false,
+                        },
+                        new ()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "Attend 2 Events (Min. 10 min)",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 2,
+                                stepsDone = 1,
+                            },
+                            credits = 2,
+                            isClaimed = false,
+                        },
+                        new ()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "View 3 New Profiles",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 3,
+                                stepsDone = 3,
+                            },
+                            credits = 1,
+                            isClaimed = true,
+                        },
+                        new ()
+                        {
+                            thumbnail = "https://picsum.photos/100/100",
+                            title = "Visit 3 New Parcels",
+                            progress = new GoalProgressData
+                            {
+                                totalSteps = 3,
+                                stepsDone = 3,
+                            },
+                            credits = 1,
+                            isClaimed = false,
+                        },
                     },
-                    creditsAvailableToClaim = executionNumber == 1,
+                    creditsAvailableToClaim = true,
                 },
             };
-
-            if (executionNumber == 3)
-                executionNumber = 1;
-            else
-                executionNumber++;
 
             return goalsOfTheWeekResponse;
         }

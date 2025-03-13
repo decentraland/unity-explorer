@@ -51,6 +51,7 @@ namespace DCL.MarketplaceCredits
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
+                view.TotalCreditsWidget,
                 this,
                 webBrowser,
                 marketplaceCreditsAPIClient,
@@ -59,12 +60,10 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 view.GoalsOfTheWeekView,
                 view.TotalCreditsWidget,
-                view.WeekGoalsCompletedView,
                 webBrowser,
                 marketplaceCreditsAPIClient,
                 selfProfile,
-                webRequestController,
-                this);
+                webRequestController);
         }
 
         public void OpenPanel()

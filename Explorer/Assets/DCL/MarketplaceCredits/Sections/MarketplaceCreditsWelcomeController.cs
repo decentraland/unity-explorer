@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -17,6 +18,7 @@ namespace DCL.MarketplaceCredits.Sections
         private const string EMAIL_PATTERN = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
 
         private readonly MarketplaceCreditsWelcomeView view;
+        private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
@@ -28,12 +30,14 @@ namespace DCL.MarketplaceCredits.Sections
 
         public MarketplaceCreditsWelcomeController(
             MarketplaceCreditsWelcomeView view,
+            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile)
         {
             this.view = view;
+            this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
@@ -75,8 +79,7 @@ namespace DCL.MarketplaceCredits.Sections
                 if (ownProfile != null)
                 {
                     var programRegistrationResponse = await marketplaceCreditsAPIClient.GetProgramRegistrationInfoAsync(ownProfile.UserId, ct);
-                    if (programRegistrationResponse.isRegistered)
-                        GoToGoalsOfTheWeek();
+                    RedirectToSection(programRegistrationResponse);
                 }
 
                 view.SetAsLoading(false);
@@ -89,9 +92,6 @@ namespace DCL.MarketplaceCredits.Sections
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
-
-        private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(LEARN_MORE_LINK);
 
         private void RegisterInTheProgram()
         {
@@ -108,10 +108,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 view.SetAsLoading(true);
                 var programRegistrationResponse = await marketplaceCreditsAPIClient.RegisterInTheProgramAsync(walletId, ct);
-
-                if (programRegistrationResponse.isRegistered)
-                    GoToGoalsOfTheWeek();
-
+                RedirectToSection(programRegistrationResponse);
                 view.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
@@ -123,8 +120,29 @@ namespace DCL.MarketplaceCredits.Sections
             }
         }
 
-        private void GoToGoalsOfTheWeek() =>
-            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+        private void RedirectToSection(ProgramRegistrationResponse programRegistrationResponse)
+        {
+            totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(programRegistrationResponse.totalCredits));
+            totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatDaysToCreditsExpire(programRegistrationResponse.daysToExpire));
+            totalCreditsWidgetView.SetDaysToExpireVisible(programRegistrationResponse.totalCredits > 0);
+
+            if (programRegistrationResponse.isProgramEnded)
+            {
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
+                return;
+            }
+
+            if (!programRegistrationResponse.isRegistered)
+                return;
+
+            marketplaceCreditsMenuController.OpenSection(
+                programRegistrationResponse.areWeekGoalsCompleted ?
+                    MarketplaceCreditsSection.WEEK_GOALS_COMPLETED :
+                    MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+        }
+
+        private void OpenLearnMoreLink() =>
+            webBrowser.OpenUrl(LEARN_MORE_LINK);
 
         private void OnEmailInputValueChanged(string email)
         {
