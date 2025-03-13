@@ -93,7 +93,7 @@ namespace DCL.InWorldCamera.Systems
                 ToggleCamera(request.IsEnable, request.TargetCameraMode);
         }
 
-        private void ToggleCamera(bool enable, CameraMode targetMode)
+        private void ToggleCamera(bool enable, CameraMode? targetMode)
         {
             if (enable)
                 EnableCamera();
@@ -120,7 +120,7 @@ namespace DCL.InWorldCamera.Systems
             aim.m_Damping = settings.AimDamping;
         }
 
-        private void DisableCamera(CameraMode targetMode)
+        private void DisableCamera(CameraMode? targetMode)
         {
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
@@ -132,7 +132,7 @@ namespace DCL.InWorldCamera.Systems
                 Except = hudController
             });
 
-            SwitchToThirdPersonCamera(targetMode);
+            TransitionCameraTo(targetMode);
 
             cursor.Unlock();
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
@@ -176,7 +176,7 @@ namespace DCL.InWorldCamera.Systems
                 new InWorldCameraInput());
         }
 
-        private void SwitchToThirdPersonCamera(CameraMode targetMode)
+        private void TransitionCameraTo(CameraMode? targetMode)
         {
             inWorldVirtualCamera.Follow = null;
             inWorldVirtualCamera.LookAt = null;
@@ -188,9 +188,7 @@ namespace DCL.InWorldCamera.Systems
             float distanceToDroneCameraView =
                 Mathf.Abs(cinemachinePreset.DroneViewCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
 
-            camera.GetCameraComponent(World).Mode = targetMode; //CameraMode.FirstPerson;
-                // distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson;
-            //targetMode;
+            camera.GetCameraComponent(World).Mode = targetMode ?? (distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson);
         }
 
         private void SwitchToInWorldCamera()

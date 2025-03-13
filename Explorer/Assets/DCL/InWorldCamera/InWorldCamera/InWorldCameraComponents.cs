@@ -10,7 +10,7 @@ namespace DCL.InWorldCamera
     {
         public bool IsEnable;
         public string Source;
-        public CameraMode TargetCameraMode;
+        public CameraMode? TargetCameraMode;
     }
 
     public struct ToggleUIRequest
