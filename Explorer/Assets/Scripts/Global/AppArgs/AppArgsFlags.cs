@@ -3,7 +3,7 @@
     public static class AppArgsFlags
     {
         public const string DEBUG = "debug";
-        public const string DCL_EDITOR = "dcl-editor";
+        public const string DCL_EDITOR = "hub";
 
         public const string ENABLE_VERSION_CONTROL = "versionControl";
         public const string SIMULATE_VERSION = "simulateVersion";
