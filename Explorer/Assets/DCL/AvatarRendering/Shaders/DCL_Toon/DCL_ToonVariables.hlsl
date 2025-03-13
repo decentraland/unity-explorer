@@ -91,7 +91,7 @@
 #define _2nd_ShadeColor float4 (0.8000001, 0.8000001, 0.8000001, 1)
 #define _Ap_RimLightColor float4 (1, 1, 1, 1)
 //#define _BaseColor float4 (1, 1, 1, 1)
-//#define _Color float4 (1, 1, 1, 1)
+#define _Color float4 (1, 1, 1, 1)
 #define _EmissionColor float4 (0, 0, 0, 1)
 //#define _EmissiveColor float4 (0, 0, 0, 1)
 //#define _Emissive_Color float4 (4.237095, 4.237095, 4.237095, 1)
@@ -101,7 +101,9 @@
 #define _Outline_Color float4 (0.6320754, 0.6320754, 0.6320754, 1)
 // _Is_LightColor_RimLight == 1.0f, so RimLightColor can be removed
 #define _RimLightColor float4 (1, 1, 1, 1)
-#define _SpecColor float4 (0.2, 0.2, 0.2, 1)
+//#define _SpecColor float4 (0.2, 0.2, 0.2, 1)
+#define _HighlightObjectOffset float4 (0.0f, 0.0f, 0.0f, 0.0f)
+#define _HighlightColour float4 (0.5f, 0.0f, 0.5f, 1.0f)
 #endif
 
 #endif // DCL_TOON_VARIABLES_INCLUDED

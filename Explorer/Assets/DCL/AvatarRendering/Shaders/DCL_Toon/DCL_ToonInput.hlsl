@@ -9,23 +9,21 @@
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 UNITY_DEFINE_INSTANCED_PROP(float4, _MainTex_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _1st_ShadeMap_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _2nd_ShadeMap_ST) // Per Material
 UNITY_DEFINE_INSTANCED_PROP(float4, _NormalMap_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _Set_1st_ShadePosition_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _Set_2nd_ShadePosition_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _ShadingGradeMap_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _HighColor_Tex_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _Set_HighColorMask_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _Set_RimLightMask_ST) // Per Material
 UNITY_DEFINE_INSTANCED_PROP(float4, _MatCap_Sampler_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _NormalMapForMatCap_ST) // Per Material
 UNITY_DEFINE_INSTANCED_PROP(float4, _Emissive_Tex_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _ClippingMask_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _Outline_Sampler_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _OutlineTex_ST) // Per Material
-UNITY_DEFINE_INSTANCED_PROP(float4, _BakedNormal_ST) // Per Material
 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST) // Per Material
+
+UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
+UNITY_DEFINE_INSTANCED_PROP(half4, _SpecColor)
+UNITY_DEFINE_INSTANCED_PROP(float4, _Emissive_Color)
+
+UNITY_DEFINE_INSTANCED_PROP(float, _EndFadeDistance)
+UNITY_DEFINE_INSTANCED_PROP(float, _StartFadeDistance)
+UNITY_DEFINE_INSTANCED_PROP(float, _FadeDistance)
+
+UNITY_DEFINE_INSTANCED_PROP(float, _Clipping_Level)
+UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_transparency)
 
 UNITY_DEFINE_INSTANCED_PROP(int, _MainTexArr_ID) 
 UNITY_DEFINE_INSTANCED_PROP(int, _NormalMapArr_ID)
@@ -34,20 +32,6 @@ UNITY_DEFINE_INSTANCED_PROP(int, _Emissive_TexArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _MetallicGlossMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _lastWearableVertCount)
 UNITY_DEFINE_INSTANCED_PROP(int, _lastAvatarVertCount)
-
-UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightObjectOffset)
-UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightColour)
-
-UNITY_DEFINE_INSTANCED_PROP(float, _EndFadeDistance)
-UNITY_DEFINE_INSTANCED_PROP(float, _StartFadeDistance)
-UNITY_DEFINE_INSTANCED_PROP(float, _FadeDistance)
-
-UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
-UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
-UNITY_DEFINE_INSTANCED_PROP(float4, _Emissive_Color)
-
-UNITY_DEFINE_INSTANCED_PROP(float, _Clipping_Level)
-UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_transparency)
 
 #ifndef _DCL_VARIABLE_OPTIMISATION
 UNITY_DEFINE_INSTANCED_PROP(float, _1st2nd_Shades_Feather)
@@ -142,30 +126,29 @@ UNITY_DEFINE_INSTANCED_PROP(float4, _HighColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _MatCapColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Outline_Color)
 UNITY_DEFINE_INSTANCED_PROP(float4, _RimLightColor)
-UNITY_DEFINE_INSTANCED_PROP(half4, _SpecColor)
+UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightObjectOffset) // As we don't use highlight of avatars this is unnecessary
+UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightColour) // As we don't use highlight of avatars this is unnecessary
 #endif
 
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define _MainTex_ST                         UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTex_ST) // Per Material
-#define _1st_ShadeMap_ST                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _1st_ShadeMap_ST) // Per Material
-#define _2nd_ShadeMap_ST                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _2nd_ShadeMap_ST) // Per Material
 #define _NormalMap_ST                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMap_ST) // Per Material
-#define _Set_1st_ShadePosition_ST           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_1st_ShadePosition_ST) // Per Material
-#define _Set_2nd_ShadePosition_ST           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_2nd_ShadePosition_ST) // Per Material
-#define _ShadingGradeMap_ST                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ShadingGradeMap_ST) // Per Material
-#define _HighColor_Tex_ST                   UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighColor_Tex_ST) // Per Material
-#define _Set_HighColorMask_ST               UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_HighColorMask_ST) // Per Material
-#define _Set_RimLightMask_ST                UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_RimLightMask_ST) // Per Material
 #define _MatCap_Sampler_ST                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MatCap_Sampler_ST) // Per Material
-#define _NormalMapForMatCap_ST              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMapForMatCap_ST) // Per Material
-#define _Set_MatcapMask_ST                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_MatcapMask_ST) // Per Material
 #define _Emissive_Tex_ST                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Tex_ST) // Per Material
-#define _ClippingMask_ST                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ClippingMask_ST) // Per Material
-#define _Outline_Sampler_ST                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Outline_Sampler_ST) // Per Material
-#define _OutlineTex_ST                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OutlineTex_ST) // Per Material
-#define _BakedNormal_ST                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BakedNormal_ST) // Per Material
 #define _BaseMap_ST                         UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST) // Per Material
+
+#define _BaseColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
+#define _SpecColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
+#define _Emissive_Color                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Color)
+
+
+#define _EndFadeDistance                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EndFadeDistance)
+#define _StartFadeDistance                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _StartFadeDistance)
+#define _FadeDistance                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeDistance)
+
+#define _Clipping_Level                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Clipping_Level)
+#define _Tweak_transparency                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Tweak_transparency)
 
 #define _MainTexArr_ID                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTexArr_ID)
 #define _NormalMapArr_ID                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMapArr_ID)
@@ -174,20 +157,6 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _MetallicGlossMapArr_ID             UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicGlossMapArr_ID)
 #define _lastWearableVertCount              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastWearableVertCount) 
 #define _lastAvatarVertCount                UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount)
-
-#define _HighlightObjectOffset              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightObjectOffset)
-#define _HighlightColour                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightColour)
-
-#define _EndFadeDistance                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EndFadeDistance)
-#define _StartFadeDistance                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _StartFadeDistance)
-#define _FadeDistance                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeDistance)
-
-#define _BaseColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
-#define _SpecColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
-#define _Emissive_Color                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Color)
-
-#define _Clipping_Level                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Clipping_Level)
-#define _Tweak_transparency                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Tweak_transparency)
 
 #ifndef _DCL_VARIABLE_OPTIMISATION
 #define _Color                              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color)
@@ -285,6 +254,8 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _Surface                            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Surface)
 #define _BaseMap_TexelSize                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_TexelSize)
 #define _BaseMap_MipInfo                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_MipInfo)
+#define _HighlightObjectOffset              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightObjectOffset)
+#define _HighlightColour                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightColour)
 #endif
 
 #ifdef _DCL_TEXTURE_ARRAYS
