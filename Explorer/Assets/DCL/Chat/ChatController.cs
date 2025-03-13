@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using ECS.Abstract;
@@ -45,6 +46,7 @@ namespace DCL.Chat
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private readonly IChatInputBus chatInputBus;
+        private readonly ILoadingStatus loadingStatus;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -75,7 +77,9 @@ namespace DCL.Chat
             IRoomHub roomHub,
             ChatAudioSettingsAsset chatAudioSettings,
             ITextFormatter hyperlinkTextFormatter,
-            IProfileCache profileCache, IChatInputBus chatInputBus) : base(viewFactory)
+            IProfileCache profileCache,
+            IChatInputBus chatInputBus,
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -91,6 +95,7 @@ namespace DCL.Chat
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatInputBus = chatInputBus;
+            this.loadingStatus = loadingStatus;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
@@ -149,7 +154,7 @@ namespace DCL.Chat
             chatInputBus.InsertTextInChat += OnInputTextInserted;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants, loadingStatus);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
