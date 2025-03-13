@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarAttach.Systems;
@@ -16,11 +17,19 @@ namespace DCL.PluginSystem.World
     {
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly Arch.Core.World globalWorld;
+        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
 
-        public AvatarAttachPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IComponentPoolsRegistry componentPoolsRegistry)
+        public AvatarAttachPlugin(
+            Arch.Core.World globalWorld,
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy)
         {
+            this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.componentPoolsRegistry = componentPoolsRegistry;
+            this.entityParticipantTableProxy = entityParticipantTableProxy;
         }
 
         public void Dispose()
@@ -33,10 +42,20 @@ namespace DCL.PluginSystem.World
             InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<Transform>(), persistentEntities.SceneRoot);
 
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
-            var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
+
+            var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder,
+                globalWorld,
+                mainPlayerAvatarBaseProxy,
+                sharedDependencies.SceneStateProvider,
+                entityParticipantTableProxy);
+
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
 
-            AvatarAttachHandlerSetupSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
+            AvatarAttachHandlerSetupSystem.InjectToWorld(ref builder,
+                globalWorld,
+                mainPlayerAvatarBaseProxy,
+                sharedDependencies.SceneStateProvider,
+                entityParticipantTableProxy);
         }
     }
 }
