@@ -8,7 +8,6 @@ using DCL.Profiles.Self;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -22,13 +21,11 @@ namespace DCL.MarketplaceCredits.Sections
 
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
-        private readonly MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
-        private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
         private Profile ownProfile;
         private CancellationTokenSource fetchGoalsOfTheWeekInfoCts;
@@ -38,20 +35,16 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
-            MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
-            IWebRequestController webRequestController,
-            MarketplaceCreditsMenuController marketplaceCreditsMenuController)
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
-            this.weekGoalsCompletedView = weekGoalsCompletedView;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
-            this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
             view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
@@ -104,23 +97,18 @@ namespace DCL.MarketplaceCredits.Sections
                     totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
                     totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatDaysToCreditsExpire(goalsOfTheWeekResponse.data.daysToExpire));
                     totalCreditsWidgetView.SetDaysToExpireVisible(goalsOfTheWeekResponse.data.totalCredits > 0);
+                    view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
 
-                    if (!JumpToProgramEndedCheck(goalsOfTheWeekResponse.data) &&
-                        !JumpToWeekGoalsCompletedCheck(goalsOfTheWeekResponse.data))
+                    foreach (GoalData goalData in goalsOfTheWeekResponse.data.goals)
                     {
-                        view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
-
-                        foreach (GoalData goalData in goalsOfTheWeekResponse.data.goals)
-                        {
-                            var goalRow = CreateAndSetupGoal(goalData);
-                            instantiatedGoalRows.Add(goalRow);
-                        }
-
-                        view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
-
-                        if (goalsOfTheWeekResponse.data.creditsAvailableToClaim)
-                            ReloadCaptcha();
+                        var goalRow = CreateAndSetupGoal(goalData);
+                        instantiatedGoalRows.Add(goalRow);
                     }
+
+                    view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
+
+                    if (goalsOfTheWeekResponse.data.creditsAvailableToClaim)
+                        ReloadCaptcha();
                 }
 
                 view.SetAsLoading(false);
@@ -133,27 +121,6 @@ namespace DCL.MarketplaceCredits.Sections
                 //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
-        }
-
-        private bool JumpToProgramEndedCheck(GoalsOfTheWeekData goalsOfTheWeekData)
-        {
-            if (goalsOfTheWeekData.goals is { Count: > 0 })
-                return false;
-
-            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
-
-            return true;
-        }
-
-        private bool JumpToWeekGoalsCompletedCheck(GoalsOfTheWeekData goalsOfTheWeekData)
-        {
-            if (goalsOfTheWeekData.creditsAvailableToClaim || goalsOfTheWeekData.goals.Count(x => x.isClaimed) != goalsOfTheWeekData.goals.Count)
-                return false;
-
-            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
-            weekGoalsCompletedView.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekData.endOfTheWeekDate);
-
-            return true;
         }
 
         private MarketplaceCreditsGoalRowView CreateAndSetupGoal(GoalData goalData)
