@@ -43,15 +43,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private NativeList<OrderedData> orderedData;
 
         private readonly Entity playerEntity;
-        private readonly ILoadingStatus loadingStatus;
 
         private bool firstTeleportRequested;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity, ILoadingStatus loadingStatus) : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.playerEntity = playerEntity;
-            this.loadingStatus = loadingStatus;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             orderedData = new NativeList<OrderedData>(
@@ -66,14 +64,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         protected override void Update(float t)
         {
-            if (!firstTeleportRequested)
-            {
-                if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.PlayerTeleporting)
-                    firstTeleportRequested = true;
-
-                return;
-            }
-
             // Start a new loading if the previous batch is finished
             var anyNonEmpty = false;
             CheckAnyLoadingInProgressQuery(World, ref anyNonEmpty);
@@ -154,7 +144,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
                     ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref sceneDefinitionComponentFirst, entityIndex);
 
-                    if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance) continue;
+                    if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance || partitionComponent.RawSqrDistance < 0) continue;
 
                     orderedData.Add(new OrderedData
                     {
