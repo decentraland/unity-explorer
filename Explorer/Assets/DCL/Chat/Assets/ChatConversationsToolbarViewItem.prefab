@@ -374,6 +374,7 @@ MonoBehaviour:
   customIcon: {fileID: 290259844803260907}
   tooltipPosition: {fileID: 8328223827935168582}
   connectionStatusIndicator: {fileID: 6707871415509916608}
+  connectionStatusIndicatorContainer: {fileID: 1145767504705254085}
   onlineStatusConfiguration: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
 --- !u!114 &510709296985545676
 MonoBehaviour:

@@ -2,15 +2,19 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using Button = UnityEngine.UI.Button;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarView : MonoBehaviour, IViewWithGlobalDependencies
+    public class ChatConversationsToolbarView : MonoBehaviour, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler
     {
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
@@ -20,6 +24,18 @@ namespace DCL.Chat
 
         [SerializeField]
         private ChatConversationsToolbarViewItem itemPrefab;
+
+        [SerializeField]
+        private CanvasGroup scrollButtons;
+
+        [SerializeField]
+        private ScrollRect scrollView;
+
+        [SerializeField]
+        private Button scrollUpButton;
+
+        [SerializeField]
+        private Button scrollDownButton;
 
         private ViewDependencies viewDependencies;
 
@@ -59,9 +75,10 @@ namespace DCL.Chat
                     newItem.SetConversationIcon(icon);
                     newItem.SetConversationName("Near By"); // TODO: Localization
                     newItem.SetClaimedNameIconVisibility(false);
+                    newItem.SetConnectionStatusVisibility(false);
                     break;
                 case ChatChannel.ChatChannelType.User:
-                    LoadProfileAsync(newItem).Forget();
+                    SetupUserConversationItemAsync(newItem).Forget();
                     break;
                 case ChatChannel.ChatChannelType.Community:
                     // TODO in future shapes
@@ -74,6 +91,8 @@ namespace DCL.Chat
 
             if(items.Count == 1)
                 SelectConversation(channel.Id);
+
+            UpdateScrollButtonsVisibility();
         }
 
         private void OnItemTooltipShown(GameObject tooltip)
@@ -106,6 +125,8 @@ namespace DCL.Chat
         {
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
                 itemPair.Value.HideTooltip(true);
+
+            HideScrollButtons(true);
         }
 
         private void OpenButtonClicked(ChatConversationsToolbarViewItem item)
@@ -118,7 +139,7 @@ namespace DCL.Chat
             ConversationRemovalRequested?.Invoke(item.Id);
         }
 
-        private async UniTaskVoid LoadProfileAsync(ChatConversationsToolbarViewItem newItem)
+        private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
         {
             ChatChannel.ChannelId.GetTypeAndNameFromId(newItem.Id.Id, out ChatChannel.ChatChannelType type, out string name);
             Profile? profile = await viewDependencies.GetProfileAsync(name, CancellationToken.None);
@@ -128,7 +149,70 @@ namespace DCL.Chat
                 newItem.SetProfileData(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
+                newItem.SetConnectionStatusVisibility(true);
             }
+        }
+
+        public void ShowScrollButtons()
+        {
+            scrollButtons.gameObject.SetActive(true);
+            UpdateScrollButtonsVisibility();
+            scrollButtons.DOKill();
+            scrollButtons.DOFade(1.0f, 0.5f);
+        }
+
+        public void HideScrollButtons(bool isImmediate)
+        {
+            if (scrollButtons.gameObject.activeSelf)
+            {
+                if (isImmediate)
+                {
+                    scrollButtons.gameObject.SetActive(false);
+                }
+                else
+                {
+                    scrollButtons.DOKill();
+                    scrollButtons.DOFade(0.0f, 0.5f).OnComplete( () => scrollButtons.gameObject.SetActive(false) );
+                }
+            }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            ShowScrollButtons();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            HideScrollButtons(false);
+        }
+
+        private void Start()
+        {
+            scrollUpButton.onClick.AddListener(OnScrollUpButtonClicked);
+            scrollDownButton.onClick.AddListener(OnScrollDownButtonClicked);
+            scrollView.onValueChanged.AddListener(OnScrollViewValueChanged);
+        }
+
+        private void OnScrollViewValueChanged(Vector2 arg0)
+        {
+            UpdateScrollButtonsVisibility();
+        }
+
+        private void OnScrollDownButtonClicked()
+        {
+            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y - scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 20.0f);
+        }
+
+        private void OnScrollUpButtonClicked()
+        {
+            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y + scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 20.0f);
+        }
+
+        private void UpdateScrollButtonsVisibility()
+        {
+            scrollUpButton.gameObject.SetActive(scrollView.normalizedPosition.y < 0.9999f);
+            scrollDownButton.gameObject.SetActive(scrollView.normalizedPosition.y > 0.0001f);
         }
     }
 }

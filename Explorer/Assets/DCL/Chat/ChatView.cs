@@ -289,6 +289,8 @@ namespace DCL.Chat
                     ShowNewMessages();
                     conversationsToolbar.SelectConversation(value);
 
+                    // TODO: Change the titlebar depending on whether the channel type is nearby or user
+
                     CurrentChannelChanged?.Invoke();
                 }
             }

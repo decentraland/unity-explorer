@@ -16,14 +16,37 @@ namespace DCL.Chat
     {
         public delegate void OpenButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
+        public delegate void TooltipShownDelegate(GameObject tooltip);
 
-        public Action<GameObject> TooltipShown;
+        public event TooltipShownDelegate TooltipShown;
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
 
         [SerializeField]
         private Button openButton;
+
+        [SerializeField]
+        private NumericBadgeUIElement unreadMessagesBadge;
+
+        [SerializeField]
+        private Image selectionMark;
+
+        [SerializeField]
+        private Image customIcon;
+
+        [Header("Connection status")]
+
+        [SerializeField]
+        private Image connectionStatusIndicator;
+
+        [SerializeField]
+        private GameObject connectionStatusIndicatorContainer;
+
+        [SerializeField]
+        private OnlineStatusConfiguration onlineStatusConfiguration;
+
+        [Header("Tooltip")]
 
         [SerializeField]
         private CanvasGroup tooltip;
@@ -35,36 +58,23 @@ namespace DCL.Chat
         private Button removeButton;
 
         [SerializeField]
-        private NumericBadgeUIElement unreadMessagesBadge;
-
-        [SerializeField]
-        private Image selectionMark;
-
-        [SerializeField]
         private RectTransform claimedNameIcon;
 
         [SerializeField]
-        private Image customIcon;
-
-        [SerializeField]
         private RectTransform tooltipPosition;
-
-        [SerializeField]
-        private Image connectionStatusIndicator;
-
-        [SerializeField]
-        private OnlineStatusConfiguration onlineStatusConfiguration;
 
         public ChatChannel.ChannelId Id { get; set; }
 
         public event OpenButtonClickedDelegate OpenButtonClicked;
         public event RemoveButtonClickedDelegate RemoveButtonClicked;
 
+        // Also called by the component in the tooltip
         public void OnPointerEnter(PointerEventData eventData)
         {
             ShowTooltip();
         }
 
+        // Also called by the component in the tooltip
         public void OnPointerExit(PointerEventData eventData)
         {
             HideTooltip(false);
@@ -120,21 +130,6 @@ namespace DCL.Chat
             claimedNameIcon.gameObject.SetActive(isVisible);
         }
 
-        private void Awake()
-        {
-            openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
-            removeButton.onClick.AddListener(() => {
-                HideTooltip(true);
-                RemoveButtonClicked?.Invoke(this);
-            });
-            SetUnreadMessages(0);
-        }
-
-        private void Start()
-        {
-            tooltip.gameObject.SetActive(false);
-        }
-
         public void ShowTooltip()
         {
             tooltip.gameObject.SetActive(true);
@@ -163,6 +158,26 @@ namespace DCL.Chat
                     });
                 }
             }
+        }
+
+        public void SetConnectionStatusVisibility(bool isVisible)
+        {
+            connectionStatusIndicatorContainer.SetActive(isVisible);
+        }
+
+        private void Awake()
+        {
+            openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
+            removeButton.onClick.AddListener(() => {
+                HideTooltip(true);
+                RemoveButtonClicked?.Invoke(this);
+            });
+            SetUnreadMessages(0);
+        }
+
+        private void Start()
+        {
+            tooltip.gameObject.SetActive(false);
         }
     }
 }
