@@ -47,7 +47,8 @@ namespace DCL.MarketplaceCredits.Sections
             this.selfProfile = selfProfile;
 
             view.TimeLeftLinkButton.onClick.AddListener(OpenTimeLeftInfoLink);
-            view.CaptchaControl.ReloadButton.onClick.AddListener(ReloadCaptcha);
+            view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.AddListener(ReloadCaptcha);
+            view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
 
             goalRowsPool = new ObjectPool<MarketplaceCreditsGoalRowView>(
@@ -71,7 +72,8 @@ namespace DCL.MarketplaceCredits.Sections
         public void Dispose()
         {
             view.TimeLeftLinkButton.onClick.RemoveListener(OpenTimeLeftInfoLink);
-            view.CaptchaControl.ReloadButton.onClick.RemoveListener(ReloadCaptcha);
+            view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.RemoveListener(ReloadCaptcha);
+            view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
             fetchGoalsOfTheWeekInfoCts.SafeCancelAndDispose();
             fetchCaptchaCts.SafeCancelAndDispose();
@@ -175,8 +177,8 @@ namespace DCL.MarketplaceCredits.Sections
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
+                view.SetCaptchaAsErrorState(true, false);
                 const string ERROR_MESSAGE = "There was an error loading the captcha. Please try again!";
-                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }

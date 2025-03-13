@@ -14,7 +14,10 @@ namespace DCL.MarketplaceCredits.Fields
         public GameObject ControlContainer { get; private set; }
 
         [field: SerializeField]
-        public GameObject ErrorContainer { get; private set; }
+        public GameObject NotLoadedErrorContainer { get; private set; }
+
+        [field: SerializeField]
+        public GameObject NotSolvedErrorContainer { get; private set; }
 
         [field: SerializeField]
         public GameObject HandlersContainer { get; private set; }
@@ -32,18 +35,18 @@ namespace DCL.MarketplaceCredits.Fields
         public float MaxTargetAreaXPos { get; private set; }
 
         [field: SerializeField]
-        public float MatchTargetOffset { get; private set; }
+        public Button ReloadFromNotLoadedStateButton { get; private set; }
 
         [field: SerializeField]
-        public Button ReloadButton { get; private set; }
+        public Button ReloadFromNotSolvedStateButton { get; private set; }
 
-        private float lastCaptchaValue = 0;
+        private float lastCaptchaValue;
 
         private void Awake()
         {
             EventTrigger trigger = MainSlider.Slider.gameObject.AddComponent<EventTrigger>();
             EventTrigger.Entry entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
-            entry.callback.AddListener((eventData) => OnSliderPointerUp());
+            entry.callback.AddListener(_ => OnSliderPointerUp());
             trigger.triggers.Add(entry);
         }
 
@@ -74,10 +77,11 @@ namespace DCL.MarketplaceCredits.Fields
                 TargetArea.anchoredPosition.y);
         }
 
-        public void SetAsErrorState(bool isError)
+        public void SetAsErrorState(bool isError, bool isNotSolvedError = true)
         {
             ControlContainer.SetActive(!isError);
-            ErrorContainer.SetActive(isError);
+            NotSolvedErrorContainer.gameObject.SetActive(isError && isNotSolvedError);
+            NotLoadedErrorContainer.gameObject.SetActive(isError && !isNotSolvedError);
         }
 
         private void OnSliderPointerUp()
