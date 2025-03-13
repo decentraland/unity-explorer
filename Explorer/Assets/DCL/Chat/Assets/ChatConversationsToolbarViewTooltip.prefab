@@ -89,6 +89,7 @@ GameObject:
   - component: {fileID: 5338217409114655614}
   - component: {fileID: 568350405726659776}
   - component: {fileID: 3061492452751375136}
+  - component: {fileID: 6402151021740081186}
   m_Layer: 0
   m_Name: ChatConversationsToolbarViewTooltip
   m_TagString: Untagged
@@ -207,6 +208,24 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &6402151021740081186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3723278711922914209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2232504f6bf7554a8e3e2e51d3ec572, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PointerEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  PointerExited:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &8120865523010945389
 GameObject:
   m_ObjectHideFlags: 0
@@ -404,7 +423,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2945863280819332983, guid: faaa81bda20189649961c29e42d56d57, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 42.34
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2945863280819332983, guid: faaa81bda20189649961c29e42d56d57, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -448,7 +467,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7025816968232101073, guid: faaa81bda20189649961c29e42d56d57, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 58.34
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7025816968232101073, guid: faaa81bda20189649961c29e42d56d57, type: 3}
       propertyPath: m_SizeDelta.y

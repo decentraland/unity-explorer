@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.UI;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,7 @@ namespace DCL.Chat
             ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
+            newItem.TooltipShown += OnItemTooltipShown;
             newItem.Id = channel.Id;
 
             switch (channel.ChannelType)
@@ -74,6 +76,11 @@ namespace DCL.Chat
                 SelectConversation(channel.Id);
         }
 
+        private void OnItemTooltipShown(GameObject tooltip)
+        {
+            tooltip.transform.SetParent(transform, true);
+        }
+
         public void RemoveConversation(ChatChannel.ChannelId channelId)
         {
             Destroy(items[channelId]);
@@ -85,14 +92,20 @@ namespace DCL.Chat
             items[destinationChannel].SetUnreadMessages(unreadMessages);
         }
 
-        public void SetConnectionStatus(ChatChannel.ChannelId destinationChannel, bool isConnected)
+        public void SetConnectionStatus(ChatChannel.ChannelId destinationChannel, OnlineStatus connectionStatus)
         {
-            items[destinationChannel].SetConnectionStatus(isConnected);
+            items[destinationChannel].SetConnectionStatus(connectionStatus);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
+        }
+
+        private void OnDisable()
+        {
+            foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
+                itemPair.Value.HideTooltip(true);
         }
 
         private void OpenButtonClicked(ChatConversationsToolbarViewItem item)

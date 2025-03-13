@@ -1,8 +1,10 @@
 using DCL.Chat.History;
+using DCL.UI;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -14,6 +16,8 @@ namespace DCL.Chat
     {
         public delegate void OpenButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
+
+        public Action<GameObject> TooltipShown;
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
@@ -42,6 +46,15 @@ namespace DCL.Chat
         [SerializeField]
         private Image customIcon;
 
+        [SerializeField]
+        private RectTransform tooltipPosition;
+
+        [SerializeField]
+        private Image connectionStatusIndicator;
+
+        [SerializeField]
+        private OnlineStatusConfiguration onlineStatusConfiguration;
+
         public ChatChannel.ChannelId Id { get; set; }
 
         public event OpenButtonClickedDelegate OpenButtonClicked;
@@ -49,15 +62,12 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            tooltip.gameObject.SetActive(true);
-            tooltip.DOKill();
-            tooltip.DOFade(1.0f, 0.5f);
+            ShowTooltip();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            tooltip.DOKill();
-            tooltip.DOFade(0.0f, 0.5f).OnComplete(() => { tooltip.gameObject.SetActive(false); });
+            HideTooltip(false);
         }
 
         public void SetConversationName(string newName)
@@ -76,9 +86,9 @@ namespace DCL.Chat
             unreadMessagesBadge.Number = currentUnreadMessages;
         }
 
-        public void SetConnectionStatus(bool isConnected)
+        public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
-            // TODO
+            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
         }
 
         public void SetSelectionStatus(bool isSelected)
@@ -98,13 +108,6 @@ namespace DCL.Chat
             profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
         }
 
-        private void Awake()
-        {
-            openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
-            removeButton.onClick.AddListener(() => { RemoveButtonClicked?.Invoke(this); });
-            SetUnreadMessages(0);
-        }
-
         public void SetConversationIcon(Sprite icon)
         {
             customIcon.sprite = icon;
@@ -115,6 +118,51 @@ namespace DCL.Chat
         public void SetClaimedNameIconVisibility(bool isVisible)
         {
             claimedNameIcon.gameObject.SetActive(isVisible);
+        }
+
+        private void Awake()
+        {
+            openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
+            removeButton.onClick.AddListener(() => {
+                HideTooltip(true);
+                RemoveButtonClicked?.Invoke(this);
+            });
+            SetUnreadMessages(0);
+        }
+
+        private void Start()
+        {
+            tooltip.gameObject.SetActive(false);
+        }
+
+        public void ShowTooltip()
+        {
+            tooltip.gameObject.SetActive(true);
+            tooltip.DOKill();
+            tooltip.DOFade(1.0f, 0.3f).OnComplete(() => { TooltipShown?.Invoke(tooltip.gameObject); });
+        }
+
+        public void HideTooltip(bool isImmediate)
+        {
+            if (tooltip.gameObject.activeSelf)
+            {
+                if (isImmediate)
+                {
+                    tooltip.transform.SetParent(transform);
+                    tooltip.transform.position = tooltipPosition.position;
+                    tooltip.gameObject.SetActive(false);
+                }
+                else
+                {
+                    tooltip.DOKill();
+                    tooltip.DOFade(0.0f, 0.3f).SetDelay(0.3f).OnComplete(() =>
+                    {
+                        tooltip.transform.SetParent(transform);
+                        tooltip.transform.position = tooltipPosition.position;
+                        tooltip.gameObject.SetActive(false);
+                    });
+                }
+            }
         }
     }
 }
