@@ -22,6 +22,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public AnalyticsController(
             IAnalyticsService analyticsService,
+            UserIPAddressService userIPAddressService,
             IAppArgs appArgs,
             AnalyticsConfiguration configuration,
             LauncherTraits launcherTraits,
@@ -35,7 +36,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData, dclVersion));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, userIPAddressService, SessionID, launcherTraits.LauncherAnonymousId, buildData, dclVersion));
         }
 
         public void Initialize(IWeb3Identity? web3Identity)

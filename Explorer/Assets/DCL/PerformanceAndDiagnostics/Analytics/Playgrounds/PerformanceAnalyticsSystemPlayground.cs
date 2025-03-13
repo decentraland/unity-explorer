@@ -3,6 +3,7 @@ using DCL.Analytics.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.Profiling;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
 using Global.AppArgs;
@@ -25,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                 World.Create(),
                 new AnalyticsController(
                     new DebugAnalyticsService(),
+                    new UserIPAddressService(IWebRequestController.DEFAULT),
                     new ApplicationParametersParser(),
                     analyticsConfiguration.EnsureNotNull(),
                     new LauncherTraits(),

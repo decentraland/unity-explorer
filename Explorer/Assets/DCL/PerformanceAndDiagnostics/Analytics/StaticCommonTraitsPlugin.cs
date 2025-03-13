@@ -1,4 +1,5 @@
-﻿using Global.AppArgs;
+﻿using Cysharp.Threading.Tasks;
+using Global.AppArgs;
 using Global.Versioning;
 using Segment.Analytics;
 using Segment.Serialization;
@@ -20,10 +21,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly JsonElement installSource;
         private readonly JsonElement os = SystemInfo.operatingSystem;
         private readonly JsonElement runtime;
+        private readonly JsonElement localIPAddress;
+
+        private JsonElement publicIPAddress;
 
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, BuildData buildData, DCLVersion dclVersion)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, UserIPAddressService userIPAddressService, string sessionId, string launcherAnonymousId, BuildData buildData, DCLVersion dclVersion)
         {
             this.sessionId = sessionId;
             this.launcherAnonymousId = launcherAnonymousId;
@@ -31,6 +35,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             runtime = ChooseRuntime(appArgs);
             installSource = buildData.InstallSource;
             rendererVersion = dclVersion.Version;
+
+            localIPAddress = userIPAddressService.LocalIP;
+            publicIPAddress = string.Empty;
+            GetPublicIPAddressAsync(userIPAddressService).Forget();
+
+            return;
+            async UniTask GetPublicIPAddressAsync(UserIPAddressService ipAddressService) =>
+                publicIPAddress = await ipAddressService.GetPublicIPAddressAsync();
         }
 
         private static string ChooseRuntime(IAppArgs appArgs)
@@ -56,6 +68,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["install_source"] = installSource;
             trackEvent.Context["runtime"] = runtime;
             trackEvent.Context["operating_system"] = os;
+            trackEvent.Context["local_ip_address"] = localIPAddress;
+            trackEvent.Context["public_ip_address"] = publicIPAddress;
 
             return trackEvent;
         }

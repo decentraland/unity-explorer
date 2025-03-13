@@ -165,7 +165,8 @@ namespace Global.Dynamic
                 LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
                 IAnalyticsService service = CreateAnalyticsService(analyticsConfig, launcherTraits, container.ApplicationParametersParser, ct);
 
-                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData, dclVersion);
+                UserIPAddressService publicUserIPAddressService = new UserIPAddressService(webRequestsContainer.WebRequestController);
+                var analyticsController = new AnalyticsController(service, publicUserIPAddressService, appArgs, analyticsConfig, launcherTraits, buildData, dclVersion);
                 var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
