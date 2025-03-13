@@ -18,7 +18,7 @@
 #define _BumpScale 1.0f
 #define _BumpScaleMatcap 1.0f
 #define _CameraRolling_Stabilizer 0.0f
-#define _Clipping_Level 0.0f
+//#define _Clipping_Level 0.0f
 #define _Cutoff 0.5f
 #define _Farthest_Distance 100.0f
 #define _GI_Intensity 0.0f
@@ -79,7 +79,7 @@
 #define _Tweak_RimLightMaskLevel -0.9f
 #define _Tweak_ShadingGradeMapLevel 0.0f
 #define _Tweak_SystemShadowsLevel 0.0f
-#define _Tweak_transparency 0.0f
+//#define _Tweak_transparency 0.0f
 #define _Unlit_Intensity 4.0f
 #define _Use_1stAs2nd 1.0f
 #define _Use_BaseAs1st 1.0f

@@ -46,6 +46,9 @@ UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Emissive_Color)
 
+UNITY_DEFINE_INSTANCED_PROP(float, _Clipping_Level)
+UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_transparency)
+
 #ifndef _DCL_VARIABLE_OPTIMISATION
 UNITY_DEFINE_INSTANCED_PROP(float, _1st2nd_Shades_Feather)
 UNITY_DEFINE_INSTANCED_PROP(float, _1st_ShadeColor_Feather)
@@ -62,7 +65,7 @@ UNITY_DEFINE_INSTANCED_PROP(half, _BlurLevelSGM)
 UNITY_DEFINE_INSTANCED_PROP(half, _BumpScale)
 UNITY_DEFINE_INSTANCED_PROP(float, _BumpScaleMatcap)
 UNITY_DEFINE_INSTANCED_PROP(float, _CameraRolling_Stabilizer)
-UNITY_DEFINE_INSTANCED_PROP(float, _Clipping_Level)
+
 UNITY_DEFINE_INSTANCED_PROP(half, _Cutoff)
 UNITY_DEFINE_INSTANCED_PROP(float, _Farthest_Distance)
 UNITY_DEFINE_INSTANCED_PROP(float, _GI_Intensity)
@@ -123,7 +126,7 @@ UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_MatcapMaskLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_RimLightMaskLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_ShadingGradeMapLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_SystemShadowsLevel)
-UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_transparency)
+
 UNITY_DEFINE_INSTANCED_PROP(float, _Unlit_Intensity)
 UNITY_DEFINE_INSTANCED_PROP(half, _Use_1stAs2nd)
 UNITY_DEFINE_INSTANCED_PROP(half, _Use_BaseAs1st)
@@ -182,6 +185,9 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _BaseColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
 #define _SpecColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
 #define _Emissive_Color                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Color)
+
+#define _Clipping_Level                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Clipping_Level)
+#define _Tweak_transparency                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Tweak_transparency)
 
 #ifndef _DCL_VARIABLE_OPTIMISATION
 #define _Color                              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color)
@@ -255,9 +261,9 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _Offset_X_Axis_BLD                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Offset_X_Axis_BLD)
 #define _Offset_Y_Axis_BLD                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Offset_Y_Axis_BLD)
 #define _Inverse_Z_Axis_BLD                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Inverse_Z_Axis_BLD)
-#define _Clipping_Level                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Clipping_Level)
+
 #define _Inverse_Clipping                   UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Inverse_Clipping)
-#define _Tweak_transparency                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Tweak_transparency)
+
 #define _GI_Intensity                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _GI_Intensity)
 #define _Is_LightColor_Outline              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Is_LightColor_Outline)
 #define _Outline_Width                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Outline_Width)
