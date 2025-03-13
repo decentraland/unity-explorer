@@ -12,6 +12,7 @@ using PortableExperiences.Controller;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.CommsApi;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi;
@@ -74,6 +75,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
+            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
             sceneRuntime.RegisterSignedFetch(webRequestController, decentralandUrlsSource, sceneData, realmData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -112,6 +114,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterEngineAPI(engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
+            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
             sceneRuntime.RegisterSignedFetch(webRequestController, decentralandUrlsSource, sceneData, realmData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -146,6 +149,11 @@ namespace SceneRuntime
         private static void RegisterSceneApi(this ISceneRuntime sceneRuntime, ISceneApi api)
         {
             sceneRuntime.Register("UnitySceneApi", new SceneApiWrapper(api));
+        }
+
+        private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler)
+        {
+            sceneRuntime.Register("CommsApi", new CommsApiWrap(roomHub, sceneExceptionsHandler));
         }
 
         private static void RegisterSignedFetch(
