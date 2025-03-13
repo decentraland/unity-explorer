@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -41,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
         private readonly IChatInputBus chatInputBus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private ChatController chatController;
@@ -62,6 +64,7 @@ namespace DCL.PluginSystem.Global
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatInputBus chatInputBus,
+            ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.mvcManager = mvcManager;
@@ -78,6 +81,7 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatInputBus = chatInputBus;
+            this.loadingStatus = loadingStatus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.roomHub = roomHub;
@@ -112,7 +116,8 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
                 profileCache,
-                chatInputBus
+                chatInputBus,
+                loadingStatus
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
