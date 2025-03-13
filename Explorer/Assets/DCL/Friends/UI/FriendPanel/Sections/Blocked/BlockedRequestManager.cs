@@ -1,7 +1,4 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.UI.Profiles.Helpers;
-using DCL.Web3;
 using MVC;
 using SuperScrollView;
 using System;
@@ -99,8 +96,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            // return MockedData();
-
             using PaginatedBlockedProfileResult result = await friendsService.GetBlockedUsersAsync(pageNumber, pageSize, ct);
 
             foreach (var blockedProfile in result.BlockedProfiles)
@@ -110,12 +105,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             FriendsSorter.SortFriendList(blockedProfiles);
 
             return result.TotalAmount;
-        }
-
-        private int MockedData()
-        {
-            blockedProfiles.Add(new BlockedProfile(new Web3Address("0xbdfdd873d70fbf9273180f98ee30404115a1a674"), "NftIsland", true, URLAddress.FromString("http://profile-images.decentraland.org/entities/bafkreigb23roa4vsdhzrvqxw7xllbviota45yu3j3htduudbcjx2wiztny/face.png"), new DateTime(), ProfileNameColorHelper.GetNameColor("NftIsland")));
-            return blockedProfiles.Count;
         }
 
         protected override void ResetCollection() =>
