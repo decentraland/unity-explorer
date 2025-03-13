@@ -166,6 +166,8 @@ namespace DCL.UI.ProfileNames
 
                 int selectedIndex = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
                 config.claimedNameDropdown.value = selectedIndex;
+                // Always start as disabled as it makes no sense save your own current name again..
+                config.saveButtonInteractable = false;
             }
 
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)
