@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
 using LiveKit.Proto;
@@ -12,6 +11,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
+using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,11 +24,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
+        private readonly InteriorVideoStreams videoStreams = new ();
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
+        public IVideoStreams VideoStreams => videoStreams;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
@@ -128,6 +130,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
+            videoStreams.Assign(room.VideoStreams);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
