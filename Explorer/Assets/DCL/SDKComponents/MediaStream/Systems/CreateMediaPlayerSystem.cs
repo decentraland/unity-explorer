@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
@@ -16,6 +17,7 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -72,7 +74,7 @@ namespace DCL.SDKComponents.MediaStream
             MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
 
             // There is no way to set this from the scene code, at the moment
             // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
@@ -82,23 +84,39 @@ namespace DCL.SDKComponents.MediaStream
             World.Add(entity, component);
         }
 
+        [SuppressMessage("ReSharper", "RedundantAssignment")]
         private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
         {
-            // if it is not valid, we try get it as a scene local video
-            bool isValidStreamUrl = url.IsValidUrl();
-            bool isValidLocalPath = false;
+            var isValidLocalPath = false;
+            var isValidStreamUrl = false;
 
-            if (!isValidStreamUrl)
+            if (url.IsLivekitAddress())
             {
-                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
-                if(isValidLocalPath)
-                    url = mediaUrl;
+                isValidLocalPath = true;
+                isValidStreamUrl = true;
             }
+
+            else
+
+                // if it is not valid, we try get it as a scene local video
+            {
+                isValidStreamUrl = url.IsValidUrl();
+
+                if (!isValidStreamUrl)
+                {
+                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+
+                    if (isValidLocalPath)
+                        url = mediaUrl;
+                }
+            }
+
+            var address = MediaAddress.New(url);
 
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
-                URL = url,
+                MediaAddress = address,
                 IsFromContentServer = url.Contains(CONTENT_SERVER_PREFIX),
                 PreviousCurrentTimeChecked = -1,
                 LastPropagatedState = VideoState.VsPaused,

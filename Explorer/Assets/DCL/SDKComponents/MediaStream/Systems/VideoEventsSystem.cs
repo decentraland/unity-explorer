@@ -80,7 +80,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private static VideoState GetCurrentVideoState(in MediaPlayerComponent mediaPlayer)
         {
-            if (string.IsNullOrEmpty(mediaPlayer.URL)) return VideoState.VsNone;
+            if (mediaPlayer.MediaAddress.IsEmpty) return VideoState.VsNone;
 
             // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
             var mediaPlayerControl = mediaPlayer.MediaPlayer.Control;

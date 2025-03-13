@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaPlayer MediaPlayer;
 
-        public string URL;
+        public MediaAddress MediaAddress;
         public bool IsFromContentServer;
         public VideoState State { get; private set; }
         public VideoState LastPropagatedState;

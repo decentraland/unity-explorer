@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms;
 using JetBrains.Annotations;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
@@ -31,7 +32,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                 // like in unity-renderer version trackSid: `livekit-video://${sid}/${videoSid}`,
                 // https://github.com/decentraland/unity-renderer/blob/ae68fec703f3c0ebd2251ce7cff2ad465f6f7f7d/browser-interface/packages/shared/apis/host/CommsAPI.ts#L19
-                this.trackSid = $"livekit-video://{identity}/{publication.Sid}";
+                this.trackSid = identity.ToLivekitAddress(publication);
 
                 sourceType = publication.Source switch
                              {
