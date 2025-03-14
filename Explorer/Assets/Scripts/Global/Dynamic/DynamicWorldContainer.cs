@@ -834,7 +834,6 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
                     userBlockingCacheProxy,
-                    profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,
                     onlineUsersProvider,

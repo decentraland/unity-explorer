@@ -49,7 +49,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -83,7 +82,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
@@ -110,7 +108,6 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -213,7 +210,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache, viewDependencies);
+                inputBlock, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 
