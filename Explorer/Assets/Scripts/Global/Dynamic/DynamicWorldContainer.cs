@@ -812,7 +812,6 @@ namespace Global.Dynamic
                     assetBundlesURL,
                     dclCursor,
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
-                    dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder,
                     nametagsData,
