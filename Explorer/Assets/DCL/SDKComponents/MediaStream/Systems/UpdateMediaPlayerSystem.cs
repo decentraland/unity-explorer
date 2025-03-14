@@ -153,12 +153,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (mediaAddress.MediaKind is MediaAddress.Kind.LIVEKIT)
-            {
-                ReportHub.LogError(GetReportCategory(), "LiveKit is not implemented yet.");
-                return;
-            }
-
             if (component.MediaAddress != mediaAddress && (!sceneData.TryGetMediaUrl(mediaAddress.Url, out URLAddress localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
             {
                 component.MediaPlayer.CloseCurrentStream();
