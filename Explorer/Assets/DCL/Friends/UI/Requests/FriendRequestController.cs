@@ -2,14 +2,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
-using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Friends.UI.Requests
@@ -19,14 +18,13 @@ namespace DCL.Friends.UI.Requests
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
         private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
         private const string DATE_FORMAT = "MMM dd";
-        private const string FRIEND_REQUEST_SENT_FORMAT = "Friend Request Sent To <color=#73D3D3>{0}</color>";
-        private const string FRIEND_REQUEST_ACCEPTED_FORMAT = "You And <color=#FF8362>{0}</color> Are Now Friends!";
+        private const string FRIEND_REQUEST_SENT_FORMAT = "Friend Request Sent To <color={0}>{1}</color>";
+        private const string FRIEND_REQUEST_ACCEPTED_FORMAT = "You And <color={0}>{1}</color> Are Now Friends!";
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly ViewDependencies viewDependencies;
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
@@ -40,14 +38,12 @@ namespace DCL.Friends.UI.Requests
             IFriendsService friendsService,
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
-            IProfileThumbnailCache profileThumbnailCache,
             ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.viewDependencies = viewDependencies;
         }
 
@@ -157,6 +153,7 @@ namespace DCL.Friends.UI.Requests
                 if (profile == null) return;
 
                 config.UserName.text = profile.Name;
+                config.UserName.color = profile.UserNameColor;
                 config.UserNameVerification.SetActive(profile.HasClaimedName);
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
                 config.UserNameHash.text = $"#{user.ToString()[^4..]}";
@@ -211,6 +208,7 @@ namespace DCL.Friends.UI.Requests
             FriendProfile user, CancellationToken ct)
         {
             config.UserName.text = user.Name;
+            config.UserName.color = user.UserNameColor;
             config.UserNameVerification.SetActive(user.HasClaimedName);
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
@@ -366,7 +364,7 @@ namespace DCL.Friends.UI.Requests
             FriendRequestView.OperationConfirmedConfig config,
             FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
-            config.Label.text = string.Format(textWithUserNameParam, profile.Name);
+            config.Label.text = string.Format(textWithUserNameParam, ToHexStr(profile.UserNameColor), profile.Name);
             config.FriendThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.FacePictureUrl,  profile.Address, ct).Forget();
 
             if (config.MyThumbnail != null)
@@ -382,6 +380,9 @@ namespace DCL.Friends.UI.Requests
             await viewInstance!.PlayShowAnimationAsync(config, ct);
             await UniTask.WhenAny(config.CloseButton.OnClickAsync(ct), UniTask.Delay(OPERATION_CONFIRMED_WAIT_TIME_MS, cancellationToken: ct));
             await viewInstance!.PlayHideAnimationAsync(config, ct);
+            return;
+
+            string ToHexStr(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
         }
 
         private enum ViewState
