@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Friends.UserBlocking;
-using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,7 +11,6 @@ namespace DCL.Friends
     {
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus eventBus;
-        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly HashSet<string> blockedUsers = new (StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> blockedByUsers = new (StringComparer.OrdinalIgnoreCase);
@@ -24,12 +22,10 @@ namespace DCL.Friends
         public bool HideChatMessages { get; set; }
 
         public UserBlockingCache(IFriendsService friendsService,
-            IFriendsEventBus eventBus,
-            IWeb3IdentityCache web3IdentityCache)
+            IFriendsEventBus eventBus)
         {
             this.friendsService = friendsService;
             this.eventBus = eventBus;
-            this.web3IdentityCache = web3IdentityCache;
 
             BlockedUsers = new ReadOnlyHashSet<string>(blockedUsers);
             BlockedByUsers = new ReadOnlyHashSet<string>(blockedByUsers);
@@ -39,9 +35,7 @@ namespace DCL.Friends
             eventBus.OnYouBlockedByUser += YouBlockedByUser;
             eventBus.OnYouUnblockedByUser += YouUnblockedByUser;
 
-            web3IdentityCache.OnIdentityChanged += IdentityChanged;
-
-            IdentityChanged();
+            ResetCache();
         }
 
         public void Dispose()
@@ -51,15 +45,13 @@ namespace DCL.Friends
             eventBus.OnYouBlockedByUser -= YouBlockedByUser;
             eventBus.OnYouUnblockedByUser -= YouUnblockedByUser;
 
-            web3IdentityCache.OnIdentityChanged -= IdentityChanged;
-
             fetchCts.SafeCancelAndDispose();
         }
 
         public bool UserIsBlocked(string userId) =>
             BlockedUsers.Contains(userId) || BlockedByUsers.Contains(userId);
 
-        private void IdentityChanged()
+        public void ResetCache()
         {
             fetchCts = fetchCts.SafeRestart();
             FetchDataAsync(fetchCts.Token).Forget();

@@ -159,12 +159,13 @@ namespace DCL.PluginSystem.Global
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
-            //TODO: developments need to be deployed in order to activate this feature
             if (includeUserBlocking)
             {
                 friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
-                IUserBlockingCache userBlockingCache = new UserBlockingCache(friendsService, friendEventBus, web3IdentityCache);
+                var userBlockingCache = new UserBlockingCache(friendsService, friendEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
+
+                web3IdentityCache.OnIdentityChanged += userBlockingCache.ResetCache;
             }
 
             // We need to restart the connection to the service as identity changes
@@ -292,6 +293,9 @@ namespace DCL.PluginSystem.Global
 
                 if (IsConnectivityStatusEnabled())
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
+
+                if (includeUserBlocking)
+                    friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
 
                 friendsPanelController?.Reset();
             }
