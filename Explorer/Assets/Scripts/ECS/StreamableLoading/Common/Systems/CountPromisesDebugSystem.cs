@@ -32,24 +32,24 @@ namespace ECS.StreamableLoading.Common.Systems
 
         public class TimeToAllowAverage
         {
-            private ulong sumMs;
+            private double sumMs;
             private ulong count;
 
-            public TimeToAllowAverage(ProfilerCounterValue<uint> profilerCounterValue)
+            public TimeToAllowAverage(ProfilerCounterValue<float> profilerCounterValue)
             {
                 this.profilerCounterValue = profilerCounterValue;
             }
 
-            internal readonly ProfilerCounterValue<uint> profilerCounterValue;
+            internal readonly ProfilerCounterValue<float> profilerCounterValue;
             internal ElementBinding<ulong> averageNs { get; } = new (0);
 
             internal void Add(float seconds)
             {
-                sumMs += (ulong)(seconds * 1_000);
+                sumMs += seconds * 1_000;
                 count++;
-                ulong avg = sumMs / count;
-                averageNs.Value = avg * 1_000_000;
-                profilerCounterValue.Value = (uint)avg;
+                double avg = sumMs / count;
+                averageNs.Value = (ulong)(avg * 1_000_000);
+                profilerCounterValue.Value = (float)avg;
             }
         }
 
@@ -88,7 +88,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 updateStatusCounters = new UpdateStatusCounters(statusCounters);
 
-                TimeToAllowAverage = new TimeToAllowAverage(new ProfilerCounterValue<uint>($"{typeof(TIntent).Name}_TTA"));
+                TimeToAllowAverage = new TimeToAllowAverage(new ProfilerCounterValue<float>($"{typeof(TIntent).Name}_TTA", ProfilerMarkerDataUnit.TimeNanoseconds));
                 timeToAllowAverage = new UpdateTimeToAllowAverage(TimeToAllowAverage);
             }
 
