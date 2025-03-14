@@ -17,9 +17,5 @@ namespace UnityEditor.Rendering.DCL_Toon
         public uint workflowMode { get; set; }
         /// <summary>The flag wheter UTS material is in transparent mode</summary>
         public uint transparentEnabled { get; set; }
-        /// <summary>The flag wheter UTS material is in tessellation mode</summary>
-        public uint tessellationEnabled { get; set; }
     }
-
-
 }

@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace UnityEditor.Rendering.DCL_Toon
 {
-
     /// <summary>
     /// Collection to store <see cref="DCL_Toon_MaterialHeaderScopeItem"></see>
     /// </summary>
@@ -41,8 +40,7 @@ namespace UnityEditor.Rendering.DCL_Toon
                 drawMaterialScope = action,
                 url = DCL_Toon_DocumentationUtils.GetHelpURL<TEnum>(expandable),
                 workflowMode = workflowMode,
-                transparentEnabled = isTransparent,
-                tessellationEnabled = isTessellation
+                transparentEnabled = isTransparent
             });
         }
 
@@ -78,5 +76,4 @@ namespace UnityEditor.Rendering.DCL_Toon
             }
         }
     }
-
 }

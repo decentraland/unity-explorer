@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace UnityEditor.Rendering.DCL_Toon
 {
-
     /// <summary>
     /// Create a toggleable header for material UI, must be used within a scope.
     /// <example>Example:
