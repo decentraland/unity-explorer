@@ -829,7 +829,6 @@ namespace Global.Dynamic
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
-                    profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,
                     onlineUsersProvider,
