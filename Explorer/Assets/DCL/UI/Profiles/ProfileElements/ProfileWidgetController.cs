@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -12,7 +13,7 @@ namespace DCL.UI.ProfileElements
         private const string GUEST_NAME = "Guest";
 
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly ViewDependencies viewDependencies;
 
         private CancellationTokenSource? loadProfileCts;
@@ -21,7 +22,7 @@ namespace DCL.UI.ProfileElements
 
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             ViewDependencies viewDependencies
         ) : base(viewFactory)
         {
@@ -43,7 +44,7 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid LoadAsync(CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
+            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, (URLDomain?)null, ct);
 
             if (profile == null) return;
 

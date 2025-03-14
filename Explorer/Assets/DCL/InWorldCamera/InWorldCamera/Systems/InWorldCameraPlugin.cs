@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
             URLDomain assetBundleURL,

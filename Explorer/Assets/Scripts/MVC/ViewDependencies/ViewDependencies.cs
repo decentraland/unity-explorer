@@ -21,7 +21,7 @@ namespace MVC
         public readonly ICursor Cursor;
 
         private readonly IProfileThumbnailCache thumbnailCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
         public async UniTask<Sprite> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
@@ -31,7 +31,7 @@ namespace MVC
             await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IProfileThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+            IProfileThumbnailCache thumbnailCache, RealmProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;

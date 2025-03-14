@@ -15,7 +15,7 @@ using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfi
 
 namespace DCL.Profiles
 {
-    public partial class RealmProfileRepository : IProfileRepository
+    public partial class RealmProfileRepository //: IProfileRepository
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
 

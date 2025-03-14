@@ -69,7 +69,7 @@ namespace Global.Dynamic
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -82,7 +82,7 @@ namespace Global.Dynamic
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment,
-            IProfileRepository profileRepository)
+            RealmProfileRepository profileRepository)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;

@@ -29,7 +29,7 @@ namespace DCL.InWorldCamera.PhotoDetail
     public class VisiblePersonController : IDisposable
     {
         internal readonly VisiblePersonView view;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IMVCManager mvcManager;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
@@ -44,7 +44,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private CancellationTokenSource loadWearablesCts = new();
 
         public VisiblePersonController(VisiblePersonView view,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
@@ -83,7 +83,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.profilePictureView.SetupOnlyColor(userColor);
             view.profilePictureView.SetLoadingState(true);
 
-            Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
+            Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, 0, (URLDomain?)null, ct);
 
             if (profile is not null)
             {

@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
@@ -73,7 +73,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,

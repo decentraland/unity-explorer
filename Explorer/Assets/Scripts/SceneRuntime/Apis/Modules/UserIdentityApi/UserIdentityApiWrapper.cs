@@ -14,13 +14,13 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
 {
     public partial class UserIdentityApiWrapper : IJsApiWrapper
     {
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly List<string> wearablesCache = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
 
-        public UserIdentityApiWrapper(IProfileRepository profileRepository,
+        public UserIdentityApiWrapper(RealmProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
             ISceneExceptionsHandler sceneExceptionsHandler)
         {
@@ -52,7 +52,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     if (identity == null)
                         return new GetUserDataResponse(null);
 
-                    Profile? profile = await profileRepository.GetAsync(identity.Address, ct);
+                    Profile? profile = await profileRepository.GetAsync(identity.Address, 0, (URLDomain?)null, ct);
 
                     if (profile == null)
                         return new GetUserDataResponse(null);

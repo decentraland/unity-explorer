@@ -46,7 +46,7 @@ namespace SceneRunner
         private readonly ISceneEntityFactory entityFactory;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IEthereumApi ethereumApi;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebRequestController webRequestController;
@@ -72,7 +72,7 @@ namespace SceneRunner
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             IEthereumApi ethereumApi,
             IMVCManager mvcManager,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,

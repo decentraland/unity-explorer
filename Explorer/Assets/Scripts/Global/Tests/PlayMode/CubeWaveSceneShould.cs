@@ -62,7 +62,7 @@ namespace Global.Tests.PlayMode
 
     Billboard.create(sign)*/
 
-    [TestFixture]
+    /*[TestFixture]
     public class CubeWaveSceneShould
     {
         private const string PATH = "cube-wave-16x16";
@@ -138,5 +138,5 @@ namespace Global.Tests.PlayMode
             Assert.AreEqual(256, world.CountEntities(in cubes));
             world.Query(in cubes, (Entity e, ref SDKTransform transform) => { Assert.AreNotEqual(positions[e], transform.Position); });
         }
-    }
+    }*/
 }

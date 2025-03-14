@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
@@ -60,7 +60,7 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IWebRequestController webRequestController,
             IWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,

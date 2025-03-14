@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -18,7 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private const int EMPTY_ELEMENT_INDEX = 2;
 
         private readonly LoopListView2 loopListView;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly List<FriendProfile> onlineFriends = new ();
@@ -33,7 +34,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IFriendsEventBus friendEventBus,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             LoopListView2 loopListView,
             int pageSize,
@@ -123,7 +124,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
                 // TODO: we should avoid requesting the profile.. instead the service should emit a FriendProfile
-                Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
+                Profile? newFriendProfile = await profileRepository.GetAsync(friendId,0, (URLDomain?)null, ct);
 
                 if (newFriendProfile != null)
                 {

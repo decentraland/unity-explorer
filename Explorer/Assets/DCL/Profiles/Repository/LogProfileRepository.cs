@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.Profiles
 {
-    public class LogProfileRepository : IProfileRepository
+    /*public class LogProfileRepository : IProfileRepository
     {
         private readonly IProfileRepository origin;
 
@@ -38,5 +38,5 @@ namespace DCL.Profiles
                .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");
             return result;
         }
-    }
+    }*/
 }

@@ -25,7 +25,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             EquippedWearableView equippedWearablePrefab,
             RectTransform visiblePersonParent,
             GameObject unusedEquippedWearablePoolObjectParent,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
             IWearableStorage wearableStorage,
@@ -106,7 +106,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private VisiblePersonController CreateVisiblePerson(
             VisiblePersonView visiblePersonPrefab,
             RectTransform visiblePersonParent,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,

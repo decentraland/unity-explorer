@@ -10,11 +10,11 @@ namespace DCL.PluginSystem.Global
 {
     public class ProfilePlugin : IDCLGlobalPlugin
     {
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
         private readonly CacheCleaner cacheCleaner;
 
-        public ProfilePlugin(IProfileRepository profileRepository, IProfileCache profileCache, CacheCleaner cacheCleaner)
+        public ProfilePlugin(RealmProfileRepository profileRepository, IProfileCache profileCache, CacheCleaner cacheCleaner)
         {
             this.profileCache = profileCache;
             this.cacheCleaner = cacheCleaner;

@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace DCL.Ipfs
 {
-    public class LogIpfsRealm : IIpfsRealm
+    /*public class LogIpfsRealm : IIpfsRealm
     {
         private readonly IIpfsRealm origin;
 
@@ -109,5 +109,5 @@ namespace DCL.Ipfs
                 .Log($"IpfsRealm GetFileHash requested, result: {result}");
             return result;
         }
-    }
+    }*/
 }

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace DCL.Profiles
 {
-    public interface IProfileRepository
+    public interface IProfileRepository_
     {
         public const string GUEST_RANDOM_ID = "fakeUserId";
         public const string PLAYER_RANDOM_ID = "Player";
@@ -18,7 +18,7 @@ namespace DCL.Profiles
 
         UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct);
 
-        public class Fake : IProfileRepository
+        /*public class Fake : IProfileRepository
         {
             private readonly Dictionary<Key, Profile> profiles = new ();
 
@@ -71,10 +71,10 @@ namespace DCL.Profiles
                     Version = version;
                 }
             }
-        }
+        }*/
     }
 
-    public static class ProfileRepositoryExtensions
+    /*public static class ProfileRepositoryExtensions
     {
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct) =>
             profileRepository.GetAsync(id, 0, null, ct);
@@ -84,5 +84,5 @@ namespace DCL.Profiles
 
         public static async UniTask<Profile> EnsuredProfileAsync(this IProfileRepository profileRepository, string id, CancellationToken ct) =>
             (await profileRepository.GetAsync(id, ct)).EnsureNotNull();
-    }
+    }*/
 }

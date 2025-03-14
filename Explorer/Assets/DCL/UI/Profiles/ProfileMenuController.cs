@@ -23,7 +23,7 @@ namespace DCL.UI.Profiles
         public ProfileMenuController(
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,

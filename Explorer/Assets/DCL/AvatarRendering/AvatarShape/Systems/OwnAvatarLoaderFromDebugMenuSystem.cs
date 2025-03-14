@@ -18,9 +18,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly Entity ownPlayerEntity;
         private readonly IRealmData realmData;
         private readonly DebugWidgetVisibilityBinding? widgetVisibility;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
 
-        
+
         private CancellationTokenSource? fetchProfileCancellationToken;
 
         public OwnAvatarLoaderFromDebugMenuSystem(
@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             Entity ownPlayerEntity,
             IDebugContainerBuilder debugContainerBuilder,
             IRealmData realmData,
-            IProfileRepository profileRepository)
+            RealmProfileRepository profileRepository)
             : base(world)
         {
             this.ownPlayerEntity = ownPlayerEntity;
@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             const int VERSION = 0;
 
-            var newProfile = await profileRepository.GetAsync(profileId, VERSION, CancellationToken.None);
+            var newProfile = await profileRepository.GetAsync(profileId, VERSION, null, CancellationToken.None);
             World.Set(ownPlayerEntity, newProfile);
         }
     }

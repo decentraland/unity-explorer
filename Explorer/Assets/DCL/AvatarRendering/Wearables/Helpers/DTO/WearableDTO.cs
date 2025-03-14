@@ -9,6 +9,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     [Serializable]
     public class WearableDTO : AvatarAttachmentDTO<WearableDTO.WearableMetadataDto>
     {
+        public WearableDTO()
+        {
+        }
+
         [Serializable]
         public class WearableMetadataDto : MetadataBase
         {

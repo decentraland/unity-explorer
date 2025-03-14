@@ -44,7 +44,7 @@ namespace Global
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IRealmData realmData,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IRoomHub roomHub,
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,

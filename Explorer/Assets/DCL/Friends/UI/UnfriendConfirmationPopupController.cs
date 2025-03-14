@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.Profiles;
@@ -11,7 +12,7 @@ namespace DCL.Friends.UI
     public class UnfriendConfirmationPopupController : ControllerBase<UnfriendConfirmationPopupView, UnfriendConfirmationPopupController.Params>
     {
         private readonly IFriendsService friendsService;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? unfriendCancellationToken;
@@ -21,7 +22,7 @@ namespace DCL.Friends.UI
 
         public UnfriendConfirmationPopupController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
         {
             this.friendsService = friendsService;
@@ -64,7 +65,7 @@ namespace DCL.Friends.UI
                 viewInstance!.ProfileImage.IsLoading = true;
                 viewInstance!.DescriptionLabel.text = "Are you sure you want to unfriend?";
 
-                Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
+                Profile? profile = await profileRepository.GetAsync(inputData.UserId, 0, (URLDomain?)null, ct);
 
                 if (profile == null) return;
 

@@ -70,23 +70,19 @@ namespace DCL.InWorldCamera.Playground
             var web3IdentityCache = new IWeb3IdentityCache.Default();
 
             var realmData = new RealmData(
-                new LogIpfsRealm(
-                    new IpfsRealm(
-                        web3IdentityCache,
-                        IWebRequestController.DEFAULT,
-                        URLDomain.FromString("TestRealm"),
-                        URLDomain.EMPTY,
-                        new ServerAbout(
-                            lambdas: new ContentEndpoint(profileUrl)
-                        )
+                new IpfsRealm(
+                    web3IdentityCache,
+                    IWebRequestController.DEFAULT,
+                    URLDomain.FromString("TestRealm"),
+                    URLDomain.EMPTY,
+                    new ServerAbout(
+                        lambdas: new ContentEndpoint(profileUrl)
                     )
                 )
             );
 
             return new SelfProfile(
-                new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
-                ),
+                new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache()),
                 web3IdentityCache,
                 new EquippedWearables(),
                 new WearableStorage(),

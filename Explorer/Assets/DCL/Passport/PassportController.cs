@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
@@ -63,7 +64,7 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_WIDTH = 250;
 
         private readonly ICursor cursor;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
@@ -133,7 +134,7 @@ namespace DCL.Passport
         public PassportController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
@@ -540,7 +541,7 @@ namespace DCL.Passport
 
         private async UniTask SetupContextMenuAsync(FriendshipStatus friendshipStatus, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
+            Profile? profile = await profileRepository.GetAsync(inputData.UserId, 0, (URLDomain?)null, ct);
 
             if (profile == null)
             {

@@ -178,8 +178,8 @@ namespace DCL.Profiles
 
         public static Profile NewRandomProfile(string? userId) =>
             new (
-                userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
-                IProfileRepository.PLAYER_RANDOM_ID,
+                userId: userId ?? IProfileRepository_.GUEST_RANDOM_ID,
+                IProfileRepository_.PLAYER_RANDOM_ID,
                 new Avatar(
                     BodyShape.MALE,
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
@@ -191,8 +191,8 @@ namespace DCL.Profiles
 
         public static Profile NewProfileWithAvatar(string? userId, Avatar avatar) =>
             new (
-                userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
-                IProfileRepository.PLAYER_RANDOM_ID,
+                userId: userId ?? IProfileRepository_.GUEST_RANDOM_ID,
+                IProfileRepository_.PLAYER_RANDOM_ID,
                 avatar
             );
 

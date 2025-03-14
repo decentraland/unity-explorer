@@ -19,11 +19,11 @@ namespace SceneRuntime.Apis.Modules.Players
     public class PlayersWrap : IJsApiWrapper
     {
         private readonly IRoomHub roomHub;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly IRemoteMetadata remoteMetadata;
 
-        public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+        public PlayersWrap(IRoomHub roomHub, RealmProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             this.roomHub = roomHub;
             this.profileRepository = profileRepository;

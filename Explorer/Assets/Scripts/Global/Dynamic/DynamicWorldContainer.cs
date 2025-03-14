@@ -125,7 +125,7 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; }
 
-        public IProfileRepository ProfileRepository { get; }
+        public RealmProfileRepository ProfileRepository { get; }
 
         public IUserInAppInitializationFlow UserInAppInAppInitializationFlow { get; }
 
@@ -141,7 +141,7 @@ namespace Global.Dynamic
             IGlobalRealmController realmController,
             GlobalWorldFactory globalWorldFactory,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IUserInAppInitializationFlow userInAppInAppInitializationFlow,
             IChatMessagesBus chatMessagesBus,
             IMessagePipesHub messagePipesHub,
@@ -280,9 +280,7 @@ namespace Global.Dynamic
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
-            );
+            var profileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache);
 
             static IMultiPool MultiPoolFactory() =>
                 new DCLMultiPool();

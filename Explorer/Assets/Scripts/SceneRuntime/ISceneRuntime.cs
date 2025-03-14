@@ -53,7 +53,7 @@ namespace SceneRuntime
             IEngineApi engineApi,
             ISceneExceptionsHandler exceptionsHandler,
             IRoomHub roomHub,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             ISceneApi sceneApi,
             IWebRequestController webRequestController,
             IRestrictedActionsAPI restrictedActionsAPI,
@@ -91,7 +91,7 @@ namespace SceneRuntime
             ISDKMessageBusCommsControllerAPI commsApiImplementation,
             ISceneExceptionsHandler exceptionsHandler,
             IRoomHub roomHub,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             ISceneApi sceneApi,
             IWebRequestController webRequestController,
             IRestrictedActionsAPI restrictedActionsAPI,
@@ -138,7 +138,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
-        private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+        private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, RealmProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             sceneRuntime.Register("UnityPlayers", new PlayersWrap(roomHub, profileRepository, remoteMetadata));
         }
@@ -179,7 +179,7 @@ namespace SceneRuntime
             sceneRuntime.Register("UnityEthereumApi", new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler, web3IdentityCache));
         }
 
-        private static void RegisterUserIdentityApi(this ISceneRuntime sceneRuntime, IProfileRepository profileRepository, IWeb3IdentityCache identityCache, ISceneExceptionsHandler sceneExceptionsHandler)
+        private static void RegisterUserIdentityApi(this ISceneRuntime sceneRuntime, RealmProfileRepository profileRepository, IWeb3IdentityCache identityCache, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             sceneRuntime.Register("UnityUserIdentityApi", new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }

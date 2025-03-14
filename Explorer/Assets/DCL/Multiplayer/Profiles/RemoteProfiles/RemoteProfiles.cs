@@ -45,12 +45,12 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
             }
         }
 
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly List<RemoteProfile> remoteProfiles = new ();
         private readonly Dictionary<string, PendingRequest> pendingProfiles = new (PoolConstants.AVATARS_COUNT);
         private readonly IRemoteMetadata remoteMetadata;
 
-        public RemoteProfiles(IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+        public RemoteProfiles(RealmProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             this.profileRepository = profileRepository;
             this.remoteMetadata = remoteMetadata;

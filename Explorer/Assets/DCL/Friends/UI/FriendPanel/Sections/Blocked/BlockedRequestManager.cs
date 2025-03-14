@@ -10,7 +10,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 {
     public class BlockedRequestManager : FriendPanelRequestManager<BlockedUserView>
     {
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private FriendProfile? userProfile;
@@ -19,7 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public event Action<FriendProfile>? UnblockClicked;
         public event Action<FriendProfile>? ContextMenuClicked;
 
-        public BlockedRequestManager(IProfileRepository profileRepository,
+        public BlockedRequestManager(RealmProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,

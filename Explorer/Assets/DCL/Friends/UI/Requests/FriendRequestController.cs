@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
@@ -24,7 +25,7 @@ namespace DCL.Friends.UI.Requests
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly ViewDependencies viewDependencies;
@@ -38,7 +39,7 @@ namespace DCL.Friends.UI.Requests
         public FriendRequestController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IFriendsService friendsService,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IInputBlock inputBlock,
             IProfileThumbnailCache profileThumbnailCache,
             ViewDependencies viewDependencies) : base(viewFactory)
@@ -152,7 +153,7 @@ namespace DCL.Friends.UI.Requests
 
             async UniTask LoadUserAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user, CancellationToken ct)
             {
-                Profile? profile = await profileRepository.GetAsync(user, ct);
+                Profile? profile = await profileRepository.GetAsync(user, 0, (URLDomain?)null, ct);
 
                 if (profile == null) return;
 
@@ -371,7 +372,7 @@ namespace DCL.Friends.UI.Requests
 
             if (config.MyThumbnail != null)
             {
-                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
+                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, 0, null, ct);
 
                 if (myProfile != null)
                     config.MyThumbnail.SetupWithDependenciesAsync(viewDependencies, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();

@@ -66,7 +66,7 @@ namespace SceneRunner.Tests
                 new EntityCollidersGlobalCache(),
                 Substitute.For<IEthereumApi>(),
                 Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(),
+                Substitute.For<RealmProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.DEFAULT,

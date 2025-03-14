@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileBroadcast profileBroadcast;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IRoomHub roomHub,
             RoomsStatus roomsStatus,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
             ILoadingStatus realFlowLoadingStatus,

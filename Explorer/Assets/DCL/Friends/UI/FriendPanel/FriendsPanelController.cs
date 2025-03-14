@@ -59,7 +59,7 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             DCLInput dclInput,

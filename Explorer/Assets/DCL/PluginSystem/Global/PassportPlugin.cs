@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundleURL;
@@ -71,7 +71,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ICursor cursor,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
             IRealmData realmData,
             URLDomain assetBundleURL,

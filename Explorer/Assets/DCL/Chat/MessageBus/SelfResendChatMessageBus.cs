@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Diagnostics;
@@ -13,12 +14,12 @@ namespace DCL.Chat.MessageBus
     {
         private readonly MultiplayerChatMessagesBus origin;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly StringBuilder sb = new ();
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository)
+        public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, RealmProfileRepository profileRepository)
         {
             this.origin = origin;
             this.web3IdentityCache = web3IdentityCache;
@@ -57,7 +58,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            Profile? ownProfile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
+            Profile? ownProfile = await profileRepository.GetAsync(identity.Address, 0, (URLDomain?)null, CancellationToken.None);
 
             MessageAdded?.Invoke(
                 channelId,

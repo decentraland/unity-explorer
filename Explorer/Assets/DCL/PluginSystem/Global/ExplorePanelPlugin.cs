@@ -66,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
@@ -134,7 +134,7 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             ISelfProfile selfProfile,

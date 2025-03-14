@@ -19,7 +19,7 @@ namespace DCL.Profiles.Self
 {
     public class SelfProfile : ISelfProfile
     {
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearableStorage wearableStorage;
@@ -30,7 +30,7 @@ namespace DCL.Profiles.Self
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IEquippedWearables equippedWearables,
             IWearableStorage wearableStorage,
@@ -58,6 +58,8 @@ namespace DCL.Profiles.Self
 
             Profile? profile = await profileRepository.GetAsync(
                 web3IdentityCache.Identity.Address,
+                0,
+                null,
                 ct
             );
 
@@ -114,7 +116,7 @@ namespace DCL.Profiles.Self
             OwnProfile = newProfile;
 
             await profileRepository.SetAsync(newProfile, publish, ct);
-            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, null, ct);
         }
 
         public async UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct)
@@ -135,7 +137,7 @@ namespace DCL.Profiles.Self
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
 
             await profileRepository.SetAsync(newProfile, publish: true, ct);
-            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, null, ct);
         }
 
         private void ConvertEquippedWearablesIntoUniqueUrns(Profile? profile, ISet<URN> uniqueWearables)

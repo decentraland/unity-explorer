@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -18,14 +19,14 @@ namespace DCL.Chat.MessageBus
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IProfileRepository profileRepository;
+        private readonly RealmProfileRepository profileRepository;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISelfProfile selfProfile;
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, ISelfProfile selfProfile, IMessageDeduplication<double> messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, RealmProfileRepository profileRepository, ISelfProfile selfProfile, IMessageDeduplication<double> messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;
@@ -54,7 +55,7 @@ namespace DCL.Chat.MessageBus
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
                     return;
 
-                Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
+                Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, 0, (URLDomain?)null, cancellationTokenSource.Token);
 
                 ChatChannel.ChannelId parsedChannelId = ChatChannel.NEARBY_CHANNEL;
                 string chatMessage = receivedMessage.Payload.Message;

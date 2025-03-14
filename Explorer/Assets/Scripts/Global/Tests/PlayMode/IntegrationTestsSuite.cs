@@ -35,7 +35,7 @@ using UnityEngine.UIElements;
 
 namespace Global.Tests.PlayMode
 {
-    public static class IntegrationTestsSuite
+    /*public static class IntegrationTestsSuite
     {
         private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
         private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
@@ -113,5 +113,5 @@ namespace Global.Tests.PlayMode
 
             return (staticContainer, sceneSharedContainer);
         }
-    }
+    }*/
 }

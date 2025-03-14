@@ -48,7 +48,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public PhotoDetailInfoController(PhotoDetailInfoView view,
             ICameraReelStorageService cameraReelStorageService,
-            IProfileRepository profileRepository,
+            RealmProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
             IRealmNavigator realmNavigator,

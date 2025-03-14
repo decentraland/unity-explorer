@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace DCL.Profiles
 {
-    public class MemoryProfileRepository : IProfileRepository
+    /*public class MemoryProfileRepository : IProfileRepository
     {
         private readonly IProfileCache profileCache;
 
@@ -18,5 +18,5 @@ namespace DCL.Profiles
 
         public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct) =>
             profileCache.Get(id);
-    }
+    }*/
 }
