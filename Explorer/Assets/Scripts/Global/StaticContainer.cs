@@ -244,6 +244,8 @@ namespace Global
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
+            var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
@@ -274,7 +276,7 @@ namespace Global
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
-
+                promisesAnalyticsPlugin,
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
@@ -286,6 +288,7 @@ namespace Global
                 new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
                     container.RealmPartitionSettings),
                 textureResolvePlugin,
+                promisesAnalyticsPlugin,
             };
 
             return (container, true);

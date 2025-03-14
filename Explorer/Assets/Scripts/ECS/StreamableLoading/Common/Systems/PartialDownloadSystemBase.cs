@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
 using DCL.WebRequests;
-using DCL.WebRequests.PartialDownload;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
