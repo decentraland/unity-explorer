@@ -41,6 +41,8 @@
             public const string PASSPORT_OPENED = "passport_opened";
             public const string BADGES_TAB_OPENED = "badges_tab_opened";
             public const string BADGE_UI_CLICK = "badge_ui_click";
+            public const string NAME_CLAIM_REQUESTED = "name_claim_requested";
+            public const string NAME_CHANGED = "profile_name_changed";
         }
 
         public static class Map
