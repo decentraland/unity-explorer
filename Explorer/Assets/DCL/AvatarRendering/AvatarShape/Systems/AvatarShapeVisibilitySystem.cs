@@ -13,6 +13,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -141,8 +142,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (isBlocked && !World.Has<BlockedPlayerComponent>(entity))
                 World.Add(entity, new BlockedPlayerComponent());
-            else if (!isBlocked && World.Has<BlockedPlayerComponent>(entity))
-                World.Remove<BlockedPlayerComponent>(entity);
+            else if (!isBlocked)
+                World.TryRemove<BlockedPlayerComponent>(entity);
         }
 
         [Query]
