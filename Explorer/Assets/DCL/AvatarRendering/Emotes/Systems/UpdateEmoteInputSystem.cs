@@ -101,7 +101,7 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, ref AvatarShapeComponent avatarShapeComponent)
+        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, in AvatarShapeComponent avatarShapeComponent)
         {
             if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible) return;
 

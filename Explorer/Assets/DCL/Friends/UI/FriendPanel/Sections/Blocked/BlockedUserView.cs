@@ -1,5 +1,5 @@
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using System;
-using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             set
             {
                 blockedDate = value;
-                BlockedDateText.SetText(blockedDate.ToString("MMM dd", CultureInfo.InvariantCulture).ToUpper());
+                BlockedDateText.SetText(FriendListSectionUtilities.FormatDate(blockedDate));
             }
         }
 

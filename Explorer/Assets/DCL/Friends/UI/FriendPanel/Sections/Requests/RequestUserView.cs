@@ -1,5 +1,5 @@
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using System;
-using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,7 +25,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             set
             {
                 requestDate = value;
-                RequestDateText.SetText(requestDate.ToString("MMM dd", CultureInfo.InvariantCulture).ToUpper());
+                RequestDateText.SetText(FriendListSectionUtilities.FormatDate(requestDate));
             }
         }
 

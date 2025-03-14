@@ -6,6 +6,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -72,5 +73,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
+
+        internal static string FormatDate(DateTime date)
+        {
+            Span<char> buffer = stackalloc char[6];
+            if (!date.TryFormat(buffer, out _, "MMM dd", CultureInfo.InvariantCulture)) return string.Empty;
+
+            for (int i = 0; i < buffer.Length; i++)
+                buffer[i] = char.ToUpperInvariant(buffer[i]);
+
+            return buffer.ToString();
+        }
     }
 }
