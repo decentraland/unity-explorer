@@ -83,6 +83,8 @@ namespace DCL.Chat.History
         /// </summary>
         public ChannelId Id { get; }
 
+        public ChatChannelType Type { get; }
+
         /// <summary>
         /// The amount of messages already read by the local participant in the chat.
         /// </summary>
@@ -106,6 +108,7 @@ namespace DCL.Chat.History
         public ChatChannel(ChatChannelType channelType, string channelName)
         {
             Id = new ChannelId(channelType, channelName);
+            Type = channelType;
         }
 
         /// <summary>

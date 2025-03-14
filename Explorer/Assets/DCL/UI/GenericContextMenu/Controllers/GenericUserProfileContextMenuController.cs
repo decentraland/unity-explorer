@@ -1,75 +1,141 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.InputBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
+using Segment.Serialization;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace MVC
+namespace DCL.UI.GenericContextMenu.Controllers
 {
     public class GenericUserProfileContextMenuController
     {
-        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
-        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5,-10);
+        private delegate void StringDelegate(string id);
+
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
+        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
         private readonly IChatInputBus chatInputBus;
+        private readonly bool includeUserBlocking;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
 
-        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
-        private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
-        private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
-        private readonly GenericContextMenu contextMenu;
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private readonly Controls.Configs.GenericContextMenu contextMenu;
+        private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
+        private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly GenericContextMenuElement contextMenuBlockUserButton;
+
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
 
-        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy, IChatInputBus chatInputBus, IMVCManager mvcManager)
+        public GenericUserProfileContextMenuController(
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            IChatInputBus chatInputBus,
+            IMVCManager mvcManager,
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            IAnalyticsController analytics,
+            bool includeUserBlocking,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
             this.mvcManager = mvcManager;
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
-            openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
-            mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
-                         .AddControl(userProfileContextMenuControlSettings)
+            this.analytics = analytics;
+            this.includeUserBlocking = includeUserBlocking;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.includeUserBlocking = includeUserBlocking;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+
+            userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
+            openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
+            mentionUserButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.MentionButtonConfig.Text, contextMenuSettings.MentionButtonConfig.Sprite, new StringDelegate(OnMentionUserClicked));
+            jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
+            blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
+            contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
+            contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
+
+            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
+                         .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(openUserProfileButtonContextMenuControlSettings)
-                         .AddControl(mentionUserButtonContextMenuControlSettings);
+                         .AddControl(openUserProfileButtonControlSettings)
+                         .AddControl(contextMenuJumpInButton)
+                         .AddControl(contextMenuBlockUserButton)
+                         .AddControl(mentionUserButtonControlSettings);
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
+            CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
+            GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.DEFAULT)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
+            UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
             if (friendServiceProxy.Configured)
             {
-                var friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
+                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+                blockButtonControlSettings.SetData(profile.UserId);
+                jumpInButtonControlSettings.SetData(profile.UserId);
+                contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
             }
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
+            userProfileControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
-            mentionUserButtonContextMenuControlSettings.SetData(profile.MentionName);
-            openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
+
+            mentionUserButtonControlSettings.SetData(profile.MentionName);
+            openUserProfileButtonControlSettings.SetData(profile.UserId);
+
+            if (anchorPoint == GenericContextMenuAnchorPoint.DEFAULT)
+                anchorPoint = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
+
+            contextMenu.ChangeAnchorPoint(anchorPoint);
+
+            if (offset == default(Vector2))
+                offset = CONTEXT_MENU_OFFSET;
+
+            contextMenu.ChangeOffsetFromTarget(offset);
+
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide:onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
@@ -81,7 +147,7 @@ namespace MVC
                        FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
                        FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
                        FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
-                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
                    };
         }
 
@@ -105,7 +171,6 @@ namespace MVC
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
             }
-
         }
 
         private void RemoveFriend(string userAddress)
@@ -179,8 +244,26 @@ namespace MVC
             chatInputBus.InsertText(userName + " ");
         }
 
+        private void OnBlockUserClicked(string userId)
+        {
+            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
+        }
+
+        private void OnJumpInClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
+        }
+
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
+
+        private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            {
+                {"receiver_id", targetAddress},
+                {"friend_position", parcel.ToString()},
+            });
 
     }
 }

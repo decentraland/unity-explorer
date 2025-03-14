@@ -4,6 +4,7 @@ using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.Web3;
 using MVC;
 using DG.Tweening;
 using System;
@@ -24,15 +25,16 @@ namespace DCL.Chat
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
+        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+        public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
-        public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void MemberListVisibilityChangedDelegate(bool isVisible);
-        public delegate void ScrollBottomReachedDelegate();
         public delegate void PointerEventDelegate();
-        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+        public delegate void ScrollBottomReachedDelegate();
         public delegate void UnreadMessagesSeparatorViewedDelegate();
+
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -48,10 +50,6 @@ namespace DCL.Chat
         private float scrollToBottomButtonFadeOutDuration = 0.5f;
 
         [Header("UI elements")]
-        [FormerlySerializedAs("ChatBubblesToggle")]
-        [SerializeField]
-        private ToggleView chatBubblesToggle;
-
         [SerializeField]
         private ChatInputBoxElement chatInputBox;
 
@@ -59,39 +57,13 @@ namespace DCL.Chat
         [SerializeField]
         private CanvasGroup panelBackgroundCanvasGroup;
 
-        [FormerlySerializedAs("CloseChatButton")]
-        [SerializeField]
-        private Button closeChatButton;
-
-        [SerializeField]
-        private Button closeMemberListButton;
-
         [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
 
-        [SerializeField]
-        private Button memberListButton;
-
-        [SerializeField]
-        private TMP_Text memberListNumberText;
-
-        [SerializeField]
-        private TMP_Text memberListNumberText2;
+        [SerializeField] private ChatTitleBarView chatTitleBar;
 
         [SerializeField]
         private ChatMemberListView memberListView;
-
-        [SerializeField]
-        private Button memberListOpeningButton;
-
-        [SerializeField]
-        private Button memberListClosingButton;
-
-        [SerializeField]
-        private GameObject defaultChatTitlebar;
-
-        [SerializeField]
-        private GameObject memberListTitlebar;
 
         [SerializeField]
         private GameObject chatPanel;
@@ -106,79 +78,81 @@ namespace DCL.Chat
         private CanvasGroup scrollToBottomCanvasGroup;
 
         [Header("Audio")]
-        [SerializeField]private AudioClipConfig chatReceiveMessageAudio;
+        [SerializeField] private AudioClipConfig chatReceiveMessageAudio;
         [SerializeField] private AudioClipConfig chatReceiveMentionMessageAudio;
 
-        /// <summary>
-        /// Raised when the mouse pointer hovers any part of the chat window.
+                /// <summary>
+        ///     Raised when the mouse pointer hovers any part of the chat window.
         /// </summary>
         public event PointerEventDelegate PointerEnter;
 
         /// <summary>
-        /// Raised when the mouse pointer stops hovering the chat window.
+        ///     Raised when the mouse pointer stops hovering the chat window.
         /// </summary>
         public event PointerEventDelegate PointerExit;
 
         /// <summary>
-        /// Raised when either the input box gains the focus or loses it.
+        ///     Raised when either the input box gains the focus or loses it.
         /// </summary>
         public event InputBoxFocusChangedDelegate InputBoxFocusChanged;
 
         /// <summary>
-        /// Raised when either the emoji selection panel opens or closes.
+        ///     Raised when either the emoji selection panel opens or closes.
         /// </summary>
         public event EmojiSelectionVisibilityChangedDelegate EmojiSelectionVisibilityChanged;
 
         /// <summary>
-        /// Raised whenever the user attempts to send the content of the input box as a chat message.
+        ///     Raised whenever the user attempts to send the content of the input box as a chat message.
         /// </summary>
         public event InputSubmittedDelegate InputSubmitted;
 
         /// <summary>
-        /// Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
+        ///     Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
         /// </summary>
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
 
         /// <summary>
-        /// Raised when the user scrolls down the list to the bottom.
+        ///     Raised when the user scrolls down the list to the bottom.
         /// </summary>
         public event ScrollBottomReachedDelegate ScrollBottomReached;
 
         /// <summary>
-        /// Raised when the UI is folded or unfolded.
+        ///     Raised when the UI is folded or unfolded.
         /// </summary>
         public event FoldingChangedDelegate FoldingChanged;
 
         /// <summary>
-        /// Raised when the Unread messages separator is visible for the user.
+        ///     Raised when the Unread messages separator is visible for the user.
         /// </summary>
         public event UnreadMessagesSeparatorViewedDelegate UnreadMessagesSeparatorViewed;
 
         /// <summary>
-        /// Raised when the Member list panel changes its visibility (which implies that the message list may appear or hide).
+        ///     Raised when the Member list panel changes its visibility (which implies that the message list may appear or hide).
         /// </summary>
         public event MemberListVisibilityChangedDelegate MemberListVisibilityChanged;
 
-        private ViewDependencies viewDependencies;
+        private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
+
+        private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private UniTaskCompletionSource closePopupTask;
+        private ChatChannel? currentChannel;
 
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
         private CancellationTokenSource fadeoutCts;
-        private CancellationTokenSource popupCts;
 
         private bool isInputSelected;
-
-        private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
-        private ChatChannel? currentChannel;
-
-        private readonly List<ChatMemberListView.MemberData> sortedMemberData = new();
-        private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private bool isMemberListCountDirty;
+        private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private int memberListCount;
+        private bool isChatContextMenuOpen;
+        private CancellationTokenSource popupCts;
+        private bool pointerExit;
+
+        private ViewDependencies viewDependencies;
 
         /// <summary>
-        /// Get or sets the current content of the input box.
+        ///     Get or sets the current content of the input box.
         /// </summary>
         public string InputBoxText
         {
@@ -187,38 +161,26 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
+        ///     Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
         /// </summary>
         public bool IsScrollAtBottom => chatMessageViewer.IsScrollAtBottom;
 
         /// <summary>
-        /// Gets or sets whether the field that allows changing the visibility of the chat bubbles is enabled or not.
+        ///     Gets or sets whether the field that allows changing the visibility of the chat bubbles is enabled or not.
         /// </summary>
         public bool EnableChatBubblesVisibilityField
         {
-            get => chatBubblesToggle.Toggle.interactable;
-
-            set
-            {
-                if (chatBubblesToggle.Toggle.interactable != value)
-                {
-                    chatBubblesToggle.Toggle.interactable = value;
-
-                    chatBubblesToggle.IsSoundEnabled = false;
-                    chatBubblesToggle.Toggle.isOn = chatBubblesToggle.Toggle.interactable;
-                    chatBubblesToggle.IsSoundEnabled = true;
-                }
-            }
+            set => chatTitleBar.SetToggleChatBubblesValue(value);
         }
 
         /// <summary>
-        /// Gets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
+        ///     Gets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
         /// </summary>
         public bool IsScrollToBottomButtonVisible => scrollToBottomButton.gameObject.activeInHierarchy;
 
         /// <summary>
-        /// Gets or sets the amount of participants in the current channel.
-        /// The UI will be refreshed in the next Update.
+        ///     Gets or sets the amount of participants in the current channel.
+        ///     The UI will be refreshed in the next Update.
         /// </summary>
         public int MemberCount
         {
@@ -235,14 +197,14 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Gets whether the message list panel is visible or not (if the chat is folded, it is considered not visible).
+        ///     Gets whether the message list panel is visible or not (if the chat is folded, it is considered not visible).
         /// </summary>
         public bool IsMessageListVisible => chatMessageViewer.IsVisible && IsUnfolded;
 
         /// <summary>
-        /// Gets or sets the chat channel to be displayed, using its Id.
+        ///     Gets or sets the chat channel to be displayed, using its Id.
         /// </summary>
-        public ChatChannel.ChannelId CurrentChannel
+        public ChatChannel.ChannelId CurrentChannelId
         {
             get => currentChannel!.Id;
 
@@ -251,19 +213,31 @@ namespace DCL.Chat
                 if (currentChannel == null || !currentChannel.Id.Equals(value))
                 {
                     currentChannel = channels![value];
-
                     chatMessageViewer.SetData(currentChannel.Messages);
+
+                    switch (currentChannel.Type)
+                    {
+                        case ChatChannel.ChatChannelType.NearBy:
+                            chatTitleBar.SetNearbyChannelImage();
+                            break;
+                        case ChatChannel.ChatChannelType.User:
+                        // Get user profile from data in the channel? and set up
+                        //chatTitleBar.SetupProfilePictureView(viewDependencies,);
+                        //chatTitleBar.SetChannelNameText(username);
+                        default:
+                            break;
+                    }
                 }
             }
         }
 
         /// <summary>
-        /// Gets whether the member list panel is visible or not (if the chat is unfolded, it is considered not visible):
+        ///     Gets whether the member list panel is visible or not (if the chat is unfolded, it is considered not visible):
         /// </summary>
         public bool IsMemberListVisible => memberListView.IsVisible && IsUnfolded;
 
         /// <summary>
-        /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
+        ///     Gets or sets whether the chat panel is open or close (the input box is visible in any case).
         /// </summary>
         public bool IsUnfolded
         {
@@ -271,7 +245,7 @@ namespace DCL.Chat
 
             set
             {
-                if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
+                if (value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
                     return;
 
                 memberListView.IsVisible = false;
@@ -308,8 +282,7 @@ namespace DCL.Chat
 
             if (isMemberListDirty || (isMemberListCountDirty && !IsMemberListVisible)) // Once the member list is visible, the number does not change
             {
-                memberListNumberText.text = memberListCount.ToString();
-                memberListNumberText2.text = memberListNumberText.text;
+                chatTitleBar.SetMemberListNumberText(memberListCount.ToString());
             }
 
             isMemberListDirty = false;
@@ -323,148 +296,6 @@ namespace DCL.Chat
             popupCts.SafeCancelAndDispose();
         }
 
-        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
-            ChatChannel.ChannelId defaultChannelId,
-            bool areChatBubblesVisible,
-            ChatAudioSettingsAsset chatAudioSettings,
-            GetParticipantProfilesDelegate getParticipantProfilesDelegate
-        )
-        {
-            this.channels = chatChannels;
-            closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
-            closeMemberListButton.onClick.AddListener(OnCloseChatButtonClicked);
-            memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
-            memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
-            chatMessageViewer.Initialize();
-            chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
-            chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
-            scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
-            memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
-
-            chatBubblesToggle.IsSoundEnabled = false;
-            chatBubblesToggle.Toggle.isOn = areChatBubblesVisible;
-            chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
-            chatBubblesToggle.IsSoundEnabled = true;
-
-            chatInputBox.Initialize(chatAudioSettings, getParticipantProfilesDelegate);
-            chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
-            chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
-            chatInputBox.InputChanged += OnInputChanged;
-            chatInputBox.InputSubmitted += OnInputSubmitted;
-
-            viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
-            closePopupTask = new UniTaskCompletionSource();
-
-            CurrentChannel = defaultChannelId;
-        }
-
-        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
-        {
-            if (memberListView.IsVisible)
-                OnMemberListClosingButtonClicked();
-        }
-
-        private void OnScrollToEndButtonClicked()
-        {
-            chatMessageViewer.ShowLastMessage(true);
-        }
-
-        /// <summary>
-        /// Makes the input box stop receiving user inputs.
-        /// </summary>
-        public void DisableInputBoxSubmissions()
-        {
-            IsFocused = false;
-            chatInputBox.DisableInputBoxSubmissions();
-        }
-
-        /// <summary>
-        /// Makes the input box start receiving user inputs.
-        /// </summary>
-        public void EnableInputBoxSubmissions()
-        {
-            IsFocused = true;
-            chatInputBox.EnableInputBoxSubmissions();
-        }
-
-        /// <summary>
-        /// Makes the input box gain the focus. It does not modify its content.
-        /// </summary>
-        public void FocusInputBox()
-        {
-            memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
-            chatInputBox.FocusInputBox();
-        }
-
-        /// <summary>
-        /// Makes the input box gain the focus and replaces its content.
-        /// </summary>
-        /// <param name="text">The new content of the input box.</param>
-        public void FocusInputBoxWithText(string text)
-        {
-            if (gameObject.activeInHierarchy)
-                chatInputBox.FocusInputBoxWithText(text);
-        }
-
-        /// <summary>
-        /// Makes the chat submit the current content of the input box.
-        /// </summary>
-        public void SubmitInput()
-        {
-            chatInputBox.SubmitInput();
-        }
-
-        /// <summary>
-        /// Inserts the sent text at the caret position
-        /// </summary>
-        /// <param name="text"> the text to be inserted </param>
-        public void InsertTextInInputBox(string text)
-        {
-            chatInputBox.InsertTextAtCaretPosition(text);
-        }
-
-        /// <summary>
-        /// Makes sure the chat window is showing all the messages stored in the data for the current channel.
-        /// </summary>
-        public void RefreshMessages()
-        {
-            int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
-
-            if (pendingMessages > 0)
-            {
-                chatMessageViewer.ShowSeparator(pendingMessages + 1);
-            }
-
-            chatMessageViewer.RefreshMessages();
-
-            SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
-
-            if (pendingMessages > 0)
-                scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
-        }
-
-        /// <summary>
-        /// Performs a click event on the chat window.
-        /// </summary>
-        public void Click()
-        {
-            chatInputBox.Click();
-        }
-
-        /// <summary>
-        /// Plays the sound FX of the chat receiving a new message.
-        /// </summary>
-        public void PlayMessageReceivedSfx(bool isMention)
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(isMention? chatReceiveMentionMessageAudio : chatReceiveMessageAudio);
-        }
-
-        /// <summary>
-        /// Moves the chat so it shows the last created message.
-        /// </summary>
-        public void ShowLastMessage()
-            => chatMessageViewer.ShowLastMessage();
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             PointerEnter?.Invoke();
@@ -475,6 +306,8 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (isChatContextMenuOpen) return;
+
             PointerExit?.Invoke();
             panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
             chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
@@ -494,11 +327,158 @@ namespace DCL.Chat
             chatInputBox.InjectDependencies(dependencies);
             chatMessageViewer.InjectDependencies(dependencies);
             memberListView.InjectDependencies(dependencies);
+            chatTitleBar.InjectDependencies(dependencies);
+        }
+
+        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
+            ChatChannel.ChannelId defaultChannelId,
+            bool areChatBubblesVisible,
+            ChatAudioSettingsAsset chatAudioSettings,
+            GetParticipantProfilesDelegate getParticipantProfilesDelegate
+        )
+        {
+            channels = chatChannels;
+            chatTitleBar.Initialize(areChatBubblesVisible);
+            chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
+            chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
+            chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
+            chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
+            chatTitleBar.ChatBubblesVisibilityChanged += OnToggleChatBubblesValueChanged;
+            chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
+
+            chatMessageViewer.Initialize();
+            chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
+            chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
+            scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
+            memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
+
+            chatInputBox.Initialize(chatAudioSettings, getParticipantProfilesDelegate);
+            chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
+            chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
+            chatInputBox.InputChanged += OnInputChanged;
+            chatInputBox.InputSubmitted += OnInputSubmitted;
+
+            viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
+            closePopupTask = new UniTaskCompletionSource();
+
+            CurrentChannelId = defaultChannelId;
+        }
+
+        private void OnChatContextMenuVisibilityChanged(bool isVisible)
+        {
+            isChatContextMenuOpen = isVisible;
+
+            if (!isChatContextMenuOpen)
+                OnPointerExit(null);
+        }
+
+        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
+        {
+            if (memberListView.IsVisible)
+                OnMemberListClosingButtonClicked();
+        }
+
+        private void OnScrollToEndButtonClicked()
+        {
+            chatMessageViewer.ShowLastMessage(true);
         }
 
         /// <summary>
-        /// Replaces the data of the participants in the current channel.
-        /// The list will be refreshed during the next Update.
+        ///     Makes the input box stop receiving user inputs.
+        /// </summary>
+        public void DisableInputBoxSubmissions()
+        {
+            IsFocused = false;
+            chatInputBox.DisableInputBoxSubmissions();
+        }
+
+        /// <summary>
+        ///     Makes the input box start receiving user inputs.
+        /// </summary>
+        public void EnableInputBoxSubmissions()
+        {
+            IsFocused = true;
+            chatInputBox.EnableInputBoxSubmissions();
+        }
+
+        /// <summary>
+        ///     Makes the input box gain the focus. It does not modify its content.
+        /// </summary>
+        public void FocusInputBox()
+        {
+            memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
+            chatInputBox.FocusInputBox();
+        }
+
+        /// <summary>
+        ///     Makes the input box gain the focus and replaces its content.
+        /// </summary>
+        /// <param name="text">The new content of the input box.</param>
+        public void FocusInputBoxWithText(string text)
+        {
+            if (gameObject.activeInHierarchy)
+                chatInputBox.FocusInputBoxWithText(text);
+        }
+
+        /// <summary>
+        ///     Makes the chat submit the current content of the input box.
+        /// </summary>
+        public void SubmitInput()
+        {
+            chatInputBox.SubmitInput();
+        }
+
+        /// <summary>
+        ///     Inserts the sent text at the caret position
+        /// </summary>
+        /// <param name="text"> the text to be inserted </param>
+        public void InsertTextInInputBox(string text)
+        {
+            chatInputBox.InsertTextAtCaretPosition(text);
+        }
+
+        /// <summary>
+        ///     Makes sure the chat window is showing all the messages stored in the data for the current channel.
+        /// </summary>
+        public void RefreshMessages()
+        {
+            int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
+
+            if (pendingMessages > 0) { chatMessageViewer.ShowSeparator(pendingMessages + 1); }
+
+            chatMessageViewer.RefreshMessages();
+
+            SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
+
+            if (pendingMessages > 0)
+                scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
+        }
+
+        /// <summary>
+        ///     Performs a click event on the chat window.
+        /// </summary>
+        public void Click()
+        {
+            chatInputBox.Click();
+        }
+
+        /// <summary>
+        ///     Plays the sound FX of the chat receiving a new message.
+        /// </summary>
+        public void PlayMessageReceivedSfx(bool isMention)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isMention ? chatReceiveMentionMessageAudio : chatReceiveMessageAudio);
+        }
+
+        /// <summary>
+        ///     Moves the chat so it shows the last created message.
+        /// </summary>
+        public void ShowLastMessage() =>
+            chatMessageViewer.ShowLastMessage();
+
+        /// <summary>
+        ///     Replaces the data of the participants in the current channel.
+        ///     The list will be refreshed during the next Update.
         /// </summary>
         /// <param name="memberData">The data of the members to be displayed in the member list.</param>
         public void SetMemberData(List<ChatMemberListView.MemberData> memberData)
@@ -510,12 +490,12 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Refreshes the list of messages (adds the unread messages elements if needed) and scrolls the list so the first of
-        /// the unread messages, if any, is visible.
+        ///     Refreshes the list of messages (adds the unread messages elements if needed) and scrolls the list so the first of
+        ///     the unread messages, if any, is visible.
         /// </summary>
         public void ShowNewMessages()
         {
-            if(currentChannel!.Messages.Count == 0)
+            if (currentChannel!.Messages.Count == 0)
                 return;
 
             // If there are unread messages...
@@ -541,7 +521,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Changes the visibility of the scroll-to-bottom button.
+        ///     Changes the visibility of the scroll-to-bottom button.
         /// </summary>
         /// <param name="isVisible">Whether to make it visible or invisible.</param>
         /// <param name="useAnimation">Whether to use a fading animation or change its visual state immediately.</param>
@@ -557,10 +537,8 @@ namespace DCL.Chat
             }
             else
             {
-                if(useAnimation)
-                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).
-                                              SetDelay(scrollToBottomButtonTimeBeforeHiding).
-                                              OnComplete(() => { scrollToBottomButton.gameObject.SetActive(false); });
+                if (useAnimation)
+                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).SetDelay(scrollToBottomButtonTimeBeforeHiding).OnComplete(() => { scrollToBottomButton.gameObject.SetActive(false); });
                 else
                 {
                     scrollToBottomCanvasGroup.alpha = 0.0f;
@@ -598,7 +576,7 @@ namespace DCL.Chat
             closePopupTask.TrySetResult();
             closePopupTask = new UniTaskCompletionSource();
 
-            ChatEntryMenuPopupData data = new ChatEntryMenuPopupData(
+            var data = new ChatEntryMenuPopupData(
                 chatEntryView.messageBubbleElement.PopupPosition,
                 messageText,
                 () => chatEntryView.messageBubbleElement.HideOptionsButton(),
@@ -661,8 +639,7 @@ namespace DCL.Chat
 
         private void OnMemberListViewVisibilityChanged(bool isVisible)
         {
-            memberListTitlebar.gameObject.SetActive(isVisible);
-            defaultChatTitlebar.gameObject.SetActive(!isVisible);
+            chatTitleBar.ChangeTitleBarVisibility(isVisible);
             chatPanel.SetActive(!isVisible);
             chatInputBox.gameObject.SetActive(!isVisible);
 

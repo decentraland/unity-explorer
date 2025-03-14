@@ -242,6 +242,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 688aa1f59829ea64fb0887ed7bb87d26
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithTextAndIcon_StringDelegateVariant.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6afb31861b85441b6ab2b988819bb96a
     m_Address: ChatEntryConfiguration
     m_ReadOnly: 0

@@ -96,7 +96,7 @@ namespace DCL.Chat
 
         public void Clear() // Called by a command
         {
-            chatHistory.ClearChannel(viewInstance!.CurrentChannel);
+            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
         }
 
@@ -180,7 +180,7 @@ namespace DCL.Chat
             CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
             // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
+            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannelId) && viewInstance.IsScrollAtBottom)
                 MarkCurrentChannelAsRead();
 
             if (isSentByOwnUser)
@@ -217,7 +217,7 @@ namespace DCL.Chat
 
         private void OnViewUnreadMessagesSeparatorViewed()
         {
-            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannel].Messages.Count;
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannelId].Messages.Count;
             hasToResetUnreadMessagesWhenNewMessageArrive = true;
         }
 
@@ -283,8 +283,8 @@ namespace DCL.Chat
 
         private void MarkCurrentChannelAsRead()
         {
-            chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
-            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
+            chatHistory.Channels[viewInstance!.CurrentChannelId].MarkAllMessagesAsRead();
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannelId].ReadMessages;
         }
 
         private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
