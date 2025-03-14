@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
 using System.IO;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ namespace ECS.StreamableLoading.Cache.Disk
     public readonly struct CacheDirectory
     {
         //Bump this version if there is the need to wipe out the old disk cache when introducing major changes to DiskCaching
-        private const string CACHE_VERSION = "V1";
+        private const string CACHE_VERSION = "V2";
         private static readonly string DISK_CACHE_FOLDER = $"DiskCache{CACHE_VERSION}";
         public readonly string Path;
 
@@ -15,6 +16,9 @@ namespace ECS.StreamableLoading.Cache.Disk
         {
             this.Path = path;
         }
+
+        public static CacheDirectory NewExact(string fullPath) =>
+            new (fullPath);
 
         public static CacheDirectory New(string subdirectory)
         {
@@ -56,5 +60,16 @@ namespace ECS.StreamableLoading.Cache.Disk
         public static CacheDirectory NewDefaultSubdirectory(string subdirectory) =>
             New($"{DISK_CACHE_FOLDER}/{subdirectory}");
 
+        public string PathFor(HashKey key, string extension)
+        {
+            string hashName = HashNamings.HashNameFrom(key, extension);
+            return PathFor(hashName);
+        }
+
+        public string PathFor(string fileName)
+        {
+            string fullPath = System.IO.Path.Combine(Path, fileName);
+            return fullPath;
+        }
     }
 }

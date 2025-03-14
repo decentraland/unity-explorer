@@ -138,7 +138,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
-                    state.AcquiredBudget?.Release();
+                    state.AcquiredBudget!.Release();
 
                     OngoingRequestResult<TAsset> ongoingRequestResult;
 
@@ -146,7 +146,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
                     //Temporarly disabled as we don't have partial loading integrated
-                    //SynchronizePartialData(state, ongoingRequestResult);
+                    state.SyncOrReplaceChunkData(ongoingRequestResult);
 
                     result = ongoingRequestResult.Result;
 
@@ -183,21 +183,6 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { FinalizeLoading(entity, intention, result, source, state); }
         }
 
-        /// <summary>
-        ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
-        ///     <para>
-        ///         Provokes Partial Data to be copied in order to keep both promises independent
-        ///     </para>
-        /// </summary>
-        private static void SynchronizePartialData(StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
-        {
-            state.PartialDownloadingData?.Dispose();
-            state.PartialDownloadingData = null;
-
-            if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
-                state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
-        }
-
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
         private void FinalizeLoading(EntityReference entity, TIntention intention,
@@ -209,14 +194,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
             state.DisposeBudgetIfExists();
 
-            //Temporarly disabled as we don't have partial loading integrated
             // Special path for partial downloading
-            /*if (state.PartialDownloadingData is { FullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
+            if (state.PartialDownloadingData is { IsFileFullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();
                 return;
-            }*/
+            }
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used

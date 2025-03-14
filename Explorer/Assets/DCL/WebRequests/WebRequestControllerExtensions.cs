@@ -102,7 +102,7 @@ namespace DCL.WebRequests
                     fullFileSize = Convert.ToInt32(webRequest.UnityWebRequest.downloadedBytes);
                 }
 
-                return new PartialDownloadedData(partialDownloadHandler.PartialData, partialDownloadHandler.DownloadedSize, fullFileSize);
+                return new PartialDownloadedData(partialDownloadHandler.PartialData, partialDownloadHandler.DownloadedSize, fullFileSize, partialDownloadHandler.buffersPool);
             }
         }
         public static UniTask<TResult> PostAsync<TOp, TResult>(

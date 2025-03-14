@@ -1,7 +1,6 @@
 ﻿using AssetManagement;
 using DCL.Diagnostics;
 using System;
-using System.Runtime.CompilerServices;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -10,6 +9,8 @@ namespace ECS.StreamableLoading.Common.Components
     /// </summary>
     public readonly struct StreamableLoadingResult<T>
     {
+        public static Exception Empty => new ($"Empty StreamableLoadingResult Exception: {typeof(T).Name}");
+
         /// <summary>
         ///     Always contains result even if the request has failed
         /// </summary>

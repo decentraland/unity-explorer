@@ -51,7 +51,7 @@ namespace Global.Dynamic
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
-        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly IPartialDiskCache partialsDiskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -69,7 +69,7 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
+            IPartialDiskCache partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;

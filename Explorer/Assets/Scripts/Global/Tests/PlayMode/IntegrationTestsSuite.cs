@@ -82,7 +82,7 @@ namespace Global.Tests.PlayMode
                 enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
-                Substitute.For<IDiskCache<PartialLoadingState>>(),
+                Substitute.For<IPartialDiskCache>(),
                 scenesUI,
                 ct,
                 enableGPUInstancing: false

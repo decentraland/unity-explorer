@@ -1,52 +1,60 @@
-﻿using ECS.StreamableLoading.Cache.Disk;
+﻿using DCL.Utilities.Extensions;
+using DCL.WebRequests.PartialDownload;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
+using UnityEngine;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Components
 {
     public struct PartialLoadingState
     {
-        public readonly int FullFileSize;
-        private SlicedOwnedMemory<byte> memoryOwner;
+        private MutexSlim<PartialFile>? memoryOwner;
 
-        public PartialLoadingState(int fullFileSize, bool isFileFullyDownloaded = false)
+        public PartialLoadingState(MutexSlim<PartialFile> partialFile)
         {
-            memoryOwner = new SlicedOwnedMemory<byte>(fullFileSize);
-            NextRangeStart = 0;
-            FullFileSize = fullFileSize;
-            IsFileFullyDownloaded = isFileFullyDownloaded;
+            memoryOwner = partialFile;
         }
 
-        public PartialLoadingState(in PartialLoadingState otherInstance, bool isFileFullyDownloaded = false) : this(otherInstance.FullFileSize, isFileFullyDownloaded)
-        {
-            AppendData(otherInstance.FullData[..otherInstance.NextRangeStart]);
-        }
+        internal readonly MutexSlim<PartialFile> PeekOwner() =>
+            memoryOwner.EnsureNotNull();
 
-        public int NextRangeStart { get; private set; }
-
-        public bool IsFileFullyDownloaded;
-        public readonly bool FullyDownloaded => NextRangeStart >= FullFileSize;
-        public readonly ReadOnlyMemory<byte> FullData => memoryOwner.Memory;
-
-        internal void AppendData(ReadOnlyMemory<byte> data)
-        {
-            data.CopyTo(memoryOwner.Memory[NextRangeStart..]);
-            NextRangeStart += data.Length;
-            IsFileFullyDownloaded = FullyDownloaded;
-        }
+        public readonly bool IsFileFullyDownloaded => memoryOwner.EnsureNotNull().Access(static p => p.MetaData.IsFullyDownloaded);
 
         /// <summary>
         ///     When the memory ownership is transferred, the responsibility to dispose of the memory will be on the external caller
         /// </summary>
-        internal SlicedOwnedMemory<byte> TransferMemoryOwnership()
+        internal MutexSlim<PartialFile> TransferMemoryOwnership()
         {
+            if (memoryOwner == null)
+                throw new InvalidOperationException("Memory owner is null");
+
             var memoryOwnerToReturn = memoryOwner;
-            memoryOwner = SlicedOwnedMemory<byte>.EMPTY;
+            memoryOwner = null;
             return memoryOwnerToReturn;
         }
 
-        public void Dispose()
+        public readonly void Dispose()
         {
-            memoryOwner.Dispose();
+            memoryOwner?.Dispose();
+        }
+    }
+
+    public static class PartialLoadingStateExtensions
+    {
+        public static PartialDownloadingRange NewPartialDownloadingRange(this PartialFile partialFile)
+        {
+            var meta = partialFile.MetaData;
+
+            if (meta.MaxFileSize == 0)
+
+                // If the downloading has not started yet, create the first chunk data
+                return new PartialDownloadingRange(0, PartialDownloadingRange.CHUNK_SIZE);
+
+            // If the downloading has already started, get the next chunk data
+            int nextRange = partialFile.NextRangeStart;
+            int limit = Mathf.Min(meta.MaxFileSize - 1, nextRange + PartialDownloadingRange.CHUNK_SIZE);
+            return new PartialDownloadingRange(nextRange, limit);
         }
     }
 }

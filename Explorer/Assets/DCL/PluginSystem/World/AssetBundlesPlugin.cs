@@ -35,9 +35,9 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
         private readonly IWebRequestController webRequestController;
         private readonly ArrayPool<byte> buffersPool;
-        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly IPartialDiskCache partialsDiskCache;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IPartialDiskCache partialsDiskCache)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;

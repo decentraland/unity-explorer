@@ -13,6 +13,14 @@ namespace DCL.Utilities.Extensions
             return value;
         }
 
+        public static T EnsureNotNull<T>(this Nullable<T> value, string? message = null) where T : struct
+        {
+            if (value.HasValue == false)
+                throw new NullReferenceException(message ?? $"Value of type {typeof(T).FullName} is null");
+
+            return value.Value;
+        }
+
         public static T EnsureGetComponent<T>(this GameObject? value) =>
             value.EnsureNotNull("GameObject is null")
                  .GetComponent<T>()

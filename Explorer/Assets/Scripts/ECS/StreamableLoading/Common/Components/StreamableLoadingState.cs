@@ -1,3 +1,4 @@
+using DCL.Optimization.Memory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.Cache.Disk;
@@ -5,6 +6,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -55,7 +57,9 @@ namespace ECS.StreamableLoading.Common.Components
                 state.PartialDownloadingData = null;
             },
             collectionCheck: PoolConstants.CHECK_COLLECTIONS,
-            defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT, maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT);
+            defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT,
+            maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT
+        );
 
         public static StreamableLoadingState Create() =>
             POOL.Get();
@@ -74,20 +78,14 @@ namespace ECS.StreamableLoading.Common.Components
         /// <summary>
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started
         /// </summary>
-        public PartialLoadingState? PartialDownloadingData { get; internal set; }
+        public PartialLoadingState? PartialDownloadingData { get; private set; }
 
-        public ReadOnlyMemory<byte> GetFullyDownloadedData()
+        public MutexSlim<PartialFile> ClaimOwnershipOverFullyDownloadedData()
         {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
-            return PartialDownloadingData!.Value.FullData;
-        }
-
-        public SlicedOwnedMemory<byte> ClaimOwnershipOverFullyDownloadedData()
-        {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            Assert.IsTrue(PartialDownloadingData is { IsFileFullyDownloaded: true });
             PartialLoadingState value = PartialDownloadingData!.Value;
-            SlicedOwnedMemory<byte> owner = value.TransferMemoryOwnership();
-            PartialDownloadingData = value;
+            MutexSlim<PartialFile> owner = value.TransferMemoryOwnership();
+            PartialDownloadingData = null;
             return owner;
         }
 
@@ -149,6 +147,19 @@ namespace ECS.StreamableLoading.Common.Components
         public void SetChunkData(PartialLoadingState partialDownloadingData)
         {
             PartialDownloadingData = partialDownloadingData;
+        }
+
+        /// <summary>
+        ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
+        ///     <para>
+        ///         Provokes Partial Data to be copied in order to keep both promises independent
+        ///     </para>
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncOrReplaceChunkData<T>(in OngoingRequestResult<T> ongoingRequestResult)
+        {
+            if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
+                PartialDownloadingData = ongoingRequestResult.PartialDownloadingData.Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
