@@ -180,7 +180,7 @@ namespace DCL.MarketplaceCredits
             if (controller is not CreditsUnlockedController)
                 return;
 
-            marketplaceCreditsGoalsOfTheWeekController.OnOpenSection();
+            OpenSection(MarketplaceCreditsSection.WELCOME);
         }
     }
 }

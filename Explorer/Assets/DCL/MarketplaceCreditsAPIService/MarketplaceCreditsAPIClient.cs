@@ -220,7 +220,7 @@ namespace DCL.MarketplaceCreditsAPIService
 
             ClaimCreditsResponse responseData = new ClaimCreditsResponse
             {
-                success = randomSuccess,
+                success = true,
             };
 
             return responseData;
