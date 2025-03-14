@@ -93,13 +93,15 @@ namespace DCL.Multiplayer.Emotes
         {
             using (receivedMessage)
             {
-                if (cancellationTokenSource.Token.IsCancellationRequested
-                    || (userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(receivedMessage.FromWalletId)))
+                if (cancellationTokenSource.Token.IsCancellationRequested || IsUserBlocked(receivedMessage.FromWalletId))
                     return;
 
                 Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId);
             }
         }
+
+        private bool IsUserBlocked(string userAddress) =>
+            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
         private void Inbox(string walletId, URN emoteURN, uint incrementalId)
         {
