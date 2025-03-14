@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Rendering.GPUInstancing;
+using System;
 using System.Collections;
 using UnityEngine;
 using Utility;
@@ -25,6 +26,7 @@ namespace DCL.InWorldCamera
 
         private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;
+        private readonly GPUInstancingService gpuInstancingService;
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
 
@@ -34,12 +36,13 @@ namespace DCL.InWorldCamera
 
         public RecordingState State { get; private set; } = RecordingState.IDLE;
 
-        public ScreenRecorder(RectTransform canvasRectTransform)
+        public ScreenRecorder(RectTransform canvasRectTransform, GPUInstancingService gpuInstancingService)
         {
             targetAspectRatio = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
             Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
 
             this.canvasRectTransform = canvasRectTransform;
+            this.gpuInstancingService = gpuInstancingService;
         }
 
         public void Dispose()

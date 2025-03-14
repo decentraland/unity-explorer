@@ -24,6 +24,7 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Rendering.GPUInstancing;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
         private readonly ViewDependencies viewDependencies;
+        private readonly GPUInstancingService gpuInstancingBuffers;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -94,7 +96,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            GPUInstancingService gpuInstancingBuffers)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -122,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
             this.viewDependencies = viewDependencies;
+            this.gpuInstancingBuffers = gpuInstancingBuffers;
             factory = new InWorldCameraFactory();
         }
 
@@ -137,7 +141,7 @@ namespace DCL.PluginSystem.Global
             hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
             followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
-            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>(), gpuInstancingBuffers);
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
