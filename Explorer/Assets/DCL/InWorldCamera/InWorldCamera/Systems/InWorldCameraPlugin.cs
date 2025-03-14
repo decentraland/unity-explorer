@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -74,6 +75,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private readonly ViewDependencies viewDependencies;
         private readonly GPUInstancingService gpuInstancingBuffers;
+        private readonly ExposedCameraData exposedCameraData;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -97,7 +99,8 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
             ViewDependencies viewDependencies,
-            GPUInstancingService gpuInstancingBuffers)
+            GPUInstancingService gpuInstancingBuffers,
+            ExposedCameraData exposedCameraData)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -126,6 +129,7 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.viewDependencies = viewDependencies;
             this.gpuInstancingBuffers = gpuInstancingBuffers;
+            this.exposedCameraData = exposedCameraData;
             factory = new InWorldCameraFactory();
         }
 
@@ -185,7 +189,7 @@ namespace DCL.PluginSystem.Global
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
         }

@@ -45,7 +45,7 @@ namespace DCL.InWorldCamera.Playground
         {
             recorder ??= new ScreenRecorder(canvasRectTransform, new GPUInstancingService(null));
 
-            StartCoroutine(recorder.CaptureScreenshot());
+            StartCoroutine(recorder.CaptureScreenshot(Camera.main));
             yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME;
 
             Texture = recorder.GetScreenshotAndReset();
