@@ -177,7 +177,7 @@ namespace DCL.MarketplaceCredits.Sections
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                view.SetCaptchaAsErrorState(true, false);
+                view.SetCaptchaAsErrorState(true, isNonSolvedError: false);
                 const string ERROR_MESSAGE = "There was an error loading the captcha. Please try again!";
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -208,7 +208,7 @@ namespace DCL.MarketplaceCredits.Sections
                     OnOpenSection();
                 }
                 else
-                    view.SetCaptchaAsErrorState(true);
+                    view.SetCaptchaAsErrorState(true, isNonSolvedError: true);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

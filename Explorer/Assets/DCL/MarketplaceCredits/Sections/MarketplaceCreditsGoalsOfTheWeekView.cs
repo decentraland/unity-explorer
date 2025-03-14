@@ -57,7 +57,7 @@ namespace DCL.MarketplaceCredits.Sections
         public void SetCaptchaTargetAreaPercentageValue(float value) =>
             CaptchaControl.SetTargetAreaPercentageValue(value);
 
-        public void SetCaptchaAsErrorState(bool isError, bool isNotSolvedError = true) =>
-            CaptchaControl.SetAsErrorState(isError, isNotSolvedError);
+        public void SetCaptchaAsErrorState(bool isError, bool isNonSolvedError = true) =>
+            CaptchaControl.SetAsErrorState(isError, isNonSolvedError);
     }
 }

@@ -77,11 +77,11 @@ namespace DCL.MarketplaceCredits.Fields
                 TargetArea.anchoredPosition.y);
         }
 
-        public void SetAsErrorState(bool isError, bool isNotSolvedError = true)
+        public void SetAsErrorState(bool isError, bool isNonSolvedError = true)
         {
             ControlContainer.SetActive(!isError);
-            NotSolvedErrorContainer.gameObject.SetActive(isError && isNotSolvedError);
-            NotLoadedErrorContainer.gameObject.SetActive(isError && !isNotSolvedError);
+            NotSolvedErrorContainer.gameObject.SetActive(isError && isNonSolvedError);
+            NotLoadedErrorContainer.gameObject.SetActive(isError && !isNonSolvedError);
         }
 
         private void OnSliderPointerUp()
