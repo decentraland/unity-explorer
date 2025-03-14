@@ -24,7 +24,7 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            basicMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scripts/ECS/Unity/Materials/MaterialReference/BasicShapeMaterial.mat");
+            basicMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/DCL/Infrastructure/ECS/Unity/Materials/MaterialReference/BasicShapeMaterial.mat");
 
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
