@@ -27,6 +27,7 @@ namespace DCL.MarketplaceCredits
         private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource showHideMenuCts;
+        private CancellationTokenSource showErrorNotificationCts;
 
         public MarketplaceCreditsMenuController(
             MarketplaceCreditsMenuView view,
@@ -63,7 +64,10 @@ namespace DCL.MarketplaceCredits
                 webBrowser,
                 marketplaceCreditsAPIClient,
                 selfProfile,
-                webRequestController);
+                webRequestController,
+                this);
+
+            view.ErrorNotification.Hide(true, CancellationToken.None);
         }
 
         public void OpenPanel()
@@ -114,9 +118,16 @@ namespace DCL.MarketplaceCredits
             view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME);
         }
 
+        public void ShowErrorNotification(string message)
+        {
+            showErrorNotificationCts = showErrorNotificationCts.SafeRestart();
+            ShowErrorNotificationAsync(message, showErrorNotificationCts.Token).Forget();
+        }
+
         public void Dispose()
         {
             showHideMenuCts.SafeCancelAndDispose();
+            showErrorNotificationCts.SafeCancelAndDispose();
 
             view.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
             view.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
@@ -141,5 +152,13 @@ namespace DCL.MarketplaceCredits
 
         private void OpenLearnMoreLink() =>
             webBrowser.OpenUrl(MarketplaceCreditsUtils.GO_SHOPPING_LINK);
+
+        private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
+        {
+            view.ErrorNotification.SetText(message);
+            view.ErrorNotification.Show(ct);
+            await UniTask.Delay((int) view.ErrorNotificationDuration * 1000, cancellationToken: ct);
+            view.ErrorNotification.Hide(false, ct);
+        }
     }
 }

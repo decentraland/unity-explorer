@@ -502,6 +502,12 @@ MonoBehaviour:
       Severity: 4
     - Category: FRIENDS
       Severity: 1
+    - Category: MARKETPLACE_CREDITS
+      Severity: 4
+    - Category: MARKETPLACE_CREDITS
+      Severity: 1
+    - Category: MARKETPLACE_CREDITS
+      Severity: 0
   sentryMatrix:
     entries: []
   debounceEnabled: 1

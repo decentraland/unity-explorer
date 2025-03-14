@@ -87,7 +87,7 @@ namespace DCL.MarketplaceCredits.Sections
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
-                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
+                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
@@ -114,7 +114,7 @@ namespace DCL.MarketplaceCredits.Sections
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
-                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
+                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }

@@ -1,7 +1,10 @@
+using Cysharp.Threading.Tasks;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCredits.Sections;
+using DCL.UI;
 using MVC;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,5 +40,19 @@ namespace DCL.MarketplaceCredits
 
         [field: SerializeField]
         public MarketplaceCreditsProgramEndedView ProgramEndedView { get; private set; }
+
+        [field: SerializeField]
+        public WarningNotificationView ErrorNotification { get; private set; }
+
+        [field: SerializeField]
+        public float ErrorNotificationDuration { get; private set; } = 3f;
+
+        private async UniTask ShowErrorNotificationAsync(string message, CancellationToken ct)
+        {
+            ErrorNotification.SetText(message);
+            ErrorNotification.Show(ct);
+            await UniTask.Delay((int) ErrorNotificationDuration * 1000, cancellationToken: ct);
+            ErrorNotification.Hide(false, ct);
+        }
     }
 }

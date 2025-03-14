@@ -26,6 +26,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly ISelfProfile selfProfile;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
+        private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
         private Profile ownProfile;
         private CancellationTokenSource fetchGoalsOfTheWeekInfoCts;
@@ -38,13 +39,15 @@ namespace DCL.MarketplaceCredits.Sections
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
+            this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
             view.TimeLeftLinkButton.onClick.AddListener(OpenTimeLeftInfoLink);
             view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.AddListener(ReloadCaptcha);
@@ -122,7 +125,7 @@ namespace DCL.MarketplaceCredits.Sections
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error loading the goals of the week. Please try again!";
-                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
+                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
@@ -213,8 +216,8 @@ namespace DCL.MarketplaceCredits.Sections
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
+                view.SetCaptchaAsErrorState(true, isNonSolvedError: false);
                 const string ERROR_MESSAGE = "There was an error claiming the credits. Please try again!";
-                //marketplaceCreditsErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
