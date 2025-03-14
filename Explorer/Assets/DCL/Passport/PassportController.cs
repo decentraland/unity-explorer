@@ -580,7 +580,7 @@ namespace DCL.Passport
             BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();
             async UniTaskVoid BlockUserClickedAsync(CancellationToken ct)
             {
-                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetProfile!.UserId, targetProfile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct);
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(targetProfile!.UserId), targetProfile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct);
 
                 ShowFriendshipInteraction();
             }
@@ -689,7 +689,7 @@ namespace DCL.Passport
 
             async UniTaskVoid UnblockAndThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetProfile!.UserId, targetProfile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct);
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(targetProfile!.UserId), targetProfile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct);
 
                 ShowFriendshipInteraction();
             }

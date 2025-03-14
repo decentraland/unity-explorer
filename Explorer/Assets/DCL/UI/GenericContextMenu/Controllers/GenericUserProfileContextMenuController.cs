@@ -186,7 +186,7 @@ namespace MVC
         }
 
         private void OnBlockUserClicked(Profile profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(profile.UserId, profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         private void OnMentionUserClicked(string userName)
         {

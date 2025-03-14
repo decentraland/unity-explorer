@@ -1,12 +1,14 @@
+using DCL.Web3;
+
 namespace DCL.Friends.UI.BlockUserPrompt
 {
     public struct BlockUserPromptParams
     {
-        public readonly string TargetUserId;
+        public readonly Web3Address TargetUserId;
         public readonly string TargetUserName;
         public readonly UserBlockAction Action;
 
-        public BlockUserPromptParams(string targetUserId, string targetUserName, UserBlockAction action)
+        public BlockUserPromptParams(Web3Address targetUserId, string targetUserName, UserBlockAction action)
         {
             this.TargetUserId = targetUserId;
             this.TargetUserName = targetUserName;

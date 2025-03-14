@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -68,7 +69,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             return (contextMenu, jumpInElement);
         }
 
-        public static void BlockUserClicked(IMVCManager mvcManager, string targetUserAddress, string targetUserName) =>
+        public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
