@@ -150,7 +150,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     orderedData.Add(new OrderedData
                     {
                         Entity = entity,
-                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind, sceneDefinitionComponent.ContainsParcel(playerParcel)),
+                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind, sceneDefinitionComponent.ContainsParcel(playerParcel), sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x),
                     });
                 }
             }
@@ -160,13 +160,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
-        private readonly int scenesToLoad = 1;
+        private readonly int scenesToLoad = 4;
 
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
-            var promisesCreated = 0;
-
             unloadingSceneCounter.UpdateUnloadingScenes();
 
             for (var i = 0; i < orderedData.Length; i++)
@@ -189,8 +187,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     TryLoad(ipfsRealm, data, components.t0.Value, components.t1.Value);
                 else
                     TryUnload(data, components.t0.Value);
-
-                promisesCreated++;
             }
         }
 
