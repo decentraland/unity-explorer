@@ -13,7 +13,6 @@ using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace UnityEditor.Rendering.DCL_Toon
 {
-#if UNITY_2021_1_OR_NEWER
     /// <summary>
     /// Attribute to define the help url
     /// </summary>
@@ -105,5 +104,4 @@ namespace UnityEditor.Rendering.DCL_Toon
 #endif
         }
     }
-#endif // #if UNITY_2021_1_OR_NEWER
-        }
+}

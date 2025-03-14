@@ -6,12 +6,6 @@ namespace UnityEditor.Rendering.DCL_Toon
 {
     internal partial class DCL_Toon_GUI : UnityEditor.ShaderGUI
     {
-        internal const float kVersionX = 0.0f;
-        internal const float kVersionY = 11.0f;
-        internal const float kVersionZ = 0.0f;
-
-        internal static string versionString => "0.11.0-preview";
-
         // Render Pipelines UTS supports are the followings
         internal enum RenderPipeline
         {
@@ -60,32 +54,12 @@ namespace UnityEditor.Rendering.DCL_Toon
              }
         }
 
-
-
-        internal  void RenderingPerChennelsSetting(Material material)
-        {
-            if (currentRenderPipeline == RenderPipeline.HDRP)
-            {
-
-                RenderingPerChennelsSettingHDRP(material);
-            }
-        }
-
-        internal  void ApplyRenderingPerChennelsSetting(Material material)
-        {
-
-        }
-
-        internal const string ShaderDefineSHADINGGRADEMAP = "_SHADINGGRADEMAP";
-        internal const string ShaderDefineUTS_USE_RAYTRACING_SHADOW = "UTS_USE_RAYTRACING_SHADOW";
-        internal const string ShaderPropRTHS = "_RTHS";
         internal const string ShaderPropMatCap = "_MatCap";
         internal const string ShaderPropMainTex = "_MainTex";
         internal const string ShaderPropClippingMode = "_ClippingMode";
         internal const string ShaderPropClippingMask = "_ClippingMask";
         internal const string ShaderProp_Set_1st_ShadePosition = "_Set_1st_ShadePosition";
         internal const string ShaderProp_Set_2nd_ShadePosition = "_Set_2nd_ShadePosition";
-        internal const string ShaderProp_ShadingGradeMap = "_ShadingGradeMap";
         internal const string ShaderProp_Set_RimLightMask = "_Set_RimLightMask";
         internal const string ShaderProp_HighColor_Tex = "_HighColor_Tex";
         internal const string ShaderProp_Set_HighColorMask = "_Set_HighColorMask";
@@ -93,16 +67,12 @@ namespace UnityEditor.Rendering.DCL_Toon
         internal const string ShaderProp_Set_MatcapMask = "_Set_MatcapMask";
         internal const string ShaderProp_OutlineTex = "_OutlineTex";
         internal const string ShaderProp_Outline_Sampler = "_Outline_Sampler";
-
-        internal const string ShaderPropSimpleUI = "_simpleUI";
         internal const string ShaderPropStencilMode = "_StencilMode";
         internal const string ShaderPropStencilNo = "_StencilNo";
         internal const string ShaderPropTransparentEnabled = "_TransparentEnabled";
         internal const string ShaderPropStencilComp = "_StencilComp";
         internal const string ShaderPropStencilOpPass = "_StencilOpPass";
         internal const string ShaderPropStencilOpFail = "_StencilOpFail";
-        internal const string ShaderPropStencilWriteMask = "_StencilWriteMask";
-        internal const string ShaderPropStencilReadMask = "_StencilReadMask";
         internal const string ShaderPropUtsVersionX = "_utsVersionX";
         internal const string ShaderPropUtsVersionY = "_utsVersionY";
         internal const string ShaderPropUtsVersionZ = "_utsVersionZ";
@@ -118,8 +88,6 @@ namespace UnityEditor.Rendering.DCL_Toon
         internal const string ShaderPropIs_Ortho = "_Is_Ortho";
         internal const string ShaderPropGI_Intensity = "_GI_Intensity";
         internal const string ShaderPropUnlit_Intensity = "_Unlit_Intensity";
-
-
         internal const string ShaderPropIs_Filter_LightColor = "_Is_Filter_LightColor";
         internal const string ShaderPropIs_LightColor_1st_Shade = "_Is_LightColor_1st_Shade";
         internal const string ShaderPropIs_LightColor_2nd_Shade = "_Is_LightColor_2nd_Shade";
@@ -127,7 +95,6 @@ namespace UnityEditor.Rendering.DCL_Toon
         internal const string ShaderPropIs_LightColor_RimLight = "_Is_LightColor_RimLight";
         internal const string ShaderPropIs_LightColor_Ap_RimLight = "_Is_LightColor_Ap_RimLight";
         internal const string ShaderPropIs_LightColor_MatCap = "_Is_LightColor_MatCap";
-        internal const string ShaderPropIs_LightColor_AR = "_Is_LightColor_AR";
         internal const string ShaderPropIs_LightColor_Outline = "_Is_LightColor_Outline";
         internal const string ShaderPropInvert_MatcapMask = "_Inverse_MatcapMask";
         internal const string ShaderPropUse_BaseAs1st = "_Use_BaseAs1st";
@@ -139,13 +106,10 @@ namespace UnityEditor.Rendering.DCL_Toon
         internal const string ShaderPropIs_BlendAddToMatCap = "_Is_BlendAddToMatCap";
         internal const string ShaderPropARSampler_AlphaOn = "_ARSampler_AlphaOn";
         internal const string ShaderPropIs_UseTweakHighColorOnShadow = "_Is_UseTweakHighColorOnShadow";
-
         internal const string ShaderPropIs_SpecularToHighColor = "_Is_SpecularToHighColor";
         internal const string ShaderPropIs_BlendAddToHiColor = "_Is_BlendAddToHiColor";
-
         internal const string ShaderPropAdd_Antipodean_RimLight = "_Add_Antipodean_RimLight";
         internal const string ShaderPropLightDirection_MaskOn = "_LightDirection_MaskOn";
-
         internal const string ShaderProp1st_ShadeColor_Step = "_1st_ShadeColor_Step";
         internal const string ShaderPropBaseColor_Step = "_BaseColor_Step";
         internal const string ShaderProp1st_ShadeColor_Feather = "_1st_ShadeColor_Feather";
@@ -156,31 +120,17 @@ namespace UnityEditor.Rendering.DCL_Toon
         internal const string ShaderProp1st2nd_Shades_Feather = "_1st2nd_Shades_Feather";
         internal const string ShaderPropIs_NormalMapForMatCap = "_Is_NormalMapForMatCap";
         internal const string ShaderPropIs_UseTweakMatCapOnShadow = "_Is_UseTweakMatCapOnShadow";
-        internal const string ShaderPropIs_ViewCoord_Scroll = "_Is_ViewCoord_Scroll";
-
-        internal const string ShaderPropIs_ViewShift = "_Is_ViewShift";
         internal const string ShaderPropIs_BlendBaseColor = "_Is_BlendBaseColor";
         internal const string ShaderPropIs_OutlineTex = "_Is_OutlineTex";
         internal const string ShaderPropIs_BakedNormal = "_Is_BakedNormal";
         internal const string ShaderPropIs_BLD = "_Is_BLD";
         internal const string ShaderPropInverse_Z_Axis_BLD = "_Inverse_Z_Axis_BLD";
-
-
-        internal const string ShaderDefineIS_OUTLINE_CLIPPING_NO = "_IS_OUTLINE_CLIPPING_NO";
-        internal const string ShaderDefineIS_OUTLINE_CLIPPING_YES = "_IS_OUTLINE_CLIPPING_YES";
-
         internal const string ShaderDefineIS_CLIPPING_OFF = "_IS_CLIPPING_OFF";
         internal const string ShaderDefineIS_CLIPPING_MODE = "_IS_CLIPPING_MODE";
         internal const string ShaderDefineIS_CLIPPING_TRANSMODE = "_IS_CLIPPING_TRANSMODE";
-
         internal const string ShaderDefineIS_TRANSCLIPPING_OFF = "_IS_TRANSCLIPPING_OFF";
         internal const string ShaderDefineIS_TRANSCLIPPING_ON = "_IS_TRANSCLIPPING_ON";
 
-        internal const string ShaderDefineIS_CLIPPING_MATTE = "_IS_CLIPPING_MATTE";
-
-
-        protected readonly string[] UtsModeNames = { "Standard", "With Additional Control Maps" };
-        protected readonly string[] EmissiveScrollMode = { "UV Coordinate Scroll", "View Coordinate Scroll" };
         protected readonly string[] ClippingModeNames = { "Off", "On", "Clip Transparency" };
         protected readonly string[] StencilModeNames = { "Off", "Draw If Not Equal to", "Replace Stencil Buffer with" };
         public enum UTS_Mode : uint
@@ -268,9 +218,7 @@ namespace UnityEditor.Rendering.DCL_Toon
         }
 
         [Flags]
-#if UNITY_2021_1_OR_NEWER
         [DCL_Toon_InspectorHelpURL("instruction")]
-#endif // UNITY_2021_1_OR_NEWER
         protected enum Expandable
         {
             Shader = 1 << 0,
@@ -285,7 +233,7 @@ namespace UnityEditor.Rendering.DCL_Toon
             Outline = 1 << 9,
 
             SceneLight = 1 << 12,
-            EnvironmentalLightEffectiveness = 1 << 13,
+
             MetaverseSettings = 1 << 14,
         }
 
@@ -331,9 +279,6 @@ namespace UnityEditor.Rendering.DCL_Toon
         protected MaterialProperty transparentMode = null;
         protected MaterialProperty clippingMode = null;
         protected MaterialProperty clippingMask = null;
-
-        protected MaterialProperty stencilValue = null;
-
         protected MaterialProperty stencilMode = null;
         protected MaterialProperty mainTex = null;
         protected MaterialProperty baseColor = null;
@@ -345,28 +290,20 @@ namespace UnityEditor.Rendering.DCL_Toon
         protected MaterialProperty bumpScale = null;
         protected MaterialProperty set_1st_ShadePosition = null;
         protected MaterialProperty set_2nd_ShadePosition = null;
-        protected MaterialProperty shadingGradeMap = null;
-
         protected MaterialProperty highColor_Tex = null;
         protected MaterialProperty highColor = null;
-
         protected MaterialProperty set_HighColorMask = null;
-        protected MaterialProperty tweak_HighColorMaskLevel = null;
-
         protected MaterialProperty rimLight_Power = null;
         protected MaterialProperty ap_RimLight_Power = null;
         protected MaterialProperty set_RimLightMask = null;
-
         protected MaterialProperty matCap_Sampler = null;
         protected MaterialProperty matCapColor = null;
         protected MaterialProperty normalMapForMatCap = null;
         protected MaterialProperty bumpScaleMatcap = null;
         protected MaterialProperty set_MatcapMask = null;
-
         protected MaterialProperty emissive_Tex = null;
         protected MaterialProperty emissive_Color = null;
         protected MaterialProperty rotate_EmissiveUV = null;
-
         protected MaterialProperty outline_Sampler = null;
         protected MaterialProperty offset_Z = null;
         protected MaterialProperty outlineTex = null;
@@ -374,16 +311,6 @@ namespace UnityEditor.Rendering.DCL_Toon
 
         //------------------------------------------------------
         protected MaterialEditor m_MaterialEditor;
-
-        const int HDRPGeometryMin = 2650; // UnityEngine.Rendering.RenderQueue.Geometry;
-        internal static void UpdateVersionInMaterial(Material material)
-        {
-            MaterialSetInt(material,ShaderPropIsUnityToonShader, 1);
-            material.SetFloat(ShaderPropUtsVersionX,  kVersionX);
-            material.SetFloat(ShaderPropUtsVersionY,  kVersionY);
-            material.SetFloat(ShaderPropUtsVersionZ,  kVersionZ);
-
-        }
 
         void FindProperties(MaterialProperty[] props)
         {
@@ -394,8 +321,6 @@ namespace UnityEditor.Rendering.DCL_Toon
             transparentMode = FindProperty(ShaderPropTransparentEnabled, props);
             clippingMask = FindProperty(ShaderPropClippingMask, props);
             clippingMode = FindProperty(ShaderPropClippingMode, props);
-
-            stencilValue = FindProperty(ShaderPropStencilNo, props);
 
             stencilMode = FindProperty(ShaderPropStencilMode, props);
             mainTex = FindProperty(ShaderPropMainTex, props);
@@ -408,15 +333,11 @@ namespace UnityEditor.Rendering.DCL_Toon
             bumpScale = FindProperty("_BumpScale", props);
             set_1st_ShadePosition = FindProperty(ShaderProp_Set_1st_ShadePosition, props, false);
             set_2nd_ShadePosition = FindProperty(ShaderProp_Set_2nd_ShadePosition, props, false);
-            shadingGradeMap = FindProperty(ShaderProp_ShadingGradeMap, props, false);
-
 
             highColor_Tex = FindProperty(ShaderProp_HighColor_Tex, props);
             highColor = FindProperty("_HighColor", props);
 
             set_HighColorMask = FindProperty(ShaderProp_Set_HighColorMask, props);
-            tweak_HighColorMaskLevel = FindProperty("_Tweak_HighColorMaskLevel", props);
-
 
             set_RimLightMask = FindProperty(ShaderProp_Set_RimLightMask, props);
 
@@ -426,12 +347,10 @@ namespace UnityEditor.Rendering.DCL_Toon
             normalMapForMatCap = FindProperty("_NormalMapForMatCap", props);
             bumpScaleMatcap = FindProperty("_BumpScaleMatcap", props);
 
-
             set_MatcapMask = FindProperty(ShaderProp_Set_MatcapMask, props);
 
             emissive_Tex = FindProperty("_Emissive_Tex", props);
             emissive_Color = FindProperty("_Emissive_Color", props);
-
 
             outline_Sampler = FindProperty(ShaderProp_Outline_Sampler, props, false);
             outlineTex = FindProperty(ShaderProp_OutlineTex, props, false);
@@ -440,15 +359,6 @@ namespace UnityEditor.Rendering.DCL_Toon
         // --------------------------------
 
         // --------------------------------
-        static void Line()
-        {
-            GUILayout.Box("", GUILayout.ExpandWidth(true), GUILayout.Height(1));
-        }
-
-        protected static bool Foldout(bool display, GUIContent title)
-        {
-            return EditorGUILayout.Foldout(display, title, true );
-        }
 
         static bool FoldoutSubMenu(bool display, GUIContent title)
         {
@@ -514,8 +424,6 @@ namespace UnityEditor.Rendering.DCL_Toon
             public static readonly GUIContent matCapFoldout = EditorGUIUtility.TrTextContent("Material Capture (MatCap) Settings", "MatCap settings. Sphere maps for metallic or unusual expressions.");
             public static readonly GUIContent emissionFoldout = EditorGUIUtility.TrTextContent("Emission Settings", "Emission settings. Textures, animations and so on.");
             public static readonly GUIContent outlineFoldout = EditorGUIUtility.TrTextContent("Outline Settings", "Outline settings. Such as width, colors and so on.");
-            public static readonly GUIContent tessellationFoldout = EditorGUIUtility.TrTextContent("Tessellation Settings", "Tessellation settings for DX11, DX12 and Mac  Metal.");
-            public static readonly GUIContent maskRenderingFoldout = EditorGUIUtility.TrTextContent("Mask Rendering Settings", "Mask rendering setting, controlled by Visual Compositor.");
             public static readonly GUIContent lightEffectivenessFoldout = EditorGUIUtility.TrTextContent("Scene Light Effectiveness Settings", "Scene light effectiveness to each parameter.");
 
             public static readonly GUIContent metaverseSettingsFoldout = EditorGUIUtility.TrTextContent("Metaverse Settings (Experimental)", "Default directional light when no directional lights are in the scene.");
@@ -545,7 +453,6 @@ namespace UnityEditor.Rendering.DCL_Toon
             public static readonly GUIContent matcapOrthoText = new GUIContent("MatCap Camera Mode", "Control how the MatCap Map is rendered based on the type of camera.");
             public static readonly GUIContent transparentModeText = new GUIContent("Transparency", "Enable different modes that allow the simulation of a variety of transparent objects. ");
             public static readonly GUIContent stencilVauleText = new GUIContent("Stencil Value", "Stencil value that is submitted to the stencil buffer for controlling the per-pixel drawing.");
-            public static readonly GUIContent workflowModeText = new GUIContent("Mode", "The UTS mode that controls what settings are exposed in the shader.");
 
             // -----------------------------------------------------
             public static readonly GUIContent clippingmodeModeText0 = new GUIContent("Clipping","Allow for the use of a texture to control the transparency of the shader.");
@@ -554,9 +461,7 @@ namespace UnityEditor.Rendering.DCL_Toon
             public static readonly GUIContent cullingModeText = new GUIContent("Culling Mode", "Controls the sides of polygons that should not be drawn (culled).");
 
             // ----------------------------------------------------- for GUI Toggles
-            public static readonly GUIContent renderQueueText = new GUIContent("Render Queue", "Rendering order in the scene.");
             public static readonly GUIContent invertClippingMaskText = new GUIContent("Invert Clipping Mask", "Invert clipping mask results.");
-            public static readonly GUIContent baseMapAlphaAsClippingMask = new GUIContent("Use Base Map Alpha as Clipping Mask", "Use Base Map Alpha as Clipping Mask instead of Clipping mask texture.");
             public static readonly GUIContent applyTo1stShademapText = new GUIContent("Apply to 1st shading map", "Apply Base map to the 1st shading map.");
             public static readonly GUIContent applyTo2ndShademapText = new GUIContent("Apply to 2nd shading map", "Apply Base map or the 1st shading map to the 2st shading map.");
             public static readonly GUIContent threeBasicColorToNormalmapText = new GUIContent("Three Basic Colors", "Normal map effectiveness to Three Basic color areas, lit, the 1st shading and the 2nd.");
@@ -584,16 +489,12 @@ namespace UnityEditor.Rendering.DCL_Toon
             public static readonly GUIContent matCapNormalmapSpecularaMask = new GUIContent("Normal Map Specular Mask for MatCap", "If Enabled, gives a normal map specifically for MatCap.If you are using MatCap as speculum lighting, you can use this to mask it.");
             public static readonly GUIContent matCapOnShadow = new GUIContent("MatCap Blending on Shadows", "Enables the blending rate of the MatCap range in shadows.");
             public static readonly GUIContent invertMatCapMaskText = new GUIContent("Invert MatCap Mask","When enabled, MatCap Mask Texture is inverted.");
-            public static readonly GUIContent colorShitWithTimeText = new GUIContent("Color Shifting with Time", "The color that is multiplied by the Emissive texture is changed by linear interpolation (Lerp) toward the Destination Color.");
-            public static readonly GUIContent blendBaseColorToOutlineText = new GUIContent("Color Shifting with View Angle", "Emissive color shifts in accordance with view angle.");
-            public static readonly GUIContent colorShiftWithViewAngle = new GUIContent("Color Shifting with View Angle", "Emissive color shifts in accordance with view angle.");
             public static readonly GUIContent baseColorToOtulineText = new GUIContent("Blend Base Color to Outline","Base Color is blended into outline color.");
             public static readonly GUIContent outlineColorMapText = new GUIContent("Outline Color Map", "Apply a texture as outline color map.");
             public static readonly GUIContent bakedNormalForOutlineText = new GUIContent("Baked Normal Map", "Normal maps with vertex normals previously baked in from other models can be loaded as an addition when setting up normal inversion outlines.");
             public static readonly GUIContent metaverseLightText = new GUIContent("Metaverse Light", "Enables the use of UTS to work appropriately without any directional lights in the scene.");
             public static readonly GUIContent metaverseLightDirectionText = new GUIContent("Metaverse Light Direction", "Control the direction of the supplementary lighting for UTS in the scene.");
             public static readonly GUIContent invertZaxisDirection = new GUIContent("Invert Z-Axis Direction", "Invert Metaverse light Z-Axis Direction.");
-            public static readonly GUIContent emissiveScrollAnimationModeText = new GUIContent("Animation Mode", "Controls the animated scrolling of the emissive texture.");
             public static readonly GUIContent emissionAnimationText = new GUIContent("Emission Map Animation", "When Enabled, the UV and Color of the Emission Map are animated.");
             public static readonly GUIContent outlineModeText = new GUIContent("Outline Mode", "Specifies how the inverted-outline object is spawned.");
             public static readonly GUIContent limitLightIntensityText = new GUIContent("Limit Light Intensity", "Limit the brightness of the light to 1 to avoid white-out.");
@@ -602,24 +503,31 @@ namespace UnityEditor.Rendering.DCL_Toon
                 label: "Metaverse Light Intensity",
                 tooltip: "Control the intensity of the supplementary lighting for UTS in the scene.",
                 propName: ShaderPropUnlit_Intensity,  defaultValue: 0, min: 0.0f, max: 4.0f);
+
             public static readonly RangeProperty metaverseOffsettXaxisText = new RangeProperty(
                 label: "Offset X-Axis Direction", tooltip: "Moves  Metaverse light horizontally.",
                 propName: "_Offset_X_Axis_BLD", defaultValue: -0.05f, min: -1.0f,max:1.0f);
+
             public static readonly RangeProperty metaverseOffsettYaxisText = new RangeProperty(
                 label: "Offset Y-Axis Direction", tooltip: "Moves  Metaverse light vertically.",
                 propName: "_Offset_Y_Axis_BLD", defaultValue: -0.05f, min: -1.0f, max: 1.0f);
+
             public static readonly RangeProperty tweakTransParencyText = new RangeProperty(
                 label: "Transparency Level", tooltip: "Adjusts the transparency by considering the grayscale level of the clipping mask as an alpha value.",
                 propName: "_Tweak_transparency", defaultValue:0.0f, min: -1.0f, max:1.0f);
+
             public static readonly RangeProperty clippingLevelText = new RangeProperty(
                 label: "Clipping Level", tooltip: "Specifies the strength of the clipping mask.",
                 propName: "_Clipping_Level", defaultValue: 0.0f,min: 0.0f, max: 1.0f);
+
             public static readonly RangeProperty tweakHighColorOnShadowText = new RangeProperty(
                 label: "Blending Level", tooltip: "Adjusts the intensity of highlight applied to shadow areas.",
                 propName: "_TweakHighColorOnShadow", defaultValue: 0.0f, min: 0, max: 1);
+
             public static readonly RangeProperty tweakMatCapOnShadowText = new RangeProperty(
                 label: "Blending Level", tooltip: "Adjusts the intensity of MatCap applied to shadow areas.",
                 propName: "_TweakMatCapOnShadow", defaultValue: 0.0f, min: 0, max: 1);
+
             public static readonly RangeProperty tweakSystemShadowLevelText = new RangeProperty(
                 label: "System Shadow Level", tooltip: "Define the appearance of self-shadows and other received shadows that blend with the toon shader.",
                 propName: "_Tweak_SystemShadowsLevel", defaultValue: 0.0f, min: -0.5f, max: 0.5f);
@@ -627,12 +535,15 @@ namespace UnityEditor.Rendering.DCL_Toon
             public static readonly RangeProperty shaderPropBaseColorText = new RangeProperty(
                 label: "Base Color Step", tooltip: "Sets the boundary between the Base Color and the Shade Colors.",
                 propName: ShaderPropBaseColor_Step, defaultValue: 0.5f, min: 0, max: 1 );
+
             public static readonly RangeProperty shaderPropBaseFeatherText = new RangeProperty(
                 label: "Base Shading Feather", tooltip: "Feathers the boundary between the Base Color and the Shade Colors..",
                 propName: ShaderPropBaseShade_Feather, defaultValue: 0.0001f, min: 0.0001f, max: 1);
+
             public static readonly RangeProperty shaderPropShadeColorStepText = new RangeProperty(
                 label: "Shading Color Step", tooltip: "Sets the boundary between the 1st and 2nd Shade Colors. Set this to 0 if no 2nd Shade Color is used.",
                 propName: ShaderPropShadeColor_Step, defaultValue: 0, min: 0, max: 1);
+
             public static readonly RangeProperty shaderProp1st2nd_Shades_FeatherText = new RangeProperty(
                 label: "1st/2nd Shading Feather", tooltip: "Feathers the boundary between the 1st and 2nd Shade Colors.",
                 propName: ShaderProp1st2nd_Shades_Feather,defaultValue: 0.0001f, min: 0.0001f, max: 1);
@@ -640,12 +551,15 @@ namespace UnityEditor.Rendering.DCL_Toon
             public static readonly RangeProperty shaderProp1st_ShadeColor_StepText = new RangeProperty(
                 label: "1st Shade Color Step", tooltip: "Sets the step between the Base color and 1st Shade Color, the same as the BaseColor_Step property..",
                 propName: ShaderProp1st_ShadeColor_Step, defaultValue: 0.5f, min: 0, max: 1);
+
             public static readonly RangeProperty shaderProp1st_ShadeColor_FeatherText = new RangeProperty(
                 label: "1st Shade Color Feather", tooltip: "Feathers the boundary between the Base Color and the 1st Shade Color, the same as the Base/Shade_Feather property.",
                 propName: ShaderProp1st_ShadeColor_Feather,defaultValue: 0.0001f, min: 0.0001f, max: 1);
+
             public static readonly RangeProperty shaderProp2nd_ShadeColor_StepText = new RangeProperty(
                 label: "2nd Shade Color Step", tooltip: "Sets the step between the 1st and 2nd Shade Colors, the same as the ShadeColor_Step property.",
                 propName: ShaderProp2nd_ShadeColor_Step, defaultValue: 0, min: 0, max: 1);
+
             public static readonly RangeProperty shaderProp2nd_ShadeColor_FeatherText = new RangeProperty(
                 label: "2nd Shade Color Feather", tooltip: "Feathers the boundary between the 1st and 2nd Shade Colors, the same as the 1st/2nd_Shades_Feather properties.",
                 propName: ShaderProp2nd_ShadeColor_Feather, defaultValue: 0.0001f, min: 0.0001f, max: 1);
@@ -792,7 +706,6 @@ namespace UnityEditor.Rendering.DCL_Toon
 
         void UTS3DrawHeaders(MaterialEditor materialEditor, Material material)
         {
-            const string kTessellation = "Tessellation";
             if (material == null)
                 throw new ArgumentNullException(nameof(material));
 
@@ -821,8 +734,6 @@ namespace UnityEditor.Rendering.DCL_Toon
                     EditorGUILayout.Space();
                 }
             }
-
-
         }
         void ShaderPropertiesGUI(MaterialEditor materialEditor, Material material, MaterialProperty[] properties)
         {
@@ -854,19 +765,6 @@ namespace UnityEditor.Rendering.DCL_Toon
                     EditorGUI.EndDisabledGroup();
                     EditorGUI.indentLevel--;
                     break;
-                case UTS_Mode.ShadingGradeMap:
-
-                    DoPopup(Styles.clippingmodeModeText1, clippingMode, System.Enum.GetNames(typeof(UTS_TransClippingMode)));
-                    UTS_TransClippingMode mode1 = (UTS_TransClippingMode)MaterialGetInt(material, ShaderPropClippingMode);
-                    EditorGUI.indentLevel++;
-                    EditorGUI.BeginDisabledGroup(mode1 != UTS_TransClippingMode.On);
-                    {
-                        GUI_SetClippingMask(material);
-                        GUI_SetTransparencySetting(material);
-                    }
-                    EditorGUI.EndDisabledGroup();
-                    EditorGUI.indentLevel--;
-                    break;
             }
 
             EditorGUILayout.Space();
@@ -885,51 +783,8 @@ namespace UnityEditor.Rendering.DCL_Toon
             }
 
             FindProperties(props);
-            UpdateVersionInMaterial(material);
-
-            //m_autoRenderQueue = MaterialGetInt(material,ShaderPropAutoRenderQueue);
             transparencyEnabled = (UTS_TransparentMode)MaterialGetInt(material,ShaderPropTransparentEnabled);
             stencilNumberSetting = MaterialGetInt(material,ShaderPropStencilNo);
-
-            //Line 1 horizontal 3 buttons.
-            EditorGUILayout.BeginHorizontal();
-#if USE_SIMPLE_UI   // disabled SimpleUI
-            //Original Inspector Selection Check.
-            if (material.HasProperty(ShaderPropSimpleUI))
-            {
-                var selectedUI = material.GetInt(ShaderPropSimpleUI);
-                if (selectedUI == 2)
-                {
-                    _OriginalInspector = true;  //Original GUI
-                }
-                else if (selectedUI == 1)
-                {
-                    _SimpleUI = true;   //UTS2 Beginner GUI
-                }
-                //Original/Custom GUI toggle button.
-                if (_OriginalInspector)
-                {
-                    if (GUILayout.Button("Change CustomUI", middleButtonStyle))
-                    {
-                        _OriginalInspector = false;
-                        MaterialSetInt(material,ShaderPropSimpleUI, 0); //UTS2 Pro GUI
-                    }
-                    OpenManualLink();
-                    //Clear inherited layouts.
-                    EditorGUILayout.EndHorizontal();
-                    //Show Original GUI.
-                    m_MaterialEditor.PropertiesDefaultGUI(props);
-                    return;
-                }
-                if (GUILayout.Button("Show All properties", middleButtonStyle))
-                {
-                    _OriginalInspector = true;
-                    MaterialSetInt(material,ShaderPropSimpleUI, 2); //Original GUI
-                }
-            }
-#endif
-
-            EditorGUILayout.EndHorizontal();
 
             EditorGUI.BeginChangeCheck();
 
@@ -943,7 +798,6 @@ namespace UnityEditor.Rendering.DCL_Toon
             }
             ShaderPropertiesGUI(materialEditor, material, props);
 
-            ApplyRenderingPerChennelsSetting(material);
             ApplyClippingMode(material);
             ApplyStencilMode(material);
             ApplyMatCapMode(material);
@@ -1042,21 +896,6 @@ namespace UnityEditor.Rendering.DCL_Toon
                 MaterialSetInt(material, prop, ret ? 1 : 0);
             }
             return ret;
-        }
-
-        void GUI_SetRTHS(Material material)
-        {
-
-            EditorGUILayout.BeginHorizontal();
-
-
-            var isRTHSenabled = GUI_ToggleShaderKeyword(material, "Raytraced Hard Shadow (deprecated)", ShaderDefineUTS_USE_RAYTRACING_SHADOW);
-
-            EditorGUILayout.EndHorizontal();
-            if (isRTHSenabled)
-            {
-                EditorGUILayout.LabelField("ShadowRaytracer component must be attached to the camera when this feature is enabled.");
-            }
         }
 
         void GUI_SetCullingMode(Material material)
@@ -1365,7 +1204,6 @@ namespace UnityEditor.Rendering.DCL_Toon
 
         void GUI_RimLight(Material material)
         {
-
             EditorGUILayout.BeginHorizontal();
             var rimLightEnabled = GUI_Toggle(material, Styles.rimlightText, ShaderPropRimLight, MaterialGetInt(material, ShaderPropRimLight) != 0);
             EditorGUILayout.EndHorizontal();
@@ -1551,57 +1389,8 @@ namespace UnityEditor.Rendering.DCL_Toon
             }
 
             material.renderQueue = m_renderQueue;
-
-
             material.SetOverrideTag(RENDERTYPE, renderType);
             material.SetOverrideTag(IGNOREPROJECTION, ignoreProjection);
-        }
-
-        void SetReqnderQueueAuto(Material material)
-        {
-            const int transparent = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            const int alphaTest = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-            const int alphaTestMinusOne = (int)UnityEngine.Rendering.RenderQueue.AlphaTest - 1;
-
-            if (transparencyEnabled == UTS_TransparentMode.On)
-            {
-                material.renderQueue = transparent;
-                return;
-            }
-
-            var stencilMode = (UTS_StencilMode)MaterialGetInt(material, ShaderPropStencilMode);
-
-            switch (stencilMode)
-            {
-                case UTS_StencilMode.StencilMask:
-                    material.renderQueue = alphaTestMinusOne;
-                    return;
-                case UTS_StencilMode.StencilOut:
-                    material.renderQueue = alphaTest;
-                    return;
-                case UTS_StencilMode.Off:
-                    ClippingMode();
-                    return;
-                default:
-                    throw new NotImplementedException();
-            }
-
-            void ClippingMode()
-            {
-                var clippingMode = (UTS_ClippingMode)MaterialGetInt(material, ShaderPropClippingMode);
-
-                switch(clippingMode)
-                {
-                    case UTS_ClippingMode.On:
-                    case UTS_ClippingMode.TransClippingMode:
-                        material.renderQueue = alphaTest;
-                        return;
-                    case UTS_ClippingMode.Off:
-                        return;
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
         }
 
         void ApplyMatCapMode(Material material)
@@ -1795,45 +1584,31 @@ namespace UnityEditor.Rendering.DCL_Toon
             if (!_SimpleUI)
             {
                 EditorGUILayout.Space();
-                //                _AdvancedOutline_Foldout = FoldoutSubMenu(_AdvancedOutline_Foldout, Styles.AdvancedOutlineFoldout);
-                //                if (_AdvancedOutline_Foldout)
+                EditorGUILayout .LabelField("Camera Distance for Outline Width");
+                EditorGUI.indentLevel++;
+                GUI_FloatProperty(material, Styles.farthestDistanceText);
+                GUI_FloatProperty(material, Styles.nearestDistanceText);
+                EditorGUI.indentLevel--;
+
+                var useOutlineTexture =  GUI_Toggle(material, Styles.outlineColorMapText, ShaderPropIs_OutlineTex, MaterialGetInt(material, ShaderPropIs_OutlineTex)!=0); ;
+                EditorGUI.BeginDisabledGroup(!useOutlineTexture);
+                m_MaterialEditor.TexturePropertySingleLine(Styles.outlineTexText, outlineTex);
+                EditorGUI.EndDisabledGroup();
+                EditorGUI.BeginDisabledGroup(m_outlineMode != OutlineMode.NormalDirection);
                 {
-
-                    EditorGUILayout .LabelField("Camera Distance for Outline Width");
-                    EditorGUI.indentLevel++;
-                    GUI_FloatProperty(material, Styles.farthestDistanceText);
-                    GUI_FloatProperty(material, Styles.nearestDistanceText);
-                    EditorGUI.indentLevel--;
-
-                    var useOutlineTexture =  GUI_Toggle(material, Styles.outlineColorMapText, ShaderPropIs_OutlineTex, MaterialGetInt(material, ShaderPropIs_OutlineTex)!=0); ;
-                    EditorGUI.BeginDisabledGroup(!useOutlineTexture);
-                    m_MaterialEditor.TexturePropertySingleLine(Styles.outlineTexText, outlineTex);
-                    EditorGUI.EndDisabledGroup();
-                    EditorGUI.BeginDisabledGroup(m_outlineMode != OutlineMode.NormalDirection);
-                    {
-                        var isBackedNormal = GUI_Toggle(material, Styles.bakedNormalForOutlineText, ShaderPropIs_BakedNormal, MaterialGetInt(material, ShaderPropIs_BakedNormal) != 0);
-                        EditorGUI.BeginDisabledGroup(!isBackedNormal);
-                        m_MaterialEditor.TexturePropertySingleLine(Styles.bakedNormalOutlineText, bakedNormal);
-                        EditorGUI.EndDisabledGroup();
-                    }
+                    var isBackedNormal = GUI_Toggle(material, Styles.bakedNormalForOutlineText, ShaderPropIs_BakedNormal, MaterialGetInt(material, ShaderPropIs_BakedNormal) != 0);
+                    EditorGUI.BeginDisabledGroup(!isBackedNormal);
+                    m_MaterialEditor.TexturePropertySingleLine(Styles.bakedNormalOutlineText, bakedNormal);
                     EditorGUI.EndDisabledGroup();
                 }
+                EditorGUI.EndDisabledGroup();
+
                 EditorGUI.EndDisabledGroup(); //!isOutlineEnabled
             }
             EditorGUI.indentLevel--;
 
             EditorGUILayout.Space();
         }
-
-        void GUI_Tessellation(Material material)
-        {
-            GUI_RangeProperty(material, Styles.legacyTessEdgeLengthText);
-            GUI_RangeProperty(material, Styles.legacyTessPhongStrengthText);
-            GUI_RangeProperty(material, Styles.legacyTessExtrusionAmountText);
-
-            EditorGUILayout.Space();
-        }
-
 
 
         void GUI_LightColorEffectiveness(Material material)
