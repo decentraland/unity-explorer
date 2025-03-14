@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DG.Tweening;
 using MVC;
 using System.Threading;
@@ -25,6 +26,9 @@ namespace DCL.MarketplaceCredits
         [field: SerializeField]
         public Button CloseButton { get; private set; }
 
+        [field: SerializeField]
+        public AudioClipConfig Sound { get; private set; }
+
         private CancellationTokenSource cts;
 
         protected override async UniTask PlayShowAnimationAsync(CancellationToken ct)
@@ -36,6 +40,7 @@ namespace DCL.MarketplaceCredits
             await PanelCanvasGroup.DOFade(1, FADE_ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
             await PanelContent.transform.DOScale(Vector3.one, SCALE_ANIMATION_DURATION).SetEase(Ease.OutBounce).ToUniTask(cancellationToken: ct);
             RaysGameObject.transform.DORotate(new Vector3(0,0,360), 2f, RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).ToUniTask(cancellationToken: cts.Token);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(Sound);
         }
 
         protected override async UniTask PlayHideAnimationAsync(CancellationToken ct)

@@ -219,6 +219,7 @@ MonoBehaviour:
   <RaysGameObject>k__BackingField: {fileID: 6718302533088270705}
   <PanelContent>k__BackingField: {fileID: 8034362063734067201}
   <CloseButton>k__BackingField: {fileID: 3081618947756515223}
+  <Sound>k__BackingField: {fileID: 11400000, guid: 63990f30d3b7f184da9b61390c5a7e31, type: 2}
 --- !u!1 &1521652576325552226
 GameObject:
   m_ObjectHideFlags: 0

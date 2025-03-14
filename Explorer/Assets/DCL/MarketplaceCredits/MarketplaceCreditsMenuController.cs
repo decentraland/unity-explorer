@@ -171,7 +171,7 @@ namespace DCL.MarketplaceCredits
         {
             view.ErrorNotification.SetText(message);
             view.ErrorNotification.Show(ct);
-            await UniTask.Delay((int) view.ErrorNotificationDuration * 1000, cancellationToken: ct);
+            await UniTask.Delay((int) MarketplaceCreditsUtils.ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
             view.ErrorNotification.Hide(false, ct);
         }
 
