@@ -13,17 +13,17 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
+using DCL.Chat.InputBus;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Chat;
-using DCL.Chat.ChatLifecycleBus;
-using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -72,9 +72,9 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
-using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UserInAppInitializationFlow;
@@ -497,7 +497,7 @@ namespace Global.Dynamic
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
-                                                 .WithCommands(chatCommands)
+                                                 .WithCommands(chatCommands, staticContainer.LoadingStatus)
                                                  .WithDebugPanel(debugBuilder);
 
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
@@ -545,6 +545,7 @@ namespace Global.Dynamic
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
+            bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.MARKETPLACE_CREDITS)) || Application.isEditor;
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
@@ -560,6 +561,9 @@ namespace Global.Dynamic
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata);
+
+            var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
+                staticContainer.RealmData);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -644,7 +648,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     hyperlinkTextFormatter,
                     profileCache,
-                    chatInputBus),
+                    chatInputBus,
+                    staticContainer.LoadingStatus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -763,13 +768,14 @@ namespace Global.Dynamic
                     includeCameraReel,
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
-                    clipboard,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     identityCache,
+                    viewDependencies,
+                    realmNftNamesProvider,
                     includeFriends,
-                    includeUserBlocking
+                    includeUserBlocking,
+                    isNameEditorEnabled
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
@@ -819,7 +825,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     identityCache,
                     profileRepository,
-                    staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     dclInput,
