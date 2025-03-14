@@ -47,6 +47,7 @@ namespace DCL.WebRequests.Analytics
                                                               .AddTrackedMetric<BandwidthUp>()
                                                               .AddTrackedMetric<ServerTimeSmallFileAverage>()
                                                               .AddTrackedMetric<ServeTimePerMBAverage>()
+                                                              .AddTrackedMetric<FillRateAverage>()
                                                               .AddTrackedMetric<TimeToFirstByteAverage>();
 
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
