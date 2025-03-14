@@ -9,6 +9,7 @@ namespace DCL.MarketplaceCredits
         public const string LEARN_MORE_LINK = "https://docs.decentraland.org/";
         public const string TIME_LEFT_INFO_LINK = "https://docs.decentraland.org/";
         public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace/";
+        public const int CREDITS_UNLOCKED_DURATION = 5;
 
         public static string FormatEndOfTheWeekDateTimestamp(string timestamp)
         {

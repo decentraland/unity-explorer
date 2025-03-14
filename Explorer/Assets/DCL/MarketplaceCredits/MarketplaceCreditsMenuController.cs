@@ -8,6 +8,7 @@ using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
 using DCL.WebRequests;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine.UI;
@@ -25,8 +26,10 @@ namespace DCL.MarketplaceCredits
         private readonly IInputBlock inputBlock;
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource showHideMenuCts;
+        private CancellationTokenSource showCreditsUnlockedCts;
         private CancellationTokenSource showErrorNotificationCts;
 
         public MarketplaceCreditsMenuController(
@@ -37,14 +40,17 @@ namespace DCL.MarketplaceCredits
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IMVCManager mvcManager)
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
             this.sidebarBus = sidebarBus;
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
+            this.mvcManager = mvcManager;
 
+            mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             view.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             foreach (Button closeButton in view.CloseButtons)
@@ -118,6 +124,12 @@ namespace DCL.MarketplaceCredits
             view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME);
         }
 
+        public void ShowCreditsUnlockedPanel()
+        {
+            showCreditsUnlockedCts = showCreditsUnlockedCts.SafeRestart();
+            mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(), showCreditsUnlockedCts.Token).Forget();
+        }
+
         public void ShowErrorNotification(string message)
         {
             showErrorNotificationCts = showErrorNotificationCts.SafeRestart();
@@ -127,8 +139,10 @@ namespace DCL.MarketplaceCredits
         public void Dispose()
         {
             showHideMenuCts.SafeCancelAndDispose();
+            showCreditsUnlockedCts.SafeCancelAndDispose();
             showErrorNotificationCts.SafeCancelAndDispose();
 
+            mvcManager.OnViewClosed -= OnCreditsUnlockedPanelClosed;
             view.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
             view.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
 
@@ -159,6 +173,14 @@ namespace DCL.MarketplaceCredits
             view.ErrorNotification.Show(ct);
             await UniTask.Delay((int) view.ErrorNotificationDuration * 1000, cancellationToken: ct);
             view.ErrorNotification.Hide(false, ct);
+        }
+
+        private void OnCreditsUnlockedPanelClosed(IController controller)
+        {
+            if (controller is not CreditsUnlockedController)
+                return;
+
+            marketplaceCreditsGoalsOfTheWeekController.OnOpenSection();
         }
     }
 }

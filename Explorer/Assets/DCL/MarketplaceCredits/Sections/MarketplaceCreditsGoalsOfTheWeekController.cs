@@ -204,12 +204,7 @@ namespace DCL.MarketplaceCredits.Sections
                 view.SetCaptchaAsLoading(false);
 
                 if (claimCreditsResponse.success)
-                {
-                    // TODO (Santi): Show REWARD screen
-                    // ...
-
-                    OnOpenSection();
-                }
+                    marketplaceCreditsMenuController.ShowCreditsUnlockedPanel();
                 else
                     view.SetCaptchaAsErrorState(true, isNonSolvedError: true);
             }
