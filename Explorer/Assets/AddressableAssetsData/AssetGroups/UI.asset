@@ -77,6 +77,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 688aa1f59829ea64fb0887ed7bb87d26
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithTextAndIcon_StringDelegateVariant.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6b1f7cd8901871f42a19a8244244839e
     m_Address: ChangeRealmPrompt
     m_ReadOnly: 0
@@ -123,7 +128,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bc2f6e2e838c8114e89c2f3157c0ab47
-    m_Address: ToggleWithTextAndImage.prefab
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTextAndImage.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
