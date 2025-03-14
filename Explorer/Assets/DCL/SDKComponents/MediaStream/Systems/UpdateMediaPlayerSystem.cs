@@ -14,7 +14,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
-using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
@@ -84,8 +83,7 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateMediaPlayerPosition(ref MediaPlayerComponent mediaPlayer, ref TransformComponent transformComponent)
         {
-            // Needed for positional sound
-            mediaPlayer.MediaPlayer.transform.position = transformComponent.Transform.position;
+            mediaPlayer.MediaPlayer.PlaceAt(transformComponent.Transform.position);
         }
 
         [Query]
@@ -126,17 +124,14 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!playerComponent.IsPlaying
                 || playerComponent.State == VideoState.VsError
-                || (
-                    playerComponent.MediaAddress.MediaKind is MediaAddress.Kind.URL
-                    && !playerComponent.MediaPlayer.MediaOpened
-                )
+                || !playerComponent.MediaPlayer.MediaOpened
                )
                 return;
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
 
-            Texture avText = playerComponent.MediaPlayer.TextureProducer.GetTexture();
+            Texture? avText = playerComponent.MediaPlayer.LastTexture();
             if (avText == null) return;
 
             // Handle texture update
@@ -153,7 +148,7 @@ namespace DCL.SDKComponents.MediaStream
             bool hasPlaying,
             bool isPlaying,
             PBVideoPlayer? sdkVideoComponent = null,
-            Action<MediaPlayer, PBVideoPlayer>? onPlaybackUpdate = null
+            Action<MultiMediaPlayer, PBVideoPlayer>? onPlaybackUpdate = null
         )
         {
             if (!sdkComponent.IsDirty) return;
@@ -187,28 +182,13 @@ namespace DCL.SDKComponents.MediaStream
             sdkComponent.IsDirty = false;
         }
 
-        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer>? onOpened = null)
+        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MultiMediaPlayer, PBVideoPlayer>? onOpened = null)
         {
             if (!component.OpenMediaPromise.IsResolved) return;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
-                switch (component.MediaAddress.MediaKind)
-                {
-                    case MediaAddress.Kind.URL:
-
-                        //The problem is that video files coming from our content server are flagged as application/octet-stream,
-                        //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
-                        //This adds a query param for video files from content server to force the correct content type
-                        string url = component.MediaAddress.Url;
-                        component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.IsFromContentServer ? string.Format("{0}?includeMimeType", url) : url, autoPlay);
-
-                        break;
-                    case MediaAddress.Kind.LIVEKIT:
-                        ReportHub.LogError(ReportCategory.MEDIA_STREAM, "LiveKit is not implemented yet.");
-                        break;
-                    default: throw new ArgumentOutOfRangeException();
-                }
+                component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay);
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);

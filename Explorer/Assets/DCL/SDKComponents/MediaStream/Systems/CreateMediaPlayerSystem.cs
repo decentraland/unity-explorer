@@ -6,9 +6,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -17,6 +19,7 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
@@ -34,12 +37,21 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
         private readonly IWebRequestController webRequestController;
+        private readonly ObjectProxy<IRoomHub> roomHub;
         private readonly ISceneData sceneData;
 
-        public CreateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider,
-            IPerformanceBudget frameTimeBudget) : base(world)
+        public CreateMediaPlayerSystem(
+            World world,
+            IWebRequestController webRequestController,
+            ObjectProxy<IRoomHub> roomHub,
+            ISceneData sceneData,
+            IComponentPool<MediaPlayer> mediaPlayerPool,
+            ISceneStateProvider sceneStateProvider,
+            IPerformanceBudget frameTimeBudget
+        ) : base(world)
         {
             this.webRequestController = webRequestController;
+            this.roomHub = roomHub;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
@@ -78,8 +90,8 @@ namespace DCL.SDKComponents.MediaStream
 
             // There is no way to set this from the scene code, at the moment
             // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
-            if (component.MediaPlayer.TryGetComponent(out AudioSource mediaPlayerAudio))
-                mediaPlayerAudio.spatialBlend = World.Has<TransformComponent>(entity) ? 1.0f : 0.0f;
+            if (component.MediaPlayer.TryGetAvProPlayer(out var player) && player!.TryGetComponent(out AudioSource mediaPlayerAudio))
+                mediaPlayerAudio!.spatialBlend = World!.Has<TransformComponent>(entity) ? 1.0f : 0.0f;
 
             World.Add(entity, component);
         }
@@ -113,9 +125,16 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
+            MultiMediaPlayer player = address.MediaKind switch
+                                      {
+                                          MediaAddress.Kind.URL => MultiMediaPlayer.NewAvProMediaPlayer(mediaPlayerPool),
+                                          MediaAddress.Kind.LIVEKIT => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(roomHub.StrictObject)),
+                                          _ => throw new ArgumentOutOfRangeException()
+                                      };
+
             var component = new MediaPlayerComponent
             {
-                MediaPlayer = mediaPlayerPool.Get(),
+                MediaPlayer = player,
                 MediaAddress = address,
                 IsFromContentServer = url.Contains(CONTENT_SERVER_PREFIX),
                 PreviousCurrentTimeChecked = -1,
@@ -124,10 +143,12 @@ namespace DCL.SDKComponents.MediaStream
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };
+
             component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
 
 #if UNITY_EDITOR
-            component.MediaPlayer.gameObject.name = $"MediaPlayer_Entity_{entity}";
+            if (component.MediaPlayer.TryGetAvProPlayer(out var avPro))
+                avPro!.gameObject.name = $"MediaPlayer_Entity_{entity}";
 #endif
 
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);

@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "2ce306e3d3f091585afcac2b738f4c2402ec2847"
+      "hash": "e62c9ed9d81b9daf241ce8434d16b383e90af26c"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
