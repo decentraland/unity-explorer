@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.Rendering;
-
 
 namespace UnityEditor.Rendering.DCL_Toon
 {
 
     /// <summary>
-    /// Collection to store <see cref="UTS3MaterialHeaderScopeItem"></see>
+    /// Collection to store <see cref="DCL_Toon_MaterialHeaderScopeItem"></see>
     /// </summary>
     internal class DCL_Toon_MaterialHeaderScopeList
     {
@@ -44,11 +39,7 @@ namespace UnityEditor.Rendering.DCL_Toon
                 headerTitle = title,
                 expandable = Convert.ToUInt32(expandable),
                 drawMaterialScope = action,
-#if UNITY_2021_1_OR_NEWER
-                url = UTS3DocumentationUtils.GetHelpURL<TEnum>(expandable),
-#else
-                url = string.Empty,
-#endif
+                url = DCL_Toon_DocumentationUtils.GetHelpURL<TEnum>(expandable),
                 workflowMode = workflowMode,
                 transparentEnabled = isTransparent,
                 tessellationEnabled = isTessellation

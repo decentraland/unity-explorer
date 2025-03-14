@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace UnityEditor.Rendering.DCL_Toon
 {
@@ -28,9 +24,7 @@ namespace UnityEditor.Rendering.DCL_Toon
         /// <summary>Indicates whether the header is expanded or not. Is true if the header is expanded, false otherwise.</summary>
         internal readonly bool expanded;
         bool spaceAtEnd;
-#if !UNITY_2020_1_OR_NEWER
-        int oldIndentLevel;
-#endif
+
         internal static void DrawSplitter(bool isBoxed = false)
         {
             var rect = GUILayoutUtility.GetRect(1f, 1f);
@@ -59,20 +53,11 @@ namespace UnityEditor.Rendering.DCL_Toon
         /// <returns>return the state of the foldout header</returns>
         internal static bool DrawHeaderFoldout(GUIContent title, bool state, bool isBoxed = false, Func<bool> hasMoreOptions = null, Action toggleMoreOptions = null, string documentationURL = "", Action<Vector2> contextAction = null)
         {
-#if SRPCORE_NEWERTHAN12_IS_INSTALLED_FOR_UTS
-            return CoreEditorUtils.DrawHeaderFoldout(title, state, documentationURL: documentationURL);
-#else
             return EditorGUILayout.Foldout(state, title);
-#endif
         }
         internal static bool DrawSubHeaderFoldout(GUIContent title, bool state, bool isBoxed = false)
         {
-#if SRPCORE_NEWERTHAN12_IS_INSTALLED_FOR_UTS
-            return CoreEditorUtils.DrawSubHeaderFoldout(title, state, isBoxed: false);
-#else
             return EditorGUILayout.Foldout(state, title);
-#endif
-
         }
 
         /// <summary>
@@ -91,11 +76,6 @@ namespace UnityEditor.Rendering.DCL_Toon
                 throw new ArgumentNullException(nameof(title));
 
             bool beforeExpanded = materialEditor.IsAreaExpanded(bitExpanded, defaultExpandedState);
-
-#if !UNITY_2020_1_OR_NEWER
-            oldIndentLevel = EditorGUI.indentLevel;
-            EditorGUI.indentLevel = subHeader ? 1 : 0; //fix for preset in 2019.3 (preset are one more indentation depth in material)
-#endif
 
             this.spaceAtEnd = spaceAtEnd;
             if (!subHeader)
@@ -140,9 +120,6 @@ namespace UnityEditor.Rendering.DCL_Toon
                 --EditorGUI.indentLevel;
             }
 
-#if !UNITY_2020_1_OR_NEWER
-            EditorGUI.indentLevel = oldIndentLevel;
-#endif
             GUILayout.EndVertical();
         }
     }

@@ -49,7 +49,6 @@ UNITY_DEFINE_INSTANCED_PROP(half, _BlurLevelSGM)
 UNITY_DEFINE_INSTANCED_PROP(half, _BumpScale)
 UNITY_DEFINE_INSTANCED_PROP(float, _BumpScaleMatcap)
 UNITY_DEFINE_INSTANCED_PROP(float, _CameraRolling_Stabilizer)
-
 UNITY_DEFINE_INSTANCED_PROP(half, _Cutoff)
 UNITY_DEFINE_INSTANCED_PROP(float, _Farthest_Distance)
 UNITY_DEFINE_INSTANCED_PROP(float, _GI_Intensity)
@@ -110,18 +109,14 @@ UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_MatcapMaskLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_RimLightMaskLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_ShadingGradeMapLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_SystemShadowsLevel)
-
 UNITY_DEFINE_INSTANCED_PROP(float, _Unlit_Intensity)
 UNITY_DEFINE_INSTANCED_PROP(half, _Use_1stAs2nd)
 UNITY_DEFINE_INSTANCED_PROP(half, _Use_BaseAs1st)
 UNITY_DEFINE_INSTANCED_PROP(float, _ZOverDrawMode)
-
 UNITY_DEFINE_INSTANCED_PROP(float4, _1st_ShadeColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _2nd_ShadeColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Ap_RimLightColor)
-
 UNITY_DEFINE_INSTANCED_PROP(half4, _EmissionColor)
-
 UNITY_DEFINE_INSTANCED_PROP(float4, _HighColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _MatCapColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Outline_Color)
@@ -141,7 +136,6 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _BaseColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
 #define _SpecColor                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
 #define _Emissive_Color                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Color)
-
 
 #define _EndFadeDistance                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EndFadeDistance)
 #define _StartFadeDistance                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _StartFadeDistance)
@@ -220,7 +214,6 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _BlurLevelMatcap                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BlurLevelMatcap)
 #define _Inverse_MatcapMask                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Inverse_MatcapMask)
 #define _BumpScaleMatcap                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpScaleMatcap)
-
 #define emissive                            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, emissive)
 #define _Unlit_Intensity                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Unlit_Intensity)
 #define _Is_Filter_HiCutPointLightColor     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Is_Filter_HiCutPointLightColor)
@@ -230,9 +223,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _Offset_X_Axis_BLD                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Offset_X_Axis_BLD)
 #define _Offset_Y_Axis_BLD                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Offset_Y_Axis_BLD)
 #define _Inverse_Z_Axis_BLD                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Inverse_Z_Axis_BLD)
-
 #define _Inverse_Clipping                   UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Inverse_Clipping)
-
 #define _GI_Intensity                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _GI_Intensity)
 #define _Is_LightColor_Outline              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Is_LightColor_Outline)
 #define _Outline_Width                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Outline_Width)
@@ -244,7 +235,6 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _Is_OutlineTex                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Is_OutlineTex)
 #define _Is_BakedNormal                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Is_BakedNormal)
 #define _ZOverDrawMode                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ZOverDrawMode)
-
 #define _EmissionColor                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionColor)
 #define _Cutoff                             UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff)
 #define _Smoothness                         UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness)
@@ -265,28 +255,21 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
     #define DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(tex,coord) tex.Sample (sampler_MainTexArr,coord)
     #define DCL_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod) tex.SampleLevel (sampler##tex,coord,lod)
 
-    //DCL_DECLARE_TEX2DARRAY(_BaseMapArr);
     DCL_DECLARE_TEX2DARRAY(_BumpMapArr);
     DCL_DECLARE_TEX2DARRAY(_EmissionMapArr);
     DCL_DECLARE_TEX2DARRAY(_MainTexArr);
 
     DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(_NormalMapArr);
-
     DCL_DECLARE_TEX2DARRAY(_MatCap_SamplerArr);
-    //DCL_DECLARE_TEX2DARRAY(_NormalMapForMatCapArr);
-    //DCL_DECLARE_TEX2DARRAY(_Set_MatcapMaskArr);
     DCL_DECLARE_TEX2DARRAY(_Emissive_TexArr);
-    //DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(_ClippingMaskArr);
 
     DCL_DECLARE_TEX2DARRAY(_OcclusionMapArr);
     DCL_DECLARE_TEX2DARRAY(_MetallicGlossMapArr);
 
 
-    // #define SAMPLE_BASEMAP(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY(_BaseMapArr, float3(uv, texArrayID))
     #define SAMPLE_BUMPMAP(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY(_BumpMapArr, float3(uv, texArrayID))
     #define SAMPLE_EMISSIONMAP(uv,texArrayID)                   DCL_SAMPLE_TEX2DARRAY(_EmissionMapArr, float3(uv, texArrayID))
     #define SAMPLE_MAINTEX(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_MainTexArr, float3(uv, texArrayID))
-    // #define SAMPLE_NORMALMAP(uv,texArrayID)                     DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_NormalMapArr, float3(uv, texArrayID))
     #define SAMPLE_NORMALMAP(uv,texArrayID)                     float4(0.5f, 0.5f, 1.0f, 1.0f)
     // #define SAMPLE_MATCAP(uv,texArrayID,lod)                    DCL_SAMPLE_TEX2DARRAY_LOD(_MatCap_SamplerArr, float3(uv, texArrayID), lod)
     #define SAMPLE_MATCAP(uv,texArrayID,lod)                    float4(0.0f, 0.0f, 0.0f, 0.0f)

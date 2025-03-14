@@ -23,15 +23,15 @@ namespace UnityEditor.Rendering.DCL_Toon
     /// </example>
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, AllowMultiple = false)]
-    internal class UTS3InspectorHelpURLAttribute : HelpURLAttribute
+    internal class DCL_Toon_InspectorHelpURLAttribute : HelpURLAttribute
     {
         /// <summary>
         /// The constructor of the attribute
         /// </summary>
         /// <param name="pageName"></param>
         /// <param name="packageName"></param>
-        internal UTS3InspectorHelpURLAttribute(string pageName, string packageName = "com.unity.toonshader")
-            : base(UTS3DocumentationInfo.GetPageLink(packageName, pageName))
+        internal DCL_Toon_InspectorHelpURLAttribute(string pageName, string packageName = "com.unity.toonshader")
+            : base(DCL_Toon_DocumentationInfo.GetPageLink(packageName, pageName))
         {
         }
     }
@@ -40,7 +40,7 @@ namespace UnityEditor.Rendering.DCL_Toon
     /// <summary>
     /// Documentation Info class.
     /// </summary>
-    internal class UTS3DocumentationInfo
+    internal class DCL_Toon_DocumentationInfo
     {
         internal const string fallbackVersion = "0.7";
 #if USE_GITHUB_DOC_LINK
@@ -75,7 +75,7 @@ namespace UnityEditor.Rendering.DCL_Toon
     /// <summary>
     /// Set of utils for documentation
     /// </summary>
-    internal static class UTS3DocumentationUtils
+    internal static class DCL_Toon_DocumentationUtils
     {
         /// <summary>
         /// Obtains the help url from an enum

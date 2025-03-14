@@ -136,7 +136,6 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
 
     ////// Lighting:
     float3 halfDirection = normalize(viewDirection+lightDirection);
-    //_Color = _BaseColor;
     
     // SHARED START
     float3 Set_LightColor = lightColor.rgb;
@@ -219,11 +218,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float _Camera_Roll = acos(clamp(_Camera_Roll_Cos, -1, 1));
     half _Camera_Dir = _Camera_Right.y < 0 ? -1 : 1;
     float _Rot_MatCapUV_var_ang = (fRotate_MatCapUV*3.141592654) - _Camera_Dir*_Camera_Roll*_CameraRolling_Stabilizer;
-    //v.2.0.7
     float2 _Rot_MatCapNmUV_var = RotateUV(Set_UV0, (_Rotate_NormalMapForMatCapUV*3.141592654), float2(0.5, 0.5), 1.0);
-    //V.2.0.6
-    //int nNormalMapForMatCapArrID = -1;//_NormalMapForMatCapArr_ID;
-    //float3 _NormalMapForMatCap_var = UnpackNormalScale(SAMPLE_NORMALMAPFORMATCAP(TRANSFORM_TEX(_Rot_MatCapNmUV_var, _NormalMapForMatCap), nNormalMapForMatCapArrID), _BumpScaleMatcap);
     // MatCap with camera skew correction
     float3 viewNormal = (mul(UNITY_MATRIX_V, float4(i.normalDir,0))).rgb;
     //float3 viewNormal = (mul(UNITY_MATRIX_V, float4(lerp( i.normalDir, mul( _NormalMapForMatCap_var.rgb, tangentTransform ).rgb, _Is_NormalMapForMatCap ),0))).rgb;
@@ -231,7 +226,6 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float3 NormalBlend_MatcapUV_Base = (mul( UNITY_MATRIX_V, float4(viewDirection,0) ).rgb*float3(-1,-1,1)) + float3(0,0,1);
     float3 noSknewViewNormal = NormalBlend_MatcapUV_Base*dot(NormalBlend_MatcapUV_Base, NormalBlend_MatcapUV_Detail)/NormalBlend_MatcapUV_Base.b - NormalBlend_MatcapUV_Detail;                
     float2 _ViewNormalAsMatCapUV = (lerp(noSknewViewNormal,viewNormal,_Is_Ortho).rg*0.5)+0.5;
-    //v.2.0.7
     float2 _Rot_MatCapUV_var = RotateUV((0.0 + ((_ViewNormalAsMatCapUV - (0.0+_Tweak_MatCapUV)) * (1.0 - 0.0) ) / ((1.0-_Tweak_MatCapUV) - (0.0+_Tweak_MatCapUV))), _Rot_MatCapUV_var_ang, float2(0.5, 0.5), 1.0);
 
     // If it is "inside the mirror", flip the UV left and right.
@@ -246,9 +240,6 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
 
     int nMatCap_SamplerArrID = _MatCap_SamplerArr_ID;
     float4 _MatCap_Sampler_var = SAMPLE_MATCAP(TRANSFORM_TEX(_Rot_MatCapUV_var, _MatCap_Sampler), nMatCap_SamplerArrID, _BlurLevelMatcap);
-
-    //int nSet_MatcapMaskArrID = -1;//_Set_MatcapMaskArr_ID;
-    //float4 _Set_MatcapMask_var = float4(1.0f, 1.0f, 1.0f, 1.0f);//SAMPLE_SET_MATCAPMASK(TRANSFORM_TEX(Set_UV0, _Set_MatcapMask), nSet_MatcapMaskArrID);
 
     // MatcapMask
     float _Tweak_MatcapMaskLevel_var = 1.0f;//saturate(lerp(_Set_MatcapMask_var.g, (1.0 - _Set_MatcapMask_var.g), _Inverse_MatcapMask) + _Tweak_MatcapMaskLevel);
