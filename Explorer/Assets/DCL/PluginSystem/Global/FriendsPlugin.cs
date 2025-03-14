@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -79,7 +78,6 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
@@ -105,7 +103,6 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -200,7 +197,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache, viewDependencies);
+                inputBlock, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 
