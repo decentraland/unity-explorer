@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -15,6 +16,7 @@ namespace ECS.SceneLifeCycle
     public class ECSReloadScene : IReloadScene
     {
         private readonly IScenesCache scenesCache;
+        private readonly ICacheCleaner cacheCleaner;
 
         private readonly Entity playerEntity;
         private readonly World world;
@@ -23,12 +25,14 @@ namespace ECS.SceneLifeCycle
         public ECSReloadScene(IScenesCache scenesCache,
             World world,
             Entity playerEntity,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            ICacheCleaner cacheCleaner)
         {
             this.scenesCache = scenesCache;
             this.world = world;
             this.playerEntity = playerEntity;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.cacheCleaner = cacheCleaner;
         }
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
@@ -89,6 +93,8 @@ namespace ECS.SceneLifeCycle
                     {
                         staticScenePointers.Promise = null;
                     });
+
+                cacheCleaner.UnloadCache(false);
             }
             else
             {
