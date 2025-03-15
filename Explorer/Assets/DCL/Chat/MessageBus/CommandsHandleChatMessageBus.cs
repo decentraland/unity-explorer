@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
+using DCL.RealmNavigation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,14 +13,16 @@ namespace DCL.Chat.MessageBus
     public class CommandsHandleChatMessageBus : IChatMessagesBus
     {
         private readonly IChatMessagesBus origin;
+        private readonly ILoadingStatus loadingStatus;
         private readonly Dictionary<string, IChatCommand> commands;
         private CancellationTokenSource commandCts = new ();
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands)
+        public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands, ILoadingStatus loadingStatus)
         {
             this.origin = origin;
+            this.loadingStatus = loadingStatus;
             this.commands = commands.ToDictionary(cmd => cmd.Command);
             origin.MessageAdded += OriginOnOnMessageAdded;
         }
@@ -34,6 +37,9 @@ namespace DCL.Chat.MessageBus
 
         public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+                return;
+
             if (message[0] == '/') // User tried running a command
             {
                 HandleChatCommandAsync(channelId, message).Forget();

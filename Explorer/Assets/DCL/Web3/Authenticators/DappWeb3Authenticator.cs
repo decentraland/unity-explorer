@@ -195,9 +195,9 @@ namespace DCL.Web3.Authenticators
             finally
             {
                 if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
-                    await UniTask.SwitchToMainThread(ct);
+                    await UniTask.SwitchToMainThread(CancellationToken.None);
 
                 mutex.Release();
             }
