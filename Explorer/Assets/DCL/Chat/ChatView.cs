@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.UI;
 using MVC;
 using DG.Tweening;
@@ -176,6 +177,7 @@ namespace DCL.Chat
         private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private bool isMemberListCountDirty;
         private int memberListCount;
+        private ILoadingStatus loadingStatus;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -316,20 +318,34 @@ namespace DCL.Chat
             isMemberListCountDirty = false;
         }
 
+
         public void Dispose()
         {
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
+
+            loadingStatus.CurrentStage.OnUpdate -= SetInputFieldInteractable;
+            memberListView.VisibilityChanged -= OnMemberListViewVisibilityChanged;
+            chatInputBox.InputBoxSelectionChanged -= OnInputBoxSelectionChanged;
+            chatInputBox.EmojiSelectionVisibilityChanged -= OnEmojiSelectionVisibilityChanged;
+            chatInputBox.InputChanged -= OnInputChanged;
+            chatInputBox.InputSubmitted -= OnInputSubmitted;
+
+            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatChannel.ChannelId defaultChannelId,
             bool areChatBubblesVisible,
             ChatAudioSettingsAsset chatAudioSettings,
-            GetParticipantProfilesDelegate getParticipantProfilesDelegate
+            GetParticipantProfilesDelegate getParticipantProfilesDelegate,
+            ILoadingStatus loadingStatus
         )
         {
+            this.loadingStatus = loadingStatus;
+            loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
+
             this.channels = chatChannels;
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
             closeMemberListButton.onClick.AddListener(OnCloseChatButtonClicked);
@@ -356,6 +372,14 @@ namespace DCL.Chat
             closePopupTask = new UniTaskCompletionSource();
 
             CurrentChannel = defaultChannelId;
+        }
+
+        private void SetInputFieldInteractable(LoadingStatus.LoadingStage status)
+        {
+            if(status == LoadingStatus.LoadingStage.Completed)
+                chatInputBox.EnableInputBoxSubmissions();
+            else
+                chatInputBox.DisableInputBoxSubmissions();
         }
 
         private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
@@ -527,6 +551,10 @@ namespace DCL.Chat
                 RefreshMessages();
 
                 chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+
+                // Corner case: The new line is visible without doing scroll, and is positioned at the top of the message list
+                if(IsScrollAtBottom && chatMessageViewer.CurrentSeparatorIndex >= currentChannel.Messages.Count - 2) // -2: There is a padding message at the top of the list, the separator will be beneath it
+                    chatMessageViewer.HideSeparator();
 
                 SetScrollToBottomVisibility(!IsScrollAtBottom);
 

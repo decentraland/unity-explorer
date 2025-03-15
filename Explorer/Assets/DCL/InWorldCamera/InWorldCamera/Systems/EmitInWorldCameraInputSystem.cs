@@ -30,6 +30,8 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
+            if (!World.Get<CameraComponent>(camera).CameraInputChangeEnabled) return;
+
             if (inputSchema.ToggleInWorldCamera.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
 
