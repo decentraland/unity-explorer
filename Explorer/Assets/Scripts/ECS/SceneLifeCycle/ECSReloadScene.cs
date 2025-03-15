@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle
@@ -94,6 +95,9 @@ namespace ECS.SceneLifeCycle
                         staticScenePointers.Promise = null;
                     });
 
+                Resources.UnloadUnusedAssets();
+
+                // Nothing can be called after cacheCleaner.UnloadCache(), as that code becomes unreachable.
                 cacheCleaner.UnloadCache(false);
             }
             else

@@ -22,14 +22,12 @@ namespace ECS.StreamableLoading.GLTF
 
         protected override void DestroyObject()
         {
-            Debug.Log($"PRAVS - GLTFData.DestroyObject()");
+            // Dispose the GltfImport which will handle texture disposal
+            Asset?.Dispose();
 
             // Destroy the container GameObject
             if (containerGameObject != null)
                 Object.Destroy(containerGameObject);
-
-            // Dispose the GltfImport which will handle texture disposal
-            Asset?.Dispose();
         }
     }
 }
