@@ -70,7 +70,7 @@ namespace DCL.Chat
 
             switch (channel.ChannelType)
             {
-                case ChatChannel.ChatChannelType.NearBy:
+                case ChatChannel.ChatChannelType.Nearby:
                     newItem.SetConversationIcon(icon);
                     newItem.SetConversationName("Near By"); // TODO: Localization
                     newItem.SetClaimedNameIconVisibility(false);
@@ -140,8 +140,7 @@ namespace DCL.Chat
 
         private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
         {
-            ChatChannel.ChannelId.GetTypeAndNameFromId(newItem.Id.Id, out ChatChannel.ChatChannelType type, out string name);
-            Profile? profile = await viewDependencies.GetProfileAsync(name, CancellationToken.None);
+            Profile? profile = await viewDependencies.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
 
             if (profile != null)
             {

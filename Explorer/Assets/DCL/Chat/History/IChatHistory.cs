@@ -57,11 +57,11 @@ namespace DCL.Chat.History
         /// Creates and stores a new channel.
         /// </summary>
         /// <param name="type">The type of the channel.</param>
-        /// <param name="channelName">The unique name of the channel (for a given type).</param>
+        /// <param name="channelId">The unique name of the channel (for a given type).</param>
         /// <returns>
         /// The id of the new channel.
         /// </returns>
-        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelName);
+        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelId);
 
         /// <summary>
         /// Removes a channel along with its messages (which implies a change in the amount of read messages).

@@ -44,12 +44,12 @@ namespace DCL.Chat.History
 
         public ChatHistory()
         {
-            AddChannel(ChatChannel.ChatChannelType.NearBy, string.Empty);
+            AddChannel(ChatChannel.ChatChannelType.Nearby, string.Empty);
         }
 
-        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelName)
+        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelId)
         {
-            ChatChannel newChannel = new ChatChannel(type, channelName);
+            ChatChannel newChannel = new ChatChannel(type, channelId);
             newChannel.MessageAdded += (destinationChannel, addedMessage) => { MessageAdded?.Invoke(destinationChannel, addedMessage); };
             newChannel.Cleared += (clearedChannel) => { ChannelCleared?.Invoke(clearedChannel); };
             newChannel.ReadMessagesChanged += (changedChannel) => { ReadMessagesChanged?.Invoke(changedChannel); };
@@ -72,6 +72,9 @@ namespace DCL.Chat.History
 
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
         {
+            if (!channels.ContainsKey(channelId))
+                AddChannel(ChatChannel.ChatChannelType.User, channelId.Id);
+
             channels[channelId].AddMessage(newMessage);
         }
 

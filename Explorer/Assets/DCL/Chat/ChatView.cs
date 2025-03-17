@@ -4,6 +4,7 @@ using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.Web3;
 using MVC;
 using DG.Tweening;
 using System;
@@ -256,13 +257,12 @@ namespace DCL.Chat
 
                     switch (currentChannel.ChannelType)
                     {
-                        case ChatChannel.ChatChannelType.NearBy:
+                        case ChatChannel.ChatChannelType.Nearby:
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.User:
-                        // Get user profile from data in the channel? and set up
-                        //chatTitleBar.SetupProfilePictureView(viewDependencies,);
-                        //chatTitleBar.SetChannelNameText(username);
+                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
+                            break;
                         default:
                             break;
                     }
@@ -763,7 +763,7 @@ namespace DCL.Chat
 
         public void AddConversation(ChatChannel channelToAdd)
         {
-            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL))
+            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL_ID))
                 conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
             else
                 conversationsToolbar.AddConversation(channelToAdd);

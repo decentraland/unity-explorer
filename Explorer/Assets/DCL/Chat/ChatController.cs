@@ -44,10 +44,12 @@ namespace DCL.Chat
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
+        private readonly IRoom currentRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private readonly IChatInputBus chatInputBus;
+        private readonly IRoomHub roomHub;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -91,7 +93,8 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
-            this.islandRoom = roomHub.SharedPrivateConversationsRoom();
+            this.roomHub = roomHub;
+            this.islandRoom = roomHub.IslandRoom();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
@@ -174,15 +177,15 @@ namespace DCL.Chat
 
             // Intro message
             // TODO: Use localization systems here:
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
-            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL].MarkAllMessagesAsRead();
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem("Type /help for available commands."));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
 
 // TODO: REMOVE ALL THESE LINES AFTER TESTING
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x024b912f2c35cebc1e2b06987baa2b1280a8291d");
+chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x1b8ba74cc34c2927aac0a8af9c3b1ba2e61352f2");
 chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xc9C29AB98E6BC42015985165A11153F564e9F8C2");
 chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x51a514d3F28Ea19775e811fC09396E808394bd12");
 chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xcd4ea8e05945f34122679f5035cd6014f3263863");
@@ -199,9 +202,9 @@ chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xe2b6024873d218B2E83B
 chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2");
 chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xdA5462CDb7091c39dE8cC0dE49e96632ED33197A");
 
-viewDependencies.DclInput.TESTS.Action1.performed += (x) => { chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, new ChatMessage("Test1 " + Random.Range(0, 100), "Test1", "Address", false, "senderID", false, false)); };
-viewDependencies.DclInput.TESTS.Action2.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "0x024b912f2c35cebc1e2b06987baa2b1280a8291d"), new ChatMessage("Test2 " + Random.Range(0, 100), "Test2", "0x024b912f2c35cebc1e2b06987baa2b1280a8291d", false, "senderID", false, false)); };
-viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "0xc9C29AB98E6BC42015985165A11153F564e9F8C2"), new ChatMessage("Test3 " + Random.Range(0, 100), "Test3", "0xc9C29AB98E6BC42015985165A11153F564e9F8C2", false, "senderID", false, false)); };
+viewDependencies.DclInput.TESTS.Action1.performed += (x) => { chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, new ChatMessage("Test1 " + Random.Range(0, 100), "Test1", "Address", false, "senderID", false, false)); };
+viewDependencies.DclInput.TESTS.Action2.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId("0x024b912f2c35cebc1e2b06987baa2b1280a8291d"), new ChatMessage("Test2 " + Random.Range(0, 100), "Test2", "0x024b912f2c35cebc1e2b06987baa2b1280a8291d", false, "senderID", false, false)); };
+viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId("0xc9C29AB98E6BC42015985165A11153F564e9F8C2"), new ChatMessage("Test3 " + Random.Range(0, 100), "Test3", "0xc9C29AB98E6BC42015985165A11153F564e9F8C2", false, "senderID", false, false)); };
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
@@ -389,7 +392,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
         {
-            chatMessagesBus.Send(channel.Id, message, origin);
+            chatMessagesBus.Send(channel, message, origin);
         }
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)
