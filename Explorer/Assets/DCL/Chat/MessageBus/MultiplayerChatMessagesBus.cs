@@ -109,7 +109,7 @@ namespace DCL.Chat.MessageBus
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
                 case ChatChannel.ChatChannelType.User:
-                    SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.ToString());
+                    SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 default:
                     break;
