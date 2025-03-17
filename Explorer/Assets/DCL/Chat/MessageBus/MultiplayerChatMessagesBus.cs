@@ -34,6 +34,7 @@ namespace DCL.Chat.MessageBus
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
         }
 
         public void Dispose()
@@ -98,6 +99,7 @@ namespace DCL.Chat.MessageBus
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             SendTo(channelId, message, timestamp, messagePipesHub.IslandPipe());
             SendTo(channelId, message, timestamp, messagePipesHub.ScenePipe());
+            SendTo(channelId, message, timestamp, messagePipesHub.ChatPipe());
         }
 
         private void SendTo(ChatChannel.ChannelId channelId, string message, double timestamp, IMessagePipe messagePipe)

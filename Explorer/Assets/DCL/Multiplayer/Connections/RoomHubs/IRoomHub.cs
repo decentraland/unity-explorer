@@ -10,6 +10,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         IGateKeeperSceneRoom SceneRoom();
 
+        IRoom SharedPrivateConversationsRoom();
+
         UniTask<bool> StartAsync();
 
         UniTask StopAsync();

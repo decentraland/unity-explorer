@@ -86,7 +86,7 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
-            this.islandRoom = roomHub.IslandRoom();
+            this.islandRoom = roomHub.SharedPrivateConversationsRoom();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
