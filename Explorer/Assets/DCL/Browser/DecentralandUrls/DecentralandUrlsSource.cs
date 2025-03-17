@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.Dynamic.LaunchModes;
 using System;
 using System.Collections.Generic;
 
@@ -16,23 +17,23 @@ namespace DCL.Browser.DecentralandUrls
 
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
-        private readonly string environmentDomainLowerCase;
-        private readonly bool isLocalSceneDevelopment;
+        private readonly ILaunchMode launchMode;
 
+        public string DecentralandDomain { get; }
+        public DecentralandEnvironment Environment { get; }
 
-        public string DecentralandDomain => environmentDomainLowerCase;
-
-        public DecentralandUrlsSource(DecentralandEnvironment environment, bool isLocalSceneDevelopment = false)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            environmentDomainLowerCase = environment.ToString()!.ToLower();
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            Environment = environment;
+            DecentralandDomain = environment.ToString()!.ToLower();
+            this.launchMode = launchMode;
 
             switch (environment)
             {
                 case DecentralandEnvironment.Org:
                 case DecentralandEnvironment.Zone:
-                    ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, environmentDomainLowerCase);
-                    GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, environmentDomainLowerCase);
+                    ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, DecentralandDomain);
+                    GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, DecentralandDomain);
                     break;
                 case DecentralandEnvironment.Today:
 
@@ -40,7 +41,7 @@ namespace DCL.Browser.DecentralandUrls
                     //We want to fetch pointers from org, but asset bundles from today
                     //Thats because how peer-testing.decentraland.org works.
                     //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
-                    environmentDomainLowerCase = DecentralandEnvironment.Org.ToString()!.ToLower();
+                    DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
                     ASSET_BUNDLE_URL = "https://ab-cdn.decentraland.today";
 
                     //On staging, we hardcode the catalyst because its the only valid one with a valid comms configuration
@@ -53,22 +54,20 @@ namespace DCL.Browser.DecentralandUrls
         {
             if (cache.TryGetValue(decentralandUrl, out string? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, environmentDomainLowerCase);
+                url = RawUrl(decentralandUrl).Replace(ENV, DecentralandDomain);
                 cache[decentralandUrl] = url;
             }
 
             return url!;
         }
 
-        public string GetHostnameForFeatureFlag()
-        {
-            if (isLocalSceneDevelopment)
+        public string GetHostnameForFeatureFlag() =>
+            launchMode.CurrentMode switch
             {
-                return "localhost";
-            }
-
-            return Url(DecentralandUrl.Host);
-        }
+                LaunchMode.Play => Url(DecentralandUrl.Host),
+                LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
@@ -78,30 +77,40 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
-                DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
+                DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
+                DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
+                DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
+                DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
+                DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
-                DecentralandUrl.GateKeeperSceneAdapter =>
-                    $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
+                DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
+                DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
+                DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
-                DecentralandUrl.NotificationRead =>
-                    $"https://notifications.decentraland.{ENV}/notifications/read",
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => ASSET_BUNDLE_URL,
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
+                DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => GENESIS_URL,
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
-                DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
+                DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
+                DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
+                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
+                DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

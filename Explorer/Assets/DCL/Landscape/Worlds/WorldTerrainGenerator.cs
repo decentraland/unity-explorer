@@ -1,10 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using DCL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -113,6 +113,7 @@ namespace DCL.Landscape
             {
                 await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken);
                 await UniTask.Yield(cancellationToken);
+                noiseGenCache.ResetNoiseNativeArrayProvider();
             }
 
             if (processReport != null) processReport.SetProgress(0.5f);

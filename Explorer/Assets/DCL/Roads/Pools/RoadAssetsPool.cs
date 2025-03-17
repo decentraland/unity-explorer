@@ -1,6 +1,7 @@
 #nullable enable
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using ECS;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace DCL.LOD
 {
     public class RoadAssetsPool : IRoadAssetPool, IDisposable
     {
-        private const string DEFAULT_ROAD_KEY = "OpenRoad_0";
+        public const string DEFAULT_ROAD_KEY = "OpenRoad_0";
 
         /// <summary>
         /// The amount of instances of each type of road asset that will be created from the beginning in the pools.
@@ -38,9 +39,8 @@ namespace DCL.LOD
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
-        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
+        public RoadAssetsPool(IRealmData realmData, IReadOnlyList<GameObject> roadPrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
-
             var poolRoot = componentPoolsRegistry?.RootContainerTransform();
             roadAssetParent = new GameObject("POOL_CONTAINER_Road_Assets").transform;
             roadAssetParent.parent = poolRoot;
@@ -61,6 +61,9 @@ namespace DCL.LOD
 
             // Pool pre-warming
             Prewarm();
+
+            SwitchVisibility(realmData.RealmType.Value);
+            realmData.RealmType.OnUpdate += SwitchVisibility;
         }
 
         public void Dispose()
@@ -147,10 +150,9 @@ namespace DCL.LOD
         /// <summary>
         /// Activates / deactivates all road assets.
         /// </summary>
-        /// <param name="isVisible">Whether to activate or not all road assets.</param>
-        public void SwitchVisibility(bool isVisible)
+        private void SwitchVisibility(RealmKind realmKind)
         {
-            roadAssetParent.gameObject.SetActive(isVisible);
+            roadAssetParent.gameObject.SetActive(realmKind is RealmKind.GenesisCity);
         }
 
         /// <summary>

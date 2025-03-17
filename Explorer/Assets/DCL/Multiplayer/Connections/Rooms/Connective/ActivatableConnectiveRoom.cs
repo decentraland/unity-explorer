@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -19,6 +20,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IConnectiveRoom.State OriginTargetState { get; private set; }
 
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => Activated ? origin.CurrentConnectionLoopHealth : IConnectiveRoom.ConnectionLoopHealth.Stopped;
+
+        public AttemptToConnectState AttemptToConnectState => Activated ? origin.AttemptToConnectState : AttemptToConnectState.None;
 
         public ActivatableConnectiveRoom(IConnectiveRoom origin, bool initialState = true)
         {
@@ -105,5 +108,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public IRoom Room() =>
             proxy;
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

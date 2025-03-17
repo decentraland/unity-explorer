@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.RealmNavigation;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Linq;
 using System.Threading;
 using Utility;
 
@@ -11,16 +13,17 @@ namespace DCL.Chat.MessageBus
     public class CommandsHandleChatMessageBus : IChatMessagesBus
     {
         private readonly IChatMessagesBus origin;
-        private readonly ChatCommandsHandler chatCommandsHandler;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly Dictionary<string, IChatCommand> commands;
         private CancellationTokenSource commandCts = new ();
-        private (IChatCommand command, Match param) commandTuple;
 
-        public event Action<ChatMessage>? MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands)
+        public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands, ILoadingStatus loadingStatus)
         {
             this.origin = origin;
-            this.chatCommandsHandler = new ChatCommandsHandler(commands);
+            this.loadingStatus = loadingStatus;
+            this.commands = commands.ToDictionary(cmd => cmd.Command);
             origin.MessageAdded += OriginOnOnMessageAdded;
         }
 
@@ -32,42 +35,61 @@ namespace DCL.Chat.MessageBus
             commandCts.SafeCancelAndDispose();
         }
 
-        public void Send(string message, string origin)
+        public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {
-            //If the message doesn't start as a command (with "/"), we just forward it to the chat
-            if (!ChatCommandsHandler.StartsLikeCommand(message))
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+                return;
+
+            if (message[0] == '/') // User tried running a command
             {
-                this.origin.Send(message, origin);
+                HandleChatCommandAsync(channelId, message).Forget();
                 return;
             }
 
-            if (chatCommandsHandler.TryGetChatCommand(message, ref commandTuple))
+            this.origin.Send(channelId, message, origin);
+        }
+
+        private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, string message)
+        {
+            string[] split = message.Split(' ');
+            string userCommand = split[0][1..];
+            string[] parameters = new ArraySegment<string>(split, 1, split.Length - 1).ToArray()!;
+
+            if (commands.TryGetValue(userCommand, out IChatCommand? command))
             {
-                ExecuteChatCommandAsync(commandTuple.command, commandTuple.param).Forget();
+                if (command.ValidateParameters(parameters))
+                {
+                    // Command found and parameters validated, run it
+                    commandCts = commandCts.SafeRestart();
+
+                    try
+                    {
+                        string response = await command.ExecuteCommandAsync(parameters, commandCts.Token);
+                        SendFromSystem(channelId, response);
+                    }
+                    catch (Exception) { SendFromSystem(channelId, "🔴 Error running command."); }
+
+                    return;
+                }
+
+                SendFromSystem(channelId, $"🔴 Invalid parameters, usage:\n{command.Description}");
                 return;
             }
 
-            SendFromSystem($"🔴 Command not found: '{message}'");
+            // Command not found
+            SendFromSystem(channelId, "🔴 Command not found.");
         }
 
-        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
+        private void SendFromSystem(ChatChannel.ChannelId channelId, string message)
         {
-            commandCts = commandCts.SafeRestart();
+            if (string.IsNullOrEmpty(message)) return;
 
-            string? response = await command.ExecuteAsync(param, commandCts.Token);
-
-            if (!string.IsNullOrEmpty(response))
-                SendFromSystem(response);
+            MessageAdded?.Invoke(channelId, ChatMessage.NewFromSystem(message));
         }
 
-        private void SendFromSystem(string message)
+        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatMessage obj)
         {
-            MessageAdded?.Invoke(ChatMessage.NewFromSystem(message));
-        }
-
-        private void OriginOnOnMessageAdded(ChatMessage obj)
-        {
-            MessageAdded?.Invoke(obj);
+            MessageAdded?.Invoke(channelId, obj);
         }
     }
 }

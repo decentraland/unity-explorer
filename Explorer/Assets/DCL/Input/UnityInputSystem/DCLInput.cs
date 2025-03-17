@@ -1487,6 +1487,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionUp"",
+                    ""type"": ""Button"",
+                    ""id"": ""32ed56bf-0d55-4259-b2e8-0859588765ca"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionDown"",
+                    ""type"": ""Button"",
+                    ""id"": ""88b91896-4abe-4728-b828-0e6a082b00f7"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2006,6 +2024,28 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Close"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e23e65c2-8ff3-445f-919e-359ffa536845"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionUp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f4579625-4380-4a27-bb39-011d5684ebb6"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionDown"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -2107,6 +2147,42 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ToggleSceneDebugConsoleLarger"",
                     ""type"": ""Button"",
                     ""id"": ""65d092fb-6cb5-423f-8b70-93f843b54813"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""OpenChat"",
+                    ""type"": ""Button"",
+                    ""id"": ""430e31be-9d28-4c75-a904-851e595a70c1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""OpenChatCommandLine"",
+                    ""type"": ""Button"",
+                    ""id"": ""df66082b-5afe-4795-a9eb-e5d25d40111e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Controls"",
+                    ""type"": ""Button"",
+                    ""id"": ""ff9cdfbe-b880-4633-aaae-c5b3849d7f08"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""FriendPanel"",
+                    ""type"": ""Button"",
+                    ""id"": ""beb1ee53-edda-4028-98bb-2706bb7d853e"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -2256,6 +2332,50 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleSceneDebugConsoleLarger"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""936aa25d-52b8-4067-ab14-76c9c847d3f5"",
+                    ""path"": ""<Keyboard>/t"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""OpenChat"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""978158e8-1961-43a6-98e4-754ab341d611"",
+                    ""path"": ""<Keyboard>/slash"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""OpenChatCommandLine"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a2b44e8b-33bb-4468-9439-8836ae0a5796"",
+                    ""path"": ""<Keyboard>/h"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Controls"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a9c17c82-b11f-4a40-84ef-a26e3cf7f085"",
+                    ""path"": ""<Keyboard>/l"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FriendPanel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -3046,6 +3166,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleNametags"",
+                    ""type"": ""Button"",
+                    ""id"": ""35bcdb9a-cdac-4391-a47e-6f6a134f694d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3499,6 +3628,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Screenshot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a39e9815-f60c-4e5d-afef-3fe7fcd03dfa"",
+                    ""path"": ""<Keyboard>/n"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleNametags"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3565,6 +3705,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_UI_ControllerDelta = m_UI.FindAction("ControllerDelta", throwIfNotFound: true);
         m_UI_ControllerFastCursor = m_UI.FindAction("ControllerFastCursor", throwIfNotFound: true);
         m_UI_Close = m_UI.FindAction("Close", throwIfNotFound: true);
+        m_UI_ActionUp = m_UI.FindAction("ActionUp", throwIfNotFound: true);
+        m_UI_ActionDown = m_UI.FindAction("ActionDown", throwIfNotFound: true);
         // Shortcuts
         m_Shortcuts = asset.FindActionMap("Shortcuts", throwIfNotFound: true);
         m_Shortcuts_MainMenu = m_Shortcuts.FindAction("MainMenu", throwIfNotFound: true);
@@ -3578,6 +3720,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
+        m_Shortcuts_OpenChat = m_Shortcuts.FindAction("OpenChat", throwIfNotFound: true);
+        m_Shortcuts_OpenChatCommandLine = m_Shortcuts.FindAction("OpenChatCommandLine", throwIfNotFound: true);
+        m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
+        m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3618,6 +3764,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_CameraReel = m_InWorldCamera.FindAction("CameraReel", throwIfNotFound: true);
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
         m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
+        m_InWorldCamera_ToggleNametags = m_InWorldCamera.FindAction("ToggleNametags", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4063,6 +4210,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ControllerDelta;
     private readonly InputAction m_UI_ControllerFastCursor;
     private readonly InputAction m_UI_Close;
+    private readonly InputAction m_UI_ActionUp;
+    private readonly InputAction m_UI_ActionDown;
     public struct UIActions
     {
         private @DCLInput m_Wrapper;
@@ -4081,6 +4230,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ControllerDelta => m_Wrapper.m_UI_ControllerDelta;
         public InputAction @ControllerFastCursor => m_Wrapper.m_UI_ControllerFastCursor;
         public InputAction @Close => m_Wrapper.m_UI_Close;
+        public InputAction @ActionUp => m_Wrapper.m_UI_ActionUp;
+        public InputAction @ActionDown => m_Wrapper.m_UI_ActionDown;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4132,6 +4283,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started += instance.OnClose;
             @Close.performed += instance.OnClose;
             @Close.canceled += instance.OnClose;
+            @ActionUp.started += instance.OnActionUp;
+            @ActionUp.performed += instance.OnActionUp;
+            @ActionUp.canceled += instance.OnActionUp;
+            @ActionDown.started += instance.OnActionDown;
+            @ActionDown.performed += instance.OnActionDown;
+            @ActionDown.canceled += instance.OnActionDown;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -4178,6 +4335,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started -= instance.OnClose;
             @Close.performed -= instance.OnClose;
             @Close.canceled -= instance.OnClose;
+            @ActionUp.started -= instance.OnActionUp;
+            @ActionUp.performed -= instance.OnActionUp;
+            @ActionUp.canceled -= instance.OnActionUp;
+            @ActionDown.started -= instance.OnActionDown;
+            @ActionDown.performed -= instance.OnActionDown;
+            @ActionDown.canceled -= instance.OnActionDown;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -4210,6 +4373,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleNametags;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
+    private readonly InputAction m_Shortcuts_OpenChat;
+    private readonly InputAction m_Shortcuts_OpenChatCommandLine;
+    private readonly InputAction m_Shortcuts_Controls;
+    private readonly InputAction m_Shortcuts_FriendPanel;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -4225,6 +4392,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
         public InputAction @ToggleSceneDebugConsole => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsole;
         public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
+        public InputAction @OpenChat => m_Wrapper.m_Shortcuts_OpenChat;
+        public InputAction @OpenChatCommandLine => m_Wrapper.m_Shortcuts_OpenChatCommandLine;
+        public InputAction @Controls => m_Wrapper.m_Shortcuts_Controls;
+        public InputAction @FriendPanel => m_Wrapper.m_Shortcuts_FriendPanel;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4267,6 +4438,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled += instance.OnToggleSceneDebugConsoleLarger;
+            @OpenChat.started += instance.OnOpenChat;
+            @OpenChat.performed += instance.OnOpenChat;
+            @OpenChat.canceled += instance.OnOpenChat;
+            @OpenChatCommandLine.started += instance.OnOpenChatCommandLine;
+            @OpenChatCommandLine.performed += instance.OnOpenChatCommandLine;
+            @OpenChatCommandLine.canceled += instance.OnOpenChatCommandLine;
+            @Controls.started += instance.OnControls;
+            @Controls.performed += instance.OnControls;
+            @Controls.canceled += instance.OnControls;
+            @FriendPanel.started += instance.OnFriendPanel;
+            @FriendPanel.performed += instance.OnFriendPanel;
+            @FriendPanel.canceled += instance.OnFriendPanel;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -4304,6 +4487,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled -= instance.OnToggleSceneDebugConsoleLarger;
+            @OpenChat.started -= instance.OnOpenChat;
+            @OpenChat.performed -= instance.OnOpenChat;
+            @OpenChat.canceled -= instance.OnOpenChat;
+            @OpenChatCommandLine.started -= instance.OnOpenChatCommandLine;
+            @OpenChatCommandLine.performed -= instance.OnOpenChatCommandLine;
+            @OpenChatCommandLine.canceled -= instance.OnOpenChatCommandLine;
+            @Controls.started -= instance.OnControls;
+            @Controls.performed -= instance.OnControls;
+            @Controls.canceled -= instance.OnControls;
+            @FriendPanel.started -= instance.OnFriendPanel;
+            @FriendPanel.performed -= instance.OnFriendPanel;
+            @FriendPanel.canceled -= instance.OnFriendPanel;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -4589,6 +4784,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_CameraReel;
     private readonly InputAction m_InWorldCamera_ShowHide;
     private readonly InputAction m_InWorldCamera_Close;
+    private readonly InputAction m_InWorldCamera_ToggleNametags;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -4605,6 +4801,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @CameraReel => m_Wrapper.m_InWorldCamera_CameraReel;
         public InputAction @ShowHide => m_Wrapper.m_InWorldCamera_ShowHide;
         public InputAction @Close => m_Wrapper.m_InWorldCamera_Close;
+        public InputAction @ToggleNametags => m_Wrapper.m_InWorldCamera_ToggleNametags;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4650,6 +4847,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started += instance.OnClose;
             @Close.performed += instance.OnClose;
             @Close.canceled += instance.OnClose;
+            @ToggleNametags.started += instance.OnToggleNametags;
+            @ToggleNametags.performed += instance.OnToggleNametags;
+            @ToggleNametags.canceled += instance.OnToggleNametags;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4690,6 +4890,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started -= instance.OnClose;
             @Close.performed -= instance.OnClose;
             @Close.canceled -= instance.OnClose;
+            @ToggleNametags.started -= instance.OnToggleNametags;
+            @ToggleNametags.performed -= instance.OnToggleNametags;
+            @ToggleNametags.canceled -= instance.OnToggleNametags;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4773,6 +4976,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnControllerDelta(InputAction.CallbackContext context);
         void OnControllerFastCursor(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
+        void OnActionUp(InputAction.CallbackContext context);
+        void OnActionDown(InputAction.CallbackContext context);
     }
     public interface IShortcutsActions
     {
@@ -4787,6 +4992,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleNametags(InputAction.CallbackContext context);
         void OnToggleSceneDebugConsole(InputAction.CallbackContext context);
         void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
+        void OnOpenChat(InputAction.CallbackContext context);
+        void OnOpenChatCommandLine(InputAction.CallbackContext context);
+        void OnControls(InputAction.CallbackContext context);
+        void OnFriendPanel(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {
@@ -4830,5 +5039,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnCameraReel(InputAction.CallbackContext context);
         void OnShowHide(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
+        void OnToggleNametags(InputAction.CallbackContext context);
     }
 }

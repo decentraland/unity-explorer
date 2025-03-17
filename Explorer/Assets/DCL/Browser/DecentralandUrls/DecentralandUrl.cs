@@ -7,24 +7,33 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ArchipelagoStatus,
         GatekeeperStatus,
+        ArchipelagoHotScenes,
 
         DiscordLink,
 
         PrivacyPolicy,
         TermsOfUse,
 
+        ApiChunks,
+
         ApiPlaces,
         POI,
+        Map,
         ContentModerationReport,
 
+        ApiEvents,
+
         ApiAuth,
-        AuthSignature,
+        AuthSignatureWebApp,
+        ApiRpc,
 
         GateKeeperSceneAdapter,
+        LocalGateKeeperSceneAdapter,
 
         OpenSea,
 
         PeerAbout,
+        RemotePeers,
 
         DAO,
 
@@ -36,6 +45,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         FeatureFlags,
 
         Market,
+        MarketplaceClaimName,
 
         AssetBundlesCDN,
 
@@ -45,5 +55,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         CameraReelImages,
         CameraReelPlaces,
         CameraReelLink,
+
+        ApiFriends,
+        AssetBundleRegistry,
+
+        BuilderApiDtos,
+        BuilderApiContent,
     }
 }

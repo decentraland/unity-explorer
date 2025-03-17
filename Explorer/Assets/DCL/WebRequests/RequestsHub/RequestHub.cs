@@ -47,6 +47,7 @@ namespace DCL.WebRequests.RequestsHub
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
             Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
+            Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
             Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
         }
 

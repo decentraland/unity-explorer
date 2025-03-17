@@ -77,6 +77,18 @@ namespace DCL.Ipfs
             }
         }
 
+        public URLDomain AssetBundleRegistry
+        {
+            get
+            {
+                var result = origin.AssetBundleRegistry;
+                ReportHub
+                    .WithReport(ReportCategory.REALM)
+                    .Log($"IpfsRealm AssetBundleRegistry requested, result: {result}");
+                return result;
+            }
+        }
+
         public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             var sb = new StringBuilder();

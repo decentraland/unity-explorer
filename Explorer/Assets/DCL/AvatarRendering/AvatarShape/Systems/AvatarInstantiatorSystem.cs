@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             vertOutBuffer.Dispose();
         }
@@ -208,6 +208,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
 
+            avatarShapeComponent.CreateOutlineCompatibilityList();
             wearableIntention.Dispose();
 
             if (wearablesResult.Succeeded)

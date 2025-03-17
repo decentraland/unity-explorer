@@ -11,8 +11,19 @@ namespace DCL.UI
         [field: SerializeField]
         internal Image Image { get; private set; }
 
+        public bool IsLoading
+        {
+            set => LoadingObject.SetActive(value);
+        }
+
+        public bool ImageEnabled
+        {
+            set => Image.enabled = value;
+        }
+
         public void SetImage(Sprite sprite)
         {
+            Image.enabled = true;
             Image.sprite = sprite;
             LoadingObject.SetActive(false);
         }

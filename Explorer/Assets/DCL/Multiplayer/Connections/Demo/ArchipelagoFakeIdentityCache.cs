@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Connections.Demo
                     new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                         web3AccountFactory
                     ),
-                    "ArchipelagoTestIdentity"
+                    new IPlayerPrefsIdentityProviderKeyStrategy.Const()
                 )
             );
 

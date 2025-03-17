@@ -8,6 +8,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -15,6 +16,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 
@@ -72,6 +75,7 @@ namespace DCL.InWorldCamera.Playground
                         web3IdentityCache,
                         IWebRequestController.DEFAULT,
                         URLDomain.FromString("TestRealm"),
+                        URLDomain.EMPTY,
                         new ServerAbout(
                             lambdas: new ContentEndpoint(profileUrl)
                         )

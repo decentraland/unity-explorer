@@ -1,12 +1,13 @@
 using Cysharp.Threading.Tasks;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
     /// <summary>
     ///     Represent the core of the connection to a room
     /// </summary>
-    public interface IConnectiveRoom
+    public interface IConnectiveRoom : IDisposable
     {
         enum State
         {
@@ -38,12 +39,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         State CurrentState();
 
+        AttemptToConnectState AttemptToConnectState { get; }
+
         ConnectionLoopHealth CurrentConnectionLoopHealth { get; }
 
         IRoom Room();
 
         class Null : IConnectiveRoom
         {
+            public static readonly Null INSTANCE = new ();
+
+            protected Null() { }
+
             public UniTask<bool> StartAsync() =>
                 UniTask.FromResult(true);
 
@@ -53,10 +60,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             public State CurrentState() =>
                 State.Stopped;
 
+            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.None;
+
             public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;
+
+            public void Dispose() { }
         }
     }
 

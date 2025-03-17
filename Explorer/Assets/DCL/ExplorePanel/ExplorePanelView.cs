@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DG.Tweening;
 using MVC;
 using System;
@@ -32,6 +33,9 @@ namespace DCL.ExplorePanel
 
         [field: SerializeField]
         public ProfileMenuView ProfileMenuView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public ProfileMenuView SkyMenuView { get; private set; } = null!;
 
         [field: Header("Audio")]
         [field: SerializeField]

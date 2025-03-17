@@ -1,4 +1,5 @@
-﻿using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+﻿using DCL.CharacterCamera;
+using MVC;
 using UnityEngine;
 
 namespace DCL.InWorldCamera
@@ -9,7 +10,15 @@ namespace DCL.InWorldCamera
     {
         public bool IsEnable;
         public string Source;
+        public CameraMode? TargetCameraMode;
     }
+
+    public struct ToggleUIRequest
+    {
+        public bool Enable;
+        public IController Except;
+    }
+
     public struct TakeScreenshotRequest { public string Source; }
     public struct CameraTarget { public CharacterController Value; }
 

@@ -29,6 +29,7 @@ namespace DCL.Notifications.NewNotification
         private bool isDisplaying;
         private ImageController thumbnailImageController;
         private ImageController badgeThumbnailImageController;
+        private ImageController friendsThumbnailImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -37,8 +38,7 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
@@ -57,6 +57,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
             badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController);
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
+            friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, webRequestController);
+            viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
         }
 
         private void StopAnimation()
@@ -97,6 +99,10 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.BADGE_GRANTED:
                         await ProcessBadgeNotificationAsync(notification);
                         break;
+                    case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
+                    case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                        await ProcessFriendsNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -131,6 +137,25 @@ namespace DCL.Notifications.NewNotification
             await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
         }
 
+        private async UniTask ProcessFriendsNotificationAsync(INotification notification)
+        {
+            viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.FriendsNotificationView.NotificationType = notification.Type;
+            viewInstance.FriendsNotificationView.Notification = notification;
+            ProcessCustomMetadata(notification);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+
+            viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            if (notification.Type == NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED)
+                viewInstance.FriendsNotificationView.PlayAcceptedNotificationAudio();
+            else
+                viewInstance.FriendsNotificationView.PlayRequestNotificationAudio();
+            await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
+        }
+
         private async UniTask ProcessBadgeNotificationAsync(INotification notification)
         {
             viewInstance!.BadgeNotificationView.HeaderText.text = notification.GetHeader();
@@ -149,7 +174,13 @@ namespace DCL.Notifications.NewNotification
             switch (notification)
             {
                 case RewardAssignedNotification rewardAssignedNotification:
-                    viewInstance.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    viewInstance!.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+                case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
+                    viewInstance!.FriendsNotificationView.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
+                    break;
+                case FriendRequestReceivedNotification friendRequestReceivedNotification:
+                    viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
                     break;
             }
         }

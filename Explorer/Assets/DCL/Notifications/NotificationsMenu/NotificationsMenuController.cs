@@ -24,6 +24,9 @@ namespace DCL.Notifications.NotificationsMenu
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
+        private const int DEFAULT_NOTIFICATION_INDEX = 0;
+        private const int FRIENDS_NOTIFICATION_INDEX = 1;
+
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
@@ -102,9 +105,9 @@ namespace DCL.Notifications.NotificationsMenu
         {
             if (unreadNotifications > 0)
             {
-                view.LoopList.DoActionForEachShownItem((item2, param) =>
+                view.LoopList.DoActionForEachShownItem((item2, _) =>
                 {
-                    NotificationView notificationView = item2!.GetComponent<NotificationView>();
+                    INotificationView notificationView = item2!.GetComponent<INotificationView>();
                     INotification notificationData = notificationView.Notification;
 
                     ManageNotificationReadStatus(notificationData, true);
@@ -171,24 +174,37 @@ namespace DCL.Notifications.NotificationsMenu
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index)
         {
-            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            NotificationView notificationView = listItem!.GetComponent<NotificationView>();
             INotification notificationData = notifications[index];
+            LoopListViewItem2 listItem;
+            INotificationView notificationView;
+
+            switch (notificationData.Type)
+            {
+                case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
+                case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                    listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[FRIENDS_NOTIFICATION_INDEX].mItemPrefab.name);
+                    notificationView = listItem!.GetComponent<FriendsNotificationView>();
+                    break;
+                default:
+                    listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[DEFAULT_NOTIFICATION_INDEX].mItemPrefab.name);
+                    notificationView = listItem!.GetComponent<NotificationView>();
+                    break;
+            }
+
+            SetItemData(notificationView, notificationData);
 
             ManageNotificationReadStatus(notificationData, view.gameObject.activeSelf);
             UpdateUnreadNotificationRender();
 
-            SetItemData(notificationView, notificationData);
-
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
-                LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts.Token).Forget();
+                LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts!.Token).Forget();
 
             return listItem;
         }
 
-        private void SetItemData(NotificationView notificationView, INotification notificationData)
+        private void SetItemData(INotificationView notificationView, INotification notificationData)
         {
             notificationView.NotificationClicked -= ClickedNotification;
             notificationView.HeaderText.text = notificationData.GetHeader();
@@ -205,12 +221,23 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.NotificationClicked += ClickedNotification;
         }
 
-        private void ProcessCustomMetadata(INotification notification, NotificationView notificationView)
+        private void ProcessCustomMetadata(INotification notification, INotificationView notificationView)
         {
             switch (notification)
             {
                 case RewardAssignedNotification rewardAssignedNotification:
-                    notificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    NotificationView nView = (NotificationView)notificationView;
+                    nView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+                case FriendRequestReceivedNotification friendRequestReceivedNotification:
+                    FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;
+                    friendNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
+                    friendNotificationView.TimeText.gameObject.SetActive(true);
+                    break;
+                case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
+                    FriendsNotificationView friendNotificationView2 = (FriendsNotificationView)notificationView;
+                    friendNotificationView2.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
+                    friendNotificationView2.TimeText.gameObject.SetActive(true);
                     break;
             }
         }
@@ -220,7 +247,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationsBusController.ClickNotification(notificationType, notification);
         }
 
-        private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
+        private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
             CancellationToken ct)
         {
             IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
@@ -238,7 +265,7 @@ namespace DCL.Notifications.NotificationsMenu
             //Try add has been added in case it happens that BE returns duplicated notifications id
             //In that case we will just use the same thumbnail for each notification with the same id
             notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
-            notificationView.NotificationImage.SetImage(thumbnailSprite);
+            notificationImage.NotificationImage.SetImage(thumbnailSprite);
         }
 
         private void OnNotificationReceived(INotification notification)

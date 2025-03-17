@@ -10,6 +10,13 @@ namespace DCL.Diagnostics
     /// </summary>
     public static class ReportHub
     {
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void SetLogAndWarningToNoStackTrace()
+        {
+            Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+        }
+
         public static ReportHubLogger Instance { get; private set; } =
             new (new (ReportHandler, IReportHandler)[]
             {
@@ -84,6 +91,15 @@ namespace DCL.Diagnostics
             if (!enforceUnconditionalVerboseLogs) return;
 #endif
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
+        }
+
+        /// <summary>
+        ///     Methods guarantees that the message will be logged at any environment condition.
+        ///     Any heavy computation (string interpolations, concat and etc) should be avoided
+        /// </summary>
+        public static void LogProductionInfo(string message, ReportHandler reportToHandlers = ReportHandler.All)
+        {
+            Instance.Log(LogType.Log, ReportCategory.ALWAYS, message, null, reportToHandlers);
         }
 
         /// <summary>

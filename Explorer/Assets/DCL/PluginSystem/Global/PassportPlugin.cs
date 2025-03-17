@@ -8,17 +8,22 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
+using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.ProfileNames;
+using DCL.Utilities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -33,7 +38,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
@@ -50,6 +54,16 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
+        private readonly ObjectProxy<IFriendsService> friendsService;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCache;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ViewDependencies viewDependencies;
+        private readonly INftNamesProvider nftNamesProvider;
+        private readonly bool enableFriends;
+        private readonly bool includeUserBlocking;
+        private readonly bool isNameEditorEnabled;
 
         private PassportController? passportController;
 
@@ -59,7 +73,6 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
@@ -75,7 +88,17 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            bool enableCameraReel
+            bool enableCameraReel,
+            ObjectProxy<IFriendsService> friendsService,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            IWeb3IdentityCache web3IdentityCache,
+            ViewDependencies viewDependencies,
+            INftNamesProvider nftNamesProvider,
+            bool enableFriends,
+            bool includeUserBlocking,
+            bool isNameEditorEnabled
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -83,7 +106,6 @@ namespace DCL.PluginSystem.Global
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
@@ -100,6 +122,16 @@ namespace DCL.PluginSystem.Global
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.enableCameraReel = enableCameraReel;
+            this.friendsService = friendsService;
+            this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.web3IdentityCache = web3IdentityCache;
+            this.viewDependencies = viewDependencies;
+            this.nftNamesProvider = nftNamesProvider;
+            this.enableFriends = enableFriends;
+            this.includeUserBlocking = includeUserBlocking;
+            this.isNameEditorEnabled = isNameEditorEnabled;
         }
 
         public void Dispose()
@@ -117,16 +149,15 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>();
+            PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
 
-            ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
+            var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
                 cursor,
                 profileRepository,
                 characterPreviewFactory,
-                chatEntryConfiguration,
                 rarityBackgroundsMapping,
                 rarityColorMappings,
                 categoryIconsMapping,
@@ -145,13 +176,29 @@ namespace DCL.PluginSystem.Global
                 remoteMetadata,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
+                friendsService,
+                friendOnlineStatusCache,
+                onlineUsersProvider,
+                realmNavigator,
+                web3IdentityCache,
+                viewDependencies,
+                nftNamesProvider,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
-                enableCameraReel
+                enableCameraReel,
+                enableFriends,
+                includeUserBlocking,
+                isNameEditorEnabled
             );
 
             mvcManager.RegisterController(passportController);
+
+            ProfileNameEditorView profileNameEditorView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.NameEditorPrefab, ct)).Value.GetComponent<ProfileNameEditorView>();
+
+            mvcManager.RegisterController(new ProfileNameEditorController(
+                ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
+                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource));
         }
 
         public class PassportSettings : IDCLPluginSettings
@@ -181,6 +228,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public int ThumbnailWidth { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceGameObject NameEditorPrefab;
         }
     }
 }

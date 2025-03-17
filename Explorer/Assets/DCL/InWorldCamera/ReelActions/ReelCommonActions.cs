@@ -21,7 +21,7 @@ namespace DCL.InWorldCamera.ReelActions
         /// </summary>
         public static void ShareReelToX(string shareToXMessage, string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard, IWebBrowser webBrowser)
         {
-            string description = shareToXMessage.Replace(" ", "%20");
+            string description = shareToXMessage;
             string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{reelId}";
             string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
 
@@ -69,19 +69,7 @@ namespace DCL.InWorldCamera.ReelActions
                     Directory.CreateDirectory(directoryPath);
 
                 await File.WriteAllBytesAsync(absolutePath, imageBytes, ct);
-
-                OpenFolderExplorer(absolutePath);
             }
-        }
-
-        private static void OpenFolderExplorer(string path)
-        {
-            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
-                System.Diagnostics.Process.Start("explorer.exe", "/select," + path);
-            else if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
-                System.Diagnostics.Process.Start("open", "-R " + path);
-            else if (Application.platform == RuntimePlatform.LinuxPlayer)
-                System.Diagnostics.Process.Start("xdg-open", path);
         }
     }
 }

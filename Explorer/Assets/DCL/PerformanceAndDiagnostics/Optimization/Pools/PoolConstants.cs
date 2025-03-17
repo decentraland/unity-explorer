@@ -20,11 +20,6 @@ true;
         public const int GLOBAL_WORLD_COUNT = 50;
 
         /// <summary>
-        ///     Initial capacity of pools that should exist per empty scene context
-        /// </summary>
-        public const int EMPTY_SCENES_COUNT = 400;
-
-        /// <summary>
         ///     The maximum number of scenes before everything explodes according to our expectations
         /// </summary>
         public const int SCENES_MAX_CAPACITY = 300;
@@ -33,6 +28,13 @@ true;
         ///     Initial capacity of pools connected to the total number of entities per scene
         /// </summary>
         public const int ENTITIES_COUNT_PER_SCENE = 2000;
+
+        /// <summary>
+        ///     Initial capacity of pools connected to the initial capacity of the asset promises per scene
+        /// </summary>
+        public const int MAX_ASSET_PROMISES_PER_SCENE_COUNT = ENTITIES_COUNT_PER_SCENE / 2;
+
+        public const int INITIAL_ASSET_PROMISES_PER_SCENE_COUNT = MAX_ASSET_PROMISES_PER_SCENE_COUNT / 2;
 
         /// <summary>
         ///     Initial capacity of pools connected to pointer events processing per scene

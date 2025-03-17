@@ -8,6 +8,8 @@ import zipfile
 import requests
 import datetime
 import argparse
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 # Local
 import utils
 
@@ -32,6 +34,7 @@ is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
+GLOBAL_TIMEOUT = int(os.getenv('GLOBAL_TIMEOUT', '10800')) # Seconds
 
 build_healthy = True
 
@@ -312,12 +315,29 @@ def poll_build(id):
             return False
             
 def download_artifact(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
+    session = requests.Session()
+    retries = Retry(
+        total=5,              # Retry up to 5 times
+        backoff_factor=2,     # Exponential backoff: 2s, 4s, 8s, etc.
+        status_forcelist=[502, 503, 504],  # Retry on these HTTP errors
+        allowed_methods=["GET"]
+    )
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    try:
+        response = session.get(
+            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}',
+            headers=HEADERS, timeout=60
+        )
+        response.raise_for_status()  # Raise an HTTPError for bad status codes (4xx/5xx)
+    except requests.exceptions.RequestException as e:
+        print(f'Error: Failed to get build artifacts with ID {id}. Exception: {e}')
+        sys.exit(1)
 
     if response.status_code != 200:
-        print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
+        print(f'Error: Failed to get build artifacts with ID {id} with status code: {response.status_code}')
+        print("Response body:", response.text[:500])
         sys.exit(1)
+    print('Build artifacts successfully retrieved!')
 
     response_json = response.json()
     try:
@@ -374,6 +394,9 @@ def download_artifact(id):
         print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
+    with open('unity_cloud_log.log', 'w') as f:
+        f.write('Initialize the log file before making the request\n')
+
     try:
         response = requests.get(
             f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log',
@@ -386,11 +409,22 @@ def download_log(id):
 
     if response.status_code != 200:
         print(f'Warning: Failed to get build log with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
+        print("Response body (partial):", response.text[:500])
         return  # Gracefully exit without failing the job
 
-    with open('unity_cloud_log.log', 'w') as f:
-        f.write(response.text)
+    try:
+        with open('unity_cloud_log.log', 'a') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk.decode('utf-8'))
+    except requests.exceptions.ChunkedEncodingError as e:
+        print(f'Warning: ChunkedEncodingError while writing build log: {e}')
+        print('Continuing without completing the build log download.')
+    except Exception as e:
+        print(f'Warning: Unexpected error while writing build log: {e}')
+        print('Continuing without completing the build log download.')
+    finally:
+        response.close()
 
     print('Build log ready!')
 
@@ -505,11 +539,17 @@ else:
 # Poll the build stats every {POLL_TIME}s
 start_time = time.time()
 while True:
+    elapsed_time = time.time() - start_time
+    if elapsed_time > GLOBAL_TIMEOUT:
+        print(f'Global timeout reached: {datetime.timedelta(seconds=elapsed_time)}. Cancelling build...')
+        cancel_build(id)
+        sys.exit(1)
+
     if poll_build(id):
-        print(f'Runner elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))} | Polling again in {POLL_TIME}s [...]')
+        print(f'Runner elapsed time: {datetime.timedelta(seconds=elapsed_time)} | Polling again in {POLL_TIME}s [...]')
         time.sleep(POLL_TIME)
     else:
-        print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))}')
+        print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=elapsed_time)}')
         break
 
 # Handle build artifact

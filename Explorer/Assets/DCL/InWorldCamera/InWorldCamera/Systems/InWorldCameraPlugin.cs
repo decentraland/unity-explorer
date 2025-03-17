@@ -20,6 +20,7 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.Systems;
 using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -67,9 +68,10 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
-        private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly NametagsData nametagsData;
+        private readonly ViewDependencies viewDependencies;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -89,9 +91,10 @@ namespace DCL.PluginSystem.Global
             URLDomain assetBundleURL,
             ICursor cursor,
             Button sidebarButton,
-            UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder,
+            NametagsData nametagsData,
+            ViewDependencies viewDependencies)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -115,10 +118,10 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
-            this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
-
+            this.nametagsData = nametagsData;
+            this.viewDependencies = viewDependencies;
             factory = new InWorldCameraFactory();
         }
 
@@ -140,16 +143,14 @@ namespace DCL.PluginSystem.Global
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, ChatEntryConfigurationSO chatEntryConfiguration) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.ChatEntryConfiguration, ct));
-
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct))
+                ;
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
                     cameraReelStorageService,
-                    webRequestController,
                     profileRepository,
                     mvcManager,
                     webBrowser,
@@ -162,7 +163,8 @@ namespace DCL.PluginSystem.Global
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
-                    chatEntryConfiguration),
+                    viewDependencies
+                    ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,
@@ -176,7 +178,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera, rootUIDocument);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);

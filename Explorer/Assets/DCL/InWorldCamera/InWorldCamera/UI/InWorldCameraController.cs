@@ -65,10 +65,13 @@ namespace DCL.InWorldCamera.UI
 
         public override void Dispose()
         {
-            viewInstance!.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
-            viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
-            viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
-            viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
+            if (viewInstance != null)
+            {
+                viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
+                viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
+                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
+                viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
+            }
 
             storageService.ScreenshotUploaded -= OnScreenshotUploaded;
             sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
@@ -135,13 +138,13 @@ namespace DCL.InWorldCamera.UI
 
         private void RequestDisableInWorldCamera()
         {
-            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
                 world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = false });
         }
 
         private void ToggleInWorldCamera()
         {
-            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
                 world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 

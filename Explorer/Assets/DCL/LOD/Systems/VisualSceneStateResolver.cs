@@ -19,6 +19,9 @@ namespace DCL.LOD
         public void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition,
             SceneDefinitionComponent sceneDefinitionComponent, ILODSettingsAsset lodSettingsAsset, IRealmData realmData)
         {
+            // For PX scenes, we always show the scene
+            if (sceneDefinitionComponent.IsPortableExperience) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+
             //If we are in a world, dont show lods
             if (realmData.ScenesAreFixed) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 

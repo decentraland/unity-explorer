@@ -22,6 +22,7 @@ namespace DCL.AvatarRendering.Emotes
         public string name;
         public AudioClip audioClip;
         public Sprite thumbnail;
+
         // Represents unisex prefab
         public GameObject prefab;
         public GameObject male;
@@ -29,7 +30,7 @@ namespace DCL.AvatarRendering.Emotes
         public EmoteDTO.Metadata.Data entity;
     }
 
-    [CreateAssetMenu(menuName = "DCL/Emotes/EmbedEmotes")]
+    [CreateAssetMenu(menuName = "DCL/Avatar/Embedded Emotes Data")]
     public class EmbeddedEmotesData : ScriptableObject
     {
         public EmbeddedEmote[] emotes;
@@ -123,7 +124,7 @@ namespace DCL.AvatarRendering.Emotes
             foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(glb, rendererInfos, null);
+            return new AttachmentRegularAsset(glb, rendererInfos, ECS.StreamableLoading.IStreamableRefCountData.Null.INSTANCE);
         }
     }
 }

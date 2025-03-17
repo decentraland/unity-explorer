@@ -14,67 +14,92 @@ namespace DCL.WebRequests.Analytics
     {
         public IWebRequestController WebRequestController { get; }
 
+        public IWebRequestController SceneWebRequestController { get; }
+
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer
-        )
+            IWebRequestController sceneWebRequestController,
+            IWebRequestsAnalyticsContainer analyticsContainer)
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
+            SceneWebRequestController = sceneWebRequestController;
         }
 
         public static WebRequestsContainer Create(
             IWeb3IdentityCache web3IdentityProvider,
             ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
-            int totalBudget,
+            int coreBudget,
+            int sceneBudget,
             bool isTextureCompressionEnabled
         )
         {
-            var analyticsContainer = new WebRequestsAnalyticsContainer()
-                .AddTrackedMetric<ActiveCounter>()
-                .AddTrackedMetric<Total>()
-                .AddTrackedMetric<TotalFailed>()
-                .AddTrackedMetric<BandwidthDown>()
-                .AddTrackedMetric<BandwidthUp>();
-
             var options = new ElementBindingOptions();
-            var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
-            var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, new RequestHub(texturesFuse, isTextureCompressionEnabled))
-                                      .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                                      .WithLog()
-                                      .WithArtificialDelay(options)
-                                      .WithBudget(totalBudget);
+            WebRequestsAnalyticsContainer analyticsContainer = new WebRequestsAnalyticsContainer()
+                                                              .AddTrackedMetric<ActiveCounter>()
+                                                              .AddTrackedMetric<Total>()
+                                                              .AddTrackedMetric<TotalFailed>()
+                                                              .AddTrackedMetric<BandwidthDown>()
+                                                              .AddTrackedMetric<BandwidthUp>()
+                                                              .AddTrackedMetric<ServerTimeSmallFileAverage>()
+                                                              .AddTrackedMetric<ServeTimePerMBAverage>()
+                                                              .AddTrackedMetric<FillRateAverage>()
+                                                              .AddTrackedMetric<TimeToFirstByteAverage>();
+
+            var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
+
+            var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
+            var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
+            var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
+
+            var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
+
+            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+                                                            .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                                                            .WithLog()
+                                                            .WithArtificialDelay(options)
+                                                            .WithBudget(coreBudget, coreAvailableBudget);
+
+            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                                                             .WithLog()
+                                                             .WithArtificialDelay(options)
+                                                             .WithBudget(sceneBudget, sceneAvailableBudget);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(webRequestController, analyticsContainer);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
                 debugContainerBuilder
-                    .TryAddWidget("Web Requests Debug Metrics")?
-                    .AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
+                   .TryAddWidget("Web Requests Debug Metrics")
+ ?
+.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
                         DebugLongMarkerDef.Unit.NoFormat)
-                    .AddMarker("Requests complete", requestCompleteDebugMetric,
+                   .AddMarker("Requests complete", requestCompleteDebugMetric,
+                        DebugLongMarkerDef.Unit.NoFormat)
+                   .AddMarker("Core budget", coreAvailableBudget,
+                        DebugLongMarkerDef.Unit.NoFormat)
+                   .AddMarker("Scene budget", sceneAvailableBudget,
                         DebugLongMarkerDef.Unit.NoFormat);
             }
 
             void CreateWebRequestDelayUtility()
             {
                 debugContainerBuilder
-                    .TryAddWidget("Web Requests Delay")
-                    ?.AddControlWithLabel(
+                   .TryAddWidget("Web Requests Delay")
+                  ?.AddControlWithLabel(
                         "Use Artificial Delay",
                         new DebugToggleDef(options.Enable)
                     )
-                    .AddControlWithLabel(
+                   .AddControlWithLabel(
                         "Artificial Delay Seconds",
                         new DebugFloatFieldDef(options.Delay)
                     );
@@ -82,44 +107,49 @@ namespace DCL.WebRequests.Analytics
 
             void CreateStressTestUtility()
             {
-                var stressTestUtility = new WebRequestStressTestUtility(webRequestController);
+                var stressTestUtility = new WebRequestStressTestUtility(coreWebRequestController);
 
                 var count = new ElementBinding<int>(50);
                 var retriesCount = new ElementBinding<int>(3);
                 var delayBetweenRequests = new ElementBinding<float>(0);
 
-                debugContainerBuilder.TryAddWidget("Web Requests Stress Tress")?
-                    .AddControlWithLabel("Count:", new DebugIntFieldDef(count))
-                    .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
-                    .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
-                    .AddControl(
-                        new DebugButtonDef("Start Success",
-                            () =>
-                            {
-                                stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, false,
-                                    delayBetweenRequests.Value).Forget();
-                            }),
-                        new DebugButtonDef("Start Failure",
-                            () =>
-                            {
-                                stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, true,
-                                    delayBetweenRequests.Value).Forget();
-                            }),
-                        new DebugHintDef("Concurrent"))
-                    .AddControl(
-                        new DebugButtonDef("Start Success",
-                            () =>
-                            {
-                                stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, false,
-                                    delayBetweenRequests.Value).Forget();
-                            }),
-                        new DebugButtonDef("Start Failure",
-                            () =>
-                            {
-                                stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, true,
-                                    delayBetweenRequests.Value).Forget();
-                            }),
-                        new DebugHintDef("Sequential"));
+                debugContainerBuilder.TryAddWidget("Web Requests Stress Tress")
+               ?
+              .AddControlWithLabel("Count:", new DebugIntFieldDef(count))
+                                     .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
+                                     .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
+                                     .AddControl(
+                                          new DebugButtonDef("Start Success",
+                                              () =>
+                                              {
+                                                  stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, false,
+                                                                        delayBetweenRequests.Value)
+                                                                   .Forget();
+                                              }),
+                                          new DebugButtonDef("Start Failure",
+                                              () =>
+                                              {
+                                                  stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, true,
+                                                                        delayBetweenRequests.Value)
+                                                                   .Forget();
+                                              }),
+                                          new DebugHintDef("Concurrent"))
+                                     .AddControl(
+                                          new DebugButtonDef("Start Success",
+                                              () =>
+                                              {
+                                                  stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, false,
+                                                                        delayBetweenRequests.Value)
+                                                                   .Forget();
+                                              }),
+                                          new DebugButtonDef("Start Failure",
+                                              () =>
+                                              {
+                                                  stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, true,
+                                                                        delayBetweenRequests.Value)
+                                                                   .Forget();
+                                              }),
+                                          new DebugHintDef("Sequential"));
             }
         }
 
@@ -133,9 +163,7 @@ namespace DCL.WebRequests.Analytics
             public ElementBindingOptions() : this(
                 PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false),
                 PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10)
-            )
-            {
-            }
+            ) { }
 
             public ElementBindingOptions(PersistentSetting<bool> enableSetting, PersistentSetting<float> delaySetting)
             {

@@ -21,7 +21,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.cameraReelController = controller.CameraReelController;
             this.cameraReelGalleryController = this.cameraReelController.CameraReelGalleryController;
 
-            navmapController.FloatingPanelController.OnJumpIn += OnJumpIn;
             cameraReelController.Activated += TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;
             cameraReelGalleryController.ScreenshotDownloaded += TrackScreenshotDownloaded;
@@ -30,7 +29,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         public void Dispose()
         {
-            navmapController.FloatingPanelController.OnJumpIn -= OnJumpIn;
             cameraReelController.Activated -= TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted -= TrackScreenshotDeleted;
             cameraReelGalleryController.ScreenshotDownloaded -= TrackScreenshotDownloaded;

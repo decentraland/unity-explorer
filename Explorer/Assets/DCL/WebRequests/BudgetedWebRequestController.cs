@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
 
@@ -8,10 +9,12 @@ namespace DCL.WebRequests
     {
         private readonly IWebRequestController origin;
         private readonly IReleasablePerformanceBudget totalBudget;
+        private readonly ElementBinding<ulong> debugBudget;
 
-        public BudgetedWebRequestController(IWebRequestController origin, int totalBudget)
+        public BudgetedWebRequestController(IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget)
         {
             this.origin = origin;
+            this.debugBudget = debugBudget;
             this.totalBudget = new ConcurrentLoadingPerformanceBudget(totalBudget);
         }
 
@@ -25,10 +28,14 @@ namespace DCL.WebRequests
 
             try
             {
+                lock (debugBudget) { debugBudget.Value--; }
+
                 return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
             }
             finally
             {
+                lock (debugBudget) { debugBudget.Value++; }
+
                 totalBudgetAcquired.Dispose();
             }
         }

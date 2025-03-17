@@ -54,8 +54,6 @@ MonoBehaviour:
       Severity: 4
     - Category: TEXTURES
       Severity: 4
-    - Category: GLTF_CONTAINER
-      Severity: 4
     - Category: MATERIALS
       Severity: 4
     - Category: PRIMITIVE_COLLIDERS
@@ -122,8 +120,6 @@ MonoBehaviour:
       Severity: 1
     - Category: TEXTURES
       Severity: 1
-    - Category: GLTF_CONTAINER
-      Severity: 1
     - Category: MATERIALS
       Severity: 1
     - Category: PRIMITIVE_COLLIDERS
@@ -189,6 +185,22 @@ MonoBehaviour:
     - Category: ANALYTICS
       Severity: 1
     - Category: TEXTURES
+      Severity: 0
+    - Category: ALWAYS
+      Severity: 2
+    - Category: ALWAYS
+      Severity: 0
+    - Category: ALWAYS
+      Severity: 4
+    - Category: ALWAYS
+      Severity: 1
+    - Category: FRIENDS
+      Severity: 4
+    - Category: FRIENDS
+      Severity: 1
+    - Category: ALWAYS
+      Severity: 3
+    - Category: FRIENDS
       Severity: 0
   sentryMatrix:
     entries:
@@ -238,8 +250,6 @@ MonoBehaviour:
       Severity: 4
     - Category: GENERIC_WEB_REQUEST
       Severity: 4
-    - Category: GLTF_CONTAINER
-      Severity: 4
     - Category: HIGHLIGHTS
       Severity: 4
     - Category: INPUT
@@ -265,8 +275,6 @@ MonoBehaviour:
     - Category: MVC
       Severity: 4
     - Category: NFT_INFO_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_SHAPE_WEB_REQUEST
       Severity: 4
     - Category: PLAYER_SDK_DATA
       Severity: 4
@@ -358,8 +366,6 @@ MonoBehaviour:
       Severity: 1
     - Category: GENERIC_WEB_REQUEST
       Severity: 1
-    - Category: GLTF_CONTAINER
-      Severity: 1
     - Category: HIGHLIGHTS
       Severity: 1
     - Category: INPUT
@@ -385,8 +391,6 @@ MonoBehaviour:
     - Category: MVC
       Severity: 1
     - Category: NFT_INFO_WEB_REQUEST
-      Severity: 1
-    - Category: NFT_SHAPE_WEB_REQUEST
       Severity: 1
     - Category: PLAYER_SDK_DATA
       Severity: 1
@@ -440,6 +444,10 @@ MonoBehaviour:
       Severity: 1
     - Category: WEARABLE
       Severity: 1
+    - Category: FRIENDS
+      Severity: 1
+    - Category: FRIENDS
+      Severity: 4
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1
