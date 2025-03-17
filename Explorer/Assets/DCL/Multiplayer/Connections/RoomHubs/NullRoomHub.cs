@@ -2,8 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Rooms;
-using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
