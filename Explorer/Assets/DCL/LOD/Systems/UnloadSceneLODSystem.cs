@@ -44,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
             sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
-            World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
+            World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
         }
 
         [Query]

@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
-                World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
+                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
 
         [Query]
@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(entity);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
 
         [Query]

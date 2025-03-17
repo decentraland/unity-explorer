@@ -15,6 +15,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
+using NSubstitute.Exceptions;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -76,8 +77,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 ProcessVolatileRealmQuery(World, maxLoadingSqrDistance);
                 ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
             }
-
-            ProcessScenesUnloadingInRealmQuery(World);
         }
 
         [Query]
@@ -92,16 +91,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
         private void ProcessVolatileRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realm)
         {
-            StartScenesLoading(ref realm, maxLoadingSqrDistance);
+            StartScenesLoading(maxLoadingSqrDistance, ref realm);
         }
 
-        [Query]
+        //TODO: StaticScenePointers should never unload
+        /*[Query]
         [None(typeof(StaticScenePointers))]
         [All(typeof(RealmComponent))]
         private void ProcessScenesUnloadingInRealm()
         {
             StartUnloadingQuery(World);
         }
+        */
 
         /// <summary>
         ///     Start loading scenes when all fixed pointers are loaded, otherwise we can't
@@ -112,15 +113,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void ProcessesFixedRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
-                StartScenesLoading(ref realmComponent, maxLoadingSqrDistance);
+                StartScenesLoading(maxLoadingSqrDistance, ref realmComponent);
         }
 
-        private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
+        private void StartScenesLoading([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent)
         {
             if (sortingJobHandle is { IsCompleted: true })
             {
                 sortingJobHandle.Value.Complete();
-                CreatePromisesFromOrderedData(realmComponent.Ipfs);
+                CreatePromisesFromOrderedData(realmComponent.Ipfs, maxLoadingSqrDistance);
             }
 
             if (sortingJobHandle is { IsCompleted: false }) return;
@@ -144,7 +145,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
                     ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref sceneDefinitionComponentFirst, entityIndex);
 
-                    if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance || partitionComponent.RawSqrDistance < 0) continue;
+                    //Ignore unpartitioned
+                    if (partitionComponent.RawSqrDistance < 0) continue;
 
                     orderedData.Add(new OrderedData
                     {
@@ -159,9 +161,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
-        private readonly int scenesToLoad = 1;
+        private readonly int scenesToLoad = 500;
 
-        private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
+        private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm, float maxLoadingSqrDistance)
         {
             unloadingSceneCounter.UpdateUnloadingScenes();
 
@@ -176,6 +178,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
+                //Always unload out of range scenes
+                if (components.t1.Value.RawSqrDistance >= maxLoadingSqrDistance)
+                {
+                    TryUnload(data, components.t0.Value, ref components.t2.Value);
+                    continue;
+                }
 
                 //If there is a teleport intent, only allow to load the teleport intent
                 //TODO: This is going to work better when the intent is according to the player position and not the camera
@@ -185,7 +193,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     continue;
 
                 if (i < scenesToLoad)
-                    TryLoad(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
+                    UpdateLoadState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
                 else
                     TryUnload(data, components.t0.Value, ref components.t2.Value);
             }
@@ -197,12 +205,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (!World.IsAlive(entity))
                 return true;
 
-            if (!World.Has<SceneLoadingState>(entity) || !World.Has<SceneDefinitionComponent>(entity) || !World.Has<PartitionComponent>(entity))
+            if (!World.Has<SceneLoadingState>(entity) || !World.Has<SceneDefinitionComponent>(entity) || !World.Has<PartitionComponent>(entity) || World.Has<DeleteEntityIntention>(entity))
             {
                 //WHY?
                 UnityEngine.Debug.Log("JUANI WE ARE CONTINUING");
                 return true;
             }
+
+            return false;
         }
 
         private bool TeleportOccuring(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent,
@@ -211,7 +221,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
             {
                 if (sceneDefinitionComponent.ContainsParcel(playerTeleportIntent.Parcel))
-                    TryLoad(ipfsRealm, data, sceneDefinitionComponent, partitionComponent, ref sceneState);
+                    UpdateLoadState(ipfsRealm, data, sceneDefinitionComponent, partitionComponent, ref sceneState);
 
                 return true;
             }
@@ -226,50 +236,58 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (World.TryGet(data.Entity, out ISceneFacade sceneFacade))
                     unloadingSceneCounter.RegisterSceneFacade(sceneDefinitionComponent.Definition.id, sceneFacade);
 
-                sceneState.loaded = false;
-                World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
+                Unload(data, ref sceneState);
             }
         }
 
-        private void TryLoad(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
+        private void Unload(OrderedData data, ref SceneLoadingState sceneState)
+        {
+            sceneState.loaded = false;
+            sceneState.VisualSceneStateEnum = VisualSceneStateEnum.UNINITIALIZED;
+            World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
+        }
+
+        private void UpdateLoadState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
             ref SceneLoadingState sceneState)
         {
-            if (!sceneState.loaded)
+            //Dont try to load an unloading scene. Wait
+            if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
+                return;
+
+            if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED && !partitionComponent.IsDirty)
+                return;
+
+            VisualSceneStateEnum candidateByEnum = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent);
+
+            //There is a change, so we are going to unload the current state and try to reload on the next iteration analysis
+            if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED
+                && sceneState.VisualSceneStateEnum != candidateByEnum
+                && candidateByEnum != VisualSceneStateEnum.SHOWING_SCENE)
             {
-                //Dont try to load an unloading scene. Wait
-                if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
-                    return;
-
-                var visualSceneState = new VisualSceneState();
-                VisualSceneStateEnum candidateByEnum = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent);
-                visualSceneState.CurrentVisualSceneState = candidateByEnum;
-                sceneState.loaded = true;
-
-                switch (visualSceneState.CurrentVisualSceneState)
-                {
-                    case VisualSceneStateEnum.SHOWING_LOD:
-                        World.Add(data.Entity, visualSceneState, SceneLODInfo.Create());
-                        break;
-                    case VisualSceneStateEnum.ROAD:
-                        World.Add(data.Entity, visualSceneState, RoadInfo.Create());
-                        break;
-                    default:
-                        World.Add(data.Entity, visualSceneState, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
-                        break;
-                }
+                Unload(data, ref sceneState);
+                return;
             }
-        }
 
-        [Query]
-        [All(typeof(SceneDefinitionComponent))]
-        [None(typeof(DeleteEntityIntention))]
-        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
-        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
-        {
-            if (partitionComponent.OutOfRange)
+            //Nothing has changed, keep going
+            if (sceneState.VisualSceneStateEnum == candidateByEnum)
+                return;
+
+            sceneState.VisualSceneStateEnum = candidateByEnum;
+            sceneState.loaded = true;
+
+            switch (sceneState.VisualSceneStateEnum)
             {
-                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+                case VisualSceneStateEnum.SHOWING_LOD:
+                    World.Add(data.Entity, SceneLODInfo.Create());
+                    break;
+                case VisualSceneStateEnum.ROAD:
+                    World.Add(data.Entity, RoadInfo.Create());
+                    break;
+                default:
+                    World.Add(data.Entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                        new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
+
+                    break;
             }
         }
 
@@ -295,7 +313,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     public struct SceneLoadingState
     {
         public bool loaded;
+        public VisualSceneStateEnum VisualSceneStateEnum;
     }
+
 
     public class UnloadingSceneCounter
     {
