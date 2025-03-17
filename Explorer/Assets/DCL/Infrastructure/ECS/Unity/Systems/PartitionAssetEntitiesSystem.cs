@@ -10,9 +10,13 @@ using ECS.Groups;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
+using System;
+using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -32,16 +36,14 @@ namespace ECS.Unity.Systems
     [LogCategory(ReportCategory.PRIORITIZATION)]
     public partial class PartitionAssetEntitiesSystem : BaseUnityLoopSystem
     {
-        private static ProfilerMarker job_PrepareMarker = new ("PartitionAssetEntitiesSystem.Job_Prepare");
-        private static ProfilerMarker job_RunMarker = new ("PartitionAssetEntitiesSystem.Job_Run");
-        private static ProfilerMarker job_ResultMarker = new ("PartitionAssetEntitiesSystem.Job_Result");
-
-        private static ProfilerMarker mRePartitionExistingEntityQuery = new ("PartitionAssetEntitiesSystem.RePartitionExistingEntityQuery");
-        private static ProfilerMarker mRepartitionExistingEntityWithoutTransformQuery = new ("PartitionAssetEntitiesSystem.RepartitionExistingEntityWithoutTransformQuery");
+        private static ProfilerMarker mRePartition = new ("PartitionAssetEntitiesSystem.mRePartition");
         private static ProfilerMarker mResetDirtyQuery = new ("PartitionAssetEntitiesSystem.ResetDirtyQuery");
-        private static ProfilerMarker mPartitionNewEntityQuery = new ("PartitionAssetEntitiesSystem.PartitionNewEntityQuery");
-        private static ProfilerMarker mPartitionNewEntityWithoutTransformQuery = new ("PartitionAssetEntitiesSystem.PartitionNewEntityWithoutTransformQuery");
-        private static ProfilerMarker mAddToJob = new ("PartitionAssetEntitiesSystem.AddToJob");
+
+        private static ProfilerMarker mJobRePartitionAll = new ("PartitionAssetEntitiesSystem.mJobRePartitionAll");
+        private static ProfilerMarker mJobRePartitionPreparation = new ("PartitionAssetEntitiesSystem.mJobRePartitionPreparation");
+        private static ProfilerMarker mJobRePartitionRun = new ("PartitionAssetEntitiesSystem.mJobRePartitionRun");
+        private static ProfilerMarker mJobRePartitionApply = new ("PartitionAssetEntitiesSystem.mJobRePartitionApply");
+
         private readonly IReadOnlyCameraSamplingData samplingData;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly Entity sceneRoot;
@@ -49,14 +51,7 @@ namespace ECS.Unity.Systems
         private readonly IPartitionSettings partitionSettings;
         private readonly IPartitionComponent scenePartition;
 
-        private readonly NativeArray<int> sqrDistanceBuckets;
-
-        private JobHandle handle;
-        private int InJobIdentifier;
-
-        private NativeList<byte> bucket = new (256, Allocator.Persistent);
-        private NativeList<bool> isBehind = new (256, Allocator.Persistent);
-        private NativeList<Vector3> position = new (256, Allocator.Persistent);
+        private readonly Schedulers.JobScheduler jobScheduler;
 
         internal PartitionAssetEntitiesSystem(World world,
             IPartitionSettings partitionSettings,
@@ -70,198 +65,346 @@ namespace ECS.Unity.Systems
             this.samplingData = samplingData;
             this.partitionComponentPool = partitionComponentPool;
             this.sceneRoot = sceneRoot;
+        }
 
-            sqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
+        public struct PartitionSettingsData
+        {
+            public byte ScenePartitionBucket;
+            public bool ScenePartitionIsBehind;
+
+            public float FastPathSqrDistance;
+            public NativeArray<float> SqrDistanceBuckets;
+        }
+
+        private PartitionSettingsData partitionSettingsData;
+        private NativeArray<float> sqrDistanceBucketsArray;
+        private PartitionComponent[] partitions = new PartitionComponent[32];
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
+            sqrDistanceBucketsArray = new NativeArray<float>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
 
             for (var i = 0; i < partitionSettings.SqrDistanceBuckets.Count; i++)
-                sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
-        }
+                sqrDistanceBucketsArray[i] = partitionSettings.SqrDistanceBuckets[i];
 
-        protected override void Update(float t)
-        {
-            if (InJobIdentifier != 0)
+            partitionSettingsData = new PartitionSettingsData
             {
-                using (job_ResultMarker.Auto())
-                {
-                    handle.Complete();
-                    ApplyJobResultsQuery(World);
-                    Clear();
-                }
-            }
-
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-
-            // First re-partition if player position or rotation is changed
-            if (samplingData.IsDirty) { RepartitionAllExistingEntityQuery(World, scenePosition); }
-            else // If not, re-partition only entities with dirty transform
-            {
-                using (mResetDirtyQuery.Auto())
-                    ResetDirtyForEntitesWithoutTransformQuery(World);
-
-                using (mRePartitionExistingEntityQuery.Auto())
-                    RePartitionExistingEntityWithDirtyTransformQuery(World); // Repartition all entities with dirty transform
-            }
-
-            using (mPartitionNewEntityWithoutTransformQuery.Auto())
-                PartitionNewEntityQuery(World, scenePosition);
-
-            if (InJobIdentifier == 0)
-                return;
-
-            PartitionJob partitionJob;
-
-            using (job_PrepareMarker.Auto())
-                partitionJob = new PartitionJob
-                {
-                    FastPathSqrDistance = partitionSettings.FastPathSqrDistance,
-                    SqrDistanceBuckets = sqrDistanceBuckets,
-                    CameraPosition = samplingData.Position,
-                    CameraForward = samplingData.Forward,
-                    SceneBucket = scenePartition.Bucket,
-                    SceneIsBehind = scenePartition.IsBehind,
-
-                    Bucket = bucket,
-                    IsBehind = isBehind,
-                    Position = position,
-                };
-
-            using (job_RunMarker.Auto()) { handle = partitionJob.Schedule(InJobIdentifier, 128); }
+                FastPathSqrDistance = partitionSettings.FastPathSqrDistance,
+                ScenePartitionBucket = scenePartition.Bucket,
+                ScenePartitionIsBehind = scenePartition.IsBehind,
+                SqrDistanceBuckets = sqrDistanceBucketsArray
+            };
         }
 
-        private void Clear()
+        protected override void OnDispose()
         {
-            bucket.Clear();
-            isBehind.Clear();
-            position.Clear();
-
-            InJobIdentifier = 0;
+            if (sqrDistanceBucketsArray.IsCreated)
+                sqrDistanceBucketsArray.Dispose();
         }
 
-        [Query]
-        private void ApplyJobResults(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent)
-        {
-            if (repartitionable.IdInJob < 0) return;
-
-            partitionComponent.IsDirty = repartitionable.IsNewEntity
-                                         || partitionComponent.Bucket != bucket[repartitionable.IdInJob]
-                                         || partitionComponent.IsBehind != isBehind[repartitionable.IdInJob];
-
-            if (partitionComponent.IsDirty)
-            {
-                partitionComponent.Bucket = bucket[repartitionable.IdInJob];
-                partitionComponent.IsBehind = isBehind[repartitionable.IdInJob];
-            }
-        }
-
-        [Query]
-        [None(typeof(TransformComponent))]
-        private void ResetDirtyForEntitesWithoutTransform(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent)
-        {
-            partitionComponent.IsDirty = false;
-            repartitionable.IdInJob = -1;
-        }
-
-        [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))]
-        [None(typeof(Repartitionable), typeof(PartitionComponent))]
-        private void PartitionNewEntity(in Entity entity, [Data] Vector3 scenePosition)
-        {
-            PartitionComponent partitionComponent = partitionComponentPool.Get();
-
-            Vector3 inPosition = World.TryGet(entity, out TransformComponent transformComponent) ? transformComponent.Cached.WorldPosition : scenePosition;
-
-            var repartitionable = new Repartitionable();
-
-            using (mAddToJob.Auto())
-                AddToJob(ref repartitionable, partitionComponent, inPosition);
-
-            repartitionable.IsNewEntity = true;
-
-            partitionComponent.IsDirty = true;
-            World.Add(entity, repartitionable, partitionComponent);
-        }
-
-        [Query]
-        private void RepartitionAllExistingEntity(in Entity entity, ref Repartitionable repartitionable, ref PartitionComponent partitionComponent, [Data] Vector3 scenePosition)
-        {
-            Vector3 pos = World.TryGet(entity, out TransformComponent transformComponent) ? transformComponent.Cached.WorldPosition : scenePosition;
-
-            using (mAddToJob.Auto())
-                AddToJob(ref repartitionable, partitionComponent, pos);
-        }
-
-        [Query]
-        private void RePartitionExistingEntityWithDirtyTransform(ref Repartitionable repartitionable, ref PartitionComponent partitionComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
-        {
-            if (!sdkTransform.IsDirty)
-            {
-                partitionComponent.IsDirty = false;
-                repartitionable.IdInJob = -1;
-
-                return;
-            }
-
-            using (mAddToJob.Auto())
-                AddToJob(ref repartitionable, partitionComponent, transformComponent.Cached.WorldPosition);
-        }
-
-        private void AddToJob(ref Repartitionable repartitionable, PartitionComponent partitionComponent, Vector3 inPosition)
-        {
-            repartitionable.IsNewEntity = false;
-            repartitionable.IdInJob = InJobIdentifier;
-
-            bucket.Add(partitionComponent.Bucket);
-            isBehind.Add(partitionComponent.IsBehind);
-            position.Add(inPosition);
-
-            InJobIdentifier++;
-        }
 
         [BurstCompile]
-        public struct PartitionJob : IJobParallelFor
+        public struct RePartitionJob : IJobParallelFor
         {
-            public int FastPathSqrDistance;
-            [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
+            [ReadOnly] public PartitionSettingsData PartitionSettings;
 
-            public byte SceneBucket;
-            public bool SceneIsBehind;
+            [ReadOnly] public float3 CameraPosition;
+            [ReadOnly] public float3 CameraForward;
 
-            public Vector3 CameraPosition;
-            public Vector3 CameraForward;
-
-            [ReadOnly] public NativeArray<Vector3> Position;
-
-            public NativeArray<byte> Bucket;
-            public NativeArray<bool> IsBehind;
+            [ReadOnly] public NativeArray<float3> EntityPositions;
+            [NativeDisableParallelForRestriction] public NativeArray<RepartitionableAssetEntity> Repartitionable;
 
             public void Execute(int index)
             {
-                Vector3 vectorToCamera = Position[index] - CameraPosition;
-                float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
+                RepartitionableAssetEntity partition = Repartitionable[index];
 
-                if (sqrDistance > FastPathSqrDistance)
+                var entityPosition = EntityPositions[index];
+                float3 vectorToCamera = entityPosition - CameraPosition;
+                float sqrDistance = math.lengthsq(vectorToCamera);
+
+                byte oldBucket = partition.Bucket;
+                bool oldIsBehind = partition.IsBehind;
+
+                if (sqrDistance > PartitionSettings.FastPathSqrDistance)
                 {
-                    Bucket[index] = SceneBucket;
-                    IsBehind[index] = SceneIsBehind;
+                    partition.Bucket = PartitionSettings.ScenePartitionBucket;
+                    partition.IsBehind = PartitionSettings.ScenePartitionIsBehind;
                 }
                 else
                 {
-                    // Find the bucket
                     byte bucketIndex = 0;
 
-                    while (bucketIndex < SqrDistanceBuckets.Length && sqrDistance >= SqrDistanceBuckets[bucketIndex])
+                    while (bucketIndex < PartitionSettings.SqrDistanceBuckets.Length && sqrDistance >= PartitionSettings.SqrDistanceBuckets[bucketIndex])
                         bucketIndex++;
 
-                    Bucket[index] = bucketIndex;
-                    IsBehind[index] = Vector3.Dot(CameraForward, vectorToCamera) < 0;
+                    partition.Bucket = bucketIndex;
+                    partition.IsBehind = math.dot(CameraForward, vectorToCamera) < 0;
                 }
+
+                partition.IsDirty = oldBucket != partition.Bucket || oldIsBehind != partition.IsBehind;
+
+                Repartitionable[index] = partition;
             }
         }
-    }
 
-    public struct Repartitionable
-    {
-        public int IdInJob;
-        public bool IsNewEntity;
+        private static ProfilerMarker mJobPrep_GetQueries = new ("PartitionAssetEntitiesSystem.mJobPrep_GetQueries");
+        private static ProfilerMarker mJobPrep_IterateArchetypes = new ("PartitionAssetEntitiesSystem.mJobPrep_IterateArchetypes");
+        private static ProfilerMarker mJobPrep_CreateArrays = new ("PartitionAssetEntitiesSystem.mJobPrep_CreateArrays");
+        private static ProfilerMarker mJobPrep_ChunkW = new ("PartitionAssetEntitiesSystem.mJobPrep_ChunkW");
+        private static ProfilerMarker mJobPrep_ChunkWo = new ("PartitionAssetEntitiesSystem.mJobPrep_ChunkWo");
+        private static ProfilerMarker mJobPrep_Dispose = new ("PartitionAssetEntitiesSystem.mJobPrep_Dispose");
+
+        QueryDescription partitionsAll = new QueryDescription().WithAll<RepartitionableAssetEntity>();
+
+        QueryDescription partitionsW = new QueryDescription().WithAll<RepartitionableAssetEntity, PartitionComponent, TransformComponent>();
+
+        QueryDescription partitionsWo = new QueryDescription().WithAll<RepartitionableAssetEntity, PartitionComponent>()
+                                                              .WithNone<TransformComponent>();
+
+        protected override void Update(float t)
+        {
+            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
+            Vector3 cameraPosition = samplingData.Position;
+            Vector3 cameraForward = samplingData.Forward;
+
+            // First re-partition everything if player position or rotation has changed
+            if (samplingData.IsDirty)
+            {
+                mJobRePartitionAll.Begin();
+
+                mJobRePartitionPreparation.Begin();
+                // TODO: split jobs and have several of them
+                var rePartitionJob = new RePartitionJob
+                {
+                    CameraPosition = cameraPosition,
+                    CameraForward = cameraForward,
+                    PartitionSettings = partitionSettingsData,
+                };
+
+                mJobPrep_GetQueries.Begin();
+                // TODO: cache Queries and use RefEquals
+                // if (!ReferenceEquals(_RePartitionExistingEntityWithDirtySdkTransform_Initialized, world))
+                // {
+                //     _RePartitionExistingEntityWithDirtySdkTransform_Query = world.Query(in RePartitionExistingEntityWithDirtySdkTransform_QueryDescription);
+                //     _RePartitionExistingEntityWithDirtySdkTransform_Initialized = world;
+                // }
+                Query queryW = World.Query(in partitionsW);
+                Query queryWo = World.Query(in partitionsWo);
+                mJobPrep_GetQueries.End();
+
+                mJobPrep_IterateArchetypes.Begin();
+                int totalAmount = World.CountEntities(partitionsAll);
+                mJobPrep_IterateArchetypes.End();
+
+                mJobPrep_CreateArrays.Begin();
+                if (partitions.Length < totalAmount) Array.Resize(ref this.partitions, totalAmount);
+                NativeArray<RepartitionableAssetEntity> repartitionables = new NativeArray<RepartitionableAssetEntity>(totalAmount, Allocator.TempJob);
+                NativeArray<float3> entityPositions = new NativeArray<float3>(totalAmount, Allocator.TempJob);
+                mJobPrep_CreateArrays.End();
+
+                mJobPrep_ChunkW.Begin();
+                int chunksOffset = 0;
+                foreach (ref Chunk chunk in queryW.GetChunkIterator()) // foreach (ref Chunk chunk in query)
+                {
+                    PartitionComponent[] partitionComponents = chunk.GetArray<PartitionComponent>();
+                    Array.Copy(partitionComponents, 0, partitions, chunksOffset, chunk.Size);
+
+                    ref var repartitionableFirst = ref chunk.GetFirst<RepartitionableAssetEntity>();
+                    ref var transformFirst = ref chunk.GetFirst<TransformComponent>();
+
+                    unsafe
+                    {
+                        var repartitionablesPtr = (RepartitionableAssetEntity*)repartitionables.GetUnsafePtr();
+                        repartitionablesPtr += chunksOffset;
+                        UnsafeUtility.MemCpy(repartitionablesPtr,Unsafe.AsPointer(ref repartitionableFirst),chunk.Size * UnsafeUtility.SizeOf<RepartitionableAssetEntity>());
+
+                        var positionsPtr = (float3*)entityPositions.GetUnsafePtr();
+                        positionsPtr += chunksOffset;
+                        for (var i = 0; i < chunk.Size; i++)
+                            positionsPtr[i] = Unsafe.Add(ref transformFirst, i).Cached.WorldPosition;
+                    }
+
+                    chunksOffset += chunk.Size;
+                }
+                mJobPrep_ChunkW.End();
+
+                mJobPrep_ChunkWo.Begin();
+                foreach (ref Chunk chunk in queryWo.GetChunkIterator()) // foreach (ref Chunk chunk in query)
+                {
+                    PartitionComponent[] partitionComponents = chunk.GetArray<PartitionComponent>();
+                    Array.Copy(partitionComponents, 0, partitions, chunksOffset, chunk.Size);
+
+                    ref var repartitionableFirst = ref chunk.GetFirst<RepartitionableAssetEntity>();
+                    unsafe
+                    {
+                        var repartitionablesPtr = (RepartitionableAssetEntity*)repartitionables.GetUnsafePtr();
+                        repartitionablesPtr += chunksOffset;
+
+                        UnsafeUtility.MemCpy(repartitionablesPtr, Unsafe.AsPointer(ref repartitionableFirst), chunk.Size * UnsafeUtility.SizeOf<RepartitionableAssetEntity>());
+                    }
+
+                    // TODO: just pass scenePosition and use it
+                    // for (var entityId = 0; entityId < chunk.Size; entityId++)
+                    //     entityPositions[chunksOffset + entityId] = scenePosition;
+
+                    chunksOffset += chunk.Size;
+                }
+                mJobPrep_ChunkWo.End();
+
+                rePartitionJob.EntityPositions = entityPositions;
+                rePartitionJob.Repartitionable = repartitionables;
+                mJobRePartitionPreparation.End();
+
+                mJobRePartitionRun.Begin();
+                JobHandle jobHandle = rePartitionJob.Schedule(repartitionables.Length, 64);
+                jobHandle.Complete();
+                mJobRePartitionRun.End();
+
+                mJobRePartitionApply.Begin();
+                for (int i = 0; i < repartitionables.Length; i++)
+                {
+                    partitions[i].Bucket = repartitionables[i].Bucket;
+                    partitions[i].IsBehind = repartitionables[i].IsBehind;
+                    partitions[i].IsDirty = repartitionables[i].IsDirty;
+                }
+                mJobRePartitionApply.End();
+
+                mJobPrep_Dispose.Begin();
+                Array.Clear(partitions, 0, partitions.Length);
+                repartitionables.Dispose();
+                entityPositions.Dispose();
+                mJobPrep_Dispose.End();
+
+                mJobRePartitionAll.End();
+
+                // using (mRepartitionExistingEntityWithoutTransformQ.Auto())
+                //     RepartitionExistingEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
+                //
+                // using (mRePartitionExistingEntityWithTransformQ.Auto())
+                //     RePartitionExistingEntityWithTransformQuery(World, cameraPosition, cameraForward);
+            }
+            else // re-partition if Transform.isDirty
+            {
+                using (mResetDirtyQuery.Auto())
+                    ResetDirtyQuery(World);
+
+                // Repartition all entities with dirty transform
+                RePartitionExistingEntityWithDirtySdkTransformQuery(World, cameraPosition, cameraForward);
+            }
+
+            // Then partition all entities that are not partitioned yet
+            PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
+            PartitionNewEntityWithTransformQuery(World, cameraPosition, cameraForward);
+        }
+
+        [Query]
+        [All(typeof(RepartitionableAssetEntity))]
+        private void ResetDirty(ref PartitionComponent partitionComponent)
+        {
+            partitionComponent.IsDirty = false;
+        }
+
+        [Query]
+        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
+        [None(typeof(TransformComponent), typeof(PartitionComponent))]
+        private void PartitionNewEntityWithoutTransform([Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
+        {
+            PartitionComponent partitionComponent = partitionComponentPool.Get();
+            RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+            partitionComponent.IsDirty = true;
+            World.Add(entity, partitionComponent, new RepartitionableAssetEntity());
+        }
+
+        [Query]
+        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
+        [None(typeof(PartitionComponent))]
+        private void PartitionNewEntityWithTransform(ref TransformComponent transformComponent, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
+        {
+            PartitionComponent partitionComponent = partitionComponentPool.Get();
+            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+            partitionComponent.IsDirty = true;
+            World.Add(entity, partitionComponent, new RepartitionableAssetEntity());
+        }
+
+        // [Query]
+        // [All(typeof(RepartitionableAssetEntity))]
+        // private void RePartitionExistingEntityWithTransform(ref PartitionComponent partitionComponent, ref TransformComponent transformComponent, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        // {
+        //     RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+        // }
+
+        // [Query]
+        // [All(typeof(RepartitionableAssetEntity))]
+        // [None(typeof(TransformComponent))]
+        // private void RepartitionExistingEntityWithoutTransform(ref PartitionComponent partitionComponent, [Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        // {
+        //     RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+        // }
+
+        [Query]
+        [All(typeof(RepartitionableAssetEntity))]
+        private void RePartitionExistingEntityWithDirtySdkTransform(ref PartitionComponent partitionComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward)
+        {
+            if (sdkTransform.IsDirty)
+                RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)
+        {
+            mRePartition.Begin();
+            byte bucket = partitionComponent.Bucket;
+            bool isBehind = partitionComponent.IsBehind;
+
+            // check if fast path should be used
+            Vector3 vectorToCamera = entityPosition - cameraTransform;
+            float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
+
+            if (sqrDistance > partitionSettings.FastPathSqrDistance)
+            {
+                // just inherit Scene's values
+                partitionComponent.Bucket = scenePartition.Bucket;
+                partitionComponent.IsBehind = scenePartition.IsBehind;
+            }
+            else
+            {
+                partitionComponent.Bucket = BinarySearchForBucket(sqrDistance);
+                partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
+            }
+
+            partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
+            mRePartition.End();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private byte BinarySearchForBucket(float sqrDistance)
+        {
+            var left = 0;
+            int right = partitionSettings.SqrDistanceBuckets.Count - 1;
+            byte bucketIndex = 0;
+
+            while (left <= right)
+            {
+                int mid = (left + right) >> 1; // Same as / 2 but faster
+
+                if (partitionSettings.SqrDistanceBuckets[mid] <= sqrDistance)
+                {
+                    bucketIndex = (byte)(mid + 1);
+                    left = mid + 1;
+                }
+                else { right = mid - 1; }
+            }
+
+            return bucketIndex;
+        }
+
+        public struct RepartitionableAssetEntity
+        {
+            public bool IsBehind;
+            public byte Bucket;
+            public bool IsDirty;
+        }
     }
 }
