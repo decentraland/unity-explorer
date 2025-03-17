@@ -120,13 +120,13 @@ namespace DCL.Friends
 
             return;
 
-            // We could try stream.WithCancellation(ct) but the cancellation doesn't work..
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
                 IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
                     module!.CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
                         new Empty());
 
+                // We could try stream.WithCancellation(ct) but the cancellation doesn't work..
                 await foreach (var response in stream)
                 {
                     try
