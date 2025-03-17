@@ -809,7 +809,9 @@ namespace Global.Dynamic
                     globalWorld,
                     debugBuilder,
                     nametagsData,
-                    viewDependencies));
+                    viewDependencies,
+                    staticContainer.GPUInstancingService,
+                    exposedGlobalDataContainer.ExposedCameraData));
 
             if (includeFriends)
             {
