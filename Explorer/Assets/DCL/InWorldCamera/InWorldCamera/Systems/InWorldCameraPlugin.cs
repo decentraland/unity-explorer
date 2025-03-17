@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -24,6 +25,7 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Rendering.GPUInstancing;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -72,6 +74,8 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
         private readonly ViewDependencies viewDependencies;
+        private readonly GPUInstancingService gpuInstancingBuffers;
+        private readonly ExposedCameraData exposedCameraData;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -94,7 +98,9 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            GPUInstancingService gpuInstancingBuffers,
+            ExposedCameraData exposedCameraData)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -122,6 +128,8 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
             this.viewDependencies = viewDependencies;
+            this.gpuInstancingBuffers = gpuInstancingBuffers;
+            this.exposedCameraData = exposedCameraData;
             factory = new InWorldCameraFactory();
         }
 
@@ -137,7 +145,7 @@ namespace DCL.PluginSystem.Global
             hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
             followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
-            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>(), gpuInstancingBuffers);
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
@@ -181,7 +189,7 @@ namespace DCL.PluginSystem.Global
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
         }
