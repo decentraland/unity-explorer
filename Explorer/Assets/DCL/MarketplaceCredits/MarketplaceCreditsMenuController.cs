@@ -4,6 +4,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
@@ -27,6 +29,7 @@ namespace DCL.MarketplaceCredits
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
+        private readonly INotificationsBusController notificationBusController;
 
         private CancellationTokenSource showHideMenuCts;
         private CancellationTokenSource showCreditsUnlockedCts;
@@ -41,7 +44,8 @@ namespace DCL.MarketplaceCredits
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            INotificationsBusController notificationBusController)
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
@@ -49,12 +53,15 @@ namespace DCL.MarketplaceCredits
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.mvcManager = mvcManager;
+            this.notificationBusController = notificationBusController;
 
             mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             view.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.AddListener(ClosePanel);
+
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationClicked);
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
@@ -76,9 +83,9 @@ namespace DCL.MarketplaceCredits
             view.ErrorNotification.Hide(true, CancellationToken.None);
         }
 
-        public void OpenPanel()
+        public void OpenPanel(bool forceReopen = false)
         {
-            if (view.gameObject.activeSelf)
+            if (!forceReopen && view.gameObject.activeSelf)
                 return;
 
             showHideMenuCts = showHideMenuCts.SafeRestart();
@@ -97,6 +104,8 @@ namespace DCL.MarketplaceCredits
             view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+
+            TestNotificationAsync(CancellationToken.None).Forget();
         }
 
         public void OpenSection(MarketplaceCreditsSection section)
@@ -171,7 +180,7 @@ namespace DCL.MarketplaceCredits
         {
             view.ErrorNotification.SetText(message);
             view.ErrorNotification.Show(ct);
-            await UniTask.Delay((int) MarketplaceCreditsUtils.ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
+            await UniTask.Delay(MarketplaceCreditsUtils.ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
             view.ErrorNotification.Hide(false, ct);
         }
 
@@ -181,6 +190,28 @@ namespace DCL.MarketplaceCredits
                 return;
 
             OpenSection(MarketplaceCreditsSection.WELCOME);
+        }
+
+        private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
+            OpenPanel(forceReopen: true);
+
+        private async UniTaskVoid TestNotificationAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(5000, cancellationToken: ct);
+            notificationBusController.AddNotification(new MarketplaceCreditsNotification
+            {
+                Type = NotificationType.MARKETPLACE_CREDITS,
+                Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
+                Id = $"SantiTest{DateTime.Now.Ticks}",
+                Read = false,
+                Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString(),
+                Metadata = new MarketplaceCreditsNotificationMetadata
+                {
+                    Title = "Weekly Goal Completed!",
+                    Description = "Claim your Credits to unlock them",
+                    Image = "https://i.ibb.co/4L0WD2j/Credits-Icn.png",
+                }
+            });
         }
     }
 }

@@ -10,6 +10,7 @@ namespace DCL.Notifications.Serialization
     {
         private const string FRIENDSHIP_RECEIVED_TYPE = "social_service_friendship_request";
         private const string FRIENDSHIP_ACCEPTED_TYPE = "social_service_friendship_accepted";
+        private const string MARKETPLACE_CREDITS_TYPE = "marketplace_credits";
 
         private readonly List<string> excludedTypes = new ();
 
@@ -61,6 +62,7 @@ namespace DCL.Notifications.Serialization
                     "badge_granted" => new BadgeGrantedNotification(),
                     FRIENDSHIP_RECEIVED_TYPE => new FriendRequestReceivedNotification(),
                     FRIENDSHIP_ACCEPTED_TYPE => new FriendRequestAcceptedNotification(),
+                    MARKETPLACE_CREDITS_TYPE => new MarketplaceCreditsNotification(),
                     _ => null
                 };
 
