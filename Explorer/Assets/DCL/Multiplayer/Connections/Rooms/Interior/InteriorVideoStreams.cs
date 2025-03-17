@@ -11,6 +11,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         public WeakReference<IVideoStream>? VideoStream(string identity, string sid) =>
             assigned.EnsureAssigned().VideoStream(identity, sid);
 
+        public bool Release(IVideoStream videoStream) =>
+            assigned.Release(videoStream);
+
         public void Free()
         {
             assigned.Free();

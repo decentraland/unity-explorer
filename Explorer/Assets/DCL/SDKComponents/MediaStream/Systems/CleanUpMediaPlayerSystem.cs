@@ -3,13 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
-using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -17,12 +15,7 @@ namespace DCL.SDKComponents.MediaStream
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class CleanUpMediaPlayerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
-
-        internal CleanUpMediaPlayerSystem(World world, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
-        {
-            this.videoTexturesPool = videoTexturesPool;
-        }
+        internal CleanUpMediaPlayerSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -30,9 +23,6 @@ namespace DCL.SDKComponents.MediaStream
             HandleSdkVideoPlayerComponentRemovalQuery(World);
 
             HandleMediaPlayerDestructionQuery(World);
-            HandleVideoEntityDestructionQuery(World);
-
-            HandleVideoPlayerWithoutConsumersQuery(World);
         }
 
         [Query]
@@ -45,49 +35,19 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref VideoTextureConsumer textureConsumer, ref MediaPlayerComponent mediaPlayer)
+        private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {
-            CleanUpVideoTexture(ref textureConsumer);
             CleanUpMediaPlayer(ref mediaPlayer);
-            World.Remove<MediaPlayerComponent, VideoTextureConsumer>(entity);
+            World.Remove<MediaPlayerComponent>(entity);
             World.Remove<VideoStateByPriorityComponent>(entity);
         }
 
-        /// <summary>
-        ///     Prevents CPU and memory leaks by cleaning up video textures and media players that are not being used anymore.
-        /// </summary>
-        [Query]
-        [All(typeof(PBVideoPlayer))]
-        [None(typeof(DeleteEntityIntention))]
-        private void HandleVideoPlayerWithoutConsumers(Entity entity, ref VideoTextureConsumer textureConsumer, ref MediaPlayerComponent mediaPlayerComponent)
-        {
-            if (textureConsumer.ConsumersCount == 0)
-            {
-                CleanUpVideoTexture(ref textureConsumer);
-                CleanUpMediaPlayer(ref mediaPlayerComponent);
-                World.Remove<MediaPlayerComponent, VideoTextureConsumer>(entity);
-                World.Remove<VideoStateByPriorityComponent>(entity);
-            }
-        }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleMediaPlayerDestruction(ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpMediaPlayer(ref mediaPlayer);
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleVideoEntityDestruction(ref VideoTextureConsumer textureConsumer)
-        {
-            CleanUpVideoTexture(ref textureConsumer);
-        }
-
-        private void CleanUpVideoTexture(ref VideoTextureConsumer videoTextureConsumer)
-        {
-            videoTexturesPool.Release(videoTextureConsumer.Texture);
-            videoTextureConsumer.Dispose();
         }
 
         private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
@@ -97,13 +57,8 @@ namespace DCL.SDKComponents.MediaStream
 
         public void FinalizeComponents(in Query query)
         {
-            FinalizeVideoTextureConsumerComponentQuery(World);
             FinalizeMediaPlayerComponentQuery(World);
         }
-
-        [Query]
-        private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
-            CleanUpVideoTexture(ref component);
 
         [Query]
         private void FinalizeMediaPlayerComponent(ref MediaPlayerComponent component) =>

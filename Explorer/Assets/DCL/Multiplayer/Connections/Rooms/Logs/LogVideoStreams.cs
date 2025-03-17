@@ -21,6 +21,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             return videoStream;
         }
 
+        public bool Release(IVideoStream videoStream)
+        {
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{nameof(LogVideoStreams)}: {nameof(Release)}: called");
+            bool result = origin.Release(videoStream);
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{nameof(LogVideoStreams)}: {nameof(Release)}: done");
+            return result;
+        }
+
         public void Free()
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{nameof(LogVideoStreams)}: {nameof(Free)}: called");

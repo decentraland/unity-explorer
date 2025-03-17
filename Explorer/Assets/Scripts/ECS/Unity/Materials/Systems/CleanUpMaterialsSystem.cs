@@ -34,6 +34,7 @@ namespace ECS.Unity.Materials.Systems
         {
             TryReleaseQuery(World);
             TryReleaseConsumerQuery(World);
+            HandleTextureWithoutConsumersQuery(World);
         }
 
         [Query]
@@ -43,12 +44,30 @@ namespace ECS.Unity.Materials.Systems
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
         }
 
+        /// <summary>
+        /// Release of VideoTextureConsumer component should be in this scope because it is a part of the material system
+        /// StartMaterialsLoadingSystem -> CleanUpMaterialsSystem
+        /// </summary>
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void TryReleaseConsumer(Entity entity, ref VideoTextureConsumer textureConsumer)
         {
             CleanUpVideoTexture(ref textureConsumer);
             World.Remove<VideoTextureConsumer>(entity);
+        }
+
+        /// <summary>
+        ///     Prevents CPU and memory leaks by cleaning up video textures and media players that are not being used anymore.
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void HandleTextureWithoutConsumers(Entity entity, ref VideoTextureConsumer textureConsumer)
+        {
+            if (textureConsumer.ConsumersCount == 0)
+            {
+                CleanUpVideoTexture(ref textureConsumer);
+                World.Remove<VideoTextureConsumer>(entity);
+            }
         }
 
         private void CleanUpVideoTexture(ref VideoTextureConsumer videoTextureConsumer)

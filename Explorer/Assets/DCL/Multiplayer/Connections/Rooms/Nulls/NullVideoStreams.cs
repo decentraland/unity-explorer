@@ -12,6 +12,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         public WeakReference<IVideoStream>? VideoStream(string identity, string sid) =>
             null;
 
+        public bool Release(IVideoStream videoStream)
+        {
+            // Do nothing
+            return false;
+        }
+
         public void Free()
         {
             // Do nothing
