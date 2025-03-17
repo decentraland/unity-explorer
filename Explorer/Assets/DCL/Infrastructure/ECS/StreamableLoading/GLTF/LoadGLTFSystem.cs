@@ -79,7 +79,9 @@ namespace ECS.StreamableLoading.GLTF
                 if (patchTexturesFormat)
                     PatchTexturesForWearable(gltfImport);
 
-                return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, rootContainer));
+                var gltfData = new GLTFData(gltfImport, rootContainer);
+                gltfData.AddReference();
+                return new StreamableLoadingResult<GLTFData>(gltfData);
             }
 
             return new StreamableLoadingResult<GLTFData>(

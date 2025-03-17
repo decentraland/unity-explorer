@@ -56,6 +56,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         {
             var result = GltfContainerAsset.Create(gltfData.containerGameObject, gltfData);
 
+            // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
                 gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
@@ -76,6 +77,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 result.Animators.AddRange(animatorScope.Value);
             }
 
+            // Collect colliders from mesh filters
+            // Colliders are created/fetched disabled as its layer is controlled by another system
             using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
             {
                 List<MeshFilter> list = meshFilterScope.Value;
@@ -93,10 +96,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     }
                     else
                     {
-                        // Note from Alejandro Alvarez Melucci <alejandro.alvarez@decentraland.org>:
-                        // I'm not sure why on the AssetBundle flow there's this check,
-                        // I introduced it here just in case it's needed. I already reached out to Nico Lorusso to investigate further
-
                         // Consider it a visible collider when it has a renderer on it
                         if (go.GetComponent<Renderer>())
                             AddVisibleMeshCollider(result.VisibleColliderMeshes, go, meshFilter.sharedMesh);
