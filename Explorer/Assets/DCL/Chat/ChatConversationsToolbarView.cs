@@ -103,6 +103,7 @@ namespace DCL.Chat
         {
             Destroy(items[channelId].gameObject);
             items.Remove(channelId);
+            UpdateScrollButtonsVisibility();
         }
 
         public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages)
@@ -210,8 +211,18 @@ namespace DCL.Chat
 
         private void UpdateScrollButtonsVisibility()
         {
-            scrollUpButton.gameObject.SetActive(scrollView.normalizedPosition.y < 0.9999f);
-            scrollDownButton.gameObject.SetActive(scrollView.normalizedPosition.y > 0.0001f);
+            if (scrollView.content.rect.height > scrollView.viewport.rect.height)
+            {
+                // It may show one or both
+                scrollUpButton.gameObject.SetActive(scrollView.normalizedPosition.y < 0.9999f);
+                scrollDownButton.gameObject.SetActive(scrollView.normalizedPosition.y > 0.0001f);
+            }
+            else
+            {
+                // Hidden if there is no scroll to be done
+                scrollUpButton.gameObject.SetActive(false);
+                scrollDownButton.gameObject.SetActive(false);
+            }
         }
     }
 }
