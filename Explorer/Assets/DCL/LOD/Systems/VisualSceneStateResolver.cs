@@ -13,7 +13,7 @@ namespace DCL.LOD
         public static ILODSettingsAsset lodSettingsAsset;
         public static IRealmData realmData;
 
-        public static VisualSceneStateEnum ResolveVisualSceneState(PartitionComponent partition, SceneDefinitionComponent sceneDefinitionComponent)
+        public static VisualSceneStateEnum ResolveVisualSceneState(PartitionComponent partition, SceneDefinitionComponent sceneDefinitionComponent, VisualSceneStateEnum currentVisualSceneState)
         {
             // For PX scenes, we always show the scene
             if (sceneDefinitionComponent.IsPortableExperience) return VisualSceneStateEnum.SHOWING_SCENE;
@@ -31,7 +31,11 @@ namespace DCL.LOD
             if (!sceneDefinitionComponent.IsSDK7)
                 return VisualSceneStateEnum.SHOWING_LOD;
 
-            return partition.Bucket < lodSettingsAsset.SDK7LodThreshold
+            int isSceneLoaded = currentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE
+                ? lodSettingsAsset.UnloadTolerance
+                : 0;
+
+            return partition.Bucket < lodSettingsAsset.SDK7LodThreshold + isSceneLoaded
                 ? VisualSceneStateEnum.SHOWING_SCENE
                 : VisualSceneStateEnum.SHOWING_LOD;
         }
