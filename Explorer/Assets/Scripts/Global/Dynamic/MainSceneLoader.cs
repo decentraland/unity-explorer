@@ -83,8 +83,6 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-
-
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -237,8 +235,11 @@ namespace Global.Dynamic
                     return;
                 }
 
-                if (await CheckPlayerBlocked(staticContainer!, bootstrapContainer.IdentityCache.EnsuredIdentity().Address, splashScreen, bootstrapContainer.WebBrowser, decentralandUrlsSource, ct)) // TODO mihak
+                if (await IsPlayerBlockedAsync(staticContainer!, bootstrapContainer.IdentityCache.EnsuredIdentity().Address, decentralandUrlsSource, ct))
+                {
+                    await ShowBlockedPopupAsync(splashScreen, bootstrapContainer.WebBrowser, ct);
                     return;
+                }
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -277,12 +278,15 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<bool> CheckPlayerBlocked(StaticContainer sc, string playerID, SplashScreen splashScreen, IWebBrowser webBrowser, IDecentralandUrlsSource urlsSource, CancellationToken ct)
+        private async UniTask<bool> IsPlayerBlockedAsync(StaticContainer sc, string playerID, IDecentralandUrlsSource urlsSource, CancellationToken ct)
         {
-            bool isBlocklisted = await ApplicationBlocklistGuard.CheckIfBlocklistedAsync(sc.WebRequestsContainer.WebRequestController, urlsSource, playerID, ct);
+            bool isBlocklisted = await ApplicationBlocklistGuard.IsUserBlocklisted(sc.WebRequestsContainer.WebRequestController, urlsSource, playerID, ct);
 
-            if (!isBlocklisted) return false;
+            return isBlocklisted;
+        }
 
+        private async UniTask ShowBlockedPopupAsync(SplashScreen splashScreen, IWebBrowser webBrowser, CancellationToken ct)
+        {
             splashScreen.Hide();
 
             var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
@@ -294,8 +298,6 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
-
-            return true;
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
@@ -356,7 +358,6 @@ namespace Global.Dynamic
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
                 return IDiskCache<PartialLoadingState>.Null.INSTANCE;
             }
-
 
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {

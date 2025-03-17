@@ -11,7 +11,7 @@ namespace DCL.ApplicationBlocklistGuard
 {
     public static class ApplicationBlocklistGuard
     {
-        public static async UniTask<bool> CheckIfBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, CancellationToken ct)
+        public static async UniTask<bool> IsUserBlocklisted(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, CancellationToken ct)
         {
             FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                 urlsSource.Url(DecentralandUrl.Blocklist),
@@ -22,7 +22,7 @@ namespace DCL.ApplicationBlocklistGuard
 
             BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
 
-            return bd.users.Select(u => u.wallet).Contains(userID);
+            return bd.users.Any(u => u.wallet == userID);
         }
     }
 }
