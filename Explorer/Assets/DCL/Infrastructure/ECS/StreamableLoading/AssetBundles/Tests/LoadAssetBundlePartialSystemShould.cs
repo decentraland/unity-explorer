@@ -6,7 +6,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.PartialDownload;
 using DCL.WebRequests.RequestsHub;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;

@@ -350,7 +350,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
-            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
+            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
 
             LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
 
@@ -815,7 +815,9 @@ namespace Global.Dynamic
                     globalWorld,
                     debugBuilder,
                     nametagsData,
-                    viewDependencies));
+                    viewDependencies,
+                    staticContainer.GPUInstancingService,
+                    exposedGlobalDataContainer.ExposedCameraData));
 
             if (includeFriends)
             {

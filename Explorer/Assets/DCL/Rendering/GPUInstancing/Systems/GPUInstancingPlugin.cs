@@ -6,7 +6,6 @@ using DCL.CharacterCamera;
 using DCL.Landscape.Settings;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
-using DCL.Roads.GPUInstancing;
 using ECS;
 using System.Threading;
 

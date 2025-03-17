@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -39,7 +40,10 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention, partition, StreamableLoadingState.Create())),
+                Entity = world.Reference(
+                    StreamableLoadingDebug.ENABLED
+                        ? world.Create(loadingIntention, partition, StreamableLoadingState.Create(), new IntentionCreationTime(Time.realtimeSinceStartup))
+                        : world.Create(loadingIntention, partition, StreamableLoadingState.Create())),
             };
 
         public static AssetPromise<TAsset, TLoadingIntention> CreateFinalized(TLoadingIntention loadingIntention, StreamableLoadingResult<TAsset>? result) =>

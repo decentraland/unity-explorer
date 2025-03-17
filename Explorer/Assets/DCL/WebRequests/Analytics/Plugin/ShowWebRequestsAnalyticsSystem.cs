@@ -12,10 +12,22 @@ namespace DCL.WebRequests.Analytics
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class ShowWebRequestsAnalyticsSystem : BaseUnityLoopSystem
     {
+        public readonly struct RequestType
+        {
+            public readonly Type Type;
+            public readonly string MarkerName;
+
+            public RequestType(Type type, string markerName)
+            {
+                Type = type;
+                MarkerName = markerName;
+            }
+        }
+
         private const float THROTTLE = 0.1f;
 
         private readonly IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer;
-        private readonly Type[] requestTypes;
+        private readonly RequestType[] requestTypes;
 
         private readonly Dictionary<Type, Dictionary<string, ElementBinding<ulong>>> ongoingRequests = new ();
         private readonly DebugWidgetVisibilityBinding? visibilityBinding;
@@ -25,7 +37,7 @@ namespace DCL.WebRequests.Analytics
         internal ShowWebRequestsAnalyticsSystem(World world,
             IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer,
             IDebugContainerBuilder debugContainerBuilder,
-            Type[] requestTypes) : base(world)
+            RequestType[] requestTypes) : base(world)
         {
             this.webRequestsAnalyticsContainer = webRequestsAnalyticsContainer;
             this.requestTypes = requestTypes;
@@ -34,7 +46,7 @@ namespace DCL.WebRequests.Analytics
                                        .TryAddWidget("Web Requests")
                                       ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
-            foreach (Type requestType in requestTypes)
+            foreach (RequestType requestType in requestTypes)
             {
                 var bindings = new Dictionary<string, ElementBinding<ulong>>(0);
                 var metrics = webRequestsAnalyticsContainer.GetTrackedMetrics();
@@ -43,28 +55,41 @@ namespace DCL.WebRequests.Analytics
                 {
                     bindings.Add(metric.Key.Name, new ElementBinding<ulong>(0));
                     DebugLongMarkerDef.Unit requestMetricUnit = metric.Value().GetUnit();
-                    widget?.AddMarker(requestType.Name + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
+                    widget?.AddMarker(requestType.MarkerName + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
                 }
 
-                ongoingRequests[requestType] = bindings;
+                ongoingRequests[requestType.Type] = bindings;
             }
         }
 
         protected override void Update(float t)
         {
-            if (visibilityBinding is { IsExpanded: true } && lastTimeSinceMetricsUpdate > THROTTLE)
+            if (visibilityBinding is { IsExpanded: true })
             {
-                lastTimeSinceMetricsUpdate = 0;
-
-                foreach (Type requestType in requestTypes)
+                // Some metrics may require update without throttling
+                foreach (RequestType requestType in requestTypes)
                 {
-                    var metrics = webRequestsAnalyticsContainer.GetMetric(requestType);
+                    IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
                     if (metrics == null) continue;
 
-                    foreach (var metric in metrics)
+                    foreach (IRequestMetric metric in metrics)
+                        metric.Update();
+                }
+
+                if (lastTimeSinceMetricsUpdate > THROTTLE)
+                {
+                    lastTimeSinceMetricsUpdate = 0;
+
+                    foreach (RequestType requestType in requestTypes)
                     {
-                        if (ongoingRequests.TryGetValue(requestType, out Dictionary<string, ElementBinding<ulong>> bindings) &&
-                            bindings.TryGetValue(metric.GetType().Name, out ElementBinding<ulong> binding)) { binding.Value = metric.GetMetric(); }
+                        IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+                        if (metrics == null) continue;
+
+                        foreach (IRequestMetric? metric in metrics)
+                        {
+                            if (ongoingRequests.TryGetValue(requestType.Type, out Dictionary<string, ElementBinding<ulong>> bindings) &&
+                                bindings.TryGetValue(metric.GetType().Name, out ElementBinding<ulong> binding)) { binding.Value = metric.GetMetric(); }
+                        }
                     }
                 }
             }

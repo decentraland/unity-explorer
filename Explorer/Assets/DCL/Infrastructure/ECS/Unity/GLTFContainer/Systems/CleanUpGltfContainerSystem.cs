@@ -7,9 +7,11 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
@@ -59,6 +61,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                 {
                     cache.Dereference(component.Hash, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
+
+                    // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
+                    if (result.Asset.AssetData is GLTFData)
+                        result.Asset.Dispose();
                 }
 
                 component.Promise.ForgetLoading(world);

@@ -1,4 +1,5 @@
 using GLTFast.Loading;
+using System;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -25,7 +26,9 @@ namespace ECS.StreamableLoading.GLTF
 
         public void Dispose()
         {
-            // Ignore
+            Data = Array.Empty<byte>();
+            if (!string.IsNullOrEmpty(Text))
+                Text = string.Empty;
         }
     }
 }

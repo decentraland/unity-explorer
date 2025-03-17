@@ -141,7 +141,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         }
 
         // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
-        // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local development
+        // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local scene development
 
 #region Helper Collider Methods
 

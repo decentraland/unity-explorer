@@ -163,7 +163,12 @@ namespace Global.Dynamic
             if (container.enableAnalytics)
             {
                 LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
-                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, launcherTraits, container.ApplicationParametersParser, ct);
+                IAnalyticsService service = CreateAnalyticsService(
+                    analyticsConfig,
+                    launcherTraits,
+                    container.ApplicationParametersParser,
+                    realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment,
+                    ct);
 
                 var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData, dclVersion);
                 var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
@@ -174,11 +179,13 @@ namespace Global.Dynamic
             return (coreBootstrap, IAnalyticsController.Null);
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, CancellationToken token)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, bool isLocalSceneDevelopment, CancellationToken token)
         {
-            // Force segment in release
-            if (!args.HasDebugFlag())
+            // Avoid Segment analytics for: Unity Editor or Debug Mode (except when in Local Scene Development mode)
+#if !UNITY_EDITOR
+            if (!args.HasDebugFlag() || isLocalSceneDevelopment)
                 return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token);
+#endif
 
             return analyticsConfig.Mode switch
                    {
