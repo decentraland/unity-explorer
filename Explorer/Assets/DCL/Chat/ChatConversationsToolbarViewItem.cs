@@ -203,7 +203,7 @@ namespace DCL.Chat
                 else
                 {
                     tooltip.DOKill();
-                    tooltip.DOFade(0.0f, 0.3f).SetDelay(0.3f).OnComplete(() =>
+                    tooltip.DOFade(0.0f, 0.3f).OnComplete(() =>
                     {
                         tooltip.transform.SetParent(transform);
                         tooltip.transform.position = tooltipPosition.position;
