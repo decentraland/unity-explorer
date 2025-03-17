@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
@@ -32,11 +31,11 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandDataComponent(in PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent, in AvatarShapeComponent avatarShapeComponent)
+        private void UpdateEmoteCommandDataComponent(in PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
         {
             if (!playerCRDTEntity.AssignedToScene) return;
 
-            if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote) || !avatarShapeComponent.IsVisible) return;
+            if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
 
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
