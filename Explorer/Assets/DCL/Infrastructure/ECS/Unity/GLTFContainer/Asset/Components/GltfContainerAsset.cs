@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.GLTF;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
@@ -53,13 +54,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         /// </summary>
         public List<SDKCollider>? DecodedVisibleSDKColliders;
 
-        private IStreamableRefCountData assetData;
+        public IStreamableRefCountData AssetData { get; private set; }
 
         private GltfContainerAsset(GameObject root, IStreamableRefCountData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
             List<Animator> animators)
         {
-            this.assetData = assetData;
+            this.AssetData = assetData;
 
             Root = root;
             InvisibleColliders = invisibleColliders;
@@ -73,8 +74,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
-            assetData.Dereference();
-            assetData = null;
+            AssetData.Dereference();
+
+            // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
+            if (AssetData is GLTFData)
+                AssetData.Dispose();
+
+            AssetData = null;
 
             COLLIDERS_POOL.Release(InvisibleColliders);
             VISIBLE_MESH_COLLIDERS_POOL.Release(VisibleColliderMeshes);

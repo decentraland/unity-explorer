@@ -6,6 +6,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Profiling;
 using UnityEngine.Pool;
 using static ECS.StreamableLoading.Common.Components.StreamableLoadingState;
 
@@ -13,12 +14,15 @@ namespace ECS.StreamableLoading.DeferredLoading
 {
     public abstract class DeferredLoadingSystem : BaseUnityLoopSystem
     {
+        // There is suspicion that one of these operations take too long
+        private static readonly ProfilerMarker<int> SORT_PROFILER_MARKER = new ($"{nameof(DeferredLoadingSystem)}.Sort", "Intentions Count");
+        private static readonly ProfilerMarker<int> ANALYZE_BUDGET_PROFILER_MARKER = new ($"{nameof(DeferredLoadingSystem)}.AnalyzeBudget", "Intentions Count");
         private readonly IReleasablePerformanceBudget releasablePerformanceLoadingBudget;
 
         private readonly List<IntentionData> loadingIntentions;
+        private readonly IPerformanceBudget memoryBudget;
 
         protected QueryDescription[] sameBoatQueries;
-        private readonly IPerformanceBudget memoryBudget;
 
         protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget) : base(world)
         {
@@ -57,7 +61,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                         var intentionData = new IntentionData
                         {
                             State = state,
-                            PartitionComponent = partition
+                            PartitionComponent = partition,
                         };
 
                         loadingIntentions.Add(intentionData);
@@ -67,8 +71,11 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             if (loadingIntentions.Count == 0) return;
 
-            loadingIntentions.Sort(static (p1, p2) => BucketBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
-            AnalyzeBudget();
+            using (SORT_PROFILER_MARKER.Auto(loadingIntentions.Count))
+                loadingIntentions.Sort(static (p1, p2) => BucketBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
+
+            using (ANALYZE_BUDGET_PROFILER_MARKER.Auto(loadingIntentions.Count))
+                AnalyzeBudget();
         }
 
         private void AnalyzeBudget()
