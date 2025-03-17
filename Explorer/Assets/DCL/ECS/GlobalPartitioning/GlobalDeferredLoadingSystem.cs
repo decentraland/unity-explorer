@@ -45,7 +45,6 @@ namespace DCL.GlobalPartitioning
         private readonly IScenesCache scenesCache;
         private readonly Entity playerEntity;
 
-
         static GlobalDeferredLoadingSystem()
         {
             COMPONENT_HANDLERS_SCENES_ASSETS = new[]
@@ -61,13 +60,13 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetTextureIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
-                CreateQuery<GetAudioClipIntention, AudioClipData>(), 
+                CreateQuery<GetAudioClipIntention, AudioClipData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>()
             };
 
             COMPONENT_HANDLERS_SCENES = new[]
             {
-                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(), 
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>()
             };
         }
