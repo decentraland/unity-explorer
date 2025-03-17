@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Web3;
 using MVC;
 using SuperScrollView;
@@ -39,7 +40,7 @@ namespace DCL.Chat
         private ViewDependencies viewDependencies;
         private bool isInitialized;
         private bool isVisible;
-
+        private UniTaskCompletionSource contextMenuTask = new ();
         private CancellationTokenSource contextMenuCts = new ();
 
         public bool IsVisible
@@ -101,8 +102,15 @@ namespace DCL.Chat
 
         private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition, Action onMenuHide)
         {
+            contextMenuTask?.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, contextMenuCts.Token, onMenuHide);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
+        }
+
+        private void OnDisable()
+        {
+            contextMenuTask?.TrySetResult();
         }
     }
 }

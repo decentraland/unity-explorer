@@ -556,13 +556,13 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        GenericContextMenuMentionUserButtonPrefab:
-          m_AssetGUID: 734732fb25eed5944b9c5a5814249f81
+        GenericContextMenuButtonWithStringDelegatePrefab:
+          m_AssetGUID: 688aa1f59829ea64fb0887ed7bb87d26
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        GenericContextMenuViewUserProfileButtonPrefab:
-          m_AssetGUID: c325bf3c176cc034d83115896fd851da
+        GenericContextMenuToggleWithIconPrefab:
+          m_AssetGUID: bc2f6e2e838c8114e89c2f3157c0ab47
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -589,6 +589,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        startFadeDistanceDithering: 2
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff

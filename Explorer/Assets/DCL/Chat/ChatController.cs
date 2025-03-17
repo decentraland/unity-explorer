@@ -19,7 +19,6 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -101,7 +100,7 @@ namespace DCL.Chat
 
         public void Clear() // Called by a command
         {
-            chatHistory.ClearChannel(viewInstance!.CurrentChannel);
+            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
         }
 
@@ -212,7 +211,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
             CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
             // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
+            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannelId) && viewInstance.IsScrollAtBottom)
                 MarkCurrentChannelAsRead();
 
             if (isSentByOwnUser)
@@ -223,7 +222,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
             }
             else
             {
-                if (destinationChannel.Id.Equals(viewInstance.CurrentChannel))
+                if (destinationChannel.Id.Equals(viewInstance.CurrentChannelId))
                 {
                     // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
                     //       Once a new message arrives, the separator moves to the position of that new message and the count of
@@ -251,7 +250,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
         {
-            if(changedChannel.Id.Equals(viewInstance.CurrentChannel))
+            if(changedChannel.Id.Equals(viewInstance.CurrentChannelId))
                 viewInstance!.RefreshMessages();
             else
                 viewInstance.RefreshUnreadMessages(changedChannel.Id);
@@ -259,7 +258,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
         private void OnViewUnreadMessagesSeparatorViewed()
         {
-            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannel].Messages.Count;
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannelId].Messages.Count;
             hasToResetUnreadMessagesWhenNewMessageArrive = true;
         }
 
@@ -325,8 +324,8 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
         private void MarkCurrentChannelAsRead()
         {
-            chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
-            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
+            chatHistory.Channels[viewInstance!.CurrentChannelId].MarkAllMessagesAsRead();
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannelId].ReadMessages;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
