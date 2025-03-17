@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -29,11 +28,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         public RequestsRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
+            ViewDependencies viewDependencies,
             int pageSize,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
+            : base(friendsService, friendEventBus, viewDependencies, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
         {
             this.loopListView = loopListView;
 

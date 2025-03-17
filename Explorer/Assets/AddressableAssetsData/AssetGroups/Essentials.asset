@@ -132,6 +132,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4362b43091b0d462db2641f8c866e9b9
+    m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4a2a7b610414b45c1b576946ce094877
     m_Address: NftCategoryIcons
     m_ReadOnly: 0
