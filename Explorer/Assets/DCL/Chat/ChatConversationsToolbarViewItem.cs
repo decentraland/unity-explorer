@@ -143,7 +143,6 @@ namespace DCL.Chat
             {
                 if (isImmediate)
                 {
-                    tooltip.transform.SetParent(transform);
                     tooltip.transform.position = tooltipPosition.position;
                     tooltip.gameObject.SetActive(false);
                 }
