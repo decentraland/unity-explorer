@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Friends.UI.FriendPanel
+namespace DCL.UI
 {
-    [CreateAssetMenu(fileName = "FriendPanelOnlineStatusSettings", menuName = "DCL/Friends/OnlineStatusConfiguration")]
+    [CreateAssetMenu(fileName = "PanelOnlineStatusSettings", menuName = "DCL/UI/OnlineStatusConfiguration")]
     [Serializable]
     public class OnlineStatusConfiguration : ScriptableObject
     {
