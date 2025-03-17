@@ -17,7 +17,6 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Jobs;
@@ -35,7 +34,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private static readonly Comparer COMPARER_INSTANCE = new ();
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-           .WithAll<SceneDefinitionComponent, PartitionComponent>();
+                                                                       .WithAll<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>()
+                                                                       .WithNone<DeleteEntityIntention, EmptySceneComponent>();
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
         internal JobHandle? sortingJobHandle;
@@ -43,7 +43,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Entity playerEntity;
 
         private readonly UnloadingSceneCounter unloadingSceneCounter;
-
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
@@ -160,8 +159,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
-        private readonly int scenesToLoad = 4;
-
+        private readonly int scenesToLoad = 1;
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
@@ -175,27 +173,35 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (!World.IsAlive(data.Entity))
                     continue;
 
+                if (!World.Has<SceneLoadingState>(data.Entity) || !World.Has<SceneDefinitionComponent>(data.Entity) || !World.Has<PartitionComponent>(data.Entity))
+                {
+                    //WHY?
+                    UnityEngine.Debug.Log("JUANI WE ARE CONTINUING");
+                    continue;
+                }
+
                 // We can't save component to data as sorting is throttled and components could change
                 var components
-                    = World.Get<SceneDefinitionComponent, PartitionComponent>(data.Entity);
+                    = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
                 //If there is a teleport intent, only allow to load the teleport intent
-                if (TeleportOccuring(ipfsRealm, data, components.t0.Value, components.t1.Value))
+                if (TeleportOccuring(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value))
                     continue;
 
                 if (i < scenesToLoad)
-                    TryLoad(ipfsRealm, data, components.t0.Value, components.t1.Value);
+                    TryLoad(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
                 else
-                    TryUnload(data, components.t0.Value);
+                    TryUnload(data, components.t0.Value, ref components.t2.Value);
             }
         }
 
-        private bool TeleportOccuring(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent)
+        private bool TeleportOccuring(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent,
+            PartitionComponent partitionComponent, ref SceneLoadingState sceneState)
         {
             if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
             {
                 if (sceneDefinitionComponent.ContainsParcel(playerTeleportIntent.Parcel))
-                    TryLoad(ipfsRealm, data, sceneDefinitionComponent, partitionComponent);
+                    TryLoad(ipfsRealm, data, sceneDefinitionComponent, partitionComponent, ref sceneState);
 
                 return true;
             }
@@ -203,26 +209,31 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             return false;
         }
 
-        private void TryUnload(OrderedData data, SceneDefinitionComponent sceneDefinitionComponent)
+        private void TryUnload(OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
-            if (World.Has<VisualSceneState>(data.Entity))
+            if (sceneState.loaded)
             {
                 if (World.TryGet(data.Entity, out ISceneFacade sceneFacade))
                     unloadingSceneCounter.RegisterSceneFacade(sceneDefinitionComponent.Definition.id, sceneFacade);
+
+                sceneState.loaded = false;
                 World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
             }
         }
 
-        private void TryLoad(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent)
+        private void TryLoad(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
+            ref SceneLoadingState sceneState)
         {
-            if (!World.Has<VisualSceneState>(data.Entity))
+            if (!sceneState.loaded)
             {
                 //Dont try to load an unloading scene. Wait
                 if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
                     return;
 
                 var visualSceneState = new VisualSceneState();
-                VisualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partitionComponent, sceneDefinitionComponent);
+                VisualSceneStateEnum candidateByEnum = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent);
+                visualSceneState.CurrentVisualSceneState = candidateByEnum;
+                sceneState.loaded = true;
 
                 switch (visualSceneState.CurrentVisualSceneState)
                 {
@@ -235,7 +246,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     default:
                         World.Add(data.Entity, visualSceneState, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                             new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
-
                         break;
                 }
             }
@@ -270,6 +280,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             public Entity Entity;
             public DistanceBasedComparer.DataSurrogate Data;
         }
+    }
+
+    public struct SceneLoadingState
+    {
+        public bool loaded;
     }
 
     public class UnloadingSceneCounter

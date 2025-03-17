@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
 using ECS.Abstract;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Ipfs;
 using Unity.Collections;
@@ -15,7 +16,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
         protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
-            World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience));
+            World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), new SceneLoadingState());
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
@@ -35,7 +36,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
+                CreateSceneEntity(definition, ipfsPath);
             }
         }
     }
