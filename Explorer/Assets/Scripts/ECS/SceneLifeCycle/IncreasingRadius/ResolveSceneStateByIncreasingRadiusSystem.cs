@@ -169,10 +169,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 OrderedData data = orderedData[i];
 
-                if (ShouldIgnoreScene(data.Entity))
-                    continue;
+                if (!World.IsAlive(data.Entity))
+                    return;
 
                 // We can't save component to data as sorting is throttled and components could change
+                // We need to optimize this
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
@@ -194,6 +195,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
         }
 
+        //Dont delete just yet. The error may come back
         private bool ShouldIgnoreScene(Entity entity)
         {
             // As sorting is throttled Entity might gone out of scope
@@ -236,7 +238,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void Unload(OrderedData data, ref SceneLoadingState sceneState)
         {
-            sceneState.loaded = false;
             sceneState.VisualSceneStateEnum = VisualSceneStateEnum.UNINITIALIZED;
             World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
         }
@@ -250,9 +251,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
                 return;
 
-            //TODO: Requires re-analysis every frame?
+            //TODO: Requires re-analysis every frame? Partition changes when bucket changes, but now we have the memory restriction
             //if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED && !partitionComponent.IsDirty)
             //    return;
+
+            //TODO: Optimize road code. For now, the only thing that can unload a road is distance
+            //Maybe add the component on the `SceneEntityDefinition` creation?
+            if (sceneState.VisualSceneStateEnum == VisualSceneStateEnum.ROAD)
+                return;
 
             VisualSceneStateEnum candidateByEnum
                 = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneStateEnum);
