@@ -526,13 +526,11 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
-            Debug.Log("CONVERSATION REMOVED");
             viewInstance!.RemoveConversation(removedChannel);
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
         {
-            Debug.Log("CONVERSATION ADDED");
             viewInstance!.AddConversation(addedChannel);
         }
     }
