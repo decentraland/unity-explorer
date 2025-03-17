@@ -190,7 +190,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (TeleportOccuring(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value))
                     continue;
 
-                UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
+                UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value, i);
             }
         }
 
@@ -241,7 +241,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
         }
 
-        private readonly int scenesToLoad = 500;
+        private readonly int scenesToLoad = 1;
 
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
             ref SceneLoadingState sceneState, int numberOfSceneToLoad)
@@ -250,13 +250,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
                 return;
 
-            if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED && !partitionComponent.IsDirty)
-                return;
+            //TODO: Requires re-analysis every frame?
+            //if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED && !partitionComponent.IsDirty)
+            //    return;
 
             VisualSceneStateEnum candidateByEnum
                 = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneStateEnum);
 
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && numberOfSceneToLoad > scenesToLoad)
+            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && numberOfSceneToLoad >= scenesToLoad)
                 candidateByEnum = VisualSceneStateEnum.SHOWING_LOD;
 
             //Nothing has changed, keep going
