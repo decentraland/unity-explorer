@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 {
-    public class BlockedSectionController : FriendPanelSectionController<BlockedSectionView, BlockedRequestManager, BlockedUserView>
+    public class BlockedSectionController : FriendPanelSectionController<BlockedSectionView, BlockedPanelList, BlockedUserView>
     {
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
@@ -22,7 +22,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         public BlockedSectionController(BlockedSectionView view,
             IMVCManager mvcManager,
-            BlockedRequestManager requestManager,
+            BlockedPanelList requestManager,
             IPassportBridge passportBridge) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;

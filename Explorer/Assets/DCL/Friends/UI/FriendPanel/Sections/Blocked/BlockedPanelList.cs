@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 {
-    public class BlockedRequestManager : FriendPanelRequestManager<BlockedUserView>
+    public class BlockedPanelList : FriendPanelRequestManager<BlockedUserView>
     {
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendsEventBus;
@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public event Action? NoUserInCollection;
         public event Action? AtLeastOneUserInCollection;
 
-        public BlockedRequestManager(
+        public BlockedPanelList(
             IFriendsService friendsService,
             IFriendsEventBus friendsEventBus,
             ViewDependencies viewDependencies,
