@@ -1489,7 +1489,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9097780066956728766, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
       propertyPath: m_text
-      value: Enter Link Title
+      value: Enter Link Title (E.g. Instagram)
       objectReference: {fileID: 0}
     - target: {fileID: 9097780066956728766, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
       propertyPath: m_fontColor.a

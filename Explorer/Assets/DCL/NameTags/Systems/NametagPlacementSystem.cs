@@ -115,7 +115,7 @@ namespace DCL.Nametags
         [None(typeof(PBAvatarShape))]
         private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            if (nametagView.Id == avatarShape.ID)
+            if (nametagView.Id == avatarShape.ID && nametagView.IsName(profile.ValidatedName, profile.WalletId, profile.HasClaimedName))
                 return;
 
             nametagView.Id = avatarShape.ID;
@@ -191,7 +191,12 @@ namespace DCL.Nametags
             NametagView nametagView = nametagViewPool.Get();
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = profile?.UserNameColor != Color.white? profile!.UserNameColor : ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+
+            if (profile != null)
+                nametagView.Username.color = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+            else
+                nametagView.Username.color = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
 
             int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;

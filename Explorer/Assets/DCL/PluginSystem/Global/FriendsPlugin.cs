@@ -2,10 +2,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Clipboard;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
@@ -22,7 +21,6 @@ using DCL.UI.MainUI;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Utilities;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
@@ -41,8 +39,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ISystemClipboard systemClipboard;
-        private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly DCLInput dclInput;
@@ -50,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -60,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly IAnalyticsController? analyticsController;
+        private readonly ViewDependencies viewDependencies;
         private readonly bool useAnalytics;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -75,8 +71,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard,
-            IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
             DCLInput dclInput,
@@ -84,7 +78,6 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
@@ -94,7 +87,8 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
-            IAnalyticsController? analyticsController)
+            IAnalyticsController? analyticsController,
+            ViewDependencies viewDependencies)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -102,8 +96,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
-            this.systemClipboard = systemClipboard;
-            this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
@@ -111,7 +103,6 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -122,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.sidebarActionsBus = sidebarActionsBus;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
+            this.viewDependencies = viewDependencies;
         }
 
         public void Dispose()
@@ -178,17 +170,16 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 web3IdentityCache,
                 profileRepository,
-                systemClipboard,
-                webRequestController,
-                profileThumbnailCache,
                 dclInput,
                 passportBridge,
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 sidebarActionsBus,
+                viewDependencies,
                 includeUserBlocking,
-                isConnectivityStatusEnabled);
+                isConnectivityStatusEnabled
+                );
 
             mvcManager.RegisterController(friendsPanelController);
 
@@ -206,13 +197,12 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache);
+                inputBlock, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 
             var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
-                friendsConnectivityStatusTracker,
-                profileThumbnailCache);
+                friendsConnectivityStatusTracker, viewDependencies);
 
             mvcManager.RegisterController(friendPushNotificationController);
 
@@ -220,7 +210,7 @@ namespace DCL.PluginSystem.Global
 
             unfriendConfirmationPopupController = new UnfriendConfirmationPopupController(
                 UnfriendConfirmationPopupController.CreateLazily(unfriendConfirmationPopupPrefab, null),
-                injectableFriendService, profileRepository, profileThumbnailCache);
+                injectableFriendService, profileRepository, viewDependencies);
 
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 

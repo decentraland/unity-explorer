@@ -27,7 +27,6 @@ using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
@@ -86,18 +85,20 @@ namespace DCL.Passport
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
         private readonly bool enableCameraReel;
         private readonly bool enableFriendshipInteractions;
         private readonly bool includeUserBlocking;
+        private readonly bool isNameEditorEnabled;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ViewDependencies viewDependencies;
+        private readonly INftNamesProvider nftNamesProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -128,6 +129,7 @@ namespace DCL.Passport
         public event Action<string, bool, string>? BadgesSectionOpened;
         public event Action<string, bool>? BadgeSelected;
         public event Action<string, Vector2Int>? JumpToFriendClicked;
+        public event Action? NameClaimRequested;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -154,17 +156,18 @@ namespace DCL.Passport
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISystemClipboard systemClipboard,
-            IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
+            ViewDependencies viewDependencies,
+            INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
             bool enableCameraReel,
             bool enableFriendshipInteractions,
-            bool includeUserBlocking) : base(viewFactory)
+            bool includeUserBlocking,
+            bool isNameEditorEnabled) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -187,22 +190,24 @@ namespace DCL.Passport
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
+            this.viewDependencies = viewDependencies;
+            this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
             this.enableCameraReel = enableCameraReel;
             this.enableFriendshipInteractions = enableFriendshipInteractions;
             this.includeUserBlocking = includeUserBlocking;
+            this.isNameEditorEnabled = isNameEditorEnabled;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, ExecuteFriendshipOperationFromContextMenu);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(ExecuteFriendshipOperationFromContextMenu);
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -211,9 +216,13 @@ namespace DCL.Passport
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
+
+            viewInstance!.InjectDependencies(viewDependencies);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, passportErrorsController));
+            var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, decentralandUrlsSource, isNameEditorEnabled);
+            userBasicInfoPassportModuleController.NameClaimRequested += OnNameClaimRequested;
+            commonPassportModules.Add(userBasicInfoPassportModuleController);
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
@@ -248,6 +257,9 @@ namespace DCL.Passport
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)), false));
         }
+
+        private void OnNameClaimRequested() =>
+            NameClaimRequested?.Invoke();
 
         private void ShowContextMenu()
         {
@@ -547,8 +559,6 @@ namespace DCL.Passport
                 return;
             }
 
-            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
-
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
             contextMenuJumpInButton.Enabled = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
@@ -557,7 +567,7 @@ namespace DCL.Passport
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
                 profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
-                thumbnailSprite);
+                profile.Avatar.FaceSnapshotUrl);
         }
 
         private static void BlockUserClicked(string userId)
@@ -614,8 +624,7 @@ namespace DCL.Passport
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    ImageView view = mutualConfig[i].Image;
-                    view.LoadThumbnailSafeAsync(profileThumbnailCache, mutualFriend.Address, mutualFriend.FacePictureUrl, ct).Forget();
+                    mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
                 }
             }
         }

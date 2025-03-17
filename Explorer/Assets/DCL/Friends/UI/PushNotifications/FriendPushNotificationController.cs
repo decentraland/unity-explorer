@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Friends.UI.PushNotifications
@@ -9,16 +8,16 @@ namespace DCL.Friends.UI.PushNotifications
     public class FriendPushNotificationController : ControllerBase<FriendPushNotificationView>
     {
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly ViewDependencies viewDependencies;
 
         private CancellationTokenSource toastAnimationCancellationTokenSource = new ();
 
         public FriendPushNotificationController(ViewFactoryMethod viewFactory,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
+            ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
-            this.profileThumbnailCache = profileThumbnailCache;
+            this.viewDependencies = viewDependencies;
 
             friendsConnectivityStatusTracker.OnFriendBecameOnline += FriendConnected;
         }
@@ -28,6 +27,13 @@ namespace DCL.Friends.UI.PushNotifications
             base.Dispose();
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendConnected;
             toastAnimationCancellationTokenSource.SafeCancelAndDispose();
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            viewInstance!.InjectDependencies(viewDependencies);
         }
 
         private void FriendConnected(FriendProfile friendProfile)
@@ -40,10 +46,7 @@ namespace DCL.Friends.UI.PushNotifications
                 if (viewInstance == null) return;
 
                 viewInstance.HideToast();
-
-                Sprite? profileThumbnail = await profileThumbnailCache.GetThumbnailAsync(friendProfile.Address, friendProfile.FacePictureUrl, ct);
-
-                viewInstance.ConfigureForFriend(friendProfile, profileThumbnail);
+                viewInstance.ConfigureForFriend(friendProfile);
                 await viewInstance.ShowToastAsync(ct);
             }
         }

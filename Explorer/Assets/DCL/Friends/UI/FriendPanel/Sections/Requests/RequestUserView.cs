@@ -1,4 +1,3 @@
-using DCL.WebRequests;
 using System;
 using System.Globalization;
 using TMPro;
@@ -47,13 +46,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             buttons.Add(ContextMenuButton);
         }
 
-        public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        public override void Configure(FriendProfile profile)
         {
             buttons.Clear();
             buttons.Add(ContextMenuButton);
             buttons.Add(DeleteButton);
             buttons.Add(AcceptButton);
-            base.Configure(profile, webRequestController, profileThumbnailCache);
+            base.Configure(profile);
         }
 
         protected override void ToggleButtonView(bool isActive)

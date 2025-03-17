@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -9,10 +9,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 {
     public abstract class FriendPanelRequestManager<T> : IDisposable where T : FriendPanelUserView
     {
+        private readonly ViewDependencies viewDependencies;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
-        private readonly IWebRequestController webRequestController;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly CancellationTokenSource fetchNewDataCts = new ();
 
         private int pageNumber;
@@ -25,14 +24,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public event Action<FriendProfile>? ElementClicked;
 
-        protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache)
+        protected FriendPanelRequestManager(ViewDependencies viewDependencies,
+            int pageSize, int elementsMissingThreshold)
         {
+            this.viewDependencies = viewDependencies;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
-            this.webRequestController = webRequestController;
-            this.profileThumbnailCache = profileThumbnailCache;
         }
 
         public virtual void Dispose()
@@ -49,13 +46,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            view.Configure(GetCollectionElement(index), webRequestController, profileThumbnailCache);
+            view.InjectDependencies(viewDependencies);
+            view.Configure(GetCollectionElement(index));
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
-
-            view.RemoveSpriteLoadedListeners();
-            view.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(view.UserProfile.Address.ToString(), sprite);
 
             CustomiseElement(view, index);
 
