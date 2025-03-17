@@ -9,9 +9,11 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using DCL.Diagnostics;
 using ECS.LifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -31,6 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             UnloadLODQuery(World);
+            UnloadLODWhenSceneReadyQuery(World);
         }
 
         public void FinalizeComponents(in Query query)
@@ -41,10 +44,25 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
+        [None(typeof(ISceneFacade))]
         private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
             sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
+        }
+
+        [Query]
+        private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+        {
+            if (sceneLoadingState.VisualSceneStateEnum == VisualSceneStateEnum.SHOWING_SCENE)
+            {
+                if (!sceneFacade.IsSceneReady())
+                    return;
+
+                sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                World.Remove<SceneLODInfo>(entity);
+            }
         }
 
         [Query]
