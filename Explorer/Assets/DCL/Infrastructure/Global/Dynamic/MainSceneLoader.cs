@@ -280,7 +280,7 @@ namespace Global.Dynamic
 
         private async UniTask<bool> IsPlayerBlockedAsync(StaticContainer sc, string playerID, IDecentralandUrlsSource urlsSource, CancellationToken ct)
         {
-            bool isBlocklisted = await ApplicationBlocklistGuard.IsUserBlocklisted(sc.WebRequestsContainer.WebRequestController, urlsSource, playerID, ct);
+            bool isBlocklisted = await ApplicationBlocklistGuard.IsUserBlocklistedAsync(sc.WebRequestsContainer.WebRequestController, urlsSource, playerID, ct);
 
             return isBlocklisted;
         }
