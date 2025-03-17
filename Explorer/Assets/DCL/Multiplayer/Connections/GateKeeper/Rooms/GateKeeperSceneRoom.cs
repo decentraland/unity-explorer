@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle;
+using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -148,9 +149,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             }
         }
 
+        private struct Sign
+        {
+            public string signer;
+        }
+
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             string url = options.AdapterUrl;
+
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
                                                              url,
                                                              meta.ToJson(),
