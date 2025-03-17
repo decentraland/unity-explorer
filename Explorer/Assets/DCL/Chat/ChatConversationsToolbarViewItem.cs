@@ -4,7 +4,6 @@ using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,8 +16,6 @@ namespace DCL.Chat
         public delegate void OpenButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void TooltipShownDelegate(GameObject tooltip);
-
-        public event TooltipShownDelegate TooltipShown;
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
@@ -63,10 +60,25 @@ namespace DCL.Chat
         [SerializeField]
         private RectTransform tooltipPosition;
 
+        /// <summary>
+        /// Gets or sets the identifier of the conversation.
+        /// </summary>
         public ChatChannel.ChannelId Id { get; set; }
 
+        /// <summary>
+        /// Raised when the button to select / open the conversation is clicked.
+        /// </summary>
         public event OpenButtonClickedDelegate OpenButtonClicked;
+
+        /// <summary>
+        /// Raised when the button to remove the conversation is clicked.
+        /// </summary>
         public event RemoveButtonClickedDelegate RemoveButtonClicked;
+
+        /// <summary>
+        /// Raised when the tooltip of the icon appears.
+        /// </summary>
+        public event TooltipShownDelegate TooltipShown;
 
         // Also called by the component in the tooltip
         public void OnPointerEnter(PointerEventData eventData)
@@ -80,27 +92,47 @@ namespace DCL.Chat
             HideTooltip(false);
         }
 
+        /// <summary>
+        /// Stores the name that will be shown in the tooltip.
+        /// </summary>
+        /// <param name="newName">The "name" of the conversation.</param>
         public void SetConversationName(string newName)
         {
             tooltipText.text = newName;
         }
 
+        /// <summary>
+        /// Adapts the UI according to whether the conversation is one-to-one or not.
+        /// </summary>
+        /// <param name="isPrivate">Whether it is a private conversation or not.</param>
         public void SetConversationType(bool isPrivate)
         {
             removeButton.gameObject.SetActive(isPrivate);
-            // TODO: hide connection icon
+            connectionStatusIndicatorContainer.gameObject.SetActive(isPrivate);
         }
 
+        /// <summary>
+        /// Replaces the value of unread messages to show next to the icon.
+        /// </summary>
+        /// <param name="currentUnreadMessages">The amount of unread messages in the conversation.</param>
         public void SetUnreadMessages(int currentUnreadMessages)
         {
             unreadMessagesBadge.Number = currentUnreadMessages;
         }
 
+        /// <summary>
+        /// Changes the visual aspect of the connection status indicator.
+        /// </summary>
+        /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
         }
 
+        /// <summary>
+        /// Changes the visual aspect of the icon depending on whether it is selected or not.
+        /// </summary>
+        /// <param name="isSelected">Whether the conversation is selected.</param>
         public void SetSelectionStatus(bool isSelected)
         {
             selectionMark.gameObject.SetActive(isSelected);
@@ -111,6 +143,13 @@ namespace DCL.Chat
                 openButton.OnDeselect(null);
         }
 
+        /// <summary>
+        /// Provides the data required to display the profile picture.
+        /// </summary>
+        /// <param name="viewDependencies">A set of system tools for views.</param>
+        /// <param name="userColor">The color of the user's profile picture.</param>
+        /// <param name="faceSnapshotUrl">The URL to the profile picture.</param>
+        /// <param name="userId">The Id of the user (wallet Id).</param>
         public void SetProfileData(ViewDependencies viewDependencies, Color userColor, string faceSnapshotUrl, string userId)
         {
             customIcon.gameObject.SetActive(false);
@@ -118,6 +157,10 @@ namespace DCL.Chat
             profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
         }
 
+        /// <summary>
+        /// Replaces the profile picture with a custom icon.
+        /// </summary>
+        /// <param name="icon">The icon to show.</param>
         public void SetConversationIcon(Sprite icon)
         {
             customIcon.sprite = icon;
@@ -125,11 +168,18 @@ namespace DCL.Chat
             profilePictureView.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// Shows or hides the "verified" icon.
+        /// </summary>
+        /// <param name="isVisible">Whether the icon has to be displayed or not.</param>
         public void SetClaimedNameIconVisibility(bool isVisible)
         {
             claimedNameIcon.gameObject.SetActive(isVisible);
         }
 
+        /// <summary>
+        /// Makes the tooltip of the item appear.
+        /// </summary>
         public void ShowTooltip()
         {
             tooltip.gameObject.SetActive(true);
@@ -137,6 +187,10 @@ namespace DCL.Chat
             tooltip.DOFade(1.0f, 0.3f).OnComplete(() => { TooltipShown?.Invoke(tooltip.gameObject); });
         }
 
+        /// <summary>
+        /// Hides the tooltip of the item with or without animations.
+        /// </summary>
+        /// <param name="isImmediate">Whether to skip animations or not.</param>
         public void HideTooltip(bool isImmediate)
         {
             if (tooltip.gameObject.activeSelf)
@@ -157,11 +211,6 @@ namespace DCL.Chat
                     });
                 }
             }
-        }
-
-        public void SetConnectionStatusVisibility(bool isVisible)
-        {
-            connectionStatusIndicatorContainer.SetActive(isVisible);
         }
 
         private void Awake()
