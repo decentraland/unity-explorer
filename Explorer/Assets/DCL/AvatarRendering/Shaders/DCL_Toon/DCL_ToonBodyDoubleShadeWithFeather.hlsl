@@ -260,6 +260,8 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float3 envLightColor = envColor.rgb;
     float envLightIntensity = 0.299*envLightColor.r + 0.587*envLightColor.g + 0.114*envLightColor.b <1 ? (0.299*envLightColor.r + 0.587*envLightColor.g + 0.114*envLightColor.b) : 1;
     float3 pointLightColor = 0;
+
+    // TODO: Rework the tiled forward lighting to work with the recent Unity changes
     // #ifdef _ADDITIONAL_LIGHTS
     //     int pixelLightCount = GetAdditionalLightsCount();
     //
