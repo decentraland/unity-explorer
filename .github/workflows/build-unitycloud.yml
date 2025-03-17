@@ -314,7 +314,15 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: ${{ inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version) || format('@dcl/{0}/branch/{1}', github.event.repository.name, github.head_ref || github.ref_name) }}
+          DESTINATION_PATH: >-
+          ${{
+            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
+            || (github.event_name == 'pull_request' && format('@dcl/{0}/branch/pr-{1}/PR-{2}-{3}', github.event.repository.name, github.event.pull_request.number, github.run_number, github.sha[:7]))
+            || (github.event_name == 'push' && format('@dcl/{0}/branch/{1}/PU-{2}-{3}', github.event.repository.name, github.ref_name, github.run_number, github.sha[:7]))
+            || (github.event_name == 'merge_group' && format('@dcl/{0}/branch/{1}/MG-{2}-{3}', github.event.repository.name, github.ref_name, github.run_number, github.sha[:7]))
+            || (github.event_name == 'workflow_dispatch' && format('@dcl/{0}/branch/{1}/WD-{2}-{3}', github.event.repository.name, github.ref_name, github.run_number, github.sha[:7]))
+            || (github.event_name == 'workflow_call' && format('@dcl/{0}/branch/{1}/WC-{2}-{3}', github.event.repository.name, github.ref_name, github.run_number, github.sha[:7]))
+          }}
         run: |
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
