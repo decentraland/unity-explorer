@@ -44,7 +44,7 @@ namespace DCL.Chat.History
 
         public ChatHistory()
         {
-            AddChannel(ChatChannel.ChatChannelType.Nearby, string.Empty);
+            AddChannel(ChatChannel.ChatChannelType.Nearby, ChatChannel.NEARBY_CHANNEL_ID.Id);
         }
 
         public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelId)
