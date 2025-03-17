@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
+using DCL.Profiles.Self;
 using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;

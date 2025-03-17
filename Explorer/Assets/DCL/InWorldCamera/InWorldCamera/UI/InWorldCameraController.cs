@@ -140,13 +140,13 @@ namespace DCL.InWorldCamera.UI
 
         private void RequestDisableInWorldCamera()
         {
-            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
                 world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = false });
         }
 
         private void ToggleInWorldCamera()
         {
-            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
                 world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 

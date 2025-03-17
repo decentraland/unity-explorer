@@ -197,7 +197,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, profileThumbnailCache, viewDependencies);
+                inputBlock, viewDependencies);
 
             mvcManager.RegisterController(friendRequestController);
 
