@@ -9,6 +9,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class StaticCommonTraitsPlugin : EventPlugin
     {
         private const string UNITY_EDITOR = "unity-editor";
+        private const string DCL_EDITOR = "dcl-editor";
         private const string DEBUG = "debug";
         private const string RELEASE = "release";
 
@@ -21,6 +22,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly JsonElement os = SystemInfo.operatingSystem;
         private readonly JsonElement runtime;
 
+        private readonly bool isLocalSceneDevelopment;
+
         public override PluginType Type => PluginType.Enrichment;
 
         public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, BuildData buildData, DCLVersion dclVersion)
@@ -31,6 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             runtime = ChooseRuntime(appArgs);
             installSource = buildData.InstallSource;
             rendererVersion = dclVersion.Version;
+            isLocalSceneDevelopment = appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
         }
 
         private static string ChooseRuntime(IAppArgs appArgs)
@@ -38,8 +42,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (Application.isEditor)
                 return UNITY_EDITOR;
 
-            if (appArgs.HasFlag(AppArgsFlags.DCL_EDITOR))
-                return AppArgsFlags.DCL_EDITOR;
+            if (appArgs.TryGetValue(AppArgsFlags.DCL_EDITOR, out var dclEditorValue) && dclEditorValue == "true")
+                return DCL_EDITOR; // We send "dcl-editor" instead of "hub" to track it better on the analytics data side
 
             if (appArgs.HasDebugFlag())
                 return DEBUG;
@@ -56,6 +60,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["install_source"] = installSource;
             trackEvent.Context["runtime"] = runtime;
             trackEvent.Context["operating_system"] = os;
+            trackEvent.Context["is_local_scene"] = isLocalSceneDevelopment;
 
             return trackEvent;
         }
