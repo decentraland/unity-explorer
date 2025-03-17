@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.VideoPlayer;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Pooling;
@@ -55,7 +56,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 w => new CreatePBRMaterialSystem(w, materialsPool, capFrameBudget, memoryBudget),
                 w => new ApplyMaterialSystem(w, sceneData),
                 w => new ResetMaterialSystem(w, destroyMaterial, sceneData),
-                w => new CleanUpMaterialsSystem(w, destroyMaterial)
+                w => new CleanUpMaterialsSystem(w, destroyMaterial, VideoTextureFactory.CreateVideoTexturesPool())
             );
         }
 

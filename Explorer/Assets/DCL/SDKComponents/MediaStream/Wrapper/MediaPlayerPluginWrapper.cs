@@ -23,7 +23,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
-        private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
@@ -52,7 +51,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
 
-            this.videoTexturePool = videoTexturePool;
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
@@ -93,7 +91,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
-            finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, videoTexturePool));
+            finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
 #endif
         }
     }

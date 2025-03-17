@@ -153,7 +153,15 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (component.MediaAddress != mediaAddress && (!sceneData.TryGetMediaUrl(mediaAddress.Url, out URLAddress localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
+            bool ShouldUpdateSource(in MediaPlayerComponent component) =>
+                component.MediaAddress.MediaKind switch
+                {
+                    MediaAddress.Kind.URL => !sceneData.TryGetMediaUrl(mediaAddress.Url, out URLAddress localMediaUrl) || component.MediaAddress.Url != localMediaUrl,
+                    MediaAddress.Kind.LIVEKIT => true,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+            if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
             {
                 component.MediaPlayer.CloseCurrentStream();
 
