@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             string metadata = FixedMetadata.Default.ToJson();
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-            string connectionString = response.chatAdapter;
+            string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_CHAT_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
@@ -63,7 +63,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         [Serializable]
         private struct AdapterResponse
         {
-            public string chatAdapter;
+            public string adapter;
         }
     }
 }
