@@ -169,22 +169,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 OrderedData data = orderedData[i];
 
-                // As sorting is throttled Entity might gone out of scope
-                if (!World.IsAlive(data.Entity))
+                if (ShouldIgnoreScene(data.Entity))
                     continue;
-
-                if (!World.Has<SceneLoadingState>(data.Entity) || !World.Has<SceneDefinitionComponent>(data.Entity) || !World.Has<PartitionComponent>(data.Entity))
-                {
-                    //WHY?
-                    UnityEngine.Debug.Log("JUANI WE ARE CONTINUING");
-                    continue;
-                }
 
                 // We can't save component to data as sorting is throttled and components could change
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
+
                 //If there is a teleport intent, only allow to load the teleport intent
+                //TODO: This is going to work better when the intent is according to the player position and not the camera
+                //Right now, the reliance on "isPLayerInsideParcel" doesnt work, since the player is not moved to the parcel until the teleport is complete
+                //Therefore, a scene can unload/load until the player is moved
                 if (TeleportOccuring(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value))
                     continue;
 
@@ -192,6 +188,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     TryLoad(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
                 else
                     TryUnload(data, components.t0.Value, ref components.t2.Value);
+            }
+        }
+
+        private bool ShouldIgnoreScene(Entity entity)
+        {
+            // As sorting is throttled Entity might gone out of scope
+            if (!World.IsAlive(entity))
+                return true;
+
+            if (!World.Has<SceneLoadingState>(entity) || !World.Has<SceneDefinitionComponent>(entity) || !World.Has<PartitionComponent>(entity))
+            {
+                //WHY?
+                UnityEngine.Debug.Log("JUANI WE ARE CONTINUING");
+                return true;
             }
         }
 
