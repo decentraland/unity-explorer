@@ -4,7 +4,6 @@ using DCL.Profiles;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -102,7 +101,7 @@ namespace DCL.Chat
 
         public void RemoveConversation(ChatChannel.ChannelId channelId)
         {
-            Destroy(items[channelId]);
+            Destroy(items[channelId].gameObject);
             items.Remove(channelId);
         }
 

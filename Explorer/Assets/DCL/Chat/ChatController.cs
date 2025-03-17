@@ -19,6 +19,7 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -124,6 +125,7 @@ namespace DCL.Chat
                 viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
                 viewInstance.FoldingChanged -= OnViewFoldingChanged;
                 viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
+                viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
                 viewInstance.Dispose();
             }
 
@@ -166,6 +168,7 @@ namespace DCL.Chat
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
+            viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
 
             OnFocus();
 
@@ -240,6 +243,12 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
                     viewInstance.RefreshUnreadMessages(destinationChannel.Id);
                 }
             }
+        }
+
+        private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
+        {
+            chatHistory.RemoveChannel(channelId);
+            viewInstance.RemoveConversation(channelId);
         }
 
         private void OnViewFoldingChanged(bool isUnfolded)
