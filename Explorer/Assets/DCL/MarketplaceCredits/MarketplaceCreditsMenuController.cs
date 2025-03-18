@@ -66,6 +66,7 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
                 view.TotalCreditsWidget,
+                view.WeekGoalsCompletedView,
                 this,
                 webBrowser,
                 marketplaceCreditsAPIClient,

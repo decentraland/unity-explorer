@@ -95,6 +95,7 @@ namespace DCL.MarketplaceCreditsAPIService
                 daysToExpire = 23,
                 areWeekGoalsCompleted = executionNumber == 2,
                 isProgramEnded = executionNumber == 3,
+                endOfTheWeekDate = "2025-03-16T12:00:00Z",
             };
 
             if (isAlreadyRegistered)
@@ -120,6 +121,7 @@ namespace DCL.MarketplaceCreditsAPIService
                 daysToExpire = 20,
                 areWeekGoalsCompleted = false,
                 isProgramEnded = false,
+                endOfTheWeekDate = "2025-03-16T12:00:00Z",
             };
 
             isAlreadyRegistered = true;

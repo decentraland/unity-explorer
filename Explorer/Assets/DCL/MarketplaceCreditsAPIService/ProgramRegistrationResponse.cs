@@ -10,5 +10,6 @@ namespace DCL.MarketplaceCreditsAPIService
         public int daysToExpire;
         public bool areWeekGoalsCompleted;
         public bool isProgramEnded;
+        public string endOfTheWeekDate;
     }
 }

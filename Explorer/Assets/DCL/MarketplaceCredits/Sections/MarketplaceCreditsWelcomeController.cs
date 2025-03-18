@@ -18,6 +18,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         private readonly MarketplaceCreditsWelcomeView view;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
+        private readonly MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
@@ -30,6 +31,7 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsWelcomeController(
             MarketplaceCreditsWelcomeView view,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
+            MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
@@ -37,6 +39,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
+            this.weekGoalsCompletedView = weekGoalsCompletedView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
@@ -134,10 +137,13 @@ namespace DCL.MarketplaceCredits.Sections
             if (!programRegistrationResponse.isRegistered)
                 return;
 
-            marketplaceCreditsMenuController.OpenSection(
-                programRegistrationResponse.areWeekGoalsCompleted ?
-                    MarketplaceCreditsSection.WEEK_GOALS_COMPLETED :
-                    MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+            if (programRegistrationResponse.areWeekGoalsCompleted)
+            {
+                weekGoalsCompletedView.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(programRegistrationResponse.endOfTheWeekDate);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
+            }
+            else
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
         }
 
         private void OpenLearnMoreLink() =>
