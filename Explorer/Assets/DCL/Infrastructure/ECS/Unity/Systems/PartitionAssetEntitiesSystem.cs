@@ -39,7 +39,6 @@ namespace ECS.Unity.Systems
         private static ProfilerMarker mRePartition = new ("PartitionAssetEntitiesSystem.mRePartition");
         private static ProfilerMarker mResetDirtyQuery = new ("PartitionAssetEntitiesSystem.ResetDirtyQuery");
 
-        private static ProfilerMarker mJobRePartitionAll = new ("PartitionAssetEntitiesSystem.mJobRePartitionAll");
         private static ProfilerMarker mJobRePartitionPreparation = new ("PartitionAssetEntitiesSystem.mJobRePartitionPreparation");
         private static ProfilerMarker mJobRePartitionRun = new ("PartitionAssetEntitiesSystem.mJobRePartitionRun");
         private static ProfilerMarker mJobRePartitionApply = new ("PartitionAssetEntitiesSystem.mJobRePartitionApply");
@@ -96,7 +95,13 @@ namespace ECS.Unity.Systems
                 ScenePartitionIsBehind = scenePartition.IsBehind,
                 SqrDistanceBuckets = sqrDistanceBucketsArray
             };
+
+             queryW = World.Query(in partitionsW);
+             queryWo = World.Query(in partitionsWo);
         }
+
+        private Query queryW;
+        private Query queryWo;
 
         protected override void OnDispose()
         {
@@ -149,7 +154,6 @@ namespace ECS.Unity.Systems
             }
         }
 
-        private static ProfilerMarker mJobPrep_GetQueries = new ("PartitionAssetEntitiesSystem.mJobPrep_GetQueries");
         private static ProfilerMarker mJobPrep_IterateArchetypes = new ("PartitionAssetEntitiesSystem.mJobPrep_IterateArchetypes");
         private static ProfilerMarker mJobPrep_CreateArrays = new ("PartitionAssetEntitiesSystem.mJobPrep_CreateArrays");
         private static ProfilerMarker mJobPrep_ChunkW = new ("PartitionAssetEntitiesSystem.mJobPrep_ChunkW");
@@ -172,112 +176,105 @@ namespace ECS.Unity.Systems
             // First re-partition everything if player position or rotation has changed
             if (samplingData.IsDirty)
             {
-                mJobRePartitionAll.Begin();
-
-                mJobRePartitionPreparation.Begin();
-                // TODO: split jobs and have several of them
-                var rePartitionJob = new RePartitionJob
+                using (mRepartitionAllExistingEntityQuery.Auto())
                 {
-                    CameraPosition = cameraPosition,
-                    CameraForward = cameraForward,
-                    PartitionSettings = partitionSettingsData,
-                };
+                    mJobRePartitionPreparation.Begin();
 
-                mJobPrep_GetQueries.Begin();
-                // TODO: cache Queries and use RefEquals
-                // if (!ReferenceEquals(_RePartitionExistingEntityWithDirtySdkTransform_Initialized, world))
-                // {
-                //     _RePartitionExistingEntityWithDirtySdkTransform_Query = world.Query(in RePartitionExistingEntityWithDirtySdkTransform_QueryDescription);
-                //     _RePartitionExistingEntityWithDirtySdkTransform_Initialized = world;
-                // }
-                Query queryW = World.Query(in partitionsW);
-                Query queryWo = World.Query(in partitionsWo);
-                mJobPrep_GetQueries.End();
-
-                mJobPrep_IterateArchetypes.Begin();
-                int totalAmount = World.CountEntities(partitionsAll);
-                mJobPrep_IterateArchetypes.End();
-
-                mJobPrep_CreateArrays.Begin();
-                if (partitions.Length < totalAmount) Array.Resize(ref this.partitions, totalAmount);
-                NativeArray<RepartitionableAssetEntity> repartitionables = new NativeArray<RepartitionableAssetEntity>(totalAmount, Allocator.TempJob);
-                NativeArray<float3> entityPositions = new NativeArray<float3>(totalAmount, Allocator.TempJob);
-                mJobPrep_CreateArrays.End();
-
-                mJobPrep_ChunkW.Begin();
-                int chunksOffset = 0;
-                foreach (ref Chunk chunk in queryW.GetChunkIterator()) // foreach (ref Chunk chunk in query)
-                {
-                    PartitionComponent[] partitionComponents = chunk.GetArray<PartitionComponent>();
-                    Array.Copy(partitionComponents, 0, partitions, chunksOffset, chunk.Size);
-
-                    ref var repartitionableFirst = ref chunk.GetFirst<RepartitionableAssetEntity>();
-                    ref var transformFirst = ref chunk.GetFirst<TransformComponent>();
-
-                    unsafe
+                    // TODO: split jobs and have several of them
+                    var rePartitionJob = new RePartitionJob
                     {
-                        var repartitionablesPtr = (RepartitionableAssetEntity*)repartitionables.GetUnsafePtr();
-                        repartitionablesPtr += chunksOffset;
-                        UnsafeUtility.MemCpy(repartitionablesPtr,Unsafe.AsPointer(ref repartitionableFirst),chunk.Size * UnsafeUtility.SizeOf<RepartitionableAssetEntity>());
+                        CameraPosition = cameraPosition,
+                        CameraForward = cameraForward,
+                        PartitionSettings = partitionSettingsData,
+                    };
 
-                        var positionsPtr = (float3*)entityPositions.GetUnsafePtr();
-                        positionsPtr += chunksOffset;
-                        for (var i = 0; i < chunk.Size; i++)
-                            positionsPtr[i] = Unsafe.Add(ref transformFirst, i).Cached.WorldPosition;
+                    mJobPrep_IterateArchetypes.Begin();
+                    int totalAmount = World.CountEntities(partitionsAll);
+                    mJobPrep_IterateArchetypes.End();
+
+                    mJobPrep_CreateArrays.Begin();
+                    if (partitions.Length < totalAmount) Array.Resize(ref this.partitions, totalAmount);
+                    NativeArray<RepartitionableAssetEntity> repartitionables = new NativeArray<RepartitionableAssetEntity>(totalAmount, Allocator.TempJob);
+                    NativeArray<float3> entityPositions = new NativeArray<float3>(totalAmount, Allocator.TempJob);
+                    mJobPrep_CreateArrays.End();
+
+                    mJobPrep_ChunkW.Begin();
+
+                    unsafe { UnsafeUtility.MemCpyReplicate(entityPositions.GetUnsafePtr(), &scenePosition, UnsafeUtility.SizeOf<float3>(), totalAmount); }
+
+                    int chunksOffset = 0;
+                    foreach (ref Chunk chunk in queryW.GetChunkIterator()) // foreach (ref Chunk chunk in query)
+                    {
+                        PartitionComponent[] partitionComponents = chunk.GetArray<PartitionComponent>();
+                        Array.Copy(partitionComponents, 0, partitions, chunksOffset, chunk.Size);
+
+                        ref var repartitionableFirst = ref chunk.GetFirst<RepartitionableAssetEntity>();
+                        ref var transformFirst = ref chunk.GetFirst<TransformComponent>();
+
+                        unsafe
+                        {
+                            var repartitionablesPtr = (RepartitionableAssetEntity*)repartitionables.GetUnsafePtr();
+                            repartitionablesPtr += chunksOffset;
+                            UnsafeUtility.MemCpy(repartitionablesPtr, Unsafe.AsPointer(ref repartitionableFirst), chunk.Size * UnsafeUtility.SizeOf<RepartitionableAssetEntity>());
+
+                            var positionsPtr = (float3*)entityPositions.GetUnsafePtr();
+                            positionsPtr += chunksOffset;
+
+                            for (var i = 0; i < chunk.Size; i++)
+                                positionsPtr[i] = Unsafe.Add(ref transformFirst, i).Cached.WorldPosition;
+                        }
+
+                        chunksOffset += chunk.Size;
+                    }
+                    mJobPrep_ChunkW.End();
+
+                    using (mJobPrep_ChunkWo.Auto())
+                    {
+                        foreach (ref Chunk chunk in queryWo.GetChunkIterator()) // foreach (ref Chunk chunk in query)
+                        {
+                            PartitionComponent[] partitionComponents = chunk.GetArray<PartitionComponent>();
+                            Array.Copy(partitionComponents, 0, partitions, chunksOffset, chunk.Size);
+
+                            ref var repartitionableFirst = ref chunk.GetFirst<RepartitionableAssetEntity>();
+
+                            unsafe
+                            {
+                                var repartitionablesPtr = (RepartitionableAssetEntity*)repartitionables.GetUnsafePtr();
+                                repartitionablesPtr += chunksOffset;
+
+                                UnsafeUtility.MemCpy(repartitionablesPtr, Unsafe.AsPointer(ref repartitionableFirst), chunk.Size * UnsafeUtility.SizeOf<RepartitionableAssetEntity>());
+                            }
+
+                            chunksOffset += chunk.Size;
+                        }
                     }
 
-                    chunksOffset += chunk.Size;
-                }
-                mJobPrep_ChunkW.End();
+                    rePartitionJob.EntityPositions = entityPositions;
+                    rePartitionJob.Repartitionable = repartitionables;
+                    mJobRePartitionPreparation.End();
 
-                mJobPrep_ChunkWo.Begin();
-                foreach (ref Chunk chunk in queryWo.GetChunkIterator()) // foreach (ref Chunk chunk in query)
-                {
-                    PartitionComponent[] partitionComponents = chunk.GetArray<PartitionComponent>();
-                    Array.Copy(partitionComponents, 0, partitions, chunksOffset, chunk.Size);
+                    mJobRePartitionRun.Begin();
+                    JobHandle jobHandle = rePartitionJob.Schedule(repartitionables.Length, 64);
+                    jobHandle.Complete();
+                    mJobRePartitionRun.End();
 
-                    ref var repartitionableFirst = ref chunk.GetFirst<RepartitionableAssetEntity>();
-                    unsafe
+                    mJobRePartitionApply.Begin();
+
+                    for (int i = 0; i < repartitionables.Length; i++)
                     {
-                        var repartitionablesPtr = (RepartitionableAssetEntity*)repartitionables.GetUnsafePtr();
-                        repartitionablesPtr += chunksOffset;
-
-                        UnsafeUtility.MemCpy(repartitionablesPtr, Unsafe.AsPointer(ref repartitionableFirst), chunk.Size * UnsafeUtility.SizeOf<RepartitionableAssetEntity>());
+                        partitions[i].Bucket = repartitionables[i].Bucket;
+                        partitions[i].IsBehind = repartitionables[i].IsBehind;
+                        partitions[i].IsDirty = repartitionables[i].IsDirty;
                     }
 
-                    // TODO: just pass scenePosition and use it
-                    // for (var entityId = 0; entityId < chunk.Size; entityId++)
-                    //     entityPositions[chunksOffset + entityId] = scenePosition;
+                    mJobRePartitionApply.End();
 
-                    chunksOffset += chunk.Size;
+                    mJobPrep_Dispose.Begin();
+                    Array.Clear(partitions, 0, partitions.Length);
+                    repartitionables.Dispose();
+                    entityPositions.Dispose();
+                    mJobPrep_Dispose.End();
                 }
-                mJobPrep_ChunkWo.End();
-
-                rePartitionJob.EntityPositions = entityPositions;
-                rePartitionJob.Repartitionable = repartitionables;
-                mJobRePartitionPreparation.End();
-
-                mJobRePartitionRun.Begin();
-                JobHandle jobHandle = rePartitionJob.Schedule(repartitionables.Length, 64);
-                jobHandle.Complete();
-                mJobRePartitionRun.End();
-
-                mJobRePartitionApply.Begin();
-                for (int i = 0; i < repartitionables.Length; i++)
-                {
-                    partitions[i].Bucket = repartitionables[i].Bucket;
-                    partitions[i].IsBehind = repartitionables[i].IsBehind;
-                    partitions[i].IsDirty = repartitionables[i].IsDirty;
-                }
-                mJobRePartitionApply.End();
-
-                mJobPrep_Dispose.Begin();
-                Array.Clear(partitions, 0, partitions.Length);
-                repartitionables.Dispose();
-                entityPositions.Dispose();
-                mJobPrep_Dispose.End();
-
-                mJobRePartitionAll.End();
 
                 // using (mRepartitionExistingEntityWithoutTransformQ.Auto())
                 //     RepartitionExistingEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
@@ -291,13 +288,21 @@ namespace ECS.Unity.Systems
                     ResetDirtyQuery(World);
 
                 // Repartition all entities with dirty transform
-                RePartitionExistingEntityWithDirtySdkTransformQuery(World, cameraPosition, cameraForward);
+                using(mRePartitionExistingEntityQuery.Auto())
+                    RePartitionExistingEntityWithDirtySdkTransformQuery(World, cameraPosition, cameraForward);
             }
 
-            // Then partition all entities that are not partitioned yet
-            PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
-            PartitionNewEntityWithTransformQuery(World, cameraPosition, cameraForward);
+            using (mPartitionNewEntityQuery.Auto())
+            { // Then partition all entities that are not partitioned yet
+                PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
+                PartitionNewEntityWithTransformQuery(World, cameraPosition, cameraForward);
+            }
         }
+
+        private static ProfilerMarker mRePartitionExistingEntityQuery = new ("PartitionAssetEntitiesSystem.RePartitionExistingEntityQuery");
+        private static ProfilerMarker mPartitionNewEntityQuery = new ("PartitionAssetEntitiesSystem.PartitionNewEntityQuery");
+        private static ProfilerMarker mRepartitionAllExistingEntityQuery = new ("PartitionAssetEntitiesSystem.RepartitionAllEntityQuery");
+
 
         [Query]
         [All(typeof(RepartitionableAssetEntity))]

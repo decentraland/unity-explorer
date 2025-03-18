@@ -50,9 +50,9 @@ namespace ECS.Unity.Systems
             this.sceneRoot = sceneRoot;
         }
 
-        private static ProfilerMarker mRePartitionExistingEntityQuery = new ("PartitionAssetEntitiesSystemOld.RePartitionExistingEntityQuery");
-        private static ProfilerMarker mResetDirtyQuery = new ("PartitionAssetEntitiesSystemOld.ResetDirtyQuery");
-        private static ProfilerMarker mPartitionNewEntityQuery = new ("PartitionAssetEntitiesSystemOld.PartitionNewEntityQuery");
+        private static ProfilerMarker mRePartitionExistingEntityQuery = new ("PartitionAssetEntitiesSystem.RePartitionExistingEntityQuery");
+        private static ProfilerMarker mResetDirtyQuery = new ("PartitionAssetEntitiesSystem.ResetDirtyQuery");
+        private static ProfilerMarker mPartitionNewEntityQuery = new ("PartitionAssetEntitiesSystem.PartitionNewEntityQuery");
         private static ProfilerMarker mRepartitionAllExistingEntityQuery = new ("PartitionAssetEntitiesSystem.RepartitionAllEntityQuery");
 
         protected override void Update(float t)
