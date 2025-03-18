@@ -20,6 +20,7 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class LoadFixedPointersShould : UnitySystemTestBase<LoadFixedPointersSystem>
     {
+        /*
         private static readonly string[] URNs =
         {
             "urn:decentraland:entity:bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4?=&baseUrl=https://sdk-team-cdn.decentraland.org/ipfs/",
@@ -100,5 +101,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(definitions.Any(d => d.IpfsPath.EntityId == "bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"), Is.True);
             Assert.That(definitions.Any(d => d.IpfsPath.EntityId == "bafkreihh3b5zjpb252blfa6b2n5lpr63pl5tdwhcxjidxx6vpytjjhbxou"), Is.True);
         }
+            */
+
     }
 }

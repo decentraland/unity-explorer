@@ -1,9 +1,11 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
+using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Ipfs;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -13,10 +15,25 @@ namespace ECS.SceneLifeCycle.Systems
 {
     public abstract class LoadScenePointerSystemBase : BaseUnityLoopSystem
     {
-        protected LoadScenePointerSystemBase(World world) : base(world) { }
+        private readonly HashSet<Vector2Int>? roadCoordinates;
+        private readonly IRealmData realmData;
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
-            World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), new SceneLoadingState());
+        protected LoadScenePointerSystemBase(World world, HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world)
+        {
+            this.roadCoordinates = roadCoordinates;
+            this.realmData = realmData;
+        }
+
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false)
+        {
+            if (IsRoad(definition))
+                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), new SceneLoadingState(), RoadInfo.Create());
+
+            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), new SceneLoadingState());
+        }
+
+        private bool IsRoad(SceneEntityDefinition definition) =>
+            realmData.IsGenesis() && roadCoordinates != null && roadCoordinates.Contains(definition.metadata.scene.DecodedBase);
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet

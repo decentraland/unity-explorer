@@ -44,6 +44,8 @@ namespace DCL.LOD.Systems
 
         public ILODCache LodCache { get; private set; } = null!;
 
+        public HashSet<Vector2Int> RoadCoordinates { get; private set; }
+
         private LODContainer(IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -72,7 +74,7 @@ namespace DCL.LOD.Systems
 
                 VisualSceneStateResolver.realmData = staticContainer.RealmData;
                 VisualSceneStateResolver.lodSettingsAsset = c.lodSettingsAsset.Value;
-                VisualSceneStateResolver.roadCoordinates = roadDataDictionary.Keys.ToHashSet();
+                container.RoadCoordinates = roadDataDictionary.Keys.ToHashSet();
 
                 var roadAssetPool = new RoadAssetsPool(realmData, c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
                 container.RoadAssetsPool = roadAssetPool;

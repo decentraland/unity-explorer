@@ -70,6 +70,7 @@ namespace Global.Dynamic
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
         private readonly IProfileRepository profileRepository;
+        private readonly HashSet<Vector2Int> roadCoordinates;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -78,6 +79,7 @@ namespace Global.Dynamic
             IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
+            HashSet<Vector2Int> roadCoordinates,
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
@@ -107,6 +109,7 @@ namespace Global.Dynamic
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
             this.profileRepository = profileRepository;
+            this.roadCoordinates = roadCoordinates;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -145,16 +148,16 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
 
-            LoadStaticPointersSystem.InjectToWorld(ref builder);
-            LoadFixedPointersSystem.InjectToWorld(ref builder);
-            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
+            LoadStaticPointersSystem.InjectToWorld(ref builder, roadCoordinates, realmData);
+            LoadFixedPointersSystem.InjectToWorld(ref builder, realmData);
+            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder, realmData);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings, sceneReadinessReportQueue, scenesCache);
+                partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity);
             //Removed, since we now have landscape surrounding the world

@@ -14,7 +14,7 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadPortableExperiencePointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadPortableExperiencePointersSystem(World world) : base(world) { }
+        internal LoadPortableExperiencePointersSystem(World world, IRealmData realmData) : base(world, null, realmData) { }
 
         protected override void Update(float t)
         {

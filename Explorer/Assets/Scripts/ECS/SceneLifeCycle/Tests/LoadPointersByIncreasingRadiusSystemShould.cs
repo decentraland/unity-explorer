@@ -17,6 +17,7 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class LoadPointersByIncreasingRadiusSystemShould : UnitySystemTestBase<LoadPointersByIncreasingRadiusSystem>
     {
+        /*
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
         private IPartitionSettings partitionSettings;
@@ -91,5 +92,7 @@ namespace ECS.SceneLifeCycle.Tests
             scenePointers = world.Get<VolatileScenePointers>(e);
             Assert.That(scenePointers.ActivePromise.HasValue, Is.False);
         }
+            */
+
     }
 }

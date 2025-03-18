@@ -35,9 +35,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
                                                                        .WithAll<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>()
-                                                                       .WithNone<DeleteEntityIntention, EmptySceneComponent>();
+                                                                       .WithNone<DeleteEntityIntention, EmptySceneComponent, RoadInfo>();
 
-        private readonly IRealmPartitionSettings realmPartitionSettings;
         internal JobHandle? sortingJobHandle;
         private NativeList<OrderedData> orderedData;
         private readonly Entity playerEntity;
@@ -52,7 +51,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
-            this.realmPartitionSettings = realmPartitionSettings;
             this.playerEntity = playerEntity;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
@@ -76,11 +74,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (!anyNonEmpty)
             {
-                float maxLoadingDistance = realmPartitionSettings.MaxLoadingDistanceInParcels * ParcelMathHelper.PARCEL_SIZE;
-                float maxLoadingSqrDistance = maxLoadingDistance * maxLoadingDistance;
-
-                ProcessVolatileRealmQuery(World, maxLoadingSqrDistance);
-                ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
+                ProcessVolatileRealmQuery(World);
+                ProcessesFixedRealmQuery(World);
             }
         }
 
@@ -94,9 +89,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
-        private void ProcessVolatileRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realm)
+        private void ProcessVolatileRealm(ref RealmComponent realm)
         {
-            StartScenesLoading(maxLoadingSqrDistance, ref realm);
+            StartScenesLoading(ref realm);
         }
 
         //TODO: StaticScenePointers should never unload
@@ -115,18 +110,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         /// </summary>
         [Query]
         [None(typeof(StaticScenePointers), typeof(VolatileScenePointers))]
-        private void ProcessesFixedRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
+        private void ProcessesFixedRealm(ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
-                StartScenesLoading(maxLoadingSqrDistance, ref realmComponent);
+                StartScenesLoading(ref realmComponent);
         }
 
-        private void StartScenesLoading([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent)
+        private void StartScenesLoading(ref RealmComponent realmComponent)
         {
             if (sortingJobHandle is { IsCompleted: true })
             {
                 sortingJobHandle.Value.Complete();
-                CreatePromisesFromOrderedData(realmComponent.Ipfs, maxLoadingSqrDistance);
+                CreatePromisesFromOrderedData(realmComponent.Ipfs);
             }
 
             if (sortingJobHandle is { IsCompleted: false }) return;
@@ -166,8 +161,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
-
-        private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm, float maxLoadingSqrDistance)
+        private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
             unloadingSceneCounter.UpdateUnloadingScenes();
             loadedScenes = 0;
@@ -188,7 +182,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
                 //Always unload out of range scenes
-                if (components.t1.Value.RawSqrDistance >= maxLoadingSqrDistance)
+                if (components.t1.Value.OutOfRange)
                 {
                     TryUnload(data, components.t0.Value, ref components.t2.Value);
                     continue;
@@ -225,19 +219,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             return teleportParcel;
         }
 
-        private bool TeleportOccuring(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent,
-            PartitionComponent partitionComponent, ref SceneLoadingState sceneState)
-        {
-            if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
-            {
-                if (sceneDefinitionComponent.ContainsParcel(playerTeleportIntent.Parcel))
-                    UpdateLoadingState(ipfsRealm, data, sceneDefinitionComponent, partitionComponent, ref sceneState);
-                return true;
-            }
-
-            return false;
-        }
-
         private void TryUnload(OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
             if (sceneState.loaded)
@@ -260,6 +241,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
             ref SceneLoadingState sceneState)
         {
+            if (sceneDefinitionComponent.Definition.id.Contains("QmWFuMqfFFeRmDW2w6BuizxHjUYo9LidqgSSHzLDdcUtpi")) { UnityEngine.Debug.Log("FOR THE DEBUG"); }
+
             //Dont try to load an unloading scene. Wait
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
                 return;
@@ -267,11 +250,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //TODO: Requires re-analysis every frame? Partition changes when bucket changes, but now we have the memory restriction
             //if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED && !partitionComponent.IsDirty)
             //    return;
-
-            //TODO: Optimize road code. For now, the only thing that can unload a road is distance
-            //Maybe add the component on the `SceneEntityDefinition` creation?
-            if (sceneState.VisualSceneStateEnum == VisualSceneStateEnum.ROAD)
-                return;
 
             VisualSceneStateEnum candidateByEnum
                 = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneStateEnum);
@@ -299,9 +277,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 case VisualSceneStateEnum.SHOWING_LOD:
                     loadedLODs++;
                     World.Add(data.Entity, SceneLODInfo.Create());
-                    break;
-                case VisualSceneStateEnum.ROAD:
-                    World.Add(data.Entity, RoadInfo.Create());
                     break;
                 default:
                     loadedScenes++;
