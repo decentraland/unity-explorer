@@ -241,12 +241,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
         }
 
-
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
             ref SceneLoadingState sceneState)
         {
-            if (sceneDefinitionComponent.Definition.id.Contains("QmWFuMqfFFeRmDW2w6BuizxHjUYo9LidqgSSHzLDdcUtpi")) { UnityEngine.Debug.Log("FOR THE DEBUG"); }
-
             //Dont try to load an unloading scene. Wait
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
                 return;
