@@ -22,9 +22,6 @@ namespace DCL.Analytics.Systems
     {
         private const int FRAMES_SAMPLES_CAPACITY = 1024;
 
-        private static readonly QueryDescription SCENES_QUERY = new QueryDescription()
-           .WithAll<ISceneFacade>();
-
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
         private readonly IJsonObjectBuilder jsonObjectBuilder;
