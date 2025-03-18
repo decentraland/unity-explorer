@@ -18,8 +18,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public LivekitPlayer(IRoomHub roomHub)
         {
-            //TODO migrate to scene
-            room = roomHub.IslandRoom();
+            room = roomHub.SceneRoom().Room();
         }
 
         public void OpenMedia(string identity, string sid)

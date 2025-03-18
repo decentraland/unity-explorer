@@ -31,8 +31,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                     await UniTask.SwitchToMainThread();
 
                     var list = new List<GetActiveVideoStreamsResponse.Stream>();
-                    //TODO Should we use scene room instead?
-                    var participants = roomHub.IslandRoom().Participants;
+                    var participants = roomHub.SceneRoom().Room().Participants;
 
                     foreach (string remoteParticipantIdentity in participants.RemoteParticipantIdentities())
                     {
