@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -66,12 +69,21 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             return (contextMenu, jumpInElement);
         }
 
-        internal static void BlockUserClicked(FriendProfile profile)
-        {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
-        }
+        public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
+
+        internal static string FormatDate(DateTime date)
+        {
+            Span<char> buffer = stackalloc char[6];
+            if (!date.TryFormat(buffer, out _, "MMM dd", CultureInfo.InvariantCulture)) return string.Empty;
+
+            for (int i = 0; i < buffer.Length; i++)
+                buffer[i] = char.ToUpperInvariant(buffer[i]);
+
+            return buffer.ToString();
+        }
     }
 }
