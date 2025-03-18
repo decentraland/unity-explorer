@@ -293,9 +293,9 @@ namespace ECS.Unity.Systems
             }
 
             using (mPartitionNewEntityQuery.Auto())
-            { // Then partition all entities that are not partitioned yet
-                PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
-                PartitionNewEntityWithTransformQuery(World, cameraPosition, cameraForward);
+            {
+                // Then partition all entities that are not partitioned yet
+                PartitionNewEntityQuery(World);
             }
         }
 
@@ -313,25 +313,37 @@ namespace ECS.Unity.Systems
 
         [Query]
         [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
-        [None(typeof(TransformComponent), typeof(PartitionComponent))]
-        private void PartitionNewEntityWithoutTransform([Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
+        [None(typeof(PartitionComponent))]
+        private void PartitionNewEntity(in Entity entity)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
-            RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+            partitionComponent.Bucket = scenePartition.Bucket;
+            partitionComponent.IsBehind = scenePartition.IsBehind;
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent, new RepartitionableAssetEntity());
         }
 
-        [Query]
-        [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
-        [None(typeof(PartitionComponent))]
-        private void PartitionNewEntityWithTransform(ref TransformComponent transformComponent, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
-        {
-            PartitionComponent partitionComponent = partitionComponentPool.Get();
-            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
-            partitionComponent.IsDirty = true;
-            World.Add(entity, partitionComponent, new RepartitionableAssetEntity());
-        }
+        // [Query]
+        // [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
+        // [None(typeof(TransformComponent), typeof(PartitionComponent))]
+        // private void PartitionNewEntityWithoutTransform([Data] Vector3 scenePosition, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
+        // {
+        //     PartitionComponent partitionComponent = partitionComponentPool.Get();
+        //     RePartition(cameraPosition, cameraForward, scenePosition, ref partitionComponent);
+        //     partitionComponent.IsDirty = true;
+        //     World.Add(entity, partitionComponent, new RepartitionableAssetEntity());
+        // }
+        //
+        // [Query]
+        // [Any(typeof(PBNftShape), typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBUiBackground), typeof(PBRaycast))] // PbMaterial is attached to the renderer and can contain textures
+        // [None(typeof(PartitionComponent))]
+        // private void PartitionNewEntityWithTransform(ref TransformComponent transformComponent, [Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity)
+        // {
+        //     PartitionComponent partitionComponent = partitionComponentPool.Get();
+        //     RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
+        //     partitionComponent.IsDirty = true;
+        //     World.Add(entity, partitionComponent, new RepartitionableAssetEntity());
+        // }
 
         // [Query]
         // [All(typeof(RepartitionableAssetEntity))]
