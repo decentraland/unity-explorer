@@ -32,7 +32,7 @@ namespace DCL.Chat.History
         /// <summary>
         /// The unique identifier of a chat channel.
         /// </summary>
-        public struct ChannelId
+        public struct ChannelId : IEquatable<ChannelId>
         {
             public string Id { get; }
 
@@ -40,6 +40,9 @@ namespace DCL.Chat.History
             {
                 Id = id;
             }
+
+            public bool Equals(ChannelId other) =>
+                Id == other.Id;
         }
 
         /// <summary>
