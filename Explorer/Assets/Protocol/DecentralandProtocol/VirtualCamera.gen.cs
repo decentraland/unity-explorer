@@ -49,6 +49,7 @@ namespace DCL.ECSComponents {
   /// an 'instant' transition (like using speed/time = 0)
   /// * The lookAtEntity defines to which entity the Camera has to look at constantly (independent from 
   /// the holding entity transform).
+  /// * The fov defines the Field of View of the virtual camera
   /// </summary>
   public sealed partial class PBVirtualCamera : pb::IMessage<PBVirtualCamera>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -139,7 +140,7 @@ namespace DCL.ECSComponents {
     public const int FovFieldNumber = 3;
     private float fov_;
     /// <summary>
-    /// default = 60
+    /// default: 60
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
