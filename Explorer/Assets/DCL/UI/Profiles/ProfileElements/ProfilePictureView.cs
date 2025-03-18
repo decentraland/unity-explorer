@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using MVC;
 using System;
 using System.Threading;
@@ -17,6 +16,17 @@ namespace DCL.UI.ProfileElements
 
         private ViewDependencies viewDependencies;
         private CancellationTokenSource cts;
+        private string currentlyLoadedThumbnail;
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+        }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+        }
 
         public void Setup(Color userColor, string faceSnapshotUrl, string userId)
         {
@@ -55,33 +65,29 @@ namespace DCL.UI.ProfileElements
 
         private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
         {
+            if (currentlyLoadedThumbnail == faceSnapshotUrl) return;
+
             try
             {
                 cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
+                thumbnailImageView.Alpha = 0f;
 
                 Sprite sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
                 thumbnailImageView.SetImage(sprite ? sprite : defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
+                currentlyLoadedThumbnail = faceSnapshotUrl;
+                await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception)
             {
                 thumbnailImageView.SetImage(defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
+                await thumbnailImageView.FadeInAsync(1f, cts.Token);
             }
-
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
         }
     }
 }
