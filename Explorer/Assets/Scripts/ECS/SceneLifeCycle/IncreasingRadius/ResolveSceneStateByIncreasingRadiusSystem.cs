@@ -44,9 +44,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly UnloadingSceneCounter unloadingSceneCounter;
         private readonly int maximumAmountOfScenesThatCanLoad = 5;
         private readonly int maximumAmountOfScenesLODsThatCanLoad = 5;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
 
         private int loadedScenes;
         private int loadedLODs;
+        private int promisesCreated;
 
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
@@ -59,6 +61,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 Allocator.Persistent);
 
             unloadingSceneCounter = new UnloadingSceneCounter();
+            this.realmPartitionSettings = realmPartitionSettings;
         }
 
         protected override void OnDispose()
@@ -166,10 +169,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             unloadingSceneCounter.UpdateUnloadingScenes();
             loadedScenes = 0;
             loadedLODs = 0;
+            promisesCreated = 0;
 
             PlayerTeleportingState teleportParcel = GetTeleportParcel();
 
-            for (var i = 0; i < orderedData.Length; i++)
+            for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
                 OrderedData data = orderedData[i];
 
@@ -177,7 +181,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     return;
 
                 // We can't save component to data as sorting is throttled and components could change
-                // We need to optimize this
+                // TODO: We need to optimize this
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
@@ -232,7 +236,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void Unload(OrderedData data, ref SceneLoadingState sceneState)
         {
-            sceneState.VisualSceneStateEnum = VisualSceneStateEnum.UNINITIALIZED;
+            sceneState.VisualSceneState = VisualSceneStateEnum.UNINITIALIZED;
             sceneState.loaded = false;
             World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
         }
@@ -252,7 +256,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //    return;
 
             VisualSceneStateEnum candidateByEnum
-                = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneStateEnum);
+                = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
             if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes >= maximumAmountOfScenesThatCanLoad)
@@ -266,13 +270,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
 
             //Nothing has changed, keep going
-            if (sceneState.VisualSceneStateEnum == candidateByEnum)
+            if (sceneState.VisualSceneState == candidateByEnum)
                 return;
 
+            promisesCreated++;
             sceneState.loaded = true;
-            sceneState.VisualSceneStateEnum = candidateByEnum;
+            sceneState.VisualSceneState = candidateByEnum;
 
-            switch (sceneState.VisualSceneStateEnum)
+            switch (sceneState.VisualSceneState)
             {
                 case VisualSceneStateEnum.SHOWING_LOD:
                     loadedLODs++;
@@ -305,18 +310,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
     }
 
-    public struct SceneLoadingState
-    {
-        public bool loaded;
-        public VisualSceneStateEnum VisualSceneStateEnum;
-    }
-
     public struct PlayerTeleportingState
     {
         public Vector2Int Parcel;
         public bool IsTeleporting;
     }
-
 
     public class UnloadingSceneCounter
     {

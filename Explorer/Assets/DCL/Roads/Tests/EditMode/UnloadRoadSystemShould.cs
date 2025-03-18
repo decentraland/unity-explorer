@@ -1,4 +1,5 @@
-﻿using DCL.LOD;
+﻿using Arch.Core;
+using DCL.LOD;
 using DCL.Roads.Components;
 using DCL.Roads.Systems;
 using ECS.LifeCycle.Components;
@@ -32,7 +33,8 @@ namespace DCL.Roads.Tests
             {
                 IsDirty = false, CurrentKey = "key", CurrentAsset = new GameObject().transform
             };
-            var entity = world.Create(roadInfo, new SceneDefinitionComponent(), new VisualSceneState(), new DeleteEntityIntention());
+
+            Entity entity = world.Create(roadInfo, new SceneDefinitionComponent(), new DeleteEntityIntention());
 
             // Act
             system.Update(0);

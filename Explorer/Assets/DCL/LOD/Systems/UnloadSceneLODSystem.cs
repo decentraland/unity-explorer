@@ -55,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
             ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
-            if (sceneLoadingState.VisualSceneStateEnum == VisualSceneStateEnum.SHOWING_SCENE)
+            if (sceneLoadingState.VisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
                 if (!sceneFacade.IsSceneReady())
                     return;

@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using ECS;
+﻿using ECS;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using UnityEngine;
 
 namespace DCL.LOD
 {
