@@ -235,8 +235,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
             }
 
-            UnityEngine.Debug.Log($"JUANI LOADED SCENES {loadedScenes} LOADED LOD {loadedLODs} QUALITY REDUCED LOD {qualityReductedLOD}");
-
             previousOrderedData = orderedData;
         }
 
@@ -304,27 +302,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 else if (qualityReductedLOD < maximumAmountOfScenesLODsThatCanLoadQualityReducted)
                 {
                     qualityReductedLOD++;
-
                     if (sceneState.FullQuality)
                     {
                         //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
                         TryUnload(data.Entity, sceneDefinitionComponent, ref sceneState);
-                        return;
+                        candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
                     }
-
                     // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
                     sceneState.FullQuality = false;
-                    UnityEngine.Debug.Log($"JUANI THIS SHOULD BE QUALITY REDUCTED {sceneDefinitionComponent.Definition.id}");
                 }
                 else
                 {
-                    // No more LODs can be loaded
-                    return;
+                    // Nothing else can load. And we need to unload the loaded which are still inside the loading range
+                    TryUnload(data.Entity, sceneDefinitionComponent, ref sceneState);
+                    candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
                 }
             }
 
             //No new promise is required
-            if (sceneState.VisualSceneState == candidateByEnum)
+            if (candidateByEnum == VisualSceneStateEnum.UNINITIALIZED
+                || sceneState.VisualSceneState == candidateByEnum)
                 return;
 
             promisesCreated++;
