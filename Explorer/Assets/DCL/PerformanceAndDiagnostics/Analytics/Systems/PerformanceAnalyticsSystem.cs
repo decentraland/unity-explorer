@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -7,7 +6,6 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
-using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
