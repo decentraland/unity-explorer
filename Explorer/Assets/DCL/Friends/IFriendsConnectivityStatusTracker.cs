@@ -1,4 +1,4 @@
-using DCL.Friends.UI.FriendPanel;
+using DCL.UI;
 using System;
 
 namespace DCL.Friends

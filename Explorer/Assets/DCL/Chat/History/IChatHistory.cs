@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Chat.History
@@ -9,6 +8,7 @@ namespace DCL.Chat.History
     public interface IChatHistory
     {
         public delegate void ChannelAddedDelegate(ChatChannel addedChannel);
+        public delegate void ChannelRemovedDelegate(ChatChannel.ChannelId removedChannel);
         public delegate void ChannelClearedDelegate(ChatChannel claredChannel);
         public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
         public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
@@ -17,6 +17,11 @@ namespace DCL.Chat.History
         /// Raised when a new channel is added.
         /// </summary>
         event ChannelAddedDelegate ChannelAdded;
+
+        /// <summary>
+        /// Raised when a new channel is removed.
+        /// </summary>
+        event ChannelRemovedDelegate ChannelRemoved;
 
         /// <summary>
         /// Raised when a channel is emptied.

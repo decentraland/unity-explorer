@@ -5,6 +5,7 @@ namespace DCL.Chat.History
     public class ChatHistory : IChatHistory
     {
         public event IChatHistory.ChannelAddedDelegate ChannelAdded;
+        public event IChatHistory.ChannelRemovedDelegate ChannelRemoved;
         public event IChatHistory.ChannelClearedDelegate ChannelCleared;
         public event IChatHistory.MessageAddedDelegate MessageAdded;
         public event IChatHistory.ReadMessagesChangedDelegate ReadMessagesChanged;
@@ -35,9 +36,7 @@ namespace DCL.Chat.History
                 int result = 0;
 
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channel in channels)
-                {
                     result += channel.Value.Messages.Count;
-                }
 
                 return result;
             }
@@ -69,6 +68,8 @@ namespace DCL.Chat.History
 
             if(channel.ReadMessages != channel.Messages.Count)
                 ReadMessagesChanged?.Invoke(channel);
+
+            ChannelRemoved?.Invoke(channelId);
         }
 
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
