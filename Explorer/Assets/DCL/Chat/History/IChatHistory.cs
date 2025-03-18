@@ -19,7 +19,7 @@ namespace DCL.Chat.History
         event ChannelAddedDelegate ChannelAdded;
 
         /// <summary>
-        /// Raised when a new channel is added.
+        /// Raised when a new channel is removed.
         /// </summary>
         event ChannelRemovedDelegate ChannelRemoved;
 
