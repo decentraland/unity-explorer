@@ -18,7 +18,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private const int STATUS_ELEMENT_INDEX = 1;
         private const int EMPTY_ELEMENT_INDEX = 2;
 
-        private readonly LoopListView2 loopListView;
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
@@ -37,11 +36,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             LoopListView2 loopListView,
             ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(friendsService, friendEventBus, viewDependencies, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            int elementsMissingThreshold) : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
-            this.loopListView = loopListView;
 
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
@@ -110,12 +108,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
 
             RefreshLoopList();
-        }
-
-        private void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetElementsNumber(), false);
-            loopListView.RefreshAllShownItem();
         }
 
         private void FriendRequestAccepted(string friendId)
