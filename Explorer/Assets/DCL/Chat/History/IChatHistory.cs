@@ -61,7 +61,7 @@ namespace DCL.Chat.History
         /// <returns>
         /// The id of the new channel.
         /// </returns>
-        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelId);
+        public ChatChannel AddOrGetChannel(ChatChannel.ChatChannelType type, ChatChannel.ChannelId channelId);
 
         /// <summary>
         /// Removes a channel along with its messages (which implies a change in the amount of read messages).

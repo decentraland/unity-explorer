@@ -191,8 +191,8 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
-            var channel = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, userId);
-            viewInstance.CurrentChannelId = channel;
+            var channel = chatHistory.AddOrGetChannel(ChatChannel.ChatChannelType.User, new ChatChannel.ChannelId(userId));
+            viewInstance!.CurrentChannelId = channel.Id;
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)

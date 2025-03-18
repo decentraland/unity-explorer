@@ -44,21 +44,22 @@ namespace DCL.Chat.History
 
         public ChatHistory()
         {
-            AddChannel(ChatChannel.ChatChannelType.Nearby, ChatChannel.NEARBY_CHANNEL_ID.Id);
+            AddOrGetChannel(ChatChannel.ChatChannelType.Nearby, ChatChannel.NEARBY_CHANNEL_ID);
         }
 
-        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelId)
+        public ChatChannel AddOrGetChannel(ChatChannel.ChatChannelType type, ChatChannel.ChannelId channelId)
         {
-            ChatChannel newChannel = new ChatChannel(type, channelId);
+            if (channels.TryGetValue(channelId, out ChatChannel channel))
+                return channel;
+
+            ChatChannel newChannel = new ChatChannel(type, channelId.Id);
             newChannel.MessageAdded += (destinationChannel, addedMessage) => { MessageAdded?.Invoke(destinationChannel, addedMessage); };
             newChannel.Cleared += (clearedChannel) => { ChannelCleared?.Invoke(clearedChannel); };
             newChannel.ReadMessagesChanged += (changedChannel) => { ReadMessagesChanged?.Invoke(changedChannel); };
 
             channels.Add(newChannel.Id, newChannel);
-
             ChannelAdded?.Invoke(newChannel);
-
-            return newChannel.Id;
+            return newChannel;
         }
 
         public void RemoveChannel(ChatChannel.ChannelId channelId)
@@ -72,10 +73,8 @@ namespace DCL.Chat.History
 
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
         {
-            if (!channels.ContainsKey(channelId))
-                AddChannel(ChatChannel.ChatChannelType.User, channelId.Id);
-
-            channels[channelId].AddMessage(newMessage);
+            var channel = AddOrGetChannel(ChatChannel.ChatChannelType.User, channelId);
+            channel.AddMessage(newMessage);
         }
 
         public void ClearChannel(ChatChannel.ChannelId channelId)
