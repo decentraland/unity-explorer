@@ -5,7 +5,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -209,7 +208,7 @@ namespace DCL.Passport
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(ExecuteFriendshipOperationFromContextMenu);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -571,7 +570,7 @@ namespace DCL.Passport
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
             userProfileContextMenuControlSettings.SetInitialData(targetProfile.Name, targetProfile.UserId, targetProfile.HasClaimedName,
-                targetProfile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
+                targetProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
                 targetProfile.Avatar.FaceSnapshotUrl);
         }
 
@@ -584,20 +583,6 @@ namespace DCL.Passport
 
                 ShowFriendshipInteraction();
             }
-        }
-
-        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
-        {
-            return friendshipStatus switch
-            {
-                FriendshipStatus.NONE => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
-                FriendshipStatus.FRIEND => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
-                FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                FriendshipStatus.BLOCKED_BY => UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE
-            };
         }
 
         private void ShowMutualFriends()
@@ -648,20 +633,6 @@ namespace DCL.Passport
             viewInstance.CancelFriendButton.gameObject.SetActive(false);
             viewInstance.RemoveFriendButton.gameObject.SetActive(false);
             viewInstance.UnblockFriendButton.gameObject.SetActive(false);
-        }
-
-        private void ExecuteFriendshipOperationFromContextMenu(string profile,
-            UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
-        {
-            switch (friendshipStatus)
-            {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship();
-                    break;
-            }
         }
 
         private void RemoveFriend()
