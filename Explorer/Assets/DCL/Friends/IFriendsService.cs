@@ -27,6 +27,14 @@ namespace DCL.Friends
         UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct);
 
         UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct);
+
+        UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct);
+
+        UniTask BlockUserAsync(string userId, CancellationToken ct);
+
+        UniTask UnblockUserAsync(string userId, CancellationToken ct);
+
+        UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct);
     }
 
     public readonly struct PaginatedFriendsResult : IDisposable
@@ -46,6 +54,50 @@ namespace DCL.Friends
         public void Dispose()
         {
             ListPool<FriendProfile>.Release(friends);
+        }
+    }
+
+    public readonly struct PaginatedBlockedProfileResult : IDisposable
+    {
+        private readonly List<BlockedProfile> blockedProfiles;
+
+        public IReadOnlyList<BlockedProfile> BlockedProfiles => blockedProfiles;
+        public int TotalAmount { get; }
+
+        public PaginatedBlockedProfileResult(IEnumerable<BlockedProfile> profiles, int totalAmount)
+        {
+            blockedProfiles = ListPool<BlockedProfile>.Get();
+            blockedProfiles.AddRange(profiles);
+            TotalAmount = totalAmount;
+        }
+
+        public void Dispose()
+        {
+            ListPool<BlockedProfile>.Release(blockedProfiles);
+        }
+    }
+
+    public readonly struct UserBlockingStatus : IDisposable
+    {
+        private readonly List<string> blockedUsers;
+        private readonly List<string> blockedByUsers;
+
+        public IReadOnlyList<string> BlockedUsers => blockedUsers;
+        public IReadOnlyList<string> BlockedByUsers => blockedByUsers;
+
+        public UserBlockingStatus(IEnumerable<string> blockedUsers, IEnumerable<string> blockedByUsers)
+        {
+            this.blockedUsers = ListPool<string>.Get();
+            this.blockedUsers.AddRange(blockedUsers);
+
+            this.blockedByUsers = ListPool<string>.Get();
+            this.blockedByUsers.AddRange(blockedByUsers);
+        }
+
+        public void Dispose()
+        {
+            ListPool<string>.Release(blockedUsers);
+            ListPool<string>.Release(blockedByUsers);
         }
     }
 
