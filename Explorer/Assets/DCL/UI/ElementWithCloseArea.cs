@@ -32,7 +32,7 @@ namespace DCL.UI
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            showingCts.Cancel();
+            showingCts = showingCts.SafeRestart();
 
             await UniTask.WaitUntil(() => !gameObject.activeSelf, PlayerLoopTiming.Update, ct);
         }
@@ -44,7 +44,7 @@ namespace DCL.UI
 
         private void OnCloseAreaButtonClicked()
         {
-            showingCts.Cancel();
+            showingCts = showingCts.SafeRestart();
             Closed?.Invoke();
         }
     }

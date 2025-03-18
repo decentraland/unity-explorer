@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.SidebarBus;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3;
@@ -39,12 +38,10 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
-        private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new ();
@@ -61,10 +58,8 @@ namespace DCL.Notifications.NotificationsMenu
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
-            ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
-            IWeb3IdentityCache web3IdentityCache,
-            ISharedSpaceManager sharedSpaceManager)
+            IWeb3IdentityCache web3IdentityCache)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -73,14 +68,12 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
-            this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
-            this.sharedSpaceManager = sharedSpaceManager;
             CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
         }
@@ -99,19 +92,20 @@ namespace DCL.Notifications.NotificationsMenu
             notificationPanelCts = notificationPanelCts.SafeRestart();
             await view.ShowAsync(notificationPanelCts.Token);
             ViewShowingComplete?.Invoke(this);
+            await UniTask.WaitUntilCanceled(notificationPanelCts.Token);
+            await view.HideAsync(notificationPanelCts.Token);
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
-            await view.HideAsync(notificationPanelCts.Token);
+
+            await UniTask.WaitUntil(() => !view.gameObject.activeSelf, PlayerLoopTiming.Update, ct);
         }
 
         private void ClosePanel()
         {
-            sidebarBus.UnblockSidebar();
             notificationPanelCts = notificationPanelCts.SafeRestart();
-            sharedSpaceManager.HideAsync(PanelsSharingSpace.Notifications).Forget();
         }
 
         private void OnViewShown()
