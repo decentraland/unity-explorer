@@ -31,7 +31,14 @@ namespace DCL.UI.ProfileElements
         public void Setup(Color userColor, string faceSnapshotUrl, string userId)
         {
             thumbnailBackground.color = userColor;
-            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
+            SetUpAsync().Forget();
+            return;
+
+            async UniTaskVoid SetUpAsync()
+            {
+                try { await LoadThumbnailAsync(faceSnapshotUrl, userId); }
+                catch (OperationCanceledException) { }
+            }
         }
 
         public async UniTask SetupWithDependenciesAsync(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
