@@ -247,8 +247,9 @@ namespace DCL.Chat
                 }
 
                 // Updates the amount of members
-                if(canUpdateParticipants && roomHub.ParticipantsCount != viewInstance!.MemberCount)
-                    viewInstance!.MemberCount = roomHub.ParticipantsCount;
+                int participantsCount = roomHub.ParticipantsCount();
+                if(roomHub.HasAnyRoomConnected() && participantsCount != viewInstance!.MemberCount)
+                    viewInstance!.MemberCount = participantsCount;
 
                 await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
             }
@@ -294,12 +295,10 @@ namespace DCL.Chat
             messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
         }
 
-        private bool canUpdateParticipants => roomHub.HasAnyRoomConnected;
-
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
+        private void CreateChatBubble(ChatChannel _, ChatMessage chatMessage, bool isSentByOwnUser)
         {
             // Chat bubble over the avatars
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
@@ -419,7 +418,7 @@ namespace DCL.Chat
 
         private void OnMemberListVisibilityChanged(bool isVisible)
         {
-            if (isVisible && canUpdateParticipants)
+            if (isVisible && roomHub.HasAnyRoomConnected())
                 RefreshMemberList();
         }
 
