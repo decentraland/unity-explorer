@@ -1,8 +1,10 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.Utilities;
 using System.Threading;
 using UnityEngine;
 
@@ -19,6 +21,7 @@ namespace MVC
         public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
+        public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
 
         private readonly IProfileThumbnailCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
@@ -31,7 +34,7 @@ namespace MVC
             await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IProfileThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+            IProfileThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
@@ -41,6 +44,7 @@ namespace MVC
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
             this.remoteMetadata = remoteMetadata;
+            this.UserBlockingCacheProxy = userBlockingCacheProxy;
         }
 
     }
