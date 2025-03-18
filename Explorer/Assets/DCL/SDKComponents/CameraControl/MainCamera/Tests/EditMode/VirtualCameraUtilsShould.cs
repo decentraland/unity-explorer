@@ -55,9 +55,11 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void FetchVirtualCameraComponentCorrectly()
         {
-            world.Add<VirtualCameraComponent>(entity1);
+            world.Add(entity1, new VirtualCameraComponent(), new PBVirtualCamera());
 
             Assert.IsTrue(VirtualCameraUtils.TryGetVirtualCameraComponents(world, entitiesMap, world.Get<CRDTEntity>(entity1).Id, out var vCamComponent, out var pbVCamComponent));
+            Assert.NotNull(vCamComponent);
+            Assert.NotNull(pbVCamComponent);
             Assert.IsFalse(VirtualCameraUtils.TryGetVirtualCameraComponents(world, entitiesMap, world.Get<CRDTEntity>(entity2).Id, out vCamComponent, out pbVCamComponent));
         }
 
