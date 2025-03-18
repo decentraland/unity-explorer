@@ -172,6 +172,7 @@ namespace DCL.Friends.UI.FriendPanel
             requestsSectionController.Reset();
             friendSectionController?.Reset();
             friendSectionControllerConnectivity?.Reset();
+            blockedSectionController.Reset();
         }
 
         private void RegisterCloseHotkey()
