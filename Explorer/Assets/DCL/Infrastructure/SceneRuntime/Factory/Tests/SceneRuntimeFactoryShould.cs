@@ -79,7 +79,9 @@ namespace SceneRuntime.Factory.Tests
                 // Act
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
-                instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
+
+                instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>())
+                                     .Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), _ => { }));
 
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
