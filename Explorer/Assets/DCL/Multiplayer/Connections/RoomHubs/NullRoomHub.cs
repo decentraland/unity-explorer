@@ -15,8 +15,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IGateKeeperSceneRoom SceneRoom() =>
             new IGateKeeperSceneRoom.Fake();
 
-        public HashSet<string> AllRoomsRemoteParticipantIdentities() =>
-            new ();
+        public IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities() =>
+            new List<string>();
 
         public UniTask<bool> StartAsync() => UniTask.FromResult(true);
 
