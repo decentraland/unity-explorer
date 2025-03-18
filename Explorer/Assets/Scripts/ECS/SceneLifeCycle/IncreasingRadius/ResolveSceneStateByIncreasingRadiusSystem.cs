@@ -43,11 +43,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private readonly UnloadingSceneCounter unloadingSceneCounter;
         private readonly int maximumAmountOfScenesThatCanLoad = 5;
-        private readonly int maximumAmountOfScenesLODsThatCanLoad = 5;
+        private readonly int maximumAmountOfScenesLODsThatCanLoadQualityReducted = 5;
+        private readonly int maximumAmoutOfScenesLODsThatCanLoad = 5;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
         private int loadedScenes;
         private int loadedLODs;
+        private int qualityReductedLOD;
         private int promisesCreated;
 
 
@@ -80,6 +82,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 ProcessVolatileRealmQuery(World);
                 ProcessesFixedRealmQuery(World);
             }
+
+            ProcessScenesUnloadingInRealmQuery(World);
         }
 
         [Query]
@@ -97,15 +101,21 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             StartScenesLoading(ref realm);
         }
 
-        //TODO: StaticScenePointers should never unload
-        /*[Query]
+        [Query]
+        private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
+        {
+            if (partitionComponent.OutOfRange)
+                TryUnload(entity, sceneDefinitionComponent, ref sceneLoadingState);
+        }
+
+        [Query]
         [None(typeof(StaticScenePointers))]
         [All(typeof(RealmComponent))]
         private void ProcessScenesUnloadingInRealm()
         {
             StartUnloadingQuery(World);
         }
-        */
+
 
         /// <summary>
         ///     Start loading scenes when all fixed pointers are loaded, otherwise we can't
@@ -148,8 +158,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
                     ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref sceneDefinitionComponentFirst, entityIndex);
 
-                    //Ignore unpartitioned
-                    if (partitionComponent.RawSqrDistance < 0) continue;
+                    //Ignore unpartitioned and out of range
+                    if (partitionComponent.RawSqrDistance < 0 || partitionComponent.OutOfRange) continue;
 
                     orderedData.Add(new OrderedData
                     {
@@ -164,14 +174,37 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
+        public bool AreListsEqual(NativeList<OrderedData> list1, NativeList<OrderedData> list2)
+        {
+            if (list1.Length != list2.Length)
+                return false;
+
+            for (var i = 0; i < list1.Length; i++)
+            {
+                if (!list1[i].Equals(list2[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private NativeList<OrderedData> previousOrderedData = new (Allocator.Persistent);
+
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
             unloadingSceneCounter.UpdateUnloadingScenes();
             loadedScenes = 0;
             loadedLODs = 0;
+            qualityReductedLOD = 0;
             promisesCreated = 0;
 
             PlayerTeleportingState teleportParcel = GetTeleportParcel();
+
+            if (previousOrderedData.Length > 0)
+            {
+                if (!AreListsEqual(previousOrderedData, orderedData))
+                    UnityEngine.Debug.Log("JUANI THEY ARE DFFIERENT");
+            }
 
             for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
@@ -184,13 +217,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 // TODO: We need to optimize this
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
-
-                //Always unload out of range scenes
-                if (components.t1.Value.OutOfRange)
-                {
-                    TryUnload(data, components.t0.Value, ref components.t2.Value);
-                    continue;
-                }
 
                 //If there is a teleport intent, only allow to load the teleport intent
                 //TODO: This is going to work better when the intent is according to the player position and not the camera
@@ -208,6 +234,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
             }
+
+            UnityEngine.Debug.Log($"JUANI LOADED SCENES {loadedScenes} LOADED LOD {loadedLODs} QUALITY REDUCED LOD {qualityReductedLOD}");
+
+            previousOrderedData = orderedData;
         }
 
         private PlayerTeleportingState GetTeleportParcel()
@@ -223,24 +253,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             return teleportParcel;
         }
 
-        private void TryUnload(OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
+        private void TryUnload(in Entity entity, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
-            if (sceneState.loaded)
+            if (sceneState.Loaded)
             {
-                if (World.TryGet(data.Entity, out ISceneFacade sceneFacade))
+                if (World.TryGet(entity, out ISceneFacade sceneFacade))
                     unloadingSceneCounter.RegisterSceneFacade(sceneDefinitionComponent.Definition.id, sceneFacade);
 
-                Unload(data, ref sceneState);
+                Unload(entity, ref sceneState);
             }
         }
 
-        private void Unload(OrderedData data, ref SceneLoadingState sceneState)
+        private void Unload(in Entity entity, ref SceneLoadingState sceneState)
         {
             sceneState.VisualSceneState = VisualSceneStateEnum.UNINITIALIZED;
-            sceneState.loaded = false;
-            World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
+            sceneState.Loaded = false;
+            sceneState.FullQuality = false;
+            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
+        //TODO: Requires re-analysis every frame? Partition changes when bucket changes, but now we have the memory restriction
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
             ref SceneLoadingState sceneState)
         {
@@ -248,40 +280,63 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
                 return;
 
-            //TODO: Requires re-analysis every frame? Partition changes when bucket changes, but now we have the memory restriction
-            //if (sceneState.VisualSceneStateEnum != VisualSceneStateEnum.UNINITIALIZED && !partitionComponent.IsDirty)
-            //    return;
-
             VisualSceneStateEnum candidateByEnum
                 = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes >= maximumAmountOfScenesThatCanLoad)
-                candidateByEnum = VisualSceneStateEnum.SHOWING_LOD;
-
-            //TODO: Reduce quality, dont unload
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_LOD && loadedLODs >= maximumAmountOfScenesLODsThatCanLoad)
+            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes < maximumAmountOfScenesThatCanLoad)
+                loadedScenes++;
+            else
             {
-                TryUnload(data, sceneDefinitionComponent, ref sceneState);
-                return;
+                //Lets do a quality reduction analysis
+                candidateByEnum = VisualSceneStateEnum.SHOWING_LOD;
             }
 
-            //Nothing has changed, keep going
+            //Reduce quality
+            if (candidateByEnum == VisualSceneStateEnum.SHOWING_LOD)
+            {
+                if (loadedLODs < maximumAmoutOfScenesLODsThatCanLoad)
+                {
+                    // This LOD is within the full-quality limit, so load it normally. Nothing to do here
+                    loadedLODs++;
+                    sceneState.FullQuality = true;
+                }
+                else if (qualityReductedLOD < maximumAmountOfScenesLODsThatCanLoadQualityReducted)
+                {
+                    qualityReductedLOD++;
+
+                    if (sceneState.FullQuality)
+                    {
+                        //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
+                        TryUnload(data.Entity, sceneDefinitionComponent, ref sceneState);
+                        return;
+                    }
+
+                    // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
+                    sceneState.FullQuality = false;
+                    UnityEngine.Debug.Log($"JUANI THIS SHOULD BE QUALITY REDUCTED {sceneDefinitionComponent.Definition.id}");
+                }
+                else
+                {
+                    // No more LODs can be loaded
+                    return;
+                }
+            }
+
+            //No new promise is required
             if (sceneState.VisualSceneState == candidateByEnum)
                 return;
 
             promisesCreated++;
-            sceneState.loaded = true;
+            sceneState.Loaded = true;
             sceneState.VisualSceneState = candidateByEnum;
 
             switch (sceneState.VisualSceneState)
             {
                 case VisualSceneStateEnum.SHOWING_LOD:
-                    loadedLODs++;
                     World.Add(data.Entity, SceneLODInfo.Create());
                     break;
                 default:
-                    loadedScenes++;
                     World.Add(data.Entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                         new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
                     break;
@@ -297,7 +352,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 DistanceBasedComparer.Compare(x.Data, y.Data);
         }
 
-        private struct OrderedData
+        public struct OrderedData
         {
             /// <summary>
             ///     Referencing entity is expensive and at the moment we don't delete scene entities at all
