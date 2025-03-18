@@ -8,7 +8,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private static readonly Comparison<FriendProfile> CACHED_PROFILE_COMPARISON = FriendProfileComparison;
         private static readonly Comparison<FriendRequest> CACHED_REQUEST_COMPARISON = FriendRequestComparison;
 
-        internal static void SortFriendList(List<FriendProfile> friends) =>
+        internal static void SortFriendList<T>(List<T> friends) where T : FriendProfile =>
             friends.Sort(CACHED_PROFILE_COMPARISON);
 
         internal static void SortFriendRequestList(List<FriendRequest> friends) =>

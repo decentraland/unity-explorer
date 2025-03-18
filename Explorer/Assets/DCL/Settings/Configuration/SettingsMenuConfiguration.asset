@@ -47,6 +47,11 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
+  <ChatSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: Messages
+      <Modules>k__BackingField:
+      - rid: 7563415536206086146
   references:
     version: 2
     RefIds:
@@ -257,6 +262,16 @@ MonoBehaviour:
           - 144
           defaultOptionIndex: 0
         <Feature>k__BackingField: 5
+    - rid: 7563415536206086146
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Hide Blocked User Chat Input
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 2
     - rid: 7621844939572510720
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

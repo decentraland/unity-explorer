@@ -13,6 +13,8 @@ namespace ECS.Unity.SceneBoundsChecker
         internal static readonly int PLANE_CLIPPING_ID = Shader.PropertyToID("_PlaneClipping");
         internal static readonly int VERTICAL_CLIPPING_ID = Shader.PropertyToID("_VerticalClipping");
 
+        private static Vector4 verticalClipping = new (-0.01f, 0.0f, 0.0f, 0.0f); // -0.01f for x to avoid z-fighting
+
         /// <summary>
         ///     We can use this shared instance as this API is single-threaded
         /// </summary>
@@ -24,7 +26,7 @@ namespace ECS.Unity.SceneBoundsChecker
         public static void EnableSceneBounds(in GltfContainerAsset asset, in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes, float sceneHeight)
         {
             var vector = new Vector4(sceneCircumscribedPlanes.MinX, sceneCircumscribedPlanes.MaxX, sceneCircumscribedPlanes.MinZ, sceneCircumscribedPlanes.MaxZ);
-            Vector4 verticalClipping = new Vector4(0.0f, sceneHeight, 0.0f, 0.0f);
+            verticalClipping.y = sceneHeight;
 
             for (var i = 0; i < asset.Renderers.Count; i++)
             {
@@ -43,7 +45,7 @@ namespace ECS.Unity.SceneBoundsChecker
         public static void EnableSceneBounds(Material material, in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes, float sceneHeight)
         {
             var vector = new Vector4(sceneCircumscribedPlanes.MinX, sceneCircumscribedPlanes.MaxX, sceneCircumscribedPlanes.MinZ, sceneCircumscribedPlanes.MaxZ);
-            Vector4 verticalClipping = new Vector4(0.0f, sceneHeight, 0.0f, 0.0f);
+            verticalClipping.y = sceneHeight;
 
             material.SetVector(PLANE_CLIPPING_ID, vector);
             material.SetVector(VERTICAL_CLIPPING_ID, verticalClipping);

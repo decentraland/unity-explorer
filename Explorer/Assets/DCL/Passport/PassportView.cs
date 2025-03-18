@@ -98,6 +98,9 @@ namespace DCL.Passport
         public Button CancelFriendButton { get; private set; }
 
         [field: SerializeField]
+        public Button UnblockFriendButton { get; private set; }
+
+        [field: SerializeField]
         public MutualFriendsConfig MutualFriends { get; private set; }
 
         [field: Header("Context menu")]
