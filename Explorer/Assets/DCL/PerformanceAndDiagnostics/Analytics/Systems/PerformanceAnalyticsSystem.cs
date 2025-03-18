@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using Arch.Core;
+using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -6,6 +7,7 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -19,6 +21,9 @@ namespace DCL.Analytics.Systems
     public partial class PerformanceAnalyticsSystem : BaseUnityLoopSystem
     {
         private const int FRAMES_SAMPLES_CAPACITY = 1024;
+
+        private static readonly QueryDescription SCENES_QUERY = new QueryDescription()
+           .WithAll<ISceneFacade>();
 
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
@@ -90,7 +95,7 @@ namespace DCL.Analytics.Systems
             // jsonObjectBuilder.Set("jsheap_used_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
             // jsonObjectBuilder.Set("jsheap_total_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
             // jsonObjectBuilder.Set("jsheap_total_executable_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
-            // jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
+            jsonObjectBuilder.Set("running_v8_engines", World.CountEntities(in SCENES_QUERY));
 
             // Memory
             jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());
