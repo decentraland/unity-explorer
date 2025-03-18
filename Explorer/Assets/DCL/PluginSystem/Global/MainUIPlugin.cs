@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using MVC;
@@ -11,20 +10,17 @@ namespace DCL.PluginSystem.Global
     public class MainUIPlugin : IDCLGlobalPlugin<MainUIPlugin.Settings>
     {
         private readonly IMVCManager mvcManager;
-        private readonly ISidebarBus sidebarBus;
         private readonly MainUIView mainUIView;
         private readonly bool isFriendsEnabled;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         public MainUIPlugin(
             IMVCManager mvcManager,
-            ISidebarBus sidebarBus,
             MainUIView mainUIView,
             bool isFriendsEnabled,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.mvcManager = mvcManager;
-            this.sidebarBus = sidebarBus;
             this.mainUIView = mainUIView;
             this.isFriendsEnabled = isFriendsEnabled;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -46,7 +42,6 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(true);
                     return view;
                 },
-                sidebarBus,
                 mvcManager,
                 isFriendsEnabled,
                 sharedSpaceManager

@@ -1,13 +1,11 @@
-﻿using DCL.EmotesWheel;
-using DCL.Friends.UI;
-using DCL.Friends.UI.FriendPanel;
+﻿using DCL.Friends.UI.FriendPanel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
-using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -61,5 +59,26 @@ namespace DCL.UI.Sidebar
         [field: Header("Chat")]
         [field: SerializeField] internal Button unreadMessagesButton { get; private set; }
         [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; }
+
+        public delegate void BlockStatusChangedDelegate(bool status);
+        public delegate void AutohideStatusChangedDelegate(bool status);
+
+        public event BlockStatusChangedDelegate BlockStatusChanged;
+        public event AutohideStatusChangedDelegate AutohideStatusChanged;
+
+        public void BlockSidebar()
+        {
+            BlockStatusChanged?.Invoke(true);
+        }
+
+        public void UnblockSidebar()
+        {
+            BlockStatusChanged?.Invoke(false);
+        }
+
+        public void SetAutoHideSidebarStatus(bool value)
+        {
+            AutohideStatusChanged?.Invoke(value);
+        }
     }
 }

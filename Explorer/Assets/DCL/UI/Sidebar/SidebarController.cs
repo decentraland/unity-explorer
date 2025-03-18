@@ -7,7 +7,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -24,7 +23,6 @@ namespace DCL.UI.Sidebar
     {
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
-        private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
@@ -52,7 +50,6 @@ namespace DCL.UI.Sidebar
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
-            ISidebarBus sidebarBus,
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
@@ -64,7 +61,6 @@ namespace DCL.UI.Sidebar
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
             this.profileMenuController = profileMenuMenuWidgetController;
-            this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
@@ -154,7 +150,7 @@ namespace DCL.UI.Sidebar
 
         private void OnAutoHideToggleChanged(bool value)
         {
-            sidebarBus.SetAutoHideSidebarStatus(value);
+            viewInstance.SetAutoHideSidebarStatus(value);
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
@@ -214,9 +210,9 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSidebarSettingsAsync()
         {
-            sidebarBus.BlockSidebar();
+            viewInstance.BlockSidebar();
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
-            sidebarBus.UnblockSidebar();
+            viewInstance.UnblockSidebar();
 
             viewInstance!.sidebarSettingsButton.OnDeselect(null);
         }
@@ -230,23 +226,23 @@ namespace DCL.UI.Sidebar
 
             viewInstance!.ProfileMenuView.gameObject.SetActive(true);
 
-            sidebarBus.BlockSidebar();
+            viewInstance.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
-            sidebarBus.UnblockSidebar();
+            viewInstance.UnblockSidebar();
         }
 
         private async void OpenSkyboxSettingsAsync()
         {
-            sidebarBus.BlockSidebar();
+            viewInstance.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            sidebarBus.UnblockSidebar();
+            viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
-            sidebarBus.BlockSidebar();
+            viewInstance.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            sidebarBus.UnblockSidebar();
+            viewInstance.UnblockSidebar();
         }
 
         private async void OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

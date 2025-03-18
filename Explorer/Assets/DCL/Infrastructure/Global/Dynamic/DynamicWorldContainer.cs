@@ -68,7 +68,6 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
-using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -528,7 +527,7 @@ namespace Global.Dynamic
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
-            var sidebarBus = new SidebarBus();
+
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
@@ -611,7 +610,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform),
-                new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends, sharedSpaceManager),
+                new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
@@ -620,7 +619,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
-                    profileCache, sidebarBus, dclInput,
+                    profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
                     chatHistory, viewDependencies, sharedSpaceManager),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),

@@ -3,7 +3,6 @@ using DCL.Chat;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
-using DCL.SidebarBus;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
@@ -24,7 +23,6 @@ namespace DCL.UI.MainUI
         private const float SHOW_SIDEBAR_WAIT_TIME = 0.3f;
         private const float SIDEBAR_ANIMATION_TIME = 0.2f;
 
-        private readonly ISidebarBus sidebarBus;
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -41,12 +39,10 @@ namespace DCL.UI.MainUI
 
         public MainUIController(
             ViewFactoryMethod viewFactory,
-            ISidebarBus sidebarBus,
             IMVCManager mvcManager,
             bool isFriendsEnabled,
             ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
-            this.sidebarBus = sidebarBus;
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -54,8 +50,8 @@ namespace DCL.UI.MainUI
 
         protected override void OnViewInstantiated()
         {
-            sidebarBus.SidebarBlockStatusChange += OnSidebarBlockStatusChanged;
-            sidebarBus.SidebarAutohideStatusChange += OnSidebarAutohideStatusChanged;
+            viewInstance.SidebarView.BlockStatusChanged += OnSidebarBlockStatusChanged;
+            viewInstance.SidebarView.AutohideStatusChanged += OnSidebarAutohideStatusChanged;
             viewInstance!.pointerDetectionArea.OnEnterArea += OnPointerEnter;
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();

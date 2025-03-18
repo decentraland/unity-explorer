@@ -9,7 +9,6 @@ using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
-using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
@@ -43,7 +42,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly ISidebarBus sidebarBus;
         private readonly DCLInput input;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -66,7 +64,6 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            ISidebarBus sidebarBus,
             DCLInput input,
             Arch.Core.World world,
             Entity playerEntity,
@@ -88,7 +85,6 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.sidebarBus = sidebarBus;
             this.input = input;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -124,7 +120,6 @@ namespace DCL.PluginSystem.Global
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
-                sidebarBus,
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
