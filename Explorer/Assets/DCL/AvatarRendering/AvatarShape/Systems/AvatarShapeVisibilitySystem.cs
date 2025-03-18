@@ -6,11 +6,14 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using DCL.Rendering.Avatar;
+using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -25,9 +28,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly float startFadeDithering;
         private readonly float endFadeDithering;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
-        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering) : base(world)
+        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering) : base(world)
         {
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
             planes = new Plane[6];
 
@@ -48,6 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
+            BlockAvatarsQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
             GetAvatarsVisibleWithOutlineQuery(World);
         }
@@ -126,9 +132,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea;
+            if (!userBlockingCacheProxy.Configured) return;
+
+            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
+
+            bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
+
+            if (isBlocked && !World.Has<BlockedPlayerComponent>(entity))
+                World.Add(entity, new BlockedPlayerComponent());
+            else if (!isBlocked)
+                World.TryRemove<BlockedPlayerComponent>(entity);
+        }
+
+        [Query]
+        private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        {
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<BlockedPlayerComponent>(entity);
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 

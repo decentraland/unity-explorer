@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.InputBus;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
@@ -32,23 +33,33 @@ namespace MVC
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
         private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
         private readonly GenericContextMenu contextMenu;
+        private readonly BlockUserButtonContextMenuControlSettings blockUserButtonContextMenuControlSettings;
+        private readonly GenericContextMenuElement blockUserElement;
+        private readonly bool includeUserBlocking;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
 
-        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy, IChatInputBus chatInputBus, IMVCManager mvcManager)
+        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy,
+            IChatInputBus chatInputBus,
+            IMVCManager mvcManager,
+            bool includeUserBlocking)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatInputBus = chatInputBus;
             this.mvcManager = mvcManager;
+            this.includeUserBlocking = includeUserBlocking;
+
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
+            blockUserButtonContextMenuControlSettings = new BlockUserButtonContextMenuControlSettings(OnBlockUserClicked);
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
                          .AddControl(userProfileContextMenuControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(openUserProfileButtonContextMenuControlSettings)
-                         .AddControl(mentionUserButtonContextMenuControlSettings);
+                         .AddControl(mentionUserButtonContextMenuControlSettings)
+                         .AddControl(blockUserElement = new GenericContextMenuElement(blockUserButtonContextMenuControlSettings));
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
@@ -67,6 +78,8 @@ namespace MVC
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
             mentionUserButtonContextMenuControlSettings.SetData(profile.MentionName);
             openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
+            blockUserButtonContextMenuControlSettings.SetData(profile);
+            blockUserElement.Enabled = includeUserBlocking && contextMenuFriendshipStatus != UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED;
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide:onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
@@ -171,6 +184,9 @@ namespace MVC
             closeContextMenuTask.TrySetResult();
             ShowPassport(userId, cancellationTokenSource.Token).Forget();
         }
+
+        private void OnBlockUserClicked(Profile profile) =>
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         private void OnMentionUserClicked(string userName)
         {

@@ -37,6 +37,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
             this.friendEventBus.OnYouRemovedFriend += RemoveFriend;
+            this.friendEventBus.OnYouBlockedByUser += RemoveFriend;
+            this.friendEventBus.OnYouBlockedProfile += RemoveFriend;
             this.friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
         }
 
@@ -48,6 +50,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserAcceptedYourRequest -= FriendRequestAccepted;
             friendEventBus.OnYouRemovedFriend -= RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
+            friendEventBus.OnYouBlockedByUser -= RemoveFriend;
+            friendEventBus.OnYouBlockedProfile -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
         }
 
@@ -76,10 +80,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             }
         }
 
+        private void RemoveFriend(BlockedProfile profile) =>
+            RemoveFriend(profile.Address);
+
         private void RemoveFriend(string userid)
         {
-            friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
-            RefreshLoopList();
+            if (friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid)) > 0)
+                RefreshLoopList();
         }
 
         public override int GetCollectionCount() =>

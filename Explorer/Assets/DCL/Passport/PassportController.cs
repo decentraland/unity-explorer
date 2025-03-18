@@ -5,10 +5,10 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
@@ -102,6 +102,7 @@ namespace DCL.Passport
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
+        private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
@@ -243,6 +244,7 @@ namespace DCL.Passport
             viewInstance.AddFriendButton.onClick.AddListener(SendFriendRequest);
             viewInstance.CancelFriendButton.onClick.AddListener(CancelFriendRequest);
             viewInstance.RemoveFriendButton.onClick.AddListener(RemoveFriend);
+            viewInstance.UnblockFriendButton.onClick.AddListener(UnblockUser);
             viewInstance.ContextMenuButton.onClick.AddListener(ShowContextMenu);
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
@@ -255,7 +257,7 @@ namespace DCL.Passport
                          .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
-                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)), false));
+                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
         }
 
         private void OnNameClaimRequested() =>
@@ -542,7 +544,9 @@ namespace DCL.Passport
                     case FriendshipStatus.REQUEST_RECEIVED:
                         viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
                         break;
-                    case FriendshipStatus.BLOCKED: break;
+                    case FriendshipStatus.BLOCKED:
+                        viewInstance!.UnblockFriendButton.gameObject.SetActive(true);
+                        break;
                 }
 
                 await SetupContextMenuAsync(friendshipStatus, ct);
@@ -551,9 +555,9 @@ namespace DCL.Passport
 
         private async UniTask SetupContextMenuAsync(FriendshipStatus friendshipStatus, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
+            targetProfile = await profileRepository.GetAsync(inputData.UserId, ct);
 
-            if (profile == null)
+            if (targetProfile == null)
             {
                 ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
                 return;
@@ -565,14 +569,20 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
-                profile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                profile.Avatar.FaceSnapshotUrl);
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile.Name, targetProfile.UserId, targetProfile.HasClaimedName,
+                targetProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
+                targetProfile.Avatar.FaceSnapshotUrl);
         }
 
-        private static void BlockUserClicked(string userId)
+        private void BlockUserClicked()
         {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
+            BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();
+            async UniTaskVoid BlockUserClickedAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(targetProfile!.UserId), targetProfile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct);
+
+                ShowFriendshipInteraction();
+            }
         }
 
         private void ShowMutualFriends()
@@ -622,6 +632,7 @@ namespace DCL.Passport
             viewInstance.AddFriendButton.gameObject.SetActive(false);
             viewInstance.CancelFriendButton.gameObject.SetActive(false);
             viewInstance.RemoveFriendButton.gameObject.SetActive(false);
+            viewInstance.UnblockFriendButton.gameObject.SetActive(false);
         }
 
         private void RemoveFriend()
@@ -636,6 +647,20 @@ namespace DCL.Passport
                 {
                     UserId = new Web3Address(inputData.UserId),
                 }), ct);
+
+                ShowFriendshipInteraction();
+            }
+        }
+
+        private void UnblockUser()
+        {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+            UnblockAndThenChangeInteractionStatusAsync(friendshipOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid UnblockAndThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(targetProfile!.UserId), targetProfile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct);
 
                 ShowFriendshipInteraction();
             }
