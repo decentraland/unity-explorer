@@ -48,12 +48,12 @@ namespace DCL.Friends
         private readonly IWeb3IdentityCache identityCache;
         private readonly FriendsCache friendsCache;
         private readonly ISelfProfile selfProfile;
-        private readonly List<FriendRequest> receivedFriendRequestsBuffer = new();
-        private readonly List<FriendRequest> sentFriendRequestsBuffer = new();
-        private readonly Dictionary<string, string> authChainBuffer = new();
-        private readonly List<FriendProfile> friendProfileBuffer = new();
-        private readonly List<BlockedProfile> blockedProfileBuffer = new();
-        private readonly SemaphoreSlim handshakeMutex = new(1, 1);
+        private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
+        private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
+        private readonly Dictionary<string, string> authChainBuffer = new ();
+        private readonly List<FriendProfile> friendProfileBuffer = new ();
+        private readonly List<BlockedProfile> blockedProfileBuffer = new ();
+        private readonly SemaphoreSlim handshakeMutex = new (1, 1);
 
         private RpcClientModule? module;
         private RpcClientPort? port;
@@ -241,9 +241,10 @@ namespace DCL.Friends
                 try
                 {
                     await EnsureRpcConnectionAsync(ct);
-                    await OpenStreamAndProcessUpdatesAsync();
+                    var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
+                    await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
                 }
-                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
 
                 await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
             }
@@ -255,7 +256,7 @@ namespace DCL.Friends
                 IUniTaskAsyncEnumerable<BlockUpdate> stream =
                     module!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
 
-                await foreach (var response in stream.WithCancellation(ct))
+                await foreach (var response in stream)
                 {
                     try
                     {
@@ -266,10 +267,7 @@ namespace DCL.Friends
                     }
 
                     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    catch (Exception e) when (e is not OperationCanceledException)
-                    {
-                        ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                    }
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
                 }
             }
         }
@@ -701,6 +699,7 @@ namespace DCL.Friends
                         await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
 
                         string authChain = BuildAuthChain();
+
                         // The service expects the auth-chain in json format within a 30 seconds threshold after connection
                         await transport.SendMessageAsync(authChain, ct);
 
