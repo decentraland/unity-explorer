@@ -6,8 +6,6 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
-using ECS.SceneLifeCycle;
-using SceneRuntime;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -29,7 +27,6 @@ namespace DCL.Analytics.Systems
         private readonly IRealmData realmData;
 
         private readonly IProfiler profiler;
-        private readonly V8ActiveEngines v8ActiveEngines;
 
         // private readonly IScenesCache scenesCache;
 
@@ -43,14 +40,11 @@ namespace DCL.Analytics.Systems
             IAnalyticsController analytics,
             IRealmData realmData,
             IProfiler profiler,
-            V8ActiveEngines v8ActiveEngines,
-            IScenesCache scenesCache,
             IJsonObjectBuilder jsonObjectBuilder
         ) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
-            this.v8ActiveEngines = v8ActiveEngines;
 
             // this.scenesCache = scenesCache;
             this.analytics = analytics;
@@ -96,7 +90,7 @@ namespace DCL.Analytics.Systems
             // jsonObjectBuilder.Set("jsheap_used_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
             // jsonObjectBuilder.Set("jsheap_total_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
             // jsonObjectBuilder.Set("jsheap_total_executable_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
-            jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
+            // jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
 
             // Memory
             jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());

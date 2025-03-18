@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization;
 using ECS;
@@ -17,11 +16,10 @@ using UnityEngine;
 
 namespace SceneRuntime.Factory
 {
-    public class SceneRuntimeFactory
+    public sealed class SceneRuntimeFactory
     {
         private readonly IRealmData realmData;
         private readonly V8EngineFactory engineFactory;
-        private readonly V8ActiveEngines activeEngines;
 
         public enum InstantiationBehavior
         {
@@ -35,12 +33,11 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData,
-            V8EngineFactory engineFactory, V8ActiveEngines activeEngines, IWebJsSources webJsSources)
+        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
+            IWebJsSources webJsSources)
         {
             this.realmData = realmData;
             this.engineFactory = engineFactory;
-            this.activeEngines = activeEngines;
             jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
             this.webJsSources = webJsSources;
         }
@@ -94,7 +91,9 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo, engineFactory, activeEngines);
+            
+            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
+                engineFactory);
         }
 
         /// <summary>
