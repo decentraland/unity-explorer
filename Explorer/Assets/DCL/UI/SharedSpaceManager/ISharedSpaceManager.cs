@@ -16,7 +16,6 @@ namespace DCL.UI.SharedSpaceManager
     ///
     /// - When ShowAsync is called, it will hide any registered panel (depending on the established rules), wait for it to finish its animation or cleaning process, and then showing the panel. ShowAsync
     /// may be called from anywhere.
-    /// - When HideAsync is called, it will wait for the panel to finish its animation or cleaning process and, depending on the established rules, another panel may be shown or not.
     /// HideAsync should be called only from non-controller panels. If something has to happen when a controller is hidden, that logic should be added right after the "await mvcManager.ShowAsync" line (remember that,
     /// in our MVC manager, a Fullscreen or Popup controller is "showing" until its WaitForCloseIntentAsync finishes).
     /// - The ToggleVisibilityAsync method is used when there is no way to know whether the panel is hidden or not, and it has to change its state.
@@ -43,14 +42,6 @@ namespace DCL.UI.SharedSpaceManager
         /// <param name="parameters">Optionally, the parameters the panel will use when shown.</param>
         /// <returns>The async task.</returns>
         UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null);
-
-        /// <summary>
-        /// Waits for the panel to finish its animation or cleaning process and, depending on the established rules, another panel may be shown or not. It should be called only from non-controller panels.
-        /// </summary>
-        /// <param name="panel">Which panel to hide.</param>
-        /// <param name="parameters">Optionally, the parameters the panel will use when hidden.</param>
-        /// <returns>The async task.</returns>
-        UniTask HideAsync(PanelsSharingSpace panel, object parameters = null);
 
         /// <summary>
         /// It shows the panel if it is hidden, or hides it if it is not. Should be used when there is no way to know whether the panel is hidden or not, and it has to change its state

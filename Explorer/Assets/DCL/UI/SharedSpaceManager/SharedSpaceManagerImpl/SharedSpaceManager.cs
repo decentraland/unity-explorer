@@ -191,7 +191,13 @@ namespace DCL.UI.SharedSpaceManager
 
         }
 
-        public async UniTask HideAsync(PanelsSharingSpace panel, object parameters = null)
+        /// <summary>
+        /// Waits for the panel to finish its animation or cleaning process and, depending on the established rules, another panel may be shown or not. It should be called only from non-controller panels.
+        /// </summary>
+        /// <param name="panel">Which panel to hide.</param>
+        /// <param name="parameters">Optionally, the parameters the panel will use when hidden.</param>
+        /// <returns>The async task.</returns>
+        protected async UniTask HideAsync(PanelsSharingSpace panel, object parameters = null)
         {
             if (!IsRegistered(panel))
                 return;
