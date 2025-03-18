@@ -43,6 +43,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Entity playerEntity;
 
         private readonly UnloadingSceneCounter unloadingSceneCounter;
+        private readonly int maximumAmountOfScenesThatCanLoad = 5;
+        private readonly int maximumAmountOfScenesLODsThatCanLoad = 5;
+
+        private int loadedScenes;
+        private int loadedLODs;
+
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
@@ -164,6 +170,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm, float maxLoadingSqrDistance)
         {
             unloadingSceneCounter.UpdateUnloadingScenes();
+            loadedScenes = 0;
+            loadedLODs = 0;
+
+            PlayerTeleportingState teleportParcel = GetTeleportParcel();
 
             for (var i = 0; i < orderedData.Length; i++)
             {
@@ -188,28 +198,31 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 //TODO: This is going to work better when the intent is according to the player position and not the camera
                 //Right now, the reliance on "isPLayerInsideParcel" doesnt work, since the player is not moved to the parcel until the teleport is complete
                 //Therefore, a scene can unload/load until the player is moved
-                if (TeleportOccuring(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value))
+                if (teleportParcel.IsTeleporting)
+                {
+                    if (components.t0.Value.ContainsParcel(teleportParcel.Parcel))
+                    {
+                        UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
+                        break;
+                    }
                     continue;
+                }
 
-                UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value, i);
+                UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
             }
         }
 
-        //Dont delete just yet. The error may come back
-        private bool ShouldIgnoreScene(Entity entity)
+        private PlayerTeleportingState GetTeleportParcel()
         {
-            // As sorting is throttled Entity might gone out of scope
-            if (!World.IsAlive(entity))
-                return true;
+            var teleportParcel = new PlayerTeleportingState();
 
-            if (!World.Has<SceneLoadingState>(entity) || !World.Has<SceneDefinitionComponent>(entity) || !World.Has<PartitionComponent>(entity) || World.Has<DeleteEntityIntention>(entity))
+            if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
             {
-                //WHY?
-                UnityEngine.Debug.Log("JUANI WE ARE CONTINUING");
-                return true;
+                teleportParcel.IsTeleporting = true;
+                teleportParcel.Parcel = playerTeleportIntent.Parcel;
             }
 
-            return false;
+            return teleportParcel;
         }
 
         private bool TeleportOccuring(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent,
@@ -218,7 +231,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
             {
                 if (sceneDefinitionComponent.ContainsParcel(playerTeleportIntent.Parcel))
-                    UpdateLoadingState(ipfsRealm, data, sceneDefinitionComponent, partitionComponent, ref sceneState, 0);
+                    UpdateLoadingState(ipfsRealm, data, sceneDefinitionComponent, partitionComponent, ref sceneState);
                 return true;
             }
 
@@ -239,13 +252,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void Unload(OrderedData data, ref SceneLoadingState sceneState)
         {
             sceneState.VisualSceneStateEnum = VisualSceneStateEnum.UNINITIALIZED;
+            sceneState.loaded = false;
             World.Add(data.Entity, DeleteEntityIntention.DeferredDeletion);
         }
 
-        private readonly int scenesToLoad = 1;
 
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
-            ref SceneLoadingState sceneState, int numberOfSceneToLoad)
+            ref SceneLoadingState sceneState)
         {
             //Dont try to load an unloading scene. Wait
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
@@ -263,24 +276,35 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             VisualSceneStateEnum candidateByEnum
                 = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneStateEnum);
 
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && numberOfSceneToLoad >= scenesToLoad)
+            //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
+            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes >= maximumAmountOfScenesThatCanLoad)
                 candidateByEnum = VisualSceneStateEnum.SHOWING_LOD;
+
+            //TODO: Reduce quality, dont unload
+            if (candidateByEnum == VisualSceneStateEnum.SHOWING_LOD && loadedLODs >= maximumAmountOfScenesLODsThatCanLoad)
+            {
+                TryUnload(data, sceneDefinitionComponent, ref sceneState);
+                return;
+            }
 
             //Nothing has changed, keep going
             if (sceneState.VisualSceneStateEnum == candidateByEnum)
                 return;
 
+            sceneState.loaded = true;
             sceneState.VisualSceneStateEnum = candidateByEnum;
 
             switch (sceneState.VisualSceneStateEnum)
             {
                 case VisualSceneStateEnum.SHOWING_LOD:
+                    loadedLODs++;
                     World.Add(data.Entity, SceneLODInfo.Create());
                     break;
                 case VisualSceneStateEnum.ROAD:
                     World.Add(data.Entity, RoadInfo.Create());
                     break;
                 default:
+                    loadedScenes++;
                     World.Add(data.Entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                         new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
                     break;
@@ -310,6 +334,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     {
         public bool loaded;
         public VisualSceneStateEnum VisualSceneStateEnum;
+    }
+
+    public struct PlayerTeleportingState
+    {
+        public Vector2Int Parcel;
+        public bool IsTeleporting;
     }
 
 
