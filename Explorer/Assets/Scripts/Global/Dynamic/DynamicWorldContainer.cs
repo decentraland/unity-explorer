@@ -23,7 +23,7 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat;
 using DCL.Chat.ChatLifecycleBus;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -559,10 +559,10 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
-            IChatInputBus chatInputBus = new ChatInputBus();
+            IChatEventBus chatEventBus = new ChatEventBus();
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
-            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus, genericUserProfileContextMenuSettingsSo, includeUserBlocking, bootstrapContainer.Analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
+            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatEventBus, genericUserProfileContextMenuSettingsSo, includeUserBlocking, bootstrapContainer.Analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata);
 
@@ -648,7 +648,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     hyperlinkTextFormatter,
                     profileCache,
-                    chatInputBus),
+                    chatEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
