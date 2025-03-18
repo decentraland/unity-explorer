@@ -14,9 +14,9 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
 
-        private ViewDependencies viewDependencies;
-        private CancellationTokenSource cts;
-        private string currentlyLoadedThumbnail;
+        private ViewDependencies? viewDependencies;
+        private CancellationTokenSource? cts;
+        private string? currentThumbnailUrl;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -65,20 +65,35 @@ namespace DCL.UI.ProfileElements
 
         private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
         {
-            if (currentlyLoadedThumbnail == faceSnapshotUrl) return;
+            cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+
+            if (currentThumbnailUrl == faceSnapshotUrl) return;
 
             try
             {
-                cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+                ct.ThrowIfCancellationRequested();
+
+                Sprite? sprite = viewDependencies!.GetSprite(userId);
+
+                if (sprite != null && !thumbnailImageView.IsLoading)
+                {
+                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.ImageEnabled = true;
+                    thumbnailImageView.IsLoading = false;
+                    thumbnailImageView.Alpha = 1f;
+                    currentThumbnailUrl = faceSnapshotUrl;
+                    return;
+                }
+
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
                 thumbnailImageView.Alpha = 0f;
 
-                Sprite sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
-                thumbnailImageView.SetImage(sprite ? sprite : defaultEmptyThumbnail);
+                currentThumbnailUrl = faceSnapshotUrl;
+                thumbnailImageView.SetImage(sprite ? sprite! : defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
-                currentlyLoadedThumbnail = faceSnapshotUrl;
                 await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
             }
             catch (OperationCanceledException) { throw; }

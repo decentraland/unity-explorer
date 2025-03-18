@@ -15,6 +15,7 @@ namespace DCL.UI
 
         public bool IsLoading
         {
+            get => LoadingObject.activeSelf;
             set => LoadingObject.SetActive(value);
         }
 
