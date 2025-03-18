@@ -115,9 +115,9 @@ namespace DCL.UI.SharedSpaceManager
                             FriendsPanelParameter friendsParams = parameters == null ? default(FriendsPanelParameter) : (FriendsPanelParameter)parameters;
                             await mvcManager.ShowAsync(FriendsPanelController.IssueCommand(friendsParams), cts.Token);
 
-                            // Once the friends panel is hidden, chat must appear
-                            bool isShowingChat = panelBeingShown == PanelsSharingSpace.Chat;
-                            await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(isShowingChat));
+                            // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
+                            if(panelBeingShown != PanelsSharingSpace.Chat)
+                                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(false));
                         }
                         else
                             isShowing = false;
@@ -210,8 +210,9 @@ namespace DCL.UI.SharedSpaceManager
                         {
                             await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
 
-                            // When friends panel is not present, the chat panel must be
-                            await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
+                            // When friends panel is not present, the chat panel must be (unless the Friends panel was hidden due to showing the chat panel)
+                            if(panelBeingShown != PanelsSharingSpace.Chat)
+                                await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
                         }
 
                         break;
