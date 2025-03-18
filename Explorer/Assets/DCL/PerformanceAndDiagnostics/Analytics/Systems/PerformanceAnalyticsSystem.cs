@@ -85,17 +85,19 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
 
             // JS runtime memory
-            // bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
-            // JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
-            // JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
-            // jsonObjectBuilder.Set("jsheap_used", totalJsMemoryData.UsedHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total", totalJsMemoryData.TotalHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total_executable", totalJsMemoryData.TotalHeapSizeExecutableMB);
-            // jsonObjectBuilder.Set("jsheap_limit", totalJsMemoryData.HeapSizeLimitMB);
-            // jsonObjectBuilder.Set("jsheap_used_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total_executable_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
-            jsonObjectBuilder.Set("running_v8_engines", World.CountEntities(in SCENES_QUERY));
+            jsonObjectBuilder.Set("jsheap_used", DebugViewProfilingSystem.allScenesUsedHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total", DebugViewProfilingSystem.allScenesTotalHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_executable", DebugViewProfilingSystem.allScenesTotalHeapSizeExecutable.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_limit", DebugViewProfilingSystem.allScenesHeapSizeLimit.ByteToMB());
+
+            if (DebugViewProfilingSystem.currentSceneHasStats)
+            {
+                jsonObjectBuilder.Set("jsheap_used_current_scene", DebugViewProfilingSystem.currentSceneUsedHeapSize.ByteToMB());
+                jsonObjectBuilder.Set("jsheap_total_current_scene", DebugViewProfilingSystem.currentSceneTotalHeapSize.ByteToMB());
+                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", DebugViewProfilingSystem.currentSceneTotalHeapSizeExecutable.ByteToMB());
+            }
+
+            jsonObjectBuilder.Set("running_v8_engines", DebugViewProfilingSystem.activeEngines);
 
             // Memory
             jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());

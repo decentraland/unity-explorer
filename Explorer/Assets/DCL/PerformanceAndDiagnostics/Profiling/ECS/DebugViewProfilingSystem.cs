@@ -10,7 +10,6 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.Versioning;
-using Microsoft.ClearScript.V8;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;
@@ -69,13 +68,20 @@ namespace DCL.Profiling.ECS
         private bool frameTimingsEnabled;
         private bool sceneMetricsEnabled;
 
-        private ulong totalHeapSize;
-        private ulong totalHeapSizeExecutable;
-        private ulong totalPhysicalSize;
-        private ulong usedHeapSize;
-        private ulong heapSizeLimit;
-        private ulong totalExternalSize;
-        private int activeEngines;
+        internal static ulong allScenesTotalHeapSize { get; private set; }
+        internal static ulong allScenesTotalHeapSizeExecutable { get; private set; }
+        internal static ulong allScenesTotalPhysicalSize { get; private set; }
+        internal static ulong allScenesUsedHeapSize { get; private set; }
+        internal static ulong allScenesHeapSizeLimit { get; private set; }
+        internal static ulong allScenesTotalExternalSize { get; private set; }
+        internal static int activeEngines { get; private set; }
+        internal static ulong currentSceneTotalHeapSize { get; private set; }
+        internal static ulong currentSceneTotalHeapSizeExecutable { get; private set; }
+        internal static ulong currentSceneTotalPhysicalSize { get; private set; }
+        internal static ulong currentSceneUsedHeapSize { get; private set; }
+        internal static ulong currentSceneHeapSizeLimit { get; private set; }
+        internal static ulong currentSceneTotalExternalSize { get; private set; }
+        internal static bool currentSceneHasStats { get; private set; }
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
             MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, IScenesCache scenesCache,
@@ -136,7 +142,7 @@ namespace DCL.Profiling.ECS
 
         protected override void Update(float t)
         {
-            SampleProfilerCounters();
+            SampleJavaScriptProfilerCounters();
 
             if (!realmData.Configured) return;
 
@@ -165,63 +171,74 @@ namespace DCL.Profiling.ECS
             }
         }
 
-        private void SampleProfilerCounters()
+        private void SampleJavaScriptProfilerCounters()
         {
-            totalHeapSize = 0ul;
-            totalHeapSizeExecutable = 0ul;
-            totalPhysicalSize = 0ul;
-            usedHeapSize = 0ul;
-            heapSizeLimit = 0ul;
-            totalExternalSize = 0ul;
+            allScenesTotalHeapSize = 0ul;
+            allScenesTotalHeapSizeExecutable = 0ul;
+            allScenesTotalPhysicalSize = 0ul;
+            allScenesUsedHeapSize = 0ul;
+            allScenesHeapSizeLimit = 0ul;
+            allScenesTotalExternalSize = 0ul;
             activeEngines = 0;
 
-            SampleProfilerCountersQuery(World);
+            SampleJavaScriptProfilerCountersQuery(World);
 
             if (activeEngines > 0)
-                heapSizeLimit /= (ulong)activeEngines;
+                allScenesHeapSizeLimit /= (ulong)activeEngines;
+
+            currentSceneHasStats = false;
+
+            if (scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } })
+            {
+                var scene = (SceneFacade)scenesCache.CurrentScene;
+                var heapInfo = scene.runtimeInstance.RuntimeHeapInfo;
+
+                if (heapInfo != null)
+                {
+                    currentSceneTotalHeapSize = heapInfo.TotalHeapSize;
+                    currentSceneTotalHeapSizeExecutable = heapInfo.TotalHeapSizeExecutable;
+                    currentSceneTotalPhysicalSize = heapInfo.TotalPhysicalSize;
+                    currentSceneUsedHeapSize = heapInfo.UsedHeapSize;
+                    currentSceneHeapSizeLimit = heapInfo.HeapSizeLimit;
+                    currentSceneTotalExternalSize = heapInfo.TotalExternalSize;
+                    currentSceneHasStats = true;
+                }
+            }
 
 #if ENABLE_PROFILER
-            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE.Sample(totalHeapSize);
-            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE_EXECUTABLE.Sample(totalHeapSizeExecutable);
-            JavaScriptProfilerCounters.TOTAL_PHYSICAL_SIZE.Sample(totalPhysicalSize);
-            JavaScriptProfilerCounters.USED_HEAP_SIZE.Sample(usedHeapSize);
-            JavaScriptProfilerCounters.TOTAL_EXTERNAL_SIZE.Sample(totalExternalSize);
+            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE.Sample(allScenesTotalHeapSize);
+            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE_EXECUTABLE.Sample(allScenesTotalHeapSizeExecutable);
+            JavaScriptProfilerCounters.TOTAL_PHYSICAL_SIZE.Sample(allScenesTotalPhysicalSize);
+            JavaScriptProfilerCounters.USED_HEAP_SIZE.Sample(allScenesUsedHeapSize);
+            JavaScriptProfilerCounters.TOTAL_EXTERNAL_SIZE.Sample(allScenesTotalExternalSize);
             JavaScriptProfilerCounters.ACTIVE_ENGINES.Sample(activeEngines);
 #endif
         }
 
         [Query]
-        private void SampleProfilerCounters(ISceneFacade scene0)
+        private void SampleJavaScriptProfilerCounters(ISceneFacade scene0)
         {
             var scene = (SceneFacade)scene0;
             var heapInfo = scene.runtimeInstance.RuntimeHeapInfo;
 
             if (heapInfo != null)
             {
-                totalHeapSize += heapInfo.TotalHeapSize;
-                totalHeapSizeExecutable += heapInfo.TotalHeapSizeExecutable;
-                totalPhysicalSize += heapInfo.TotalPhysicalSize;
-                usedHeapSize += heapInfo.UsedHeapSize;
-                heapSizeLimit += heapInfo.HeapSizeLimit;
-                totalExternalSize += heapInfo.TotalExternalSize;
+                allScenesTotalHeapSize += heapInfo.TotalHeapSize;
+                allScenesTotalHeapSizeExecutable += heapInfo.TotalHeapSizeExecutable;
+                allScenesTotalPhysicalSize += heapInfo.TotalPhysicalSize;
+                allScenesUsedHeapSize += heapInfo.UsedHeapSize;
+                allScenesHeapSizeLimit += heapInfo.HeapSizeLimit;
+                allScenesTotalExternalSize += heapInfo.TotalExternalSize;
                 activeEngines += 1;
             }
         }
 
         private void UpdateSceneMetrics()
         {
-            V8RuntimeHeapInfo current = null;
-
-            if (scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } })
-            {
-                var scene = (SceneFacade)scenesCache.CurrentScene;
-                current = scene.runtimeInstance.RuntimeHeapInfo;
-            }
-
-            jsHeapUsedSize.Value = $"{usedHeapSize.ByteToMB():f1} | {current?.UsedHeapSize.ByteToMB().ToString("f1") ?? "N/A"}";
-            jsHeapTotalSize.Value = $"{totalHeapSize.ByteToMB():f1} | {current?.TotalHeapSize.ByteToMB().ToString("f1") ?? "N/A"}";
-            jsHeapTotalExecutable.Value = $"{totalHeapSizeExecutable.ByteToMB():f1} | {current?.TotalHeapSizeExecutable.ByteToMB().ToString("f1") ?? "N/A"}";
-            jsHeapLimit.Value = $"{heapSizeLimit.ByteToMB():f1}";
+            jsHeapUsedSize.Value = $"{allScenesUsedHeapSize.ByteToMB():f1} | {(currentSceneHasStats ? currentSceneUsedHeapSize.ByteToMB().ToString("f1") : "N/A")}";
+            jsHeapTotalSize.Value = $"{allScenesTotalHeapSize.ByteToMB():f1} | {(currentSceneHasStats ? currentSceneTotalHeapSize.ByteToMB().ToString("f1") : "N/A")}";
+            jsHeapTotalExecutable.Value = $"{allScenesTotalHeapSizeExecutable.ByteToMB():f1} | {(currentSceneHasStats ? currentSceneTotalHeapSizeExecutable.ByteToMB().ToString("f1") : "N/A")}";
+            jsHeapLimit.Value = $"{allScenesHeapSizeLimit.ByteToMB():f1}";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
