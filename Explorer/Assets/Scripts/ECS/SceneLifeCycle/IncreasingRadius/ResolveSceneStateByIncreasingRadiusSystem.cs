@@ -40,12 +40,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal JobHandle? sortingJobHandle;
         private NativeList<OrderedData> orderedData;
         private readonly Entity playerEntity;
-
-        private readonly UnloadingSceneCounter unloadingSceneCounter;
-        private readonly int maximumAmountOfScenesThatCanLoad = 5;
-        private readonly int maximumAmountOfScenesLODsThatCanLoadQualityReducted = 5;
-        private readonly int maximumAmoutOfScenesLODsThatCanLoad = 5;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+
+        //TODO: Do we need it?
+        private readonly UnloadingSceneCounter unloadingSceneCounter;
+
+        private readonly int maximumAmountOfScenesThatCanLoad;
+        private readonly int maximumAmountOfReductedLODsThatCanLoad;
+        private readonly int maximumAmoutOfLODsThatCanLoad;
 
         private int loadedScenes;
         private int loadedLODs;
@@ -56,6 +58,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
             this.playerEntity = playerEntity;
+            this.realmPartitionSettings = realmPartitionSettings;
+
+            maximumAmountOfScenesThatCanLoad = realmPartitionSettings.MaximumAmountOfScenesThatCanLoad;
+            maximumAmoutOfLODsThatCanLoad = realmPartitionSettings.MaximumAmoutOfLODsThatCanLoad;
+            maximumAmountOfReductedLODsThatCanLoad = realmPartitionSettings.MaximumAmountOfReductedLODsThatCanLoad;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             orderedData = new NativeList<OrderedData>(
@@ -63,7 +70,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 Allocator.Persistent);
 
             unloadingSceneCounter = new UnloadingSceneCounter();
-            this.realmPartitionSettings = realmPartitionSettings;
         }
 
         protected override void OnDispose()
@@ -293,13 +299,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //Reduce quality
             if (candidateByEnum == VisualSceneStateEnum.SHOWING_LOD)
             {
-                if (loadedLODs < maximumAmoutOfScenesLODsThatCanLoad)
+                if (loadedLODs < maximumAmoutOfLODsThatCanLoad)
                 {
                     // This LOD is within the full-quality limit, so load it normally. Nothing to do here
                     loadedLODs++;
                     sceneState.FullQuality = true;
                 }
-                else if (qualityReductedLOD < maximumAmountOfScenesLODsThatCanLoadQualityReducted)
+                else if (qualityReductedLOD < maximumAmountOfReductedLODsThatCanLoad)
                 {
                     qualityReductedLOD++;
                     if (sceneState.FullQuality)
