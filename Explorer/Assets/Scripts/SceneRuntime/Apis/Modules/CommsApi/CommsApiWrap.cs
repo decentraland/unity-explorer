@@ -31,7 +31,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                     await UniTask.SwitchToMainThread();
 
                     var list = new List<GetActiveVideoStreamsResponse.Stream>();
-                    var participants = roomHub.SceneRoom().Room().Participants;
+                    var participants = roomHub.StreamingRoom().Participants;
 
                     foreach (string remoteParticipantIdentity in participants.RemoteParticipantIdentities())
                     {

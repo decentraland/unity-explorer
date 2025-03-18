@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public LivekitPlayer(IRoomHub roomHub)
         {
-            room = roomHub.SceneRoom().Room();
+            room = roomHub.StreamingRoom();
         }
 
         public void OpenMedia(string identity, string sid)

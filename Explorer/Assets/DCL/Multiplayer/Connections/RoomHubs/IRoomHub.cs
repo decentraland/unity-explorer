@@ -14,4 +14,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         UniTask StopAsync();
     }
+
+    public static class RoomHubExtensions
+    {
+        /// <summary>
+        /// Room used for the video streaming
+        /// </summary>
+        public static IRoom StreamingRoom(this IRoomHub roomHub) =>
+            roomHub.SceneRoom().Room();
+    }
 }
