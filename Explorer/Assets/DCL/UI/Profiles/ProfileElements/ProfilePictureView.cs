@@ -80,7 +80,7 @@ namespace DCL.UI.ProfileElements
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = viewDependencies!.GetSprite(userId);
+                Sprite? sprite = viewDependencies!.GetProfileThumbnail(userId);
 
                 if (sprite != null && !thumbnailImageView.IsLoading)
                 {
@@ -96,7 +96,7 @@ namespace DCL.UI.ProfileElements
                 thumbnailImageView.ImageEnabled = false;
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                sprite = await viewDependencies.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
                 currentThumbnailUrl = faceSnapshotUrl;
                 thumbnailImageView.SetImage(sprite ? sprite! : defaultEmptyThumbnail);

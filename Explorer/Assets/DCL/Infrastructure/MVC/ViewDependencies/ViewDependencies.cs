@@ -27,10 +27,10 @@ namespace MVC
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
-        public async UniTask<Sprite?> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
+        public async UniTask<Sprite?> GetProfileThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
             await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
 
-        public Sprite? GetSprite(string userId) =>
+        public Sprite? GetProfileThumbnail(string userId) =>
             thumbnailCache.GetThumbnail(userId);
 
         public async UniTask<Profile?> GetProfileAsync(string walletId, CancellationToken ct) =>
