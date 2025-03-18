@@ -3,8 +3,6 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
-using DCL.Profiles;
-using DCL.Profiles.Self;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -20,33 +18,26 @@ namespace DCL.MarketplaceCredits.Sections
         private const int GOALS_POOL_DEFAULT_CAPACITY = 4;
 
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
-        private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
-        private Profile ownProfile;
-        private CancellationTokenSource fetchGoalsOfTheWeekInfoCts;
+        private string currentWalletId;
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
 
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
-            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
             this.view = view;
-            this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
-            this.selfProfile = selfProfile;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
             view.TimeLeftLinkButton.onClick.AddListener(OpenTimeLeftInfoLink);
@@ -66,10 +57,30 @@ namespace DCL.MarketplaceCredits.Sections
                 actionOnRelease: goalRowView => goalRowView.gameObject.SetActive(false));
         }
 
-        public void OnOpenSection()
+        public void OpenSection() =>
+            view.gameObject.SetActive(true);
+
+        public void CloseSection() =>
+            view.gameObject.SetActive(false);
+
+        public void Setup(string walletId, CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            fetchGoalsOfTheWeekInfoCts = fetchGoalsOfTheWeekInfoCts.SafeRestart();
-            LoadGoalsOfTheWeekInfoAsync(fetchGoalsOfTheWeekInfoCts.Token).Forget();
+            currentWalletId = walletId;
+
+            ClearGoals();
+
+            view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft);
+
+            foreach (GoalData goalData in creditsProgramProgressResponse.goals)
+            {
+                var goalRow = CreateAndSetupGoal(goalData);
+                instantiatedGoalRows.Add(goalRow);
+            }
+
+            view.ShowCaptcha(creditsProgramProgressResponse.SomethingToClaim());
+
+            if (creditsProgramProgressResponse.SomethingToClaim())
+                ReloadCaptcha();
         }
 
         public void Dispose()
@@ -78,7 +89,6 @@ namespace DCL.MarketplaceCredits.Sections
             view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
-            fetchGoalsOfTheWeekInfoCts.SafeCancelAndDispose();
             fetchCaptchaCts.SafeCancelAndDispose();
             claimCreditsCts.SafeCancelAndDispose();
         }
@@ -89,57 +99,16 @@ namespace DCL.MarketplaceCredits.Sections
             return goalRowView;
         }
 
-        private async UniTaskVoid LoadGoalsOfTheWeekInfoAsync(CancellationToken ct)
-        {
-            try
-            {
-                view.SetAsLoading(true);
-                totalCreditsWidgetView.SetAsLoading(true);
-                ClearGoals();
-
-                ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
-                {
-                    var goalsOfTheWeekResponse = await marketplaceCreditsAPIClient.GetGoalsOfTheWeekAsync(ownProfile.UserId, ct);
-                    totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(goalsOfTheWeekResponse.data.totalCredits));
-                    totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatDaysToCreditsExpire(goalsOfTheWeekResponse.data.daysToExpire));
-                    totalCreditsWidgetView.SetDaysToExpireVisible(goalsOfTheWeekResponse.data.totalCredits > 0);
-                    view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(goalsOfTheWeekResponse.data.endOfTheWeekDate);
-
-                    foreach (GoalData goalData in goalsOfTheWeekResponse.data.goals)
-                    {
-                        var goalRow = CreateAndSetupGoal(goalData);
-                        instantiatedGoalRows.Add(goalRow);
-                    }
-
-                    view.ShowCaptcha(goalsOfTheWeekResponse.data.creditsAvailableToClaim);
-
-                    if (goalsOfTheWeekResponse.data.creditsAvailableToClaim)
-                        ReloadCaptcha();
-                }
-
-                view.SetAsLoading(false);
-                totalCreditsWidgetView.SetAsLoading(false);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error loading the goals of the week. Please try again!";
-                marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
-            }
-        }
-
         private MarketplaceCreditsGoalRowView CreateAndSetupGoal(GoalData goalData)
         {
             var goalRow = goalRowsPool.Get();
 
             goalRow.SetupGoalImage(goalData.thumbnail);
             goalRow.SetTitle(goalData.title);
-            goalRow.SetCredits(goalData.credits);
-            goalRow.SetAsCompleted(goalData.progress.stepsDone == goalData.progress.totalSteps);
-            goalRow.SetClaimStatus(goalData.progress.stepsDone == goalData.progress.totalSteps && !goalData.isClaimed, goalData.isClaimed);
-            goalRow.SetProgress(goalData.progress.GetProgressPercentage(), goalData.progress.stepsDone, goalData.progress.totalSteps);
+            goalRow.SetCredits(MarketplaceCreditsUtils.FormatGoalReward(goalData.reward));
+            goalRow.SetAsCompleted(goalData.progress.completedSteps == goalData.progress.totalSteps);
+            goalRow.SetClaimStatus(goalData.progress.completedSteps == goalData.progress.totalSteps && !goalData.isClaimed, goalData.isClaimed);
+            goalRow.SetProgress(goalData.progress.GetProgressPercentage(), goalData.progress.completedSteps, goalData.progress.totalSteps);
 
             return goalRow;
         }
@@ -160,11 +129,8 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void ReloadCaptcha()
         {
-            if (ownProfile == null)
-                return;
-
             fetchCaptchaCts = fetchCaptchaCts.SafeRestart();
-            LoadCaptchaAsync(ownProfile.UserId, fetchCaptchaCts.Token).Forget();
+            LoadCaptchaAsync(currentWalletId, fetchCaptchaCts.Token).Forget();
         }
 
         private async UniTaskVoid LoadCaptchaAsync(string walletId, CancellationToken ct)
@@ -188,11 +154,8 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void ClaimCredits(float captchaValue)
         {
-            if (ownProfile == null)
-                return;
-
             claimCreditsCts = claimCreditsCts.SafeRestart();
-            ClaimCreditsAsync(ownProfile.UserId, captchaValue, claimCreditsCts.Token).Forget();
+            ClaimCreditsAsync(currentWalletId, captchaValue, claimCreditsCts.Token).Forget();
         }
 
         private async UniTaskVoid ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)

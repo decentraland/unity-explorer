@@ -67,8 +67,8 @@ namespace DCL.MarketplaceCredits.Fields
         public void SetTitle(string goalTitle) =>
             GoalTitleText.text = goalTitle;
 
-        public void SetCredits(int credits) =>
-            GoalCreditsValueText.text = $"+{credits}";
+        public void SetCredits(string credits) =>
+            GoalCreditsValueText.text = credits;
 
         public void SetAsCompleted(bool isCompleted)
         {

@@ -20,6 +20,8 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
+        private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
+        private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -33,6 +35,8 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
+            MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController,
+            MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile)
@@ -41,6 +45,8 @@ namespace DCL.MarketplaceCredits.Sections
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.weekGoalsCompletedView = weekGoalsCompletedView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
+            this.marketplaceCreditsGoalsOfTheWeekController = marketplaceCreditsGoalsOfTheWeekController;
+            this.marketplaceCreditsWeekGoalsCompletedController = marketplaceCreditsWeekGoalsCompletedController;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
@@ -51,8 +57,10 @@ namespace DCL.MarketplaceCredits.Sections
             view.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
         }
 
-        public void OnOpenSection()
+        public void OpenSection()
         {
+            view.gameObject.SetActive(true);
+
             fetchProgramRegistrationInfoCts = fetchProgramRegistrationInfoCts.SafeRestart();
             LoadProgramRegistrationInfoAsync(fetchProgramRegistrationInfoCts.Token).Forget();
 
@@ -60,6 +68,9 @@ namespace DCL.MarketplaceCredits.Sections
             view.CleanEmailInput();
             CheckStartWithEmailButtonState();
         }
+
+        public void CloseSection() =>
+            view.gameObject.SetActive(false);
 
         public void Dispose()
         {
@@ -80,8 +91,8 @@ namespace DCL.MarketplaceCredits.Sections
                 ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
-                    var programRegistrationResponse = await marketplaceCreditsAPIClient.GetProgramRegistrationInfoAsync(ownProfile.UserId, ct);
-                    RedirectToSection(programRegistrationResponse);
+                    var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
+                    RedirectToSection(creditsProgramProgressResponse);
                 }
 
                 view.SetAsLoading(false);
@@ -122,28 +133,31 @@ namespace DCL.MarketplaceCredits.Sections
             }
         }
 
-        private void RedirectToSection(ProgramRegistrationResponse programRegistrationResponse)
+        private void RedirectToSection(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(programRegistrationResponse.totalCredits));
-            totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatDaysToCreditsExpire(programRegistrationResponse.daysToExpire));
-            totalCreditsWidgetView.SetDaysToExpireVisible(programRegistrationResponse.totalCredits > 0);
+            totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(creditsProgramProgressResponse.credits.available));
+            totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(creditsProgramProgressResponse.credits.expireIn));
+            totalCreditsWidgetView.SetDaysToExpireVisible(creditsProgramProgressResponse.credits.available > 0);
 
-            if (programRegistrationResponse.isProgramEnded)
+            if (creditsProgramProgressResponse.season.timeLeft <= 0f)
             {
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
                 return;
             }
 
-            if (!programRegistrationResponse.isRegistered)
+            if (!creditsProgramProgressResponse.user.isRegistered)
                 return;
 
-            if (programRegistrationResponse.areWeekGoalsCompleted)
+            if (creditsProgramProgressResponse.AreWeekGoalsCompleted())
             {
-                weekGoalsCompletedView.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDateTimestamp(programRegistrationResponse.endOfTheWeekDate);
+                marketplaceCreditsWeekGoalsCompletedController.Setup(creditsProgramProgressResponse);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
             }
-            else
+            else if (ownProfile != null)
+            {
+                marketplaceCreditsGoalsOfTheWeekController.Setup(ownProfile.UserId, creditsProgramProgressResponse);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+            }
         }
 
         private void OpenLearnMoreLink() =>

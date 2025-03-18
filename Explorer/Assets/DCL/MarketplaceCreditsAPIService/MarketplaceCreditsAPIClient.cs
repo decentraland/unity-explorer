@@ -12,9 +12,6 @@ namespace DCL.MarketplaceCreditsAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private static bool isAlreadyRegistered;
-        private static int executionNumber = 1;
-
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
@@ -23,40 +20,29 @@ namespace DCL.MarketplaceCreditsAPIService
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public async UniTask<ProgramRegistrationResponse> GetProgramRegistrationInfoAsync(string walletId, CancellationToken ct)
+        public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/progress/{walletId}";
+
+            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
+            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
+
+            CreditsProgramProgressResponse creditsProgramProgressResponse = await MockCreditsProgramProgressAsync(false, ct);
+
+            return creditsProgramProgressResponse;
+        }
+
+        public async UniTask<CreditsProgramProgressResponse> RegisterInTheProgramAsync(string walletId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration";
 
-            // ProgramRegistrationResponse programRegistrationResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
-            //                                                                                     .CreateFromJson<ProgramRegistrationResponse>(WRJsonParser.Newtonsoft);
+            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController
+            //                                                                      .SignedFetchPostAsync(url, string.Empty, ct)
+            //                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
-            ProgramRegistrationResponse programRegistrationResponse = await MockProgramRegistrationAsync(ct);
-
-            return programRegistrationResponse;
-        }
-
-        public async UniTask<ProgramRegistrationResponse> RegisterInTheProgramAsync(string walletId, CancellationToken ct)
-        {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration";
-
-            // ProgramRegistrationResponse programRegistrationResponse = await webRequestController
-            //                                                  .SignedFetchPostAsync(url, string.Empty, ct)
-            //                                                 .CreateFromJson<ProgramRegistrationResponse>(WRJsonParser.Unity);
-
-            ProgramRegistrationResponse programRegistrationResponse = await MockRegisterInTheProgramAsync(ct);
+            CreditsProgramProgressResponse programRegistrationResponse = await MockCreditsProgramProgressAsync(true, ct);
 
             return programRegistrationResponse;
-        }
-
-        public async UniTask<GoalsOfTheWeekResponse> GetGoalsOfTheWeekAsync(string walletId, CancellationToken ct)
-        {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/goals";
-
-            //GoalsOfTheWeekResponse goalsOfTheWeekResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
-            //                                                                          .CreateFromJson<GoalsOfTheWeekResponse>(WRJsonParser.Newtonsoft);
-            GoalsOfTheWeekResponse goalsOfTheWeekResponse = await MockGoalsOfTheWeekAsync(ct);
-
-            return goalsOfTheWeekResponse;
         }
 
         public async UniTask<CaptchaResponse> GenerateCaptchaAsync(string walletId, CancellationToken ct)
@@ -83,101 +69,68 @@ namespace DCL.MarketplaceCreditsAPIService
             return claimCreditsResponseData;
         }
 
-        private static async UniTask<ProgramRegistrationResponse> MockProgramRegistrationAsync(CancellationToken ct)
+        private static async UniTask<CreditsProgramProgressResponse> MockCreditsProgramProgressAsync(bool isRegistered, CancellationToken ct)
         {
             int randomDelay = new System.Random().Next(1000, 3000);
             await UniTask.Delay(randomDelay, cancellationToken: ct);
 
-            ProgramRegistrationResponse programRegistration = new ProgramRegistrationResponse
+            CreditsProgramProgressResponse programRegistration = new CreditsProgramProgressResponse
             {
-                isRegistered = isAlreadyRegistered,
-                totalCredits = 2.1f,
-                daysToExpire = 23,
-                areWeekGoalsCompleted = executionNumber == 2,
-                isProgramEnded = executionNumber == 3,
-                endOfTheWeekDate = "2025-03-23T12:00:00Z",
-            };
-
-            if (isAlreadyRegistered)
-            {
-                if (executionNumber == 3)
-                    executionNumber = 1;
-                else
-                    executionNumber++;
-            }
-
-            return programRegistration;
-        }
-
-        private static async UniTask<ProgramRegistrationResponse> MockRegisterInTheProgramAsync(CancellationToken ct)
-        {
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            ProgramRegistrationResponse programRegistration = new ProgramRegistrationResponse
-            {
-                isRegistered = true,
-                totalCredits = 2.1f,
-                daysToExpire = 20,
-                areWeekGoalsCompleted = false,
-                isProgramEnded = false,
-                endOfTheWeekDate = "2025-03-23T12:00:00Z",
-            };
-
-            isAlreadyRegistered = true;
-            executionNumber++;
-
-            return programRegistration;
-        }
-
-        private static async UniTask<GoalsOfTheWeekResponse> MockGoalsOfTheWeekAsync(CancellationToken ct)
-        {
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            GoalsOfTheWeekResponse goalsOfTheWeekResponse = new GoalsOfTheWeekResponse
-            {
-                data = new GoalsOfTheWeekData
+                season = new SeasonData
                 {
-                    endOfTheWeekDate = "2025-03-23T12:00:00Z",
-                    totalCredits = 2.1f,
-                    daysToExpire = 15,
-                    goals = new List<GoalData>
-                    {
-                        new ()
+                    timeLeft = 601200000,
+                },
+                currentWeek = new CurrentWeekData
+                {
+                    timeLeft = 601200000,
+                },
+                user = new UserData
+                {
+                    isRegistered = isRegistered,
+                    email = "test@test.com",
+                    isEmailConfirmed = false,
+                },
+                credits = new CreditsData
+                {
+                    available = 8.5f,
+                    expireIn = 2630016000,
+                },
+                goals = new List<GoalData>
+                {
+                    new ()
                         {
-                            thumbnail = "https://picsum.photos/100/100",
                             title = "Jump Into Decentraland On 3 Separate Days (Min. 10 min)",
+                            thumbnail = "https://picsum.photos/100/100",
                             progress = new GoalProgressData
                             {
                                 totalSteps = 3,
-                                stepsDone = 1,
+                                completedSteps = 1,
                             },
-                            credits = 4,
+                            reward = 4,
                             isClaimed = false,
                         },
                         new ()
                         {
-                            thumbnail = "https://picsum.photos/100/100",
                             title = "Attend 2 Events (Min. 10 min)",
+                            thumbnail = "https://picsum.photos/100/100",
                             progress = new GoalProgressData
                             {
                                 totalSteps = 2,
-                                stepsDone = 1,
+                                completedSteps = 1,
                             },
-                            credits = 2,
+                            reward = 2,
                             isClaimed = false,
                         },
                         new ()
                         {
-                            thumbnail = "https://picsum.photos/100/100",
                             title = "View 3 New Profiles",
+                            thumbnail = "https://picsum.photos/100/100",
                             progress = new GoalProgressData
                             {
                                 totalSteps = 3,
-                                stepsDone = 3,
+                                completedSteps = 3,
                             },
-                            credits = 1,
+                            reward = 1,
                             isClaimed = true,
                         },
                         new ()
@@ -187,17 +140,15 @@ namespace DCL.MarketplaceCreditsAPIService
                             progress = new GoalProgressData
                             {
                                 totalSteps = 3,
-                                stepsDone = 3,
+                                completedSteps = 3,
                             },
-                            credits = 1,
+                            reward = 1,
                             isClaimed = false,
                         },
-                    },
-                    creditsAvailableToClaim = true,
                 },
             };
 
-            return goalsOfTheWeekResponse;
+            return programRegistration;
         }
 
         private static async UniTask<CaptchaResponse> MockCaptchaAsync(CancellationToken ct)
@@ -222,7 +173,7 @@ namespace DCL.MarketplaceCreditsAPIService
 
             ClaimCreditsResponse responseData = new ClaimCreditsResponse
             {
-                success = true,
+                success = false,
             };
 
             return responseData;
