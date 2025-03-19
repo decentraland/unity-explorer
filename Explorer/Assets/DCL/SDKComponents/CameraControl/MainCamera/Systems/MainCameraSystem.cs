@@ -6,6 +6,7 @@ using Cinemachine;
 using CRDT;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.InWorldCamera;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
@@ -182,7 +183,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
         {
-            var cameraComponent = globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
+            ref CameraComponent cameraComponent = ref globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
             if (isAnyVirtualCameraActive)
             {
                 if (cameraComponent.Mode != CameraMode.SDKCamera)
@@ -192,10 +193,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 }
             }
             else if (cameraComponent.Mode == CameraMode.SDKCamera)
-            {
                 cameraComponent.Mode = lastNonSDKCameraMode;
-            }
-            globalWorld.Set(cameraData.CameraEntityProxy.Object, cameraComponent);
         }
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)

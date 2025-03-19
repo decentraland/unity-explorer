@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -31,13 +32,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public FriendListPagedDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
             IProfileRepository profileRepository,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             LoopListView2 loopListView,
+            ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            int elementsMissingThreshold) : base(friendsService, friendEventBus, viewDependencies, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
@@ -47,6 +47,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
             friendEventBus.OnYouRemovedFriend += RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
+            friendEventBus.OnYouBlockedByUser += RemoveFriend;
+            friendEventBus.OnYouBlockedProfile += RemoveFriend;
 
             friendsConnectivityStatusTracker.OnFriendBecameOnline += FriendBecameOnline;
             friendsConnectivityStatusTracker.OnFriendBecameAway += FriendBecameAway;
@@ -59,6 +61,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserAcceptedYourRequest -= FriendRequestAccepted;
             friendEventBus.OnYouRemovedFriend -= RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
+            friendEventBus.OnYouBlockedByUser -= RemoveFriend;
+            friendEventBus.OnYouBlockedProfile -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
 
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendBecameOnline;
@@ -141,11 +145,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             AddNewFriendProfileAsync(addFriendProfileCts.Token).Forget();
         }
 
+        private void RemoveFriend(BlockedProfile profile) =>
+            RemoveFriend(profile.Address);
+
         private void RemoveFriend(string userid)
         {
-            onlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
-            offlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
-            RefreshLoopList();
+            int removed = onlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+            removed += offlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+
+            if (removed > 0)
+                RefreshLoopList();
+            else
+                return;
 
             if (offlineFriends.Count + onlineFriends.Count == 0)
                 NoFriendsInCollections?.Invoke();

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -45,6 +46,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
+            requestManager.CancelRequestClicked += CancelRequestClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.RequestClicked += RequestClicked;
 
@@ -52,6 +54,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
             friendEventBus.OnOtherUserCancelledTheRequest += PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouBlockedProfile += PropagateRequestReceived;
+            friendEventBus.OnYouBlockedByUser += PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
         }
@@ -61,12 +65,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             base.Dispose();
             requestManager.DeleteRequestClicked -= DeleteRequestClicked;
             requestManager.AcceptRequestClicked -= AcceptRequestClicked;
+            requestManager.CancelRequestClicked -= CancelRequestClicked;
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.RequestClicked -= RequestClicked;
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
             friendEventBus.OnOtherUserCancelledTheRequest -= PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouBlockedProfile -= PropagateRequestReceived;
+            friendEventBus.OnYouBlockedByUser -= PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
@@ -80,10 +87,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             CheckShouldInit();
         }
 
-        private void BlockUserClicked(FriendProfile profile)
-        {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
-        }
+        private void BlockUserClicked(FriendProfile profile) =>
+            FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
@@ -98,7 +103,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
             {
-                await friendsService.CancelFriendshipAsync(userId, ct);
+                try
+                {
+                    await friendsService.CancelFriendshipAsync(userId, ct);
+                }
+                catch(Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
             }
         }
 
@@ -109,6 +121,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             passportBridge.ShowAsync(profile.Address).Forget();
 
         private void PropagateRequestReceived(FriendRequest request) =>
+            PropagateReceivedRequestsCountChanged();
+
+        private void PropagateRequestReceived(BlockedProfile profile) =>
             PropagateReceivedRequestsCountChanged();
 
         private void PropagateReceivedRequestsCountChanged(string userId) =>
@@ -132,7 +147,26 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 {
                     await friendsService.RejectFriendshipAsync(request.From.Address, ct);
                 }
-                catch(Exception e)
+                catch(Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+            }
+        }
+
+        private void CancelRequestClicked(FriendRequest request)
+        {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+
+            CancelFriendshipAsync(friendshipOperationCts.Token).Forget();
+
+            async UniTaskVoid CancelFriendshipAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await friendsService.CancelFriendshipAsync(request.To.Address, ct);
+                }
+                catch(Exception e) when (e is not OperationCanceledException)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
                 }
