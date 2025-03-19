@@ -102,7 +102,8 @@ namespace DCL.UserInAppInitializationFlow
                     startUpOps,
                     reLoginOps,
                     checkOnboardingStartupOperation,
-                    bootstrapContainer.IdentityCache),
+                    bootstrapContainer.IdentityCache.EnsureNotNull(),
+                    appArgs),
             };
         }
     }
