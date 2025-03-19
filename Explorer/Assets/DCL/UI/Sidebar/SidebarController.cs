@@ -171,6 +171,8 @@ namespace DCL.UI.Sidebar
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
+
+            TestMarketplaceCreditsNotificationAsync(CancellationToken.None).Forget();
         }
 
         private void OnControlsButtonClicked()
@@ -301,5 +303,24 @@ namespace DCL.UI.Sidebar
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
+
+        private async UniTaskVoid TestMarketplaceCreditsNotificationAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(5000, cancellationToken: ct);
+            notificationsBusController.AddNotification(new MarketplaceCreditsNotification
+            {
+                Type = NotificationType.MARKETPLACE_CREDITS,
+                Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
+                Id = $"SantiTest{DateTime.Now.Ticks}",
+                Read = false,
+                Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString(),
+                Metadata = new MarketplaceCreditsNotificationMetadata
+                {
+                    Title = "Weekly Goal Completed!",
+                    Description = "Claim your Credits to unlock them",
+                    Image = "https://i.ibb.co/4L0WD2j/Credits-Icn.png",
+                }
+            });
+        }
     }
 }

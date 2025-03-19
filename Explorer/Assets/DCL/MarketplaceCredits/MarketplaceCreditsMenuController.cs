@@ -9,6 +9,7 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
+using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -23,6 +24,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsMenuView view;
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly ISidebarBus sidebarBus;
+        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
@@ -41,6 +43,7 @@ namespace DCL.MarketplaceCredits
             MarketplaceCreditsMenuView view,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
             ISidebarBus sidebarBus,
+            ISidebarActionsBus sidebarActionsBus,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
@@ -56,6 +59,7 @@ namespace DCL.MarketplaceCredits
             this.inputBlock = inputBlock;
             this.mvcManager = mvcManager;
             this.notificationBusController = notificationBusController;
+            this.sidebarActionsBus = sidebarActionsBus;
 
             mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
@@ -93,11 +97,8 @@ namespace DCL.MarketplaceCredits
             view.ErrorNotification.Hide(true, CancellationToken.None);
         }
 
-        public void OpenPanel(bool forceReopen = false)
+        public void OpenPanel()
         {
-            if (!forceReopen && view.gameObject.activeSelf)
-                return;
-
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.ShowAsync(showHideMenuCts.Token).Forget();
             OpenSection(MarketplaceCreditsSection.WELCOME);
@@ -114,8 +115,6 @@ namespace DCL.MarketplaceCredits
             view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-
-            TestNotificationAsync(CancellationToken.None).Forget();
         }
 
         public void OpenSection(MarketplaceCreditsSection section)
@@ -202,26 +201,10 @@ namespace DCL.MarketplaceCredits
             OpenSection(MarketplaceCreditsSection.WELCOME);
         }
 
-        private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
-            OpenPanel(forceReopen: true);
-
-        private async UniTaskVoid TestNotificationAsync(CancellationToken ct)
+        private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
         {
-            await UniTask.Delay(5000, cancellationToken: ct);
-            notificationBusController.AddNotification(new MarketplaceCreditsNotification
-            {
-                Type = NotificationType.MARKETPLACE_CREDITS,
-                Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
-                Id = $"SantiTest{DateTime.Now.Ticks}",
-                Read = false,
-                Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString(),
-                Metadata = new MarketplaceCreditsNotificationMetadata
-                {
-                    Title = "Weekly Goal Completed!",
-                    Description = "Claim your Credits to unlock them",
-                    Image = "https://i.ibb.co/4L0WD2j/Credits-Icn.png",
-                }
-            });
+            sidebarActionsBus.CloseAllWidgets();
+            OpenPanel();
         }
     }
 }
