@@ -176,7 +176,7 @@ namespace DCL.MarketplaceCreditsAPIService
 
             ClaimCreditsResponse responseData = new ClaimCreditsResponse
             {
-                success = false,
+                success = randomSuccess,
             };
 
             return responseData;

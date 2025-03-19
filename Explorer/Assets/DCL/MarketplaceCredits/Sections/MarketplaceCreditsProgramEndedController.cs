@@ -7,6 +7,9 @@ namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsProgramEndedController : IDisposable
     {
+        private const string SUBSCRIBE_LINK_ID = "SUBSCRIBE_LINK_ID";
+        private const string X_LINK_ID = "X_LINK_ID";
+
         private readonly MarketplaceCreditsProgramEndedView view;
         private readonly IWebBrowser webBrowser;
 
@@ -17,7 +20,7 @@ namespace DCL.MarketplaceCredits.Sections
             this.view = view;
             this.webBrowser = webBrowser;
 
-            view.Subtitle.ConvertUrlsToClickeableLinks(OpenUrl);
+            view.Subtitle.ConvertUrlsToClickeableLinks(OpenLink);
         }
 
         public void OpenSection() =>
@@ -32,12 +35,17 @@ namespace DCL.MarketplaceCredits.Sections
                 $"The current run of Marketplace Credits Weekly Rewards ({MarketplaceCreditsUtils.FormatSeasonDateRange(creditsProgramProgressResponse.season.startDate, creditsProgramProgressResponse.season.endDate)}) has closed" :
                 "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
 
-            view.Subtitle.text = $"Make sure to <color=#FF2D55><b><u><link={MarketplaceCreditsUtils.SUBSCRIBE_LINK}>subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={MarketplaceCreditsUtils.X_LINK}>X</link></u></b></color> to find out when the next run goes live!";
+            view.Subtitle.text = $"Make sure to <color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> to find out when the next run goes live!";
         }
 
         public void Dispose() { }
 
-        private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+        private void OpenLink(string id)
+        {
+            if (id == SUBSCRIBE_LINK_ID)
+                webBrowser.OpenUrl(MarketplaceCreditsUtils.SUBSCRIBE_LINK);
+            else if (id == X_LINK_ID)
+                webBrowser.OpenUrl(MarketplaceCreditsUtils.X_LINK);
+        }
     }
 }

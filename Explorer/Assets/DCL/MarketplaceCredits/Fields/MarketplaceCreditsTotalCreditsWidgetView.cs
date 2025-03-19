@@ -18,15 +18,6 @@ namespace DCL.MarketplaceCredits.Fields
         [field: SerializeField]
         public Button GoShoppingButton { get; private set; }
 
-        [field: SerializeField]
-        public GameObject TotalCreditsLoadingSpinner { get; private set; }
-
-        public void SetAsLoading(bool isLoading)
-        {
-            TotalCreditsLoadingSpinner.SetActive(isLoading);
-            TotalCreditsContainer.SetActive(!isLoading);
-        }
-
         public void SetCredits(string creditsText) =>
             TotalCreditsText.text = creditsText;
 
