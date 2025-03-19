@@ -73,6 +73,5 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
-
     }
 }
