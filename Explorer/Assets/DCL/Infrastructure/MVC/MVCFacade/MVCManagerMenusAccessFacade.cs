@@ -31,12 +31,13 @@ namespace MVC
             IMVCManager mvcManager,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatInputBus chatInputBus
+            IChatInputBus chatInputBus,
+            bool includeUserBlocking
         )
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
-            genericUserProfileContextMenuController = new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager);
+            genericUserProfileContextMenuController = new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, includeUserBlocking);
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>

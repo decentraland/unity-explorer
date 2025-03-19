@@ -76,3 +76,29 @@ MonoBehaviour:
     - urn:decentraland:matic:collections-v2:0xfe54b0887ebfabd61404b2d91672147d90c7ace9:1
   - pointers:
     - urn:decentraland:matic:collections-v2:0xdb1db5ffc64430474c2de25dcbc271b592f04d6b:2
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x178fc25d739d234721ca2e8a4800354cb99900f0:0
+    - urn:decentraland:matic:collections-v2:0x269605b96948fa09732d78ab4c81e6cc48bc4110:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x93dcafee005a023b9fe5b34b71ab696bea4d665e:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xdfb6972f215f5792d9341d296a73d08d68d9bbf9:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xd1af9ed8faec09b5a1688a64d998f27aa8c48eab:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xb90dbf4f7d04bfa1629cd119ae5420df346bb18c:0
+    - urn:decentraland:matic:collections-v2:0x7493b2684faaef531ae7b89f62bc726da1eb736a:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xff8e630bd43246bf5c37aecc0228af5418a8ceef:4
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xce3dcdb52098ddaf5436da1c5ffb21ce6c36bee4:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xce3dcdb52098ddaf5436da1c5ffb21ce6c36bee4:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x409ce015d5b90c52fb544c0f950420b6dcae2961:0
+    - urn:decentraland:matic:collections-v2:0x23ec6017d07a31ea0c6e185ad9f7bc22eaa75270:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xd1af9ed8faec09b5a1688a64d998f27aa8c48eab:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x23ec6017d07a31ea0c6e185ad9f7bc22eaa75270:2
+    - urn:decentraland:matic:collections-v2:0xaf132f67fba76139d03c998be36109de74d717ce:0

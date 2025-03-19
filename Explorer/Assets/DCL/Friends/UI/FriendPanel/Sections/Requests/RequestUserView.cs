@@ -1,5 +1,5 @@
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using System;
-using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +11,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
         [field: SerializeField] public Button DeleteButton { get; private set; }
         [field: SerializeField] public Button AcceptButton { get; private set; }
+        [field: SerializeField] public Button CancelButton { get; private set; }
         [field: SerializeField] public TMP_Text RequestDateText { get; private set; }
         [field: SerializeField] public GameObject HasMessageIndicator { get; private set; }
 
@@ -24,7 +25,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             set
             {
                 requestDate = value;
-                RequestDateText.SetText(requestDate.ToString("MMM dd", CultureInfo.InvariantCulture).ToUpper());
+                RequestDateText.SetText(FriendListSectionUtilities.FormatDate(requestDate));
             }
         }
 
@@ -44,6 +45,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             buttons.Clear();
             buttons.Add(ContextMenuButton);
+            buttons.Add(CancelButton);
         }
 
         public override void Configure(FriendProfile profile)
@@ -52,6 +54,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             buttons.Add(ContextMenuButton);
             buttons.Add(DeleteButton);
             buttons.Add(AcceptButton);
+            buttons.Add(CancelButton);
             base.Configure(profile);
         }
 
