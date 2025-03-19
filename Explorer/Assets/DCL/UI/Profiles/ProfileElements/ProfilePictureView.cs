@@ -17,6 +17,7 @@ namespace DCL.UI.ProfileElements
         private ViewDependencies? viewDependencies;
         private CancellationTokenSource? cts;
         private string? currentThumbnailUrl;
+        private bool isLoading;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -82,7 +83,7 @@ namespace DCL.UI.ProfileElements
 
                 Sprite? sprite = viewDependencies!.GetProfileThumbnail(userId);
 
-                if (sprite != null && !thumbnailImageView.IsLoading)
+                if (sprite != null && !isLoading)
                 {
                     thumbnailImageView.SetImage(sprite);
                     thumbnailImageView.ImageEnabled = true;
@@ -95,6 +96,7 @@ namespace DCL.UI.ProfileElements
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
                 thumbnailImageView.Alpha = 0f;
+                isLoading = true;
 
                 sprite = await viewDependencies.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
@@ -102,13 +104,14 @@ namespace DCL.UI.ProfileElements
                 thumbnailImageView.SetImage(sprite ? sprite! : defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
                 await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
+                isLoading = false;
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception)
             {
                 thumbnailImageView.SetImage(defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
-                await thumbnailImageView.FadeInAsync(1f, cts.Token);
+                await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
             }
         }
     }
