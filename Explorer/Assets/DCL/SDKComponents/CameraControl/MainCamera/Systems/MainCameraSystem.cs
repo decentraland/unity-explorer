@@ -167,14 +167,22 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, CRDTEntity virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
-            if (!VirtualCameraUtils.TryGetVirtualCameraComponent(World, entitiesMap, virtualCamCRDTEntity, out var virtualCameraComponent)) return;
+            if (!VirtualCameraUtils.TryGetVirtualCameraComponents(
+                    World,
+                    entitiesMap,
+                    virtualCamCRDTEntity,
+                    out var virtualCameraComponent,
+                    out var pbVirtualCameraComponent))
+                return;
 
             var virtualCameraInstance = virtualCameraComponent!.Value.virtualCameraInstance;
 
-            VirtualCameraUtils.ConfigureVirtualCameraTransition(World, entitiesMap, cameraData, virtualCamCRDTEntity,
+            VirtualCameraUtils.ConfigureVirtualCameraTransition(cameraData, pbVirtualCameraComponent!,
                 previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance.transform.position, previousCameraPosition.Value) : 0f);
 
             VirtualCameraUtils.ConfigureCameraLookAt(World, entitiesMap, virtualCameraComponent.Value);
+
+            VirtualCameraUtils.ConfigureVirtualCameraFOV(pbVirtualCameraComponent!, virtualCameraComponent.Value);
 
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
