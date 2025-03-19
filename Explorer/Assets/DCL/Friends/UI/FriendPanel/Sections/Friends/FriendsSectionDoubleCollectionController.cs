@@ -124,7 +124,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         }
 
-        private async UniTaskVoid WaitAndOpenPassport(FriendProfile profile, CancellationToken ct)
+        private async UniTaskVoid WaitAndOpenPassportAsync(FriendProfile profile, CancellationToken ct)
         {
             elementClicked = true;
             if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.OFFLINE)
