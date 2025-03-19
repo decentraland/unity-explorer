@@ -292,6 +292,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BlockUserPromptPrefab>k__BackingField:
+          m_AssetGUID: 93a86930ad6d44ebd85b46f9c6ebad72
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -476,11 +481,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        CreditsUnlockedPrefab:
-          m_AssetGUID: adccb7c4aa6e2424c95ac85e0d3f0a35
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -576,6 +576,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        GenericContextMenuViewBlockUserButtonPrefab:
+          m_AssetGUID: 2308a593e7fee41dbad5a6b14f89e0e7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -599,8 +604,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        startFadeDistanceDithering: 2
-        endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
