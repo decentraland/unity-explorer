@@ -40,6 +40,7 @@ namespace DCL.Web3.Identities
         private readonly int selfPID;
         private readonly ProcessName selfProcessName;
 
+        private bool disposed;
         private string? storedKey;
 
         public MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy()
@@ -52,12 +53,16 @@ namespace DCL.Web3.Identities
             mutex = new PMutex(MUTEX_NAME);
             selfPID = Process.GetCurrentProcess().Id;
             selfProcessName = new ProcessName(selfPID);
+            disposed = false;
         }
 
         public string PlayerPrefsKey
         {
             get
             {
+                if (disposed)
+                    throw new ObjectDisposedException("Object is already disposed");
+
                 if (storedKey == null)
                     RegisterSelf();
 
@@ -118,6 +123,10 @@ namespace DCL.Web3.Identities
 
         public void Dispose()
         {
+            if (disposed)
+                throw new ObjectDisposedException("Object is already disposed");
+
+            disposed = true;
             UnregisterSelf();
             memoryMappedFile.Dispose();
             mutex.Dispose();
