@@ -12,6 +12,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
         private readonly ViewDependencies viewDependencies;
+        private readonly LoopListView2 loopListView;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
         private readonly bool disablePagination;
@@ -42,6 +43,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             ViewDependencies viewDependencies,
+            LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold,
             FriendPanelStatus firstCollectionStatus,
@@ -54,6 +56,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.viewDependencies = viewDependencies;
+            this.loopListView = loopListView;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
             this.firstCollectionStatus = firstCollectionStatus;
@@ -187,6 +190,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             pageNumber = 0;
             totalFetched = 0;
             ResetCollections();
+            RefreshLoopList();
+        }
+
+        protected void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetElementsNumber(), false);
+            loopListView.RefreshAllShownItem();
         }
 
         protected abstract void ResetCollections();

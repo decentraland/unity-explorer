@@ -10,6 +10,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     public abstract class FriendPanelRequestManager<T> : IDisposable where T : FriendPanelUserView
     {
         private readonly ViewDependencies viewDependencies;
+        private readonly LoopListView2 loopListView;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
         private readonly CancellationTokenSource fetchNewDataCts = new ();
@@ -26,9 +27,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public event Action<FriendProfile>? ElementClicked;
 
         protected FriendPanelRequestManager(ViewDependencies viewDependencies,
+            LoopListView2 loopListView,
             int pageSize, int elementsMissingThreshold)
         {
             this.viewDependencies = viewDependencies;
+            this.loopListView = loopListView;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
         }
@@ -104,6 +107,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             pageNumber = 0;
             totalFetched = 0;
             ResetCollection();
+            RefreshLoopList();
+        }
+
+        protected void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetCollectionCount(), false);
+            loopListView.RefreshAllShownItem();
         }
 
         protected abstract void ResetCollection();
