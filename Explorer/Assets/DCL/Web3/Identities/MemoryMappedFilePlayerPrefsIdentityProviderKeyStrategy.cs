@@ -124,7 +124,14 @@ namespace DCL.Web3.Identities
         public void Dispose()
         {
             if (disposed)
-                throw new ObjectDisposedException("Object is already disposed");
+            {
+                ReportHub.LogWarning(
+                    ReportCategory.PROFILE,
+                    $"Attempt to dispose an already disposed object {nameof(MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy)}"
+                );
+
+                return;
+            }
 
             disposed = true;
             UnregisterSelf();
