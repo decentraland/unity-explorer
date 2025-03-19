@@ -13,7 +13,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly List<BlockedProfile> blockedProfiles = new ();
-        private readonly LoopListView2 loopListView;
 
         public event Action<BlockedProfile>? UnblockClicked;
         public event Action<BlockedProfile, Vector2, BlockedUserView>? ContextMenuClicked;
@@ -26,11 +25,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             ViewDependencies viewDependencies,
             LoopListView2 loopListView,
             int pageSize,
-            int elementsMissingThreshold) : base(viewDependencies, pageSize, elementsMissingThreshold)
+            int elementsMissingThreshold) : base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendsEventBus = friendsEventBus;
-            this.loopListView = loopListView;
 
             friendsEventBus.OnYouBlockedProfile += BlockProfile;
             friendsEventBus.OnYouUnblockedProfile += UnblockProfile;
@@ -67,12 +65,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
             if (blockedProfiles.Count == 0)
                 NoUserInCollection?.Invoke();
-        }
-
-        private void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetCollectionCount(), false);
-            loopListView.RefreshAllShownItem();
         }
 
         public override int GetCollectionCount() =>

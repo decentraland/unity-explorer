@@ -23,9 +23,12 @@ namespace DCL.Profiles
             this.webRequestController = webRequestController;
         }
 
+        public Sprite? GetThumbnail(string userId) =>
+            thumbnails.GetValueOrDefault(userId);
+
         public async UniTask<Sprite?> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
         {
-            Sprite? sprite = GetThumbnailFromCache(userId);
+            Sprite? sprite = GetThumbnail(userId);
             if (sprite != null)
                 return sprite;
 
@@ -59,9 +62,6 @@ namespace DCL.Profiles
                 return null;
             }
         }
-
-        private Sprite? GetThumbnailFromCache(string userId) =>
-            thumbnails.GetValueOrDefault(userId);
 
         private void SetThumbnailIntoCache(string userId, Sprite sprite) =>
             thumbnails[userId] = sprite;

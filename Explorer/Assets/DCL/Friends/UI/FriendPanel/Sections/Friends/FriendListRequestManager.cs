@@ -16,7 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
-        private readonly LoopListView2 loopListView;
         private readonly List<FriendProfile> friends = new ();
         private readonly CancellationTokenSource addFriendProfileCts = new ();
 
@@ -29,12 +28,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             LoopListView2 loopListView,
             ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(viewDependencies, pageSize, elementsMissingThreshold)
+            int elementsMissingThreshold) : base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.profileRepository = profileRepository;
-            this.loopListView = loopListView;
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
@@ -89,12 +87,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             if (friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid)) > 0)
                 RefreshLoopList();
-        }
-
-        private void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetCollectionCount(), false);
-            loopListView.RefreshAllShownItem();
         }
 
         public override int GetCollectionCount() =>
