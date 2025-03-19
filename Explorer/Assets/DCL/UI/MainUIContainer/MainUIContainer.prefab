@@ -1217,6 +1217,10 @@ PrefabInstance:
       value: -266.5
       objectReference: {fileID: 0}
     - target: {fileID: 2834991132609836437, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
+      propertyPath: m_TargetGraphic
+      value: 
+      objectReference: {fileID: 8705957106494722673}
+    - target: {fileID: 2834991132609836437, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
       propertyPath: m_Colors.m_PressedColor.a
       value: 0.29803923
       objectReference: {fileID: 0}
@@ -2186,6 +2190,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9164904624699036997, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
   m_PrefabInstance: {fileID: 3088119578452600715}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8705957106494722673 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5911803240365651450, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
+  m_PrefabInstance: {fileID: 3088119578452600715}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3443520972679509683
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2758,8 +2773,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 243621710923428424, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
+      propertyPath: m_Size
+      value: 0.74367625
+      objectReference: {fileID: 0}
+    - target: {fileID: 243621710923428424, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
       propertyPath: m_Value
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 510719210599564447, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3003,6 +3022,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5665430339207882965, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6186551520230418445, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6334738306198345799, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}

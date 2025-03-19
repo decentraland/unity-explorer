@@ -23,6 +23,7 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.Passport;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
@@ -498,7 +499,9 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
+            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>(), userBlockingCacheProxy)
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -522,7 +525,7 @@ namespace Global.Dynamic
                 )
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings, userBlockingCacheProxy);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
 
@@ -550,12 +553,13 @@ namespace Global.Dynamic
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
+
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatInputBus chatInputBus = new ChatInputBus();
 
-            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus);
+            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus, includeUserBlocking);
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata, userBlockingCacheProxy);
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -609,7 +613,8 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     remoteEntities,
-                    staticContainer.CharacterContainer.Transform),
+                    staticContainer.CharacterContainer.Transform,
+                    userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -691,6 +696,7 @@ namespace Global.Dynamic
                     includeCameraReel,
                     appArgs,
                     viewDependencies,
+                    userBlockingCacheProxy,
                     sharedSpaceManager
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -830,6 +836,7 @@ namespace Global.Dynamic
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
+                    userBlockingCacheProxy,
                     profileThumbnailCache,
                     notificationsBusController,
                     onlineUsersProvider,

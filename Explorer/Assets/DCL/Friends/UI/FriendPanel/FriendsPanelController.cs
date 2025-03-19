@@ -6,7 +6,6 @@ using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
-using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -57,7 +56,6 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
-            IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             DCLInput dclInput,
             IPassportBridge passportBridge,
@@ -103,8 +101,8 @@ namespace DCL.Friends.UI.FriendPanel
                 passportBridge,
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
-                web3IdentityCache,
-                new BlockedRequestManager(profileRepository, web3IdentityCache, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                mvcManager,
+                new BlockedPanelList(friendsService, friendEventBus, viewDependencies, instantiatedView.BlockedSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
@@ -182,6 +180,7 @@ namespace DCL.Friends.UI.FriendPanel
             requestsSectionController.Reset();
             friendSectionController?.Reset();
             friendSectionControllerConnectivity?.Reset();
+            blockedSectionController.Reset();
         }
 
         private void RegisterCloseHotkey()

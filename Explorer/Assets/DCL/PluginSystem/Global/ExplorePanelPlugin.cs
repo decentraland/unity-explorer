@@ -41,6 +41,7 @@ using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.EventsApi;
+using DCL.Friends.UserBlocking;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -108,6 +109,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private readonly bool includeCameraReel;
@@ -168,8 +170,8 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            IAppArgs appArgs,
-            ViewDependencies viewDependencies,
+            IAppArgs appArgs, ViewDependencies viewDependencies,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -218,6 +220,7 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
             this.viewDependencies = viewDependencies;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -323,7 +326,7 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, worldVolumeMacBus);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, worldVolumeMacBus);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,

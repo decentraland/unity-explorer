@@ -10,6 +10,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     public abstract class FriendPanelRequestManager<T> : IDisposable where T : FriendPanelUserView
     {
         private readonly ViewDependencies viewDependencies;
+        private readonly LoopListView2 loopListView;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
         private readonly CancellationTokenSource fetchNewDataCts = new ();
@@ -18,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private int totalFetched;
         private int totalToFetch;
         private bool isFetching;
+        private bool isInitializing;
 
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
@@ -25,9 +27,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public event Action<FriendProfile>? ElementClicked;
 
         protected FriendPanelRequestManager(ViewDependencies viewDependencies,
+            LoopListView2 loopListView,
             int pageSize, int elementsMissingThreshold)
         {
             this.viewDependencies = viewDependencies;
+            this.loopListView = loopListView;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
         }
@@ -83,19 +87,33 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public async UniTask InitAsync(CancellationToken ct)
         {
+            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes 
+            if (isInitializing) return;
+
+            isInitializing = true;
+
             await FetchDataInternalAsync(ct);
 
             HasElements = GetCollectionCount() > 0;
             WasInitialised = true;
+            isInitializing = false;
         }
 
         public void Reset()
         {
             HasElements = false;
             WasInitialised = false;
+            isInitializing = false;
             pageNumber = 0;
             totalFetched = 0;
             ResetCollection();
+            RefreshLoopList();
+        }
+
+        protected void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetCollectionCount(), false);
+            loopListView.RefreshAllShownItem();
         }
 
         protected abstract void ResetCollection();

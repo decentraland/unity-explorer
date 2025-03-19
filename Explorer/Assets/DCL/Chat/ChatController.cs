@@ -17,7 +17,6 @@ using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
@@ -70,6 +69,7 @@ namespace DCL.Chat
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
+        private readonly IRoomHub roomHub;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -121,6 +121,7 @@ namespace DCL.Chat
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
             this.islandRoom = roomHub.IslandRoom();
+            this.roomHub = roomHub;
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
@@ -309,7 +310,7 @@ namespace DCL.Chat
 
             while (!memberListCts.IsCancellationRequested)
             {
-                // If the player jumps to another room (like a world) while the member list is visible, it must refresh
+                // If the player jumps to another island room (like a world) while the member list is visible, it must refresh
                 if (previousRoomSid != islandRoom.Info.Sid && viewInstance!.IsMemberListVisible)
                 {
                     previousRoomSid = islandRoom.Info.Sid;
@@ -317,8 +318,9 @@ namespace DCL.Chat
                 }
 
                 // Updates the amount of members
-                if(canUpdateParticipants && islandRoom.Participants.RemoteParticipantIdentities().Count != viewInstance!.MemberCount)
-                    viewInstance!.MemberCount = islandRoom.Participants.RemoteParticipantIdentities().Count;
+                int participantsCount = roomHub.ParticipantsCount();
+                if(roomHub.HasAnyRoomConnected() && participantsCount != viewInstance!.MemberCount)
+                    viewInstance!.MemberCount = participantsCount;
 
                 await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
             }
@@ -362,15 +364,13 @@ namespace DCL.Chat
             messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
         }
 
-        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
-
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             ViewShowingComplete?.Invoke(this);
             await UniTask.Never(ct);
         }
 
-        private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
+        private void CreateChatBubble(ChatChannel _, ChatMessage chatMessage, bool isSentByOwnUser)
         {
             // Chat bubble over the avatars
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
@@ -485,10 +485,8 @@ namespace DCL.Chat
 
         private void OnMemberListVisibilityChanged(bool isVisible)
         {
-            if (isVisible && canUpdateParticipants)
-            {
+            if (isVisible && roomHub.HasAnyRoomConnected())
                 RefreshMemberList();
-            }
         }
 
         private List<ChatMemberListView.MemberData> GenerateMemberList()
@@ -537,14 +535,11 @@ namespace DCL.Chat
         {
             outProfiles.Clear();
 
-            // Island room
-            IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
-
-            foreach (string identity in islandIdentities)
+            foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
                 Profile profile = profileCache.Get(identity);
 
-                if(profile != null)
+                if (profile != null)
                     outProfiles.Add(profile);
             }
         }
