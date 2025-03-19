@@ -9,7 +9,7 @@ namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
-        private const string RANGE_HEADER = "Range";
+        internal const string RANGE_HEADER = "Range";
         private const string EMPTY_HEADER = "";
 
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();

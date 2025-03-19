@@ -14,6 +14,7 @@ namespace DCL.WebRequests
             UnityWebRequest = unityWebRequest;
         }
 
+        // TODO move to hub
         internal static PartialDownloadRequest Initialize(in CommonArguments commonArguments, GenericGetArguments arguments) =>
             new (UnityWebRequest.Get(commonArguments.URL));
     }

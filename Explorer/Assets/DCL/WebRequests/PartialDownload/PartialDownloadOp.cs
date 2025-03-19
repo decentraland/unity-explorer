@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.WebRequests.CustomDownloadHandlers;
+using DCL.WebRequests.HTTP2;
 using System;
 using System.Threading;
 

@@ -6,6 +6,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
     public static class DownloadHandlersUtils
     {
         private static readonly StringBuilder STRING_BUILDER = new ();
+
         private const string BYTES_HEADER = "bytes=";
         private const string BYTES_HEADER_SEPARATOR = "-";
 
