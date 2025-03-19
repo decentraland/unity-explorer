@@ -198,6 +198,7 @@ Shader "DCL/DCL_Toon"
         //////////// _MainTex("BaseMap", 2D) = "white" {}
         _Color("Color", Color) = (1,1,1,1)
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+        _emissiveTest("Emissive Test", Float) = 5.0
     } 
     HLSLINCLUDE
     #define _DCL_TEXTURE_ARRAYS
