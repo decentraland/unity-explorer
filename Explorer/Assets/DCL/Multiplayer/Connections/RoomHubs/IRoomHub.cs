@@ -9,9 +9,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     public interface IRoomHub
     {
         IRoom IslandRoom();
+
         IGateKeeperSceneRoom SceneRoom();
 
         UniTask<bool> StartAsync();
+
         UniTask StopAsync();
 
         IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities();
@@ -25,10 +27,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public static int ParticipantsCount(this IRoomHub roomHub) =>
             roomHub.AllRoomsRemoteParticipantIdentities().Count;
-    }
 
-    public static class RoomHubExtensions
-    {
         /// <summary>
         /// Room used for the video streaming
         /// </summary>
