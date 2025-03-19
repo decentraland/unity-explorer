@@ -193,6 +193,7 @@ namespace DCL.Chat
         {
             var channel = chatHistory.AddOrGetChannel(ChatChannel.ChatChannelType.User, new ChatChannel.ChannelId(userId));
             viewInstance!.CurrentChannelId = channel.Id;
+            viewInstance.FocusInputBox();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -12,6 +13,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
+
     public static class FriendListSectionUtilities
     {
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
@@ -71,7 +73,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
         }
 
-        internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
+        internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge)
+        {
             passportBridge.ShowAsync(profile.Address).Forget();
+        }
     }
 }

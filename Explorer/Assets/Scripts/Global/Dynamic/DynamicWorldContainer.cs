@@ -842,7 +842,8 @@ namespace Global.Dynamic
                     sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
-                    viewDependencies));
+                    viewDependencies,
+                    chatEventBus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)
