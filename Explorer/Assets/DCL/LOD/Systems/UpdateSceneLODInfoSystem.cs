@@ -50,7 +50,7 @@ namespace DCL.LOD.Systems
                 byte lodForAcquisition;
 
                 //If we are quality reducted, always load the greated value LOD
-                if (sceneState.FullQuality)
+                if (!sceneState.FullQuality)
                     lodForAcquisition = (byte)lodSettingsAsset.LodPartitionBucketThresholds.Length;
                 else
                 {

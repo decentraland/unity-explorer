@@ -215,7 +215,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     }
                     continue;
                 }
-
                 UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
             }
         }
@@ -282,6 +281,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
                 else
                 {
+                    UnityEngine.Debug.Log($"Will try to unload {sceneDefinitionComponent.Definition.id}");
                     // Nothing else can load. And we need to unload the loaded which are still inside the loading range
                     TryUnload(data.Entity, sceneDefinitionComponent, ref sceneState);
                     candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
