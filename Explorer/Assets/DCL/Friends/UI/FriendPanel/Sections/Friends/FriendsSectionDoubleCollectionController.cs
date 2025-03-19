@@ -119,7 +119,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             else
             {
                 openPassportCts = openPassportCts.SafeRestart();
-                WaitAndOpenPassport(profile, openPassportCts.Token).Forget();
+                WaitAndOpenPassportAsync(profile, openPassportCts.Token).Forget();
             }
 
         }
