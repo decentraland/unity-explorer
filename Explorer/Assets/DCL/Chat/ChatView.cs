@@ -60,7 +60,6 @@ namespace DCL.Chat
         [SerializeField]
         private Image unfoldedPanelInteractableArea;
 
-
         [Header("Messages")]
 
         [SerializeField]
@@ -165,7 +164,7 @@ namespace DCL.Chat
         public event CurrentChannelChangedDelegate CurrentChannelChanged;
 
         /// <summary>
-        ///
+        /// Raised when the user requests the removal of a channel. Data has not been modified yet and UI has not reacted either.
         /// </summary>
         public event ChannelRemovalRequestedDelegate ChannelRemovalRequested;
 
@@ -593,6 +592,36 @@ namespace DCL.Chat
             }
         }
 
+        /// <summary>
+        /// Creates a new item in the conversation toolbar.
+        /// </summary>
+        /// <param name="channelToAdd">The channel for which the item will be created.</param>
+        public void AddConversation(ChatChannel channelToAdd)
+        {
+            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL))
+                conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
+            else
+                conversationsToolbar.AddConversation(channelToAdd);
+        }
+
+        /// <summary>
+        /// Removes an item from the conversations toolbar.
+        /// </summary>
+        /// <param name="channelToRemove">The Id of the conversation.</param>
+        public void RemoveConversation(ChatChannel.ChannelId channelToRemove)
+        {
+            conversationsToolbar.RemoveConversation(channelToRemove);
+        }
+
+        /// <summary>
+        /// Replaces the number of unread messages in an item of the conversations toolbar.
+        /// </summary>
+        /// <param name="destinationChannel">The Id of the conversation.</param>
+        public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
+        {
+            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+        }
+
         private void OnChatContextMenuVisibilityChanged(bool isVisible)
         {
             isChatContextMenuOpen = isVisible;
@@ -759,24 +788,6 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
-        }
-
-        public void AddConversation(ChatChannel channelToAdd)
-        {
-            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
-            else
-                conversationsToolbar.AddConversation(channelToAdd);
-        }
-
-        public void RemoveConversation(ChatChannel.ChannelId channelToRemove)
-        {
-            conversationsToolbar.RemoveConversation(channelToRemove);
-        }
-
-        public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
-        {
-            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
         }
     }
 }

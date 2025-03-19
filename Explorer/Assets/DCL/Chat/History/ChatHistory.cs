@@ -69,6 +69,8 @@ namespace DCL.Chat.History
 
             if(channel.ReadMessages != channel.Messages.Count)
                 ReadMessagesChanged?.Invoke(channel);
+
+            ChannelRemoved?.Invoke(channelId);
         }
 
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
