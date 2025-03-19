@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.MediaStream
             isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5);
             //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly
             if (!isReachable)
-                isReachable = await IsGetReachableAsync(ct);
+                isReachable = await IsGetReachableAsync(url, ct);
 
             ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
 
@@ -55,9 +55,9 @@ namespace DCL.SDKComponents.MediaStream
          *There was no other way other then the new UnityWebRequest to start the request with the webrequestcontroller and interrupt it after a few bytes were received
          * This will be soon replaced by the integration of HTTP2 library that will provide a clearer way to solve the problem
          */
-        private async UniTask<bool> IsGetReachableAsync(CancellationToken ct)
+        private async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
         {
-            UnityWebRequest isGetReachableRequest = UnityWebRequest.Get(this.url);
+            UnityWebRequest isGetReachableRequest = UnityWebRequest.Get(url);
             isGetReachableRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
 
             while (isGetReachableRequest.downloadedBytes == 0)
