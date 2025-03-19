@@ -113,6 +113,7 @@ namespace DCL.UI.ProfileElements
                 thumbnailImageView.ImageEnabled = true;
                 await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
             }
+            finally { isLoading = false; }
         }
     }
 }
