@@ -159,7 +159,7 @@ namespace Global.Dynamic
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData);
 
-            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity);
+
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
@@ -192,8 +192,10 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
+                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

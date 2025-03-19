@@ -10,6 +10,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using System;
 using System.Runtime.CompilerServices;
@@ -35,13 +36,13 @@ namespace DCL.Roads.Systems
         }
 
         [Query]
-        private void UnloadRoad(in Entity entity, ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
+        private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLoadingState loadingState)
         {
-            if (partitionComponent.OutOfRange)
+            if (partitionComponent.OutOfRange && loadingState.Loaded)
             {
                 roadInfo.Dispose(roadAssetPool);
+                loadingState.Loaded = false;
                 scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
-                World.Remove<RoadInfo>(entity);
             }
         }
 

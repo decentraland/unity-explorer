@@ -1,6 +1,6 @@
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
-    public struct SceneLoadingState
+    public class SceneLoadingState
     {
         public bool Loaded;
         public bool FullQuality;

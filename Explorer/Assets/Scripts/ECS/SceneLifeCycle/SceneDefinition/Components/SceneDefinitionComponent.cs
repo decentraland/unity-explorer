@@ -24,7 +24,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public int InternalJobIndex { get; set; }
 
-        private readonly HashSet<Vector2Int> ParcelsHashSet;
 
 
         public SceneDefinitionComponent(
@@ -42,16 +41,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             SceneGeometry = sceneGeometry;
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
-
-            //Cannot make spatial calculations, since a parcel can be contained inside the other
-            //TODO: Is this the most performant way to do it?
-            ParcelsHashSet = new HashSet<Vector2Int>();
-
-            foreach (Vector2Int vector2Int in Parcels) { ParcelsHashSet.Add(vector2Int); }
         }
 
-        public bool ContainsParcel(Vector2Int playerParcel) =>
-            ParcelsHashSet.Contains(playerParcel);
     }
 
     public static class SceneDefinitionComponentFactory

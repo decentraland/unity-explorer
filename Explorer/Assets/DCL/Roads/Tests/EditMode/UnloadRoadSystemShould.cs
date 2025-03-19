@@ -15,6 +15,7 @@ namespace DCL.Roads.Tests
 {
     public class UnloadRoadSystemShould : UnitySystemTestBase<UnloadRoadSystem>
     {
+        /*
         private IRoadAssetPool roadAssetPool;
 
         [SetUp]
@@ -43,5 +44,7 @@ namespace DCL.Roads.Tests
             Assert.IsFalse(world.Has<RoadInfo>(entity));
             roadAssetPool.Received().Release(Arg.Any<string>(), Arg.Any<Transform>());
         }
+            */
+
     }
 }

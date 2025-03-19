@@ -2,12 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
 using DCL.Roads.Components;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -17,9 +17,6 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Unity.Collections;
-using Unity.Jobs;
 using UnityEngine;
 using Utility;
 
@@ -29,21 +26,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     [UpdateAfter(typeof(LoadPointersByIncreasingRadiusSystem))]
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
-    public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem
+    public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly Comparer COMPARER_INSTANCE = new ();
+        private static readonly OrdenedDataListComparer COMPARER_INSTANCE = new ();
 
-        private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-                                                                       .WithAll<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>()
-                                                                       .WithNone<DeleteEntityIntention, EmptySceneComponent, RoadInfo>();
-
-        internal JobHandle? sortingJobHandle;
-        private NativeList<OrderedData> orderedData;
+        private List<OrderedDataList> orderedData;
         private readonly Entity playerEntity;
+        private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
         //TODO: Do we need it?
-        private readonly UnloadingSceneCounter unloadingSceneCounter;
+        private UnloadingSceneCounter unloadingSceneCounter;
 
         private readonly int maximumAmountOfScenesThatCanLoad;
         private readonly int maximumAmountOfReductedLODsThatCanLoad;
@@ -56,6 +49,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
+            playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
             this.playerEntity = playerEntity;
             this.realmPartitionSettings = realmPartitionSettings;
 
@@ -63,17 +57,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             maximumAmoutOfLODsThatCanLoad = realmPartitionSettings.MaximumAmoutOfLODsThatCanLoad;
             maximumAmountOfReductedLODsThatCanLoad = realmPartitionSettings.MaximumAmountOfReductedLODsThatCanLoad;
 
-            // Set initial capacity to 1/3 of the total capacity required for all rings
-            orderedData = new NativeList<OrderedData>(
-                ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3,
-                Allocator.Persistent);
-
-            unloadingSceneCounter = new UnloadingSceneCounter();
+            ResetUtilsArrays();
         }
 
-        protected override void OnDispose()
+        public void FinalizeComponents(in Query query)
         {
-            orderedData.Dispose();
+            //On realm change, reset the ordered data array
+            ResetUtilsArrays();
+        }
+
+        private void ResetUtilsArrays()
+        {
+            // Set initial capacity to maximum amount of things that can load
+            orderedData = new List<OrderedDataList>(maximumAmountOfScenesThatCanLoad + maximumAmoutOfLODsThatCanLoad + maximumAmountOfReductedLODsThatCanLoad);
+            unloadingSceneCounter = new UnloadingSceneCounter();
         }
 
         protected override void Update(float t)
@@ -84,11 +81,33 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (!anyNonEmpty)
             {
+                AddNewSceneDefinitionToListQuery(World);
+                UpdatePlayerInParcel();
+
+                //Why is there a 128B allocations here?
+                orderedData.Sort(COMPARER_INSTANCE);
                 ProcessVolatileRealmQuery(World);
                 ProcessesFixedRealmQuery(World);
             }
 
             ProcessScenesUnloadingInRealmQuery(World);
+        }
+
+        private void UpdatePlayerInParcel()
+        {
+            Vector2Int currentParcel = playerTransform.position.ToParcel();
+
+            for (var i = 0; i < orderedData.Count; i++)
+                orderedData[i].UpdatePlayerInParcel(currentParcel);
+        }
+
+        [Query]
+        [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
+        private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            var sceneLoadingState = new SceneLoadingState();
+            orderedData.Add(new OrderedDataList(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
+            World.Add(entity, sceneLoadingState);
         }
 
         [Query]
@@ -101,12 +120,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
-        private void ProcessVolatileRealm(ref RealmComponent realm)
+        private void ProcessVolatileRealm(ref RealmComponent realmComponent)
         {
-            StartScenesLoading(ref realm);
+            CreatePromisesFromOrderedData(realmComponent.Ipfs);
         }
 
         [Query]
+        [None(typeof(RoadInfo))]
         private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
         {
             if (partitionComponent.OutOfRange)
@@ -128,57 +148,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         /// </summary>
         [Query]
         [None(typeof(StaticScenePointers), typeof(VolatileScenePointers))]
-        private void ProcessesFixedRealm(ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
+        private void ProcessesFixedRealm(in RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
-                StartScenesLoading(ref realmComponent);
-        }
-
-        private void StartScenesLoading(ref RealmComponent realmComponent)
-        {
-            if (sortingJobHandle is { IsCompleted: true })
-            {
-                sortingJobHandle.Value.Complete();
                 CreatePromisesFromOrderedData(realmComponent.Ipfs);
-            }
-
-            if (sortingJobHandle is { IsCompleted: false }) return;
-
-            // Start new sorting
-            // Order the scenes definitions by the CURRENT partition and serve first N of them
-
-            orderedData.Clear();
-
-            Vector2Int playerParcel = World.Get<CharacterTransform>(playerEntity).Transform.position.ToParcel();
-
-            foreach (ref Chunk chunk in World.Query(in START_SCENES_LOADING))
-            {
-                ref Entity entityFirstElement = ref chunk.Entity(0);
-                ref PartitionComponent partitionComponentFirst = ref chunk.GetFirst<PartitionComponent>();
-                ref SceneDefinitionComponent sceneDefinitionComponentFirst = ref chunk.GetFirst<SceneDefinitionComponent>();
-
-                foreach (int entityIndex in chunk)
-                {
-                    ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
-                    ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
-                    ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref sceneDefinitionComponentFirst, entityIndex);
-
-                    //Ignore unpartitioned and out of range
-                    if (partitionComponent.RawSqrDistance < 0 || partitionComponent.OutOfRange) continue;
-
-                    orderedData.Add(new OrderedData
-                    {
-                        Entity = entity,
-                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind, sceneDefinitionComponent.ContainsParcel(playerParcel), sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x),
-                    });
-                }
-            }
-
-            // Raw Distance will give more stable results in terms of scenes loading order, especially in cases
-            // when a wide range falls into the same bucket
-            sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
-
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
@@ -194,28 +168,25 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (teleportParcel.JustTeleported)
                 return;
 
-            for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
+            for (var i = 0; i < orderedData.Count && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
-                OrderedData data = orderedData[i];
+                OrderedDataList data = orderedData[i];
 
-                if (!World.IsAlive(data.Entity))
-                    return;
-
-                // We can't save component to data as sorting is throttled and components could change
-                // TODO: We need to optimize this
-                var components
-                    = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
+                //Ignore unpartitioned and out of range
+                //Optimization: remove out of range from list when adding DeleteEntityIntention
+                if (data.RawSqrDistance < 0 || data.OutOfRange) continue;
 
                 if (teleportParcel.IsTeleporting)
                 {
-                    if (components.t0.Value.ContainsParcel(teleportParcel.Parcel))
+                    if (data.ParcelsHashSet.Contains(teleportParcel.Parcel))
                     {
-                        UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
+                        UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
                         break;
                     }
                     continue;
                 }
-                UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
+
+                UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
             }
         }
 
@@ -223,6 +194,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             if (sceneState.Loaded)
             {
+                //TODO: optimize, the last TryGet
                 if (World.TryGet(entity, out ISceneFacade sceneFacade))
                     unloadingSceneCounter.RegisterSceneFacade(sceneDefinitionComponent.Definition.id, sceneFacade);
 
@@ -239,8 +211,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
         //TODO: Requires re-analysis every frame? Partition changes when bucket changes, but now we have the memory restriction
-        private void UpdateLoadingState(IIpfsRealm ipfsRealm, OrderedData data, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent,
-            ref SceneLoadingState sceneState)
+        private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
+            SceneLoadingState sceneState)
         {
             //Dont try to load an unloading scene. Wait
             if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
@@ -273,7 +245,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     if (sceneState.FullQuality)
                     {
                         //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
-                        TryUnload(data.Entity, sceneDefinitionComponent, ref sceneState);
+                        TryUnload(entity, sceneDefinitionComponent, ref sceneState);
                         candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
                     }
                     // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
@@ -281,9 +253,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
                 else
                 {
-                    UnityEngine.Debug.Log($"Will try to unload {sceneDefinitionComponent.Definition.id}");
                     // Nothing else can load. And we need to unload the loaded which are still inside the loading range
-                    TryUnload(data.Entity, sceneDefinitionComponent, ref sceneState);
+                    TryUnload(entity, sceneDefinitionComponent, ref sceneState);
                     candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
                 }
             }
@@ -300,32 +271,85 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             switch (sceneState.VisualSceneState)
             {
                 case VisualSceneStateEnum.SHOWING_LOD:
-                    World.Add(data.Entity, SceneLODInfo.Create());
+                    World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:
-                    World.Add(data.Entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                    World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                         new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
                     break;
             }
         }
 
-        /// <summary>
-        ///     It must be a structure to be compatible with Burst SortJob
-        /// </summary>
-        private struct Comparer : IComparer<OrderedData>
+        public class OrdenedDataListComparer : IComparer<OrderedDataList>
         {
-            public int Compare(OrderedData x, OrderedData y) =>
-                DistanceBasedComparer.Compare(x.Data, y.Data);
+            public int Compare(OrderedDataList x, OrderedDataList y)
+            {
+                if (x.IsPlayerInsideParcel && !y.IsPlayerInsideParcel) return -1;
+                if (y.IsPlayerInsideParcel && !x.IsPlayerInsideParcel) return 1;
+
+                // discrete distance comparison
+                int bucketComparison = x.RawSqrDistance.CompareTo(y.RawSqrDistance);
+
+                if (bucketComparison != 0)
+                    return bucketComparison;
+
+                int compareIsBehind = x.IsBehind.CompareTo(y.IsBehind);
+
+                if (compareIsBehind != 0)
+                    return compareIsBehind;
+
+                //If everything fails, the scene on the right has higher priority
+                return x.XCoordinate.CompareTo(y.XCoordinate);
+            }
         }
 
-        public struct OrderedData
+        public class OrderedDataList
         {
-            /// <summary>
-            ///     Referencing entity is expensive and at the moment we don't delete scene entities at all
-            /// </summary>
+            //Need it to get the ref of SceneLoadingState
             public Entity Entity;
-            public DistanceBasedComparer.DataSurrogate Data;
+
+            public readonly SceneDefinitionComponent SceneDefinitionComponent;
+            public readonly SceneLoadingState SceneLoadingState;
+            public readonly PartitionComponent PartitionComponent;
+
+            public float RawSqrDistance;
+            public bool IsBehind;
+            public bool IsPlayerInsideParcel;
+            public int XCoordinate;
+            public bool OutOfRange;
+
+            public readonly HashSet<Vector2Int> ParcelsHashSet;
+
+            public OrderedDataList(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState)
+            {
+                Entity = entity;
+                SceneDefinitionComponent = sceneDefinitionComponent;
+                SceneLoadingState = sceneLoadingState;
+                PartitionComponent = partitionComponent;
+                XCoordinate = sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x;
+                IsPlayerInsideParcel = false;
+                RawSqrDistance = float.MaxValue;
+                IsBehind = false;
+                OutOfRange = true;
+
+                //Cannot make spatial calculations, since a parcel can be contained inside the other
+                //TODO: Is this the most performant way to do it?
+                ParcelsHashSet = new HashSet<Vector2Int>();
+
+                foreach (Vector2Int vector2Int in SceneDefinitionComponent.Parcels) { ParcelsHashSet.Add(vector2Int); }
+            }
+
+            public void UpdatePlayerInParcel(Vector2Int currentParcel)
+            {
+                //Maybe use ISCurrentAPI?
+                IsPlayerInsideParcel = ParcelsHashSet.Contains(currentParcel);
+                RawSqrDistance = PartitionComponent.RawSqrDistance;
+                IsBehind = PartitionComponent.IsBehind;
+                OutOfRange = PartitionComponent.OutOfRange;
+            }
         }
+
+
     }
 
 
