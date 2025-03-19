@@ -101,7 +101,8 @@ namespace DCL.UserInAppInitializationFlow
                     chatHistory,
                     startUpOps,
                     reLoginOps,
-                    checkOnboardingStartupOperation),
+                    checkOnboardingStartupOperation,
+                    bootstrapContainer.IdentityCache),
             };
         }
     }

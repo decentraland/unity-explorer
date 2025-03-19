@@ -13,6 +13,7 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using PortableExperiences.Controller;
@@ -38,6 +39,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRoomHub roomHub;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
+        private readonly IWeb3IdentityCache identityCache;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -52,11 +54,13 @@ namespace DCL.UserInAppInitializationFlow
             IChatHistory chatHistory,
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
-            CheckOnboardingStartupOperation checkOnboardingStartupOperation)
+            CheckOnboardingStartupOperation checkOnboardingStartupOperation,
+            IWeb3IdentityCache identityCache)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
             this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
+            this.identityCache = identityCache;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -81,7 +85,11 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                if (parameters.ShowAuthentication)
+                // Force show authentication if there's no valid identity in the cache
+                bool shouldShowAuthentication = parameters.ShowAuthentication ||
+                    identityCache.Identity == null || identityCache.Identity.IsExpired;
+
+                if (shouldShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
 
