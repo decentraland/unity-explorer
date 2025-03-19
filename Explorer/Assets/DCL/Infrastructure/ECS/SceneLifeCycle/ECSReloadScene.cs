@@ -17,7 +17,6 @@ namespace ECS.SceneLifeCycle
     public class ECSReloadScene : IReloadScene
     {
         private readonly IScenesCache scenesCache;
-        private readonly ICacheCleaner cacheCleaner;
 
         private readonly Entity playerEntity;
         private readonly World world;
@@ -26,14 +25,12 @@ namespace ECS.SceneLifeCycle
         public ECSReloadScene(IScenesCache scenesCache,
             World world,
             Entity playerEntity,
-            bool localSceneDevelopment,
-            ICacheCleaner cacheCleaner)
+            bool localSceneDevelopment)
         {
             this.scenesCache = scenesCache;
             this.world = world;
             this.playerEntity = playerEntity;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.cacheCleaner = cacheCleaner;
         }
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
@@ -96,9 +93,6 @@ namespace ECS.SceneLifeCycle
                     });
 
                 Resources.UnloadUnusedAssets();
-
-                // Nothing can be called after cacheCleaner.UnloadCache(), as that code becomes unreachable.
-                cacheCleaner.UnloadCache(false);
             }
             else
             {
