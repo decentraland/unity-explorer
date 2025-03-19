@@ -54,7 +54,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private int qualityReductedLOD;
         private int promisesCreated;
 
-
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
             this.playerEntity = playerEntity;
@@ -180,21 +179,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
-        public bool AreListsEqual(NativeList<OrderedData> list1, NativeList<OrderedData> list2)
-        {
-            if (list1.Length != list2.Length)
-                return false;
-
-            for (var i = 0; i < list1.Length; i++)
-            {
-                if (!list1[i].Equals(list2[i]))
-                    return false;
-            }
-
-            return true;
-        }
-
-        private NativeList<OrderedData> previousOrderedData = new (Allocator.Persistent);
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
@@ -204,13 +188,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             qualityReductedLOD = 0;
             promisesCreated = 0;
 
-            PlayerTeleportingState teleportParcel = GetTeleportParcel();
+            TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
 
-            if (previousOrderedData.Length > 0)
-            {
-                if (!AreListsEqual(previousOrderedData, orderedData))
-                    UnityEngine.Debug.Log("JUANI THEY ARE DFFIERENT");
-            }
+            //Dont do anything until the teleport cooldown is over
+            if (teleportParcel.JustTeleported)
+                return;
 
             for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
@@ -224,10 +206,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, SceneLoadingState>(data.Entity);
 
-                //If there is a teleport intent, only allow to load the teleport intent
-                //TODO: This is going to work better when the intent is according to the player position and not the camera
-                //Right now, the reliance on "isPLayerInsideParcel" doesnt work, since the player is not moved to the parcel until the teleport is complete
-                //Therefore, a scene can unload/load until the player is moved
                 if (teleportParcel.IsTeleporting)
                 {
                     if (components.t0.Value.ContainsParcel(teleportParcel.Parcel))
@@ -240,21 +218,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 UpdateLoadingState(ipfsRealm, data, components.t0.Value, components.t1.Value, ref components.t2.Value);
             }
-
-            previousOrderedData = orderedData;
-        }
-
-        private PlayerTeleportingState GetTeleportParcel()
-        {
-            var teleportParcel = new PlayerTeleportingState();
-
-            if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
-            {
-                teleportParcel.IsTeleporting = true;
-                teleportParcel.Parcel = playerTeleportIntent.Parcel;
-            }
-
-            return teleportParcel;
         }
 
         private void TryUnload(in Entity entity, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
@@ -365,11 +328,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
     }
 
-    public struct PlayerTeleportingState
-    {
-        public Vector2Int Parcel;
-        public bool IsTeleporting;
-    }
+
 
     public class UnloadingSceneCounter
     {

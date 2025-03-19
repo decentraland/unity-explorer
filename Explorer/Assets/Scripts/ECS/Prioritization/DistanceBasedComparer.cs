@@ -14,6 +14,9 @@ namespace ECS.Prioritization
 
         public static int Compare(DataSurrogate x, DataSurrogate y)
         {
+            if (x.IsPlayerInsideParcel && !y.IsPlayerInsideParcel) return -1;
+            if (y.IsPlayerInsideParcel && !x.IsPlayerInsideParcel) return 1;
+
             // discrete distance comparison
             // break down by SQR_PARCEL_SIZE
 
@@ -24,9 +27,6 @@ namespace ECS.Prioritization
 
             if (bucketComparison != 0)
                 return bucketComparison;
-
-            if (x.IsPlayerInsideParcel && !y.IsPlayerInsideParcel) return -1;
-            if (y.IsPlayerInsideParcel && !x.IsPlayerInsideParcel) return 1;
 
             int compareIsBehind = x.IsBehind.CompareTo(y.IsBehind);
 
