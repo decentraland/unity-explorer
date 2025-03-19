@@ -42,10 +42,15 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void OpenLink(string id)
         {
-            if (id == SUBSCRIBE_LINK_ID)
-                webBrowser.OpenUrl(MarketplaceCreditsUtils.SUBSCRIBE_LINK);
-            else if (id == X_LINK_ID)
-                webBrowser.OpenUrl(MarketplaceCreditsUtils.X_LINK);
+            switch (id)
+            {
+                case SUBSCRIBE_LINK_ID:
+                    webBrowser.OpenUrl(MarketplaceCreditsUtils.SUBSCRIBE_LINK);
+                    break;
+                case X_LINK_ID:
+                    webBrowser.OpenUrl(MarketplaceCreditsUtils.X_LINK);
+                    break;
+            }
         }
     }
 }
