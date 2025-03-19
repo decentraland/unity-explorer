@@ -16,7 +16,10 @@ namespace DCL.MarketplaceCreditsAPIService
     [Serializable]
     public class SeasonData
     {
+        public string startDate;
+        public string endDate;
         public uint timeLeft;
+        public bool isOutOfFunds;
     }
 
     [Serializable]

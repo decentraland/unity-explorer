@@ -72,17 +72,20 @@ namespace DCL.MarketplaceCredits
                 webRequestController,
                 this);
 
-            marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(view.WeekGoalsCompletedView);
+            marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(
+                view.WeekGoalsCompletedView);
 
-            marketplaceCreditsProgramEndedController = new MarketplaceCreditsProgramEndedController(view.ProgramEndedView);
+            marketplaceCreditsProgramEndedController = new MarketplaceCreditsProgramEndedController(
+                view.ProgramEndedView,
+                webBrowser);
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
                 view.TotalCreditsWidget,
-                view.WeekGoalsCompletedView,
                 this,
                 marketplaceCreditsGoalsOfTheWeekController,
                 marketplaceCreditsWeekGoalsCompletedController,
+                marketplaceCreditsProgramEndedController,
                 webBrowser,
                 marketplaceCreditsAPIClient,
                 selfProfile);

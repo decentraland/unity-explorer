@@ -18,10 +18,10 @@ namespace DCL.MarketplaceCredits.Sections
 
         private readonly MarketplaceCreditsWelcomeView view;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
-        private readonly MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
+        private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -33,20 +33,20 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsWelcomeController(
             MarketplaceCreditsWelcomeView view,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
-            MarketplaceCreditsWeekGoalsCompletedView weekGoalsCompletedView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController,
             MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController,
+            MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile)
         {
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
-            this.weekGoalsCompletedView = weekGoalsCompletedView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.marketplaceCreditsGoalsOfTheWeekController = marketplaceCreditsGoalsOfTheWeekController;
             this.marketplaceCreditsWeekGoalsCompletedController = marketplaceCreditsWeekGoalsCompletedController;
+            this.marketplaceCreditsProgramEndedController = marketplaceCreditsProgramEndedController;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
@@ -139,8 +139,9 @@ namespace DCL.MarketplaceCredits.Sections
             totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(creditsProgramProgressResponse.credits.expireIn));
             totalCreditsWidgetView.SetDaysToExpireVisible(creditsProgramProgressResponse.credits.available > 0);
 
-            if (creditsProgramProgressResponse.season.timeLeft <= 0f)
+            if (creditsProgramProgressResponse.IsProgramEnded())
             {
+                marketplaceCreditsProgramEndedController.Setup(creditsProgramProgressResponse);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
                 return;
             }

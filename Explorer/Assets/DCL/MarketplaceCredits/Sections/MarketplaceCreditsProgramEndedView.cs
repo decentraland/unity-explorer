@@ -1,6 +1,14 @@
+using TMPro;
 using UnityEngine;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsProgramEndedView : MonoBehaviour { }
+    public class MarketplaceCreditsProgramEndedView : MonoBehaviour
+    {
+        [field: SerializeField]
+        public TMP_Text Title { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text Subtitle { get; private set; }
+    }
 }

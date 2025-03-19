@@ -78,7 +78,10 @@ namespace DCL.MarketplaceCreditsAPIService
             {
                 season = new SeasonData
                 {
+                    startDate = "2025-03-01T00:00:00Z",
+                    endDate = "2025-05-31T23:59:59Z",
                     timeLeft = 601200000,
+                    isOutOfFunds = false,
                 },
                 currentWeek = new CurrentWeekData
                 {

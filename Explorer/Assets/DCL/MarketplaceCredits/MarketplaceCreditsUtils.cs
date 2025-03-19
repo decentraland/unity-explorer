@@ -1,14 +1,17 @@
 using DCL.MarketplaceCreditsAPIService;
 using System;
+using System.Globalization;
 
 namespace DCL.MarketplaceCredits
 {
     public static class MarketplaceCreditsUtils
     {
-        public const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org/";
-        public const string LEARN_MORE_LINK = "https://docs.decentraland.org/";
-        public const string TIME_LEFT_INFO_LINK = "https://docs.decentraland.org/";
-        public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace/";
+        public const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org";
+        public const string LEARN_MORE_LINK = "https://docs.decentraland.org";
+        public const string TIME_LEFT_INFO_LINK = "https://docs.decentraland.org";
+        public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
+        public const string SUBSCRIBE_LINK = "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend";
+        public const string X_LINK = "https://x.com/decentraland";
         public const int CREDITS_UNLOCKED_DURATION = 5;
         public const int ERROR_NOTIFICATION_DURATION = 3;
 
@@ -33,8 +36,18 @@ namespace DCL.MarketplaceCredits
             return $"Expire in {days} days";
         }
 
+        public static string FormatSeasonDateRange(string startDate, string endDate)
+        {
+            DateTime startDateDT = DateTime.ParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+            DateTime endDateDT = DateTime.ParseExact(endDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+            return $"{startDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}";
+        }
+
         public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
             goalProgress.completedSteps * 100 / goalProgress.totalSteps;
+
+        public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
+            creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds;
 
         public static bool AreWeekGoalsCompleted(this CreditsProgramProgressResponse creditsProgramProgressResponse)
         {

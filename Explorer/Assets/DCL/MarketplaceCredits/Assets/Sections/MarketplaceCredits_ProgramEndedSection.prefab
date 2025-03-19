@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 6516402176571454231}
   - component: {fileID: 7699229070819554931}
   m_Layer: 5
-  m_Name: Text1
+  m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -109,8 +109,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 96, y: -23}
-  m_SizeDelta: {x: 500, y: 20}
+  m_AnchoredPosition: {x: 96, y: -30}
+  m_SizeDelta: {x: 500, y: 40}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &6516402176571454231
 CanvasRenderer:
@@ -140,7 +140,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "The program has ended!\r"
+  m_text: Title
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -175,7 +175,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -222,8 +222,9 @@ GameObject:
   - component: {fileID: 5289063042924363200}
   - component: {fileID: 2789085573632065399}
   - component: {fileID: 6903505366287819304}
+  - component: {fileID: 8181496622157665733}
   m_Layer: 5
-  m_Name: Text2
+  m_Name: Subtitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -245,7 +246,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 96, y: -60}
+  m_AnchoredPosition: {x: 96, y: -90}
   m_SizeDelta: {x: 500, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &2789085573632065399
@@ -276,8 +277,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Visit the Marketplace and spend your Marketplace Credits before they expire
-    \U0001F6CD"
+  m_text: Subtitle
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -348,6 +348,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &8181496622157665733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7882631672930130607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa79a46ad7d14748b3e248214931267e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8612692321914640550
 GameObject:
   m_ObjectHideFlags: 0
@@ -384,8 +396,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 128, y: -227}
-  m_SizeDelta: {x: 622, y: 130}
+  m_AnchoredPosition: {x: 128, y: -207}
+  m_SizeDelta: {x: 622, y: 170}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &3403899303340726968
 CanvasRenderer:
@@ -515,3 +527,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b3d0926a8f0471b98a6aa6e375272bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Title>k__BackingField: {fileID: 7699229070819554931}
+  <Subtitle>k__BackingField: {fileID: 6903505366287819304}
