@@ -27,7 +27,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["dcl_eth_address"] = identityCache?.Identity?.Address == null ? NOT_CONFIGURED : identityCache.Identity.Address.ToString();
             trackEvent.Context["auth_chain"] = identityCache?.Identity?.AuthChain == null? NOT_CONFIGURED : identityCache.Identity.AuthChain.ToString();
             trackEvent.Context["realm"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.RealmName;
-            trackEvent.Context["parcel"] = playerTransform == null? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();
+            trackEvent.Context["realm_url"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.Ipfs.CatalystBaseUrl.Value;
+            trackEvent.Context["parcel"] = playerTransform == null ? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();
             trackEvent.Context["position"] = playerTransform == null? NOT_CONFIGURED : playerTransform.Position.Value.ToShortString();
             trackEvent.Context["direct"] = true;
 

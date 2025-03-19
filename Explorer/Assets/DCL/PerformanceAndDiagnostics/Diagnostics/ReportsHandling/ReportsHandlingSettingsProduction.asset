@@ -448,6 +448,10 @@ MonoBehaviour:
       Severity: 1
     - Category: FRIENDS
       Severity: 4
+    - Category: IN_WORLD_CAMERA
+      Severity: 4
+    - Category: IN_WORLD_CAMERA
+      Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

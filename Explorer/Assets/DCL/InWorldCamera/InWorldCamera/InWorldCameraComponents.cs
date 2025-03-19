@@ -1,4 +1,5 @@
-﻿using MVC;
+﻿using DCL.CharacterCamera;
+using MVC;
 using UnityEngine;
 
 namespace DCL.InWorldCamera
@@ -9,6 +10,7 @@ namespace DCL.InWorldCamera
     {
         public bool IsEnable;
         public string Source;
+        public CameraMode? TargetCameraMode;
     }
 
     public struct ToggleUIRequest
