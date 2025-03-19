@@ -37,6 +37,7 @@ namespace DCL.Chat
         [SerializeField] private GameObject defaultChatTitlebar;
         [SerializeField] private GameObject memberListTitlebar;
 
+        [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
         [SerializeField] private SimpleProfileView profileView;
 
@@ -88,15 +89,17 @@ namespace DCL.Chat
         public void SetNearbyChannelImage()
         {
             nearbyChannelContainer.SetActive(true);
+            memberCountObject.SetActive(true);
             profileView.gameObject.SetActive(false);
         }
 
-        public void SetupProfileView(Web3Address userId )
+        public void SetupProfileView(Web3Address userId)
         {
             cts = cts.SafeRestart();
             profileView.gameObject.SetActive(true);
             profileView.SetupAsync(userId, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
+            memberCountObject.SetActive(false);
         }
 
         public void SetToggleChatBubblesValue(bool value)
