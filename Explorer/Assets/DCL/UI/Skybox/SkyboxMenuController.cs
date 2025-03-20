@@ -7,7 +7,7 @@ using Utility;
 
 namespace DCL.UI.Skybox
 {
-    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IPanelInSharedSpace
+    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
         private const int SECONDS_IN_DAY = 86400;
 
@@ -23,11 +23,6 @@ namespace DCL.UI.Skybox
         public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
-        }
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)

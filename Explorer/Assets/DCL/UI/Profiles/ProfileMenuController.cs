@@ -15,7 +15,7 @@ using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.Profiles
 {
-    public class ProfileMenuController : ControllerBase<ProfileMenuView>, IPanelInSharedSpace
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>, IControllerInSharedSpace<ProfileMenuView, ControllerNoData>
     {
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
@@ -45,9 +45,6 @@ namespace DCL.UI.Profiles
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>
-            await UniTask.CompletedTask;
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {

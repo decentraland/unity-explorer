@@ -84,7 +84,7 @@ namespace DCL.Friends.UI.FriendPanel
                         if (friendsPanelController!.State != ControllerState.ViewHidden)
                             friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
                         else
-                            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Friends);
+                            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
 
                         break;
                     case FriendshipStatus.REQUEST_RECEIVED:

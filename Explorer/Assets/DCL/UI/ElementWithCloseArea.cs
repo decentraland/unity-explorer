@@ -9,7 +9,7 @@ using Utility;
 
 namespace DCL.UI
 {
-    public class ElementWithCloseArea : ViewBaseWithAnimationElement, IView, IPanelInSharedSpace
+    public class ElementWithCloseArea : ViewBaseWithAnimationElement, IView, IPanelInSharedSpace<ControllerNoData>
     {
         [field: SerializeField] internal Button closeAreaButton { get; private set; }
 
@@ -20,7 +20,7 @@ namespace DCL.UI
 
         private CancellationTokenSource showingCts = new ();
 
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ControllerNoData parameters)
         {
             gameObject.SetActive(true);
             await PlayShowAnimationAsync(ct);

@@ -17,7 +17,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
-    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IPanelInSharedSpace
+    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IControllerInSharedSpace<FriendsPanelView, FriendsPanelParameter>
     {
         public enum FriendsPanelTab
         {
@@ -130,11 +130,6 @@ namespace DCL.Friends.UI.FriendPanel
             friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
             UnregisterCloseHotkey();
-        }
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)

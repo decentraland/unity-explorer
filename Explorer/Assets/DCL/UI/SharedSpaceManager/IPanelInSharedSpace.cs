@@ -4,6 +4,18 @@ using System.Threading;
 
 namespace DCL.UI.SharedSpaceManager
 {
+    public interface IPanelInSharedSpace<in TParams> : IPanelInSharedSpace
+    {
+        /// <summary>
+        ///     Called by the manager. It should be implemented by Persistent controllers or panels that are not controllers, and should wait for any animation or preparation to finish before returning.
+        ///     Otherwise, it should return immediately.
+        /// </summary>
+        /// <param name="ct">A cancellation token.</param>
+        /// <param name="parameters">Optional parameters used to vary the way the panel is shown.</param>
+        /// <returns>The async task.</returns>
+        UniTask OnShownInSharedSpaceAsync(CancellationToken ct, TParams parameters = default!);
+    }
+
     /// <summary>
     /// A UI panel whose visibility is managed by a Shared Space Manager. A panel may be a controller, a view or none of them. Panels use this interface as a homogenous way to communicate with the manager after
     /// they have been registered in it.
@@ -24,15 +36,6 @@ namespace DCL.UI.SharedSpaceManager
         /// It should check if the view is not hidden, it the case it is a controller, or any other condition that means that the panel can be hidden.
         /// </summary>
         bool IsVisibleInSharedSpace { get; }
-
-        /// <summary>
-        /// Called by the manager. It should be implemented by Persistent controllers or panels that are not controllers, and should wait for any animation or preparation to finish before returning.
-        /// Otherwise, it should return immediately.
-        /// </summary>
-        /// <param name="ct">A cancellation token.</param>
-        /// <param name="parameters">Optional parameters used to vary the way the panel is shown.</param>
-        /// <returns>The async task.</returns>
-        UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null);
 
         /// <summary>
         /// Called by the manager. When the panel is a controller, the implementation should make the WaitForCloseIntentAsync finish; otherwise, it should hide the view / visual elements, waiting for any animation

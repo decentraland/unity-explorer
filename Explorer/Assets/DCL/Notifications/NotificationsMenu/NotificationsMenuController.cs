@@ -10,6 +10,7 @@ using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
@@ -20,7 +21,7 @@ using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuController : IDisposable, IPanelInSharedSpace
+    public class NotificationsMenuController : IDisposable, IPanelInSharedSpace<ControllerNoData>
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
@@ -87,7 +88,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ControllerNoData parameters)
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
             await view.ShowAsync(notificationPanelCts.Token);

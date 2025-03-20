@@ -17,33 +17,36 @@ using UnityEngine.InputSystem;
 
 namespace DCL.UI.SharedSpaceManager
 {
-    // PLEASE read the summary in ISharedSpaceManager
+    /// <summary>
+    ///     <inheritdoc cref="ISharedSpaceManager" />
+    /// </summary>
     public class SharedSpaceManager : ISharedSpaceManager, IDisposable
     {
+        private readonly Dictionary<PanelsSharingSpace, PanelRegistration> registrations = new ();
+
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
-        private readonly Dictionary<PanelsSharingSpace, IPanelInSharedSpace> controllers = new ();
         private readonly World ecsWorld;
 
-        private CancellationTokenSource cts = new ();
+        private readonly bool isFriendsFeatureEnabled;
+        private readonly bool isCameraReelFeatureEnabled;
+
+        private readonly CancellationTokenSource cts = new ();
         private bool isShowing; // true whenever a view is being shown, so other calls wait for them to finish
         private bool isHiding; // true whenever a view is being hidden, so other calls wait for them to finish
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
 
-        private bool isExplorePanelVisible => controllers[PanelsSharingSpace.Explore].IsVisibleInSharedSpace;
-
-        private readonly bool isFriendsFeatureEnabled;
-        private readonly bool isCameraReelFeatureEnabled;
+        private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
         public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
-            this.isFriendsFeatureEnabled = isFriendsEnabled;
-            this.isCameraReelFeatureEnabled = isCameraReelEnabled;
-            this.ecsWorld = world;
+            isFriendsFeatureEnabled = isFriendsEnabled;
+            isCameraReelFeatureEnabled = isCameraReelEnabled;
+            ecsWorld = world;
 
-            if(isFriendsEnabled)
+            if (isFriendsEnabled)
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
 
             dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformedAsync;
@@ -62,7 +65,25 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
-        public async UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null)
+        public void Dispose()
+        {
+            if (isFriendsFeatureEnabled)
+                dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
+
+            dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
+            dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
+
+            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
+            dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
+            dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
+
+            if (isCameraReelFeatureEnabled)
+                dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
+        }
+
+        public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
             if (!IsRegistered(panel))
             {
@@ -86,20 +107,19 @@ namespace DCL.UI.SharedSpaceManager
                 else
                     await HideAllAsync();
 
-                IPanelInSharedSpace controllerInSharedSpace = controllers[panel];
+                PanelRegistration<TParams> registration = registrations[panel].GetByParams<TParams>();
+                IPanelInSharedSpace<TParams> panelInSharedSpace = registration.instance;
 
                 // Each panel has a different situation and implementation, and has to be shown in a different way
                 switch (panel)
                 {
                     case PanelsSharingSpace.Chat:
                     {
-                        if ((controllerInSharedSpace as IController).State == ControllerState.ViewHidden)
-                        {
-                            ChatController.ShowParams chatParams = parameters == null ? default(ChatController.ShowParams) : (ChatController.ShowParams)parameters;
-                            await mvcManager.ShowAsync(ChatController.IssueCommand(chatParams), cts.Token);
-                        }
-                        else if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await controllerInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
+                        IController controller = registration.GetPanel<IController>();
+
+                        if (controller.State == ControllerState.ViewHidden) { await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token); }
+                        else if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                            await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
                             isShowing = false;
 
@@ -107,16 +127,17 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.Friends:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace && isFriendsFeatureEnabled)
+                        if (!panelInSharedSpace.IsVisibleInSharedSpace && isFriendsFeatureEnabled)
                         {
-                            // The chat is hidden while the friends panel is present
-                            (controllers[PanelsSharingSpace.Chat] as ChatController).SetViewVisibility(false);
+                            ChatController chatController = registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>();
 
-                            FriendsPanelParameter friendsParams = parameters == null ? default(FriendsPanelParameter) : (FriendsPanelParameter)parameters;
-                            await mvcManager.ShowAsync(FriendsPanelController.IssueCommand(friendsParams), cts.Token);
+                            // The chat is hidden while the friends panel is present
+                            chatController.SetViewVisibility(false);
+
+                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
-                            if(panelBeingShown != PanelsSharingSpace.Chat)
+                            if (panelBeingShown != PanelsSharingSpace.Chat)
                                 await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(false));
                         }
                         else
@@ -126,8 +147,8 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.Skybox:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await mvcManager.ShowAsync(SkyboxMenuController.IssueCommand(), cts.Token);
+                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else
                             isShowing = false;
 
@@ -135,8 +156,8 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.EmotesWheel:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await mvcManager.ShowAsync(EmotesWheelController.IssueCommand(), cts.Token);
+                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else
                             isShowing = false;
 
@@ -144,11 +165,8 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.Explore:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                        {
-                            ExplorePanelParameter exploreParams = parameters == null ? default(ExplorePanelParameter) : (ExplorePanelParameter)parameters;
-                            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(exploreParams), cts.Token);
-                        }
+                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else
                             isShowing = false;
 
@@ -156,8 +174,8 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.SidebarProfile:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await mvcManager.ShowAsync(ProfileMenuController.IssueCommand(), cts.Token);
+                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else
                             isShowing = false;
 
@@ -166,8 +184,8 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Notifications:
                     case PanelsSharingSpace.SidebarSettings:
                     {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await controllerInSharedSpace.OnShownInSharedSpaceAsync(cts.Token);
+                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                            await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token);
                         else
                             isShowing = false;
 
@@ -188,16 +206,14 @@ namespace DCL.UI.SharedSpaceManager
             // Arrives here once when the panel stops being shown (they leave WaitForCloseIntentAsync) for whatever reason.
             // If there is an exit animation or any other process that takes time, it waits for it
             await UniTask.WaitUntil(() => isHiding == false, PlayerLoopTiming.Update, cts.Token);
-
         }
 
         /// <summary>
-        /// Waits for the panel to finish its animation or cleaning process and, depending on the established rules, another panel may be shown or not. It should be called only from non-controller panels.
+        ///     Waits for the panel to finish its animation or cleaning process and, depending on the established rules, another panel may be shown or not. It should be called only from non-controller panels.
         /// </summary>
         /// <param name="panel">Which panel to hide.</param>
-        /// <param name="parameters">Optionally, the parameters the panel will use when hidden.</param>
         /// <returns>The async task.</returns>
-        protected async UniTask HideAsync(PanelsSharingSpace panel, object parameters = null)
+        private async UniTask HideAsync(PanelsSharingSpace panel)
         {
             if (!IsRegistered(panel))
                 return;
@@ -206,7 +222,7 @@ namespace DCL.UI.SharedSpaceManager
 
             try
             {
-                IPanelInSharedSpace controllerInSharedSpace = controllers[panel];
+                IPanelInSharedSpace controllerInSharedSpace = registrations[panel].panel;
 
                 switch (panel)
                 {
@@ -217,8 +233,8 @@ namespace DCL.UI.SharedSpaceManager
                             await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
 
                             // When friends panel is not present, the chat panel must be (unless the Friends panel was hidden due to showing the chat panel)
-                            if(panelBeingShown != PanelsSharingSpace.Chat)
-                                await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
+                            if (panelBeingShown != PanelsSharingSpace.Chat)
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
                         }
 
                         break;
@@ -234,26 +250,111 @@ namespace DCL.UI.SharedSpaceManager
             {
                 // Stops propagation
             }
-            finally
-            {
-                isHiding = false;
-            }
+            finally { isHiding = false; }
         }
 
-        public async UniTask ToggleVisibilityAsync(PanelsSharingSpace panel, object parameters = null)
+        public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
             if (!IsRegistered(panel))
                 return;
 
-            bool show = !controllers[panel].IsVisibleInSharedSpace;
+            bool show = !registrations[panel].GetByParams<TParams>().instance.IsVisibleInSharedSpace;
 
-            if(show)
+            if (show)
                 await ShowAsync(panel, parameters);
             else
-                await HideAsync(panel, parameters);
+                await HideAsync(panel);
         }
 
-        public void RegisterPanel(PanelsSharingSpace panel, IPanelInSharedSpace controller)
+        private bool IsRegistered(PanelsSharingSpace panel) =>
+            registrations.ContainsKey(panel);
+
+        private async UniTask HideAllAsync(PanelsSharingSpace? panelToIgnore = null)
+        {
+            foreach (KeyValuePair<PanelsSharingSpace, PanelRegistration> controllerInSharedSpace in registrations)
+                if ((!panelToIgnore.HasValue || controllerInSharedSpace.Key != panelToIgnore) && controllerInSharedSpace.Value.panel.IsVisibleInSharedSpace)
+                    await HideAsync(controllerInSharedSpace.Key);
+        }
+
+        private void OnControllerViewShowingComplete(IPanelInSharedSpace controller)
+        {
+            // Showing some panels may make others be visible too (like the chat), but we only consider the showing process as finished if the event was raised by the panel that started it
+            if (registrations[panelBeingShown].panel == controller)
+                isShowing = false;
+        }
+
+        private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
+            {
+                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
+
+                // TODO This can be an input parameter so we don't violate encapsulation
+                registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().FocusInputBox();
+            }
+        }
+
+        private abstract class PanelRegistration
+        {
+            internal abstract IPanelInSharedSpace panel { get; }
+
+            internal abstract PanelRegistration<T> GetByParams<T>();
+
+            internal abstract T GetPanel<T>();
+        }
+
+        private class PanelRegistration<TParams> : PanelRegistration
+        {
+            internal readonly IPanelInSharedSpace<TParams> instance;
+            private readonly Func<IMVCManager, TParams, CancellationToken, UniTask> showAsyncCommand;
+
+            internal override IPanelInSharedSpace panel => instance;
+
+            internal PanelRegistration(IPanelInSharedSpace<TParams> panel, Func<IMVCManager, TParams, CancellationToken, UniTask> showAsyncCommand = null)
+            {
+                instance = panel;
+                this.showAsyncCommand = showAsyncCommand;
+            }
+
+            internal override T GetPanel<T>()
+            {
+                if (instance is not T castedPanel)
+                    throw new ArgumentException($"{panel} is not assignable to {typeof(T)}");
+
+                return castedPanel;
+            }
+
+            internal UniTask IssueShowCommandAsync(IMVCManager mvcManager, TParams parameters, CancellationToken ct)
+            {
+                if (showAsyncCommand == null)
+                    throw new NotSupportedException($"{instance} is not a controller");
+
+                return showAsyncCommand(mvcManager, parameters, ct);
+            }
+
+            internal override PanelRegistration<T> GetByParams<T>()
+            {
+                if (typeof(T) != typeof(TParams))
+                    throw new ArgumentException($"The parameters type provided ({typeof(TParams).Name}) does not match the expected type ({typeof(TParams).Name})");
+
+                return this as PanelRegistration<T>;
+            }
+        }
+
+#region Registration
+        public void RegisterPanel<TParams>(PanelsSharingSpace panel, IPanelInSharedSpace<TParams> panelImplementation)
+        {
+            if (IsRegistered(panel))
+            {
+                ReportHub.LogError(ReportCategory.UI, $"The panel {panel} was already registered in the shared space manager!");
+                return;
+            }
+
+            panelImplementation.ViewShowingComplete += OnControllerViewShowingComplete;
+            registrations.Add(panel, new PanelRegistration<TParams>(panelImplementation));
+        }
+
+        public void RegisterPanel<TView, TInputData>(PanelsSharingSpace panel, IControllerInSharedSpace<TView, TInputData> controller) where TView: IView
         {
             if (IsRegistered(panel))
             {
@@ -263,120 +364,74 @@ namespace DCL.UI.SharedSpaceManager
 
             controller.ViewShowingComplete += OnControllerViewShowingComplete;
 
-            controllers.Add(panel, controller);
+            registrations.Add(panel, new PanelRegistration<TInputData>(controller,
+                (manager, data, ct) => manager.ShowAsync(new ShowCommand<TView, TInputData>(data), ct)));
         }
+#endregion
 
-        public void Dispose()
-        {
-            if(isFriendsFeatureEnabled)
-                dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
-
-            dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformedAsync;
-            dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
-            dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
-
-            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
-            dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
-            dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
-            dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
-
-            if(isCameraReelFeatureEnabled)
-                dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
-        }
-
-        private bool IsRegistered(PanelsSharingSpace panel)
-        {
-            return controllers.ContainsKey(panel);
-        }
-
-        private async UniTask HideAllAsync(PanelsSharingSpace? panelToIgnore = null)
-        {
-            foreach (KeyValuePair<PanelsSharingSpace,IPanelInSharedSpace> controllerInSharedSpace in controllers)
-                if((!panelToIgnore.HasValue || controllerInSharedSpace.Key != panelToIgnore) && controllerInSharedSpace.Value.IsVisibleInSharedSpace)
-                    await HideAsync(controllerInSharedSpace.Key);
-        }
-
-        private void OnControllerViewShowingComplete(IPanelInSharedSpace controller)
-        {
-            // Showing some panels may make others be visible too (like the chat), but we only consider the showing process as finished if the event was raised by the panel that started it
-            if (controllers[panelBeingShown] == controller)
-                isShowing = false;
-        }
-
-        private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
-        {
-            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
-            {
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
-                (controllers[PanelsSharingSpace.Chat] as ChatController).FocusInputBox();
-            }
-        }
-
-        #region Shortcut handlers
-
+#region Shortcut handlers
         private async void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible && isCameraReelFeatureEnabled)
+            if (!isExplorePanelVisible && isCameraReelFeatureEnabled)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel));
         }
 
         private async void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible)
+            if (!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack));
         }
 
         private async void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible)
+            if (!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings));
         }
 
         private async void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible)
+            if (!isExplorePanelVisible)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap));
         }
 
         private async void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible)
-                await ShowAsync(PanelsSharingSpace.Explore); // No section provided, the panel will decide
+            if (!isExplorePanelVisible)
+                await ShowAsync(PanelsSharingSpace.Explore, default(ExplorePanelParameter)); // No section provided, the panel will decide
         }
 
         private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible)
-                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+            if (!isExplorePanelVisible)
+                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
         }
 
         private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible && isFriendsFeatureEnabled)
+            if (!isExplorePanelVisible && isFriendsFeatureEnabled)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
         }
 
         private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
-            if(!isExplorePanelVisible)
+            if (!isExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
         {
             // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            if(isShowing || isHiding)
+            if (isShowing || isHiding)
                 return;
 
             Entity camera = ecsWorld.CacheCamera();
 
-            if(!ecsWorld.Has<InWorldCameraComponent>(camera))
+            if (!ecsWorld.Has<InWorldCameraComponent>(camera))
                 await HideAllAsync();
 
             const string SOURCE_SHORTCUT = "Shortcut";
             ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
         }
-
-        #endregion
+#endregion
     }
 }

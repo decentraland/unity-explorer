@@ -23,7 +23,7 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IPanelInSharedSpace
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
@@ -76,13 +76,13 @@ namespace DCL.ExplorePanel
             this.dclInput = dclInput;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.profileMenuController = profileMenuController;
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssignedAsync);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
-        private async void OnRewardAssignedAsync(object[] parameters)
+        private async UniTaskVoid OnRewardAssignedAsync(object[] _)
         {
             if(State == ControllerState.ViewHidden)
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack)); // TODO: move to the shared space manager?
@@ -96,11 +96,6 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
-        }
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)

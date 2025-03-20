@@ -14,7 +14,6 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,7 +22,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IPanelInSharedSpace
+    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IControllerInSharedSpace<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly ISelfProfile selfProfile;
@@ -88,11 +87,6 @@ namespace DCL.EmotesWheel
             emoteWheelInput.Close.performed -= Close;
             dclInput.UI.Close.performed -= Close;
             UnregisterSlotsInput(emoteWheelInput);
-        }
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)

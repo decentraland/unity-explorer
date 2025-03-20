@@ -27,7 +27,7 @@ using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView, ChatController.ShowParams>, IPanelInSharedSpace
+    public class ChatController : ControllerBase<ChatView, ChatController.ShowParams>, IControllerInSharedSpace<ChatView, ChatController.ShowParams>
     {
         public struct ShowParams
         {
@@ -166,14 +166,13 @@ namespace DCL.Chat
             memberListCts.SafeCancelAndDispose();
         }
 
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ShowParams showParams)
         {
             if(State != ControllerState.ViewHidden)
             {
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-                ShowParams showParams = (ShowParams)parameters;
                 IsUnfolded = showParams.ShowUnfolded;
 
                 ViewShowingComplete?.Invoke(this);

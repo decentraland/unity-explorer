@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
+using DCL.Friends.UI.FriendPanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -90,8 +91,8 @@ namespace DCL.UI.Sidebar
                 OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
             });
 
-            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings));
-            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap));
+            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
 
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
@@ -194,7 +195,7 @@ namespace DCL.UI.Sidebar
 
         private async void OnFriendsButtonClickedAsync()
         {
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends);
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
         private void OnHelpButtonClicked()
@@ -245,7 +246,7 @@ namespace DCL.UI.Sidebar
             viewInstance.UnblockSidebar();
         }
 
-        private async void OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
+        private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
