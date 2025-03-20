@@ -49,14 +49,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly List<OrderedDataManaged> orderedDataManagedList;
         private NativeList<OrderedDataNative> orderedDataNative;
         private JobHandle? sortingJobHandle;
+        private readonly IRealmData realmData;
+        private bool arraysInSync;
+
 
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity, VisualSceneStateResolver visualSceneStateResolver) : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity, VisualSceneStateResolver visualSceneStateResolver, IRealmData realmData) : base(world)
         {
             playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
             this.playerEntity = playerEntity;
             this.visualSceneStateResolver = visualSceneStateResolver;
+            this.realmData = realmData;
             this.realmPartitionSettings = realmPartitionSettings;
 
             maximumAmountOfScenesThatCanLoad = realmPartitionSettings.MaximumAmountOfScenesThatCanLoad;
@@ -106,15 +110,27 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
-        private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent)
+        private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
+            in SceneDefinitionComponent sceneDefinitionComponent)
         {
             var sceneLoadingState = new SceneLoadingState();
 
-            //Sizes should always be the same
-            orderedDataManagedList.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
-            orderedDataNative.Add(new OrderedDataNative());
+            if (sceneDefinitionComponent.IsPortableExperience)
+            {
+                //Portable experiences shouldnt be analyzed. Create straight away
+                World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent), partitionComponent), sceneLoadingState);
+            }
+            else
+            {
+                //Sizes should always be the same
+                orderedDataManagedList.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
+                orderedDataNative.Add(new OrderedDataNative());
+                arraysInSync = false;
+            }
             World.Add(entity, sceneLoadingState);
         }
+
 
         [Query]
         [All(typeof(PartitionComponent), typeof(SceneDefinitionComponent))]
@@ -160,12 +176,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 StartScenesLoading(realmComponent);
         }
 
+        private int lengthWhenSortingStarted;
+
         private void StartScenesLoading(in RealmComponent realmComponent)
         {
             if (sortingJobHandle is { IsCompleted: true })
             {
                 sortingJobHandle.Value.Complete();
-                CreatePromisesFromOrderedData(realmComponent.Ipfs);
+
+                // Since adding new values is throttled, arrays may be out of sync. They need to be synced to work
+                if (arraysInSync)
+                    CreatePromisesFromOrderedData(realmComponent.Ipfs);
             }
 
             if (sortingJobHandle is { IsCompleted: false }) return;
@@ -195,6 +216,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
+            arraysInSync = true;
             sortingJobHandle = orderedDataNative.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
@@ -206,15 +228,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             promisesCreated = 0;
 
             TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
-
             //Dont do anything until the teleport cooldown is over
             if (teleportParcel.JustTeleported)
                 return;
 
-            int orderedDataNativeLength = orderedDataNative.Length;
-
             unsafe
             {
+                int orderedDataNativeLength = orderedDataNative.Length;
                 OrderedDataNative* dataPtr = orderedDataNative.GetUnsafePtr();
                 int xCoordinateTeleporting = teleportParcel.Parcel.x;
                 int yCoordinateTeleporting = teleportParcel.Parcel.y;
@@ -234,7 +254,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                             UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
                             break;
                         }
-
                         continue;
                     }
 

@@ -198,7 +198,7 @@ namespace Global.Dynamic
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
-                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset)),
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

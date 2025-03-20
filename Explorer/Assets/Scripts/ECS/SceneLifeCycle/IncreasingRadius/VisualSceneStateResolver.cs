@@ -19,9 +19,6 @@ namespace DCL.LOD
         public VisualSceneStateEnum ResolveVisualSceneState(PartitionComponent partition, SceneDefinitionComponent sceneDefinitionComponent,
             VisualSceneStateEnum currentVisualSceneState, bool scenesAreFixed)
         {
-            // For PX scenes, we always show the scene
-            if (sceneDefinitionComponent.IsPortableExperience) return VisualSceneStateEnum.SHOWING_SCENE;
-
             //If we are in a world, dont show lods
             if (scenesAreFixed) return VisualSceneStateEnum.SHOWING_SCENE;
 
