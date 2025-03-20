@@ -90,7 +90,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                     virtualCameraCRDTEntity.Value,
                     hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
                 );
-                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
             }
             else
             {
@@ -187,6 +186,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
             virtualCameraInstance.enabled = true;
+
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
         }
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
