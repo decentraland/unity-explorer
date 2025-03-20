@@ -2,11 +2,15 @@ using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Fields
 {
     public class MarketplaceCreditsGoalRowView : MonoBehaviour
     {
+        [field: SerializeField]
+        public Image MainBackgroundImage { get; private set; }
+
         [field: SerializeField]
         public ImageView GoalImage { get; private set; }
 
@@ -78,6 +82,7 @@ namespace DCL.MarketplaceCredits.Fields
 
         public void SetClaimStatus(bool isPendingToClaim, bool isClaimed)
         {
+            MainBackgroundImage.enabled = !isPendingToClaim;
             PendingToClaimMark.SetActive(isPendingToClaim);
             PendingToClaimOutline.SetActive(isPendingToClaim);
             CreditsCanvasGroup.alpha = isClaimed ? AlphaValueForClaimedCredits : 1f;

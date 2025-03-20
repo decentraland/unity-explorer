@@ -226,7 +226,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -376,6 +376,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ced45a5ea5340ee84c61119bdf0a172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <MainBackgroundImage>k__BackingField: {fileID: 8584942396907256830}
   <GoalImage>k__BackingField: {fileID: 3569744193606336008}
   <DefaultGoalSprite>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <GoalTitleText>k__BackingField: {fileID: 3694455267212925076}
