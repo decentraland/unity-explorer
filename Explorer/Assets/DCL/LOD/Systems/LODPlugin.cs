@@ -20,14 +20,12 @@ namespace DCL.PluginSystem.Global
     public class LODPlugin : IDCLGlobalPlugin
     {
         private readonly IScenesCache scenesCache;
-        private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly IRealmPartitionSettings partitionSettings;
-        private readonly VisualSceneStateResolver visualSceneStateResolver;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
@@ -42,21 +40,19 @@ namespace DCL.PluginSystem.Global
         private readonly int lodLevels;
         private readonly Transform lodCacheParent;
 
-        public LODPlugin(RealmData realmData, IPerformanceBudget memoryBudget,
+        public LODPlugin(IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset, IRealmPartitionSettings partitionSettings,
             ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource, Transform lodCacheParent, bool lodEnabled,
             int lodLevels)
         {
-            this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
             this.debugBuilder = debugBuilder;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.visualSceneStateResolver = visualSceneStateResolver;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.lodSettingsAsset = lodSettingsAsset;
             this.lodEnabled = lodEnabled;
@@ -71,8 +67,6 @@ namespace DCL.PluginSystem.Global
         {
             lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
-
-            //UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodCache, lodSettingsAsset, visualSceneStateResolver);
 
             if (lodEnabled)
             {

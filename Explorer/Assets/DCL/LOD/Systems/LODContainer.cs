@@ -44,6 +44,8 @@ namespace DCL.LOD.Systems
 
         public ILODCache LodCache { get; private set; } = null!;
 
+        public ILODSettingsAsset LODSettings { get; private set; } = null!;
+
         public HashSet<Vector2Int> RoadCoordinates { get; private set; }
 
         private LODContainer(IAssetsProvisioner assetsProvisioner)
@@ -72,8 +74,6 @@ namespace DCL.LOD.Systems
                 foreach (RoadDescription roadDescription in c.roadSettingsAsset.Value.RoadDescriptions)
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
-                VisualSceneStateResolver.realmData = staticContainer.RealmData;
-                VisualSceneStateResolver.lodSettingsAsset = c.lodSettingsAsset.Value;
                 container.RoadCoordinates = roadDataDictionary.Keys.ToHashSet();
 
                 var roadAssetPool = new RoadAssetsPool(realmData, c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
@@ -93,13 +93,14 @@ namespace DCL.LOD.Systems
                 LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, LODGROUP_POOL_PREWARM_VALUE);
 
                 c.LodCache = new LODCache(lodGroupPool);
+                c.LODSettings = c.lodSettingsAsset.Value;
                 staticContainer.CacheCleaner.Register(c.LodCache);
 
-                c.LODPlugin = new LODPlugin(realmData,
+                c.LODPlugin = new LODPlugin(
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    null, textureArrayContainerFactory, c.lodSettingsAsset.Value,
+                    textureArrayContainerFactory, c.lodSettingsAsset.Value,
                     staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, decentralandUrlsSource, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;

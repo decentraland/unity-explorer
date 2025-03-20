@@ -71,6 +71,7 @@ namespace Global.Dynamic
         private readonly bool localSceneDevelopment;
         private readonly IProfileRepository profileRepository;
         private readonly HashSet<Vector2Int> roadCoordinates;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -80,6 +81,7 @@ namespace Global.Dynamic
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             HashSet<Vector2Int> roadCoordinates,
+            ILODSettingsAsset lodSettingsAsset,
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
@@ -110,6 +112,7 @@ namespace Global.Dynamic
             this.world = world;
             this.profileRepository = profileRepository;
             this.roadCoordinates = roadCoordinates;
+            this.lodSettingsAsset = lodSettingsAsset;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -195,7 +198,7 @@ namespace Global.Dynamic
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
-                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity),
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset)),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

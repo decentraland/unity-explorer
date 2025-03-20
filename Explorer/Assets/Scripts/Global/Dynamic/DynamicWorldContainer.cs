@@ -863,6 +863,7 @@ namespace Global.Dynamic
                 currentSceneInfo,
                 lodContainer.LodCache,
                 lodContainer.RoadCoordinates,
+                lodContainer.LODSettings,
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
