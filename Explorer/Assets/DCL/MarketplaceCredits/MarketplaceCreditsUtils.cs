@@ -1,6 +1,7 @@
 using DCL.MarketplaceCreditsAPIService;
 using System;
 using System.Globalization;
+using UnityEngine;
 
 namespace DCL.MarketplaceCredits
 {
@@ -14,6 +15,9 @@ namespace DCL.MarketplaceCredits
         public const string X_LINK = "https://x.com/decentraland";
         public const int CREDITS_UNLOCKED_DURATION = 5;
         public const int ERROR_NOTIFICATION_DURATION = 3;
+        public const int CHECKING_SIDEBAR_BUTTON_STATE_TIME_INTERVAL = 10;
+
+        private const string FEATURE_OPEN_BY_FIRST_TIME_LOCAL_STORAGE_KEY = "MarketplaceCreditsFeatureOpenByFirstTime";
 
         public static string FormatEndOfTheWeekDate(uint timeLeftInMilliseconds)
         {
@@ -51,6 +55,15 @@ namespace DCL.MarketplaceCredits
 
         public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds;
+
+        public static bool HasFeatureBeenOpenedByFirstTime() =>
+            PlayerPrefs.GetInt(FEATURE_OPEN_BY_FIRST_TIME_LOCAL_STORAGE_KEY, 0) == 1;
+
+        public static void SetFeatureAsOpenedByFirstTime()
+        {
+            PlayerPrefs.SetInt(FEATURE_OPEN_BY_FIRST_TIME_LOCAL_STORAGE_KEY, 1);
+            PlayerPrefs.Save();
+        }
 
         public static bool AreWeekGoalsCompleted(this CreditsProgramProgressResponse creditsProgramProgressResponse)
         {

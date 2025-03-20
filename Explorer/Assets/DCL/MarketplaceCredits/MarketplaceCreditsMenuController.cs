@@ -14,6 +14,7 @@ using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
@@ -21,6 +22,8 @@ namespace DCL.MarketplaceCredits
 {
     public class MarketplaceCreditsMenuController : IDisposable
     {
+        private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID = Animator.StringToHash("isAlert");
+
         private readonly MarketplaceCreditsMenuView view;
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly ISidebarBus sidebarBus;
@@ -33,11 +36,13 @@ namespace DCL.MarketplaceCredits
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
-        private readonly INotificationsBusController notificationBusController;
+        private readonly Animator sidebarCreditsButtonAnimator;
+        private readonly GameObject sidebarCreditsButtonIndicator;
 
         private CancellationTokenSource showHideMenuCts;
         private CancellationTokenSource showCreditsUnlockedCts;
         private CancellationTokenSource showErrorNotificationCts;
+        private CancellationTokenSource sidebarButtonStateCts;
 
         public MarketplaceCreditsMenuController(
             MarketplaceCreditsMenuView view,
@@ -50,7 +55,9 @@ namespace DCL.MarketplaceCredits
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            INotificationsBusController notificationBusController)
+            INotificationsBusController notificationBusController,
+            Animator sidebarCreditsButtonAnimator,
+            GameObject sidebarCreditsButtonIndicator)
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
@@ -58,8 +65,9 @@ namespace DCL.MarketplaceCredits
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.mvcManager = mvcManager;
-            this.notificationBusController = notificationBusController;
             this.sidebarActionsBus = sidebarActionsBus;
+            this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
+            this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
 
             mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
@@ -95,6 +103,9 @@ namespace DCL.MarketplaceCredits
                 selfProfile);
 
             view.ErrorNotification.Hide(true, CancellationToken.None);
+
+            sidebarButtonStateCts = sidebarButtonStateCts.SafeRestart();
+            CheckForSidebarButtonStateAsync(sidebarButtonStateCts.Token).Forget();
         }
 
         public void OpenPanel()
@@ -103,6 +114,7 @@ namespace DCL.MarketplaceCredits
             view.ShowAsync(showHideMenuCts.Token).Forget();
             OpenSection(MarketplaceCreditsSection.WELCOME);
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+            MarketplaceCreditsUtils.SetFeatureAsOpenedByFirstTime();
         }
 
         public void ClosePanel()
@@ -160,6 +172,7 @@ namespace DCL.MarketplaceCredits
             showHideMenuCts.SafeCancelAndDispose();
             showCreditsUnlockedCts.SafeCancelAndDispose();
             showErrorNotificationCts.SafeCancelAndDispose();
+            sidebarButtonStateCts.SafeCancelAndDispose();
 
             mvcManager.OnViewClosed -= OnCreditsUnlockedPanelClosed;
             view.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
@@ -208,6 +221,16 @@ namespace DCL.MarketplaceCredits
         {
             sidebarActionsBus.CloseAllWidgets();
             OpenPanel();
+        }
+
+        private async UniTaskVoid CheckForSidebarButtonStateAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID, !MarketplaceCreditsUtils.HasFeatureBeenOpenedByFirstTime());
+
+                await UniTask.Delay(MarketplaceCreditsUtils.CHECKING_SIDEBAR_BUTTON_STATE_TIME_INTERVAL * 1000, cancellationToken: ct);
+            }
         }
     }
 }

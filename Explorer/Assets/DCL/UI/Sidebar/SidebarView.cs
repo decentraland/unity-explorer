@@ -28,7 +28,9 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; }
 
         [field: Header("Marketplace Credits")]
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator MarketplaceCreditsButton { get; private set; } = null!;
+        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator MarketplaceCreditsButton { get; private set; }
+        [field: SerializeField] public Animator MarketplaceCreditsButtonAnimator { get; private set; }
+        [field: SerializeField] public GameObject MarketplaceCreditsClaimIndicator { get; private set; }
         [field: SerializeField] public MarketplaceCreditsMenuView MarketplaceCreditsMenuView { get; private set; }
 
         [field: Header("Explore Panel Shortcuts")]
