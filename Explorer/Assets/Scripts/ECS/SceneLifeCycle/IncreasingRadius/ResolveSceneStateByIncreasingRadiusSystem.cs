@@ -36,36 +36,34 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Entity playerEntity;
         private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IRealmData realmData;
 
-        private readonly int maximumAmountOfScenesThatCanLoad;
-        private readonly int maximumAmountOfReductedLODsThatCanLoad;
-        private readonly int maximumAmoutOfLODsThatCanLoad;
+        //Array sorting helpers
+        private readonly List<OrderedDataManaged> orderedDataManagedList;
+        private readonly NativeList<OrderedDataNative> orderedDataNative;
+        private JobHandle? sortingJobHandle;
+        private bool arraysInSync;
 
+        //Loading helpers
         private int loadedScenes;
         private int loadedLODs;
         private int qualityReductedLOD;
         private int promisesCreated;
 
-        private readonly List<OrderedDataManaged> orderedDataManagedList;
-        private NativeList<OrderedDataNative> orderedDataNative;
-        private JobHandle? sortingJobHandle;
-        private readonly IRealmData realmData;
-        private bool arraysInSync;
-
+        private readonly SceneLoadingLimit sceneLoadingLimit;
 
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity, VisualSceneStateResolver visualSceneStateResolver, IRealmData realmData) : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity,
+            VisualSceneStateResolver visualSceneStateResolver, IRealmData realmData,
+            SceneLoadingLimit sceneLoadingLimit) : base(world)
         {
             playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
             this.playerEntity = playerEntity;
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.realmData = realmData;
             this.realmPartitionSettings = realmPartitionSettings;
-
-            maximumAmountOfScenesThatCanLoad = realmPartitionSettings.MaximumAmountOfScenesThatCanLoad;
-            maximumAmoutOfLODsThatCanLoad = realmPartitionSettings.MaximumAmoutOfLODsThatCanLoad;
-            maximumAmountOfReductedLODsThatCanLoad = realmPartitionSettings.MaximumAmountOfReductedLODsThatCanLoad;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             int initialCapacity = ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3;
@@ -285,7 +283,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes < maximumAmountOfScenesThatCanLoad)
+            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes < sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad)
                 loadedScenes++;
             else
             {
@@ -296,13 +294,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //Reduce quality
             if (candidateByEnum == VisualSceneStateEnum.SHOWING_LOD)
             {
-                if (loadedLODs < maximumAmoutOfLODsThatCanLoad)
+                if (loadedLODs < sceneLoadingLimit.MaximumAmoutOfLODsThatCanLoad)
                 {
                     // This LOD is within the full-quality limit, so load it normally. Nothing to do here
                     loadedLODs++;
                     sceneState.FullQuality = true;
                 }
-                else if (qualityReductedLOD < maximumAmountOfReductedLODsThatCanLoad)
+                else if (qualityReductedLOD < sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad)
                 {
                     qualityReductedLOD++;
                     if (sceneState.FullQuality)

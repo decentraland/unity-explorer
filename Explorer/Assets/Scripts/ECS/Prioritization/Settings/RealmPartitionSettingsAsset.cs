@@ -60,7 +60,7 @@ namespace ECS.Prioritization
         public int MaximumAmountOfScenesThatCanLoad { get; private set; }
 
         [field: SerializeField]
-        public int MaximumAmoutOfLODsThatCanLoad { get; private set; }
+        public int MaximumAmountOfLODsThatCanLoad { get; private set; }
 
         [field: SerializeField]
         public int MaximumAmountOfReductedLODsThatCanLoad { get; private set; }

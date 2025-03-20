@@ -193,12 +193,17 @@ namespace Global.Dynamic
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
+            var sceneLoadingLimit
+                = new SceneLoadingLimit(realmPartitionSettings.MaximumAmountOfScenesThatCanLoad,
+                    realmPartitionSettings.MaximumAmountOfLODsThatCanLoad,
+                    realmPartitionSettings.MaximumAmountOfReductedLODsThatCanLoad);
+
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
-                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData),
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

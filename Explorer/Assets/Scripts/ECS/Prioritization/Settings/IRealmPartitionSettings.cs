@@ -56,7 +56,7 @@ namespace ECS.Prioritization
 
         int MaximumAmountOfScenesThatCanLoad { get; }
 
-        int MaximumAmoutOfLODsThatCanLoad { get; }
+        int MaximumAmountOfLODsThatCanLoad { get; }
 
         int MaximumAmountOfReductedLODsThatCanLoad { get; }
 
