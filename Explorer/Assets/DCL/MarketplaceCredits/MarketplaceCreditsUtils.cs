@@ -56,15 +56,6 @@ namespace DCL.MarketplaceCredits
         public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds;
 
-        public static bool HasFeatureBeenOpenedByFirstTime() =>
-            PlayerPrefs.GetInt(FEATURE_OPEN_BY_FIRST_TIME_LOCAL_STORAGE_KEY, 0) == 1;
-
-        public static void SetFeatureAsOpenedByFirstTime()
-        {
-            PlayerPrefs.SetInt(FEATURE_OPEN_BY_FIRST_TIME_LOCAL_STORAGE_KEY, 1);
-            PlayerPrefs.Save();
-        }
-
         public static bool AreWeekGoalsCompleted(this CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             foreach (var goal in creditsProgramProgressResponse.goals)

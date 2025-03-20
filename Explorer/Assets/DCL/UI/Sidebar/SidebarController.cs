@@ -137,6 +137,8 @@ namespace DCL.UI.Sidebar
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
             chatView.FoldingChanged += OnChatViewFoldingChanged;
+
+            marketplaceCreditsMenuController.CheckForSidebarButtonState();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)

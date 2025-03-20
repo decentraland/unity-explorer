@@ -167,7 +167,11 @@ namespace DCL.MarketplaceCredits.Sections
                 view.SetCaptchaAsLoading(false);
 
                 if (claimCreditsResponse.success)
+                {
                     marketplaceCreditsMenuController.ShowCreditsUnlockedPanel(claimCreditsResponse.claimedCredits);
+                    marketplaceCreditsMenuController.SetSidebarCreditsButtonAlertAnimation(false);
+                    marketplaceCreditsMenuController.SetSidebarCreditsButtonAlertClaimIndicator(false);
+                }
                 else
                     view.SetCaptchaAsErrorState(true, isNonSolvedError: true);
             }

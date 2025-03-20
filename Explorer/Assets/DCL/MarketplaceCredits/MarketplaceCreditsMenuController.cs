@@ -1,11 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SidebarBus;
 using DCL.UI.Buttons;
@@ -33,6 +35,8 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
         private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
         private readonly IInputBlock inputBlock;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
@@ -43,6 +47,8 @@ namespace DCL.MarketplaceCredits
         private CancellationTokenSource showCreditsUnlockedCts;
         private CancellationTokenSource showErrorNotificationCts;
         private CancellationTokenSource sidebarButtonStateCts;
+
+        private Profile ownProfile;
 
         public MarketplaceCreditsMenuController(
             MarketplaceCreditsMenuView view,
@@ -64,6 +70,8 @@ namespace DCL.MarketplaceCredits
             this.sidebarBus = sidebarBus;
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.sidebarActionsBus = sidebarActionsBus;
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
@@ -75,6 +83,7 @@ namespace DCL.MarketplaceCredits
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.AddListener(ClosePanel);
 
+            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationClicked);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
@@ -103,9 +112,6 @@ namespace DCL.MarketplaceCredits
                 selfProfile);
 
             view.ErrorNotification.Hide(true, CancellationToken.None);
-
-            sidebarButtonStateCts = sidebarButtonStateCts.SafeRestart();
-            CheckForSidebarButtonStateAsync(sidebarButtonStateCts.Token).Forget();
         }
 
         public void OpenPanel()
@@ -114,7 +120,6 @@ namespace DCL.MarketplaceCredits
             view.ShowAsync(showHideMenuCts.Token).Forget();
             OpenSection(MarketplaceCreditsSection.WELCOME);
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-            MarketplaceCreditsUtils.SetFeatureAsOpenedByFirstTime();
         }
 
         public void ClosePanel()
@@ -167,6 +172,12 @@ namespace DCL.MarketplaceCredits
             ShowErrorNotificationAsync(message, showErrorNotificationCts.Token).Forget();
         }
 
+        public void CheckForSidebarButtonState()
+        {
+            sidebarButtonStateCts = sidebarButtonStateCts.SafeRestart();
+            CheckForSidebarButtonStateAsync(sidebarButtonStateCts.Token).Forget();
+        }
+
         public void Dispose()
         {
             showHideMenuCts.SafeCancelAndDispose();
@@ -217,6 +228,12 @@ namespace DCL.MarketplaceCredits
             OpenSection(MarketplaceCreditsSection.WELCOME);
         }
 
+        private void OnMarketplaceCreditsNotificationReceived(INotification notification)
+        {
+            SetSidebarCreditsButtonAlertAnimation(true);
+            SetSidebarCreditsButtonAlertClaimIndicator(true);
+        }
+
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
         {
             sidebarActionsBus.CloseAllWidgets();
@@ -225,12 +242,37 @@ namespace DCL.MarketplaceCredits
 
         private async UniTaskVoid CheckForSidebarButtonStateAsync(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID, !MarketplaceCreditsUtils.HasFeatureBeenOpenedByFirstTime());
+                ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile != null)
+                {
+                    var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
 
-                await UniTask.Delay(MarketplaceCreditsUtils.CHECKING_SIDEBAR_BUTTON_STATE_TIME_INTERVAL * 1000, cancellationToken: ct);
+                    if (creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds)
+                    {
+                        SetSidebarCreditsButtonAlertAnimation(false);
+                        SetSidebarCreditsButtonAlertClaimIndicator(false);
+                        return;
+                    }
+
+                    bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
+                    SetSidebarCreditsButtonAlertAnimation(!creditsProgramProgressResponse.user.isRegistered || thereIsSomethingToClaim);
+                    SetSidebarCreditsButtonAlertClaimIndicator(creditsProgramProgressResponse.user.isRegistered && thereIsSomethingToClaim);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
+
+        public void SetSidebarCreditsButtonAlertAnimation(bool isOn) =>
+            sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID, isOn);
+
+        public void SetSidebarCreditsButtonAlertClaimIndicator(bool isOn) =>
+            sidebarCreditsButtonIndicator.SetActive(isOn);
     }
 }
