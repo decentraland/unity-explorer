@@ -352,6 +352,10 @@ namespace DCL.WebRequests.HTTP2
                         EndCacheWrite(response.Context);
 
                         cachedPartialData.writeHandler = null;
+
+                        // Open for reading immediately
+                        cachedPartialData.readHandler = new CacheReadHandler(cache.BeginReadContent(requestHash, response.Context));
+
                         opMode = Mode.COMPLETE_DATA_CACHED;
                     }
 
@@ -555,7 +559,7 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
-        internal struct CachedPartialData
+        private struct CachedPartialData
         {
             internal readonly PoolExtensions.Scope<Dictionary<string, List<string>>> pooledHeaders;
 
