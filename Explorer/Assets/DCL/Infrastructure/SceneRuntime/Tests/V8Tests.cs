@@ -9,21 +9,19 @@ namespace SceneRuntime.Tests
     public class V8Tests
     {
         private V8EngineFactory engineFactory;
-        private V8ActiveEngines activeEngines;
         private V8ScriptEngine engine;
 
         [SetUp]
         public void SetUp()
         {
-            activeEngines = new V8ActiveEngines();
-             engineFactory = new V8EngineFactory(activeEngines);
-             engine = engineFactory.Create(new SceneShortInfo(new Vector2Int(0, 0), "test"));
+            engineFactory = new V8EngineFactory();
+            engine = engineFactory.Create(new SceneShortInfo(new Vector2Int(0, 0), "test"));
         }
 
         [TearDown]
         public void TearDown()
         {
-            activeEngines.Clear();
+            engine.Dispose();
         }
 
         [Test]

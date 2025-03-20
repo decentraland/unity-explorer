@@ -32,13 +32,6 @@ namespace Global
         /// </summary>
         public ISceneFactory SceneFactory { get; private set; }
 
-        /// <summary>
-        /// Is actually collectively owned by some of the global plugins.
-        /// <see cref="GlobalWorldFactory.Create"/> loops through all(?) global plugins and passes it to
-        /// each.
-        /// </summary>
-        public V8ActiveEngines V8ActiveEngines { get; private set; }
-
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
@@ -59,16 +52,12 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
 
-            var v8ActiveEngines = new V8ActiveEngines();
-
             return new SceneSharedContainer
             {
-                V8ActiveEngines = v8ActiveEngines,
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController,
-                        realmData ?? new IRealmData.Fake(), new V8EngineFactory(v8ActiveEngines),
-                        v8ActiveEngines, webJsSources),
+                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
+                        webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
