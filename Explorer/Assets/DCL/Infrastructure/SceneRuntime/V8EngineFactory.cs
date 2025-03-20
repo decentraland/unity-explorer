@@ -3,25 +3,21 @@ using Microsoft.ClearScript.V8;
 
 namespace SceneRuntime
 {
-    public class V8EngineFactory
+    public sealed class V8EngineFactory
     {
-        private readonly V8ActiveEngines activeEngines;
-
-        public V8EngineFactory(V8ActiveEngines activeEngines)
+        public V8EngineFactory()
         {
-            this.activeEngines = activeEngines;
+            // TODO: Store information about which scene's engine to create with debugging enabled.
         }
 
         public V8ScriptEngine Create(SceneShortInfo sceneInfo)
         {
-            var engine = new V8ScriptEngine();
+            var engine = new V8ScriptEngine(sceneInfo.ToString());
 
             // IL2CPP does not support dynamic bindings!
             engine.DisableDynamicBinding = true;
             engine.UseReflectionBindFallback = true;
             engine.AllowReflection = true;
-
-            activeEngines.TryAdd(sceneInfo, engine);
 
             return engine;
         }
