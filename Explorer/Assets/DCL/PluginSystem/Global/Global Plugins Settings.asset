@@ -292,6 +292,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BlockUserPromptPrefab>k__BackingField:
+          m_AssetGUID: 93a86930ad6d44ebd85b46f9c6ebad72
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -377,6 +382,11 @@ MonoBehaviour:
         <GridLayoutFixedColumnCount>k__BackingField: 4
         <ThumbnailHeight>k__BackingField: 201
         <ThumbnailWidth>k__BackingField: 272
+        NameEditorPrefab:
+          m_AssetGUID: 4362b43091b0d462db2641f8c866e9b9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -563,6 +573,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuViewUserProfileButtonPrefab:
           m_AssetGUID: c325bf3c176cc034d83115896fd851da
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuViewBlockUserButtonPrefab:
+          m_AssetGUID: 2308a593e7fee41dbad5a6b14f89e0e7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

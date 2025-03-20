@@ -26,15 +26,6 @@ namespace DCL.Profiles
         public Sprite? GetThumbnail(string userId) =>
             thumbnails.GetValueOrDefault(userId);
 
-        public async UniTask<Sprite?> GetThumbnailAsync(Profile profile, CancellationToken ct)
-        {
-            Sprite? sprite = GetThumbnail(profile.UserId);
-            if (sprite != null)
-                return sprite;
-
-            return await DownloadThumbnailAsync(profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
-        }
-
         public async UniTask<Sprite?> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
         {
             Sprite? sprite = GetThumbnail(userId);
@@ -61,7 +52,7 @@ namespace DCL.Profiles
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
                 Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-                SetThumbnail(userId, downloadedSprite);
+                SetThumbnailIntoCache(userId, downloadedSprite);
 
                 return downloadedSprite;
             }
@@ -72,8 +63,7 @@ namespace DCL.Profiles
             }
         }
 
-        public void SetThumbnail(string userId, Sprite sprite) =>
+        private void SetThumbnailIntoCache(string userId, Sprite sprite) =>
             thumbnails[userId] = sprite;
-
     }
 }

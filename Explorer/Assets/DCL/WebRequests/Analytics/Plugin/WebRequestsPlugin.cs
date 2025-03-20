@@ -21,17 +21,18 @@ namespace DCL.WebRequests.Analytics
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, new[]
+            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, new ShowWebRequestsAnalyticsSystem.RequestType[]
             {
-                typeof(GetAssetBundleWebRequest),
-                typeof(GenericGetRequest),
-                typeof(GenericPostRequest),
-                typeof(GenericPutRequest),
-                typeof(GenericPatchRequest),
-                typeof(GenericHeadRequest),
-                typeof(GenericDeleteRequest),
-                typeof(GetTextureWebRequest),
-                typeof(GetAudioClipWebRequest),
+                new (typeof(GetAssetBundleWebRequest), "Asset Bundle"),
+                new (typeof(GenericGetRequest), "Get"),
+                new (typeof(PartialDownloadRequest), "Partial"),
+                new (typeof(GenericPostRequest), "Post"),
+                new (typeof(GenericPutRequest), "Put"),
+                new (typeof(GenericPatchRequest), "Patch"),
+                new (typeof(GenericHeadRequest), "Head"),
+                new (typeof(GenericDeleteRequest), "Delete"),
+                new (typeof(GetTextureWebRequest), "Texture"),
+                new (typeof(GetAudioClipWebRequest), "Audio"),
             });
         }
     }

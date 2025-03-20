@@ -16,6 +16,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuUserProfileView> userProfilePool;
         private readonly IObjectPool<GenericContextMenuOpenUserProfileButtonView> openUserProfileButtonPool;
         private readonly IObjectPool<GenericContextMenuMentionUserButtonView> mentionUserButtonPool;
+        private readonly IObjectPool<GenericContextMenuBlockUserButtonView> blockUserButtonPool;
 
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
@@ -27,7 +28,8 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuToggleView togglePrefab,
             GenericContextMenuUserProfileView userProfilePrefab,
             GenericContextMenuOpenUserProfileButtonView openUserProfileButtonPrefab,
-            GenericContextMenuMentionUserButtonView mentionUserButtonPrefab)
+            GenericContextMenuMentionUserButtonView mentionUserButtonPrefab,
+            GenericContextMenuBlockUserButtonView blockUserButtonPrefab)
         {
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => GameObject.Instantiate(separatorPrefab, controlsParent),
@@ -64,6 +66,12 @@ namespace DCL.UI.GenericContextMenu
                 actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => GameObject.Destroy(buttonView.gameObject));
 
+            blockUserButtonPool = new ObjectPool<GenericContextMenuBlockUserButtonView>(
+                createFunc: () => GameObject.Instantiate(blockUserButtonPrefab, controlsParent),
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
+                actionOnDestroy: buttonView => GameObject.Destroy(buttonView.gameObject));
+
             mentionUserButtonPool = new ObjectPool<GenericContextMenuMentionUserButtonView>(
                 createFunc: () => GameObject.Instantiate(mentionUserButtonPrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
@@ -81,6 +89,7 @@ namespace DCL.UI.GenericContextMenu
                                                             UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
                                                             MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings => GetMentionUserButton(mentionUserButtonContextMenuControlSettings),
                                                             OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings => GetOpenUserProfileButton(openUserProfileButtonContextMenuControlSettings),
+                                                            BlockUserButtonContextMenuControlSettings blockUserButtonContextMenuControlSettings => GetBlockUserButton(blockUserButtonContextMenuControlSettings),
                                                             _ => throw new ArgumentOutOfRangeException()
                                                         };
             component!.transform.SetSiblingIndex(index);
@@ -137,6 +146,14 @@ namespace DCL.UI.GenericContextMenu
             return userProfileView;
         }
 
+        private GenericContextMenuComponentBase GetBlockUserButton(BlockUserButtonContextMenuControlSettings settings)
+        {
+            GenericContextMenuBlockUserButtonView blockUserView = blockUserButtonPool.Get();
+            blockUserView.Configure(settings);
+
+            return blockUserView;
+        }
+
         public void Dispose() =>
             ReleaseAllCurrentControls();
 
@@ -165,6 +182,9 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case GenericContextMenuOpenUserProfileButtonView buttonView:
                         openUserProfileButtonPool.Release(buttonView);
+                        break;
+                    case GenericContextMenuBlockUserButtonView buttonView:
+                        blockUserButtonPool.Release(buttonView);
                         break;
                 }
             }

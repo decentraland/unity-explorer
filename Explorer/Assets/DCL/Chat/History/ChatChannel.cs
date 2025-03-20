@@ -120,6 +120,7 @@ namespace DCL.Chat.History
                 // Adding two elements to count as top and bottom padding
                 messages.Add(new ChatMessage(true));
                 messages.Add(new ChatMessage(true));
+                readMessages = 2; // both paddings
             }
 
             // Removing padding element and reversing list due to infinite scroll view behaviour

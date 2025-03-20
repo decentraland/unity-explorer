@@ -45,7 +45,6 @@ namespace DCL.GlobalPartitioning
         private readonly IScenesCache scenesCache;
         private readonly Entity playerEntity;
 
-
         static GlobalDeferredLoadingSystem()
         {
             COMPONENT_HANDLERS_SCENES_ASSETS = new[]
