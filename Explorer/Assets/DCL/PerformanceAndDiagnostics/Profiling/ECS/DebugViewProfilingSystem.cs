@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
@@ -7,15 +6,11 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
-using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.Versioning;
-using SceneRunner;
-using SceneRunner.Scene;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Diagnostics;
 using static DCL.Utilities.ConversionUtils;
@@ -23,6 +18,7 @@ using static DCL.Utilities.ConversionUtils;
 namespace DCL.Profiling.ECS
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateAfter(typeof(UpdateProfilerSystem))]
     public partial class DebugViewProfilingSystem : BaseUnityLoopSystem
     {
         private const float FRAME_STATS_COOLDOWN = 30; // update each <FRAME_STATS_COOLDOWN> frames (statistic buffer == 1000)
@@ -30,7 +26,6 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
-        private readonly IScenesCache scenesCache;
         private readonly CurrentSceneInfo currentSceneInfo;
 
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
@@ -68,29 +63,13 @@ namespace DCL.Profiling.ECS
         private bool frameTimingsEnabled;
         private bool sceneMetricsEnabled;
 
-        internal static ulong allScenesTotalHeapSize { get; private set; }
-        internal static ulong allScenesTotalHeapSizeExecutable { get; private set; }
-        internal static ulong allScenesTotalPhysicalSize { get; private set; }
-        internal static ulong allScenesUsedHeapSize { get; private set; }
-        internal static ulong allScenesHeapSizeLimit { get; private set; }
-        internal static ulong allScenesTotalExternalSize { get; private set; }
-        internal static int activeEngines { get; private set; }
-        internal static ulong currentSceneTotalHeapSize { get; private set; }
-        internal static ulong currentSceneTotalHeapSizeExecutable { get; private set; }
-        internal static ulong currentSceneTotalPhysicalSize { get; private set; }
-        internal static ulong currentSceneUsedHeapSize { get; private set; }
-        internal static ulong currentSceneHeapSizeLimit { get; private set; }
-        internal static ulong currentSceneTotalExternalSize { get; private set; }
-        internal static bool currentSceneHasStats { get; private set; }
-
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
-            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, IScenesCache scenesCache,
-            DCLVersion dclVersion) : base(world)
+            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion)
+            : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
-            this.scenesCache = scenesCache;
 
             CreateView();
             return;
@@ -142,8 +121,6 @@ namespace DCL.Profiling.ECS
 
         protected override void Update(float t)
         {
-            SampleJavaScriptProfilerCounters();
-
             if (!realmData.Configured) return;
 
             if (memoryVisibilityBinding.IsExpanded)
@@ -171,74 +148,12 @@ namespace DCL.Profiling.ECS
             }
         }
 
-        private void SampleJavaScriptProfilerCounters()
-        {
-            allScenesTotalHeapSize = 0ul;
-            allScenesTotalHeapSizeExecutable = 0ul;
-            allScenesTotalPhysicalSize = 0ul;
-            allScenesUsedHeapSize = 0ul;
-            allScenesHeapSizeLimit = 0ul;
-            allScenesTotalExternalSize = 0ul;
-            activeEngines = 0;
-
-            SampleJavaScriptProfilerCountersQuery(World);
-
-            if (activeEngines > 0)
-                allScenesHeapSizeLimit /= (ulong)activeEngines;
-
-            currentSceneHasStats = false;
-
-            if (scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } })
-            {
-                var scene = (SceneFacade)scenesCache.CurrentScene;
-                var heapInfo = scene.runtimeInstance.RuntimeHeapInfo;
-
-                if (heapInfo != null)
-                {
-                    currentSceneTotalHeapSize = heapInfo.TotalHeapSize;
-                    currentSceneTotalHeapSizeExecutable = heapInfo.TotalHeapSizeExecutable;
-                    currentSceneTotalPhysicalSize = heapInfo.TotalPhysicalSize;
-                    currentSceneUsedHeapSize = heapInfo.UsedHeapSize;
-                    currentSceneHeapSizeLimit = heapInfo.HeapSizeLimit;
-                    currentSceneTotalExternalSize = heapInfo.TotalExternalSize;
-                    currentSceneHasStats = true;
-                }
-            }
-
-#if ENABLE_PROFILER
-            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE.Sample(allScenesTotalHeapSize);
-            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE_EXECUTABLE.Sample(allScenesTotalHeapSizeExecutable);
-            JavaScriptProfilerCounters.TOTAL_PHYSICAL_SIZE.Sample(allScenesTotalPhysicalSize);
-            JavaScriptProfilerCounters.USED_HEAP_SIZE.Sample(allScenesUsedHeapSize);
-            JavaScriptProfilerCounters.TOTAL_EXTERNAL_SIZE.Sample(allScenesTotalExternalSize);
-            JavaScriptProfilerCounters.ACTIVE_ENGINES.Sample(activeEngines);
-#endif
-        }
-
-        [Query]
-        private void SampleJavaScriptProfilerCounters(ISceneFacade scene0)
-        {
-            var scene = (SceneFacade)scene0;
-            var heapInfo = scene.runtimeInstance.RuntimeHeapInfo;
-
-            if (heapInfo != null)
-            {
-                allScenesTotalHeapSize += heapInfo.TotalHeapSize;
-                allScenesTotalHeapSizeExecutable += heapInfo.TotalHeapSizeExecutable;
-                allScenesTotalPhysicalSize += heapInfo.TotalPhysicalSize;
-                allScenesUsedHeapSize += heapInfo.UsedHeapSize;
-                allScenesHeapSizeLimit += heapInfo.HeapSizeLimit;
-                allScenesTotalExternalSize += heapInfo.TotalExternalSize;
-                activeEngines += 1;
-            }
-        }
-
         private void UpdateSceneMetrics()
         {
-            jsHeapUsedSize.Value = $"{allScenesUsedHeapSize.ByteToMB():f1} | {(currentSceneHasStats ? currentSceneUsedHeapSize.ByteToMB().ToString("f1") : "N/A")}";
-            jsHeapTotalSize.Value = $"{allScenesTotalHeapSize.ByteToMB():f1} | {(currentSceneHasStats ? currentSceneTotalHeapSize.ByteToMB().ToString("f1") : "N/A")}";
-            jsHeapTotalExecutable.Value = $"{allScenesTotalHeapSizeExecutable.ByteToMB():f1} | {(currentSceneHasStats ? currentSceneTotalHeapSizeExecutable.ByteToMB().ToString("f1") : "N/A")}";
-            jsHeapLimit.Value = $"{allScenesHeapSizeLimit.ByteToMB():f1}";
+            jsHeapUsedSize.Value = $"{profiler.AllScenesUsedHeapSize.ByteToMB():f1} | {(profiler.CurrentSceneHasStats ? profiler.CurrentSceneUsedHeapSize.ByteToMB().ToString("f1") : "N/A")}";
+            jsHeapTotalSize.Value = $"{profiler.AllScenesTotalHeapSize.ByteToMB():f1} | {(profiler.CurrentSceneHasStats ? profiler.CurrentSceneTotalHeapSize.ByteToMB().ToString("f1") : "N/A")}";
+            jsHeapTotalExecutable.Value = $"{profiler.AllScenesTotalHeapSizeExecutable.ByteToMB():f1} | {(profiler.CurrentSceneHasStats ? profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB().ToString("f1") : "N/A")}";
+            jsHeapLimit.Value = $"{profiler.AllScenesHeapSizeLimit.ByteToMB():f1}";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -261,7 +176,7 @@ namespace DCL.Profiling.ECS
                 $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
-            jsEnginesCount.Value = activeEngines.ToString();
+            jsEnginesCount.Value = profiler.ActiveEngines.ToString();
 
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
@@ -321,37 +236,4 @@ namespace DCL.Profiling.ECS
             elementBinding.Value = $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
         }
     }
-
-#if ENABLE_PROFILER
-    public static class JavaScriptProfilerCounters
-    {
-        public const string CATEGORY_NAME = "JavaScript";
-        public static readonly ProfilerCategory CATEGORY = new (CATEGORY_NAME);
-
-        public static readonly string TOTAL_HEAP_SIZE_NAME = "Total Heap Size";
-        public static readonly string TOTAL_HEAP_SIZE_EXECUTABLE_NAME = "Total Executable Heap Size";
-        public static readonly string TOTAL_PHYSICAL_SIZE_NAME = "Total Physical Memory Size";
-        public static readonly string USED_HEAP_SIZE_NAME = "Used Heap Size";
-        public static readonly string TOTAL_EXTERNAL_SIZE_NAME = "Total External Memory Size";
-        public static readonly string ACTIVE_ENGINES_NAME = "Active Engines";
-
-        public static readonly ProfilerCounter<ulong> TOTAL_HEAP_SIZE
-            = new (CATEGORY, TOTAL_HEAP_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
-
-        public static readonly ProfilerCounter<ulong> TOTAL_HEAP_SIZE_EXECUTABLE
-            = new (CATEGORY, TOTAL_HEAP_SIZE_EXECUTABLE_NAME, ProfilerMarkerDataUnit.Bytes);
-
-        public static readonly ProfilerCounter<ulong> TOTAL_PHYSICAL_SIZE
-            = new (CATEGORY, TOTAL_PHYSICAL_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
-
-        public static readonly ProfilerCounter<ulong> USED_HEAP_SIZE
-            = new (CATEGORY, USED_HEAP_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
-
-        public static readonly ProfilerCounter<ulong> TOTAL_EXTERNAL_SIZE
-            = new (CATEGORY, TOTAL_EXTERNAL_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
-
-        public static readonly ProfilerCounter<int> ACTIVE_ENGINES
-            = new (CATEGORY, ACTIVE_ENGINES_NAME, ProfilerMarkerDataUnit.Count);
-    }
-#endif
 }

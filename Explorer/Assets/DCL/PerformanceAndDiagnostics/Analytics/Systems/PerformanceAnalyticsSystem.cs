@@ -80,19 +80,19 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
 
             // JS runtime memory
-            jsonObjectBuilder.Set("jsheap_used", DebugViewProfilingSystem.allScenesUsedHeapSize.ByteToMB());
-            jsonObjectBuilder.Set("jsheap_total", DebugViewProfilingSystem.allScenesTotalHeapSize.ByteToMB());
-            jsonObjectBuilder.Set("jsheap_total_executable", DebugViewProfilingSystem.allScenesTotalHeapSizeExecutable.ByteToMB());
-            jsonObjectBuilder.Set("jsheap_limit", DebugViewProfilingSystem.allScenesHeapSizeLimit.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_used", profiler.AllScenesUsedHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total", profiler.AllScenesTotalHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_executable", profiler.AllScenesTotalHeapSizeExecutable.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_limit", profiler.AllScenesHeapSizeLimit.ByteToMB());
 
-            if (DebugViewProfilingSystem.currentSceneHasStats)
+            if (profiler.CurrentSceneHasStats)
             {
-                jsonObjectBuilder.Set("jsheap_used_current_scene", DebugViewProfilingSystem.currentSceneUsedHeapSize.ByteToMB());
-                jsonObjectBuilder.Set("jsheap_total_current_scene", DebugViewProfilingSystem.currentSceneTotalHeapSize.ByteToMB());
-                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", DebugViewProfilingSystem.currentSceneTotalHeapSizeExecutable.ByteToMB());
+                jsonObjectBuilder.Set("jsheap_used_current_scene", profiler.CurrentSceneUsedHeapSize.ByteToMB());
+                jsonObjectBuilder.Set("jsheap_total_current_scene", profiler.CurrentSceneTotalHeapSize.ByteToMB());
+                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB());
             }
 
-            jsonObjectBuilder.Set("running_v8_engines", DebugViewProfilingSystem.activeEngines);
+            jsonObjectBuilder.Set("running_v8_engines", profiler.ActiveEngines);
 
             // Memory
             jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());

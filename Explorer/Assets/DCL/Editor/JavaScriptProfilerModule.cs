@@ -1,4 +1,3 @@
-using DCL.Profiling.ECS;
 using System;
 using Unity.Profiling.Editor;
 
