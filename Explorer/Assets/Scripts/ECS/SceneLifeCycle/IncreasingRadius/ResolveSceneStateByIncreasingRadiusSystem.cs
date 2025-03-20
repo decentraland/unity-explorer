@@ -17,6 +17,8 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using Utility;
 
@@ -28,9 +30,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
     public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly OrdenedDataListComparer COMPARER_INSTANCE = new ();
+        private static readonly OrdenedDataNativeComparer COMPARER_INSTANCE = new ();
 
-        private List<OrderedDataList> orderedData;
         private readonly Entity playerEntity;
         private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
@@ -44,6 +45,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private int qualityReductedLOD;
         private int promisesCreated;
 
+        private readonly List<OrderedDataManaged> orderedDataManagedList;
+        private NativeList<OrderedDataNative> orderedDataNative;
+        private JobHandle? sortingJobHandle;
+
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity) : base(world)
         {
             playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
@@ -53,6 +58,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             maximumAmountOfScenesThatCanLoad = realmPartitionSettings.MaximumAmountOfScenesThatCanLoad;
             maximumAmoutOfLODsThatCanLoad = realmPartitionSettings.MaximumAmoutOfLODsThatCanLoad;
             maximumAmountOfReductedLODsThatCanLoad = realmPartitionSettings.MaximumAmountOfReductedLODsThatCanLoad;
+
+            orderedDataManagedList = new List<OrderedDataManaged>(maximumAmountOfScenesThatCanLoad + maximumAmoutOfLODsThatCanLoad + maximumAmountOfReductedLODsThatCanLoad);
+
+            // Set initial capacity to 1/3 of the total capacity required for all rings
+            orderedDataNative = new NativeList<OrderedDataNative>(
+                ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3,
+                Allocator.Persistent);
 
             ResetUtilsArrays();
         }
@@ -65,8 +77,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void ResetUtilsArrays()
         {
-            // Set initial capacity to maximum amount of things that can load
-            orderedData = new List<OrderedDataList>(maximumAmountOfScenesThatCanLoad + maximumAmoutOfLODsThatCanLoad + maximumAmountOfReductedLODsThatCanLoad);
+            if (sortingJobHandle.HasValue)
+                sortingJobHandle.Value.Complete();
+
+            orderedDataManagedList.Clear();
+            orderedDataNative.Clear();
         }
 
         protected override void Update(float t)
@@ -78,10 +93,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (!anyNonEmpty)
             {
                 AddNewSceneDefinitionToListQuery(World);
-                UpdatePlayerInParcel();
-
-                //Why is there a 128B allocations here?
-                orderedData.Sort(COMPARER_INSTANCE);
                 ProcessVolatileRealmQuery(World);
                 ProcessesFixedRealmQuery(World);
             }
@@ -89,20 +100,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             ProcessScenesUnloadingInRealmQuery(World);
         }
 
-        private void UpdatePlayerInParcel()
-        {
-            Vector2Int currentParcel = playerTransform.position.ToParcel();
-
-            for (var i = 0; i < orderedData.Count; i++)
-                orderedData[i].UpdatePlayerInParcel(currentParcel);
-        }
 
         [Query]
         [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent)
         {
             var sceneLoadingState = new SceneLoadingState();
-            orderedData.Add(new OrderedDataList(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
+            orderedDataManagedList.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
             World.Add(entity, sceneLoadingState);
         }
 
@@ -118,7 +122,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
         private void ProcessVolatileRealm(ref RealmComponent realmComponent)
         {
-            CreatePromisesFromOrderedData(realmComponent.Ipfs);
+            StartScenesLoading(realmComponent);
         }
 
         [Query]
@@ -147,8 +151,44 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void ProcessesFixedRealm(in RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
-                CreatePromisesFromOrderedData(realmComponent.Ipfs);
+                StartScenesLoading(realmComponent);
         }
+
+        private void StartScenesLoading(in RealmComponent realmComponent)
+        {
+            if (sortingJobHandle is { IsCompleted: true })
+            {
+                sortingJobHandle.Value.Complete();
+                CreatePromisesFromOrderedData(realmComponent.Ipfs);
+            }
+
+            if (sortingJobHandle is { IsCompleted: false }) return;
+
+            // Start new sorting
+            orderedDataNative.Clear();
+
+            for (var i = 0; i < orderedDataManagedList.Count; i++)
+            {
+                OrderedDataManaged currentOrderedData = orderedDataManagedList[i];
+                Vector2Int currentParcel = playerTransform.position.ToParcel();
+                currentOrderedData.UpdatePlayerInParcel(currentParcel);
+
+                orderedDataNative.Add(new OrderedDataNative
+                {
+                    ReferenceListIndex = i,
+                    RawSqrDistance = currentOrderedData.RawSqrDistance,
+                    IsBehind = currentOrderedData.IsBehind,
+                    IsPlayerInsideParcel = currentOrderedData.IsPlayerInsideParcel,
+                    XCoordinate = currentOrderedData.XCoordinate,
+                    OutOfRange = currentOrderedData.OutOfRange,
+                });
+            }
+
+            sortingJobHandle = orderedDataNative.SortJob(COMPARER_INSTANCE).Schedule();
+            jobScheduled++;
+        }
+
+        private int jobScheduled;
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
@@ -163,9 +203,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (teleportParcel.JustTeleported)
                 return;
 
-            for (var i = 0; i < orderedData.Count && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
+            for (var i = 0; i < orderedDataNative.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
-                OrderedDataList data = orderedData[i];
+                OrderedDataManaged data = orderedDataManagedList[orderedDataNative[i].ReferenceListIndex];
 
                 //Ignore unpartitioned and out of range
                 //Optimization: remove out of range from list when adding DeleteEntityIntention
@@ -264,17 +304,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
         }
 
-        public class OrdenedDataListComparer : IComparer<OrderedDataList>
+        public struct OrdenedDataNativeComparer : IComparer<OrderedDataNative>
         {
-            public int Compare(OrderedDataList x, OrderedDataList y)
+            public int Compare(OrderedDataNative x, OrderedDataNative y)
             {
-                //Parcels in range should always have higher prioirty
-                if (x.OutOfRange) return -1;
-                if (y.OutOfRange) return 1;
+                //Out of range always go last
+                int compareOutOfRange = x.OutOfRange.CompareTo(y.OutOfRange);
+
+                if (compareOutOfRange != 0)
+                    return compareOutOfRange;
 
                 //Parcels infront should always have higher priority
                 int compareIsBehind = x.IsBehind.CompareTo(y.IsBehind);
-
                 if (compareIsBehind != 0)
                     return compareIsBehind;
 
@@ -291,7 +332,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
         }
 
-        public class OrderedDataList
+        public struct OrderedDataNative
+        {
+            public int ReferenceListIndex;
+            public float RawSqrDistance;
+            public bool IsBehind;
+            public bool IsPlayerInsideParcel;
+            public int XCoordinate;
+            public bool OutOfRange;
+        }
+
+        public class OrderedDataManaged
         {
             //Need it to get the ref of SceneLoadingState
             public Entity Entity;
@@ -308,7 +359,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             public readonly HashSet<Vector2Int> ParcelsHashSet;
 
-            public OrderedDataList(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState)
+            public OrderedDataManaged(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState)
             {
                 Entity = entity;
                 SceneDefinitionComponent = sceneDefinitionComponent;
