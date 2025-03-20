@@ -1,5 +1,4 @@
 using DCL.Multiplayer.Connections.Rooms;
-using JetBrains.Annotations;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
 using Newtonsoft.Json;
@@ -7,8 +6,6 @@ using System;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
 {
-    [Serializable]
-    [PublicAPI]
     public static class GetActiveVideoStreamsResponse
     {
         public static void WriteTo(JsonWriter writer, string identity, TrackPublication publication)
