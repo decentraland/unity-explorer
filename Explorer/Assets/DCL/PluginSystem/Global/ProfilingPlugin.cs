@@ -36,6 +36,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             UpdateProfilerSystem.InjectToWorld(ref builder, profiler, scenesCache);
+
             DebugViewProfilingSystem.InjectToWorld(ref builder, realmData, profiler, memoryBudget,
                 debugContainerBuilder, dclVersion);
         }
