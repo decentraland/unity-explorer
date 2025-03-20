@@ -121,6 +121,8 @@ namespace DCL.MarketplaceCredits
         {
             CloseAllSections();
 
+            view.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: false);
+
             switch (section)
             {
                 case MarketplaceCreditsSection.WELCOME:
@@ -133,6 +135,7 @@ namespace DCL.MarketplaceCredits
                     marketplaceCreditsWeekGoalsCompletedController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
+                    view.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedController.OpenSection();
                     break;
             }
