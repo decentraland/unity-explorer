@@ -70,6 +70,7 @@ namespace Global.Dynamic
         public Vector2Int StartParcel { get; init; }
         public bool IsolateScenesCommunication { get; init; }
         public bool EnableLandscape { get; init; }
+        public bool EnableGPUInstancing { get; init; }
         public bool EnableLOD { get; init; }
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }

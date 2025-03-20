@@ -21,6 +21,7 @@ namespace DCL.Roads.Systems
         private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary;
 
         private readonly RoadAssetsPool roadAssetPool;
+        private readonly bool enableGPUInstancing;
 
         public RoadPlugin(IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary,
             IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, RoadAssetsPool roadAssetPool)
