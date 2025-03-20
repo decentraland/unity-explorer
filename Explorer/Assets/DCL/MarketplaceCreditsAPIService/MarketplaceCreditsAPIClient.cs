@@ -171,12 +171,14 @@ namespace DCL.MarketplaceCreditsAPIService
         private static async UniTask<ClaimCreditsResponse> MockClaimCreditsAsync(CancellationToken ct)
         {
             bool randomSuccess = new System.Random().Next(0, 2) == 1;
+            float randomClaimedCredits = ((float)new System.Random().NextDouble() * 4) + 1;
             int randomDelay = new System.Random().Next(1000, 3000);
             await UniTask.Delay(randomDelay, cancellationToken: ct);
 
             ClaimCreditsResponse responseData = new ClaimCreditsResponse
             {
                 success = randomSuccess,
+                claimedCredits = randomClaimedCredits,
             };
 
             return responseData;

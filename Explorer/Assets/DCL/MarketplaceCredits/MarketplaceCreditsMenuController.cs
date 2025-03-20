@@ -143,10 +143,10 @@ namespace DCL.MarketplaceCredits
             view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME);
         }
 
-        public void ShowCreditsUnlockedPanel()
+        public void ShowCreditsUnlockedPanel(float claimedCredits)
         {
             showCreditsUnlockedCts = showCreditsUnlockedCts.SafeRestart();
-            mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(), showCreditsUnlockedCts.Token).Forget();
+            mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(new CreditsUnlockedController.Params(claimedCredits)), showCreditsUnlockedCts.Token).Forget();
         }
 
         public void ShowErrorNotification(string message)

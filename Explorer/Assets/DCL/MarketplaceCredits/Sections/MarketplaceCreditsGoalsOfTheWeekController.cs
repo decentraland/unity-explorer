@@ -167,7 +167,7 @@ namespace DCL.MarketplaceCredits.Sections
                 view.SetCaptchaAsLoading(false);
 
                 if (claimCreditsResponse.success)
-                    marketplaceCreditsMenuController.ShowCreditsUnlockedPanel();
+                    marketplaceCreditsMenuController.ShowCreditsUnlockedPanel(claimCreditsResponse.claimedCredits);
                 else
                     view.SetCaptchaAsErrorState(true, isNonSolvedError: true);
             }

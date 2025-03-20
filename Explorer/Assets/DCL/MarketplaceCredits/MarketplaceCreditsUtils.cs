@@ -30,6 +30,9 @@ namespace DCL.MarketplaceCredits
         public static string FormatGoalReward(float goalCredits) =>
             $"{Math.Floor(goalCredits):+0}";
 
+        public static string FormatClaimedGoalReward(float claimedCredits) =>
+            $"{FormatGoalReward(claimedCredits)} Marketplace Credit{(claimedCredits >= 2 ? "s" : "")}";
+
         public static string FormatCreditsExpireIn(uint timeLeftInMilliseconds)
         {
             uint days = timeLeftInMilliseconds / (1000 * 60 * 60 * 24);

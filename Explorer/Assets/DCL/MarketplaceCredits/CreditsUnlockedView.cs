@@ -3,6 +3,7 @@ using DCL.Audio;
 using DG.Tweening;
 using MVC;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -13,6 +14,9 @@ namespace DCL.MarketplaceCredits
     {
         private const float FADE_ANIMATION_DURATION = 0.4f;
         private const float SCALE_ANIMATION_DURATION = 0.5f;
+
+        [field: SerializeField]
+        public TMP_Text CreditsText { get; private set; }
 
         [field: SerializeField]
         public CanvasGroup PanelCanvasGroup { get; private set; }

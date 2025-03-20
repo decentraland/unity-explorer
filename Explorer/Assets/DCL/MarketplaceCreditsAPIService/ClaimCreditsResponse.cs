@@ -6,5 +6,6 @@ namespace DCL.MarketplaceCreditsAPIService
     public class ClaimCreditsResponse
     {
         public bool success;
+        public float claimedCredits;
     }
 }
