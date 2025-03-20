@@ -36,9 +36,7 @@ namespace SceneRuntime.Tests
 
         private static SceneRuntimeFactory NewSceneRuntimeFactory()
         {
-            var activeEngines = new V8ActiveEngines();
-            return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(),
-                new V8EngineFactory(activeEngines), activeEngines,
+            return new SceneRuntimeFactory(new IRealmData.Fake(), new V8EngineFactory(),
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
         }
 

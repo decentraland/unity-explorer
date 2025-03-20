@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision.CodeResolver;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -258,8 +257,8 @@ namespace Global.Dynamic
                 webJsSources
             );
 
-            GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
-                sceneSharedContainer.V8ActiveEngines, playerEntity);
+            GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
+                sceneSharedContainer.SceneFactory, playerEntity);
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
