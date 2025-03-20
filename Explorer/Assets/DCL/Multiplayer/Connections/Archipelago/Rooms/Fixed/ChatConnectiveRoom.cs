@@ -36,8 +36,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
         {
-            string url2 = "https://comms-gatekeeper.decentraland.zone/private-messages/token";
-
             string metadata = FixedMetadata.Default.ToJson();
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);

@@ -16,7 +16,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
-        private const float DELAY_BETWEEN_CLICKS = 1f;
+        private const float DELAY_BETWEEN_CLICKS = 0.5f;
 
         private readonly IPassportBridge passportBridge;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
