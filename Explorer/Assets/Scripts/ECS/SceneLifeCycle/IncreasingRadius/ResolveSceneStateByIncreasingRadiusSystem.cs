@@ -35,9 +35,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        //TODO: Do we need it?
-        private UnloadingSceneCounter unloadingSceneCounter;
-
         private readonly int maximumAmountOfScenesThatCanLoad;
         private readonly int maximumAmountOfReductedLODsThatCanLoad;
         private readonly int maximumAmoutOfLODsThatCanLoad;
@@ -70,7 +67,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             // Set initial capacity to maximum amount of things that can load
             orderedData = new List<OrderedDataList>(maximumAmountOfScenesThatCanLoad + maximumAmoutOfLODsThatCanLoad + maximumAmountOfReductedLODsThatCanLoad);
-            unloadingSceneCounter = new UnloadingSceneCounter();
         }
 
         protected override void Update(float t)
@@ -130,7 +126,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
         {
             if (partitionComponent.OutOfRange)
-                TryUnload(entity, sceneDefinitionComponent, ref sceneLoadingState);
+                TryUnload(entity, ref sceneLoadingState);
         }
 
         [Query]
@@ -156,7 +152,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
-            unloadingSceneCounter.UpdateUnloadingScenes();
             loadedScenes = 0;
             loadedLODs = 0;
             qualityReductedLOD = 0;
@@ -190,16 +185,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
         }
 
-        private void TryUnload(in Entity entity, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
+        private void TryUnload(in Entity entity, ref SceneLoadingState sceneState)
         {
             if (sceneState.Loaded)
-            {
-                //TODO: optimize, the last TryGet
-                if (World.TryGet(entity, out ISceneFacade sceneFacade))
-                    unloadingSceneCounter.RegisterSceneFacade(sceneDefinitionComponent.Definition.id, sceneFacade);
-
                 Unload(entity, ref sceneState);
-            }
         }
 
         private void Unload(in Entity entity, ref SceneLoadingState sceneState)
@@ -210,14 +199,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
-        //TODO: Requires re-analysis every frame? Partition changes when bucket changes, but now we have the memory restriction
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
             SceneLoadingState sceneState)
         {
-            //Dont try to load an unloading scene. Wait
-            if (unloadingSceneCounter.IsSceneUnloading(sceneDefinitionComponent.Definition.id))
-                return;
-
             VisualSceneStateEnum candidateByEnum
                 = VisualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState);
 
@@ -245,7 +229,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     if (sceneState.FullQuality)
                     {
                         //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
-                        TryUnload(entity, sceneDefinitionComponent, ref sceneState);
+                        TryUnload(entity, ref sceneState);
                         candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
                     }
                     // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
@@ -254,7 +238,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 else
                 {
                     // Nothing else can load. And we need to unload the loaded which are still inside the loading range
-                    TryUnload(entity, sceneDefinitionComponent, ref sceneState);
+                    TryUnload(entity, ref sceneState);
                     candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
                 }
             }
@@ -284,19 +268,23 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             public int Compare(OrderedDataList x, OrderedDataList y)
             {
+                //Parcels in range should always have higher prioirty
+                if (x.OutOfRange) return -1;
+                if (y.OutOfRange) return 1;
+
+                //Parcels infront should always have higher priority
+                int compareIsBehind = x.IsBehind.CompareTo(y.IsBehind);
+
+                if (compareIsBehind != 0)
+                    return compareIsBehind;
+
                 if (x.IsPlayerInsideParcel && !y.IsPlayerInsideParcel) return -1;
                 if (y.IsPlayerInsideParcel && !x.IsPlayerInsideParcel) return 1;
 
                 // discrete distance comparison
                 int bucketComparison = x.RawSqrDistance.CompareTo(y.RawSqrDistance);
-
                 if (bucketComparison != 0)
                     return bucketComparison;
-
-                int compareIsBehind = x.IsBehind.CompareTo(y.IsBehind);
-
-                if (compareIsBehind != 0)
-                    return compareIsBehind;
 
                 //If everything fails, the scene on the right has higher priority
                 return x.XCoordinate.CompareTo(y.XCoordinate);
@@ -354,35 +342,5 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
 
 
-    public class UnloadingSceneCounter
-    {
-        private readonly Dictionary<string, ISceneFacade> unloadingScenesDictionary = new (100);
-        private readonly HashSet<string> unloadingScenes = new ();
-        private readonly List<string> reusableScenesToRemove = new ();
 
-        public void RegisterSceneFacade(string sceneId, ISceneFacade facade)
-        {
-            unloadingScenesDictionary[sceneId] = facade;
-        }
-
-        public void UpdateUnloadingScenes()
-        {
-            reusableScenesToRemove.Clear();
-
-            foreach (KeyValuePair<string, ISceneFacade> keyValuePair in unloadingScenesDictionary)
-            {
-                if (keyValuePair.Value.SceneStateProvider.State == SceneState.Disposed)
-                    reusableScenesToRemove.Add(keyValuePair.Key);
-            }
-
-            foreach (string sceneId in reusableScenesToRemove)
-            {
-                unloadingScenesDictionary.Remove(sceneId);
-                unloadingScenes.Remove(sceneId);
-            }
-        }
-
-        public bool IsSceneUnloading(string sceneId) =>
-            unloadingScenes.Contains(sceneId);
-    }
 }
