@@ -35,6 +35,41 @@ namespace DCL.SDKComponents.SceneUI.Utils
             visualElementToSetup.style.alignSelf = GetAlign(model.AlignSelf);
             visualElementToSetup.style.justifyContent = GetJustify(model.JustifyContent);
 
+            // Border
+            var defaultStyleFloat = new StyleFloat(StyleKeyword.Undefined);
+            visualElementToSetup.style.borderBottomColor = model.GetBorderBottomColor();
+            visualElementToSetup.style.borderTopColor = model.GetBorderTopColor();
+            visualElementToSetup.style.borderLeftColor = model.GetBorderLeftColor();
+            visualElementToSetup.style.borderRightColor = model.GetBorderRightColor();
+            visualElementToSetup.style.borderBottomWidth = model.HasBorderBottomWidth ? model.BorderBottomWidth : defaultStyleFloat;
+            visualElementToSetup.style.borderTopWidth = model.HasBorderTopWidth ? model.BorderTopWidth : defaultStyleFloat;
+            visualElementToSetup.style.borderLeftWidth = model.HasBorderLeftWidth ? model.BorderLeftWidth : defaultStyleFloat;
+            visualElementToSetup.style.borderRightWidth = model.HasBorderRightWidth ? model.BorderRightWidth : defaultStyleFloat;
+            visualElementToSetup.style.borderBottomLeftRadius = GetBorderRadius(
+                model.HasBorderBottomLeftRadius,
+                model.HasBorderBottomLeftRadiusUnit,
+                model.BorderBottomLeftRadius,
+                model.BorderBottomLeftRadiusUnit
+            );
+            visualElementToSetup.style.borderBottomRightRadius = GetBorderRadius(
+                model.HasBorderBottomRightRadius,
+                model.HasBorderBottomRightRadiusUnit,
+                model.BorderBottomRightRadius,
+                model.BorderBottomRightRadiusUnit
+            );
+            visualElementToSetup.style.borderTopLeftRadius = GetBorderRadius(
+                model.HasBorderTopLeftRadius,
+                model.HasBorderTopLeftRadiusUnit,
+                model.BorderTopLeftRadius,
+                model.BorderTopLeftRadiusUnit
+            );
+            visualElementToSetup.style.borderTopRightRadius = GetBorderRadius(
+                model.HasBorderTopRightRadius,
+                model.HasBorderTopRightRadiusUnit,
+                model.BorderTopRightRadius,
+                model.BorderTopRightRadiusUnit
+            );
+
             // Layout size
             if (model.HeightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.height = model.HeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Height, GetUnit(model.HeightUnit));
@@ -337,6 +372,17 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 default:
                     return Align.Auto;
             }
+        }
+
+        private static StyleLength GetBorderRadius(bool hasBorderRadius, bool hasBorderRadiusUnit, float borderRadius, YGUnit borderRadiusUnit)
+        {
+            if (!hasBorderRadius)
+                return StyleKeyword.Undefined;
+
+            LengthUnit unit = hasBorderRadiusUnit && borderRadiusUnit == YGUnit.YguPercent ?
+                LengthUnit.Percent : LengthUnit.Pixel;
+
+            return new Length(borderRadius, unit);
         }
 
         public static string BuildElementName(string prefix, in CRDTEntity entity)
