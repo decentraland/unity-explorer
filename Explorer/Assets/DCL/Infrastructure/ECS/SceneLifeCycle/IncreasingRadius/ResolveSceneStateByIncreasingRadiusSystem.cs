@@ -39,7 +39,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly IRealmData realmData;
 
         //Array sorting helpers
-        private List<OrderedDataManaged> orderedDataManagedList;
+        private readonly List<OrderedDataManaged> orderedDataManaged;
         private NativeList<OrderedDataNative> orderedDataNative;
         internal JobHandle? sortingJobHandle;
         private bool arraysInSync;
@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Set initial capacity to 1/3 of the total capacity required for all rings
             int initialCapacity = ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3;
 
-            orderedDataManagedList = new List<OrderedDataManaged>(initialCapacity);
+            orderedDataManaged = new List<OrderedDataManaged>(initialCapacity);
             orderedDataNative = new NativeList<OrderedDataNative>(initialCapacity, Allocator.Persistent);
 
             ResetUtilsArrays();
@@ -85,7 +85,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (sortingJobHandle.HasValue)
                 sortingJobHandle.Value.Complete();
 
-            orderedDataManagedList.Clear();
+            orderedDataManaged.Clear();
             orderedDataNative.Clear();
             arraysInSync = false;
         }
@@ -122,7 +122,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 var sceneLoadingState = new SceneLoadingState();
                 //Sizes should always be the same
-                orderedDataManagedList.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
+                orderedDataManaged.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
                 orderedDataNative.Add(new OrderedDataNative());
                 arraysInSync = false;
                 World.Add(entity, sceneLoadingState);
@@ -197,9 +197,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 OrderedDataNative* dataPtr = orderedDataNative.GetUnsafePtr();
 
-                for (var i = 0; i < orderedDataManagedList.Count; i++)
+                for (var i = 0; i < orderedDataManaged.Count; i++)
                 {
-                    OrderedDataManaged currentOrderedData = orderedDataManagedList[i];
+                    OrderedDataManaged currentOrderedData = orderedDataManaged[i];
                     currentOrderedData.UpdatePlayerInParcel(xCoordinate, yCoordinate);
 
                     dataPtr[i] = new OrderedDataNative
@@ -239,7 +239,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
                 {
-                    OrderedDataManaged data = orderedDataManagedList[dataPtr[i].ReferenceListIndex];
+                    OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
 
                     //Ignore unpartitioned and out of range
                     //Optimization: remove out of range from list when adding DeleteEntityIntention
