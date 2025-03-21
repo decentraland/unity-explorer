@@ -124,50 +124,28 @@ jobs:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         if: env.APPROVAL_CHECK == 'passed'
         run: |
-          echo "🔎 Finding workflow ID for 'Enforce QA and DEV Approvals'"
-          WORKFLOW_ID=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows" --jq '.workflows[] | select(.name == "Enforce QA and DEV Approvals") | .id')
-          echo "📘 Workflow ID: $WORKFLOW_ID"
+          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA and PR #$PR_NUMBER..."
 
-          page=1
-          WORKFLOW_RUN_ID=""
-
-          while [ -z "$WORKFLOW_RUN_ID" ]; do
-            echo "📄 Fetching page $page of workflow runs for workflow ID $WORKFLOW_ID..."
-            RUNS=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?per_page=100&page=$page")
-
-            # 🕒 Log created_at of the first run on this page
-            FIRST_CREATED_AT=$(jq -r '.workflow_runs[0].created_at // "N/A"' <<< "$RUNS")
-            echo "🕒 First run on page $page was created at: $FIRST_CREATED_AT"
-
-            MATCH=$(jq --arg HEAD_SHA "$HEAD_SHA" --argjson PR_NUMBER "$PR_NUMBER" '
-              .workflow_runs[] |
-              select(.head_sha == $HEAD_SHA) |
-              select(.pull_requests | any(.number == $PR_NUMBER)) |
-              select(.conclusion == "failure")
-            ' <<< "$RUNS")
-
-            if [ -n "$MATCH" ]; then
-              WORKFLOW_RUN_ID=$(echo "$MATCH" | jq -r '.id')
-              echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
-              break
-            fi
-
-            # Stop if fewer than 100 runs returned (no more pages)
-            if [ "$(jq '.workflow_runs | length' <<< "$RUNS")" -lt 100 ]; then
-              echo "🚫 No matching failed workflow run found in available history."
-              break
-            fi
-
-            page=$((page + 1))
-          done
+          WORKFLOW_RUN_ID=$(gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 1000 \
+            --repo "$REPO_OWNER/$REPO_NAME" \
+            --json databaseId,event,headSha,conclusion,pullRequests \
+            | jq -r --arg HEAD_SHA "$HEAD_SHA" --argjson PR_NUMBER "$PR_NUMBER" '
+                .[] |
+                select(.event == "pull_request") |
+                select(.headSha == $HEAD_SHA) |
+                select(.conclusion == "failure") |
+                select(.pullRequests | any(.number == $PR_NUMBER)) |
+                .databaseId
+            ')
 
           if [ -z "$WORKFLOW_RUN_ID" ]; then
-            echo "🔸 No previous failed workflow run found for this commit on PR #${PR_NUMBER}."
+            echo "🔸 No previous failed workflow run found for this commit on PR #$PR_NUMBER."
             exit 0
           fi
 
-          echo "🔁 Triggering re-run for Workflow Run ID: $WORKFLOW_RUN_ID"
-          echo "    ➤ Endpoint: POST /repos/$REPO_OWNER/$REPO_NAME/actions/runs/$WORKFLOW_RUN_ID/rerun"
-
-          gh api -X POST "repos/$REPO_OWNER/$REPO_NAME/actions/runs/$WORKFLOW_RUN_ID/rerun" --verbose
+          echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
+          echo "🔁 Triggering re-run via GitHub API"
+          gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME" --verbose
           echo "✅ Re-run triggered successfully!"
