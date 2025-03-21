@@ -10,7 +10,7 @@ using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Utilities;
 using DG.Tweening;
 using MVC;
 using System;
@@ -120,13 +120,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.systemClipboard = systemClipboard;
             this.webBrowser = webBrowser;
 
-            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
-                this.view.scrollRect.scrollSensitivity *= MACOS_SCROLL_SENSITIVITY_SCALE_FACTOR;
+            this.view.scrollRect.SetScrollSensitivityBasedOnPlatform();
 
             if (optionButtonView is not null)
-            {
                 this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!);
-            }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
                 view.unusedGridViewObject, cameraReelScreenshotsStorage,

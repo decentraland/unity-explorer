@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Utilities;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -30,6 +31,7 @@ namespace DCL.Navmap
 
             view.NextPageButton.onClick.AddListener(CycleToNextPage);
             view.PreviousPageButton.onClick.AddListener(CycleToPrevPage);
+            view.scrollView.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Show()
