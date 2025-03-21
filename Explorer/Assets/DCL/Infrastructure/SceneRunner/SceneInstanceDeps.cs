@@ -158,7 +158,7 @@ namespace SceneRunner
             if (sceneData.IsSdk7()) // Create an instance of Scene Runtime on the thread pool
                 sceneData.TryGetMainScriptUrl(out SceneCodeUrl);
             else
-                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk6-adaption-layer/main/index.min.js");
         }
 
         public void Dispose()
