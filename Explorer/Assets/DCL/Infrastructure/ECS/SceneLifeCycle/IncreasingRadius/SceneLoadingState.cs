@@ -32,6 +32,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             FullQuality = true,
             VisualSceneState = VisualSceneState.SHOWING_SCENE,
         };
+
+        //Testing purpose
+        public static SceneLoadingState CreateHighQualityLOD() =>
+            new ()
+            {
+                PromiseCreated = true,
+                FullQuality = true,
+                VisualSceneState = VisualSceneState.SHOWING_LOD,
+            };
     }
 
     public enum VisualSceneState
