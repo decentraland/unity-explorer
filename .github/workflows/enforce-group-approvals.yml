@@ -122,10 +122,19 @@ jobs:
       - name: Search Failed "Enforce QA and DEV Approvals" Run
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
-        if: env.APPROVAL_CHECK == 'passed'
+        if: env.APPROVAL_CHECK == 'passed' && github.event_name == 'pull_request_review'
         run: |
-          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
+          echo "📦 Searching 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
+          gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 1000 \
+            --repo "$REPO_OWNER/$REPO_NAME" \
+            --json databaseId,headSha,event,conclusion,status,createdAt \
+            | jq --arg HEAD_SHA "$HEAD_SHA" '
+                .[] | select(.headSha == $HEAD_SHA)
+              '
 
+          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
           WORKFLOW_RUN_ID=$(gh run list \
             --workflow="Enforce QA and DEV Approvals" \
             --limit 1000 \
@@ -138,16 +147,6 @@ jobs:
                 select(.conclusion == "failure") |
                 .databaseId
             ' | head -n 1)
-          
-          echo "📦 Searching workflow runs using 'gh run list' (no repo scope needed)"
-          gh run list \
-            --workflow="Enforce QA and DEV Approvals" \
-            --limit 100 \
-            --repo "$REPO_OWNER/$REPO_NAME" \
-            --json databaseId,headSha,conclusion,status,createdAt \
-            | jq --arg HEAD_SHA "$HEAD_SHA" '
-                .[] | select(.headSha == $HEAD_SHA)
-              '
 
           if [ -z "$WORKFLOW_RUN_ID" ]; then
             echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
