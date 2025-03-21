@@ -42,7 +42,12 @@ namespace DCL.Web3.Identities
                 IWeb3Identity? storedIdentity = storage.Identity;
 
                 if (storedIdentity != null)
+                {
+                    if (storedIdentity.IsExpired)
+                        return null;
+
                     memory.Identity = storedIdentity;
+                }
 
                 return memory.Identity;
             }
