@@ -27,7 +27,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false)
         {
             if (IsRoad(definition))
-                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), RoadInfo.Create(), new SceneLoadingState());
+                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), RoadInfo.Create(), SceneLoadingState.CreateRoad());
 
             return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience));
         }

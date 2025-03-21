@@ -38,10 +38,10 @@ namespace DCL.Roads.Systems
         [Query]
         private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLoadingState loadingState)
         {
-            if (partitionComponent.OutOfRange && loadingState.Loaded)
+            if (partitionComponent.OutOfRange && loadingState.PromiseCreated)
             {
                 roadInfo.Dispose(roadAssetPool);
-                loadingState.Loaded = false;
+                loadingState.PromiseCreated = false;
                 scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
             }
         }

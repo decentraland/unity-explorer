@@ -111,22 +111,22 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
             in SceneDefinitionComponent sceneDefinitionComponent)
         {
-            var sceneLoadingState = new SceneLoadingState();
 
             if (sceneDefinitionComponent.IsPortableExperience)
             {
                 //Portable experiences shouldnt be analyzed. Create straight away
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent), partitionComponent), sceneLoadingState);
+                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
             }
             else
             {
+                var sceneLoadingState = new SceneLoadingState();
                 //Sizes should always be the same
                 orderedDataManagedList.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
                 orderedDataNative.Add(new OrderedDataNative());
                 arraysInSync = false;
+                World.Add(entity, sceneLoadingState);
             }
-            World.Add(entity, sceneLoadingState);
         }
 
 
@@ -264,14 +264,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void TryUnload(in Entity entity, ref SceneLoadingState sceneState)
         {
-            if (sceneState.Loaded)
+            if (sceneState.PromiseCreated)
                 Unload(entity, ref sceneState);
         }
 
         private void Unload(in Entity entity, ref SceneLoadingState sceneState)
         {
-            sceneState.VisualSceneState = VisualSceneStateEnum.UNINITIALIZED;
-            sceneState.Loaded = false;
+            sceneState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+            sceneState.PromiseCreated = false;
             sceneState.FullQuality = false;
             World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
@@ -279,20 +279,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
             SceneLoadingState sceneState)
         {
-            VisualSceneStateEnum candidateByEnum
+            VisualSceneState candidateBy
                 = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_SCENE && loadedScenes < sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad)
+            if (candidateBy == VisualSceneState.SHOWING_SCENE && loadedScenes < sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad)
                 loadedScenes++;
             else
             {
                 //Lets do a quality reduction analysis
-                candidateByEnum = VisualSceneStateEnum.SHOWING_LOD;
+                candidateBy = VisualSceneState.SHOWING_LOD;
             }
 
             //Reduce quality
-            if (candidateByEnum == VisualSceneStateEnum.SHOWING_LOD)
+            if (candidateBy == VisualSceneState.SHOWING_LOD)
             {
                 if (loadedLODs < sceneLoadingLimit.MaximumAmoutOfLODsThatCanLoad)
                 {
@@ -307,7 +307,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     {
                         //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
                         TryUnload(entity, ref sceneState);
-                        candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
+                        candidateBy = VisualSceneState.UNINITIALIZED;
                     }
                     // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
                     sceneState.FullQuality = false;
@@ -316,22 +316,22 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     // Nothing else can load. And we need to unload the loaded which are still inside the loading range
                     TryUnload(entity, ref sceneState);
-                    candidateByEnum = VisualSceneStateEnum.UNINITIALIZED;
+                    candidateBy = VisualSceneState.UNINITIALIZED;
                 }
             }
 
             //No new promise is required
-            if (candidateByEnum == VisualSceneStateEnum.UNINITIALIZED
-                || sceneState.VisualSceneState == candidateByEnum)
+            if (candidateBy == VisualSceneState.UNINITIALIZED
+                || sceneState.VisualSceneState == candidateBy)
                 return;
 
             promisesCreated++;
-            sceneState.Loaded = true;
-            sceneState.VisualSceneState = candidateByEnum;
+            sceneState.PromiseCreated = true;
+            sceneState.VisualSceneState = candidateBy;
 
             switch (sceneState.VisualSceneState)
             {
-                case VisualSceneStateEnum.SHOWING_LOD:
+                case VisualSceneState.SHOWING_LOD:
                     World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:

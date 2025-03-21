@@ -55,7 +55,7 @@ namespace DCL.Roads.Systems
         {
             if (partitionComponent.OutOfRange) return;
 
-            if (sceneLoadingState.Loaded) return;
+            if (sceneLoadingState.PromiseCreated) return;
 
             if (partitionComponent.IsBehind) return;
 
@@ -87,7 +87,7 @@ namespace DCL.Roads.Systems
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
             }
 
-            sceneLoadingState.Loaded = true;
+            sceneLoadingState.PromiseCreated = true;
 
             //In case this is a road teleport destination, we need to release the loading screen
             SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
