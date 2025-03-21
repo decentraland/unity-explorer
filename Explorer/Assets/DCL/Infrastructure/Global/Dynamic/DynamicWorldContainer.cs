@@ -544,7 +544,7 @@ namespace Global.Dynamic
             IClipboardManager clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
-            bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
+            bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && !appArgs.HasFlagWithValueFalse(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
             bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
@@ -569,30 +569,6 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(
-                    assetsProvisioner,
-                    archipelagoIslandRoom,
-                    gateKeeperSceneRoom,
-                    roomHub,
-                    roomsStatus,
-                    profileRepository,
-                    profileBroadcast,
-                    debugBuilder,
-                    staticContainer.LoadingStatus,
-                    entityParticipantTable,
-                    messagePipesHub,
-                    remoteMetadata,
-                    staticContainer.CharacterContainer.CharacterObject,
-                    staticContainer.RealmData,
-                    remoteEntities,
-                    staticContainer.ScenesCache,
-                    emotesCache,
-                    characterDataPropagationUtility,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                    islandThroughputBunch,
-                    sceneThroughputBunch
-                ),
-                new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument, exposedGlobalDataContainer.ExposedCameraData),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, mvcManager),
@@ -620,19 +596,8 @@ namespace Global.Dynamic
                     userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
-                new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new SidebarPlugin(
-                    assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
-                    notificationsRequestController, identityCache, profileRepository,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
-                    initializationFlowContainer.InitializationFlow,
-                    profileCache, sidebarBus, dclInput, sidebarActionsBus,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory, viewDependencies),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
-                new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
                     mvcManager,
                     chatMessagesBus,
@@ -652,7 +617,110 @@ namespace Global.Dynamic
                     profileCache,
                     chatInputBus,
                     staticContainer.LoadingStatus),
-                new ExplorePanelPlugin(
+                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
+                new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
+                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
+                new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
+                new TeleportPromptPlugin(
+                    assetsProvisioner,
+                    mvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAPIService,
+                    dclCursor,
+                    chatMessagesBus
+                ),
+                new ChangeRealmPromptPlugin(
+                    assetsProvisioner,
+                    mvcManager,
+                    dclCursor,
+                    realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", "RestrictedActionAPI")),
+                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
+                staticContainer.CharacterContainer.CreateGlobalPlugin(),
+                staticContainer.QualityContainer.CreatePlugin(),
+                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
+                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
+                new NotificationPlugin(
+                    assetsProvisioner,
+                    mvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    notificationsBusController),
+                new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
+                realmNavigatorContainer.CreatePlugin(),
+                new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData)
+            };
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.WORLD_INFO_ENABLED))
+            {
+                globalPlugins.Add(new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.MULTIPLAYER_ENABLED))
+            {
+                globalPlugins.Add(new MultiplayerPlugin(
+                    assetsProvisioner,
+                    archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    roomHub,
+                    roomsStatus,
+                    profileRepository,
+                    profileBroadcast,
+                    debugBuilder,
+                    staticContainer.LoadingStatus,
+                    entityParticipantTable,
+                    messagePipesHub,
+                    remoteMetadata,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    staticContainer.RealmData,
+                    remoteEntities,
+                    staticContainer.ScenesCache,
+                    emotesCache,
+                    characterDataPropagationUtility,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    islandThroughputBunch,
+                    sceneThroughputBunch
+                ));
+                globalPlugins.Add(new MultiplayerMovementPlugin(
+                    assetsProvisioner,
+                    multiplayerMovementMessageBus,
+                    debugBuilder,
+                    remoteEntities,
+                    staticContainer.CharacterContainer.Transform,
+                    multiplayerDebugSettings,
+                    appArgs,
+                    entityParticipantTable,
+                    staticContainer.RealmData,
+                    remoteMetadata,
+                    staticContainer.FeatureFlagsCache));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.MAP_RENDERER_ENABLED))
+            {
+                globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.SIDEBAR_ENABLED))
+            {
+                globalPlugins.Add(new SidebarPlugin(
+                    assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
+                    notificationsRequestController, identityCache, profileRepository,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
+                    initializationFlowContainer.InitializationFlow,
+                    profileCache, sidebarBus, dclInput, sidebarActionsBus,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends,
+                    chatHistory, viewDependencies));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.MINIMAP_ENABLED))
+            {
+                globalPlugins.Add(new MinimapPlugin(mvcManager, minimap));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.EXPLORE_PANEL_ENABLED))
+            {
+                globalPlugins.Add(new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
                     mapRendererContainer,
@@ -700,54 +768,38 @@ namespace Global.Dynamic
                     appArgs,
                     viewDependencies,
                     userBlockingCacheProxy
-                ),
-                new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
-                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.FeatureFlagsCache),
-                new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
-                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
-                new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
-                new TeleportPromptPlugin(
-                    assetsProvisioner,
-                    mvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    placesAPIService,
-                    dclCursor,
-                    chatMessagesBus
-                ),
-                new ChangeRealmPromptPlugin(
-                    assetsProvisioner,
-                    mvcManager,
-                    dclCursor,
-                    realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", "RestrictedActionAPI")),
-                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
-                staticContainer.CharacterContainer.CreateGlobalPlugin(),
-                staticContainer.QualityContainer.CreatePlugin(),
-                terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder),
-                new MultiplayerMovementPlugin(
-                    assetsProvisioner,
-                    multiplayerMovementMessageBus,
-                    debugBuilder,
-                    remoteEntities,
-                    staticContainer.CharacterContainer.Transform,
-                    multiplayerDebugSettings,
-                    appArgs,
-                    entityParticipantTable,
-                    staticContainer.RealmData,
-                    remoteMetadata,
-                    staticContainer.FeatureFlagsCache),
-                lodContainer.LODPlugin,
-                lodContainer.RoadPlugin,
-                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
-                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
-                new NotificationPlugin(
-                    assetsProvisioner,
-                    mvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    notificationsBusController),
-                new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
-                new PassportPlugin(
+                ));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
+            {
+                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LODS_ENABLED))
+            {
+                globalPlugins.Add(lodContainer.LODPlugin);
+                globalPlugins.Add(lodContainer.RoadPlugin);
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.REWARD_PANEL_ENABLED))
+            {
+                globalPlugins.Add(new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.CHARACTER_PREVIEW_ENABLED))
+            {
+                globalPlugins.Add(new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_ENABLED))
+            {
+                globalPlugins.Add(new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.FeatureFlagsCache));
+            }
+
+            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.PASSPORT_ENABLED))
+            {
+                globalPlugins.Add(new PassportPlugin(
                     assetsProvisioner,
                     mvcManager,
                     dclCursor,
@@ -779,13 +831,8 @@ namespace Global.Dynamic
                     includeFriends,
                     includeUserBlocking,
                     isNameEditorEnabled
-                ),
-                new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
-                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
-                realmNavigatorContainer.CreatePlugin(),
-                new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-
-            };
+                ));
+            }
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
