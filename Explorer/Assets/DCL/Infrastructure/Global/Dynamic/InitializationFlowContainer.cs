@@ -47,8 +47,6 @@ namespace DCL.UserInAppInitializationFlow
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, appArgs, realmNavigationContainer.RealmNavigator);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
-            // TODO review why loadGlobalPxOperation is invoked on recovery
-            var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmContainer.RealmController, bootstrapContainer.DiagnosticsContainer);
 
             var loadingOperations = new List<IStartupOperation>()
@@ -62,8 +60,13 @@ namespace DCL.UserInAppInitializationFlow
                 sentryDiagnostics
             };
 
+            // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
+            // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
             if (!localSceneDevelopment)
-                loadingOperations.Add(loadGlobalPxOperation);
+            {
+                // TODO review why loadGlobalPxOperation is invoked on recovery
+                loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
+            }
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
