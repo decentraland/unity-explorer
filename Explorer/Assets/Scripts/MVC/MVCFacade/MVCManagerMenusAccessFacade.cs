@@ -1,7 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
 using DCL.Multiplayer.Connectivity;
@@ -28,7 +28,7 @@ namespace MVC
         private readonly IMVCManager mvcManager;
         private readonly IProfileCache profileCache;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly IChatInputBus chatInputBus;
+        private readonly IChatEventBus chatEventBus;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
         private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
@@ -44,7 +44,7 @@ namespace MVC
             IMVCManager mvcManager,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatInputBus chatInputBus,
+            IChatEventBus chatEventBus,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             bool includeUserBlocking,
             IAnalyticsController analytics,
@@ -54,7 +54,7 @@ namespace MVC
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
             this.friendServiceProxy = friendServiceProxy;
-            this.chatInputBus = chatInputBus;
+            this.chatEventBus = chatEventBus;
             this.contextMenuSettings = contextMenuSettings;
             this.includeUserBlocking = includeUserBlocking;
             this.analytics = analytics;
@@ -102,7 +102,7 @@ namespace MVC
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
         }
 

@@ -5,7 +5,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.ChatLifecycleBus;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -19,14 +19,11 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
-using Random = UnityEngine.Random;
 
 namespace DCL.Chat
 {
@@ -44,10 +41,12 @@ namespace DCL.Chat
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
+        private readonly IRoom currentRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
-        private readonly IChatInputBus chatInputBus;
+        private readonly IChatEventBus chatEventBus;
+        private readonly IRoomHub roomHub;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -80,7 +79,7 @@ namespace DCL.Chat
             IRoomHub roomHub,
             ChatAudioSettingsAsset chatAudioSettings,
             ITextFormatter hyperlinkTextFormatter,
-            IProfileCache profileCache, IChatInputBus chatInputBus) : base(viewFactory)
+            IProfileCache profileCache, IChatEventBus chatEventBus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -91,11 +90,12 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
+            this.roomHub = roomHub;
             this.islandRoom = roomHub.IslandRoom();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
-            this.chatInputBus = chatInputBus;
+            this.chatEventBus = chatEventBus;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
@@ -111,7 +111,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat -= Clear;
-            chatInputBus.InsertTextInChat -= OnInputTextInserted;
+            chatEventBus.InsertTextInChat -= OnEventTextInserted;
 
             if (viewInstance != null)
             {
@@ -152,7 +152,9 @@ namespace DCL.Chat
             chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat += Clear;
-            chatInputBus.InsertTextInChat += OnInputTextInserted;
+
+            chatEventBus.InsertTextInChat += OnEventTextInserted;
+            chatEventBus.OpenConversation += OnOpenConversation;
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
@@ -172,39 +174,22 @@ namespace DCL.Chat
 
             OnFocus();
 
-            // Intro message
-            // TODO: Use localization systems here:
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
-            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL].MarkAllMessagesAsRead();
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewWelcomeMessage());
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
 
-// TODO: REMOVE ALL THESE LINES AFTER TESTING
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x024b912f2c35cebc1e2b06987baa2b1280a8291d");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xc9C29AB98E6BC42015985165A11153F564e9F8C2");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x51a514d3F28Ea19775e811fC09396E808394bd12");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xcd4ea8e05945f34122679f5035cd6014f3263863");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x6A327965bE29a7AcB83E1d1bbD689B72E188E58d");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xd545B9E0A5F3638a5026d1914CC9b47ed16B5ae9");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x69D30b1875d39E13A01AF73CCFED6d84839e84f2");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x97574fCd296f73FE34823973390ebE4b9b065300");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x31d4f4DD8615ec45bbB6330DA69F60032Aca219E");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xd0bBE281840cF1ccEBF202e547b539a94e2e9DA3");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x1BB3CeCd07DE9A8456cD3d6076b87c7a546162d0");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x04E77bA608Cc78aD8aEFfBc60a2Ea47ABdaEA7BA");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xe2b6024873d218B2E83B462D3658D8D7C3f55a18");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2");
-chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "0xdA5462CDb7091c39dE8cC0dE49e96632ED33197A");
-
-viewDependencies.DclInput.TESTS.Action1.performed += (x) => { chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, new ChatMessage("Test1 " + Random.Range(0, 100), "Test1", "Address", false, "senderID", false, false)); };
-viewDependencies.DclInput.TESTS.Action2.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "0x024b912f2c35cebc1e2b06987baa2b1280a8291d"), new ChatMessage("Test2 " + Random.Range(0, 100), "Test2", "0x024b912f2c35cebc1e2b06987baa2b1280a8291d", false, "senderID", false, false)); };
-viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMessage(new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "0xc9C29AB98E6BC42015985165A11153F564e9F8C2"), new ChatMessage("Test3 " + Random.Range(0, 100), "Test3", "0xc9C29AB98E6BC42015985165A11153F564e9F8C2", false, "senderID", false, false)); };
-
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
+        }
+
+        private void OnOpenConversation(string userId)
+        {
+            var channel = chatHistory.AddOrGetChannel(ChatChannel.ChatChannelType.User, new ChatChannel.ChannelId(userId));
+            viewInstance!.CurrentChannelId = channel.Id;
+            viewInstance.FocusInputBox();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -389,7 +374,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
         {
-            chatMessagesBus.Send(channel.Id, message, origin);
+            chatMessagesBus.Send(channel, message, origin);
         }
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)
@@ -440,7 +425,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
             viewInstance!.FocusInputBox();
         }
 
-        private void OnInputTextInserted(string text)
+        private void OnEventTextInserted(string text)
         {
             viewInstance!.FocusInputBox();
             viewInstance.InsertTextInInputBox(text);

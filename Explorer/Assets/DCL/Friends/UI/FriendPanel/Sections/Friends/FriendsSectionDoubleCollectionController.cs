@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
@@ -15,6 +16,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
+        private const float DELAY_BETWEEN_CLICKS = 0.5f;
+
         private readonly IPassportBridge passportBridge;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -23,9 +26,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly GenericContextMenu contextMenu;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly IChatEventBus chatEventBus;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private FriendProfile contextMenuFriendProfile;
+        private CancellationTokenSource openPassportCts = new ();
+        private bool elementClicked;
 
         internal event Action<string>? OnlineFriendClicked;
         internal event Action<string, Vector2Int>? JumpInClicked;
@@ -39,13 +45,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            bool includeUserBlocking)
+            bool includeUserBlocking, IChatEventBus chatEventBus)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
+            this.chatEventBus = chatEventBus;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
@@ -102,11 +109,35 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         protected override void ElementClicked(FriendProfile profile)
         {
-            passportBridge.ShowAsync(profile.Address).Forget();
+            if (elementClicked)
+            {
+                openPassportCts.Cancel();
+                //TODO FRAN: when refactor PR is merged, close friends panel
+                chatEventBus.OpenConversationUsingUserId(profile.Address);
+                elementClicked = false;
+            }
+            else
+            {
+                openPassportCts = openPassportCts.SafeRestart();
+                WaitAndOpenPassportAsync(profile, openPassportCts.Token).Forget();
+            }
 
+        }
+
+        private async UniTaskVoid WaitAndOpenPassportAsync(FriendProfile profile, CancellationToken ct)
+        {
+            elementClicked = true;
             if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.OFFLINE)
                 OnlineFriendClicked?.Invoke(profile.Address);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BETWEEN_CLICKS), cancellationToken: ct);
+            elementClicked = false;
+
+
+            await passportBridge.ShowAsync(profile.Address);
         }
+
+
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {

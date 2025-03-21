@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {
@@ -13,6 +14,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IGateKeeperSceneRoom SceneRoom() =>
             new IGateKeeperSceneRoom.Fake();
+
+        public IRoom SharedPrivateConversationsRoom() =>
+            NullRoom.INSTANCE;
 
         public UniTask<bool> StartAsync() => UniTask.FromResult(true);
 

@@ -4,6 +4,9 @@ namespace DCL.Chat.History
 {
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
+        private const string DCL_SYSTEM_SENDER = "DCL System";
+        private const string WELCOME_MESSAGE = "Type /help for available commands.";
+
         public readonly bool IsPaddingElement;
         public readonly string Message;
         public readonly string SenderValidatedName;
@@ -47,8 +50,11 @@ namespace DCL.Chat.History
         public static ChatMessage CopyWithNewMessage(string message, ChatMessage chatMessage) =>
             new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.SentByOwnUser, chatMessage.SenderWalletId, chatMessage.IsMention, chatMessage.SystemMessage);
 
+        public static ChatMessage NewWelcomeMessage() =>
+            NewFromSystem(WELCOME_MESSAGE);
+
         public static ChatMessage NewFromSystem(string message) =>
-            new (message, "DCL System", string.Empty, true,
+            new (message, DCL_SYSTEM_SENDER, string.Empty, true,
                 null, false, true);
 
         public bool Equals(ChatMessage other) =>

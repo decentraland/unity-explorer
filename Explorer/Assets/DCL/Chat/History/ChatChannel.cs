@@ -16,7 +16,7 @@ namespace DCL.Chat.History
             /// <summary>
             /// The channel in which all users in an island can participate.
             /// </summary>
-            NearBy,
+            Nearby,
 
             /// <summary>
             /// A channel in which a limited group of users can participate.
@@ -32,27 +32,25 @@ namespace DCL.Chat.History
         /// <summary>
         /// The unique identifier of a chat channel.
         /// </summary>
-        public struct ChannelId
+        public struct ChannelId : IEquatable<ChannelId>
         {
             public string Id { get; }
 
-            public ChannelId(ChatChannelType type, string name)
+            public ChannelId(string id)
             {
-                Id = type + ":" + name;
+                Id = id;
             }
 
-            public static void GetTypeAndNameFromId(string id, out ChatChannelType channelType, out string channelName)
-            {
-                channelName = id.Substring(id.LastIndexOf(':') + 1);
-                string channelIdType = id.Substring(0, id.LastIndexOf(':'));
-                Enum.TryParse(channelIdType, out channelType);
-            }
+            public bool Equals(ChannelId other) =>
+                Id == other.Id;
         }
 
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
-        public static readonly ChannelId NEARBY_CHANNEL = new (ChatChannelType.NearBy, string.Empty);
+        public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.Nearby.ToString());
+
+        public static readonly ChatChannel NEARBY_CHANNEL = new ChatChannel(ChatChannelType.Nearby, ChatChannelType.Nearby.ToString());
 
         public delegate void ClearedDelegate(ChatChannel clearedChannel);
         public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
@@ -108,9 +106,9 @@ namespace DCL.Chat.History
         private readonly List<ChatMessage> messages = new ();
         private int readMessages;
 
-        public ChatChannel(ChatChannelType channelType, string channelName)
+        public ChatChannel(ChatChannelType channelType, string channelId)
         {
-            Id = new ChannelId(channelType, channelName);
+            Id = new ChannelId(channelId);
             ChannelType = channelType;
         }
 

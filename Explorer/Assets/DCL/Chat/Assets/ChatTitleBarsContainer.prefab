@@ -70,6 +70,7 @@ MonoBehaviour:
   memberListChannelNameText: {fileID: 1320663737415923502}
   defaultChatTitlebar: {fileID: 5554480968708598910}
   memberListTitlebar: {fileID: 9061095220331220801}
+  memberCountObject: {fileID: 6177869427546414279}
   nearbyChannelContainer: {fileID: 5174794944162340121}
   profileView: {fileID: 1310678421051852368}
   chatOptionsContextMenuData:
@@ -472,6 +473,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &6177869427546414279 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 730101595095240254, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+  m_PrefabInstance: {fileID: 6889913742591480569}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &9044296380937847988 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2458454848096015949, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}

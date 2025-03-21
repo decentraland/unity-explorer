@@ -70,6 +70,12 @@ namespace DCL.Diagnostics
         public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
 
         /// <summary>
+        ///     Chat livekit requests
+        /// </summary>
+        public const string COMMS_CHAT_HANDLER = nameof(COMMS_CHAT_HANDLER);
+
+
+        /// <summary>
         ///     Unspecified ECS World Exceptions
         /// </summary>
         public const string ECS = nameof(ECS);

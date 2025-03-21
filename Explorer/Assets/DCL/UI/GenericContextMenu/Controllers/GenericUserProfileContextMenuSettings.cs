@@ -10,5 +10,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
         [field: SerializeField] public GenericContextMenuControlConfig JumpInButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig MentionButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig OpenUserProfileButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig OpenConversationButtonConfig { get; private set; }
     }
 }

@@ -37,9 +37,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void ReEmit(ChatChannel.ChannelId channelId, ChatMessage obj) =>
             MessageAdded?.Invoke(channelId, obj);
 
-        public void Send(ChatChannel.ChannelId channelId, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin)
         {
-            core.Send(channelId, message, origin);
+            core.Send(channel, message, origin);
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, new JsonObject
             {
@@ -47,6 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "origin", origin },
                 { "is_mention", CheckIfIsMention(message)}
 
+                //TODO FRAN: Add here array of mentioned players.
                 // { "emoji_count", emoji_count },
                 // { "message", message },
                 // { "channel_mame", "nearby"}, // temporally hardcoded

@@ -1,3 +1,4 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -34,6 +35,7 @@ namespace DCL.Chat.MessageBus
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnPrivateMessageReceived);
         }
 
         public void Dispose()
@@ -42,12 +44,17 @@ namespace DCL.Chat.MessageBus
             cancellationTokenSource.Dispose();
         }
 
+        private void OnPrivateMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
+        {
+            OnChatAsync(receivedMessage, true).Forget();
+        }
+
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
             OnChatAsync(receivedMessage).Forget();
         }
 
-        private async UniTaskVoid OnChatAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
+        private async UniTaskVoid OnChatAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, bool isPrivate = false)
         {
             using (receivedMessage)
             {
@@ -56,7 +63,7 @@ namespace DCL.Chat.MessageBus
 
                 Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
 
-                ChatChannel.ChannelId parsedChannelId = ChatChannel.NEARBY_CHANNEL;
+                ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
                 string chatMessage = receivedMessage.Payload.Message;
 
                 Profile ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
@@ -90,19 +97,32 @@ namespace DCL.Chat.MessageBus
             return false;
         }
 
-        public void Send(ChatChannel.ChannelId channelId, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");
 
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
-            SendTo(channelId, message, timestamp, messagePipesHub.IslandPipe());
-            SendTo(channelId, message, timestamp, messagePipesHub.ScenePipe());
+            switch (channel.ChannelType)
+            {
+                case ChatChannel.ChatChannelType.Nearby:
+                    SendTo(message, timestamp, messagePipesHub.IslandPipe());
+                    SendTo(message, timestamp, messagePipesHub.ScenePipe());
+                    break;
+                case ChatChannel.ChatChannelType.User:
+                    SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
+                    break;
+                default:
+                    break;
+            }
+
         }
 
-        private void SendTo(ChatChannel.ChannelId channelId, string message, double timestamp, IMessagePipe messagePipe)
+        private void SendTo(string message, double timestamp, IMessagePipe messagePipe, string? recipient = null)
         {
             MessageWrap<Decentraland.Kernel.Comms.Rfc4.Chat> chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
+            if (recipient != null)
+                chat.AddSpecialRecipient(recipient);
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
