@@ -42,6 +42,7 @@ namespace DCL.UserInAppInitializationFlow
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, appArgs, realmNavigationContainer.RealmNavigator);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
@@ -53,6 +54,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 new IStartupOperation[]
                 {
+                    blocklistCheckStartupOperation,
                     preloadProfileStartupOperation,
                     loadPlayerAvatarStartupOperation,
                     loadLandscapeStartupOperation,
@@ -72,6 +74,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 new IStartupOperation[]
                 {
+                    blocklistCheckStartupOperation,
                     preloadProfileStartupOperation,
                     loadPlayerAvatarStartupOperation,
                     loadLandscapeStartupOperation,

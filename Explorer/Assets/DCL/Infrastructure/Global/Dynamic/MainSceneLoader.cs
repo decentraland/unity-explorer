@@ -235,11 +235,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                if (await IsPlayerBlockedAsync(staticContainer!, bootstrapContainer.IdentityCache.EnsuredIdentity().Address, decentralandUrlsSource, ct))
-                {
-                    await ShowBlockedPopupAsync(splashScreen, bootstrapContainer.WebBrowser, ct);
-                    return;
-                }
+                await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -278,26 +274,15 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<bool> IsPlayerBlockedAsync(StaticContainer sc, string playerID, IDecentralandUrlsSource urlsSource, CancellationToken ct)
+        private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
         {
-            bool isBlocklisted = await ApplicationBlocklistGuard.IsUserBlocklistedAsync(sc.WebRequestsContainer.WebRequestController, urlsSource, playerID, ct);
-
-            return isBlocklisted;
-        }
-
-        private async UniTask ShowBlockedPopupAsync(SplashScreen splashScreen, IWebBrowser webBrowser, CancellationToken ct)
-        {
-            splashScreen.Hide();
-
-            var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
+            var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
 
             ControllerBase<BlockedScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
-                BlockedScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<BlockedScreenView>(), null);
+                BlockedScreenController.CreateLazily(blockedPopupPrefab.Value.GetComponent<BlockedScreenView>(), null);
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
-
-            await dynamicWorldContainer!.MvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
