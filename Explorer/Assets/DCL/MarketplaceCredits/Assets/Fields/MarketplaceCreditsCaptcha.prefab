@@ -327,6 +327,7 @@ MonoBehaviour:
   <TargetAreaBackgroundImage>k__BackingField: {fileID: 1066891484959773169}
   <ReloadFromNotLoadedStateButton>k__BackingField: {fileID: 5452683132495091837}
   <ReloadFromNotSolvedStateButton>k__BackingField: {fileID: 1574226583070062774}
+  <CaptchaSolvedAudio>k__BackingField: {fileID: 11400000, guid: 22c05636e2b0d7b4a8eebb9d46f21e8b, type: 2}
 --- !u!1 &1807394865850442734
 GameObject:
   m_ObjectHideFlags: 0

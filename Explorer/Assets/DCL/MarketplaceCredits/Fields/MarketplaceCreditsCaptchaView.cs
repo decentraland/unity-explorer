@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -36,6 +37,9 @@ namespace DCL.MarketplaceCredits.Fields
 
         [field: SerializeField]
         public Button ReloadFromNotSolvedStateButton { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig CaptchaSolvedAudio { get; private set; }
 
         private float lastCaptchaValue;
 
@@ -87,6 +91,7 @@ namespace DCL.MarketplaceCredits.Fields
 
             OnCaptchaSolved?.Invoke(MainSlider.Slider.value);
             lastCaptchaValue = MainSlider.Slider.value;
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(CaptchaSolvedAudio);
         }
     }
 }

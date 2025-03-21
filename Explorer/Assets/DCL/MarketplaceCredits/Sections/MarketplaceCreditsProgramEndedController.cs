@@ -51,6 +51,8 @@ namespace DCL.MarketplaceCredits.Sections
                     webBrowser.OpenUrl(MarketplaceCreditsUtils.X_LINK);
                     break;
             }
+
+            view.PlayOnLinkClickAudio();
         }
     }
 }
