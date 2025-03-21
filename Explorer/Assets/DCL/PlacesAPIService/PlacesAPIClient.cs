@@ -80,13 +80,9 @@ namespace DCL.PlacesAPIService
 
             URLAddress url = urlBuilder.Build();
 
-            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct,
-                ReportCategory.UI,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
+                ReportCategory.UI);
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
