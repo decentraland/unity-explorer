@@ -124,28 +124,27 @@ jobs:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         if: env.APPROVAL_CHECK == 'passed'
         run: |
-          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA and PR #$PR_NUMBER..."
+          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
 
           WORKFLOW_RUN_ID=$(gh run list \
             --workflow="Enforce QA and DEV Approvals" \
             --limit 1000 \
             --repo "$REPO_OWNER/$REPO_NAME" \
-            --json databaseId,event,headSha,conclusion,pullRequests \
-            | jq -r --arg HEAD_SHA "$HEAD_SHA" --argjson PR_NUMBER "$PR_NUMBER" '
+            --json databaseId,event,headSha,conclusion \
+            | jq -r --arg HEAD_SHA "$HEAD_SHA" '
                 .[] |
                 select(.event == "pull_request") |
                 select(.headSha == $HEAD_SHA) |
                 select(.conclusion == "failure") |
-                select(.pullRequests | any(.number == $PR_NUMBER)) |
                 .databaseId
-            ')
+            ' | head -n 1)
 
           if [ -z "$WORKFLOW_RUN_ID" ]; then
-            echo "🔸 No previous failed workflow run found for this commit on PR #$PR_NUMBER."
+            echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
             exit 0
           fi
 
           echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
-          echo "🔁 Triggering re-run via GitHub API"
+          echo "🔁 Triggering re-run via GitHub CLI"
           gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME" --verbose
           echo "✅ Re-run triggered successfully!"
