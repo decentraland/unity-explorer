@@ -3,12 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Diagnostics;
-using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
-using DCL.UI.Profiles;
-using DCL.UI.Skybox;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -32,8 +29,7 @@ namespace DCL.UI.SharedSpaceManager
         private readonly bool isCameraReelFeatureEnabled;
 
         private readonly CancellationTokenSource cts = new ();
-        private bool isShowing; // true whenever a view is being shown, so other calls wait for them to finish
-        private bool isHiding; // true whenever a view is being hidden, so other calls wait for them to finish
+        private bool isTransitioning; // true whenever a view is being shown or hidden, so other calls wait for them to finish
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
@@ -91,13 +87,13 @@ namespace DCL.UI.SharedSpaceManager
                 return;
             }
 
-            if (isShowing || isHiding)
+            if (isTransitioning)
             {
                 ReportHub.Log(ReportCategory.UI, $"The panel {panel} could not be shown, there is another panel still being shown or hidden.");
                 return;
             }
 
-            isShowing = true; // Set to false when the view is shown, see OnControllerViewShowingComplete
+            isTransitioning = true; // Set to false when the view is shown, see OnControllerViewShowingComplete
             panelBeingShown = panel;
 
             try
@@ -121,7 +117,7 @@ namespace DCL.UI.SharedSpaceManager
                         else if (!panelInSharedSpace.IsVisibleInSharedSpace)
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
-                            isShowing = false;
+                            isTransitioning = false;
 
                         break;
                     }
@@ -136,48 +132,28 @@ namespace DCL.UI.SharedSpaceManager
 
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
+                            // Waits until the Friends panel hides completely before showing the Chat
+                            if(isTransitioning)
+                                await UniTask.WaitWhile(() => isTransitioning);
+
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
                                 await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(false));
                         }
                         else
-                            isShowing = false;
+                            isTransitioning = false;
 
                         break;
                     }
                     case PanelsSharingSpace.Skybox:
-                    {
-                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
-                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
-                        else
-                            isShowing = false;
-
-                        break;
-                    }
                     case PanelsSharingSpace.EmotesWheel:
-                    {
-                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
-                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
-                        else
-                            isShowing = false;
-
-                        break;
-                    }
                     case PanelsSharingSpace.Explore:
-                    {
-                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
-                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
-                        else
-                            isShowing = false;
-
-                        break;
-                    }
                     case PanelsSharingSpace.SidebarProfile:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else
-                            isShowing = false;
+                            isTransitioning = false;
 
                         break;
                     }
@@ -187,17 +163,15 @@ namespace DCL.UI.SharedSpaceManager
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token);
                         else
-                            isShowing = false;
+                            isTransitioning = false;
 
                         break;
                     }
                 }
             }
             catch (Exception ex)
-
             {
-                isShowing = false;
-                isHiding = false;
+                isTransitioning = false;
 
                 if (!(ex is OperationCanceledException))
                     throw;
@@ -205,11 +179,11 @@ namespace DCL.UI.SharedSpaceManager
 
             // Arrives here once when the panel stops being shown (they leave WaitForCloseIntentAsync) for whatever reason.
             // If there is an exit animation or any other process that takes time, it waits for it
-            await UniTask.WaitUntil(() => isHiding == false, PlayerLoopTiming.Update, cts.Token);
+            await UniTask.WaitUntil(() => isTransitioning == false, PlayerLoopTiming.Update, cts.Token);
         }
 
         /// <summary>
-        ///     Waits for the panel to finish its animation or cleaning process and, depending on the established rules, another panel may be shown or not. It should be called only from non-controller panels.
+        ///     Waits for the panel to finish its animation or cleaning process.
         /// </summary>
         /// <param name="panel">Which panel to hide.</param>
         /// <returns>The async task.</returns>
@@ -217,8 +191,6 @@ namespace DCL.UI.SharedSpaceManager
         {
             if (!IsRegistered(panel))
                 return;
-
-            isHiding = true;
 
             try
             {
@@ -250,7 +222,7 @@ namespace DCL.UI.SharedSpaceManager
             {
                 // Stops propagation
             }
-            finally { isHiding = false; }
+            finally { ; }
         }
 
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
@@ -276,11 +248,11 @@ namespace DCL.UI.SharedSpaceManager
                     await HideAsync(controllerInSharedSpace.Key);
         }
 
-        private void OnControllerViewShowingComplete(IPanelInSharedSpace controller)
+        private void OnPanelViewShowingComplete(IPanelInSharedSpace panel)
         {
             // Showing some panels may make others be visible too (like the chat), but we only consider the showing process as finished if the event was raised by the panel that started it
-            if (registrations[panelBeingShown].panel == controller)
-                isShowing = false;
+            if (registrations[panelBeingShown].panel == panel)
+                isTransitioning = false;
         }
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
@@ -335,7 +307,7 @@ namespace DCL.UI.SharedSpaceManager
             internal override PanelRegistration<T> GetByParams<T>()
             {
                 if (typeof(T) != typeof(TParams))
-                    throw new ArgumentException($"The parameters type provided ({typeof(TParams).Name}) does not match the expected type ({typeof(TParams).Name})");
+                    throw new ArgumentException($"The parameters type provided ({typeof(T).Name}) does not match the expected type ({typeof(TParams).Name})");
 
                 return this as PanelRegistration<T>;
             }
@@ -350,7 +322,7 @@ namespace DCL.UI.SharedSpaceManager
                 return;
             }
 
-            panelImplementation.ViewShowingComplete += OnControllerViewShowingComplete;
+            panelImplementation.ViewShowingComplete += OnPanelViewShowingComplete;
             registrations.Add(panel, new PanelRegistration<TParams>(panelImplementation));
         }
 
@@ -362,7 +334,7 @@ namespace DCL.UI.SharedSpaceManager
                 return;
             }
 
-            controller.ViewShowingComplete += OnControllerViewShowingComplete;
+            controller.ViewShowingComplete += OnPanelViewShowingComplete;
 
             registrations.Add(panel, new PanelRegistration<TInputData>(controller,
                 (manager, data, ct) => manager.ShowAsync(new ShowCommand<TView, TInputData>(data), ct)));
@@ -414,14 +386,14 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (!isExplorePanelVisible)
+            if (!isExplorePanelVisible && !isTransitioning)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
         {
             // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            if (isShowing || isHiding)
+            if (isTransitioning)
                 return;
 
             Entity camera = ecsWorld.CacheCamera();

@@ -12,19 +12,22 @@ namespace DCL.UI.SharedSpaceManager
     ///     Note that we are calling them "panels" because they may not be either controllers or views; panels are required to implement IPanelInSharedSpace interface, whose implementation may
     ///     vary notably depending on whether they are controllers or not, and depending on the type of controller (Persistent, Popup or Fullscreen); Overlay controllers do not need to be included in the manager.
     ///     Internally, the manager will use the MVC Manager when possible, so the rules of that system apply (a Fullscreen controller will hide all Popups automatically, but not Persistent controllers or other panels).
+    ///
     ///     How it works:
+    ///
     ///     - When ShowAsync is called, it will hide any registered panel (depending on the established rules), wait for it to finish its animation or cleaning process, and then showing the panel. ShowAsync
-    ///     may be called from anywhere.
-    ///     HideAsync should be called only from non-controller panels. If something has to happen when a controller is hidden, that logic should be added right after the "await mvcManager.ShowAsync" line (remember that,
+    ///     may be called from anywhere. If something has to happen when a controller is hidden, that logic should be added right after the line where the manager awaits the panel to stop showing (remember that,
     ///     in our MVC manager, a Fullscreen or Popup controller is "showing" until its WaitForCloseIntentAsync finishes).
     ///     - The ToggleVisibilityAsync method is used when there is no way to know whether the panel is hidden or not, and it has to change its state.
     ///     - Regarding the parameters sent to these methods, they can be of any type although in case of showing a controller the type should match the one expected by it.
+    ///
     ///     How to add new panels:
+    ///
     ///     - Register the panel.
-    ///     - Make the panel implement IPanelInSharedSpace.
+    ///     - Make the panel implement either IPanelInSharedSpace (if it does not inherit from IController) or IControllerInSharedSpace (otherwise).
     ///     -> The panel must raise the ViewShowingComplete event right before the condition for the WaitForCloseIntentAsync is evaluated, in case it is a controller, or before leaving the OnShownInSharedSpaceAsync method.
     ///     -> The OnHiddenInSharedSpaceAsync method must make the WaitForCloseIntentAsync finish, in case it is a controller, or hide the view / visual elements waiting for any animation or cleaning process to finish.
-    ///     -> The OnShownInSharedSpaceAsync method should be used by Persistent controllers or panels that are not controllers, and should wait for any animation or preparation to finish.
+    ///     -> The OnShownInSharedSpaceAsync method should be implemented by Persistent controllers or panels that are not controllers, and should wait for any animation or preparation to finish.
     ///     -> The IsVisibleInSharedSpace will normally check if the view is not hidden, it the case it is a controller, or any other condition that means that the panel can be hidden.
     ///     - Add the panel to the PanelsInSharedSpace enumeration.
     ///     - Add a section to the ShowAsync method to handle how the panel should be shown, depending on whether it is a controller or not, and whether it needs some specific logic (like hiding other specific panel).
