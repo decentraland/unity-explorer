@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private FriendsPanelController? friendsPanelController;
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
         private CancellationTokenSource? prewarmFriendsCancellationToken;
+        private UserBlockingCache userBlockingCache;
 
         public FriendsPlugin(
             MainUIView mainUIView,
@@ -151,15 +152,14 @@ namespace DCL.PluginSystem.Global
 
             if (includeUserBlocking)
             {
-                var userBlockingCache = new UserBlockingCache(friendsService, friendEventBus);
+                userBlockingCache = new UserBlockingCache(friendEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
-                web3IdentityCache.OnIdentityChanged += userBlockingCache.ResetCache;
             }
 
             // We need to restart the connection to the service as identity changes
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
-            web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
+            web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -256,6 +256,12 @@ namespace DCL.PluginSystem.Global
                 if (friendsPanelController != null)
                     await friendsPanelController.InitAsync(ct);
 
+                if (includeUserBlocking)
+                {
+                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
+                    userBlockingCache.Reset(blockingStatus);
+                }
+
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
             }
         }
@@ -274,7 +280,7 @@ namespace DCL.PluginSystem.Global
             appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
                 || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
 
-        private void ReconnectRpcClient()
+        private void ReInitializeRpcClient()
         {
             friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
             ReconnectRpcClientAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
@@ -293,7 +299,12 @@ namespace DCL.PluginSystem.Global
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
                 if (includeUserBlocking)
+                {
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
+
+                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
+                    userBlockingCache.Reset(blockingStatus);
+                }
 
                 friendsPanelController?.Reset();
             }
