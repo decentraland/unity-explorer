@@ -786,9 +786,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 236, y: -180}
+  m_AnchoredPosition: {x: 122.00001, y: -157.00002}
   m_SizeDelta: {x: 228, y: 46}
-  m_Pivot: {x: 1, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3387170493232071200
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1034,9 +1034,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -236.00003, y: -23.000023}
+  m_AnchoredPosition: {x: -122.00001, y: -0.000045776367}
   m_SizeDelta: {x: 228, y: 46}
-  m_Pivot: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5802840291699824015
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1316,9 +1316,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 236.00009, y: -23.000023}
+  m_AnchoredPosition: {x: 122.00009, y: -0.000045776367}
   m_SizeDelta: {x: 228, y: 46}
-  m_Pivot: {x: 1, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6215155843902633034
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2715,9 +2715,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -236, y: -180}
+  m_AnchoredPosition: {x: -121.999985, y: -157}
   m_SizeDelta: {x: 228, y: 46}
-  m_Pivot: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6345152662706823092
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3821,9 +3821,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 236.00009, y: -23.000023}
+  m_AnchoredPosition: {x: 122.00009, y: -0.000045776367}
   m_SizeDelta: {x: 228, y: 46}
-  m_Pivot: {x: 1, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8673690962180392796
 CanvasRenderer:
   m_ObjectHideFlags: 0
