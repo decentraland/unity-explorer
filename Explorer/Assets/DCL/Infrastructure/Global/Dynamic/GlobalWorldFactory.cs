@@ -193,7 +193,7 @@ namespace Global.Dynamic
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
             var sceneLoadingLimit
-                = new SceneLoadingLimit();
+                = SceneLoadingLimit.CreateMax();
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {

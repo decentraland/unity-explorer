@@ -1,6 +1,9 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
+using DCL.Character.Components;
 using DCL.Ipfs;
+using DCL.LOD;
+using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -21,17 +24,28 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class ResolveSceneStateByIncreasingRadiusSystemShould : UnitySystemTestBase<ResolveSceneStateByIncreasingRadiusSystem>
     {
-        /*
         private IRealmPartitionSettings realmPartitionSettings;
         private RealmComponent realmComponent;
 
         [SetUp]
         public void SetUp()
         {
-            realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings);
+            Entity playerEntity = world.Create(new CharacterTransform(new GameObject().transform));
 
-            realmComponent = new RealmComponent(new RealmData(new TestIpfsRealm()));
+            ILODSettingsAsset lodSettingsAsset = ScriptableObject.CreateInstance<LODSettingsAsset>();
+            lodSettingsAsset.SDK7LodThreshold = 2;
+            lodSettingsAsset.UnloadTolerance = 1;
+
+            VisualSceneStateResolver visualSceneStateResolver = new VisualSceneStateResolver(lodSettingsAsset);
+
+            RealmData realmData = new RealmData(new TestIpfsRealm());
+
+            SceneLoadingLimit sceneLoadingLimit = SceneLoadingLimit.CreateMax();
+
+            realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
+            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, realmData, sceneLoadingLimit);
+
+            realmComponent = new RealmComponent(realmData);
             world.Create(realmComponent, new VolatileScenePointers());
         }
 
@@ -51,22 +65,20 @@ namespace ECS.SceneLifeCycle.Tests
                         {
                             scene = new SceneMetadataScene
                                 { DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) } },
+                            runtimeVersion = "7"
                         },
                     },
                     new IpfsPath()), new PartitionComponent
                 {
                     Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i,
-                }, new VisualSceneState());
+                });
             }
 
             system.Update(0f);
 
             // Wait for job to complete
             while (!system.sortingJobHandle.Value.IsCompleted)
-            {
                 await Task.Yield();
-                system.Update(0f);
-            }
 
             system.Update(0f);
 
@@ -101,14 +113,13 @@ namespace ECS.SceneLifeCycle.Tests
                     new IpfsPath()), new PartitionComponent
                 {
                     Bucket = i, RawSqrDistance = (ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i) - 1f, OutOfRange = i < 4,
-                }, Substitute.For<ISceneFacade>());
+                }, Substitute.For<ISceneFacade>(),
+                    SceneLoadingState.CreateBuiltScene());
             }
 
             system.Update(0f);
 
             Assert.That(world.CountEntities(new QueryDescription().WithAll<DeleteEntityIntention>()), Is.EqualTo(2));
         }
-            */
-
     }
 }

@@ -39,9 +39,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly IRealmData realmData;
 
         //Array sorting helpers
-        private readonly List<OrderedDataManaged> orderedDataManagedList;
-        private readonly NativeList<OrderedDataNative> orderedDataNative;
-        private JobHandle? sortingJobHandle;
+        private List<OrderedDataManaged> orderedDataManagedList;
+        private NativeList<OrderedDataNative> orderedDataNative;
+        internal JobHandle? sortingJobHandle;
         private bool arraysInSync;
 
         //Loading helpers
@@ -87,6 +87,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             orderedDataManagedList.Clear();
             orderedDataNative.Clear();
+            arraysInSync = false;
         }
 
         protected override void Update(float t)
@@ -111,7 +112,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
             in SceneDefinitionComponent sceneDefinitionComponent)
         {
-
             if (sceneDefinitionComponent.IsPortableExperience)
             {
                 //Portable experiences shouldnt be analyzed. Create straight away
