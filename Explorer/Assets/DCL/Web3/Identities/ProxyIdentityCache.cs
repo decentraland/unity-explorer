@@ -43,6 +43,9 @@ namespace DCL.Web3.Identities
 
                 if (storedIdentity != null)
                 {
+                    // Since an expired identity is like non having one at all
+                    // we return an invalid one to force the systems to not use it
+                    // as not all of them are validating its expiration
                     if (storedIdentity.IsExpired)
                         return null;
 
