@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 
 namespace DCL.Web3.Authenticators
@@ -38,6 +39,8 @@ namespace DCL.Web3.Authenticators
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
         private readonly DecentralandEnvironment environment;
+        private readonly int? identityExpirationDuration;
+
         // Allow only one web3 operation at a time
         private readonly SemaphoreSlim mutex = new (1, 1);
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
@@ -59,7 +62,8 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
-            DecentralandEnvironment environment)
+            DecentralandEnvironment environment,
+            int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
             this.authApiUrl = authApiUrl;
@@ -70,6 +74,7 @@ namespace DCL.Web3.Authenticators
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
             this.environment = environment;
+            this.identityExpirationDuration = identityExpirationDuration;
         }
 
         public void Dispose()
@@ -153,6 +158,10 @@ namespace DCL.Web3.Authenticators
 
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
+
+                if (identityExpirationDuration != null)
+                    sessionExpiration = DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value);
+
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
                 SignatureIdResponse authenticationResponse = await RequestEthMethodWithSignatureAsync(new LoginAuthApiRequest
@@ -282,7 +291,7 @@ namespace DCL.Web3.Authenticators
         private async UniTask<EthApiResponse> RequestEthMethodWithoutSignatureAsync(EthApiRequest request, CancellationToken ct)
         {
             string reqJson = JsonConvert.SerializeObject(request);
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(reqJson);
+            byte[] bytes = Encoding.UTF8.GetBytes(reqJson);
             await rpcWebSocket!.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
 
             while (!ct.IsCancellationRequested && rpcWebSocket?.State == WebSocketState.Open)
@@ -291,7 +300,7 @@ namespace DCL.Web3.Authenticators
 
                 if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
                 {
-                    string resJson = System.Text.Encoding.UTF8.GetString(rpcByteBuffer, 0, result.Count);
+                    string resJson = Encoding.UTF8.GetString(rpcByteBuffer, 0, result.Count);
                     EthApiResponse response = JsonConvert.DeserializeObject<EthApiResponse>(resJson);
 
                     if (response.id == request.id)
