@@ -36,9 +36,20 @@ namespace DCL.Chat
             /// </summary>
             public readonly bool ShowUnfolded;
 
-            public ShowParams(bool showUnfolded)
+            /// <summary>
+            /// Indicates whether the input box of the chat panel should gain the focus after showing.
+            /// </summary>
+            public readonly bool HasToFocusInputBox;
+
+            /// <summary>
+            /// Constructor with all fields.
+            /// </summary>
+            /// <param name="showUnfolded">Indicates whether the chat panel should be folded or unfolded when its view is shown.</param>
+            /// <param name="hasToFocusInputBox">Indicates whether the input box of the chat panel should gain the focus after showing</param>
+            public ShowParams(bool showUnfolded, bool hasToFocusInputBox = false)
             {
                 ShowUnfolded = showUnfolded;
+                HasToFocusInputBox = hasToFocusInputBox;
             }
         }
 
@@ -84,6 +95,11 @@ namespace DCL.Chat
                 // When opened from outside, it should show the unread messages
                 if (value)
                     viewInstance.ShowNewMessages();
+
+                if (value)
+                    viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
+                else
+                    viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
             }
 
         }
@@ -174,6 +190,9 @@ namespace DCL.Chat
                     SetViewVisibility(true);
 
                 IsUnfolded = showParams.ShowUnfolded;
+
+                if(showParams.HasToFocusInputBox)
+                    FocusInputBox();
 
                 ViewShowingComplete?.Invoke(this);
             }

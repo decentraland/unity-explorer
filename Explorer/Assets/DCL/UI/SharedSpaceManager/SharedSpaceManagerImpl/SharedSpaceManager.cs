@@ -239,12 +239,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
             if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
-            {
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
-
-                // TODO This can be an input parameter so we don't violate encapsulation
-                registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().FocusInputBox();
-            }
+                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
         }
 
 #region Registration
