@@ -6,6 +6,7 @@ using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
+using DCL.UI.Buttons;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -38,6 +39,7 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
+        private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
@@ -55,6 +57,7 @@ namespace DCL.Notifications.NotificationsMenu
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
+            HoverableAndSelectableButtonWithAnimator sidebarButton,
             ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache)
@@ -66,6 +69,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
+            this.sidebarButton = sidebarButton;
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
@@ -91,6 +95,7 @@ namespace DCL.Notifications.NotificationsMenu
             sidebarBus.UnblockSidebar();
             notificationPanelCts = notificationPanelCts.SafeRestart();
             view.HideAsync(notificationPanelCts.Token).Forget();
+            sidebarButton.Deselect();
         }
 
         public void ToggleNotificationsPanel(bool forceClose)
@@ -98,7 +103,11 @@ namespace DCL.Notifications.NotificationsMenu
             notificationPanelCts = notificationPanelCts.SafeRestart();
 
             if (!forceClose && !view.gameObject.activeSelf) { view.ShowAsync(notificationPanelCts.Token).Forget(); }
-            else if (view.gameObject.activeSelf) { view.HideAsync(notificationPanelCts.Token).Forget(); }
+            else if (view.gameObject.activeSelf)
+            {
+                view.HideAsync(notificationPanelCts.Token).Forget();
+                sidebarButton.Deselect();
+            }
         }
 
         private void OnViewShown()

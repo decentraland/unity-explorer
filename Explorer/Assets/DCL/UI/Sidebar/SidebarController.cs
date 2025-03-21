@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -27,6 +28,7 @@ namespace DCL.UI.Sidebar
         private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
+        private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
@@ -34,6 +36,7 @@ namespace DCL.UI.Sidebar
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly bool includeMarketplaceCredits;
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
 
@@ -49,6 +52,7 @@ namespace DCL.UI.Sidebar
             IMVCManager mvcManager,
             INotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
+            MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
@@ -58,6 +62,7 @@ namespace DCL.UI.Sidebar
             ISidebarActionsBus sidebarActionsBus,
             bool includeCameraReel,
             bool includeFriends,
+            bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory)
             : base(viewFactory)
@@ -68,6 +73,7 @@ namespace DCL.UI.Sidebar
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
+            this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
@@ -76,6 +82,7 @@ namespace DCL.UI.Sidebar
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
 
             sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
         }
@@ -85,6 +92,7 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             notificationsMenuController.Dispose();
+            marketplaceCreditsMenuController.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -102,7 +110,8 @@ namespace DCL.UI.Sidebar
 
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenu);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
-            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.notificationsButton.Button.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.MarketplaceCreditsButton.Button.onClick.AddListener(OpenMarketplaceCreditsPanel);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
@@ -123,10 +132,13 @@ namespace DCL.UI.Sidebar
             }
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+            viewInstance.MarketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
             chatView.FoldingChanged += OnChatViewFoldingChanged;
+
+            marketplaceCreditsMenuController.CheckForSidebarButtonState();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -161,6 +173,8 @@ namespace DCL.UI.Sidebar
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
+
+            TestMarketplaceCreditsNotificationAsync(CancellationToken.None).Forget();
         }
 
         private void OnControlsButtonClicked()
@@ -185,6 +199,7 @@ namespace DCL.UI.Sidebar
                 skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget();
 
             notificationsMenuController.ToggleNotificationsPanel(true);
+            marketplaceCreditsMenuController.ClosePanel();
             viewInstance!.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
         }
@@ -270,6 +285,14 @@ namespace DCL.UI.Sidebar
             sidebarActionsBus.OpenWidget();
         }
 
+        private void OpenMarketplaceCreditsPanel()
+        {
+            CloseAllWidgets();
+            sidebarBus.BlockSidebar();
+            marketplaceCreditsMenuController.OpenPanel();
+            sidebarActionsBus.OpenWidget();
+        }
+
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
             CloseAllWidgets();
@@ -282,5 +305,24 @@ namespace DCL.UI.Sidebar
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
+
+        private async UniTaskVoid TestMarketplaceCreditsNotificationAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(5000, cancellationToken: ct);
+            notificationsBusController.AddNotification(new MarketplaceCreditsNotification
+            {
+                Type = NotificationType.MARKETPLACE_CREDITS,
+                Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
+                Id = $"SantiTest{DateTime.Now.Ticks}",
+                Read = false,
+                Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString(),
+                Metadata = new MarketplaceCreditsNotificationMetadata
+                {
+                    Title = "Weekly Goal Completed!",
+                    Description = "Claim your Credits to unlock them",
+                    Image = "https://i.ibb.co/4L0WD2j/Credits-Icn.png",
+                }
+            });
+        }
     }
 }
