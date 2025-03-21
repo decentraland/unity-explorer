@@ -139,10 +139,31 @@ jobs:
                 .databaseId
             ' | head -n 1)
 
+          WORKFLOW_RUN_ID2=$(gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 1000 \
+            --repo "$REPO_OWNER/$REPO_NAME" \
+            --json databaseId,event,headSha,conclusion \
+            | jq -r --arg HEAD_SHA "$HEAD_SHA" '
+                .[] |
+                select(.event == "pull_request") |
+                select(.headSha == $HEAD_SHA) |
+                select(.conclusion == "failure") |
+                .databaseId
+            ' | head -n 1)
+
           if [ -z "$WORKFLOW_RUN_ID" ]; then
             echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
             exit 0
           fi
+
+          echo "📦 Fetching raw run metadata for workflow ID $WORKFLOW_ID and SHA $HEAD_SHA..."
+          RAW_RUNS=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?per_page=100&event=pull_request&status=completed" --jq '.')
+
+          echo "📄 Matching workflow runs for head_sha: $HEAD_SHA"
+          echo "$RAW_RUNS" | jq --arg HEAD_SHA "$HEAD_SHA" '
+            .workflow_runs[] | select(.head_sha == $HEAD_SHA)
+          '
 
           echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
           echo "🔁 Triggering re-run via GitHub CLI"
