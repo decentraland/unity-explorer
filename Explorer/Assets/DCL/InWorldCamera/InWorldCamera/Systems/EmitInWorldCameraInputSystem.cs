@@ -32,9 +32,6 @@ namespace DCL.InWorldCamera.Systems
         {
             if (!World.Get<CameraComponent>(camera).CameraInputChangeEnabled) return;
 
-            if (inputSchema.ToggleInWorldCamera.triggered)
-                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
-
             if (inputSchema.CameraReel.triggered || inputSchema.Close.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
 

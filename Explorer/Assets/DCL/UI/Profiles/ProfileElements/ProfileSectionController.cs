@@ -60,8 +60,8 @@ namespace DCL.UI.ProfileElements
         public new void Dispose()
         {
             cts.SafeCancelAndDispose();
-            nameElementController.Dispose();
-            walletAddressElementController.Dispose();
+            nameElementController?.Dispose();
+            walletAddressElementController?.Dispose();
         }
     }
 }

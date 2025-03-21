@@ -450,7 +450,6 @@ GameObject:
   - component: {fileID: 4392543827313620798}
   - component: {fileID: 8235211841819826033}
   - component: {fileID: 2111446578221211890}
-  - component: {fileID: 8178401225095585124}
   m_Layer: 5
   m_Name: PersistentEmoteWheelOpener
   m_TagString: Untagged
@@ -523,7 +522,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &8235211841819826033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -562,24 +561,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &8178401225095585124
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8178171541332435676}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e23afb52c7e24e5588cb1d13677a2f78, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <canvas>k__BackingField: {fileID: 1647044090541485172}
-  <raycaster>k__BackingField: {fileID: 8235211841819826033}
-  <OpenEmoteWheelButton>k__BackingField: {fileID: 2772674678068339908}
-  <EmotesEnabledContainer>k__BackingField: {fileID: 4596462494624646587}
-  <EmotesDisabledContainer>k__BackingField: {fileID: 4753231099487728027}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &8926289785583344591
 GameObject:
   m_ObjectHideFlags: 0

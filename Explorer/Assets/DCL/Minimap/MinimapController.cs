@@ -17,6 +17,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
+using DCL.UI.SharedSpaceManager;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -47,6 +48,7 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
+        private readonly ISharedSpaceManager sharedSpaceManager;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
@@ -68,7 +70,8 @@ namespace DCL.Minimap
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            Vector2Int startParcelInGenesis
+            Vector2Int startParcelInGenesis,
+            ISharedSpaceManager sharedSpaceManager
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -80,6 +83,7 @@ namespace DCL.Minimap
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
+            this.sharedSpaceManager = sharedSpaceManager;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -97,7 +101,7 @@ namespace DCL.Minimap
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
-            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>

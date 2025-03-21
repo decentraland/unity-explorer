@@ -50,6 +50,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using Global.AppArgs;
 using UnityEngine;
@@ -109,6 +110,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private readonly bool includeCameraReel;
 
@@ -169,7 +171,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
             IAppArgs appArgs, ViewDependencies viewDependencies,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -218,6 +221,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.viewDependencies = viewDependencies;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose()
@@ -341,7 +345,7 @@ namespace DCL.PluginSystem.Global
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager, includeCameraReel);
+            inputHandler = new ExplorePanelInputHandler(dclInput);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
@@ -357,11 +361,14 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 settings.StorageProgressBarText);
 
-            mvcManager.RegisterController(new
+            ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
-                    dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock, includeCameraReel));
+                    dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
+            mvcManager.RegisterController(explorePanelController);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
