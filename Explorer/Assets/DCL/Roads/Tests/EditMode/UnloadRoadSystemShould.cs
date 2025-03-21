@@ -3,8 +3,10 @@ using DCL.LOD;
 using DCL.Roads.Components;
 using DCL.Roads.Systems;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
 using NSubstitute;
@@ -15,7 +17,6 @@ namespace DCL.Roads.Tests
 {
     public class UnloadRoadSystemShould : UnitySystemTestBase<UnloadRoadSystem>
     {
-        /*
         private IRoadAssetPool roadAssetPool;
 
         [SetUp]
@@ -32,19 +33,24 @@ namespace DCL.Roads.Tests
             // Arrange
             var roadInfo = new RoadInfo
             {
-                IsDirty = false, CurrentKey = "key", CurrentAsset = new GameObject().transform
+                CurrentKey = "key", CurrentAsset = new GameObject().transform
             };
 
-            Entity entity = world.Create(roadInfo, new SceneDefinitionComponent(), new DeleteEntityIntention());
+            SceneLoadingState sceneLoadingState = SceneLoadingState.CreateRoad();
+            sceneLoadingState.PromiseCreated = true;
+
+            PartitionComponent partitionComponent  = new PartitionComponent();
+            partitionComponent.OutOfRange = true;
+
+            Entity entity = world.Create(roadInfo, new SceneDefinitionComponent(), sceneLoadingState, partitionComponent);
 
             // Act
             system.Update(0);
 
             // Assert
-            Assert.IsFalse(world.Has<RoadInfo>(entity));
+            Assert.IsFalse(world.Get<SceneLoadingState>(entity).PromiseCreated);
             roadAssetPool.Received().Release(Arg.Any<string>(), Arg.Any<Transform>());
         }
-            */
 
     }
 }

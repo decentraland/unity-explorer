@@ -13,6 +13,7 @@ using DCL.Roads.Systems;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
@@ -23,7 +24,6 @@ using Utility;
 
 public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiatorSystem>
 {
-    /*
     private static readonly string EXISTING_ROAD_KEY = "EXISTING_ROAD";
     private static readonly string NON_EXISTING_ROAD_KEY = "NON_EXISTING_ROAD";
     private static readonly Quaternion EXISTING_ROTATION = Quaternion.Euler(90, 0, 0);
@@ -110,13 +110,12 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         };
 
         Entity roadEntity
-            = world.Create(roadInfo, partitionComponent, sceneDefinitionComponent);
+            = world.Create(roadInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateRoad());
 
         // Act
         system.Update(0);
 
         // Assert
-        Assert.IsFalse(world.Get<RoadInfo>(roadEntity).IsDirty);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentAsset, existingInstantiatedRoad);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentKey, EXISTING_ROAD_KEY);
 
@@ -129,12 +128,6 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
     [Test]
     public void InstantiateDefaultRoad()
     {
-        // Arrange
-        var roadInfo = new RoadInfo
-        {
-            IsDirty = true,
-        };
-
         var sceneEntityDefinition = new SceneEntityDefinition
         {
             id = "fakeHash", metadata = new SceneMetadata
@@ -157,13 +150,12 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         };
 
         Entity roadEntity
-            = world.Create(roadInfo, partitionComponent, sceneDefinitionComponent);
+            = world.Create(RoadInfo.Create(), partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateRoad());
 
         // Act
         system.Update(0);
 
         // Assert
-        Assert.IsFalse(world.Get<RoadInfo>(roadEntity).IsDirty);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentAsset, existingInstantiatedRoad);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentKey, NON_EXISTING_ROAD_KEY);
 
@@ -174,5 +166,4 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         Assert.AreEqual(Quaternion.Angle(existingInstantiatedRoad.localRotation, EXISTING_ROTATION), 0);
         Assert.IsTrue(existingInstantiatedRoad.gameObject.activeSelf);
     }
-    */
 }

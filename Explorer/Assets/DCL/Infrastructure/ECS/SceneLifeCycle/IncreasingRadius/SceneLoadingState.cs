@@ -11,7 +11,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public static SceneLoadingState CreateRoad() =>
             new ()
             {
-                PromiseCreated = true,
+                PromiseCreated = false,
                 FullQuality = true,
                 VisualSceneState = VisualSceneState.ROAD,
             };

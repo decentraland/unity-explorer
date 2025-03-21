@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadFixedPointersSystem(World world, IRealmData realmData) : base(world, null, realmData) { }
+        internal LoadFixedPointersSystem(World world, IRealmData realmData) : base(world, new HashSet<Vector2Int>(), realmData) { }
 
         protected override void Update(float t)
         {

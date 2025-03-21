@@ -15,7 +15,7 @@ namespace ECS.SceneLifeCycle.Systems
 {
     public abstract class LoadScenePointerSystemBase : BaseUnityLoopSystem
     {
-        private readonly HashSet<Vector2Int>? roadCoordinates;
+        private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly IRealmData realmData;
 
         protected LoadScenePointerSystemBase(World world, HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world)
@@ -33,7 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         private bool IsRoad(SceneEntityDefinition definition) =>
-            realmData.IsGenesis() && roadCoordinates != null && roadCoordinates.Contains(definition.metadata.scene.DecodedBase);
+            realmData.IsGenesis() && roadCoordinates.Contains(definition.metadata.scene.DecodedBase);
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet

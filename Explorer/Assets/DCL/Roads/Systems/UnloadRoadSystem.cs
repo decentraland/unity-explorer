@@ -38,6 +38,7 @@ namespace DCL.Roads.Systems
         [Query]
         private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLoadingState loadingState)
         {
+            //Note: The destruction of all roads on realm change is done on DestroyAllRoadAssetsTeleportOperation.cs
             if (partitionComponent.OutOfRange && loadingState.PromiseCreated)
             {
                 roadInfo.Dispose(roadAssetPool);
