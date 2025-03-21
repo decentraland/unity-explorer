@@ -124,18 +124,35 @@ jobs:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         if: env.APPROVAL_CHECK == 'passed'
         run: |
-          echo "🔎 Fetching previous failed workflow run selection for HEAD commit: $HEAD_SHA on PR #${PR_NUMBER}"
+          echo "🔎 Fetching workflow runs for HEAD commit: $HEAD_SHA on PR #${PR_NUMBER}"
           WORKFLOW_RUNS_JSON=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/runs" --jq '.')
 
-          # Extract Workflow Run ID (if any)
-          WORKFLOW_RUN_ID=$(jq -r --arg HEAD_SHA "$HEAD_SHA" --argjson PR_NUMBER "$PR_NUMBER" '
-            .workflow_runs[] |
-            select(.name == "Enforce QA and DEV Approvals") |
-            select(.event == "pull_request") |
-            select(.pull_requests[].number == $PR_NUMBER) |
-            select(.head_sha == $HEAD_SHA) |
-            select(.conclusion == "failure") |
-            .id' <<< "$WORKFLOW_RUNS_JSON" | head -n 1)
+          echo "📋 Total workflow runs fetched: $(jq '.workflow_runs | length' <<< "$WORKFLOW_RUNS_JSON")"
+
+          echo "🔍 Step 1: Filter by head_sha == $HEAD_SHA"
+          STEP1=$(jq --arg HEAD_SHA "$HEAD_SHA" '
+            .workflow_runs[] | select(.head_sha == $HEAD_SHA)' <<< "$WORKFLOW_RUNS_JSON")
+          echo "$STEP1" | jq -c '.id, .head_sha' || echo "🔸 No runs matched Step 1"
+
+          echo "🔍 Step 2: Filter by PR number == $PR_NUMBER"
+          STEP2=$(echo "$STEP1" | jq --argjson PR_NUMBER "$PR_NUMBER" '
+            select(.pull_requests | any(.number == $PR_NUMBER))')
+          echo "$STEP2" | jq -c '.id, .pull_requests' || echo "🔸 No runs matched Step 2"
+
+          echo "🔍 Step 3: Filter by event == 'pull_request'"
+          STEP3=$(echo "$STEP2" | jq 'select(.event == "pull_request")')
+          echo "$STEP3" | jq -c '.id, .event' || echo "🔸 No runs matched Step 3"
+
+          echo "🔍 Step 4: Filter by conclusion == 'failure'"
+          STEP4=$(echo "$STEP3" | jq 'select(.conclusion == "failure")')
+          echo "$STEP4" | jq -c '.id, .conclusion' || echo "🔸 No runs matched Step 4"
+
+          echo "🔍 Step 5: Filter by name == 'Enforce QA and DEV Approvals'"
+          STEP5=$(echo "$STEP4" | jq 'select(.name == "Enforce QA and DEV Approvals")')
+          echo "$STEP5" | jq -c '.id, .name' || echo "🔸 No runs matched Step 5"
+
+          # Extract Workflow Run ID
+          WORKFLOW_RUN_ID=$(echo "$STEP5" | jq -r '.id' | head -n 1)
 
           if [ -z "$WORKFLOW_RUN_ID" ]; then
             echo "🔸 No previous failed workflow run found for this commit on PR #${PR_NUMBER}."
