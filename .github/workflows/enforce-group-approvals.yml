@@ -133,7 +133,7 @@ jobs:
 
           while [ -z "$WORKFLOW_RUN_ID" ]; do
             echo "📄 Fetching page $page of workflow runs for workflow ID $WORKFLOW_ID..."
-            RUNS=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?event=pull_request&status=completed&per_page=100&page=$page")
+            RUNS=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?per_page=100&page=$page")
 
             # 🕒 Log created_at of the first run on this page
             FIRST_CREATED_AT=$(jq -r '.workflow_runs[0].created_at // "N/A"' <<< "$RUNS")
