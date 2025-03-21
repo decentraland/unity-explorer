@@ -131,24 +131,29 @@ jobs:
           echo "$(jq '.workflow_runs' <<< "$WORKFLOW_RUNS_JSON")"
 
           echo "🔍 Step 1: Filter by head_sha == $HEAD_SHA"
-          STEP1=$(jq --arg HEAD_SHA "$HEAD_SHA" '.workflow_runs[] | select(.head_sha == $HEAD_SHA)' <<< "$WORKFLOW_RUNS_JSON" || echo "empty")
-          echo "$STEP1" | jq -c '.id, .head_sha' || echo "$STEP1"
+          STEP1=$(jq --arg HEAD_SHA "$HEAD_SHA" '.workflow_runs[] | select(.head_sha == $HEAD_SHA)' <<< "$WORKFLOW_RUNS_JSON")
+          [ -z "$STEP1" ] && STEP1="empty"
+          echo "$STEP1" | jq -c '.id, .head_sha' 2>/dev/null || echo "$STEP1"
 
           echo "🔍 Step 2: Filter by PR number == $PR_NUMBER"
-          STEP2=$(echo "$STEP1" | jq --argjson PR_NUMBER "$PR_NUMBER" 'select(.pull_requests | any(.number == $PR_NUMBER))' || echo "empty")
-          echo "$STEP2" | jq -c '.id, .pull_requests' || echo "$STEP2"
+          STEP2=$(echo "$STEP1" | jq --argjson PR_NUMBER "$PR_NUMBER" 'select(.pull_requests | any(.number == $PR_NUMBER))')
+          [ -z "$STEP2" ] && STEP2="empty"
+          echo "$STEP2" | jq -c '.id, .pull_requests' 2>/dev/null || echo "$STEP2"
 
           echo "🔍 Step 3: Filter by event == 'pull_request'"
-          STEP3=$(echo "$STEP2" | jq 'select(.event == "pull_request")' || echo "empty")
-          echo "$STEP3" | jq -c '.id, .event' || echo "$STEP3"
+          STEP3=$(echo "$STEP2" | jq 'select(.event == "pull_request")')
+          [ -z "$STEP3" ] && STEP3="empty"
+          echo "$STEP3" | jq -c '.id, .event' 2>/dev/null || echo "$STEP3"
 
           echo "🔍 Step 4: Filter by conclusion == 'failure'"
-          STEP4=$(echo "$STEP3" | jq 'select(.conclusion == "failure")' || echo "empty")
-          echo "$STEP4" | jq -c '.id, .conclusion' || echo "$STEP4"
+          STEP4=$(echo "$STEP3" | jq 'select(.conclusion == "failure")')
+          [ -z "$STEP4" ] && STEP4="empty"
+          echo "$STEP4" | jq -c '.id, .conclusion' 2>/dev/null || echo "$STEP4"
 
           echo "🔍 Step 5: Filter by name == 'Enforce QA and DEV Approvals'"
-          STEP5=$(echo "$STEP4" | jq 'select(.name == "Enforce QA and DEV Approvals")' || echo "empty")
-          echo "$STEP5" | jq -c '.id, .name' || echo "$STEP5"
+          STEP5=$(echo "$STEP4" | jq 'select(.name == "Enforce QA and DEV Approvals")')
+          [ -z "$STEP5" ] && STEP5="empty"
+          echo "$STEP5" | jq -c '.id, .name' 2>/dev/null || echo "$STEP5"
 
           # Extract Workflow Run ID
           WORKFLOW_RUN_ID=$(echo "$STEP5" | jq -r '.id' | head -n 1)
