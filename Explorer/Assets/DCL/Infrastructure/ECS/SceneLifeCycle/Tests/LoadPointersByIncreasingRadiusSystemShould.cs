@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
+using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -11,6 +12,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -25,12 +27,15 @@ namespace ECS.SceneLifeCycle.Tests
         [SetUp]
         public void SetUp()
         {
+            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
                 partitionSettings = Substitute.For<IPartitionSettings>(),
                 Substitute.For<ISceneReadinessReportQueue>(),
-                Substitute.For<IScenesCache>());
+                Substitute.For<IScenesCache>(),
+                new HashSet<Vector2Int>(), realmData);
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
@@ -42,7 +47,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void StartLoading([Range(1, 10, 1)] int radius)
+        public void StartLoading([NUnit.Framework.Range(1, 10, 1)] int radius)
         {
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             using var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
@@ -65,7 +70,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void NotStartLoadingProcessedParcels([Range(1, 10, 1)] int radius)
+        public void NotStartLoadingProcessedParcels([NUnit.Framework.Range(1, 10, 1)] int radius)
         {
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             using var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);

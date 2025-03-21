@@ -1,5 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using Org.BouncyCastle.Utilities.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,6 +24,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public int InternalJobIndex { get; set; }
 
+
+
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
@@ -38,6 +42,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
         }
+
     }
 
     public static class SceneDefinitionComponentFactory

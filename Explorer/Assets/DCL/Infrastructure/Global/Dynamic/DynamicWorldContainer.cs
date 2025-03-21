@@ -875,6 +875,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.HybridSceneParams,
                 currentSceneInfo,
                 lodContainer.LodCache,
+                lodContainer.RoadCoordinates,
+                lodContainer.LODSettings,
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,

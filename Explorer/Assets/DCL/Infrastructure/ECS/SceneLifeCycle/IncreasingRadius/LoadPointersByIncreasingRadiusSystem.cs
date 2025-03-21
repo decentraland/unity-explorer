@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -35,7 +36,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
+            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache,
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;

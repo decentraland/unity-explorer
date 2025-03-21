@@ -50,7 +50,7 @@ namespace DCL.LOD.Systems
         [All(typeof(DeleteEntityIntention), typeof(SceneLODInfo), typeof(SceneDefinitionComponent))]
         private void UnloadLOD(in Entity entity)
         {
-            World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention, MockSceneLODInfo>(entity);
+            World.Remove<SceneLODInfo, DeleteEntityIntention, MockSceneLODInfo>(entity);
         }
     }
 }

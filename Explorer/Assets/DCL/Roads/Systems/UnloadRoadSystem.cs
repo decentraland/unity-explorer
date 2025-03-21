@@ -7,9 +7,12 @@ using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace DCL.Roads.Systems
@@ -30,16 +33,18 @@ namespace DCL.Roads.Systems
         protected override void Update(float t)
         {
             UnloadRoadQuery(World);
-            World.Remove<RoadInfo, VisualSceneState, DeleteEntityIntention>(UnloadRoad_QueryDescription);
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
-        private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLoadingState loadingState)
         {
-            // Helpful info: DeleteEntityIntention is added as component in ResolveSceneStateByIncreasingRadiusSystem.StartUnloading
-            roadInfo.Dispose(roadAssetPool);
-            scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
+            //Note: The destruction of all roads on realm change is done on DestroyAllRoadAssetsTeleportOperation.cs
+            if (partitionComponent.OutOfRange && loadingState.PromiseCreated)
+            {
+                roadInfo.Dispose(roadAssetPool);
+                loadingState.PromiseCreated = false;
+                scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
+            }
         }
 
     }

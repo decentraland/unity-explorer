@@ -8,8 +8,8 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Ipfs;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -19,7 +19,7 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadStaticPointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadStaticPointersSystem(World world) : base(world) { }
+        internal LoadStaticPointersSystem(World world, HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData) { }
 
         protected override void Update(float t)
         {
