@@ -125,7 +125,7 @@ jobs:
         if: env.APPROVAL_CHECK == 'passed'
         run: |
           echo "🔎 Fetching workflow runs for HEAD commit: $HEAD_SHA on PR #${PR_NUMBER}"
-          WORKFLOW_RUNS_JSON=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/runs" --jq '.')
+          WORKFLOW_RUNS_JSON=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=100" --jq '.')
 
           echo "📋 Total workflow runs fetched: $(jq '.workflow_runs | length' <<< "$WORKFLOW_RUNS_JSON")"
           echo "$(jq '.workflow_runs' <<< "$WORKFLOW_RUNS_JSON")"
