@@ -132,13 +132,15 @@ namespace DCL.UI.SharedSpaceManager
 
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
-                            // Waits until the Friends panel hides completely before showing the Chat
+                            // If it is transitioning, it's due to another panel was shown and that made Friends hide
+                            // In order to not execute 2 code paths at the same time, it waits for new operation to finish and then
+                            // continues, showing the chat
                             if(isTransitioning)
                                 await UniTask.WaitWhile(() => isTransitioning);
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(false));
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
                         }
                         else
                             isTransitioning = false;
@@ -179,7 +181,8 @@ namespace DCL.UI.SharedSpaceManager
 
             // Arrives here once when the panel stops being shown (they leave WaitForCloseIntentAsync) for whatever reason.
             // If there is an exit animation or any other process that takes time, it waits for it
-            await UniTask.WaitUntil(() => isTransitioning == false, PlayerLoopTiming.Update, cts.Token);
+            if(isTransitioning)
+                await UniTask.WaitUntil(() => isTransitioning == false, PlayerLoopTiming.Update, cts.Token);
         }
 
         /// <summary>
@@ -195,34 +198,12 @@ namespace DCL.UI.SharedSpaceManager
             try
             {
                 IPanelInSharedSpace controllerInSharedSpace = registrations[panel].panel;
-
-                switch (panel)
-                {
-                    case PanelsSharingSpace.Friends:
-                    {
-                        if (isFriendsFeatureEnabled)
-                        {
-                            await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
-
-                            // When friends panel is not present, the chat panel must be (unless the Friends panel was hidden due to showing the chat panel)
-                            if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(false));
-                        }
-
-                        break;
-                    }
-                    default:
-                    {
-                        await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
-                        break;
-                    }
-                }
+                await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
             }
             catch (OperationCanceledException)
             {
                 // Stops propagation
             }
-            finally { ; }
         }
 
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
@@ -266,12 +247,26 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
+#region Registration
         private abstract class PanelRegistration
         {
+            /// <summary>
+            /// Gets the registered panel without distinguishing among controller or non-controller.
+            /// </summary>
             internal abstract IPanelInSharedSpace panel { get; }
 
+            /// <summary>
+            /// Gets a specific type version of the registration, according to the type of the parameters required by the panel.
+            /// </summary>
+            /// <typeparam name="T">The type of the parameters.</typeparam>
+            /// <returns>The typed version of the registration.</returns>
             internal abstract PanelRegistration<T> GetByParams<T>();
 
+            /// <summary>
+            /// Gets a specific type version of the registered panel, according to the type of the parameters required by it.
+            /// </summary>
+            /// <typeparam name="T">The type of the parameters.</typeparam>
+            /// <returns>The typed version of the panel.</returns>
             internal abstract T GetPanel<T>();
         }
 
@@ -313,7 +308,6 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
-#region Registration
         public void RegisterPanel<TParams>(PanelsSharingSpace panel, IPanelInSharedSpace<TParams> panelImplementation)
         {
             if (IsRegistered(panel))
