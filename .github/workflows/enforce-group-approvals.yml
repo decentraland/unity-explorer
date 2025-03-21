@@ -155,5 +155,5 @@ jobs:
 
           echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
           echo "🔁 Triggering re-run via GitHub CLI"
-          gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME" --verbose
+          gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME"
           echo "✅ Re-run triggered successfully!"
