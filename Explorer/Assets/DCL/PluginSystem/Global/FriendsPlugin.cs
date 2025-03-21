@@ -144,24 +144,15 @@ namespace DCL.PluginSystem.Global
 
             friendServiceProxy.SetObject(injectableFriendService);
 
-            // Fire and forget as this task will never finish
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
-            friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
-
             bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
 
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendEventBus, isConnectivityStatusEnabled);
             friendOnlineStatusCacheProxy.SetObject(friendsConnectivityStatusTracker);
 
-            if (isConnectivityStatusEnabled)
-                friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
-
             if (includeUserBlocking)
             {
-                friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
                 var userBlockingCache = new UserBlockingCache(friendsService, friendEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
-
                 web3IdentityCache.OnIdentityChanged += userBlockingCache.ResetCache;
             }
 
@@ -245,6 +236,16 @@ namespace DCL.PluginSystem.Global
         private void PreWarmFriends(LoadingStatus.LoadingStage stage)
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
+
+            friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
+            // Fire and forget as this task will never finish
+            friendsService!.SubscribeToIncomingFriendshipEventsAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+
+            if (IsConnectivityStatusEnabled())
+                friendsService.SubscribeToConnectivityStatusAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+
+            if (includeUserBlocking)
+                friendsService.SubscribeToUserBlockUpdatersAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
