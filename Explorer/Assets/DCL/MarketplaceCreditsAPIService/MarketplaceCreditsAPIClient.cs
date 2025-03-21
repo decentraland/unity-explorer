@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 
 namespace DCL.MarketplaceCreditsAPIService
@@ -24,7 +25,7 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/progress/{walletId}";
 
-            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
+            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
             //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
 
             CreditsProgramProgressResponse creditsProgramProgressResponse = await MockCreditsProgramProgressAsync(false, ct);
@@ -36,9 +37,8 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration";
 
-            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController
-            //                                                                      .SignedFetchPostAsync(url, string.Empty, ct)
-            //                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
+            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
 
             CreditsProgramProgressResponse programRegistrationResponse = await MockCreditsProgramProgressAsync(true, ct);
 
@@ -49,8 +49,9 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
 
-            //CaptchaResponse captchaResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.MARKETPLACE_CREDITS)
-            //                                                            .CreateFromJson<CaptchaResponse>(WRJsonParser.Newtonsoft);
+            // CaptchaResponse captchaResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+            //                                                             .CreateFromJson<CaptchaResponse>(WRJsonParser.Newtonsoft);
+
             CaptchaResponse captchaResponse = await MockCaptchaAsync(ct);
 
             return captchaResponse;
@@ -60,9 +61,8 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/claim";
 
-            // ClaimCreditsResponse claimCreditsResponseData = await webRequestController
-            //                                                      .SignedFetchPostAsync(url, captchaValue.ToString(), ct)
-            //                                                      .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
+            // ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, captchaValue.ToString(CultureInfo.InvariantCulture), ct)
+            //                                                                           .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Newtonsoft);
 
             ClaimCreditsResponse claimCreditsResponseData = await MockClaimCreditsAsync(ct);
 
