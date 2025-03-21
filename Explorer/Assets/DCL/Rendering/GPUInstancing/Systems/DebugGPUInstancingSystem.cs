@@ -20,11 +20,14 @@ namespace DCL.Rendering.GPUInstancing.Systems
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
         private readonly ElementBinding<float> scaleFactor;
+        private readonly float settingsScaleFactor;
 
         public DebugGPUInstancingSystem(World world, IDebugContainerBuilder debugBuilder, GPUInstancingService service) : base(world)
         {
             this.service = service;
             settings = this.service.Settings;
+
+            settingsScaleFactor = settings.RenderDistScaleFactor;
 
             visibilityBinding = new DebugWidgetVisibilityBinding(true);
             scaleFactor = new ElementBinding<float>(settings.RenderDistScaleFactor);
@@ -33,6 +36,11 @@ namespace DCL.Rendering.GPUInstancing.Systems
                         .SetVisibilityBinding(visibilityBinding)
                         .AddToggleField("Is Enabled", OnIsEnableToggled, service.IsEnabled)
                         .AddFloatSliderField("EnvDist ScaleFactor", scaleFactor, 0, 1);
+        }
+
+        protected override void OnDispose()
+        {
+            settings.RenderDistScaleFactor = settingsScaleFactor;
         }
 
         private void OnIsEnableToggled(ChangeEvent<bool> evt)
