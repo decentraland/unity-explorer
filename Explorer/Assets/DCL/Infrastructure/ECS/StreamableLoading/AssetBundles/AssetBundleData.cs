@@ -81,8 +81,8 @@ namespace ECS.StreamableLoading.AssetBundles
             if(mainAsset!=null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            if (!unloaded)
-                AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
+            if (unloaded) return;
+            if(AssetBundle && AssetBundle != null) AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
         }
 
         public T GetMainAsset<T>() where T : Object

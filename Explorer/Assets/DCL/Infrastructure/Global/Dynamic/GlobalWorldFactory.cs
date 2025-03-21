@@ -33,7 +33,6 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using SceneRunner;
 using SceneRunner.Scene;
-using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
@@ -112,7 +111,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, V8ActiveEngines v8ActiveEngines, Entity playerEntity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity)
         {
             // not synced by mutex, for compatibility only
 
@@ -182,7 +181,7 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
+            var pluginArgs = new GlobalPluginArguments(playerEntity);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
