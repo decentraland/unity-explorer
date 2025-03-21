@@ -29,10 +29,7 @@ namespace DCL.MarketplaceCredits.Fields
         public SliderView MainSlider { get; private set; }
 
         [field: SerializeField]
-        public RectTransform TargetArea { get; private set; }
-
-        [field: SerializeField]
-        public float MaxTargetAreaXPos { get; private set; }
+        public Image TargetAreaBackgroundImage { get; private set; }
 
         [field: SerializeField]
         public Button ReloadFromNotLoadedStateButton { get; private set; }
@@ -70,11 +67,10 @@ namespace DCL.MarketplaceCredits.Fields
             lastCaptchaValue = MainSlider.Slider.value;
         }
 
-        public void SetTargetAreaPercentageValue(float percentageValue)
+        public void SetTargetAreaImage(Sprite sprite)
         {
-            TargetArea.anchoredPosition = new Vector2(
-                Mathf.Clamp(percentageValue / 100f * MaxTargetAreaXPos, 0f, MaxTargetAreaXPos),
-                TargetArea.anchoredPosition.y);
+            TargetAreaBackgroundImage.sprite = sprite;
+            TargetAreaBackgroundImage.enabled = true;
         }
 
         public void SetAsErrorState(bool isError, bool isNonSolvedError = true)
@@ -89,8 +85,6 @@ namespace DCL.MarketplaceCredits.Fields
             if (Mathf.Approximately(MainSlider.Slider.value, lastCaptchaValue))
                 return;
 
-            //float targetAreaPositionValue = TargetArea.anchoredPosition.x / MaxTargetAreaXPos;
-            //bool isCaptchaSolved = MainSlider.Slider.value >= targetAreaPositionValue - MatchTargetOffset && MainSlider.Slider.value <= targetAreaPositionValue + MatchTargetOffset;
             OnCaptchaSolved?.Invoke(MainSlider.Slider.value);
             lastCaptchaValue = MainSlider.Slider.value;
         }

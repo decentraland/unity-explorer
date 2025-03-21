@@ -138,8 +138,8 @@ namespace DCL.MarketplaceCredits.Sections
             try
             {
                 view.SetCaptchaAsLoading(true);
-                var captchaResponse = await marketplaceCreditsAPIClient.GenerateCaptchaAsync(walletId, ct);
-                view.SetCaptchaTargetAreaPercentageValue(captchaResponse.captchaValue);
+                var captchaSprite = await marketplaceCreditsAPIClient.GenerateCaptchaAsync(walletId, ct);
+                view.SetCaptchaTargetAreaImage(captchaSprite);
                 view.SetCaptchaAsLoading(false);
                 view.SetCaptchaPercentageValue(0f);
             }

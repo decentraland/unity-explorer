@@ -1,10 +1,14 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using UnityEngine;
+using Utility;
 
 namespace DCL.MarketplaceCreditsAPIService
 {
@@ -45,16 +49,16 @@ namespace DCL.MarketplaceCreditsAPIService
             return programRegistrationResponse;
         }
 
-        public async UniTask<CaptchaResponse> GenerateCaptchaAsync(string walletId, CancellationToken ct)
+        public async UniTask<Sprite> GenerateCaptchaAsync(string walletId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
 
-            // CaptchaResponse captchaResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-            //                                                             .CreateFromJson<CaptchaResponse>(WRJsonParser.Newtonsoft);
+            // Sprite captchaSprite = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+            //                                                  .CreateFromJson<Sprite>(WRJsonParser.Newtonsoft);
 
-            CaptchaResponse captchaResponse = await MockCaptchaAsync(ct);
+            Sprite captchaSprite = await GetSpriteFromUrlAsync("https://i.ibb.co/RG48r508/Test-Captcha.png", ct);
 
-            return captchaResponse;
+            return captchaSprite;
         }
 
         public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
@@ -67,6 +71,23 @@ namespace DCL.MarketplaceCreditsAPIService
             ClaimCreditsResponse claimCreditsResponseData = await MockClaimCreditsAsync(ct);
 
             return claimCreditsResponseData;
+        }
+
+        private async UniTask<Sprite> GetSpriteFromUrlAsync(string url, CancellationToken ct)
+        {
+            IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                new CommonArguments(URLAddress.FromString(url)),
+                new GetTextureArguments(TextureType.Albedo),
+                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
+                ct,
+                ReportCategory.UI
+            );
+
+            var texture = ownedTexture.Texture;
+            texture.filterMode = FilterMode.Bilinear;
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+
+            return sprite;
         }
 
         private static async UniTask<CreditsProgramProgressResponse> MockCreditsProgramProgressAsync(bool isRegistered, CancellationToken ct)
@@ -152,20 +173,6 @@ namespace DCL.MarketplaceCreditsAPIService
             };
 
             return programRegistration;
-        }
-
-        private static async UniTask<CaptchaResponse> MockCaptchaAsync(CancellationToken ct)
-        {
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            int randomCaptchaValue = new System.Random().Next(40, 100);
-            CaptchaResponse captchaResponse = new CaptchaResponse
-            {
-                captchaValue = randomCaptchaValue,
-            };
-
-            return captchaResponse;
         }
 
         private static async UniTask<ClaimCreditsResponse> MockClaimCreditsAsync(CancellationToken ct)

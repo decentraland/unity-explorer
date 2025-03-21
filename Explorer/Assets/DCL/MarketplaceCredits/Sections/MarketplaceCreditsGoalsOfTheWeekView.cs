@@ -34,8 +34,8 @@ namespace DCL.MarketplaceCredits.Sections
         public void SetCaptchaPercentageValue(float value) =>
             CaptchaControl.SetCaptchaPercentageValue(value);
 
-        public void SetCaptchaTargetAreaPercentageValue(float value) =>
-            CaptchaControl.SetTargetAreaPercentageValue(value);
+        public void SetCaptchaTargetAreaImage(Sprite sprite) =>
+            CaptchaControl.SetTargetAreaImage(sprite);
 
         public void SetCaptchaAsErrorState(bool isError, bool isNonSolvedError = true) =>
             CaptchaControl.SetAsErrorState(isError, isNonSolvedError);
