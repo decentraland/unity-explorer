@@ -23,8 +23,6 @@ namespace DCL.Rendering.GPUInstancing
             float result = SCENE_DIST_MIN + (Mathf.Lerp(0, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT - SCENE_DIST_MIN, normalizedEnvDistance) * RenderDistScaleFactor);
 
             return result * ParcelMathHelper.PARCEL_SIZE;
-            // float t = (envDistance - ENV_DIST_MIN) / (ENV_DIST_MAX - ENV_DIST_MIN); // normalize to [0,1] range
-            // var SCENE_DIST_MIN + ((ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT - SCENE_DIST_MIN) * t * RenderDistScaleFactor);
         }
     }
 }

@@ -11,31 +11,39 @@ using UnityEngine.UIElements;
 
 namespace DCL.Rendering.GPUInstancing.Systems
 {
-    /// <summary>
-    ///     Not supposed to work in Editor.
-    /// </summary>
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
+    [UpdateAfter(typeof(GPUInstancingRenderSystem))]
     public partial class DebugGPUInstancingSystem : BaseUnityLoopSystem
     {
-        private readonly GPUInstancingService gpuInstancingService;
-        private readonly DebugWidgetVisibilityBinding visibilityBinding;
+        private readonly GPUInstancingService service;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings;
 
-        public DebugGPUInstancingSystem(World world, IDebugContainerBuilder debugBuilder, GPUInstancingService gpuInstancingService) : base(world)
+        private readonly DebugWidgetVisibilityBinding visibilityBinding;
+        private readonly ElementBinding<float> scaleFactor;
+
+        public DebugGPUInstancingSystem(World world, IDebugContainerBuilder debugBuilder, GPUInstancingService service) : base(world)
         {
-            this.gpuInstancingService = gpuInstancingService;
+            this.service = service;
+            settings = this.service.Settings;
 
             visibilityBinding = new DebugWidgetVisibilityBinding(true);
+            scaleFactor = new ElementBinding<float>(settings.RenderDistScaleFactor);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.GPU_INSTANCING)?
                         .SetVisibilityBinding(visibilityBinding)
-                        .AddToggleField("Is Enabled", OnIsEnableToggled, gpuInstancingService.IsEnabled);
+                        .AddToggleField("Is Enabled", OnIsEnableToggled, service.IsEnabled)
+                        .AddFloatSliderField("EnvDist ScaleFactor", scaleFactor, 0, 1);
         }
 
         private void OnIsEnableToggled(ChangeEvent<bool> evt)
         {
-            gpuInstancingService.IsEnabled = evt.newValue;
+            service.IsEnabled = evt.newValue;
         }
 
-        protected override void Update(float t) { }
+        protected override void Update(float _)
+        {
+            if (visibilityBinding.IsConnectedAndExpanded)
+                settings.RenderDistScaleFactor = scaleFactor.Value;
+        }
     }
 }
