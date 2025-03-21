@@ -45,23 +45,14 @@ namespace DCL.Rendering.GPUInstancing
         [Serializable]
         public class GPUInstancingRenderFeature_Settings
         {
-            private const float SCALE_FACTOR = 0.3f;
-            private const float SCENE_DIST_MIN = 20f;
-            private const float ENV_DIST_MIN = 1000f;
-            private const float ENV_DIST_MAX = 7000f;
+            [SerializeField] private GPUInstancingSettings settings;
 
-            public ComputeShader FrustumCullingAndLODGenComputeShader;
-            public ComputeShader IndirectBufferGenerationComputeShader;
-            public ComputeShader DrawArgsInstanceCountTransferComputeShader;
+            public ComputeShader FrustumCullingAndLODGenComputeShader => settings.FrustumCullingAndLODGenComputeShader;
+            public ComputeShader IndirectBufferGenerationComputeShader => settings.IndirectBufferGenerationComputeShader;
+            public ComputeShader DrawArgsInstanceCountTransferComputeShader => settings.DrawArgsInstanceCountTransferComputeShader;
 
-            [SerializeField]
-            private LandscapeData test;
-
-            public float RoadsSceneDistance(float envDistance)
-            {
-                float t = (envDistance - ENV_DIST_MIN) / (ENV_DIST_MAX - ENV_DIST_MIN); // normalize to [0,1] range
-                return SCENE_DIST_MIN + ((ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT - SCENE_DIST_MIN) * t * SCALE_FACTOR);
-            }
+            public float RoadsSceneDistance(float envDistance) =>
+                settings.RoadsSceneDistance(envDistance);
         }
     }
 }

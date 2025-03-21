@@ -98,6 +98,7 @@ namespace DCL.Rendering.GPUInstancing
         private Camera renderCamera;
 
         public LandscapeData LandscapeData { private get; set; }
+        public bool IsEnabled { get; set; } = true;
 
         public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings)
         {
@@ -141,7 +142,7 @@ namespace DCL.Rendering.GPUInstancing
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
-                groupDataArray[0].Set(renderCamera, LandscapeData.DetailDistance * settings.MaxDistanceScaleFactor, candidate, (uint)buffers.PerInstanceMatrices.count);
+                groupDataArray[0].Set(renderCamera, settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
 
                 buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
                 FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
