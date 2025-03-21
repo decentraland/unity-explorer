@@ -294,7 +294,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //Reduce quality
             if (candidateBy == VisualSceneState.SHOWING_LOD)
             {
-                if (loadedLODs < sceneLoadingLimit.MaximumAmoutOfLODsThatCanLoad)
+                if (loadedLODs < sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad)
                 {
                     // This LOD is within the full-quality limit, so load it normally. Nothing to do here
                     loadedLODs++;
