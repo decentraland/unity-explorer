@@ -21,8 +21,6 @@ jobs:
       github.event.review.state != 'changes_requested' &&
       github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
 
     steps:
       - name: Fetch PR Metadata
@@ -47,6 +45,8 @@ jobs:
           echo "HEAD_SHA=$HEAD_SHA" >> $GITHUB_ENV
 
       - name: Validate Group Approvals
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
           echo "🔍 Checking PR labels..."
           LABELS_JSON=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.')
@@ -119,7 +119,9 @@ jobs:
           echo "✅ PR has the required approvals."
           echo "APPROVAL_CHECK=passed" >> $GITHUB_ENV
 
-      - name: Debug Workflow Run Selection
+      - name: Workflow Run Selection
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         if: env.APPROVAL_CHECK == 'passed'
         run: |
           echo "🔎 Fetching previous failed workflow run selection for HEAD commit: $HEAD_SHA on PR #${PR_NUMBER}"
