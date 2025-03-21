@@ -24,6 +24,7 @@ namespace DCL.SDKComponents.MediaStream
             else
             {
                 if (!hasVolume)
+
                     //This following part is a workaround applied for the MacOS platform, the reason
                     //is related to the video and audio streams, the MacOS environment does not support
                     //the volume control for the video and audio streams, as it doesn’t allow to route audio
@@ -39,11 +40,12 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        public static MediaPlayer UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
+        public static void UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
         {
-            if (!mediaPlayer.MediaOpened) return mediaPlayer;
+            if (!mediaPlayer.MediaOpened)
+                return;
 
-            IMediaControl control = mediaPlayer.Control;
+            IMediaControl control = mediaPlayer.Control!;
 
             if (hasPlaying)
             {
@@ -57,8 +59,25 @@ namespace DCL.SDKComponents.MediaStream
             }
             else if (control.IsPlaying())
                 control.Stop();
+        }
 
-            return mediaPlayer;
+        public static void UpdatePlayback(this LivekitPlayer mediaPlayer, bool hasPlaying, bool playing)
+        {
+            if (!mediaPlayer.MediaOpened)
+                return;
+
+            if (hasPlaying)
+            {
+                if (playing != mediaPlayer.State is PlayerState.PLAYING)
+                {
+                    if (playing)
+                        mediaPlayer.Play();
+                    else
+                        mediaPlayer.Pause();
+                }
+            }
+            else if (mediaPlayer.State is PlayerState.PLAYING)
+                mediaPlayer.Stop();
         }
 
         public static void SetPlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
@@ -67,7 +86,7 @@ namespace DCL.SDKComponents.MediaStream
             SetPlaybackPropertiesAsync(mediaPlayer.Control, sdkVideoPlayer).Forget();
         }
 
-        private static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer)
+        internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer)
         {
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
             await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
