@@ -61,6 +61,9 @@ MonoBehaviour:
     cameraMotionVector: {fileID: 4800000, guid: c56b7e0d4c7cb484e959caeeedae9bbf, type: 3}
     objectMotionVector: {fileID: 4800000, guid: 7b3ede40266cd49a395def176e1bc486, type: 3}
     dataDrivenLensFlare: {fileID: 4800000, guid: 6cda457ac28612740adb23da5d39ea92, type: 3}
+    terrainDetailLitPS: {fileID: 4800000, guid: f6783ab646d374f94b199774402a5144, type: 3}
+    terrainDetailGrassPS: {fileID: 4800000, guid: e507fdfead5ca47e8b9a768b51c291a1, type: 3}
+    terrainDetailGrassBillboardPS: {fileID: 4800000, guid: 29868e73b638e48ca99a19ea58c48d90, type: 3}
   m_AssetVersion: 2
   m_OpaqueLayerMask:
     serializedVersion: 2
@@ -114,10 +117,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 0
   m_Settings:
-    FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
-    IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
-    DrawArgsInstanceCountTransferComputeShader: {fileID: 7200000, guid: 1581f9e286d943f4aa378de7282cd920, type: 3}
-    MaxDistanceScaleFactor: 1
+    settings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
 --- !u!114 &5020021736804485952
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,9 +192,3 @@ MonoBehaviour:
   m_Name: OutlineRendererFeature
   m_EditorClassIdentifier: 
   m_Active: 0
-  m_Settings:
-    OutlineThickness: 1
-    DepthSensitivity: 0.05
-    NormalsSensitivity: 1
-    ColorSensitivity: 0.5
-    OutlineColor: {r: 1, g: 1, b: 1, a: 0.5}
