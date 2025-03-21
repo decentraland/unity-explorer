@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
+using Utility;
 
 namespace DCL.UI.SharedSpaceManager
 {
@@ -77,6 +78,8 @@ namespace DCL.UI.SharedSpaceManager
 
             if (isCameraReelFeatureEnabled)
                 dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
+
+            cts.SafeCancelAndDispose();
         }
 
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
@@ -113,7 +116,8 @@ namespace DCL.UI.SharedSpaceManager
                     {
                         IController controller = registration.GetPanel<IController>();
 
-                        if (controller.State == ControllerState.ViewHidden) { await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token); }
+                        if (controller.State == ControllerState.ViewHidden)
+                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else if (!panelInSharedSpace.IsVisibleInSharedSpace)
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
