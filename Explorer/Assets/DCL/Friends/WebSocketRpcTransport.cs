@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using rpc_csharp.transport;
 using System;
 using System.Net.WebSockets;
@@ -81,6 +82,9 @@ namespace DCL.Friends
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
+                            if (!string.IsNullOrEmpty(result.CloseStatusDescription))
+                                ReportHub.LogError(ReportCategory.FRIENDS, $"Friends web socket disconnected. {result.CloseStatusDescription}");
+
                             await CloseAsync(ct);
                             break;
                         }
