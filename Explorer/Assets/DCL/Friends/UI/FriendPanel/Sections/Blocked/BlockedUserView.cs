@@ -1,3 +1,4 @@
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using System;
 using TMPro;
 using UnityEngine;
@@ -19,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             set
             {
                 blockedDate = value;
-                BlockedDateText.SetText($"{blockedDate:MM/dd}");
+                BlockedDateText.SetText(FriendListSectionUtilities.FormatDate(blockedDate));
             }
         }
 

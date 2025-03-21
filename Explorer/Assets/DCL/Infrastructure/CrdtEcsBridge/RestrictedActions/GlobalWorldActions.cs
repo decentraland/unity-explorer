@@ -66,6 +66,8 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
+            if (!avatarShape.IsVisible) return;
+
             var promise = SceneEmotePromise.Create(world,
                 new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
                 PartitionComponent.TOP_PRIORITY);
@@ -82,6 +84,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn, bool isLooping)
         {
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
+
             world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
             messageBus.Send(urn, isLooping);
         }

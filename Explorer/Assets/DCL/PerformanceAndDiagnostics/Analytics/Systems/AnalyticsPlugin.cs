@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             walkedDistanceAnalytics.Initialize();
 
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, arguments.V8ActiveEngines, scenesCache, new JsonObjectBuilder());
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
