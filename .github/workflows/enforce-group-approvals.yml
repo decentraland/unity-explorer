@@ -135,6 +135,10 @@ jobs:
             echo "📄 Fetching page $page of workflow runs for workflow ID $WORKFLOW_ID..."
             RUNS=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?event=pull_request&status=completed&per_page=100&page=$page")
 
+            # 🕒 Log created_at of the first run on this page
+            FIRST_CREATED_AT=$(jq -r '.workflow_runs[0].created_at // "N/A"' <<< "$RUNS")
+            echo "🕒 First run on page $page was created at: $FIRST_CREATED_AT"
+
             MATCH=$(jq --arg HEAD_SHA "$HEAD_SHA" --argjson PR_NUMBER "$PR_NUMBER" '
               .workflow_runs[] |
               select(.head_sha == $HEAD_SHA) |
@@ -148,7 +152,7 @@ jobs:
               break
             fi
 
-            # Stop if there are no more pages
+            # Stop if fewer than 100 runs returned (no more pages)
             if [ "$(jq '.workflow_runs | length' <<< "$RUNS")" -lt 100 ]; then
               echo "🚫 No matching failed workflow run found in available history."
               break
@@ -163,5 +167,7 @@ jobs:
           fi
 
           echo "🔁 Triggering re-run for Workflow Run ID: $WORKFLOW_RUN_ID"
+          echo "    ➤ Endpoint: POST /repos/$REPO_OWNER/$REPO_NAME/actions/runs/$WORKFLOW_RUN_ID/rerun"
+
           gh api -X POST "repos/$REPO_OWNER/$REPO_NAME/actions/runs/$WORKFLOW_RUN_ID/rerun" --verbose
           echo "✅ Re-run triggered successfully!"
