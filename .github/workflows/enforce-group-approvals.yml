@@ -128,6 +128,7 @@ jobs:
           WORKFLOW_RUNS_JSON=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/runs" --jq '.')
 
           echo "📋 Total workflow runs fetched: $(jq '.workflow_runs | length' <<< "$WORKFLOW_RUNS_JSON")"
+          echo "$(jq '.workflow_runs' <<< "$WORKFLOW_RUNS_JSON")"
 
           echo "🔍 Step 1: Filter by head_sha == $HEAD_SHA"
           STEP1=$(jq --arg HEAD_SHA "$HEAD_SHA" '.workflow_runs[] | select(.head_sha == $HEAD_SHA)' <<< "$WORKFLOW_RUNS_JSON")
