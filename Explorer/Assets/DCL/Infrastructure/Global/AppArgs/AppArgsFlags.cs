@@ -15,7 +15,21 @@
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
-        public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
+
+        public const string SKIP_AUTH_SCREEN = "skip-auth-screen"; // TODO: change to auth-screen-enabled and check value
+        public const string WORLD_INFO_ENABLED = "world-info-enabled";
+        public const string MULTIPLAYER_ENABLED = "multiplayer-enabled";
+        public const string MAP_RENDERER_ENABLED = "map-renderer-enabled";
+        public const string SIDEBAR_ENABLED = "sidebar-enabled";
+        public const string MINIMAP_ENABLED = "minimap-enabled";
+        public const string EXPLORE_PANEL_ENABLED = "explore-panel-enabled";
+        public const string CHARACTER_PREVIEW_ENABLED = "character-preview-enabled";
+        public const string SKYBOX_ENABLED = "skybox-enabled";
+        public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+        public const string LODS_ENABLED = "lods-enabled";
+        public const string REWARD_PANEL_ENABLED = "reward-panel-enabled";
+        public const string PASSPORT_ENABLED = "passport-enabled";
+
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";

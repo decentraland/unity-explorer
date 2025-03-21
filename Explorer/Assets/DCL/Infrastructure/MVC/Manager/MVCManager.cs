@@ -66,15 +66,17 @@ namespace MVC
 
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
-            // Find the controller
-            IController controller = controllers[typeof(IController<TView, TInputData>)];
-
-            ct = ct.Equals(default(CancellationToken))
-                ? destructionCancellationTokenSource.Token
-                : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionCancellationTokenSource.Token).Token;
+            var controllerType = typeof(IController<TView, TInputData>);
 
             try
             {
+                // Find the controller
+                IController controller = controllers[controllerType];
+
+                ct = ct.Equals(default(CancellationToken))
+                    ? destructionCancellationTokenSource.Token
+                    : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionCancellationTokenSource.Token).Token;
+
                 OnViewShowed?.Invoke(controller);
 
                 switch (controller.Layer)
@@ -95,10 +97,10 @@ namespace MVC
 
                 OnViewClosed?.Invoke(controller);
             }
-            catch (OperationCanceledException _)
+            catch (Exception _)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
-                ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
+                ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controllerType}");
             }
         }
 
