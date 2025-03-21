@@ -193,9 +193,7 @@ namespace Global.Dynamic
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
             var sceneLoadingLimit
-                = new SceneLoadingLimit(realmPartitionSettings.MaximumAmountOfScenesThatCanLoad,
-                    realmPartitionSettings.MaximumAmountOfLODsThatCanLoad,
-                    realmPartitionSettings.MaximumAmountOfReductedLODsThatCanLoad);
+                = new SceneLoadingLimit();
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {

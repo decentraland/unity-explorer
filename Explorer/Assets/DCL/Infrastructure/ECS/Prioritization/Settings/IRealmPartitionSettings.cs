@@ -54,12 +54,6 @@ namespace ECS.Prioritization
         /// <returns>FPS</returns>
         int GetSceneUpdateFrequency(in PartitionComponent partition);
 
-        int MaximumAmountOfScenesThatCanLoad { get; }
-
-        int MaximumAmountOfLODsThatCanLoad { get; }
-
-        int MaximumAmountOfReductedLODsThatCanLoad { get; }
-
         Action<int>? OnMaxLoadingDistanceInParcelsChanged { get; set; }
     }
 }

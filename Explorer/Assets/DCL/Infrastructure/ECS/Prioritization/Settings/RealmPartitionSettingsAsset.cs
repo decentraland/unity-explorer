@@ -56,14 +56,6 @@ namespace ECS.Prioritization
         [field: SerializeField]
         public int ScenesDefinitionsRequestBatchSize { get; private set; }
 
-        [field: SerializeField]
-        public int MaximumAmountOfScenesThatCanLoad { get; private set; }
-
-        [field: SerializeField]
-        public int MaximumAmountOfLODsThatCanLoad { get; private set; }
-
-        [field: SerializeField]
-        public int MaximumAmountOfReductedLODsThatCanLoad { get; private set; }
         public float AggregatePositionSqrTolerance { get; private set; }
 
         public int GetSceneUpdateFrequency(in PartitionComponent partition)
