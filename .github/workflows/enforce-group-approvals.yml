@@ -151,12 +151,7 @@ jobs:
                 select(.conclusion == "failure") |
                 .databaseId
             ' | head -n 1)
-
-          if [ -z "$WORKFLOW_RUN_ID" ]; then
-            echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
-            exit 0
-          fi
-
+          
           echo "📦 Fetching raw run metadata for workflow ID $WORKFLOW_ID and SHA $HEAD_SHA..."
           RAW_RUNS=$(gh api "repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?per_page=100&event=pull_request&status=completed" --jq '.')
 
@@ -164,6 +159,11 @@ jobs:
           echo "$RAW_RUNS" | jq --arg HEAD_SHA "$HEAD_SHA" '
             .workflow_runs[] | select(.head_sha == $HEAD_SHA)
           '
+
+          if [ -z "$WORKFLOW_RUN_ID" ]; then
+            echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
+            exit 0
+          fi
 
           echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
           echo "🔁 Triggering re-run via GitHub CLI"
