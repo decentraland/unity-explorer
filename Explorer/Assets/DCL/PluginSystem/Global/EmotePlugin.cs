@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmotesMessageBus messageBus;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
             IEmotesMessageBus messageBus,
             IDebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IMVCManager mvcManager,
             DCLInput dclInput,
             CacheCleaner cacheCleaner,
