@@ -69,11 +69,11 @@ namespace Utility.Types
 
     public readonly struct EnumResult<TErrorEnum>
     {
-        public readonly (TErrorEnum State, string Message)? Error;
+        public readonly (TErrorEnum State, string Message, Exception Exception)? Error;
 
         public bool Success => Error == null;
 
-        private EnumResult((TErrorEnum State, string Message)? error)
+        private EnumResult((TErrorEnum State, string Message, Exception Exception)? error)
         {
             this.Error = error;
         }
@@ -81,8 +81,8 @@ namespace Utility.Types
         public static EnumResult<TErrorEnum> SuccessResult() =>
             new (null);
 
-        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage = "") =>
-            new ((state, errorMessage));
+        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage = "", Exception exception = null) =>
+            new ((state, errorMessage, exception));
 
         public static EnumResult<TErrorEnum> CancelledResult(TErrorEnum state) =>
             ErrorResult(state, nameof(OperationCanceledException));
@@ -179,12 +179,12 @@ namespace Utility.Types
 
     public static class ResultExtensions
     {
-        public static string AsMessage<TErrorEnum>(this (TErrorEnum State, string Message)? error)
+        public static string AsMessage<TErrorEnum>(this (TErrorEnum State, string Message, Exception exception)? error)
         {
             if (error.HasValue == false)
                 return "Not an error";
 
-            (TErrorEnum state, string message) = error!.Value;
+            (TErrorEnum state, string message, Exception exception) = error!.Value;
             return $"{state}: {message}";
         }
 
