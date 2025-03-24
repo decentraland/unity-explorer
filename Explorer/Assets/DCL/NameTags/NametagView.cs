@@ -167,11 +167,24 @@ namespace DCL.Nametags
         private JobHandle transparencyJobHandle;
         private NativeArray<Keyframe> alphaCurveKeysNative;
 
+        private MaterialPropertyBlock propertyBlock;
+        private static readonly int ColorProperty = Shader.PropertyToID("_Color");
+        private Material sharedMaterial;
+
         private void OnEnable()
         {
             nameTagAlphaNative = new NativeReference<float>(Allocator.Persistent);
             shouldUpdateNative = new NativeReference<bool>(Allocator.Persistent);
             alphaCurveKeysNative = new NativeArray<Keyframe>(alphaOverDistanceCurve.keys, Allocator.Persistent);
+            propertyBlock = new MaterialPropertyBlock();
+            
+            // Get the shared material from the background sprite
+            sharedMaterial = BackgroundSprite.sharedMaterial;
+            
+            // Ensure all sprites use the same material
+            mentionBackgroundSprite.sharedMaterial = sharedMaterial;
+            bubbleTailSprite.sharedMaterial = sharedMaterial;
+            verifiedIconRenderer.sharedMaterial = sharedMaterial;
         }
 
         private void OnDisable()
@@ -182,6 +195,8 @@ namespace DCL.Nametags
                 shouldUpdateNative.Dispose();
             if (alphaCurveKeysNative.IsCreated)
                 alphaCurveKeysNative.Dispose();
+            propertyBlock = null;
+            sharedMaterial = null;
         }
 
         [BurstCompile]
@@ -223,6 +238,61 @@ namespace DCL.Nametags
 
         }
 
+        [BurstCompile]
+        private static Vector2 CalculateBackgroundSize(float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float usernameHeight, float nametagMarginHeight, bool isClaimedName)
+        {
+            float width = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0);
+            float height = usernameHeight + nametagMarginHeight;
+            return new Vector2(width, height);
+        }
+
+        [BurstCompile]
+        private static Vector2 CalculateVerifiedIconPosition(float usernamePositionX, float usernameWidth, float verifiedIconWidth, float nametagMarginHeight)
+        {
+            return new Vector2(
+                usernamePositionX + (usernameWidth / 2) + (verifiedIconWidth / 2) - (nametagMarginHeight / 2),
+                0
+            );
+        }
+
+        [BurstCompile]
+        private static Vector2 CalculateUsernamePosition(float usernamePositionX, float verifiedIconWidth)
+        {
+            return new Vector2(usernamePositionX - verifiedIconWidth / 2, 0);
+        }
+
+        [BurstCompile]
+        private static Vector2 CalculateMessageContentPosition(float preferredSizeX, float preferredSizeY)
+        {
+            return new Vector2(preferredSizeX / 2, -preferredSizeY);
+        }
+
+        [BurstCompile]
+        private static Vector2 CalculateUsernameFinalPosition(float preferredSizeX, float usernameWidth, float bubbleMarginWidth)
+        {
+            return new Vector2(
+                (-preferredSizeX / 2) + (usernameWidth / 2) + (bubbleMarginWidth / 2),
+                0
+            );
+        }
+
+        [BurstCompile]
+        private static Vector2 CalculateVerifiedIconFinalPosition(float usernameFinalPositionX, float usernameWidth, float verifiedIconWidth)
+        {
+            return new Vector2(
+                usernameFinalPositionX + (usernameWidth / 2) + (verifiedIconWidth / 2),
+                0
+            );
+        }
+
+        [BurstCompile]
+        private static Vector2 CalculateBackgroundFinalSize(float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float usernameHeight, float nametagMarginHeight, bool isClaimedName)
+        {
+            float width = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0);
+            float height = usernameHeight + nametagMarginHeight;
+            return new Vector2(width, height);
+        }
+
         public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon)
         {
             ResetElement();
@@ -240,56 +310,66 @@ namespace DCL.Nametags
             if (hasClaimedName && useVerifiedIcon)
             {
                 usernamePos.x = Username.rectTransform.anchoredPosition.x;
-                verifiedIconInitialPosition = new Vector2(Username.rectTransform.anchoredPosition.x + (Username.preferredWidth / 2) + (verifiedIcon.sizeDelta.x / 2) - (nametagMarginOffsetHeight / 2), 0);
+                verifiedIconInitialPosition = CalculateVerifiedIconPosition(usernamePos.x, Username.preferredWidth, verifiedIcon.sizeDelta.x, nametagMarginOffsetHeight);
                 verifiedIcon.anchoredPosition = verifiedIconInitialPosition;
-                usernamePos.x -= verifiedIcon.sizeDelta.x / 2;
+                usernamePos = CalculateUsernamePosition(usernamePos.x, verifiedIcon.sizeDelta.x);
                 Username.rectTransform.anchoredPosition = usernamePos;
-                BackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + verifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
-                mentionBackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + verifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
+                
+                Vector2 backgroundSize = CalculateBackgroundSize(Username.preferredWidth, nametagMarginOffsetWidth, verifiedIcon.sizeDelta.x, Username.preferredHeight, nametagMarginOffsetHeight, true);
+                BackgroundSprite.size = backgroundSize;
+                mentionBackgroundSprite.size = backgroundSize;
             }
             else
             {
                 Username.rectTransform.anchoredPosition = Vector2.zero;
-                BackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
-                mentionBackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
+                Vector2 backgroundSize = CalculateBackgroundSize(Username.preferredWidth, nametagMarginOffsetWidth, 0, Username.preferredHeight, nametagMarginOffsetHeight, false);
+                BackgroundSprite.size = backgroundSize;
+                mentionBackgroundSprite.size = backgroundSize;
             }
+        }
+
+        [BurstCompile]
+        private static float CalculateTransparency(float distance, float maxDistance, float fullOpacityMaxDistance, float previousDistance, float distanceThreshold, NativeArray<Keyframe> alphaCurveKeys, out bool shouldUpdate)
+        {
+            shouldUpdate = math.abs(distance - previousDistance) >= distanceThreshold;
+            
+            if (!shouldUpdate)
+                return 1f;
+
+            float normalizedDistance = (distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance);
+            var curveEvaluator = new AnimationCurveEvaluator(alphaCurveKeys);
+            return curveEvaluator.Evaluate(normalizedDistance);
         }
 
         public void SetTransparency(float distance, float maxDistance)
         {
-            transparencyJob = new TransparencyJob
-            {
-                Distance = distance,
-                MaxDistance = maxDistance,
-                FullOpacityMaxDistance = fullOpacityMaxDistance,
-                PreviousDistance = previousDistance,
-                DistanceThreshold = DISTANCE_THRESHOLD,
-                AlphaCurveKeys = alphaCurveKeysNative,
-                NameTagAlpha = nameTagAlphaNative,
-                ShouldUpdate = shouldUpdateNative
-            };
+            bool shouldUpdate;
+            float alpha = CalculateTransparency(distance, maxDistance, fullOpacityMaxDistance, previousDistance, DISTANCE_THRESHOLD, alphaCurveKeysNative, out shouldUpdate);
 
-            transparencyJobHandle = transparencyJob.Schedule();
-            transparencyJobHandle.Complete();
-
-            if (!shouldUpdateNative.Value)
+            if (!shouldUpdate)
                 return;
 
             previousDistance = distance;
-            NameTagAlpha = nameTagAlphaNative.Value;
-            usernameTextColor = Username.color;
+            NameTagAlpha = alpha;
             bool shouldApplyAlpha = distance > fullOpacityMaxDistance;
-            textColor.a = shouldApplyAlpha ? NameTagAlpha : 1;
-            usernameTextColor.a = shouldApplyAlpha ? NameTagAlpha : 1;
-            backgroundColor = BackgroundSprite.color;
-            backgroundColor.a = shouldApplyAlpha ? NameTagAlpha : 1;
-            var bubblePeakColor = bubbleTailSprite.color;
-            bubblePeakColor.a = shouldApplyAlpha ? NameTagAlpha : 1;
-            bubbleTailSprite.color = bubblePeakColor;
-            BackgroundSprite.color = backgroundColor;
-            mentionBackgroundSprite.color = backgroundColor;
-            Username.color = usernameTextColor;
-            verifiedIconRenderer.color = backgroundColor;
+            float finalAlpha = shouldApplyAlpha ? NameTagAlpha : 1f;
+
+            // Update text colors while preserving original colors
+            Color originalUsernameColor = Username.color;
+            Color originalMessageColor = messageContent.color;
+            
+            originalUsernameColor.a = finalAlpha;
+            originalMessageColor.a = finalAlpha;
+            
+            messageContent.color = originalMessageColor;
+            Username.color = originalUsernameColor;
+
+            // Update sprite colors using direct color property
+            Color spriteColor = new Color(1, 1, 1, finalAlpha);
+            BackgroundSprite.color = spriteColor;
+            mentionBackgroundSprite.color = spriteColor;
+            bubbleTailSprite.color = spriteColor;
+            verifiedIconRenderer.color = spriteColor;
         }
 
         public void SetChatMessage(string chatMessage, bool isMention)
@@ -376,20 +456,19 @@ namespace DCL.Nametags
             preferredSize.y = this.messageContent.preferredHeight + additionalHeight;
             messageContentRectTransform.sizeDelta = preferredSize;
 
-            textContentInitialPosition.x = preferredSize.x / 2;
-            textContentInitialPosition.y = -preferredSize.y;
+            textContentInitialPosition = CalculateMessageContentPosition(preferredSize.x, preferredSize.y);
             messageContentRectTransform.anchoredPosition = textContentInitialPosition;
 
             // Calculate final size with margins
             preferredSize.x += bubbleMarginOffsetWidth;
             preferredSize.y += bubbleMarginOffsetHeight;
 
-            usernameFinalPosition.x = (-preferredSize.x / 2) + (Username.preferredWidth / 2) + (bubbleMarginOffsetWidth / 2);
+            usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, Username.preferredWidth, bubbleMarginOffsetWidth);
             usernameFinalPosition.y = messageContentRectTransform.sizeDelta.y + (bubbleMarginOffsetHeight / 3);
 
             if (isClaimedName)
             {
-                verifiedIconFinalPosition.x = usernameFinalPosition.x + (Username.preferredWidth / 2) + (verifiedIcon.sizeDelta.x / 2);
+                verifiedIconFinalPosition = CalculateVerifiedIconFinalPosition(usernameFinalPosition.x, Username.preferredWidth, verifiedIcon.sizeDelta.x);
                 verifiedIconFinalPosition.y = usernameFinalPosition.y;
                 verifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct);
             }
@@ -447,17 +526,22 @@ namespace DCL.Nametags
 
             bubbleTailSprite.gameObject.SetActive(false);
 
-            backgroundFinalSize.y = Username.preferredHeight + nametagMarginOffsetHeight;
+            backgroundFinalSize = CalculateBackgroundFinalSize(
+                Username.preferredWidth,
+                nametagMarginOffsetWidth,
+                verifiedIcon.sizeDelta.x,
+                Username.preferredHeight,
+                nametagMarginOffsetHeight,
+                isClaimedName
+            );
 
             if (isClaimedName)
             {
-                backgroundFinalSize.x = Username.preferredWidth + nametagMarginOffsetWidth + verifiedIcon.sizeDelta.x;
                 Username.rectTransform.DOAnchorPos(new Vector2(-verifiedIcon.sizeDelta.x / 2, 0), animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
                 verifiedIcon.DOAnchorPos(verifiedIconInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
             }
             else
             {
-                backgroundFinalSize.x = Username.preferredWidth + nametagMarginOffsetWidth;
                 Username.rectTransform.DOAnchorPos(zeroVector, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
             }
 
