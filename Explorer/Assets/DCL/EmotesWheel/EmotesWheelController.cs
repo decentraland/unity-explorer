@@ -24,7 +24,7 @@ namespace DCL.EmotesWheel
     public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly World world;
@@ -43,7 +43,7 @@ namespace DCL.EmotesWheel
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IEmoteStorage emoteStorage,
             NftTypeIconSO rarityBackgrounds,
             World world,
@@ -108,7 +108,7 @@ namespace DCL.EmotesWheel
 
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                Profile? profile = selfProfile.OwnProfile ?? await selfProfile.ProfileAsync(ct);
 
                 if (profile == null)
                 {
