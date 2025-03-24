@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         }
 
         //Used in hot path to avoid additional getters
-        public bool Contains(int x, int y) =>
+        public readonly bool Contains(int x, int y) =>
             SceneLookup.Contains(x, y);
 
         public bool Contains(Vector2Int parcel) =>

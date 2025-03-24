@@ -3,31 +3,31 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.LifeCycle.Components;
+using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using System;
-using System.Runtime.CompilerServices;
 
 namespace DCL.Roads.Systems
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.ROADS)]
-    public partial class UnloadRoadSystem : BaseUnityLoopSystem
+    public partial class UnloadRoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IRoadAssetPool roadAssetPool;
         private readonly IScenesCache scenesCache;
+        private readonly IPerformanceBudget unlimitedFPSBudget;
 
         public UnloadRoadSystem(World world, IRoadAssetPool roadAssetPool, IScenesCache scenesCache) : base(world)
         {
             this.roadAssetPool = roadAssetPool;
             this.scenesCache = scenesCache;
+            unlimitedFPSBudget = new NullPerformanceBudget();
         }
 
         protected override void Update(float t)
@@ -38,8 +38,14 @@ namespace DCL.Roads.Systems
         [Query]
         private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLoadingState loadingState)
         {
-            //Note: The destruction of all roads on realm change is done on DestroyAllRoadAssetsTeleportOperation.cs
-            if (partitionComponent.OutOfRange && loadingState.PromiseCreated)
+            if (partitionComponent.OutOfRange)
+                Unload(roadInfo, sceneDefinitionComponent, loadingState);
+        }
+
+        private void Unload(RoadInfo roadInfo, SceneDefinitionComponent sceneDefinitionComponent,
+            SceneLoadingState loadingState)
+        {
+            if (loadingState.PromiseCreated)
             {
                 roadInfo.Dispose(roadAssetPool);
                 loadingState.PromiseCreated = false;
@@ -47,5 +53,15 @@ namespace DCL.Roads.Systems
             }
         }
 
+        [Query]
+        private void UnloadAllRoads(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState loadingState)
+        {
+            Unload(roadInfo, sceneDefinitionComponent, loadingState);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            UnloadAllRoadsQuery(World);
+        }
     }
 }

@@ -87,14 +87,9 @@ namespace DCL.GlobalPartitioning
         private void FilterHandlersIfInTeleport()
         {
             bool downloadOnlySceneMetadata = false;
-
             //We check if the player is teleporting, and if the scene we want to teleport to has started.
             //If so, only scene metadata will be allowed to de downloaded
             TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
-
-            if (teleportParcel.JustTeleported)
-                downloadOnlySceneMetadata = true;
-
             if (teleportParcel.IsTeleporting)
             {
                 if (scenesCache.Contains(teleportParcel.Parcel))

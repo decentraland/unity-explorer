@@ -16,8 +16,11 @@ namespace ECS.SceneLifeCycle
                 teleportParcel.Parcel = playerTeleportIntent.Parcel;
             }
 
-            if (world.Has<PlayerTeleportIntent.JustTeleported>(playerEntity))
+            if (world.TryGet(playerEntity, out PlayerTeleportIntent.JustTeleported justTeleported))
+            {
                 teleportParcel.IsTeleporting = true;
+                teleportParcel.Parcel = justTeleported.Parcel;
+            }
 
             return teleportParcel;
         }
@@ -26,7 +29,6 @@ namespace ECS.SceneLifeCycle
         {
             public Vector2Int Parcel;
             public bool IsTeleporting;
-            public bool JustTeleported;
         }
     }
 }

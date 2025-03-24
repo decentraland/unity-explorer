@@ -36,6 +36,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
+using DCL.Roads.Systems;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -62,6 +63,7 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
+        private readonly IRoadAssetPool roadAssetPool;
         private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
@@ -85,7 +87,8 @@ namespace Global.Dynamic
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            RoadAssetsPool roadAssetPool)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -112,6 +115,7 @@ namespace Global.Dynamic
             this.profileRepository = profileRepository;
             this.roadCoordinates = roadCoordinates;
             this.lodSettingsAsset = lodSettingsAsset;
+            this.roadAssetPool = roadAssetPool;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -199,6 +203,7 @@ namespace Global.Dynamic
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
             };

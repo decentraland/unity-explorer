@@ -43,6 +43,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private NativeList<OrderedDataNative> orderedDataNative;
         internal JobHandle? sortingJobHandle;
         private bool arraysInSync;
+        private bool inTeleport;
+
 
         //Loading helpers
         private int loadedScenes;
@@ -187,9 +189,21 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (sortingJobHandle is { IsCompleted: false }) return;
 
-            Vector2Int currentParcel = playerTransform.position.ToParcel();
-            int xCoordinate = currentParcel.x;
-            int yCoordinate = currentParcel.y;
+            TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
+            int xCoordinate;
+            int yCoordinate;
+
+            if (teleportParcel.IsTeleporting)
+            {
+                xCoordinate = teleportParcel.Parcel.x;
+                yCoordinate = teleportParcel.Parcel.y;
+            }
+            else
+            {
+                Vector2Int currentParcel = playerTransform.position.ToParcel();
+                xCoordinate = currentParcel.x;
+                yCoordinate = currentParcel.y;
+            }
 
             unsafe
             {
@@ -198,7 +212,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 for (var i = 0; i < orderedDataManaged.Count; i++)
                 {
                     OrderedDataManaged currentOrderedData = orderedDataManaged[i];
-
                     dataPtr[i] = new OrderedDataNative
                     {
                         ReferenceListIndex = i,
@@ -212,6 +225,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
 
             arraysInSync = true;
+            inTeleport = teleportParcel.IsTeleporting;
             sortingJobHandle = orderedDataNative.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
@@ -222,15 +236,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             qualityReductedLOD = 0;
             promisesCreated = 0;
 
-            TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
-            //Dont do anything until the teleport cooldown is over
-            if (teleportParcel.JustTeleported)
-                return;
-
             unsafe
             {
                 int orderedDataNativeLength = orderedDataNative.Length;
+                if (orderedDataNativeLength == 0) return;
+
                 OrderedDataNative* dataPtr = orderedDataNative.GetUnsafePtr();
+
+                if (inTeleport)
+                {
+                    //The parcel we are teleporting to should be the first one
+                    OrderedDataManaged data = orderedDataManaged[dataPtr[0].ReferenceListIndex];
+                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
+                    return;
+                }
 
                 for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
                 {
@@ -239,16 +258,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     //Ignore unpartitioned and out of range
                     //Optimization: remove out of range from list when adding DeleteEntityIntention
                     if (dataPtr[i].RawSqrDistance < 0 || dataPtr[i].OutOfRange) continue;
-
-                    if (teleportParcel.IsTeleporting)
-                    {
-                        if (dataPtr[i].IsPlayerInsideParcel)
-                        {
-                            UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
-                            break;
-                        }
-                        continue;
-                    }
 
                     UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
                 }

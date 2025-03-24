@@ -881,7 +881,8 @@ namespace Global.Dynamic
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment,
-                profileRepository
+                profileRepository,
+                lodContainer.RoadAssetsPool
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);
