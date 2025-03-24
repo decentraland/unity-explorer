@@ -66,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private FriendsPanelController? friendsPanelController;
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
         private CancellationTokenSource? prewarmFriendsCancellationToken;
-        private UserBlockingCache userBlockingCache;
+        private UserBlockingCache? userBlockingCache;
 
         public FriendsPlugin(
             MainUIView mainUIView,

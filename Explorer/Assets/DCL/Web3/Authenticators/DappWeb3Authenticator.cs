@@ -157,10 +157,9 @@ namespace DCL.Web3.Authenticators
                 var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
                 // 1 week expiration day, just like unity-renderer
-                DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
-
-                if (identityExpirationDuration != null)
-                    sessionExpiration = DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value);
+                DateTime sessionExpiration = identityExpirationDuration != null
+                    ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
+                    : DateTime.UtcNow.AddDays(7);
 
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
