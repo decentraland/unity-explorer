@@ -1,7 +1,6 @@
 using DCL.MarketplaceCreditsAPIService;
 using System;
 using System.Globalization;
-using UnityEngine;
 
 namespace DCL.MarketplaceCredits
 {
@@ -15,9 +14,7 @@ namespace DCL.MarketplaceCredits
         public const string X_LINK = "https://x.com/decentraland";
         public const int CREDITS_UNLOCKED_DURATION = 5;
         public const int ERROR_NOTIFICATION_DURATION = 3;
-        public const int CHECKING_SIDEBAR_BUTTON_STATE_TIME_INTERVAL = 10;
-
-        private const string FEATURE_OPEN_BY_FIRST_TIME_LOCAL_STORAGE_KEY = "MarketplaceCreditsFeatureOpenByFirstTime";
+        public const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
 
         public static string FormatEndOfTheWeekDate(uint timeLeftInMilliseconds)
         {
@@ -52,6 +49,12 @@ namespace DCL.MarketplaceCredits
 
         public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
             goalProgress.completedSteps * 100 / goalProgress.totalSteps;
+
+        public static bool IsUserEmailRegistered(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
+            !string.IsNullOrEmpty(creditsProgramProgressResponse.user.email);
+
+        public static bool IsUserEmailVerified(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
+            creditsProgramProgressResponse.IsUserEmailRegistered() && creditsProgramProgressResponse.user.isEmailConfirmed;
 
         public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds;

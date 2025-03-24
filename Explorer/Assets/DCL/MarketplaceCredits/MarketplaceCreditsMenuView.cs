@@ -11,6 +11,7 @@ namespace DCL.MarketplaceCredits
     public enum MarketplaceCreditsSection
     {
         WELCOME,
+        VERIFY_EMAIL,
         GOALS_OF_THE_WEEK,
         WEEK_GOALS_COMPLETED,
         PROGRAM_ENDED,
@@ -18,6 +19,9 @@ namespace DCL.MarketplaceCredits
 
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement
     {
+        [field: SerializeField]
+        public GameObject TitlesContainer { get; private set; }
+
         [field: SerializeField]
         public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; }
 
@@ -29,6 +33,9 @@ namespace DCL.MarketplaceCredits
 
         [field: SerializeField]
         public MarketplaceCreditsWelcomeView WelcomeView { get; private set; }
+
+        [field: SerializeField]
+        public MarketplaceCreditsVerifyEmailView VerifyEmailView { get; private set; }
 
         [field: SerializeField]
         public MarketplaceCreditsGoalsOfTheWeekView GoalsOfTheWeekView { get; private set; }

@@ -31,7 +31,6 @@ namespace DCL.MarketplaceCreditsAPIService
     [Serializable]
     public class UserData
     {
-        public bool isRegistered;
         public string email;
         public bool isEmailConfirmed;
     }

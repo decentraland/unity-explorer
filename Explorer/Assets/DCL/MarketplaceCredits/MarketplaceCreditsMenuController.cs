@@ -31,6 +31,7 @@ namespace DCL.MarketplaceCredits
         private readonly ISidebarBus sidebarBus;
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
+        private readonly MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
         private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
@@ -100,10 +101,17 @@ namespace DCL.MarketplaceCredits
                 view.ProgramEndedView,
                 webBrowser);
 
+            marketplaceCreditsVerifyEmailController = new MarketplaceCreditsVerifyEmailController(
+                view.VerifyEmailView,
+                selfProfile,
+                marketplaceCreditsAPIClient,
+                this);
+
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
                 view.WelcomeView,
                 view.TotalCreditsWidget,
                 this,
+                marketplaceCreditsVerifyEmailController,
                 marketplaceCreditsGoalsOfTheWeekController,
                 marketplaceCreditsWeekGoalsCompletedController,
                 marketplaceCreditsProgramEndedController,
@@ -132,6 +140,7 @@ namespace DCL.MarketplaceCredits
             view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+            CloseAllSections();
         }
 
         public void OpenSection(MarketplaceCreditsSection section)
@@ -145,6 +154,9 @@ namespace DCL.MarketplaceCredits
                 case MarketplaceCreditsSection.WELCOME:
                     marketplaceCreditsWelcomeController.OpenSection();
                     break;
+                case MarketplaceCreditsSection.VERIFY_EMAIL:
+                    marketplaceCreditsVerifyEmailController.OpenSection();
+                    break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
                     marketplaceCreditsGoalsOfTheWeekController.OpenSection();
                     break;
@@ -157,7 +169,8 @@ namespace DCL.MarketplaceCredits
                     break;
             }
 
-            view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME);
+            view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
+            view.TitlesContainer.SetActive(section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
         public void ShowCreditsUnlockedPanel(float claimedCredits)
@@ -193,6 +206,7 @@ namespace DCL.MarketplaceCredits
                 closeButton.onClick.RemoveListener(ClosePanel);
 
             marketplaceCreditsWelcomeController.Dispose();
+            marketplaceCreditsVerifyEmailController.Dispose();
             marketplaceCreditsGoalsOfTheWeekController.Dispose();
             marketplaceCreditsWeekGoalsCompletedController.Dispose();
             marketplaceCreditsProgramEndedController.Dispose();
@@ -201,6 +215,7 @@ namespace DCL.MarketplaceCredits
         private void CloseAllSections()
         {
             marketplaceCreditsWelcomeController.CloseSection();
+            marketplaceCreditsVerifyEmailController.CloseSection();
             marketplaceCreditsGoalsOfTheWeekController.CloseSection();
             marketplaceCreditsWeekGoalsCompletedController.CloseSection();
             marketplaceCreditsProgramEndedController.CloseSection();
@@ -257,8 +272,8 @@ namespace DCL.MarketplaceCredits
                     }
 
                     bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-                    SetSidebarCreditsButtonAlertAnimation(!creditsProgramProgressResponse.user.isRegistered || thereIsSomethingToClaim);
-                    SetSidebarCreditsButtonAlertClaimIndicator(creditsProgramProgressResponse.user.isRegistered && thereIsSomethingToClaim);
+                    SetSidebarCreditsButtonAlertAnimation(!creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
+                    SetSidebarCreditsButtonAlertClaimIndicator(creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
                 }
             }
             catch (OperationCanceledException) { }

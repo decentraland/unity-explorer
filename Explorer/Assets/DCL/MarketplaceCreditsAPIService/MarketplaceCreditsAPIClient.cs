@@ -17,7 +17,10 @@ namespace DCL.MarketplaceCreditsAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
+        private static string mockedEmail = "test@test.com";
+        private static bool mockedEmailConfirmed = true;
+
+        private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.MarketplaceCredits);
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -27,26 +30,46 @@ namespace DCL.MarketplaceCreditsAPIService
 
         public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)
         {
-            var url = $"{marketplaceCreditsBaseUrl}/progress/{walletId}";
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
             // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
             //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
 
-            CreditsProgramProgressResponse creditsProgramProgressResponse = await MockCreditsProgramProgressAsync(false, ct);
+            CreditsProgramProgressResponse creditsProgramProgressResponse = await MockCreditsProgramProgressAsync(mockedEmail, mockedEmailConfirmed, ct);
 
             return creditsProgramProgressResponse;
         }
 
-        public async UniTask<CreditsProgramProgressResponse> RegisterInTheProgramAsync(string walletId, CancellationToken ct)
+        public async UniTask<CreditsProgramProgressResponse> RegisterInTheProgramAsync(string walletId, string email, CancellationToken ct)
         {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration";
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration/{email}";
 
             // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
             //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
 
-            CreditsProgramProgressResponse programRegistrationResponse = await MockCreditsProgramProgressAsync(true, ct);
+            CreditsProgramProgressResponse programRegistrationResponse = await MockCreditsProgramProgressAsync(email, false, ct);
 
             return programRegistrationResponse;
+        }
+
+        public async UniTask RemoveRegistrationAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/removeRegistration";
+
+            // await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+            //                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
+
+            await MockRemoveRegistrationAsync(ct);
+        }
+
+        public async UniTask ResendVerificationEmailAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/resendVerificationEmail";
+
+            // await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+            //                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
+
+            await MockResendVerificationEmailAsync(ct);
         }
 
         public async UniTask<Sprite> GenerateCaptchaAsync(string walletId, CancellationToken ct)
@@ -90,7 +113,7 @@ namespace DCL.MarketplaceCreditsAPIService
             return sprite;
         }
 
-        private static async UniTask<CreditsProgramProgressResponse> MockCreditsProgramProgressAsync(bool isRegistered, CancellationToken ct)
+        private static async UniTask<CreditsProgramProgressResponse> MockCreditsProgramProgressAsync(string email, bool isEmailConfirmed, CancellationToken ct)
         {
             int randomDelay = new System.Random().Next(1000, 3000);
             await UniTask.Delay(randomDelay, cancellationToken: ct);
@@ -110,9 +133,8 @@ namespace DCL.MarketplaceCreditsAPIService
                 },
                 user = new UserData
                 {
-                    isRegistered = isRegistered,
-                    email = "test@test.com",
-                    isEmailConfirmed = false,
+                    email = email,
+                    isEmailConfirmed = isEmailConfirmed,
                 },
                 credits = new CreditsData
                 {
@@ -172,7 +194,33 @@ namespace DCL.MarketplaceCreditsAPIService
                 },
             };
 
+            mockedEmail = email;
+            mockedEmailConfirmed = isEmailConfirmed;
+
             return programRegistration;
+        }
+
+        private static async UniTask MockRemoveRegistrationAsync(CancellationToken ct)
+        {
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
+
+            mockedEmail = string.Empty;
+            mockedEmailConfirmed = false;
+        }
+
+        private static async UniTask MockResendVerificationEmailAsync(CancellationToken ct)
+        {
+            int randomDelay = new System.Random().Next(1000, 3000);
+            await UniTask.Delay(randomDelay, cancellationToken: ct);
+
+            MockEmailVerifiedAsync(ct).Forget();
+        }
+
+        private static async UniTask MockEmailVerifiedAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(8000, cancellationToken: ct);
+            mockedEmailConfirmed = true;
         }
 
         private static async UniTask<ClaimCreditsResponse> MockClaimCreditsAsync(CancellationToken ct)

@@ -19,6 +19,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsWelcomeView view;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
+        private readonly MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
         private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
@@ -27,6 +28,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly ISelfProfile selfProfile;
 
         private Profile ownProfile;
+        private CreditsProgramProgressResponse currentCreditsProgramProgress;
         private CancellationTokenSource fetchProgramRegistrationInfoCts;
         private CancellationTokenSource registerInTheProgramCts;
 
@@ -34,6 +36,7 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsWelcomeView view,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
+            MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController,
             MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController,
             MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController,
             MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController,
@@ -44,6 +47,7 @@ namespace DCL.MarketplaceCredits.Sections
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
+            this.marketplaceCreditsVerifyEmailController = marketplaceCreditsVerifyEmailController;
             this.marketplaceCreditsGoalsOfTheWeekController = marketplaceCreditsGoalsOfTheWeekController;
             this.marketplaceCreditsWeekGoalsCompletedController = marketplaceCreditsWeekGoalsCompletedController;
             this.marketplaceCreditsProgramEndedController = marketplaceCreditsProgramEndedController;
@@ -66,6 +70,7 @@ namespace DCL.MarketplaceCredits.Sections
 
             view.IsEmailLoginActive = false;
             view.CleanEmailInput();
+            OnEmailInputValueChanged(view.EmailInput.text);
             CheckStartWithEmailButtonState();
         }
 
@@ -91,8 +96,8 @@ namespace DCL.MarketplaceCredits.Sections
                 ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
-                    var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
-                    RedirectToSection(creditsProgramProgressResponse);
+                    currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
+                    RedirectToSection(currentCreditsProgramProgress);
                 }
 
                 view.SetAsLoading(false);
@@ -112,15 +117,18 @@ namespace DCL.MarketplaceCredits.Sections
                 return;
 
             registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
-            RegisterInTheProgramAsync(ownProfile.UserId, registerInTheProgramCts.Token).Forget();
+            RegisterInTheProgramAsync(
+                ownProfile.UserId,
+                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? view.EmailInput.text : currentCreditsProgramProgress.user.email,
+                registerInTheProgramCts.Token).Forget();
         }
 
-        private async UniTaskVoid RegisterInTheProgramAsync(string walletId, CancellationToken ct)
+        private async UniTaskVoid RegisterInTheProgramAsync(string walletId, string email, CancellationToken ct)
         {
             try
             {
                 view.SetAsLoading(true);
-                var programRegistrationResponse = await marketplaceCreditsAPIClient.RegisterInTheProgramAsync(walletId, ct);
+                var programRegistrationResponse = await marketplaceCreditsAPIClient.RegisterInTheProgramAsync(walletId, email, ct);
                 RedirectToSection(programRegistrationResponse);
                 view.SetAsLoading(false);
                 marketplaceCreditsMenuController.SetSidebarCreditsButtonAlertAnimation(false);
@@ -140,6 +148,7 @@ namespace DCL.MarketplaceCredits.Sections
             totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(creditsProgramProgressResponse.credits.expireIn));
             totalCreditsWidgetView.SetDaysToExpireVisible(creditsProgramProgressResponse.credits.available > 0);
 
+            // PROGRAM ENDED FLOW
             if (creditsProgramProgressResponse.IsProgramEnded())
             {
                 marketplaceCreditsProgramEndedController.Setup(creditsProgramProgressResponse);
@@ -147,9 +156,22 @@ namespace DCL.MarketplaceCredits.Sections
                 return;
             }
 
-            if (!creditsProgramProgressResponse.user.isRegistered)
+            // NON-REGISTERED USER FLOW
+            if (!creditsProgramProgressResponse.IsUserEmailRegistered())
+            {
+                view.IsEmailLoginActive = string.IsNullOrEmpty(creditsProgramProgressResponse.user.email);
                 return;
+            }
 
+            // NON-VERIFIED USER FLOW
+            if (!creditsProgramProgressResponse.IsUserEmailVerified())
+            {
+                marketplaceCreditsVerifyEmailController.Setup(creditsProgramProgressResponse.user.email);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VERIFY_EMAIL);
+                return;
+            }
+
+            // ALREADY REGISTERED USER FLOW
             if (creditsProgramProgressResponse.AreWeekGoalsCompleted())
             {
                 marketplaceCreditsWeekGoalsCompletedController.Setup(creditsProgramProgressResponse);
@@ -167,8 +189,8 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void OnEmailInputValueChanged(string email)
         {
-            view.ShowEmailError(!IsValidEmail(email));
             CheckStartWithEmailButtonState();
+            view.ShowEmailError(!string.IsNullOrEmpty(email) & !IsValidEmail(email));
         }
 
         private void CheckStartWithEmailButtonState() =>
