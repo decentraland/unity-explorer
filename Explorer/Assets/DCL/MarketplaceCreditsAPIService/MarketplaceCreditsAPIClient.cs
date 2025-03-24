@@ -40,6 +40,30 @@ namespace DCL.MarketplaceCreditsAPIService
             return creditsProgramProgressResponse;
         }
 
+        public async UniTask<Sprite> GenerateCaptchaAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
+
+            // Sprite captchaSprite = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+            //                                                  .CreateFromJson<Sprite>(WRJsonParser.Newtonsoft);
+
+            Sprite captchaSprite = await GetSpriteFromUrlAsync("https://i.ibb.co/RG48r508/Test-Captcha.png", ct);
+
+            return captchaSprite;
+        }
+
+        public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/claim";
+
+            // ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, captchaValue.ToString(CultureInfo.InvariantCulture), ct)
+            //                                                                           .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Newtonsoft);
+
+            ClaimCreditsResponse claimCreditsResponseData = await MockClaimCreditsAsync(ct);
+
+            return claimCreditsResponseData;
+        }
+
         public async UniTask<CreditsProgramProgressResponse> RegisterInTheProgramAsync(string walletId, string email, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration/{email}";
@@ -70,30 +94,6 @@ namespace DCL.MarketplaceCreditsAPIService
             //                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
 
             await MockResendVerificationEmailAsync(ct);
-        }
-
-        public async UniTask<Sprite> GenerateCaptchaAsync(string walletId, CancellationToken ct)
-        {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
-
-            // Sprite captchaSprite = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-            //                                                  .CreateFromJson<Sprite>(WRJsonParser.Newtonsoft);
-
-            Sprite captchaSprite = await GetSpriteFromUrlAsync("https://i.ibb.co/RG48r508/Test-Captcha.png", ct);
-
-            return captchaSprite;
-        }
-
-        public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
-        {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/claim";
-
-            // ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, captchaValue.ToString(CultureInfo.InvariantCulture), ct)
-            //                                                                           .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Newtonsoft);
-
-            ClaimCreditsResponse claimCreditsResponseData = await MockClaimCreditsAsync(ct);
-
-            return claimCreditsResponseData;
         }
 
         private async UniTask<Sprite> GetSpriteFromUrlAsync(string url, CancellationToken ct)
