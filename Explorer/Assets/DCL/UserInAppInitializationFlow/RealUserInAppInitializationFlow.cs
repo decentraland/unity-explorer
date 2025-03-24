@@ -91,8 +91,7 @@ namespace DCL.UserInAppInitializationFlow
             do
             {
                 bool shouldShowAuthentication = parameters.ShowAuthentication &&
-                                                (!appArgs.TryGetValue(AppArgsFlags.SKIP_AUTH_SCREEN, out string? argValue)
-                                                || argValue == "false") ;
+                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
 
                 // Force show authentication if there's no valid identity in the cache
                 if (!shouldShowAuthentication)

@@ -11,7 +11,6 @@ namespace DCL.Rendering.GPUInstancing
 {
     public class GPUInstancingService : IDisposable
     {
-        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings;
         private readonly GroupData[] groupDataArray = new GroupData[1];
 
         struct GroupData
@@ -99,9 +98,13 @@ namespace DCL.Rendering.GPUInstancing
 
         public LandscapeData LandscapeData { private get; set; }
 
+        public bool IsEnabled { get; set; } = true;
+
+        public GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings Settings { get; }
+
         public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings)
         {
-            this.settings = settings;
+            this.Settings = settings;
 
             FrustumCullingAndLODGenComputeShader = settings.FrustumCullingAndLODGenComputeShader;
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
@@ -141,7 +144,7 @@ namespace DCL.Rendering.GPUInstancing
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
-                groupDataArray[0].Set(renderCamera, LandscapeData.DetailDistance * settings.MaxDistanceScaleFactor, candidate, (uint)buffers.PerInstanceMatrices.count);
+                groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
 
                 buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
                 FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
