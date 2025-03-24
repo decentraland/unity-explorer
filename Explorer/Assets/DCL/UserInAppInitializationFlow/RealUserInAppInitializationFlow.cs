@@ -89,12 +89,15 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                bool shouldShowAuthentication = parameters.ShowAuthentication &&
-                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
+                bool shouldShowAuthentication = parameters.ShowAuthentication
+                                                && !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
 
                 // Force show authentication if there's no valid identity in the cache
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
+
+                if (shouldShowAuthentication && appArgs.HasFlagWithValueTrue(AppArgsFlags.LOCAL_SCENE))
+                    shouldShowAuthentication = !appArgs.HasFlagWithValueTrue(AppArgsFlags.FAKE_PROFILE_AUTH);
 
                 if (shouldShowAuthentication)
                 {

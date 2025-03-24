@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using Global.AppArgs;
 using System.Threading;
 using Utility.Types;
 
@@ -18,18 +19,21 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
+        private readonly IAppArgs appArgs;
 
-        public LoadPlayerAvatarStartupOperation(ILoadingStatus loadingStatus, ISelfProfile selfProfile, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
+        public LoadPlayerAvatarStartupOperation(ILoadingStatus loadingStatus, ISelfProfile selfProfile, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IAppArgs appArgs)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.appArgs = appArgs;
         }
 
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerAvatarLoading);
-            var profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+
+            var profile = appArgs.HasFlagWithValueTrue(AppArgsFlags.FAKE_PROFILE_AUTH) ? Profile.NewRandomProfile(null) : await selfProfile.ProfileOrPublishIfNotAsync(ct);
 
             // Add the profile into the player entity so it will create the avatar in world
 

@@ -17,6 +17,7 @@
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+        public const string FAKE_PROFILE_AUTH = "fake-profile-auth";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
