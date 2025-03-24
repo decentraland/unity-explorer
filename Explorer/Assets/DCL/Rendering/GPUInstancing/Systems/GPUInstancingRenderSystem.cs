@@ -43,7 +43,9 @@ namespace DCL.Rendering.GPUInstancing.Systems
             if (!gpuInstancingService.IsEnabled) return;
 
             if (isCameraCached && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.Configured)
-                gpuInstancingService.RenderIndirect();
+            {
+                gpuInstancingService.RenderIndirectUpdate();
+            }
         }
     }
 }

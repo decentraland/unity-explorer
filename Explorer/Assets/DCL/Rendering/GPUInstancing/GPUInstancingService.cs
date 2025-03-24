@@ -58,39 +58,39 @@ namespace DCL.Rendering.GPUInstancing
         private static readonly Bounds RENDER_PARAMS_WORLD_BOUNDS =
             new (Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE));
 
-        private readonly Dictionary<GPUInstancingLODGroupWithBuffer, GPUInstancingBuffers> candidatesBuffersTable = new ();
+        public readonly Dictionary<GPUInstancingLODGroupWithBuffer, GPUInstancingBuffers> candidatesBuffersTable = new ();
         private readonly GPUInstancingMaterialsCache instancingMaterials = new ();
 
         private readonly ComputeShader FrustumCullingAndLODGenComputeShader;
-        private static readonly string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
-        private int FrustumCullingAndLODGenComputeShader_KernelIDs;
-        private uint FrustumCullingAndLODGen_ThreadGroupSize_X = 1;
-        private uint FrustumCullingAndLODGen_ThreadGroupSize_Y = 1;
-        private uint FrustumCullingAndLODGen_ThreadGroupSize_Z = 1;
+        public static readonly string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
+        public int FrustumCullingAndLODGenComputeShader_KernelIDs;
+        public uint FrustumCullingAndLODGen_ThreadGroupSize_X = 1;
+        public uint FrustumCullingAndLODGen_ThreadGroupSize_Y = 1;
+        public uint FrustumCullingAndLODGen_ThreadGroupSize_Z = 1;
 
         private readonly ComputeShader IndirectBufferGenerationComputeShader;
-        private static readonly string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
-        private int IndirectBufferGenerationComputeShader_KernelIDs;
-        private uint IndirectBufferGeneration_ThreadGroupSize_X = 1;
-        private uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
-        private uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
+        public static readonly string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
+        public int IndirectBufferGenerationComputeShader_KernelIDs;
+        public uint IndirectBufferGeneration_ThreadGroupSize_X = 1;
+        public uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
+        public uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
 
         private readonly ComputeShader DrawArgsInstanceCountTransferComputeShader;
-        private static readonly string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
-        private int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
-        private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_X = 1;
-        private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Y = 1;
-        private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Z = 1;
+        public static readonly string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
+        public int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
+        public uint DrawArgsInstanceCountTransfer_ThreadGroupSize_X = 1;
+        public uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Y = 1;
+        public uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Z = 1;
 
-        private static readonly int ComputeVar_PerInstance_LODLevels  = Shader.PropertyToID("PerInstance_LODLevels"); // RWStructuredBuffer<uint4>
-        private static readonly int ComputeVar_PerInstanceData = Shader.PropertyToID("PerInstanceData"); // RWStructuredBuffer<PerInstance>
-        private static readonly int ComputeVar_InstanceLookUpAndDither = Shader.PropertyToID("InstanceLookUpAndDitherBuffer"); // RWStructuredBuffer<uint2>
-        private static readonly int ComputeVar_GroupDataBuffer = Shader.PropertyToID("GroupDataBuffer"); // RWStructuredBuffer<GroupData> size 196 align 4
-        private static readonly int ComputeVar_arrLODCount = Shader.PropertyToID("arrLODCount");
-        private static readonly int ComputeVar_IndirectDrawIndexedArgsBuffer = Shader.PropertyToID("IndirectDrawIndexedArgsBuffer");
-        private static readonly int ComputeVar_nSubMeshCount = Shader.PropertyToID("nSubMeshCount");
-        private static readonly int MAT_PER_INSTANCE_BUFFER = Shader.PropertyToID("_PerInstanceBuffer");
-        private static readonly int PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER = Shader.PropertyToID("_PerInstanceLookUpAndDitherBuffer");
+        public static readonly int ComputeVar_PerInstance_LODLevels  = Shader.PropertyToID("PerInstance_LODLevels"); // RWStructuredBuffer<uint4>
+        public static readonly int ComputeVar_PerInstanceData = Shader.PropertyToID("PerInstanceData"); // RWStructuredBuffer<PerInstance>
+        public static readonly int ComputeVar_InstanceLookUpAndDither = Shader.PropertyToID("InstanceLookUpAndDitherBuffer"); // RWStructuredBuffer<uint2>
+        public static readonly int ComputeVar_GroupDataBuffer = Shader.PropertyToID("GroupDataBuffer"); // RWStructuredBuffer<GroupData> size 196 align 4
+        public static readonly int ComputeVar_arrLODCount = Shader.PropertyToID("arrLODCount");
+        public static readonly int ComputeVar_IndirectDrawIndexedArgsBuffer = Shader.PropertyToID("IndirectDrawIndexedArgsBuffer");
+        public static readonly int ComputeVar_nSubMeshCount = Shader.PropertyToID("nSubMeshCount");
+        public static readonly int MAT_PER_INSTANCE_BUFFER = Shader.PropertyToID("_PerInstanceBuffer");
+        public static readonly int PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER = Shader.PropertyToID("_PerInstanceLookUpAndDitherBuffer");
 
         private readonly int[] arrLOD = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -135,6 +135,18 @@ namespace DCL.Rendering.GPUInstancing
 
             candidatesBuffersTable.Clear();
             instancingMaterials.Dispose();
+        }
+
+        public void RenderIndirectUpdate()
+        {
+            if (renderCamera == null)
+                return;
+
+            foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
+            {
+                groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
+                buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
+            }
         }
 
         public void RenderIndirect()

@@ -14,11 +14,17 @@ namespace DCL.Rendering.GPUInstancing
         public GPUInstancingRenderFeature_Settings Settings => m_Settings;
 
         private GPUInstancingService instancingService;
+        private GPUInstancingComputePass instancingComputePass;
         private GPUInstancingRenderPass instancingRenderPass;
 
         public override void Create()
         {
-            instancingRenderPass = new GPUInstancingRenderPass(instancingService)
+            instancingComputePass = new GPUInstancingComputePass(instancingService, m_Settings.settings)
+            {
+                renderPassEvent = RenderPassEvent.BeforeRendering
+            };
+
+            instancingRenderPass = new GPUInstancingRenderPass(instancingService, m_Settings.settings)
             {
                 renderPassEvent = RenderPassEvent.BeforeRenderingOpaques
             };
@@ -27,12 +33,15 @@ namespace DCL.Rendering.GPUInstancing
         public void Initialize(GPUInstancingService service, IRealmData realmData)
         {
             instancingService = service;
+            instancingComputePass?.SetService(service, realmData);
             instancingRenderPass?.SetService(service, realmData);
         }
 
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (instancingComputePass != null)
+                renderer.EnqueuePass(instancingComputePass);
             if (instancingRenderPass != null)
                 renderer.EnqueuePass(instancingRenderPass);
         }
@@ -45,7 +54,7 @@ namespace DCL.Rendering.GPUInstancing
         [Serializable]
         public class GPUInstancingRenderFeature_Settings
         {
-            [SerializeField] private GPUInstancingSettings settings;
+            [SerializeField] public GPUInstancingSettings settings;
 
             public ComputeShader FrustumCullingAndLODGenComputeShader => settings.FrustumCullingAndLODGenComputeShader;
             public ComputeShader IndirectBufferGenerationComputeShader => settings.IndirectBufferGenerationComputeShader;
