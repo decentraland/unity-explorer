@@ -121,7 +121,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity, SceneLoadingLimit sceneLoadingLimit)
         {
             // not synced by mutex, for compatibility only
 
@@ -196,8 +196,7 @@ namespace Global.Dynamic
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
-            var sceneLoadingLimit
-                = SceneLoadingLimit.CreateMemoryRelativeLimit();
+
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {

@@ -20,6 +20,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -246,7 +247,10 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
+                var sceneLoadingLimit = SceneLoadingLimit.CreateMemoryRelativeLimit(
+                    applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory) ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize);
+
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity, sceneLoadingLimit);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 

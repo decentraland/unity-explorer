@@ -8,11 +8,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public int MaximumAmountOfReductedLoDsThatCanLoad;
         public int MaximumAmountOfLODsThatCanLoad;
 
-        public static SceneLoadingLimit CreateMemoryRelativeLimit()
+        public static SceneLoadingLimit CreateMemoryRelativeLimit(int systemMemory)
         {
             //We are talking about 8 GBs Rigs. For now, we only allow two scene loading (to make it usable with scenes with wholes in it),
             //and all LODs are quality reducted
-            if (SystemInfo.systemMemorySize < 9_000)
+            if (systemMemory < 9_000)
             {
                 return new SceneLoadingLimit
                 {

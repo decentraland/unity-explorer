@@ -17,6 +17,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
@@ -229,7 +230,8 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             DynamicWorldContainer dynamicWorldContainer,
             UIDocument debugUiRoot,
-            Entity playerEntity
+            Entity playerEntity,
+            SceneLoadingLimit sceneLoadingLimit
         )
         {
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
@@ -257,7 +259,7 @@ namespace Global.Dynamic
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
-                sceneSharedContainer.SceneFactory, playerEntity);
+                sceneSharedContainer.SceneFactory, playerEntity, sceneLoadingLimit);
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
