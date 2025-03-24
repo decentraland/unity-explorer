@@ -86,7 +86,9 @@ namespace DCL.LOD.Systems
                     roadDataDictionary,
                     staticContainer.ScenesCache,
                     staticContainer.SceneReadinessReportQueue,
-                    roadAssetPool);
+                    roadAssetPool,
+                    gpuInstancingService,
+                    debugBuilder);
 
                 IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
                 LODGroupPoolUtils.DEFAULT_LOD_AMOUT = LOD_LEVELS;
