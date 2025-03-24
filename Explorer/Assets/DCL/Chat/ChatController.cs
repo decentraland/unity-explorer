@@ -354,7 +354,10 @@ namespace DCL.Chat
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention));
+            {
+                bool isPrivateMessage = viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID);
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention, isPrivateMessage));
+            }
         }
 
         private void DisableUnwantedInputs()

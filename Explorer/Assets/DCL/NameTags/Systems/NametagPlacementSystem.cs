@@ -193,14 +193,16 @@ namespace DCL.Nametags
             nametagView.Id = avatarShape.ID;
 
             if (profile != null)
-                nametagView.Username.color = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+                nametagView.Username.color = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
             else
                 nametagView.Username.color = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
 
+            int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;
+            string walletId = profile?.WalletId ?? (walletIdLastDigitsIndex >= 0 ? avatarShape.ID.Substring(walletIdLastDigitsIndex) : NAMETAG_DEFAULT_WALLET_ID);
+
+
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
 
-            int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;
-            string walletId = walletIdLastDigitsIndex >= 0 ? avatarShape.ID.Substring(walletIdLastDigitsIndex) : NAMETAG_DEFAULT_WALLET_ID;
             nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, useVerifiedIcon);
 
             return nametagView;
