@@ -41,7 +41,7 @@ namespace DCL.Profiles
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(thumbnailUrl)),
                     new GetTextureArguments(TextureType.Albedo),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
+                    GetTextureWebRequest.CreateTextureAsync(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI
                 );

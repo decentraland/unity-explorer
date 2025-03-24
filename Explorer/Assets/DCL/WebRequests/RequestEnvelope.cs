@@ -11,15 +11,17 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
+    /// <summary>
+    ///     Contains all possible parameters needed to create a web request
+    /// </summary>
+    /// <typeparam name="TWebRequestArgs"></typeparam>
+    public readonly struct RequestEnvelope<TWebRequestArgs> : IDisposable where TWebRequestArgs: struct
     {
         public readonly ReportData ReportData;
         public readonly CommonArguments CommonArguments;
-        public readonly CancellationToken Ct;
         public readonly bool SuppressErrors;
-        private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
-        private readonly TWebRequestArgs args;
-        private readonly DownloadHandler? customDownloadHandler;
+        public readonly TWebRequestArgs Args;
+
         private readonly WebRequestHeadersInfo headersInfo;
         private readonly WebRequestSignInfo? signInfo;
         private readonly ISet<long>? responseCodeIgnores;
@@ -27,48 +29,39 @@ namespace DCL.WebRequests
         private const string NONE = "NONE";
 
         public RequestEnvelope(
-            InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest,
-            CommonArguments commonArguments, TWebRequestArgs args,
-            CancellationToken ct,
+            CommonArguments commonArguments,
+            TWebRequestArgs args,
             ReportData reportData,
             WebRequestHeadersInfo headersInfo,
             WebRequestSignInfo? signInfo,
             ISet<long>? responseCodeIgnores = null,
-            bool suppressErrors = false,
-            DownloadHandler? customDownloadHandler = null
+            bool suppressErrors = false
         )
         {
-            this.initializeRequest = initializeRequest;
             this.CommonArguments = commonArguments;
-            this.args = args;
-            this.Ct = ct;
+            Args = args;
             ReportData = reportData;
             this.headersInfo = headersInfo;
             this.signInfo = signInfo;
             SuppressErrors = suppressErrors;
-            this.customDownloadHandler = customDownloadHandler;
             this.responseCodeIgnores = responseCodeIgnores;
         }
 
         public override string ToString() =>
             "RequestEnvelope:"
-            + $"\nWebRequestType: {typeof(TWebRequest).Name}"
-            + $"\nWebRequestArgs: {typeof(TWebRequest).Name}"
             + $"\nCommonArguments: {CommonArguments}"
-            + $"\nArgs: {args}"
-            + $"\nCancellation Token cancelled: {Ct.IsCancellationRequested}"
+            + $"\nArgs: {Args}"
             + $"\nReportCategory: {ReportData}"
             + $"\nHeaders: {headersInfo.ToString()}"
             + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
 
         public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
         {
-            var request = initializeRequest(CommonArguments, args);
+            var request = initializeRequest(CommonArguments, Args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
             AssignTimeout(unityWebRequest);
             AssignHeaders(unityWebRequest, web3IdentityCache);
-            AssignDownloadHandler(unityWebRequest);
 
             return request;
         }
@@ -91,12 +84,6 @@ namespace DCL.WebRequests
         {
             SignRequest(unityWebRequest, web3IdentityCache);
             SetHeaders(unityWebRequest);
-        }
-
-        private void AssignDownloadHandler(UnityWebRequest unityWebRequest)
-        {
-            if (customDownloadHandler != null)
-                unityWebRequest.downloadHandler = customDownloadHandler;
         }
 
         private void AssignTimeout(UnityWebRequest unityWebRequest)

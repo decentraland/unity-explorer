@@ -31,7 +31,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             var texture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
                 new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct, ReportCategory.CAMERA_REEL);
+                GetTextureWebRequest.CreateTextureAsync(TextureWrapMode.Clamp), ct, ReportCategory.CAMERA_REEL);
 
             return texture.Texture;
         }

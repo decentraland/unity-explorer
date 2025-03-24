@@ -79,7 +79,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url), attemptsCount: 1),
                 new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                GetTextureWebRequest.CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Trilinear),
                 linkedCts.Token,
                 ReportCategory.UI
             );

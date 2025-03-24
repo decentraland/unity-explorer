@@ -4,6 +4,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.WebRequests
 {
@@ -19,6 +20,9 @@ namespace DCL.WebRequests
         );
 
         public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { WebRequestUtils.NOT_FOUND };
+
+        // TODO remove TWebRequestArgs
+        UniTask<IWebRequest> SendAsync<TWebRequestArgs>(RequestEnvelope<TWebRequestArgs> envelope, CancellationToken ct) where TWebRequestArgs: struct;
 
         UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct

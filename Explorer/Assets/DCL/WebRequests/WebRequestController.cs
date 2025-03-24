@@ -22,6 +22,15 @@ namespace DCL.WebRequests
             this.requestHub = requestHub;
         }
 
+        /// <summary>
+        ///     Creates a web request wrapper with all data required to launch it
+        /// </summary>
+        /// <param name="envelope"></param>
+        /// <typeparam name="TWebRequest"></typeparam>
+        /// <typeparam name="TWebRequestArgs"></typeparam>
+        /// <returns></returns>
+        public TWebRequest Create<TWebRequest, TWebRequestArgs>(RequestEnvelope<TWebRequestArgs> envelope) where TWebRequestArgs: struct { }
+
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest

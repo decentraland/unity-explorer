@@ -31,6 +31,7 @@ namespace ECS.Abstract
         protected BaseUnityLoopSystem(World world) : base(world)
         {
             updateSampler = CustomSampler.Create($"{GetType().Name}.Update");
+
             genericUpdateSampler = CreateGenericSamplerIfRequired();
 
             var entity = new SingleInstanceEntity(SCENE_INFO_QUERY, world, false);

@@ -39,21 +39,24 @@ namespace DCL.WebRequests.RequestsHub
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
-            Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
-            Add<GenericPostArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
-            Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
-            Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
-            Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
-            Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
-            Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-            Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
-            Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
+            Add<GetTextureArguments, GetTextureWebRequest>(map, (in CommonArguments arguments, in GetTextureArguments specificArguments) => new (arguments, specificArguments, texturesFuse, isTextureCompressionEnabled))
         }
+
+        //     Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
+        //     Add<GenericPostArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
+        //     Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
+        //     Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
+        //     Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
+        //     Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
+        //     Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
+        //     Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
+        //     Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
+        //     Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
+        // }
 
         private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
             where T: struct
-            where TWebRequest: struct, ITypedWebRequest
+            where TWebRequest: struct, ITypedWebRequest<T>
         {
             map.Add(Key.NewKey<T, TWebRequest>(), requestDelegate);
         }

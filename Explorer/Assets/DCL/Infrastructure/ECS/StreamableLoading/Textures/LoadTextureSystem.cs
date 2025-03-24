@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.Textures
             var result = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,
                 new GetTextureArguments(intention.TextureType),
-                GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
+                GetTextureWebRequest.CreateTextureAsync(intention.WrapMode, intention.FilterMode),
                 ct,
                 GetReportData()
             );
