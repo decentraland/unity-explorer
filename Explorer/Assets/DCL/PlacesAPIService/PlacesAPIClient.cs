@@ -45,7 +45,8 @@ namespace DCL.PlacesAPIService
             bool? onlyFavorites = null,
             bool? addRealmDetails = null,
             IReadOnlyList<string>? positions = null,
-            List<PlacesData.PlaceInfo>? resultBuffer = null)
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            bool signRequest = true)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(baseURL));
@@ -80,9 +81,14 @@ namespace DCL.PlacesAPIService
 
             URLAddress url = urlBuilder.Build();
 
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct,
-                ReportCategory.UI);
+                ReportCategory.UI,
+                signInfo: signRequest ? WebRequestSignInfo.NewFromUrl(url, timestamp, "get") : null,
+                headersInfo: signRequest ? new WebRequestHeadersInfo().WithSign(string.Empty, timestamp) : null);
+
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 

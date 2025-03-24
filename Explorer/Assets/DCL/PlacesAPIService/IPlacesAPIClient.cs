@@ -18,7 +18,8 @@ namespace DCL.PlacesAPIService
             bool? onlyFavorites = null,
             bool? addRealmDetails = null,
             IReadOnlyList<string>? positions = null,
-            List<PlacesData.PlaceInfo>? resultBuffer = null);
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            bool signRequest = true);
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct);
 

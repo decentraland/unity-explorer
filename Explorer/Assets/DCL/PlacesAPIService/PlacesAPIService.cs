@@ -109,7 +109,7 @@ namespace DCL.PlacesAPIService
 
             if (coordsToRequest.Value.Count > 0)
             {
-                await client.GetPlacesAsync(ct, positions: coordsToRequest.Value, resultBuffer: places, addRealmDetails: true);
+                await client.GetPlacesAsync(ct, positions: coordsToRequest.Value, resultBuffer: places, addRealmDetails: true, signRequest: false);
 
                 foreach (PlacesData.PlaceInfo place in places)
                     TryCachePlace(place);
