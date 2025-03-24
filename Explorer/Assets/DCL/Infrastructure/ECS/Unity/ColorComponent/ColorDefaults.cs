@@ -8,8 +8,6 @@ namespace ECS.Unity.ColorComponent
 
         public static readonly Color COLOR_BLACK = Color.black;
 
-        public static readonly Color COLOR_TRANSPARENT = new Color(0,0,0,0);
-
         public static readonly Color PLACEHOLDER_COLOR = new () { r = 0.3f, g = 0.3f, b = 0.3f, a = 1.0f };
     }
 }

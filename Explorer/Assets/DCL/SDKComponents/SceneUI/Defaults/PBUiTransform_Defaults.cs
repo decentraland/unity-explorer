@@ -23,15 +23,15 @@ namespace DCL.SDKComponents.SceneUI.Defaults
             self.HasFlexWrap ? self.FlexWrap : YGWrap.YgwNoWrap;
 
         public static Color GetBorderBottomColor(this PBUiTransform self) =>
-            self.BorderBottomColor?.ToUnityColor() ?? ColorDefaults.COLOR_TRANSPARENT;
+            self.BorderBottomColor?.ToUnityColor() ?? Color.clear;
 
         public static Color GetBorderTopColor(this PBUiTransform self) =>
-            self.BorderBottomColor?.ToUnityColor() ?? ColorDefaults.COLOR_TRANSPARENT;
+            self.BorderTopColor?.ToUnityColor() ?? Color.clear;
 
         public static Color GetBorderLeftColor(this PBUiTransform self) =>
-            self.BorderBottomColor?.ToUnityColor() ?? ColorDefaults.COLOR_TRANSPARENT;
+            self.BorderLeftColor?.ToUnityColor() ?? Color.clear;
 
         public static Color GetBorderRightColor(this PBUiTransform self) =>
-            self.BorderBottomColor?.ToUnityColor() ?? ColorDefaults.COLOR_TRANSPARENT;
+            self.BorderRightColor?.ToUnityColor() ?? Color.clear;
     }
 }
