@@ -29,6 +29,9 @@ namespace Utility
         public static Vector3 GetSceneRelativePosition(Vector3 position, Vector3 scenePosition) =>
             position - scenePosition;
 
+        public static Vector3 GetGlobalPosition(Vector2Int sceneBaseParcel, Vector3 sceneRelativePosition) =>
+            sceneBaseParcel.ParcelToPositionFlat() + sceneRelativePosition;
+
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition, bool adaptYPositionToTerrain = false)
         {
             var position = new Vector3(parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
