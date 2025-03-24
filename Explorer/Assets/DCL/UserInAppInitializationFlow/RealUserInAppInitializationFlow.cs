@@ -13,7 +13,9 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
 using Utility.Types;
@@ -38,6 +40,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRoomHub roomHub;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IAppArgs appArgs;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -52,11 +56,15 @@ namespace DCL.UserInAppInitializationFlow
             IChatHistory chatHistory,
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
-            CheckOnboardingStartupOperation checkOnboardingStartupOperation)
+            CheckOnboardingStartupOperation checkOnboardingStartupOperation,
+            IWeb3IdentityCache identityCache,
+            IAppArgs appArgs)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
             this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
+            this.identityCache = identityCache;
+            this.appArgs = appArgs;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -81,7 +89,14 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                if (parameters.ShowAuthentication)
+                bool shouldShowAuthentication = parameters.ShowAuthentication &&
+                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
+
+                // Force show authentication if there's no valid identity in the cache
+                if (!shouldShowAuthentication)
+                    shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
+
+                if (shouldShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
 

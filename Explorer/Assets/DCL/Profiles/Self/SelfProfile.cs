@@ -71,7 +71,9 @@ namespace DCL.Profiles.Self
                 for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
 
-            OwnProfile = profile;
+            if (OwnProfile == null || profile.Version > OwnProfile.Version)
+                OwnProfile = profile;
+
             return profile;
         }
 
@@ -150,6 +152,7 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
 
             await profileRepository.SetAsync(newProfile, publish: true, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
