@@ -2,34 +2,29 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class LoadGlobalPortableExperiencesStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDebugSettings debugSettings;
         private readonly IPortableExperiencesController portableExperiencesController;
 
         public LoadGlobalPortableExperiencesStartupOperation(
             ILoadingStatus loadingStatus,
-            ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController)
         {
             this.loadingStatus = loadingStatus;
-            this.selfProfile = selfProfile;
             this.featureFlagsCache = featureFlagsCache;
             this.debugSettings = debugSettings;
             this.portableExperiencesController = portableExperiencesController;
