@@ -140,6 +140,11 @@ namespace DCL.UserInAppInitializationFlow
                             if (operationResult.Success)
                                 parentLoadReport.SetProgress(
                                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+                            // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
+                            if (operationResult.Error is { Exception: UserBlockedException })
+                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+
                             return operationResult;
                         },
                         ct
