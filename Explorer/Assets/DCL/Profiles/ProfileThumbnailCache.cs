@@ -51,10 +51,15 @@ namespace DCL.Profiles
 
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
-                Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                    VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
                 SetThumbnailIntoCache(userId, downloadedSprite);
 
                 return downloadedSprite;
+            }
+            catch (OperationCanceledException e)
+            {
+                return null;
             }
             catch (Exception e)
             {
