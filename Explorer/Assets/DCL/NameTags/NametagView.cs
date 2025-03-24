@@ -169,14 +169,20 @@ namespace DCL.Nametags
 
         private MaterialPropertyBlock propertyBlock;
         private static readonly int ColorProperty = Shader.PropertyToID("_Color");
+        private static readonly int MainTexProperty = Shader.PropertyToID("_MainTex");
         private Material sharedMaterial;
+
+        private bool isTransparent;
+        private static readonly int SurfaceProperty = Shader.PropertyToID("_Surface");
+        private static readonly int SrcBlendProperty = Shader.PropertyToID("_SrcBlend");
+        private static readonly int DstBlendProperty = Shader.PropertyToID("_DstBlend");
+        private static readonly int ZWriteProperty = Shader.PropertyToID("_ZWrite");
 
         private void OnEnable()
         {
             nameTagAlphaNative = new NativeReference<float>(Allocator.Persistent);
             shouldUpdateNative = new NativeReference<bool>(Allocator.Persistent);
             alphaCurveKeysNative = new NativeArray<Keyframe>(alphaOverDistanceCurve.keys, Allocator.Persistent);
-            propertyBlock = new MaterialPropertyBlock();
             
             // Get the shared material from the background sprite
             sharedMaterial = BackgroundSprite.sharedMaterial;
@@ -185,6 +191,10 @@ namespace DCL.Nametags
             mentionBackgroundSprite.sharedMaterial = sharedMaterial;
             bubbleTailSprite.sharedMaterial = sharedMaterial;
             verifiedIconRenderer.sharedMaterial = sharedMaterial;
+
+            // Initialize material state
+            isTransparent = false;
+            UpdateMaterialState(false);
         }
 
         private void OnDisable()
@@ -195,8 +205,29 @@ namespace DCL.Nametags
                 shouldUpdateNative.Dispose();
             if (alphaCurveKeysNative.IsCreated)
                 alphaCurveKeysNative.Dispose();
-            propertyBlock = null;
             sharedMaterial = null;
+        }
+
+        private void UpdateMaterialState(bool transparent)
+        {
+            if (isTransparent == transparent)
+                return;
+
+            isTransparent = transparent;
+            if (transparent)
+            {
+                sharedMaterial.SetInt(SurfaceProperty, 1); // Transparent
+                sharedMaterial.SetInt(SrcBlendProperty, (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                sharedMaterial.SetInt(DstBlendProperty, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                sharedMaterial.SetInt(ZWriteProperty, 0);
+            }
+            else
+            {
+                sharedMaterial.SetInt(SurfaceProperty, 0); // Opaque
+                sharedMaterial.SetInt(SrcBlendProperty, (int)UnityEngine.Rendering.BlendMode.One);
+                sharedMaterial.SetInt(DstBlendProperty, (int)UnityEngine.Rendering.BlendMode.Zero);
+                sharedMaterial.SetInt(ZWriteProperty, 1);
+            }
         }
 
         [BurstCompile]
@@ -370,6 +401,9 @@ namespace DCL.Nametags
             mentionBackgroundSprite.color = spriteColor;
             bubbleTailSprite.color = spriteColor;
             verifiedIconRenderer.color = spriteColor;
+
+            // Only update material state when transparency state changes
+            UpdateMaterialState(finalAlpha < 1f);
         }
 
         public void SetChatMessage(string chatMessage, bool isMention)
