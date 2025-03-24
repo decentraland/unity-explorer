@@ -147,7 +147,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(RoadInfo))]
-        private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
+        private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, ref SceneLoadingState sceneLoadingState)
         {
             if (partitionComponent.OutOfRange)
                 TryUnload(entity, ref sceneLoadingState);
@@ -174,8 +174,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 StartScenesLoading(realmComponent);
         }
 
-        private int lengthWhenSortingStarted;
-
         private void StartScenesLoading(in RealmComponent realmComponent)
         {
             if (sortingJobHandle is { IsCompleted: true })
@@ -200,16 +198,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 for (var i = 0; i < orderedDataManaged.Count; i++)
                 {
                     OrderedDataManaged currentOrderedData = orderedDataManaged[i];
-                    currentOrderedData.UpdatePlayerInParcel(xCoordinate, yCoordinate);
 
                     dataPtr[i] = new OrderedDataNative
                     {
                         ReferenceListIndex = i,
-                        RawSqrDistance = currentOrderedData.RawSqrDistance,
-                        IsBehind = currentOrderedData.IsBehind,
-                        IsPlayerInsideParcel = currentOrderedData.IsPlayerInsideParcel,
+                        RawSqrDistance = currentOrderedData.PartitionComponent.RawSqrDistance,
+                        IsBehind = currentOrderedData.PartitionComponent.IsBehind,
+                        IsPlayerInsideParcel = currentOrderedData.SceneDefinitionComponent.Contains(xCoordinate, yCoordinate),
                         XCoordinate = currentOrderedData.XCoordinate,
-                        OutOfRange = currentOrderedData.OutOfRange,
+                        OutOfRange = currentOrderedData.PartitionComponent.OutOfRange,
                     };
                 }
             }
@@ -234,8 +231,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 int orderedDataNativeLength = orderedDataNative.Length;
                 OrderedDataNative* dataPtr = orderedDataNative.GetUnsafePtr();
-                int xCoordinateTeleporting = teleportParcel.Parcel.x;
-                int yCoordinateTeleporting = teleportParcel.Parcel.y;
 
                 for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
                 {
@@ -243,11 +238,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                     //Ignore unpartitioned and out of range
                     //Optimization: remove out of range from list when adding DeleteEntityIntention
-                    if (data.RawSqrDistance < 0 || data.OutOfRange) continue;
+                    if (dataPtr[i].RawSqrDistance < 0 || dataPtr[i].OutOfRange) continue;
 
                     if (teleportParcel.IsTeleporting)
                     {
-                        if (data.Vector2IntGridLookup.Contains(xCoordinateTeleporting, yCoordinateTeleporting))
+                        if (dataPtr[i].IsPlayerInsideParcel)
                         {
                             UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
                             break;
@@ -390,13 +385,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             public readonly SceneLoadingState SceneLoadingState;
             public readonly PartitionComponent PartitionComponent;
 
-            public float RawSqrDistance;
-            public bool IsBehind;
-            public bool IsPlayerInsideParcel;
             public int XCoordinate;
-            public bool OutOfRange;
 
-            public readonly Vector2IntGridLookup Vector2IntGridLookup;
 
             public OrderedDataManaged(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState)
             {
@@ -405,22 +395,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 SceneLoadingState = sceneLoadingState;
                 PartitionComponent = partitionComponent;
                 XCoordinate = sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x;
-                IsPlayerInsideParcel = false;
-                RawSqrDistance = float.MaxValue;
-                IsBehind = false;
-                OutOfRange = true;
-
-                Vector2IntGridLookup = new Vector2IntGridLookup(SceneDefinitionComponent.Parcels);
             }
 
-            public void UpdatePlayerInParcel(int x, int y)
-            {
-                //Maybe use ISCurrentAPI?
-                IsPlayerInsideParcel = Vector2IntGridLookup.Contains(x, y);
-                RawSqrDistance = PartitionComponent.RawSqrDistance;
-                IsBehind = PartitionComponent.IsBehind;
-                OutOfRange = PartitionComponent.OutOfRange;
-            }
         }
 
 

@@ -1,10 +1,6 @@
-using Decentraland.Kernel.Comms.Rfc4;
-
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
-    //Struct that will be used to dynamically modify the maximum amount of scenes that can load
-    //in the memory system
-    public struct SceneLoadingLimit
+    public class SceneLoadingLimit
     {
         public int MaximumAmountOfScenesThatCanLoad;
         public int MaximumAmountOfReductedLoDsThatCanLoad;
