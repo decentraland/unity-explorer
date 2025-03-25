@@ -37,7 +37,7 @@ namespace DCL.MarketplaceCredits
         public static string FormatCreditsExpireIn(uint timeLeftInMilliseconds)
         {
             uint days = timeLeftInMilliseconds / (1000 * 60 * 60 * 24);
-            return $"Expire in {days} days";
+            return $"Expires in {days} days";
         }
 
         public static string FormatSeasonDateRange(string startDate, string endDate)
