@@ -4,7 +4,6 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
-using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -40,13 +39,11 @@ namespace SceneRunner.Tests
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-            activeEngines = new V8ActiveEngines();
-            engineFactory = new V8EngineFactory(activeEngines);
+            engineFactory = new V8EngineFactory();
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
-                new IRealmData.Fake(), engineFactory, activeEngines,
+            sceneRuntimeFactory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
@@ -78,13 +75,12 @@ namespace SceneRunner.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public async Task TearDown()
         {
-            sceneFacade?.DisposeAsync().Forget();
-            activeEngines.Clear();
+            if (sceneFacade != null)
+                await sceneFacade.DisposeAsync();
         }
 
-        private V8ActiveEngines activeEngines;
         private V8EngineFactory engineFactory;
 
         private SceneRuntimeFactory sceneRuntimeFactory;

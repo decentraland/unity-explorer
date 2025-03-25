@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using MVC;
 using System;
 using System.Threading;
@@ -15,8 +14,19 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
 
-        private ViewDependencies viewDependencies;
-        private CancellationTokenSource cts;
+        private ViewDependencies? viewDependencies;
+        private CancellationTokenSource? cts;
+        private string? currentThumbnailUrl;
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+        }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+        }
 
         public void Setup(Color userColor, string faceSnapshotUrl, string userId)
         {
@@ -55,33 +65,44 @@ namespace DCL.UI.ProfileElements
 
         private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
         {
+            cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+
+            if (currentThumbnailUrl == faceSnapshotUrl) return;
+
             try
             {
-                cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+                ct.ThrowIfCancellationRequested();
+
+                Sprite? sprite = viewDependencies!.GetProfileThumbnail(userId);
+
+                if (sprite != null)
+                {
+                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.ImageEnabled = true;
+                    thumbnailImageView.IsLoading = false;
+                    thumbnailImageView.Alpha = 1f;
+                    currentThumbnailUrl = faceSnapshotUrl;
+                    return;
+                }
+
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
+                thumbnailImageView.Alpha = 0f;
 
-                Sprite sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                sprite = await viewDependencies.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
-                thumbnailImageView.SetImage(sprite ? sprite : defaultEmptyThumbnail);
+                currentThumbnailUrl = faceSnapshotUrl;
+                thumbnailImageView.SetImage(sprite ? sprite! : defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
+                await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
             }
+            catch (OperationCanceledException) { }
             catch (Exception)
             {
                 thumbnailImageView.SetImage(defaultEmptyThumbnail);
                 thumbnailImageView.ImageEnabled = true;
+                await thumbnailImageView.FadeInAsync(0.5f, cts.Token);
             }
-
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
         }
     }
 }

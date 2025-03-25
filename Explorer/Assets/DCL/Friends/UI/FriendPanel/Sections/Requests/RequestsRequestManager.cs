@@ -32,7 +32,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             ViewDependencies viewDependencies,
             int pageSize,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, viewDependencies, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
+            : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
         {
             this.loopListView = loopListView;
 
@@ -109,12 +109,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             RefreshLoopList();
             loopListView.ResetListView();
-        }
-
-        private void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetElementsNumber(), false);
-            loopListView.RefreshAllShownItem();
         }
 
         internal int GetReceivedRequestCount() =>

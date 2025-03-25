@@ -14,10 +14,6 @@ namespace DCL.Rendering.Avatar
             private readonly ShaderTagId m_ShaderTagId = new ("Outline");
             private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_OutlineDrawPass", ReportHint.SessionStatic);
 
-            private RTHandle outlineRTHandle_Colour;
-            private RTHandle outlineRTHandle_Depth;
-            private RenderTextureDescriptor outlineRTDescriptor_Colour;
-            private RenderTextureDescriptor outlineRTDescriptor_Depth;
             private ProfilingSampler m_Sampler = new (profilerTag);
 
             private FilteringSettings m_FilteringSettings;
@@ -28,29 +24,12 @@ namespace DCL.Rendering.Avatar
                 m_OutlineRenderers = _OutlineRenderers;
             }
 
-            public void Setup(  RTHandle _outlineRTHandle_Colour,
-                                RTHandle _outlineRTHandle_Depth,
-                                RenderTextureDescriptor _outlineRTDescriptor_Colour,
-                                RenderTextureDescriptor _outlineRTDescriptor_Depth)
-            {
-                m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
-                outlineRTHandle_Colour = _outlineRTHandle_Colour;
-                outlineRTHandle_Depth = _outlineRTHandle_Depth;
-                outlineRTDescriptor_Colour = _outlineRTDescriptor_Colour;
-                outlineRTDescriptor_Depth = _outlineRTDescriptor_Depth;
-            }
 
             // Configure the pass by creating a temporary render texture and
             // readying it for rendering
             public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
             {
-                if (outlineRTHandle_Colour != null && outlineRTHandle_Depth != null)
-                    ConfigureTarget(outlineRTHandle_Colour, outlineRTHandle_Depth);
 
-                // ConfigureTarget(outlineRTHandle_Colour, outlineRTHandle_Depth);
-                // ConfigureClear(ClearFlag.All, Color.clear);
-                // ConfigureColorStoreAction(RenderBufferStoreAction.Resolve);
-                // ConfigureDepthStoreAction(RenderBufferStoreAction.DontCare);
             }
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -59,6 +38,7 @@ namespace DCL.Rendering.Avatar
                     return;
 
                 CommandBuffer cmd = CommandBufferPool.Get("_OutlineDrawPass");
+                CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
 
                 using (new ProfilingScope(cmd, m_Sampler))
                 {
@@ -93,8 +73,7 @@ namespace DCL.Rendering.Avatar
 
             public void Dispose()
             {
-                outlineRTHandle_Colour?.Release();
-                outlineRTHandle_Depth?.Release();
+
             }
         }
     }

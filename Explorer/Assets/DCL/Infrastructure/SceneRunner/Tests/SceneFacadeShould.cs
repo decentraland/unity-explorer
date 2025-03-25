@@ -66,18 +66,15 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class SceneFacadeShould
     {
-        private V8ActiveEngines activeEngines;
         private V8EngineFactory engineFactory;
 
         [SetUp]
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-            activeEngines = new V8ActiveEngines();
-            engineFactory = new V8EngineFactory(activeEngines);
+            engineFactory = new V8EngineFactory();
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
-                new IRealmData.Fake(), engineFactory, activeEngines,
+            sceneRuntimeFactory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
@@ -128,7 +125,6 @@ namespace SceneRunner.Tests
             }
 
             sceneFacades.Clear();
-            activeEngines.Clear();
         }
 
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
