@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Best.HTTP;
+using System;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
@@ -14,6 +16,12 @@ namespace DCL.WebRequests
         public IWebRequestController Controller { get; set; }
         public RequestEnvelope Envelope { get; }
         public TArgs Args { get; }
+
+        public virtual UnityWebRequest CreateUnityWebRequest() =>
+            throw new NotSupportedException($"{nameof(CreateUnityWebRequest)} is not supported by {GetType().Name}");
+
+        public virtual HTTPRequest CreateHttp2Request() =>
+            throw new NotSupportedException($"{nameof(CreateHttp2Request)} is not supported by {GetType().Name}");
 
         public void Dispose()
         {

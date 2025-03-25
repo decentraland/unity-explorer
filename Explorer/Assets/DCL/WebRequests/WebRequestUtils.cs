@@ -57,7 +57,7 @@ namespace DCL.WebRequests
             exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
 
         public static string GetResponseContentType(this IWebRequest unityWebRequest) =>
-            unityWebRequest.Response.GetHeader("Content-Type");
+            unityWebRequest.Response.GetHeader(WebRequestHeaders.CONTENT_TYPE_HEADER);
 
         public static string GetResponseContentEncoding(this IWebRequest unityWebRequest) =>
             unityWebRequest.Response.GetHeader("Content-Encoding");

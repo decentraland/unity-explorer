@@ -28,7 +28,7 @@ namespace DCL.WebRequests.RequestsHub
             public override int GetHashCode() =>
                 HashCode.Combine(requestType, webType);
 
-            public static Key NewKey<TArgs, TWebRequest>() where TArgs: struct where TWebRequest: struct, ITypedWebRequest<TArgs> =>
+            public static Key NewKey<TArgs, TWebRequest>() where TArgs: struct where TWebRequest: ITypedWebRequest<TArgs> =>
                 new (typeof(TArgs), typeof(TWebRequest));
         }
 
@@ -39,7 +39,9 @@ namespace DCL.WebRequests.RequestsHub
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope<GetTextureArguments> envelope) => new GetTextureWebRequest(envelope, controller, texturesFuse, isTextureCompressionEnabled))
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, texturesFuse, isTextureCompressionEnabled))
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericGetArguments args) => new GenericGetRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericPostArguments args) => new GenericPostRequest(envelope, args, controller));
         }
 
         //     Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
@@ -56,14 +58,14 @@ namespace DCL.WebRequests.RequestsHub
 
         private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)
             where TArgs: struct
-            where TWebRequest: struct, ITypedWebRequest<TArgs>
+            where TWebRequest: ITypedWebRequest<TArgs>
         {
             map.Add(Key.NewKey<TArgs, TWebRequest>(), requestDelegate);
         }
 
         public InitializeRequest<TArgs, TWebRequest> RequestDelegateFor<TArgs, TWebRequest>()
             where TArgs: struct
-            where TWebRequest: struct, ITypedWebRequest<TArgs>
+            where TWebRequest: ITypedWebRequest<TArgs>
         {
             if (map.TryGetValue(Key.NewKey<TArgs, TWebRequest>(), out object requestDelegate))
                 return (InitializeRequest<TArgs, TWebRequest>)requestDelegate!;

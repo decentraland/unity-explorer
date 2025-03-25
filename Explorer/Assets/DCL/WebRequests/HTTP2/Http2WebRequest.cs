@@ -45,11 +45,12 @@ namespace DCL.WebRequests.HTTP2
         {
             private readonly HTTPRequest request;
 
-            // TODO support graceful string.Empty
             public string Text
             {
                 get
                 {
+                    if (request.Response == null) return string.Empty;
+
                     using DownloadContentStream? stream = request.Response.DownStream;
 
                     // Create a string from the stream
@@ -73,6 +74,7 @@ namespace DCL.WebRequests.HTTP2
 
                         return stringBuilder.ToString();
                     }
+                    catch (DecoderFallbackException) { return string.Empty; }
                     finally { StringBuilderPool.Release(stringBuilder); }
 
                     bool TryReadSegment(Decoder decoder)
@@ -96,7 +98,9 @@ namespace DCL.WebRequests.HTTP2
                 }
             }
 
-            public byte[] Data => request.Response.Data;
+            public string? Error => IsSuccess ? null : request.Response.Message;
+
+            public byte[] Data => request.Response?.Data ?? Array.Empty<byte>();
 
             public int StatusCode => request.Response.StatusCode;
 
@@ -112,8 +116,17 @@ namespace DCL.WebRequests.HTTP2
             public string GetHeader(string headerName) =>
                 request.Response.GetFirstHeaderValue(headerName);
 
-            public Dictionary<string, string> FlattenHeaders() =>
-                request.Response.Headers
+            public Dictionary<string, string>? FlattenHeaders()
+            {
+                if (request.Response == null) return null;
+
+                var dict = new Dictionary<string, string>(request.Response.Headers.Count);
+
+                foreach (KeyValuePair<string, List<string>> header in request.Response.Headers)
+                    dict[header.Key] = string.Join(',', header.Value);
+
+                return dict;
+            }
         }
     }
 }

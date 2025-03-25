@@ -113,6 +113,6 @@ namespace DCL.WebRequests
     public static class WebRequestHeadersInfoExtensions
     {
         public static string HeaderContentType(this WebRequestHeadersInfo webRequestHeadersInfo) =>
-            webRequestHeadersInfo.HeaderOrDefault("content-type", true);
+            webRequestHeadersInfo.HeaderOrDefault(CONTENT_TYPE_HEADER, true);
     }
 }

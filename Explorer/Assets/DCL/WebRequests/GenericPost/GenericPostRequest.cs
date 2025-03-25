@@ -1,25 +1,22 @@
-﻿using UnityEngine.Networking;
+﻿using Best.HTTP;
+using Best.HTTP.Request.Upload.Forms;
+using System;
+using System.IO;
+using System.Text;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericPostRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
+    public class GenericPostRequest : GenericUploadRequestBase
     {
-        public UnityWebRequest UnityWebRequest { get; }
-
-        internal static GenericPostRequest Initialize(in CommonArguments commonArguments, GenericPostArguments arguments)
+        public GenericPostRequest(RequestEnvelope envelope, GenericUploadArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
-            if (arguments.MultipartFormSections != null)
-                return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections));
-
-            if (arguments.WWWForm != null)
-                return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.WWWForm));
-
-            return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType));
         }
 
-        private GenericPostRequest(UnityWebRequest unityWebRequest)
-        {
-            UnityWebRequest = unityWebRequest;
-        }
+        public override HTTPRequest CreateHttp2Request() =>
+            CreateHttp2Request(HTTPMethods.Post);
+
+        public override UnityWebRequest CreateUnityWebRequest() =>
+            CreateUnityWebRequest("POST");
     }
 }

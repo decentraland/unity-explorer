@@ -1,3 +1,6 @@
+using Best.HTTP;
+using UnityEngine.Networking;
+
 namespace DCL.WebRequests
 {
     public class GenericGetRequest : TypedWebRequestBase<GenericGetArguments>
@@ -5,5 +8,11 @@ namespace DCL.WebRequests
         internal GenericGetRequest(RequestEnvelope envelope, GenericGetArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
         }
+
+        public override HTTPRequest CreateHttp2Request() =>
+            new (Envelope.CommonArguments.URL, HTTPMethods.Get);
+
+        public override UnityWebRequest CreateUnityWebRequest() =>
+            UnityWebRequest.Get(Envelope.CommonArguments.URL);
     }
 }

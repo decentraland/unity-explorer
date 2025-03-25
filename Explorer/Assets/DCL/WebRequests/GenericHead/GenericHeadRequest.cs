@@ -1,17 +1,18 @@
+using Best.HTTP;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericHeadRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
+    public class GenericHeadRequest : TypedWebRequestBase<GenericHeadArguments>
     {
-        public UnityWebRequest UnityWebRequest { get; }
-
-        private GenericHeadRequest(UnityWebRequest unityWebRequest)
+        internal GenericHeadRequest(RequestEnvelope envelope, GenericHeadArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
-            UnityWebRequest = unityWebRequest;
         }
 
-        internal static GenericHeadRequest Initialize(in CommonArguments commonArguments, GenericHeadArguments arguments) =>
-            new (UnityWebRequest.Head(commonArguments.URL));
+        public override HTTPRequest CreateHttp2Request() =>
+            new (Envelope.CommonArguments.URL, HTTPMethods.Head);
+
+        public override UnityWebRequest CreateUnityWebRequest() =>
+            UnityWebRequest.Head(Envelope.CommonArguments.URL);
     }
 }

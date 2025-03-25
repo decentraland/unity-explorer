@@ -15,7 +15,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             using IWebRequest? nativeRequest = await request.SendAsync(ct);
 
             string responseData = nativeRequest.Response.Text;
-            Dictionary<string, string> responseHeadersDictionary = nativeRequest.Response.FlattenHeaders();
+            Dictionary<string, string>? responseHeadersDictionary = nativeRequest.Response.FlattenHeaders();
             bool requestOk = nativeRequest.Response.IsSuccess;
             bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
             int requestStatus = nativeRequest.Response.StatusCode;

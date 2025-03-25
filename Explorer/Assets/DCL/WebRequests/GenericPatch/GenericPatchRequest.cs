@@ -1,26 +1,18 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Best.HTTP;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericPatchRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
+    public class GenericPatchRequest : GenericUploadRequestBase
     {
-        public UnityWebRequest UnityWebRequest { get; }
-
-        internal static GenericPatchRequest Initialize(in CommonArguments commonArguments, GenericPatchArguments arguments)
+        internal GenericPatchRequest(RequestEnvelope envelope, GenericUploadArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
-            UnityWebRequest unityWebRequest = arguments.MultipartFormSections != null
-                ? UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections)
-                : UnityWebRequest.Post(commonArguments.URL, arguments.PatchData, arguments.ContentType);
-
-            unityWebRequest.method = "PATCH";
-
-            return new GenericPatchRequest(unityWebRequest);
         }
 
-        private GenericPatchRequest(UnityWebRequest unityWebRequest)
-        {
-            UnityWebRequest = unityWebRequest;
-        }
+        public override HTTPRequest CreateHttp2Request() =>
+            CreateHttp2Request(HTTPMethods.Post);
+
+        public override UnityWebRequest CreateUnityWebRequest() =>
+            CreateUnityWebRequest("PATCH");
     }
 }

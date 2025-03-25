@@ -5,14 +5,14 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericPostArguments
+    public readonly struct GenericUploadArguments
     {
         public readonly List<IMultipartFormSection>? MultipartFormSections;
         public readonly WWWForm? WWWForm;
-        public readonly string PostData;
-        public readonly string ContentType;
+        public readonly string? PostData;
+        public readonly string? ContentType;
 
-        private GenericPostArguments(List<IMultipartFormSection> multipartFormSections)
+        private GenericUploadArguments(List<IMultipartFormSection> multipartFormSections)
         {
             MultipartFormSections = multipartFormSections;
             PostData = string.Empty;
@@ -20,7 +20,7 @@ namespace DCL.WebRequests
             WWWForm = null;
         }
 
-        private GenericPostArguments(string postData, string contentType)
+        private GenericUploadArguments(string postData, string contentType)
         {
             MultipartFormSections = null;
             PostData = postData;
@@ -28,7 +28,7 @@ namespace DCL.WebRequests
             WWWForm = null;
         }
 
-        private GenericPostArguments(WWWForm form)
+        private GenericUploadArguments(WWWForm form)
         {
             MultipartFormSections = null;
             PostData = string.Empty;
@@ -36,21 +36,21 @@ namespace DCL.WebRequests
             WWWForm = form;
         }
 
-        public static GenericPostArguments Empty => new (string.Empty, "application/json");
+        public static GenericUploadArguments Empty => new (string.Empty, "application/json");
 
-        public static GenericPostArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
+        public static GenericUploadArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
             new (multipartFormSections);
 
-        public static GenericPostArguments CreateWWWForm(WWWForm form) =>
+        public static GenericUploadArguments CreateWWWForm(WWWForm form) =>
             new (form);
 
-        public static GenericPostArguments Create(string postData, string contentType) =>
+        public static GenericUploadArguments Create(string postData, string contentType) =>
             new (postData, contentType);
 
-        public static GenericPostArguments CreateJson(string postData) =>
+        public static GenericUploadArguments CreateJson(string postData) =>
             new (postData, "application/json");
 
-        public static GenericPostArguments CreateJsonOrDefault(string? postData) =>
+        public static GenericUploadArguments CreateJsonOrDefault(string? postData) =>
             postData == null ? Empty : CreateJson(postData);
 
         public override string ToString() =>

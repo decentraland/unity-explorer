@@ -19,11 +19,9 @@ namespace DCL.WebRequests
 
         string ArgsToString();
 
-        UnityWebRequest CreateUnityWebRequest() =>
-            throw new NotSupportedException($"{nameof(CreateUnityWebRequest)} is not supported by {GetType().Name}");
+        UnityWebRequest CreateUnityWebRequest();
 
-        HTTPRequest CreateHttp2Request() =>
-            throw new NotSupportedException($"{nameof(CreateHttp2Request)} is not supported by {GetType().Name}");
+        HTTPRequest CreateHttp2Request();
     }
 
     public interface ITypedWebRequest<out TArgs> : ITypedWebRequest where TArgs: struct
