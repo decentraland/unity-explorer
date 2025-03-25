@@ -190,7 +190,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - SubMeshId: 0
-    CombinedMesh: {fileID: 2180442958453776762}
+    CombinedMesh: {fileID: 2066453041699024588}
     SharedMaterial: {fileID: 2100000, guid: 52d66a84579d7f04b8b40717fa9dc9f1, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 8224438444402023846}
@@ -202,8 +202,18 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
+    LodsMeshDataArray:
+    - BaseVertex: 0
+      StartIndex: 0
+      IndexCount: 4014
+    - BaseVertex: 1348
+      StartIndex: 4014
+      IndexCount: 2694
+    - BaseVertex: 2304
+      StartIndex: 6708
+      IndexCount: 864
   - SubMeshId: 1
-    CombinedMesh: {fileID: -8045985104837851704}
+    CombinedMesh: {fileID: 1709970040716140255}
     SharedMaterial: {fileID: 2100000, guid: a4704a1146f6a65499d2dedae82c0edc, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 8224438444402023846}
@@ -215,6 +225,16 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
+    LodsMeshDataArray:
+    - BaseVertex: 0
+      StartIndex: 0
+      IndexCount: 4014
+    - BaseVertex: 1348
+      StartIndex: 4014
+      IndexCount: 2694
+    - BaseVertex: 2304
+      StartIndex: 6708
+      IndexCount: 864
 --- !u!4 &6907363163446049570 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
@@ -225,7 +245,7 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -6164785231652290193, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
   m_PrefabInstance: {fileID: 6363968139913108681}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-8045985104837851704
+--- !u!43 &1709970040716140255
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -236,34 +256,14 @@ Mesh:
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
-    indexCount: 120
+    indexCount: 300
     topology: 0
     baseVertex: 0
     firstVertex: 0
-    vertexCount: 42
+    vertexCount: 106
     localAABB:
       m_Center: {x: 0, y: 4.674119, z: 0}
       m_Extent: {x: 0.29117897, y: 0.22226954, z: 0.29117897}
-  - serializedVersion: 2
-    firstByte: 240
-    indexCount: 120
-    topology: 0
-    baseVertex: 0
-    firstVertex: 42
-    vertexCount: 42
-    localAABB:
-      m_Center: {x: 0, y: 4.674119, z: 0}
-      m_Extent: {x: 0.29117897, y: 0.22226954, z: 0.29117897}
-  - serializedVersion: 2
-    firstByte: 480
-    indexCount: 60
-    topology: 0
-    baseVertex: 0
-    firstVertex: 84
-    vertexCount: 22
-    localAABB:
-      m_Center: {x: 0, y: 4.674119, z: 0}
-      m_Extent: {x: 0.29117897, y: 0.22226954, z: 0.27692765}
   m_Shapes:
     vertices: []
     shapes: []
@@ -410,7 +410,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &2180442958453776762
+--- !u!43 &2066453041699024588
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -421,34 +421,14 @@ Mesh:
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
-    indexCount: 4014
+    indexCount: 7572
     topology: 0
     baseVertex: 0
     firstVertex: 0
-    vertexCount: 1306
+    vertexCount: 2532
     localAABB:
       m_Center: {x: 0, y: 2.6237364, z: 0}
       m_Extent: {x: 0.3561889, y: 2.6232142, z: 0.3561889}
-  - serializedVersion: 2
-    firstByte: 8028
-    indexCount: 2694
-    topology: 0
-    baseVertex: 0
-    firstVertex: 1306
-    vertexCount: 914
-    localAABB:
-      m_Center: {x: 0, y: 2.6237364, z: 0}
-      m_Extent: {x: 0.3561889, y: 2.6232142, z: 0.3561889}
-  - serializedVersion: 2
-    firstByte: 13416
-    indexCount: 864
-    topology: 0
-    baseVertex: 0
-    firstVertex: 2220
-    vertexCount: 312
-    localAABB:
-      m_Center: {x: 0, y: 2.6160111, z: 0}
-      m_Extent: {x: 0.34865847, y: 2.615489, z: 0.33159384}
   m_Shapes:
     vertices: []
     shapes: []

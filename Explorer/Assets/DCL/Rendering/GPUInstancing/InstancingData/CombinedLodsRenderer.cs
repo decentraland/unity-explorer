@@ -5,6 +5,15 @@ using UnityEngine;
 namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
+    public struct LODMeshData
+    {
+        public uint BaseVertex;
+        public uint StartIndex;
+        public uint IndexCount;
+
+    }
+
+    [Serializable]
     public class CombinedLodsRenderer
     {
         public int SubMeshId;
@@ -15,12 +24,15 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         public RenderParamsSerialized RenderParamsSerialized;
         public RenderParams RenderParamsArray;
 
-        public CombinedLodsRenderer(Material material, Mesh combinedMesh, int subMeshId, RenderParamsSerialized renderParams)
+        public LODMeshData[] LodsMeshDataArray;
+
+        public CombinedLodsRenderer(Material material, (Mesh combinedMesh, LODMeshData[] lodsMeshDataArray) meshData, int subMeshId, RenderParamsSerialized renderParams)
         {
             RenderParamsSerialized = renderParams;
             SubMeshId = subMeshId;
             SharedMaterial = material;
-            CombinedMesh = combinedMesh;
+            CombinedMesh = meshData.combinedMesh;
+            LodsMeshDataArray = meshData.lodsMeshDataArray;
         }
 
         public CombinedLodsRenderer(Material material, Renderer rend, MeshFilter meshFilter)

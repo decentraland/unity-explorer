@@ -189,7 +189,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - SubMeshId: 0
-    CombinedMesh: {fileID: -2128783801927871982}
+    CombinedMesh: {fileID: -1773453163911944829}
     SharedMaterial: {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 4853914537683649574}
@@ -201,6 +201,16 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
+    LodsMeshDataArray:
+    - BaseVertex: 0
+      StartIndex: 0
+      IndexCount: 3492
+    - BaseVertex: 898
+      StartIndex: 3492
+      IndexCount: 2028
+    - BaseVertex: 1486
+      StartIndex: 5520
+      IndexCount: 924
 --- !u!4 &2094422023557664462 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
@@ -226,7 +236,7 @@ LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
   m_PrefabInstance: {fileID: 1916942201734408485}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-2128783801927871982
+--- !u!43 &-1773453163911944829
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -237,34 +247,14 @@ Mesh:
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
-    indexCount: 3492
+    indexCount: 6444
     topology: 0
     baseVertex: 0
     firstVertex: 0
-    vertexCount: 898
+    vertexCount: 1976
     localAABB:
       m_Center: {x: -0.009297788, y: 0.60999084, z: 0}
       m_Extent: {x: 0.595226, y: 0.6101726, z: 1.3688384}
-  - serializedVersion: 2
-    firstByte: 6984
-    indexCount: 2028
-    topology: 0
-    baseVertex: 0
-    firstVertex: 898
-    vertexCount: 588
-    localAABB:
-      m_Center: {x: -0.009297788, y: 0.60999084, z: 0}
-      m_Extent: {x: 0.595226, y: 0.6101726, z: 1.3688384}
-  - serializedVersion: 2
-    firstByte: 11040
-    indexCount: 924
-    topology: 0
-    baseVertex: 0
-    firstVertex: 1486
-    vertexCount: 490
-    localAABB:
-      m_Center: {x: -0.015579611, y: 0.60803837, z: 0}
-      m_Extent: {x: 0.58592033, y: 0.60822016, z: 1.3688384}
   m_Shapes:
     vertices: []
     shapes: []

@@ -74,7 +74,7 @@ namespace DCL.Rendering.GPUInstancing
             // The actual execution of the pass
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
-                if(instancingService == null || !realmData.Configured) return;
+                if(instancingService == null || realmData == null || !realmData!.Configured) return;
 
                 CommandBuffer cmd = CommandBufferPool.Get(profilerTag);
 

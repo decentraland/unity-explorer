@@ -183,7 +183,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - SubMeshId: 0
-    CombinedMesh: {fileID: -6462286510664829215}
+    CombinedMesh: {fileID: 3860632559575035760}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 2333152484790765667}
@@ -195,6 +195,13 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
+    LodsMeshDataArray:
+    - BaseVertex: 0
+      StartIndex: 0
+      IndexCount: 126
+    - BaseVertex: 76
+      StartIndex: 126
+      IndexCount: 42
 --- !u!4 &4135852897943845698 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: da932daa5fc0ea542892618a383f1b29, type: 3}
@@ -205,7 +212,7 @@ LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: da932daa5fc0ea542892618a383f1b29, type: 3}
   m_PrefabInstance: {fileID: 4534906233333423273}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-6462286510664829215
+--- !u!43 &3860632559575035760
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -216,24 +223,14 @@ Mesh:
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
-    indexCount: 126
+    indexCount: 168
     topology: 0
     baseVertex: 0
     firstVertex: 0
-    vertexCount: 76
+    vertexCount: 98
     localAABB:
       m_Center: {x: -7.4999995, y: 0.049999997, z: -0.0000014305115}
       m_Extent: {x: 0.5000005, y: 0.05000002, z: 8.000002}
-  - serializedVersion: 2
-    firstByte: 252
-    indexCount: 42
-    topology: 0
-    baseVertex: 0
-    firstVertex: 76
-    vertexCount: 22
-    localAABB:
-      m_Center: {x: -7.4999995, y: 0.1, z: -0.00000047683716}
-      m_Extent: {x: 0.5000005, y: 0.000000014901161, z: 8}
   m_Shapes:
     vertices: []
     shapes: []
