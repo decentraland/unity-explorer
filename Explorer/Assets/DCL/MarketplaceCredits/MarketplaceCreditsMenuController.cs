@@ -36,7 +36,6 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
         private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
         private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
-        private readonly IInputBlock inputBlock;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
@@ -71,7 +70,6 @@ namespace DCL.MarketplaceCredits
             this.view = view;
             this.sidebarBus = sidebarBus;
             this.webBrowser = webBrowser;
-            this.inputBlock = inputBlock;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
@@ -118,7 +116,8 @@ namespace DCL.MarketplaceCredits
                 marketplaceCreditsProgramEndedController,
                 webBrowser,
                 marketplaceCreditsAPIClient,
-                selfProfile);
+                selfProfile,
+                inputBlock);
 
             view.ErrorNotification.Hide(true, CancellationToken.None);
         }
@@ -128,7 +127,6 @@ namespace DCL.MarketplaceCredits
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.ShowAsync(showHideMenuCts.Token).Forget();
             OpenSection(MarketplaceCreditsSection.WELCOME);
-            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
             SetSidebarButtonAnimationAsPaused(true);
         }
 
@@ -141,7 +139,6 @@ namespace DCL.MarketplaceCredits
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
-            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
             CloseAllSections();
             SetSidebarButtonAnimationAsPaused(false);
         }
@@ -292,7 +289,7 @@ namespace DCL.MarketplaceCredits
 
         public void SetSidebarButtonAsClaimIndicator(bool isOn) =>
             sidebarCreditsButtonIndicator.SetActive(isOn);
-        
+
         private void SetSidebarButtonAnimationAsPaused(bool isOn) =>
             sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_PAUSED_ID, isOn);
     }

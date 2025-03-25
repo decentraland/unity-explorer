@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles;
@@ -26,6 +28,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
+        private readonly IInputBlock inputBlock;
 
         private Profile ownProfile;
         private CreditsProgramProgressResponse currentCreditsProgramProgress;
@@ -42,7 +45,8 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
@@ -54,6 +58,7 @@ namespace DCL.MarketplaceCredits.Sections
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
+            this.inputBlock = inputBlock;
 
             view.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
             view.StartButton.onClick.AddListener(RegisterInTheProgram);
@@ -74,8 +79,11 @@ namespace DCL.MarketplaceCredits.Sections
             CheckStartWithEmailButtonState();
         }
 
-        public void CloseSection() =>
+        public void CloseSection()
+        {
             view.gameObject.SetActive(false);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
 
         public void Dispose()
         {
@@ -160,6 +168,7 @@ namespace DCL.MarketplaceCredits.Sections
             if (!creditsProgramProgressResponse.IsUserEmailRegistered())
             {
                 view.IsEmailLoginActive = string.IsNullOrEmpty(creditsProgramProgressResponse.user.email);
+                if (view.IsEmailLoginActive) inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
                 return;
             }
 
