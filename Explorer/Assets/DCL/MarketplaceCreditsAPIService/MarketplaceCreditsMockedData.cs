@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace DCL.MarketplaceCreditsAPIService
 {
+    /// <summary>
+    /// Temporal class to mock the data for the Marketplace Credits API while the API is not available.
+    /// </summary>
     public static class MarketplaceCreditsMockedData
     {
         public static string CurrentMockedEmail = "test@test.com";
