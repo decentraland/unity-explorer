@@ -67,7 +67,7 @@ namespace DCL.Rendering.GPUInstancing
 
                             for (int j = 0; j < combinedLodRenderer.CombinedMesh.subMeshCount; j++)
                             {
-                                cmd.DrawMeshInstancedIndirect(combinedLodRenderer.CombinedMesh, j, combinedLodRenderer.RenderParamsArray.material, ForwardPass, buffers.DrawArgs, j * GraphicsBuffer.IndirectDrawIndexedArgs.size);
+                                cmd.DrawMeshInstancedIndirect(combinedLodRenderer.CombinedMesh, j, combinedLodRenderer.RenderParamsArray.material, ForwardPass, buffers.DrawArgs, ((i * lodCount) + j) * GraphicsBuffer.IndirectDrawIndexedArgs.size);
                             }
                         }
                     }
