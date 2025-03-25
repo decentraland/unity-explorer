@@ -131,7 +131,7 @@ namespace DCL.MarketplaceCredits.Sections
                 var programRegistrationResponse = await marketplaceCreditsAPIClient.RegisterInTheProgramAsync(walletId, email, ct);
                 RedirectToSection(programRegistrationResponse);
                 view.SetAsLoading(false);
-                marketplaceCreditsMenuController.SetSidebarCreditsButtonAlertAnimation(false);
+                marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

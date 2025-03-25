@@ -169,8 +169,8 @@ namespace DCL.MarketplaceCredits.Sections
                 if (claimCreditsResponse.success)
                 {
                     marketplaceCreditsMenuController.ShowCreditsUnlockedPanel(claimCreditsResponse.claimedCredits);
-                    marketplaceCreditsMenuController.SetSidebarCreditsButtonAlertAnimation(false);
-                    marketplaceCreditsMenuController.SetSidebarCreditsButtonAlertClaimIndicator(false);
+                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
+                    marketplaceCreditsMenuController.SetSidebarButtonAsClaimIndicator(false);
                 }
                 else
                     view.SetCaptchaAsErrorState(true, isNonSolvedError: true);
