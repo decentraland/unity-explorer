@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using SceneRuntime;
 
 namespace DCL.PluginSystem.Global
 {
@@ -10,12 +9,9 @@ namespace DCL.PluginSystem.Global
         /// </summary>
         public readonly Entity PlayerEntity;
 
-        public readonly V8ActiveEngines V8ActiveEngines;
-
-        public GlobalPluginArguments(Entity playerEntity, V8ActiveEngines v8ActiveEngines)
+        public GlobalPluginArguments(Entity playerEntity)
         {
             PlayerEntity = playerEntity;
-            V8ActiveEngines = v8ActiveEngines;
         }
     }
 }

@@ -42,7 +42,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (Application.isEditor)
                 return UNITY_EDITOR;
 
-            if (appArgs.TryGetValue(AppArgsFlags.DCL_EDITOR, out var dclEditorValue) && dclEditorValue == "true")
+            if (appArgs.HasFlagWithValueTrue(AppArgsFlags.DCL_EDITOR))
                 return DCL_EDITOR; // We send "dcl-editor" instead of "hub" to track it better on the analytics data side
 
             if (appArgs.HasDebugFlag())

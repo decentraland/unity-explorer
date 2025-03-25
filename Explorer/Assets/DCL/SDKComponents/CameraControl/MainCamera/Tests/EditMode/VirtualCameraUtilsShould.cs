@@ -55,10 +55,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void FetchVirtualCameraComponentCorrectly()
         {
-            world.Add<VirtualCameraComponent>(entity1);
+            world.Add(entity1, new VirtualCameraComponent(), new PBVirtualCamera());
 
-            Assert.IsTrue(VirtualCameraUtils.TryGetVirtualCameraComponent(world, entitiesMap, world.Get<CRDTEntity>(entity1).Id, out var vCamComponent));
-            Assert.IsFalse(VirtualCameraUtils.TryGetVirtualCameraComponent(world, entitiesMap, world.Get<CRDTEntity>(entity2).Id, out vCamComponent));
+            Assert.IsTrue(VirtualCameraUtils.TryGetVirtualCameraComponents(world, entitiesMap, world.Get<CRDTEntity>(entity1).Id, out var vCamComponent, out var pbVCamComponent));
+            Assert.NotNull(vCamComponent);
+            Assert.NotNull(pbVCamComponent);
+            Assert.IsFalse(VirtualCameraUtils.TryGetVirtualCameraComponents(world, entitiesMap, world.Get<CRDTEntity>(entity2).Id, out vCamComponent, out pbVCamComponent));
         }
 
         [Test]
@@ -104,10 +106,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             PBVirtualCamera pbComponent = new PBVirtualCamera();
             world.Add(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 20);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 
@@ -115,10 +115,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbComponent.DefaultTransition = new CameraTransition() { Time = 2.78f };
             world.Set(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 20);
             Assert.AreEqual(CinemachineBlendDefinition.Style.EaseInOut, cinemachineBrain.m_DefaultBlend.m_Style);
             Assert.AreEqual(pbComponent.DefaultTransition.Time, cinemachineBrain.m_DefaultBlend.m_Time);
@@ -127,10 +125,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbComponent.DefaultTransition.ClearTransitionMode();
             world.Set(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 68);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 
@@ -154,10 +150,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             };
             world.Add(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 3);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 
@@ -165,10 +159,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbComponent.DefaultTransition = new CameraTransition() { Time = 2.78f };
             world.Set(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 20);
             Assert.AreEqual(CinemachineBlendDefinition.Style.EaseInOut, cinemachineBrain.m_DefaultBlend.m_Style);
             Assert.AreEqual(pbComponent.DefaultTransition.Time, cinemachineBrain.m_DefaultBlend.m_Time);
@@ -177,10 +169,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbComponent.DefaultTransition = new CameraTransition() { Time = -1 };
             world.Set(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 68);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 
@@ -204,10 +194,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             };
             world.Add(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 8);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 
@@ -216,10 +204,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             world.Set(entity1, pbComponent);
             float distanceBetweenCameras = 35;
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 distanceBetweenCameras);
             Assert.AreEqual(CinemachineBlendDefinition.Style.EaseInOut, cinemachineBrain.m_DefaultBlend.m_Style);
             Assert.AreEqual(VirtualCameraUtils.CalculateDistanceBlendTime(distanceBetweenCameras, pbComponent.DefaultTransition.Speed), cinemachineBrain.m_DefaultBlend.m_Time);
@@ -228,10 +214,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbComponent.DefaultTransition = new CameraTransition() { Speed = -1 };
             world.Set(entity1, pbComponent);
             VirtualCameraUtils.ConfigureVirtualCameraTransition(
-                world,
-                entitiesMap,
                 exposedCameraData,
-                virtualCamCRDTEntity,
+                pbComponent,
                 4);
             Assert.AreEqual(CinemachineBlendDefinition.Style.Cut, cinemachineBrain.m_DefaultBlend.m_Style);
 

@@ -17,12 +17,9 @@ using Utility;
 namespace SceneRuntime
 {
     // Avoid the same name for Namespace and Class
-    public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
+    public sealed class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         internal readonly V8ScriptEngine engine;
-        private readonly SceneShortInfo sceneShortInfo;
-        private readonly V8ActiveEngines activeEngines;
-
         private readonly JsApiBunch jsApiBunch;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
@@ -37,12 +34,9 @@ namespace SceneRuntime
             (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
             SceneShortInfo sceneShortInfo,
-            V8EngineFactory engineFactory,
-            V8ActiveEngines activeEngines
+            V8EngineFactory engineFactory
         )
         {
-            this.sceneShortInfo = sceneShortInfo;
-            this.activeEngines = activeEngines;
             resetableSource = new JSTaskResolverResetable();
 
             engine = engineFactory.Create(sceneShortInfo);
@@ -93,9 +87,15 @@ namespace SceneRuntime
             startFunc = (ScriptObject)engine.Evaluate("__internalOnStart").EnsureNotNull();
         }
 
+        /// <remarks>
+        /// <see cref="SceneFacade"/> is a component in the global scene as an
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
+        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
+        /// shall be the chain of Dispose calls.
+        /// </remarks>
         public void Dispose()
         {
-            activeEngines.TryRemove(sceneShortInfo, engine);
+            engine.Dispose();
             jsApiBunch.Dispose();
         }
 
@@ -114,6 +114,8 @@ namespace SceneRuntime
             jsApiBunch.AddHostObject(itemName, target);
         }
 
+        public V8RuntimeHeapInfo RuntimeHeapInfo { get; private set; }
+
         public void SetIsDisposing()
         {
             jsApiBunch.SetIsDisposing();
@@ -128,6 +130,7 @@ namespace SceneRuntime
 
         public UniTask UpdateScene(float dt)
         {
+            RuntimeHeapInfo = engine.GetRuntimeHeapInfo();
             resetableSource.Reset();
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
