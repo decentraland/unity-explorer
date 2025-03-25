@@ -12,6 +12,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
@@ -51,7 +52,7 @@ namespace Global.Dynamic
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 
         GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot, Entity playerEntity);
+            UIDocument debugUiRoot, Entity playerEntity, SceneLoadingLimit sceneLoadingLimit);
 
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 

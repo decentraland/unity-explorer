@@ -8,6 +8,8 @@
         public const string ENABLE_VERSION_CONTROL = "versionControl";
         public const string SIMULATE_VERSION = "simulateVersion";
 
+        public const string SIMULATE_MEMORY = "simulateMemory";
+
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string ENVIRONMENT = "dclenv";

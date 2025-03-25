@@ -15,6 +15,7 @@ using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
 using DCL.FeatureFlags;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.Versioning;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -128,9 +129,10 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             DynamicWorldContainer dynamicWorldContainer,
             UIDocument debugUiRoot,
-            Entity playerEntity)
+            Entity playerEntity,
+            SceneLoadingLimit sceneLoadingLimit)
         {
-            GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity);
+            GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity, sceneLoadingLimit);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

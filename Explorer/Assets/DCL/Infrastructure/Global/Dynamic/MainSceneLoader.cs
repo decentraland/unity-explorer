@@ -20,6 +20,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -155,7 +156,15 @@ namespace Global.Dynamic
                 return;
             }
 
-            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+            // Memory limit
+            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
+            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            var sceneLoadingLimit = SceneLoadingLimit.CreateMemoryRelativeLimit(systemMemory);
+
+            ISystemMemoryCap memoryCap = hasSimulatedMemory
+                ? new SystemMemoryCap(MemoryCapMode.SIMULATED_MEMORY, systemMemory)
+                : new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY);
+
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -246,7 +255,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
+
+
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity, sceneLoadingLimit);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 

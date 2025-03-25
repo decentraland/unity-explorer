@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine.Scripting;
 using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.Optimization.PerformanceBudgeting
@@ -7,6 +8,7 @@ namespace DCL.Optimization.PerformanceBudgeting
     {
         MAX_SYSTEM_MEMORY,
         FROM_SETTINGS,
+        SIMULATED_MEMORY,
     }
 
     public class SystemMemoryCap : ISystemMemoryCap
@@ -14,13 +16,19 @@ namespace DCL.Optimization.PerformanceBudgeting
         private const int DEFAULT_CAP = 16;
 
         public MemoryCapMode Mode { private get; set; }
+        private long memoryCapInMB;
 
         public SystemMemoryCap(MemoryCapMode initialMode)
         {
             Mode = initialMode;
         }
 
-        private long memoryCapInMB;
+        public SystemMemoryCap(MemoryCapMode initialMode, int valueInMB)
+        {
+            Mode = initialMode;
+            memoryCapInMB = valueInMB;
+        }
+
 
         public long MemoryCapInMB
         {
@@ -35,7 +43,13 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public int MemoryCap
         {
-            set => memoryCapInMB = Math.Min(value * 1024L, SystemInfo.systemMemorySize);
+            set
+            {
+                if (Mode == MemoryCapMode.SIMULATED_MEMORY)
+                    return;
+
+                memoryCapInMB = Math.Min(value * 1024L, SystemInfo.systemMemorySize);
+            }
         }
     }
 }
