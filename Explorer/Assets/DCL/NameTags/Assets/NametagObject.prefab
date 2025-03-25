@@ -51,8 +51,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c325335b88f04df1a415fa21ed62ae3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Username>k__BackingField: {fileID: 4673612476327640102}
   <BackgroundSprite>k__BackingField: {fileID: 2640253797295083812}
+  <usernameText>k__BackingField: {fileID: 4673612476327640102}
   <verifiedIcon>k__BackingField: {fileID: 3767848672727676458}
   <verifiedIconRenderer>k__BackingField: {fileID: 4273700018563800502}
   <messageContent>k__BackingField: {fileID: 1264101715097455992}

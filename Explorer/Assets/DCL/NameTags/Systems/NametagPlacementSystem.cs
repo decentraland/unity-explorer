@@ -72,7 +72,6 @@ namespace DCL.Nametags
             AddTagForNonPlayerAvatarsQuery(World, camera);
             ProcessChatBubbleComponentsQuery(World);
             UpdateOwnTagQuery(World, camera);
-            RemoveUnusedChatBubbleComponentsQuery(World);
         }
 
         [Query]
@@ -119,33 +118,25 @@ namespace DCL.Nametags
                 return;
 
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = profile.UserNameColor;
-            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true);
+            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true, profile.UserNameColor);
             nametagView.gameObject.name = avatarShape.ID;
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
-
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
         }
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
-        private void ProcessChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent, in NametagView nametagView)
+        private void ProcessChatBubbleComponents(Entity e, in NametagView nametagView, ref ChatBubbleComponent chatBubbleComponent)
         {
+            if (!chatBubbleComponent.IsDirty) return;
+
             if (nametagsData.showChatBubbles)
                 nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention);
 
-            World.Remove<ChatBubbleComponent>(e);
+            chatBubbleComponent.IsDirty = false;
         }
 
-        [Query]
-        [All(typeof(ChatBubbleComponent))]
-        //This query is used to remove the ChatBubbleComponent from the entity if the chat bubble has not been displayed
-        private void RemoveUnusedChatBubbleComponents(Entity e)
-        {
-            World.Remove<ChatBubbleComponent>(e);
-        }
-
-        [Query]
+     [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
@@ -192,10 +183,12 @@ namespace DCL.Nametags
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
 
+            Color usernameColor;
+
             if (profile != null)
-                nametagView.Username.color = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                usernameColor = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
             else
-                nametagView.Username.color = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+                usernameColor = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
 
             int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;
             string walletId = profile?.WalletId ?? (walletIdLastDigitsIndex >= 0 ? avatarShape.ID.Substring(walletIdLastDigitsIndex) : NAMETAG_DEFAULT_WALLET_ID);
@@ -203,7 +196,7 @@ namespace DCL.Nametags
 
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
 
-            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, useVerifiedIcon);
+            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, useVerifiedIcon, usernameColor);
 
             return nametagView;
         }
