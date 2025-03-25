@@ -10,6 +10,9 @@ namespace DCL.MarketplaceCreditsAPIService
     /// </summary>
     public static class MarketplaceCreditsMockedData
     {
+        private const bool IS_SEASON_ENDED = false;
+        private const bool ARE_ALL_WEEKLY_GOALS_CLAIMED = false;
+
         public static string CurrentMockedEmail = "test@test.com";
         public static bool CurrentMockedEmailConfirmed = true;
 
@@ -24,7 +27,7 @@ namespace DCL.MarketplaceCreditsAPIService
                 {
                     startDate = "2025-03-01T00:00:00Z",
                     endDate = "2025-05-31T23:59:59Z",
-                    timeLeft = 601200000,
+                    timeLeft = IS_SEASON_ENDED ? 0 : 601200000,
                     isOutOfFunds = false,
                 },
                 currentWeek = new CurrentWeekData
@@ -53,7 +56,7 @@ namespace DCL.MarketplaceCreditsAPIService
                             completedSteps = 1,
                         },
                         reward = 4,
-                        isClaimed = false,
+                        isClaimed = ARE_ALL_WEEKLY_GOALS_CLAIMED,
                     },
                     new ()
                     {
@@ -65,7 +68,7 @@ namespace DCL.MarketplaceCreditsAPIService
                             completedSteps = 1,
                         },
                         reward = 2,
-                        isClaimed = false,
+                        isClaimed = ARE_ALL_WEEKLY_GOALS_CLAIMED,
                     },
                     new ()
                     {
@@ -89,7 +92,7 @@ namespace DCL.MarketplaceCreditsAPIService
                             completedSteps = 3,
                         },
                         reward = 1,
-                        isClaimed = false,
+                        isClaimed = ARE_ALL_WEEKLY_GOALS_CLAIMED,
                     },
                 },
             };
