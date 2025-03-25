@@ -36,7 +36,7 @@ namespace DCL.BadgesAPIService
         {
             var url = $"{badgesBaseUrl}/categories";
 
-            CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, ct, reportData: ReportCategory.BADGES)
+            CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, reportData: ReportCategory.BADGES)
                                                                           .CreateFromJson<CategoriesResponse>(WRJsonParser.Newtonsoft);
 
             return badgesResponse.data.categories;

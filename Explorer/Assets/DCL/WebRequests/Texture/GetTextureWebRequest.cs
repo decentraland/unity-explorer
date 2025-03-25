@@ -16,22 +16,16 @@ namespace DCL.WebRequests
     /// <summary>
     ///     Representation of the created web request dedicated to download a texture
     /// </summary>
-    public struct GetTextureWebRequest : ITypedWebRequest<GetTextureArguments>
+    public class GetTextureWebRequest : TypedWebRequestBase<GetTextureArguments>
     {
-        public IWebRequestController Controller { get; set; }
-
-        public RequestEnvelope<GetTextureArguments> Envelope => envelope;
-
         private readonly ITexturesFuse texturesFuse;
         private readonly bool isTextureCompressionEnabled;
-        private readonly RequestEnvelope<GetTextureArguments> envelope;
 
-        internal GetTextureWebRequest(RequestEnvelope<GetTextureArguments> envelope, IWebRequestController controller, ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
+        internal GetTextureWebRequest(RequestEnvelope envelope, GetTextureArguments args, IWebRequestController controller, ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
+            : base(envelope, args, controller)
         {
             this.texturesFuse = texturesFuse;
             this.isTextureCompressionEnabled = isTextureCompressionEnabled;
-            Controller = controller;
-            this.envelope = envelope;
         }
 
         /// <summary>
@@ -46,14 +40,14 @@ namespace DCL.WebRequests
             switch (wr.nativeRequest)
             {
                 case UnityWebRequest unityWebRequest:
-                    return await (isTextureCompressionEnabled ? ExecuteWithCompressionAsync(unityWebRequest, ct) : ExecuteNoCompressionAsync(unityWebRequest, ct));
+                    return await (isTextureCompressionEnabled ? ExecuteWithCompressionAsync(unityWebRequest, wrapMode, filterMode, ct) : ExecuteNoCompressionAsync(unityWebRequest, wrapMode, filterMode, ct));
 
                 default:
                     throw new NotSupportedException($"{nameof(CreateTextureAsync)} does not support {wr.GetType().Name})");
             }
         }
 
-        private UniTask<IOwnedTexture2D> ExecuteNoCompressionAsync(UnityWebRequest webRequest, CancellationToken ct)
+        private UniTask<IOwnedTexture2D?> ExecuteNoCompressionAsync(UnityWebRequest webRequest, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
         {
             Texture2D? texture;
 
@@ -79,7 +73,7 @@ namespace DCL.WebRequests
             return UniTask.FromResult((IOwnedTexture2D)new IOwnedTexture2D.Const(texture));
         }
 
-        private async UniTask<IOwnedTexture2D?> ExecuteWithCompressionAsync(UnityWebRequest request, CancellationToken ct)
+        private async UniTask<IOwnedTexture2D?> ExecuteWithCompressionAsync(UnityWebRequest request, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
         {
             NativeArray<byte>.ReadOnly? data = request.downloadHandler?.nativeData;
 
@@ -90,19 +84,19 @@ namespace DCL.WebRequests
                .TextureFromBytesAsync(
                     AsPointer(data.Value),
                     data.Value.Length,
-                    envelope.Args.TextureType,
+                    Args.TextureType,
                     ct
                 );
 
             // Fallback to uncompressed texture if compression fails
             if (result.Success == false)
-                return await ExecuteNoCompressionAsync(request, ct);
+                return await ExecuteNoCompressionAsync(request, wrapMode, filterMode, ct);
 
             Texture2D texture = result.Value.Texture;
 
             texture.wrapMode = wrapMode;
             texture.filterMode = filterMode;
-            texture.SetDebugName(envelope.CommonArguments.URL);
+            texture.SetDebugName(Envelope.CommonArguments.URL);
             ProfilingCounters.TexturesAmount.Value++;
             return result.Value;
         }

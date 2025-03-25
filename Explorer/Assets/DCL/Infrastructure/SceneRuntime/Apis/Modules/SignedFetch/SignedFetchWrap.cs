@@ -166,7 +166,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
                     return response;
                 }
-                catch (UnityWebRequestException e)
+                catch (WebRequestException e)
                 {
                     if (e.ResponseHeaders.TryGetValue("Content-type", out var contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
                     {

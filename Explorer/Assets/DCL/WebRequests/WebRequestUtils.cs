@@ -28,10 +28,10 @@ namespace DCL.WebRequests
         ) =>
             new (coreOp, fallbackValue, behaviour, reportContext);
 
-        public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod)
+        public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<WebRequestException, Exception> newExceptionFactoryMethod)
         {
             try { return await webRequestFlow; }
-            catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
+            catch (WebRequestException e) { throw newExceptionFactoryMethod(e); }
         }
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception, int attemptLeft) =>
@@ -47,7 +47,7 @@ namespace DCL.WebRequests
 #endif
         }
 
-        public static bool IsServerError(this UnityWebRequestException exception) =>
+        public static bool IsServerError(this WebRequestException exception) =>
             exception is { ResponseCode: >= 500 and < 600 };
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>
@@ -56,11 +56,11 @@ namespace DCL.WebRequests
         public static bool IsAborted(this UnityWebRequestException exception) =>
             exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
 
-        public static string GetResponseContentType(this UnityWebRequest unityWebRequest) =>
-            unityWebRequest.GetResponseHeader("Content-Type");
+        public static string GetResponseContentType(this IWebRequest unityWebRequest) =>
+            unityWebRequest.Response.GetHeader("Content-Type");
 
-        public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
-            unityWebRequest.GetResponseHeader("Content-Encoding");
+        public static string GetResponseContentEncoding(this IWebRequest unityWebRequest) =>
+            unityWebRequest.Response.GetHeader("Content-Encoding");
 
         /// <summary>
         /// Does nothing with the web request

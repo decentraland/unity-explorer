@@ -28,8 +28,8 @@ namespace DCL.WebRequests.RequestsHub
             public override int GetHashCode() =>
                 HashCode.Combine(requestType, webType);
 
-            public static Key NewKey<T, TWebRequest>() where T: struct where TWebRequest: struct, ITypedWebRequest =>
-                new (typeof(T), typeof(TWebRequest));
+            public static Key NewKey<TArgs, TWebRequest>() where TArgs: struct where TWebRequest: struct, ITypedWebRequest<TArgs> =>
+                new (typeof(TArgs), typeof(TWebRequest));
         }
 
         private readonly IReadOnlyDictionary<Key, object> map;
@@ -39,7 +39,7 @@ namespace DCL.WebRequests.RequestsHub
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
-            Add<GetTextureArguments, GetTextureWebRequest>(map, (in CommonArguments arguments, in GetTextureArguments specificArguments) => new (arguments, specificArguments, texturesFuse, isTextureCompressionEnabled))
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope<GetTextureArguments> envelope) => new GetTextureWebRequest(envelope, controller, texturesFuse, isTextureCompressionEnabled))
         }
 
         //     Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
@@ -54,19 +54,19 @@ namespace DCL.WebRequests.RequestsHub
         //     Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
         // }
 
-        private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
-            where T: struct
-            where TWebRequest: struct, ITypedWebRequest<T>
+        private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)
+            where TArgs: struct
+            where TWebRequest: struct, ITypedWebRequest<TArgs>
         {
-            map.Add(Key.NewKey<T, TWebRequest>(), requestDelegate);
+            map.Add(Key.NewKey<TArgs, TWebRequest>(), requestDelegate);
         }
 
-        public InitializeRequest<T, TWebRequest> RequestDelegateFor<T, TWebRequest>()
-            where T: struct
-            where TWebRequest: struct, ITypedWebRequest
+        public InitializeRequest<TArgs, TWebRequest> RequestDelegateFor<TArgs, TWebRequest>()
+            where TArgs: struct
+            where TWebRequest: struct, ITypedWebRequest<TArgs>
         {
-            if (map.TryGetValue(Key.NewKey<T, TWebRequest>(), out object requestDelegate))
-                return (InitializeRequest<T, TWebRequest>)requestDelegate!;
+            if (map.TryGetValue(Key.NewKey<TArgs, TWebRequest>(), out object requestDelegate))
+                return (InitializeRequest<TArgs, TWebRequest>)requestDelegate!;
 
             throw new InvalidOperationException("Request type not supported.");
         }

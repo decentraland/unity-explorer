@@ -21,14 +21,15 @@ namespace DCL.WebRequests
 
         public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { WebRequestUtils.NOT_FOUND };
 
-        // TODO remove TWebRequestArgs
-        UniTask<IWebRequest> SendAsync<TWebRequestArgs>(RequestEnvelope<TWebRequestArgs> envelope, CancellationToken ct) where TWebRequestArgs: struct;
-
-        UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
-            where TWebRequestArgs: struct
-            where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>;
-
         internal IRequestHub requestHub { get; }
+
+        /// <summary>
+        ///     Executes the <see cref="requestWrap" />, waits for the whole data received, and disposes of it
+        ///     <remarks>
+        ///         It will never finish for streaming requests. <br />
+        ///         Once launched it won't be possible to abort it outside the <see cref="ct" /> (e.g. gracefully).
+        ///     </remarks>
+        /// </summary>
+        UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct);
     }
 }

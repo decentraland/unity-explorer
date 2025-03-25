@@ -1,24 +1,36 @@
 ﻿using Best.HTTP;
+using System;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    /// <summary>
-    /// A common interface acts as a generic constraint and should not be used as the interface itself
-    /// </summary>
-    public interface ITypedWebRequest<out TArgs> where TArgs: struct
+    public interface ITypedWebRequest : IDisposable
     {
-        RequestEnvelope<GetTextureArguments> Envelope { get; }
+        /// <summary>
+        ///     Controller assigned to execute the web request <br />
+        ///     It can be null if the request is saved "for later" and not yet executed, or executed in a very particular manner
+        /// </summary>
+        IWebRequestController Controller { get; set; }
 
         /// <summary>
-        ///     Web Request is assigned when the <see cref="IWebRequestController" /> executes the operation
-        ///     <remarks>
-        ///         <list type="bullet">
-        ///             Depending on the implementation behaviour can vary:
-        ///             <item><see cref="UnityWebRequest" /> instance is re-assigned to this property every time a new attempt is executed</item>
-        ///             <item><see cref="HTTPRequest" /> instance is assigned only once (as it contains a built-in repetition mechanism)</item>
-        ///         </list>
-        ///     </remarks>
+        /// Parameters associated with a request
         /// </summary>
-        IWebRequest? UnityWebRequest { get; set; }
+        RequestEnvelope Envelope { get; }
+
+        string ArgsToString();
+
+        UnityWebRequest CreateUnityWebRequest() =>
+            throw new NotSupportedException($"{nameof(CreateUnityWebRequest)} is not supported by {GetType().Name}");
+
+        HTTPRequest CreateHttp2Request() =>
+            throw new NotSupportedException($"{nameof(CreateHttp2Request)} is not supported by {GetType().Name}");
+    }
+
+    public interface ITypedWebRequest<out TArgs> : ITypedWebRequest where TArgs: struct
+    {
+        TArgs Args { get; }
+
+        string ITypedWebRequest.ArgsToString() =>
+            Args.ToString();
     }
 }

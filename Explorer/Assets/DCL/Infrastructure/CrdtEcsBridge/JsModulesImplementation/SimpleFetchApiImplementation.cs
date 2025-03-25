@@ -69,7 +69,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 switch (parsedRequestMethod)
                 {
                     case RequestMethod.GET:
-                        return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, GetReportData(), webRequestHeaders);
+                        return await webController.GetAsync(commonArguments, GetReportData(), webRequestHeaders).ToSimpleFetchResponseAsync(ct);
                     case RequestMethod.POST:
                         string postContentType = webRequestHeaders.HeaderContentType();
                         var postArguments = GenericPostArguments.Create(body, postContentType);
@@ -91,7 +91,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     default: throw new ArgumentOutOfRangeException();
                 }
             }
-            catch (UnityWebRequestException e)
+            catch (WebRequestException e)
             {
                 return new ISimpleFetchApi.Response
                 {

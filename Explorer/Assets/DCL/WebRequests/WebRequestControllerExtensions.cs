@@ -18,6 +18,9 @@ namespace DCL.WebRequests
     {
         private static readonly byte[] PARTIAL_DOWNLOAD_BUFFER = new byte[1024 * 1024];
 
+        public static UniTask<IWebRequest> SendAsync(this ITypedWebRequest request, CancellationToken ct) =>
+            request.Controller.SendAsync(request, ct);
+
         public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
@@ -52,17 +55,15 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Make a generic get request to download arbitrary data
         /// </summary>
-        public static UniTask<TResult> GetAsync<TOp, TResult>(
+        public static GenericGetRequest GetAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            TOp webRequestOp,
-            CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
-        ) where TOp: struct, IWebRequestOp<GenericGetRequest, TResult> =>
-            controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(commonArguments, default(GenericGetArguments), webRequestOp, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+        ) =>
+            new (new RequestEnvelope<GenericGetArguments>(commonArguments, new GenericGetArguments(), reportData, headersInfo, signInfo, ignoreErrorCodes), controller);
 
         public static UniTask<PartialDownloadedData> GetPartialAsync(
             this IWebRequestController controller,
@@ -177,17 +178,21 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Make a request that is optimized for texture creation
         /// </summary>
-        public static UniTask<IOwnedTexture2D> GetTextureAsync<TOp>(
+        public static GetTextureWebRequest GetTextureAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetTextureArguments args,
-            TOp webRequestOp,
-            CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
-        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D> =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, IOwnedTexture2D>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
+        ) =>
+            controller.requestHub.RequestDelegateFor<GetTextureArguments, GetTextureWebRequest>()(controller, new RequestEnvelope<GetTextureArguments>(
+                commonArguments,
+                args,
+                reportData,
+                headersInfo,
+                signInfo
+            ));
 
         /// <summary>
         ///     Make a request that is optimized for audio clip

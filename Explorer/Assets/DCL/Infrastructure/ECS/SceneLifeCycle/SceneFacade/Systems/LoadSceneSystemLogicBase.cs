@@ -77,7 +77,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out var url))
                 return ReadOnlyMemory<byte>.Empty;
 
-            return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
+            return await webRequestController.GetAsync(new CommonArguments(url), reportCategory).GetDataCopyAsync(ct);
         }
 
         protected async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, ReportData reportCategory, CancellationToken ct)
@@ -86,8 +86,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             try
             {
-                var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
-                    .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), reportCategory)
+                                                                  .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 if (AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, sceneId))
                     return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);

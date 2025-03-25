@@ -114,8 +114,8 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+            GenericGetRequest genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
+            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity, ct);
 
             string hostname = ResolveHostname(realm, result);
 

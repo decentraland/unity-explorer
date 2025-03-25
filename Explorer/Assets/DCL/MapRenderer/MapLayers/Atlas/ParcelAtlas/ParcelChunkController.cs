@@ -63,7 +63,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
         public async UniTask LoadImageAsync(int chunkSize, int parcelSize, Vector2Int mapPosition, CancellationToken ct)
         {
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
-            
+
             var url = $"{CHUNKS_API}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),

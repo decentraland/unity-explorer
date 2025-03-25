@@ -4,6 +4,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using System;
+using System.Threading;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 

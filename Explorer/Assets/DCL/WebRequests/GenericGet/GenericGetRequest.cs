@@ -1,17 +1,9 @@
-using UnityEngine.Networking;
-
 namespace DCL.WebRequests
 {
-    public readonly struct GenericGetRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
+    public class GenericGetRequest : TypedWebRequestBase<GenericGetArguments>
     {
-        public UnityWebRequest UnityWebRequest { get; }
-
-        private GenericGetRequest(UnityWebRequest unityWebRequest)
+        internal GenericGetRequest(RequestEnvelope envelope, GenericGetArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
-            UnityWebRequest = unityWebRequest;
         }
-
-        internal static GenericGetRequest Initialize(in CommonArguments commonArguments, GenericGetArguments arguments) =>
-            new (UnityWebRequest.Get(commonArguments.URL));
     }
 }

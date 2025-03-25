@@ -101,7 +101,7 @@ namespace DCL.Profiles
             try
             {
                 URLAddress url = Url(id, fromCatalyst);
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+                GenericGetRequest response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),

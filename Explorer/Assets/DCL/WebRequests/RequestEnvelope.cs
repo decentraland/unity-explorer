@@ -15,86 +15,77 @@ namespace DCL.WebRequests
     ///     Contains all possible parameters needed to create a web request
     /// </summary>
     /// <typeparam name="TWebRequestArgs"></typeparam>
-    public readonly struct RequestEnvelope<TWebRequestArgs> : IDisposable where TWebRequestArgs: struct
+    public readonly struct RequestEnvelope : IDisposable
     {
         public readonly ReportData ReportData;
         public readonly CommonArguments CommonArguments;
         public readonly bool SuppressErrors;
-        public readonly TWebRequestArgs Args;
 
-        private readonly WebRequestHeadersInfo headersInfo;
-        private readonly WebRequestSignInfo? signInfo;
-        private readonly ISet<long>? responseCodeIgnores;
+        public readonly WebRequestHeadersInfo HeadersInfo;
+        public readonly WebRequestSignInfo? SignInfo;
+        public readonly ISet<long>? ResponseCodeIgnores;
 
         private const string NONE = "NONE";
 
         public RequestEnvelope(
             CommonArguments commonArguments,
-            TWebRequestArgs args,
             ReportData reportData,
-            WebRequestHeadersInfo headersInfo,
-            WebRequestSignInfo? signInfo,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null,
             ISet<long>? responseCodeIgnores = null,
             bool suppressErrors = false
         )
         {
             this.CommonArguments = commonArguments;
-            Args = args;
             ReportData = reportData;
-            this.headersInfo = headersInfo;
-            this.signInfo = signInfo;
+            HeadersInfo = headersInfo ?? WebRequestHeadersInfo.NewEmpty();
+            SignInfo = signInfo;
             SuppressErrors = suppressErrors;
-            this.responseCodeIgnores = responseCodeIgnores;
+            ResponseCodeIgnores = responseCodeIgnores;
         }
 
         public override string ToString() =>
             "RequestEnvelope:"
             + $"\nCommonArguments: {CommonArguments}"
-            + $"\nArgs: {Args}"
             + $"\nReportCategory: {ReportData}"
-            + $"\nHeaders: {headersInfo.ToString()}"
-            + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
+            + $"\nHeaders: {HeadersInfo.ToString()}"
+            + $"\nSignInfo: {SignInfo?.ToString() ?? NONE}";
 
-        public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
+        internal void InitializedWebRequest(IWeb3IdentityCache web3IdentityCache, IWebRequest webRequest)
         {
-            var request = initializeRequest(CommonArguments, Args);
-            UnityWebRequest unityWebRequest = request.UnityWebRequest;
-
-            AssignTimeout(unityWebRequest);
-            AssignHeaders(unityWebRequest, web3IdentityCache);
-
-            return request;
+            AssignTimeout(webRequest);
+            AssignHeaders(webRequest, web3IdentityCache);
         }
 
         public void Dispose()
         {
             // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
-            headersInfo.Dispose();
+            HeadersInfo.Dispose();
         }
 
-        public bool ShouldIgnoreResponseError(UnityWebRequest webRequest)
+        public bool ShouldIgnoreResponseError(IWebRequest webRequest)
         {
-            if (webRequest.result is UnityWebRequest.Result.Success)
+            if (webRequest.Response.IsSuccess)
                 return true;
 
-            return responseCodeIgnores?.Contains(webRequest.responseCode) ?? false;
+            return ResponseCodeIgnores?.Contains(webRequest.Response.StatusCode) ?? false;
         }
 
-        private void AssignHeaders(UnityWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)
+        private void AssignHeaders(IWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)
         {
             SignRequest(unityWebRequest, web3IdentityCache);
             SetHeaders(unityWebRequest);
         }
 
-        private void AssignTimeout(UnityWebRequest unityWebRequest)
+        private void AssignTimeout(IWebRequest unityWebRequest)
         {
-            unityWebRequest.timeout = CommonArguments.Timeout;
+            unityWebRequest.SetTimeout(CommonArguments.Timeout);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetHeaders(UnityWebRequest unityWebRequest)
+        private void SetHeaders(IWebRequest unityWebRequest)
         {
-            var info = headersInfo.Value;
+            IReadOnlyList<WebRequestHeader> info = HeadersInfo.Value;
             int count = info.Count;
 
             // ReSharper disable once ForCanBeConvertedToForeach
@@ -107,12 +98,12 @@ namespace DCL.WebRequests
             }
         }
 
-        private void SignRequest(UnityWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)
+        internal void SignRequest(IWebRequest webRequest, IWeb3IdentityCache web3IdentityCache)
         {
-            if (signInfo.HasValue == false)
+            if (SignInfo.HasValue == false)
                 return;
 
-            using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(signInfo.Value.StringToSign);
+            using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(SignInfo.Value.StringToSign);
 
             var i = 0;
 #if DEBUG
@@ -123,7 +114,7 @@ namespace DCL.WebRequests
             {
                 string name = AuthChainHeaderNames.Get(i);
                 string value = link.ToJson();
-                unityWebRequest.SetRequestHeader(name, value);
+                webRequest.SetRequestHeader(name, value);
 #if DEBUG
                 sb.AppendLine($"Header {name}: {value}");
 #endif
