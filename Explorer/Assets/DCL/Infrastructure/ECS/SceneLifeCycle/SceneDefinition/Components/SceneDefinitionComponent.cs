@@ -1,5 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using Org.BouncyCastle.Utilities.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,6 +25,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public int InternalJobIndex { get; set; }
 
+        private readonly SceneFastLookup SceneLookup;
+
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
@@ -37,7 +42,15 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             SceneGeometry = sceneGeometry;
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
+            SceneLookup = new SceneFastLookup(parcels);
         }
+
+        //Used in hot path to avoid additional getters
+        public readonly bool Contains(int x, int y) =>
+            SceneLookup.Contains(x, y);
+
+        public bool Contains(Vector2Int parcel) =>
+            SceneLookup.Contains(parcel.x, parcel.y);
     }
 
     public static class SceneDefinitionComponentFactory

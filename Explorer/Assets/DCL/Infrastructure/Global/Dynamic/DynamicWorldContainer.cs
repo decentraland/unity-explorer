@@ -881,11 +881,14 @@ namespace Global.Dynamic
                 dynamicWorldParams.HybridSceneParams,
                 currentSceneInfo,
                 lodContainer.LodCache,
+                lodContainer.RoadCoordinates,
+                lodContainer.LODSettings,
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment,
-                profileRepository
+                profileRepository,
+                lodContainer.RoadAssetsPool
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
@@ -26,17 +27,12 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly IScenesCache scenesCache;
-        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private IReadOnlyList<SceneAssetBundleManifest>? manifestCache;
 
-        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, IDecentralandUrlsSource decentralandUrlsSource) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset, IDecentralandUrlsSource decentralandUrlsSource) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
-            this.scenesCache = scenesCache;
-            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
@@ -47,14 +43,22 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
-            if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel
+            if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {
-                // LOD distances are currently using the old system so will only load in the LOD when the gameobject
-                // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
-                // to height and dither the transition.
-                byte lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+                byte lodForAcquisition;
+
+                //If we are quality reducted, always load the greated value LOD
+                if (!sceneState.FullQuality)
+                    lodForAcquisition = (byte)lodSettingsAsset.LodPartitionBucketThresholds.Length;
+                else
+                {
+                    // LOD distances are currently using the old system so will only load in the LOD when the gameobject
+                    // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
+                    // to height and dither the transition.
+                    lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
+                }
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
                     StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
@@ -79,7 +83,7 @@ namespace DCL.LOD.Systems
             sceneLODInfo.CurrentLODLevelPromise = level;
         }
 
-        private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
+        private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo)
         {
             //If we are in an SDK6 scene, this value will be kept.
             //Therefore, lod0 will be shown
