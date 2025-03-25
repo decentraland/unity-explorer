@@ -75,8 +75,8 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             if (!hasCharacterInterpolationMovement)
                 return;
 
-            characterInterpolationMovementComponent.TargetPosition = ParcelMathHelper.GetGlobalPosition(sceneBaseParcel, sdkTransform.Position);
-            characterInterpolationMovementComponent.TargetRotation = sdkTransform.Rotation;
+            characterInterpolationMovementComponent.TargetPosition = sdkTransform.Position.Value.FromSceneRelativeToGlobalPosition(sceneBaseParcel);
+            characterInterpolationMovementComponent.TargetRotation = sdkTransform.Rotation.Value;
             characterInterpolationMovementComponent.IsPositionManagedByTween = isPositionManagedByTween;
             characterInterpolationMovementComponent.IsRotationManagedByTween = isRotationManagedByTween;
         }
