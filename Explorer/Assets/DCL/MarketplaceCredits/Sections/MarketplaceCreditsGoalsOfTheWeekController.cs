@@ -18,7 +18,6 @@ namespace DCL.MarketplaceCredits.Sections
         private const int GOALS_POOL_DEFAULT_CAPACITY = 4;
 
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
-        private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
@@ -30,17 +29,16 @@ namespace DCL.MarketplaceCredits.Sections
 
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
-            IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebRequestController webRequestController,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
             this.view = view;
-            this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
-            view.TimeLeftLinkButton.onClick.AddListener(OpenTimeLeftInfoLink);
+            marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
+            view.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
             view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.AddListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
@@ -70,6 +68,7 @@ namespace DCL.MarketplaceCredits.Sections
             ClearGoals();
 
             view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft);
+            view.ShowTimeLeftTooltip(false);
 
             foreach (GoalData goalData in creditsProgramProgressResponse.goals)
             {
@@ -85,7 +84,8 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void Dispose()
         {
-            view.TimeLeftLinkButton.onClick.RemoveListener(OpenTimeLeftInfoLink);
+            marketplaceCreditsMenuController.OnAnyPlaceClick -= CloseTimeLeftTooltip;
+            view.TimeLeftInfoButton.onClick.RemoveListener(ToggleTimeLeftTooltip);
             view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.RemoveListener(ReloadCaptcha);
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
@@ -124,8 +124,11 @@ namespace DCL.MarketplaceCredits.Sections
             instantiatedGoalRows.Clear();
         }
 
-        private void OpenTimeLeftInfoLink() =>
-            webBrowser.OpenUrl(MarketplaceCreditsUtils.TIME_LEFT_INFO_LINK);
+        private void ToggleTimeLeftTooltip() =>
+            view.ToggleTimeLeftTooltip();
+
+        private void CloseTimeLeftTooltip() =>
+            view.ShowTimeLeftTooltip(false);
 
         private void ReloadCaptcha()
         {

@@ -2,8 +2,10 @@ using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCredits.Sections;
 using DCL.UI;
 using MVC;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits
@@ -17,8 +19,10 @@ namespace DCL.MarketplaceCredits
         PROGRAM_ENDED,
     }
 
-    public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement
+    public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement, IPointerClickHandler
     {
+        public event Action OnAnyPlaceClick;
+
         [field: SerializeField]
         public GameObject TitlesContainer { get; private set; }
 
@@ -51,5 +55,8 @@ namespace DCL.MarketplaceCredits
 
         [field: SerializeField]
         public float ErrorNotificationDuration { get; private set; } = 3f;
+
+        public void OnPointerClick(PointerEventData eventData) =>
+            OnAnyPlaceClick?.Invoke();
     }
 }

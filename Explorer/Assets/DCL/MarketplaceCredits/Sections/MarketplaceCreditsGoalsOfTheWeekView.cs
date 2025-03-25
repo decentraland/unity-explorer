@@ -1,6 +1,7 @@
 using DCL.MarketplaceCredits.Fields;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Sections
@@ -11,7 +12,10 @@ namespace DCL.MarketplaceCredits.Sections
         public TMP_Text TimeLeftText { get; private set; }
 
         [field: SerializeField]
-        public Button TimeLeftLinkButton { get; private set; }
+        public Button TimeLeftInfoButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject TimeLeftLinkTooltip { get; private set; }
 
         [field: SerializeField]
         public RectTransform GoalsContainer { get; private set; }
@@ -24,6 +28,12 @@ namespace DCL.MarketplaceCredits.Sections
 
         [field: SerializeField]
         public MarketplaceCreditsGoalRowView GoalRowPrefab { get; private set; }
+
+        public void ToggleTimeLeftTooltip() =>
+            TimeLeftLinkTooltip.SetActive(!TimeLeftLinkTooltip.activeSelf);
+
+        public void ShowTimeLeftTooltip(bool show) =>
+            TimeLeftLinkTooltip.SetActive(show);
 
         public void ShowCaptcha(bool show) =>
             CaptchaContainer.SetActive(show);

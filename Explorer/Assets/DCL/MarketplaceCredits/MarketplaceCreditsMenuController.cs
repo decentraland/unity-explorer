@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Input.Component;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -24,6 +23,8 @@ namespace DCL.MarketplaceCredits
 {
     public class MarketplaceCreditsMenuController : IDisposable
     {
+        public event Action OnAnyPlaceClick;
+
         private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID = Animator.StringToHash("isAlert");
         private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_PAUSED_ID = Animator.StringToHash("isPaused");
 
@@ -78,6 +79,7 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
 
             mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
+            view.OnAnyPlaceClick += OnAnyPlaceClicked;
             view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             view.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
             foreach (Button closeButton in view.CloseButtons)
@@ -88,7 +90,6 @@ namespace DCL.MarketplaceCredits
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 view.GoalsOfTheWeekView,
-                webBrowser,
                 marketplaceCreditsAPIClient,
                 webRequestController,
                 this);
@@ -199,6 +200,7 @@ namespace DCL.MarketplaceCredits
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             mvcManager.OnViewClosed -= OnCreditsUnlockedPanelClosed;
+            view.OnAnyPlaceClick -= OnAnyPlaceClicked;
             view.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
             view.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
 
@@ -220,6 +222,9 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsWeekGoalsCompletedController.CloseSection();
             marketplaceCreditsProgramEndedController.CloseSection();
         }
+
+        private void OnAnyPlaceClicked() =>
+            OnAnyPlaceClick?.Invoke();
 
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(MarketplaceCreditsUtils.WEEKLY_REWARDS_INFO_LINK);
