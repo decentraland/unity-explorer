@@ -47,6 +47,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 36bcbe134ec574902b49db6464414b03
+    m_Address: BlockedScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37b740e9dd5ba324c91cd05632ea002c
     m_Address: TeleportPrompt
     m_ReadOnly: 0
@@ -119,11 +124,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ad0eada9babef44e5bb3f06b080eef83
     m_Address: Navmap
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: adccb7c4aa6e2424c95ac85e0d3f0a35
-    m_Address: MarketplaceCreditsUnlockedPanel
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -1,30 +1,30 @@
-using Cysharp.Threading.Tasks;
 using DCL.Friends.UserBlocking;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using Utility;
 
 namespace DCL.Friends
 {
     public class UserBlockingCache : IUserBlockingCache, IDisposable
     {
-        private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus eventBus;
 
         private readonly HashSet<string> blockedUsers = new (StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> blockedByUsers = new (StringComparer.OrdinalIgnoreCase);
 
-        private CancellationTokenSource fetchCts = new ();
-
         public ReadOnlyHashSet<string> BlockedUsers { get; }
         public ReadOnlyHashSet<string> BlockedByUsers { get; }
-        public bool HideChatMessages { get; set; }
 
-        public UserBlockingCache(IFriendsService friendsService,
-            IFriendsEventBus eventBus)
+        // This property is fixed to true since we currently don't want to show chat messages from blocked users in any shape or form.
+        // This can change in the future, so all the logic that is already in place will stay the same for such times.
+        public bool HideChatMessages
         {
-            this.friendsService = friendsService;
+            get => true;
+
+            set { }
+        }
+
+        public UserBlockingCache(IFriendsEventBus eventBus)
+        {
             this.eventBus = eventBus;
 
             BlockedUsers = new ReadOnlyHashSet<string>(blockedUsers);
@@ -34,8 +34,6 @@ namespace DCL.Friends
             eventBus.OnYouUnblockedProfile += UserUnblockedByYou;
             eventBus.OnYouBlockedByUser += YouBlockedByUser;
             eventBus.OnYouUnblockedByUser += YouUnblockedByUser;
-
-            ResetCache();
         }
 
         public void Dispose()
@@ -44,29 +42,20 @@ namespace DCL.Friends
             eventBus.OnYouUnblockedProfile -= UserUnblockedByYou;
             eventBus.OnYouBlockedByUser -= YouBlockedByUser;
             eventBus.OnYouUnblockedByUser -= YouUnblockedByUser;
-
-            fetchCts.SafeCancelAndDispose();
         }
 
         public bool UserIsBlocked(string userId) =>
             BlockedUsers.Contains(userId) || BlockedByUsers.Contains(userId);
 
-        public void ResetCache()
+        public void Reset(UserBlockingStatus blockingStatus)
         {
-            fetchCts = fetchCts.SafeRestart();
-            FetchDataAsync(fetchCts.Token).Forget();
+            blockedUsers.Clear();
+            blockedByUsers.Clear();
 
-            async UniTaskVoid FetchDataAsync(CancellationToken ct)
-            {
-                UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                blockedUsers.Clear();
-                blockedByUsers.Clear();
-
-                foreach (string user in blockingStatus.BlockedUsers)
-                    blockedUsers.Add(user);
-                foreach (string user in blockingStatus.BlockedByUsers)
-                    blockedByUsers.Add(user);
-            }
+            foreach (string user in blockingStatus.BlockedUsers)
+                blockedUsers.Add(user);
+            foreach (string user in blockingStatus.BlockedByUsers)
+                blockedByUsers.Add(user);
         }
 
         private void UserBlockedByYou(BlockedProfile user) => blockedUsers.Add(user.Address);
