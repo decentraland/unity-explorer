@@ -19,7 +19,15 @@ namespace DCL.Friends
 
         public ReadOnlyHashSet<string> BlockedUsers { get; }
         public ReadOnlyHashSet<string> BlockedByUsers { get; }
-        public bool HideChatMessages { get; set; }
+
+        // This property is fixed to true since we currently don't want to show chat messages from blocked users in any shape or form.
+        // This can change in the future, so all the logic that is already in place will stay the same for such times.
+        public bool HideChatMessages
+        {
+            get => true;
+
+            set { }
+        }
 
         public UserBlockingCache(IFriendsService friendsService,
             IFriendsEventBus eventBus)
