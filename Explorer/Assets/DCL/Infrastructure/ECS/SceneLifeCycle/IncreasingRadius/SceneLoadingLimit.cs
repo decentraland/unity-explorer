@@ -17,7 +17,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 return new SceneLoadingLimit
                 {
                     MaximumAmountOfScenesThatCanLoad = 2,
-                    MaximumAmountOfLODsThatCanLoad = 0,
+                    MaximumAmountOfLODsThatCanLoad = 2,
                     MaximumAmountOfReductedLoDsThatCanLoad = int.MaxValue,
                 };
             }

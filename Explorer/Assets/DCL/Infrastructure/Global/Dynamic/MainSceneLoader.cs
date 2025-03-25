@@ -156,7 +156,15 @@ namespace Global.Dynamic
                 return;
             }
 
-            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+            // Memory limit
+            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
+            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            var sceneLoadingLimit = SceneLoadingLimit.CreateMemoryRelativeLimit(systemMemory);
+
+            ISystemMemoryCap memoryCap = hasSimulatedMemory
+                ? new SystemMemoryCap(MemoryCapMode.SIMULATED_MEMORY, systemMemory)
+                : new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY);
+
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -247,8 +255,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                var sceneLoadingLimit = SceneLoadingLimit.CreateMemoryRelativeLimit(
-                    applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory) ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize);
+
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity, sceneLoadingLimit);
 
