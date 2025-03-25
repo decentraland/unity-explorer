@@ -13,6 +13,7 @@ using Global;
 using Global.AppArgs;
 using Global.Dynamic;
 using MVC;
+using System.Collections.Generic;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -34,7 +35,8 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
-            IChatHistory chatHistory)
+            IChatHistory chatHistory,
+            bool localSceneDevelopment)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -45,23 +47,30 @@ namespace DCL.UserInAppInitializationFlow
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, appArgs, realmNavigationContainer.RealmNavigator);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
-            // TODO review why loadGlobalPxOperation is invoked on recovery
-            var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmContainer.RealmController, bootstrapContainer.DiagnosticsContainer);
+
+            var loadingOperations = new List<IStartupOperation>()
+            {
+                preloadProfileStartupOperation,
+                loadPlayerAvatarStartupOperation,
+                loadLandscapeStartupOperation,
+                checkOnboardingStartupOperation,
+                teleportStartupOperation,
+                ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
+                sentryDiagnostics
+            };
+
+            // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
+            // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
+            if (!localSceneDevelopment)
+            {
+                // TODO review why loadGlobalPxOperation is invoked on recovery
+                loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
+            }
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
-                new IStartupOperation[]
-                {
-                    preloadProfileStartupOperation,
-                    loadPlayerAvatarStartupOperation,
-                    loadLandscapeStartupOperation,
-                    checkOnboardingStartupOperation,
-                    teleportStartupOperation,
-                    ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
-                    loadGlobalPxOperation,
-                    sentryDiagnostics,
-                },
+                loadingOperations,
                 ReportCategory.STARTUP,
                 bootstrapContainer.Analytics.EnsureNotNull(),
                 "start-up");
@@ -70,17 +79,7 @@ namespace DCL.UserInAppInitializationFlow
 
             var reLoginOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
-                new IStartupOperation[]
-                {
-                    preloadProfileStartupOperation,
-                    loadPlayerAvatarStartupOperation,
-                    loadLandscapeStartupOperation,
-                    checkOnboardingStartupOperation,
-                    teleportStartupOperation,
-                    ensureLivekitConnectionStartupOperation,
-                    loadGlobalPxOperation,
-                    sentryDiagnostics,
-                },
+                loadingOperations,
                 ReportCategory.STARTUP,
                 bootstrapContainer.Analytics.EnsureNotNull(),
                 "re-login");
@@ -101,7 +100,9 @@ namespace DCL.UserInAppInitializationFlow
                     chatHistory,
                     startUpOps,
                     reLoginOps,
-                    checkOnboardingStartupOperation),
+                    checkOnboardingStartupOperation,
+                    bootstrapContainer.IdentityCache.EnsureNotNull(),
+                    appArgs),
             };
         }
     }

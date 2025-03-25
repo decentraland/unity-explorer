@@ -1,7 +1,9 @@
-﻿using ECS;
+﻿using DCL.Landscape.Settings;
+using ECS;
 using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using Utility;
 
 namespace DCL.Rendering.GPUInstancing
 {
@@ -13,10 +15,6 @@ namespace DCL.Rendering.GPUInstancing
 
         private GPUInstancingService instancingService;
         private GPUInstancingRenderPass instancingRenderPass;
-        public GPUInstancingRenderFeature()
-        {
-            m_Settings = new GPUInstancingRenderFeature_Settings();
-        }
 
         public override void Create()
         {
@@ -47,11 +45,16 @@ namespace DCL.Rendering.GPUInstancing
         [Serializable]
         public class GPUInstancingRenderFeature_Settings
         {
-            public ComputeShader FrustumCullingAndLODGenComputeShader;
-            public ComputeShader IndirectBufferGenerationComputeShader;
-            public ComputeShader DrawArgsInstanceCountTransferComputeShader;
+            [SerializeField] private GPUInstancingSettings settings;
 
-            public float MaxDistanceScaleFactor = 1;
+            public ComputeShader FrustumCullingAndLODGenComputeShader => settings.FrustumCullingAndLODGenComputeShader;
+            public ComputeShader IndirectBufferGenerationComputeShader => settings.IndirectBufferGenerationComputeShader;
+            public ComputeShader DrawArgsInstanceCountTransferComputeShader => settings.DrawArgsInstanceCountTransferComputeShader;
+
+            public float RenderDistScaleFactor { get => settings.RenderDistScaleFactor; set => settings.RenderDistScaleFactor = value;}
+
+            public float RoadsSceneDistance(float envDistance) =>
+                settings.RoadsSceneDistance(envDistance);
         }
     }
 }

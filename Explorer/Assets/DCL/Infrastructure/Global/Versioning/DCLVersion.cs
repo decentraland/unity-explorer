@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using Global.AppArgs;
 
 namespace Global.Versioning
