@@ -244,6 +244,7 @@ namespace DCL.Friends
                     var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
                     await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
                 }
+                catch (OperationCanceledException _) { }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
 
                 await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
