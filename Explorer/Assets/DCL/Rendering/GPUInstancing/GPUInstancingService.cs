@@ -242,12 +242,12 @@ namespace DCL.Rendering.GPUInstancing
 
                     for (var lodLevel = 0; lodLevel < _nLODCount; lodLevel++)
                     {
-                        if (lodLevel < combinedLodRenderer.LodsMeshDataArray.Length)
+                        if (lodLevel < combinedMesh.subMeshCount)
                         {
                             buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].instanceCount = 0;
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].indexCountPerInstance = combinedLodRenderer.LodsMeshDataArray[lodLevel].IndexCount;
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startIndex = combinedLodRenderer.LodsMeshDataArray[lodLevel].StartIndex;
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].baseVertexIndex =  combinedLodRenderer.LodsMeshDataArray[lodLevel].BaseVertex;
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startIndex = combinedMesh.GetIndexStart(lodLevel);
+                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
                             buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
                         }
                         else { buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)] = zeroDrawArgs; }
