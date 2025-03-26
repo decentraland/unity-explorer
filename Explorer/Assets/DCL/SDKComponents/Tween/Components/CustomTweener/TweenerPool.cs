@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.Tween.Components
             return tweener;
         }
 
-        public void Return(SDKTweenComponent sdkTweenComponent)
+        public void ReleaseCustomTweenerFrom(SDKTweenComponent sdkTweenComponent)
         {
             if (sdkTweenComponent.CustomTweener == null)
                 return;
@@ -71,6 +71,8 @@ namespace DCL.SDKComponents.Tween.Components
                     quaternionTweenerPool.Release(quaternionTweener);
                     break;
             }
+
+            sdkTweenComponent.CustomTweener = null;
         }
     }
 }
