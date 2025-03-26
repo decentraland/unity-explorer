@@ -355,7 +355,7 @@ Animator:
   m_GameObject: {fileID: 214014215}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 11e3e096626ac0548912411d33ae8192, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -615,6 +615,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <AppVerRedirectionScreenPrefab>k__BackingField:
       m_AssetGUID: f2df2b2c3721c5840b06c8fe73d5d665
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <BlockedScreenPrefab>k__BackingField:
+      m_AssetGUID: 36bcbe134ec574902b49db6464414b03
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

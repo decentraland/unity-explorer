@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
 using UnityEngine;
@@ -20,9 +21,7 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
         [field: Header("Avatar Profile")]
-        [field: SerializeField] internal Image? ProfileBackground { get; private set; }
-        [field: SerializeField] internal Image? ProfileOutline { get; private set; }
-        [field: SerializeField] internal Image playerIcon { get; private set; }
+        [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
         [field: SerializeField] internal Button profileButton { get; private set; }
 
         private ChatMessage chatMessage;
@@ -34,7 +33,7 @@ namespace DCL.Chat
 
         private void OpenContextMenu()
         {
-            ChatEntryClicked?.Invoke(chatMessage.WalletAddress, playerIcon.transform.position);
+            ChatEntryClicked?.Invoke(chatMessage.WalletAddress, profileButton.transform.position);
         }
 
         public void AnimateChatEntry()

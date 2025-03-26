@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Multiplayer.Connectivity;
+using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3;
@@ -16,7 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
     {
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -28,21 +27,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public FriendSectionController(FriendsSectionView view,
             IMVCManager mvcManager,
-            ISystemClipboard systemClipboard,
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
-            IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
             contextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
                 userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, null, BlockUserCtx).Item1;
@@ -63,7 +59,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
 
         private void BlockUserCtx() =>
-            FriendListSectionUtilities.BlockUserClicked(contextMenuFriendProfile);
+            FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
@@ -79,7 +75,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
                 friendProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
+                friendProfile.FacePictureUrl);
 
             elementView.CanUnHover = false;
 

@@ -41,6 +41,7 @@ using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.EventsApi;
+using DCL.Friends.UserBlocking;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -48,8 +49,8 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI.Profiles;
 using DCL.Utilities;
-using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -81,7 +82,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
-        private readonly IRealmNavigator realmNavigator;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -108,6 +108,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly bool includeCameraReel;
 
@@ -121,6 +122,7 @@ namespace DCL.PluginSystem.Global
         private PlaceInfoPanelController? placeInfoPanelController;
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
+        private ViewDependencies viewDependencies;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -142,7 +144,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
@@ -167,7 +168,8 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            IAppArgs appArgs)
+            IAppArgs appArgs, ViewDependencies viewDependencies,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -194,7 +196,6 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
             this.emoteStorage = emoteStorage;
-            this.realmNavigator = realmNavigator;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
@@ -215,6 +216,8 @@ namespace DCL.PluginSystem.Global
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
+            this.viewDependencies = viewDependencies;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
         }
 
         public void Dispose()
@@ -319,7 +322,7 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, worldVolumeMacBus);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, worldVolumeMacBus);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,
@@ -356,8 +359,8 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                     dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock, includeCameraReel));
         }
 

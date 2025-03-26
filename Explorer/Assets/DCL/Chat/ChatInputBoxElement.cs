@@ -79,6 +79,8 @@ namespace DCL.Chat
         private GetParticipantProfilesDelegate GetParticipantProfiles;
         private readonly List<Profile> participantProfiles = new ();
 
+        private bool isInputSubmissionEnabled;
+
         public string InputBoxText
         {
             get => inputField.text;
@@ -139,6 +141,9 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
+            if(!isInputSubmissionEnabled) return;
+            isInputSubmissionEnabled = false;
+
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
             inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
@@ -147,6 +152,9 @@ namespace DCL.Chat
 
         public void EnableInputBoxSubmissions()
         {
+            if(isInputSubmissionEnabled) return;
+            isInputSubmissionEnabled = true;
+
             inputField.onSubmit.AddListener(OnInputFieldSubmitted);
             viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
@@ -444,11 +452,11 @@ namespace DCL.Chat
                     if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile);
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, viewDependencies);
                     }
                     else
                     {
-                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile));
+                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, viewDependencies));
                     }
                 }
             }

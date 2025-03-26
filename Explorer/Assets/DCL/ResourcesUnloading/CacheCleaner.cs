@@ -79,7 +79,7 @@ namespace DCL.ResourcesUnloading
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
             nftShapeCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
-            texturesCache!.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
+            texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
             wearableStorage!.Unload(budgetToUse);

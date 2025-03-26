@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Profiles;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
+using DCL.Web3;
 using DG.Tweening;
 using MVC;
 using SuperScrollView;
@@ -32,7 +34,8 @@ namespace DCL.Chat
             ChatEntryOwn,
             Padding,
             SystemChatEntry,
-            Separator
+            Separator,
+            BlockedUser,
         }
 
         /// <summary>
@@ -141,7 +144,7 @@ namespace DCL.Chat
         /// <param name="animationDuration">The duration of the fading animation.</param>
         public void SetScrollbarVisibility(bool show, float animationDuration)
         {
-            if(show)
+            if (show)
                 scrollbarCanvasGroup.DOFade(1, animationDuration);
             else
                 scrollbarCanvasGroup.DOFade(0, animationDuration);
@@ -153,7 +156,7 @@ namespace DCL.Chat
         /// <param name="useSmoothScroll">Whether to smoothly scroll to the end or not.</param>
         public void ShowLastMessage(bool useSmoothScroll = false)
         {
-            if(useSmoothScroll)
+            if (useSmoothScroll)
                 loopList.ScrollRect.DONormalizedPos(new Vector2(1.0f, 0.0f), 0.5f);
             else
                 loopList.MovePanelToItemIndex(0, 0);
@@ -186,9 +189,7 @@ namespace DCL.Chat
 
             // Scroll view adjustment
             if (IsScrollAtBottom)
-            {
                 loopList.MovePanelToItemIndex(0, 0);
-            }
             else
             {
                 loopList.RefreshAllShownItem();
@@ -197,9 +198,9 @@ namespace DCL.Chat
                 {
                     // When the scroll view is not at the bottom, chat messages should not move if a new message is added
                     // An offset has to be applied to the scroll view in order to prevent messages from moving
-                    float offsetToPreventScrollViewMovement = 0.0f;
+                    var offsetToPreventScrollViewMovement = 0.0f;
 
-                    for (int i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
+                    for (var i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
                         offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSize + loopList.ItemList[i].Padding;
 
                     loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
@@ -298,11 +299,10 @@ namespace DCL.Chat
             bool isSeparatorIndex = IsSeparatorVisible && index == CurrentSeparatorIndex;
 
             if (isSeparatorIndex)
-            {
+
                 // Note: The separator is not part of the data, it is a view thing, so it is not a type of chat message, it is inserted by adding an extra item to the count and
                 //       faking it in this method, when it tries to create a new item
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Separator].mItemPrefab.name);
-            }
             else
             {
                 bool isIndexAfterSeparator = IsSeparatorVisible && index > CurrentSeparatorIndex;
@@ -318,23 +318,23 @@ namespace DCL.Chat
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
+                else if (IsUserBlocked(itemData.WalletAddress))
+                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
                     item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name
-                                                : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
 
-                    SetItemData(index, itemData, itemScript);
+                    SetItemDataAsync(index, itemData, itemScript).Forget();
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
                     if (itemData is { SentByOwnUser: false, SystemMessage: false })
                         itemScript.ChatEntryClicked += OnChatEntryClicked;
-
 
                     messageOptionsButton?.onClick.AddListener(() =>
                         OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
@@ -344,10 +344,13 @@ namespace DCL.Chat
             return item;
         }
 
+        private bool IsUserBlocked(string userAddress) =>
+            viewDependencies.UserBlockingCacheProxy.Configured && viewDependencies.UserBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
+
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
             popupCts = popupCts.SafeRestart();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(walletAddress, contextMenuPosition, popupCts.Token).Forget();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, popupCts.Token).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
@@ -355,19 +358,18 @@ namespace DCL.Chat
             ChatMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
         }
 
-        private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemView)
+        private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
         {
-            Color playerNameColor = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
-
-            itemView.usernameElement.userName.color = playerNameColor;
-
-            if (!itemData.SystemMessage)
+            if (itemData.SystemMessage) itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
+            else
             {
-                itemView.ProfileBackground!.color = playerNameColor;
-                playerNameColor.r += 0.3f;
-                playerNameColor.g += 0.3f;
-                playerNameColor.b += 0.3f;
-                itemView.ProfileOutline!.color = playerNameColor;
+                Profile? profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
+
+                if (profile != null)
+                {
+                    itemView.usernameElement.userName.color = profile.UserNameColor;
+                    itemView.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                }
             }
 
             itemView.SetItemData(itemData);

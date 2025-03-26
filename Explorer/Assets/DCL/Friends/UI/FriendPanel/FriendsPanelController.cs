@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
@@ -7,15 +6,12 @@ using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.Sidebar.SidebarActionsBus;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
@@ -59,17 +55,14 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
-            IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
             DCLInput dclInput,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ISidebarActionsBus sidebarActionsBus,
+            ViewDependencies viewDependencies,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled) : base(viewFactory)
         {
@@ -85,12 +78,10 @@ namespace DCL.Friends.UI.FriendPanel
                     friendsService,
                     friendEventBus,
                     mvcManager,
-                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
-                    systemClipboard,
                     friendsConnectivityStatusTracker,
                     includeUserBlocking);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
@@ -99,10 +90,8 @@ namespace DCL.Friends.UI.FriendPanel
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                     mvcManager,
-                    systemClipboard,
-                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking);
@@ -110,14 +99,12 @@ namespace DCL.Friends.UI.FriendPanel
                 friendsService,
                 friendEventBus,
                 mvcManager,
-                systemClipboard,
-                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
+                new RequestsRequestManager(friendsService, friendEventBus, viewDependencies, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                profileThumbnailCache,
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
-                web3IdentityCache,
-                new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                mvcManager,
+                new BlockedPanelList(friendsService, friendEventBus, viewDependencies, instantiatedView.BlockedSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
@@ -154,36 +141,15 @@ namespace DCL.Friends.UI.FriendPanel
         private void JumpToFriendClick(string targetAddress, Vector2Int parcel) =>
             JumpToFriendClicked?.Invoke(targetAddress, parcel);
 
-        public UniTask InitAsync(CancellationToken ct)
-        {
-            var tasks = ListPool<UniTask>.Get();
-
-            try
-            {
-                tasks.Add(requestsSectionController.InitAsync(ct));
-
-                // TODO: Remove it after the server's connectivity stream works as expected
-                // This call forces to load at least the first page of friends (around 50)
-                // Currently, as a mid-term solution, we poll connectivity status for each of the friends we have asked to the server through the archipelago api
-                // If we do not request any friends then we will get no connectivity updates
-                // This approach will work for most of the users (except those who have more than 50 friends whose going to get partial updates)
-                // When server's rpc stream works, it will automatically send connectivity updates for each friend no matter if we previously asked for it or not
-                // if (friendSectionControllerConnectivity != null)
-                //     tasks.Add(friendSectionControllerConnectivity.InitAsync(ct));
-
-                return UniTask.WhenAll(tasks);
-            }
-            finally
-            {
-                ListPool<UniTask>.Release(tasks);
-            }
-        }
+        public UniTask InitAsync(CancellationToken ct) =>
+            requestsSectionController.InitAsync(ct);
 
         public void Reset()
         {
             requestsSectionController.Reset();
             friendSectionController?.Reset();
             friendSectionControllerConnectivity?.Reset();
+            blockedSectionController.Reset();
         }
 
         private void RegisterCloseHotkey()

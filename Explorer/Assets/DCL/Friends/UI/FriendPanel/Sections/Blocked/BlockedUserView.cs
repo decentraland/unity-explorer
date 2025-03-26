@@ -1,4 +1,4 @@
-using DCL.WebRequests;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using System;
 using TMPro;
 using UnityEngine;
@@ -20,16 +20,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             set
             {
                 blockedDate = value;
-                BlockedDateText.SetText($"{blockedDate:MM/dd}");
+                BlockedDateText.SetText(FriendListSectionUtilities.FormatDate(blockedDate));
             }
         }
 
-        public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        public override void Configure(FriendProfile profile)
         {
             buttons.Clear();
             buttons.Add(UnblockButton);
             buttons.Add(ContextMenuButton);
-            base.Configure(profile, webRequestController, profileThumbnailCache);
+            base.Configure(profile);
         }
 
         protected override void ToggleButtonView(bool isActive)

@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -24,6 +25,7 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Rendering.GPUInstancing;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -68,10 +70,12 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
-        private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
+        private readonly ViewDependencies viewDependencies;
+        private readonly GPUInstancingService gpuInstancingBuffers;
+        private readonly ExposedCameraData exposedCameraData;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -91,10 +95,12 @@ namespace DCL.PluginSystem.Global
             URLDomain assetBundleURL,
             ICursor cursor,
             Button sidebarButton,
-            UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
-            NametagsData nametagsData)
+            NametagsData nametagsData,
+            ViewDependencies viewDependencies,
+            GPUInstancingService gpuInstancingBuffers,
+            ExposedCameraData exposedCameraData)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -118,10 +124,12 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
-            this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
+            this.viewDependencies = viewDependencies;
+            this.gpuInstancingBuffers = gpuInstancingBuffers;
+            this.exposedCameraData = exposedCameraData;
             factory = new InWorldCameraFactory();
         }
 
@@ -137,7 +145,7 @@ namespace DCL.PluginSystem.Global
             hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
             followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
-            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>(), gpuInstancingBuffers);
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
@@ -151,7 +159,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
                     cameraReelStorageService,
-                    webRequestController,
                     profileRepository,
                     mvcManager,
                     webBrowser,
@@ -163,7 +170,8 @@ namespace DCL.PluginSystem.Global
                     new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
-                    categoryIconsMapping
+                    categoryIconsMapping,
+                    viewDependencies
                     ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
@@ -178,10 +186,10 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera, rootUIDocument, nametagsData);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
         }

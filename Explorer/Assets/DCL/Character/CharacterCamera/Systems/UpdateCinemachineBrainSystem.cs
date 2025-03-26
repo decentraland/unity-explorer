@@ -10,20 +10,19 @@ namespace DCL.Character.CharacterCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ApplyCinemachineCameraInputSystem))]
+    [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
     public partial class UpdateCinemachineBrainSystem : BaseUnityLoopSystem
     {
         public UpdateCinemachineBrainSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            ManualBrainUpdateQueryQuery(World);
+            ManualBrainUpdateQuery(World);
         }
 
         [Query]
-        [None(typeof(CameraLookAtIntent))]
-        private void ManualBrainUpdateQuery(ref ICinemachinePreset cinemachinePreset)
+        private void ManualBrainUpdate(ref ICinemachinePreset cinemachinePreset)
         {
-            // We update brain manually in order to handle properly CameraLookAtIntent component
             cinemachinePreset.Brain.ManualUpdate();
         }
     }
