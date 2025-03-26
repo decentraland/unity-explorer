@@ -45,7 +45,6 @@ namespace DCL.Roads.Systems
         {
             DebugGPUInstancingSystem.InjectToWorld(ref builder, debugBuilder, gpuInstancingService);
             RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, roadAssetPool, sceneReadinessReportQueue, scenesCache);
-            UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache);
         }
 
         public void Dispose()

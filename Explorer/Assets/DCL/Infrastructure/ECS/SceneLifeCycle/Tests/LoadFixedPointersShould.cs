@@ -2,6 +2,7 @@
 using Arch.Core.Extensions;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -10,6 +11,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using Newtonsoft.Json;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +35,9 @@ namespace ECS.SceneLifeCycle.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new LoadFixedPointersSystem(world);
+            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.World));
+            system = new LoadFixedPointersSystem(world, realmData);
         }
 
         [Test]
