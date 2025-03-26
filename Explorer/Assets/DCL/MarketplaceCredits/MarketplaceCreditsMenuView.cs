@@ -24,9 +24,6 @@ namespace DCL.MarketplaceCredits
         public event Action OnAnyPlaceClick;
 
         [field: SerializeField]
-        public GameObject TitlesContainer { get; private set; }
-
-        [field: SerializeField]
         public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; }
 
         [field: SerializeField]

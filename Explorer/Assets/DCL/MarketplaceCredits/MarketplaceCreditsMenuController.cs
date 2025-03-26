@@ -171,7 +171,6 @@ namespace DCL.MarketplaceCredits
             }
 
             view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
-            view.TitlesContainer.SetActive(section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
         public void ShowCreditsUnlockedPanel(float claimedCredits)
