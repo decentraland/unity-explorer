@@ -176,11 +176,12 @@
         "GUID:422b93d277444c569adf5e25ecef10ba",
         "GUID:d8acebc6c6214cf1a782f4e743e7699c",
         "GUID:246f0aa8b201240c8b816c1cd6ad4778",
+        "GUID:68807fc35cd04e089ab1d9173c16106b",
         "GUID:f23b63601721ed04fbd8e0cd59b1ee59"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

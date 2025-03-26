@@ -8,13 +8,15 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadPortableExperiencePointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadPortableExperiencePointersSystem(World world) : base(world) { }
+        internal LoadPortableExperiencePointersSystem(World world, IRealmData realmData) : base(world, new HashSet<Vector2Int>(), realmData) { }
 
         protected override void Update(float t)
         {

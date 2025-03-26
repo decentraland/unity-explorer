@@ -134,7 +134,7 @@ namespace DCL.CharacterMotion.Systems
             platformComponent.CurrentPlatform = null;
 
             World.Remove<PlayerTeleportIntent>(entity);
-            World.Add(entity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES));
+            World.Add(entity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
         }
 
         [Query]
