@@ -90,7 +90,7 @@ namespace DCL.Rendering.Highlight
                 if (m_HighLightRenderers is not { Count: > 0 })
                     return;
 
-                ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", PROFILER_TAG_ADDITIVE);
+                ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", GetSampler(PROFILER_TAG_ADDITIVE));
 
                 ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", GetSampler(PROFILER_TAG_FIRST_COPY));
                 uint nBlurCount = 4;
@@ -98,16 +98,16 @@ namespace DCL.Rendering.Highlight
 
                 ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", GetSampler(PROFILER_TAG_SECOND_COPY));
 
-                ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", PROFILER_TAG_SUBTRACTIVE);
+                ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", GetSampler(PROFILER_TAG_SUBTRACTIVE));
             }
 
 
 
-            private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
+            private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, ProfilingSampler sampler)
             {
                 CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName)!;
 
-                using (new ProfilingScope(commandBuffer, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(commandBuffer, sampler))
                 {
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
