@@ -251,7 +251,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     return;
                 }
 
-                for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
+                for (var i = 0; i < orderedDataNativeLength; i++)
                 {
                     OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
 
@@ -324,18 +324,33 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
+            if (World.Has<SceneLODInfo>(entity) && candidateBy == VisualSceneState.SHOWING_LOD
+                                                && sceneState.VisualSceneState != VisualSceneState.SHOWING_LOD)
+            {
+                UnityEngine.Debug.Log("JUANI HERE IS A PROBLEM");
+                sceneState.VisualSceneState = VisualSceneState.SHOWING_LOD;
+                return;
+            }
+
             //No new promise is required
             if (candidateBy == VisualSceneState.UNINITIALIZED
                 || sceneState.VisualSceneState == candidateBy)
                 return;
 
             promisesCreated++;
+
+            //We cannot create more promises on this batch. Should be analyzed next iteration
+            if (promisesCreated > realmPartitionSettings.ScenesRequestBatchSize)
+                return;
+
             sceneState.PromiseCreated = true;
             sceneState.VisualSceneState = candidateBy;
 
             switch (sceneState.VisualSceneState)
             {
                 case VisualSceneState.SHOWING_LOD:
+                    if (World.Has<SceneLODInfo>(entity))
+                        UnityEngine.Debug.Log("JUANI HERE IS A PROBLEM");
                     World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:

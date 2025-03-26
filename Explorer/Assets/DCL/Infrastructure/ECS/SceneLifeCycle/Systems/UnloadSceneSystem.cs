@@ -55,6 +55,12 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
+                if (sceneFacade.SceneStateProvider.State == SceneState.Disposed || sceneFacade.SceneStateProvider.State == SceneState.Disposing)
+                {
+                    UnityEngine.Debug.Log("JUANI WE SHOULDNT BE HERE");
+                    return;
+                }
+
                 //TODO: Wait until LOD is Ready
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
