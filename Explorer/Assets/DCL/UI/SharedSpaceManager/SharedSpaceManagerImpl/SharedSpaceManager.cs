@@ -165,7 +165,7 @@ namespace DCL.UI.SharedSpaceManager
                             await UniTask.WaitUntil(() => !panelInSharedSpace.IsVisibleInSharedSpace, PlayerLoopTiming.Update, cts.Token);
                         }
                         else
-                            IsTransitioning = false;
+                            isTransitioning = false;
 
                         break;
                     }
@@ -192,12 +192,6 @@ namespace DCL.UI.SharedSpaceManager
                 if (!(ex is OperationCanceledException))
                     throw;
             }
-
-            // The panel hided itself
-  //          if(panel == panelBeingShown)
-  //              IsTransitioning = false; // Makes sure the transitioning state is reset (corner cases)
-
-            /*panelHasBeenClosed = false;*/
         }
 
         /// <summary>
@@ -230,7 +224,7 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
-            if (!IsRegistered(panel) || IsTransitioning/* || panelHasBeenClosed*/)
+            if (!IsRegistered(panel) || isTransitioning)
                 return;
 
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
