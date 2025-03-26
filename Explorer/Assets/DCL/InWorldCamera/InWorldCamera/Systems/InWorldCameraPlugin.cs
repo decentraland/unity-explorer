@@ -26,6 +26,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Rendering.GPUInstancing;
+using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -76,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private readonly ViewDependencies viewDependencies;
         private readonly GPUInstancingService gpuInstancingBuffers;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -100,7 +102,8 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             ViewDependencies viewDependencies,
             GPUInstancingService gpuInstancingBuffers,
-            ExposedCameraData exposedCameraData)
+            ExposedCameraData exposedCameraData,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -130,6 +133,7 @@ namespace DCL.PluginSystem.Global
             this.viewDependencies = viewDependencies;
             this.gpuInstancingBuffers = gpuInstancingBuffers;
             this.exposedCameraData = exposedCameraData;
+            this.sharedSpaceManager = sharedSpaceManager;
             factory = new InWorldCameraFactory();
         }
 
@@ -180,7 +184,7 @@ namespace DCL.PluginSystem.Global
                 new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
 
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
             mvcManager.RegisterController(inWorldCameraController);
         }
 
