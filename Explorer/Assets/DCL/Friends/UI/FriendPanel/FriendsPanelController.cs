@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -42,7 +41,6 @@ namespace DCL.Friends.UI.FriendPanel
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public event Action? FriendsPanelOpened;
         public event Action<string>? OnlineFriendClicked;

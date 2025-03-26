@@ -49,7 +49,6 @@ namespace DCL.ExplorePanel
         public CameraReelController CameraReelController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 

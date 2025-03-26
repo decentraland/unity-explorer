@@ -18,6 +18,11 @@ namespace DCL.UI.SharedSpaceManager
     public interface IControllerInSharedSpace<TView, in TInputData> : IController<TView, TInputData>, IPanelInSharedSpace<TInputData> where TView: IView
     {
         /// <summary>
+        ///     <inheritdoc cref="IPanelInSharedSpace{T}.IsVisibleInSharedSpace" />
+        /// </summary>
+        bool IPanelInSharedSpace.IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        /// <summary>
         ///     <inheritdoc cref="IPanelInSharedSpace{T}.OnShownInSharedSpaceAsync" />
         /// </summary>
         UniTask IPanelInSharedSpace<TInputData>.OnShownInSharedSpaceAsync(CancellationToken ct, TInputData parameters)

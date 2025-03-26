@@ -16,8 +16,6 @@ namespace DCL.UI.Skybox
 
         private CancellationTokenSource skyboxMenuCts = new ();
 
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
-
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)

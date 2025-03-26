@@ -136,6 +136,8 @@ namespace DCL.UI.SharedSpaceManager
 
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
+                            await UniTask.WaitUntil(() => !panelInSharedSpace.IsVisibleInSharedSpace, PlayerLoopTiming.Update, cts.Token);
+
                             // If it is transitioning, it's due to another panel was shown and that made Friends hide
                             // In order to not execute 2 code paths at the same time, it waits for new operation to finish and then
                             // continues, showing the chat
@@ -157,9 +159,13 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.SidebarProfile:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                        {
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
+
+                            await UniTask.WaitUntil(() => !panelInSharedSpace.IsVisibleInSharedSpace, PlayerLoopTiming.Update, cts.Token);
+                        }
                         else
-                            isTransitioning = false;
+                            IsTransitioning = false;
 
                         break;
                     }
@@ -167,7 +173,11 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.SidebarSettings:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                        {
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token);
+
+                            await UniTask.WaitUntil(() => !panelInSharedSpace.IsVisibleInSharedSpace, PlayerLoopTiming.Update, cts.Token);
+                        }
                         else
                             isTransitioning = false;
 
@@ -183,10 +193,11 @@ namespace DCL.UI.SharedSpaceManager
                     throw;
             }
 
-            // Arrives here once when the panel stops being shown (they leave WaitForCloseIntentAsync) for whatever reason.
-            // If there is an exit animation or any other process that takes time, it waits for it
-            if(isTransitioning)
-                await UniTask.WaitUntil(() => isTransitioning == false, PlayerLoopTiming.Update, cts.Token);
+            // The panel hided itself
+  //          if(panel == panelBeingShown)
+  //              IsTransitioning = false; // Makes sure the transitioning state is reset (corner cases)
+
+            /*panelHasBeenClosed = false;*/
         }
 
         /// <summary>
@@ -202,7 +213,14 @@ namespace DCL.UI.SharedSpaceManager
             try
             {
                 IPanelInSharedSpace controllerInSharedSpace = registrations[panel].panel;
-                await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
+
+                if (!(controllerInSharedSpace is IController) ||
+                    ((controllerInSharedSpace as IController).State != ControllerState.ViewHiding && (controllerInSharedSpace as IController).State != ControllerState.ViewHidden))
+                {
+                    await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
+
+                    await UniTask.WaitUntil(() => !controllerInSharedSpace.IsVisibleInSharedSpace);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -212,10 +230,10 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
-            if (!IsRegistered(panel))
+            if (!IsRegistered(panel) || IsTransitioning/* || panelHasBeenClosed*/)
                 return;
 
-            bool show = !registrations[panel].GetByParams<TParams>().instance.IsVisibleInSharedSpace;
+            bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
 
             if (show)
                 await ShowAsync(panel, parameters);

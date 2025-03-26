@@ -42,7 +42,6 @@ namespace DCL.UI.Profiles
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 

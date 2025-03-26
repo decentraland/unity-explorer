@@ -51,7 +51,6 @@ namespace DCL.PluginSystem.Global
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
         private readonly string builderContentURL;
-        private readonly MainUIView mainUIView;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
@@ -73,7 +72,6 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             URLDomain assetBundleURL,
-            MainUIView mainUIView,
             ICursor cursor,
             IInputBlock inputBlock,
             Arch.Core.World world,
@@ -94,7 +92,6 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;
-            this.mainUIView = mainUIView;
             this.cursor = cursor;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -154,7 +151,7 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
-                inputBlock, dclInput, mvcManager, cursor, sharedSpaceManager);
+                inputBlock, dclInput, cursor, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 

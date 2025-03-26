@@ -33,7 +33,6 @@ namespace DCL.EmotesWheel
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IInputBlock inputBlock;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
-        private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
@@ -43,7 +42,6 @@ namespace DCL.EmotesWheel
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
@@ -56,7 +54,6 @@ namespace DCL.EmotesWheel
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
             DCLInput dclInput,
-            IMVCManager mvcManager,
             ICursor cursor,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
@@ -70,7 +67,6 @@ namespace DCL.EmotesWheel
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
-            this.mvcManager = mvcManager;
             this.cursor = cursor;
             this.sharedSpaceManager = sharedSpaceManager;
 
@@ -229,6 +225,9 @@ namespace DCL.EmotesWheel
 
         private void PlayEmote(int slot)
         {
+            if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
+                return;
+
             world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
 
             Close();
@@ -236,13 +235,19 @@ namespace DCL.EmotesWheel
 
         private void PlayEmote(InputAction.CallbackContext context)
         {
+            if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
+                return;
+
             string actionName = context.action.name;
             int slot = GetSlotFromInputName(actionName);
             PlayEmote(slot);
         }
 
-        private void OpenBackpack(InputAction.CallbackContext context) =>
-            OpenBackpackAsync();
+        private void OpenBackpack(InputAction.CallbackContext context)
+        {
+            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
+                OpenBackpackAsync();
+        }
 
         private async void OpenBackpackAsync()
         {
@@ -286,8 +291,11 @@ namespace DCL.EmotesWheel
             }
         }
 
-        private void Close(InputAction.CallbackContext context) =>
-            Close();
+        private void Close(InputAction.CallbackContext context)
+        {
+            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
+                Close();
+        }
 
         private void Close() =>
             closeViewTask?.TrySetResult();
