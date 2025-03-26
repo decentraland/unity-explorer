@@ -251,7 +251,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     return;
                 }
 
-                for (var i = 0; i < orderedDataNativeLength; i++)
+                for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
                 {
                     OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
 
@@ -324,33 +324,25 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
-            if (World.Has<SceneLODInfo>(entity) && candidateBy == VisualSceneState.SHOWING_LOD
-                                                && sceneState.VisualSceneState != VisualSceneState.SHOWING_LOD)
-            {
-                sceneState.VisualSceneState = VisualSceneState.SHOWING_LOD;
-                return;
-            }
-
             //No new promise is required
             if (candidateBy == VisualSceneState.UNINITIALIZED
                 || sceneState.VisualSceneState == candidateBy)
                 return;
 
             promisesCreated++;
-
-            //We cannot create more promises on this batch. Should be analyzed next iteration
-            if (promisesCreated > realmPartitionSettings.ScenesRequestBatchSize)
-                return;
-
             sceneState.PromiseCreated = true;
             sceneState.VisualSceneState = candidateBy;
 
             switch (sceneState.VisualSceneState)
             {
                 case VisualSceneState.SHOWING_LOD:
-                    World.Add(entity, SceneLODInfo.Create());
+                    //The SceneLODInfo may still be in the entity, since it remains there until SceneIsReady (Check UnloadSceneLODInfoSystem)
+                    //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
+                    if (!World.Has<SceneLODInfo>(entity))
+                        World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:
+                    //The check is not needed here because the SceneFacade and promise are removed on the same frame that a SceneLODInfo was added
                     World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                         new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
                     break;
