@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Debug
         [None(typeof(StreamableLoadingResult<ISceneFacade>))]
         private void TryAbortLoading(Entity entity, in GetSceneFacadeIntention intention)
         {
-            if (!intention.DefinitionComponent.Parcels.Contains(coords.Value)) return;
+            if (!intention.DefinitionComponent.Contains(coords.Value)) return;
 
             Exception exceptionToReport = abortKind.Value switch
                                           {
