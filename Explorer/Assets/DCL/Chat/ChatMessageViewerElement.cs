@@ -3,6 +3,7 @@ using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.Utilities;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -21,6 +22,8 @@ namespace DCL.Chat
     /// </summary>
     public class ChatMessageViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
     {
+        private const float SCROLL_OVERRIDE_WINDOWS = 0.15f;
+        private const float SCROLL_OVERRIDE_MAC_OS = 0.45f;
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
         public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
@@ -63,6 +66,9 @@ namespace DCL.Chat
 
         [SerializeField]
         private LoopListView2 loopList;
+
+        [SerializeField]
+        private ScrollRect scrollRect;
 
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
@@ -119,6 +125,7 @@ namespace DCL.Chat
         {
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            scrollRect.SetScrollSensitivityBasedOnPlatform(SCROLL_OVERRIDE_WINDOWS, SCROLL_OVERRIDE_MAC_OS);
         }
 
         /// <summary>
