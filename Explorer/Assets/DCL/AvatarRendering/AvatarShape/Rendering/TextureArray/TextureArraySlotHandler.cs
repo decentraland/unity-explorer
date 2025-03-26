@@ -19,6 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.minArraySize = minArraySize;
             this.resolution = resolution;
             this.textureFormat = textureFormat;
+            this.domain = domain;
 
             arrays = new List<Texture2DArray>(initialCapacity);
             arrays.Add(CreateTexture2DArray());
