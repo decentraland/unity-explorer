@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using Sentry;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -19,6 +20,8 @@ namespace Utility
             {
                 isQuitting = true;
                 Application.quitting -= SetQuitting;
+                Debug.Log("Application is quitting");
+                SentrySdk.AddBreadcrumb("Application is quitting");
             }
 
             Application.quitting += SetQuitting;
