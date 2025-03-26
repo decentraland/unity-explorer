@@ -21,48 +21,40 @@ namespace DCL.SDKComponents.Tween.Components
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds)
         {
+            ITweener tweener;
+
             switch (pbTween.ModeCase)
             {
                 case PBTween.ModeOneofCase.Move:
-                    return GetVector3Tweener(pbTween.Move.Start, pbTween.Move.End, durationInSeconds);
+                    tweener = vector3TweenerPool.Get();
+                    ((ICustomTweener<Vector3>)tweener).Initialize(pbTween.Move.Start, pbTween.Move.End, durationInSeconds);
+                    break;
                 case PBTween.ModeOneofCase.Rotate:
+                    tweener = quaternionTweenerPool.Get();
+
                     // These conversions are needed because the Decentraland.Common.Quaternion type from the protobuf file
                     // is not directly compatible with the UnityEngine.Quaternion
                     Quaternion start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
                     Quaternion end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
-                    return GetQuaternionTweener(start, end, durationInSeconds);
+                    ((ICustomTweener<Quaternion>)tweener).Initialize(start, end, durationInSeconds);
+                    break;
                 case PBTween.ModeOneofCase.Scale:
-                    return GetVector3Tweener(pbTween.Scale.Start, pbTween.Scale.End, durationInSeconds);
+                    tweener = vector3TweenerPool.Get();
+                    ((ICustomTweener<Vector3>)tweener).Initialize(pbTween.Scale.Start, pbTween.Scale.End, durationInSeconds);
+                    break;
                 case PBTween.ModeOneofCase.TextureMove:
-                    return GetVector2Tweener(pbTween.TextureMove.Start, pbTween.TextureMove.End, durationInSeconds);
+                    tweener = vector2TweenerPool.Get();
+                    ((ICustomTweener<Vector2>)tweener).Initialize(pbTween.TextureMove.Start, pbTween.TextureMove.End, durationInSeconds);
+                    break;
                 case PBTween.ModeOneofCase.None:
                 default:
                     throw new ArgumentException($"No Tweener defined for tween mode: {pbTween.ModeCase}");
             }
-        }
 
-        private Vector3Tweener GetVector3Tweener(Vector3 start, Vector3 end, float durationInSeconds)
-        {
-            Vector3Tweener tweener = vector3TweenerPool.Get();
-            tweener.Initialize(start, end, durationInSeconds);
             return tweener;
         }
 
-        private QuaternionTweener GetQuaternionTweener(Quaternion start, Quaternion end, float durationInSeconds)
-        {
-            QuaternionTweener tweener = quaternionTweenerPool.Get();
-            tweener.Initialize(start, end, durationInSeconds);
-            return tweener;
-        }
-
-        private Vector2Tweener GetVector2Tweener(Vector2 start, Vector2 end, float durationInSeconds)
-        {
-            Vector2Tweener tweener = vector2TweenerPool.Get();
-            tweener.Initialize(start, end, durationInSeconds);
-            return tweener;
-        }
-
-        public void ReleaseCustomTweenerFrom(SDKTweenComponent sdkTweenComponent)
+        public void Return(SDKTweenComponent sdkTweenComponent)
         {
             if (sdkTweenComponent.CustomTweener == null)
                 return;
@@ -79,8 +71,6 @@ namespace DCL.SDKComponents.Tween.Components
                     quaternionTweenerPool.Release(quaternionTweener);
                     break;
             }
-
-            sdkTweenComponent.CustomTweener = null;
         }
     }
 }

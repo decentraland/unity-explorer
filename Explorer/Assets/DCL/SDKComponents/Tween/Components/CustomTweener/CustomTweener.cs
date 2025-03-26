@@ -19,7 +19,6 @@ namespace DCL.SDKComponents.Tween.Components
             core?.Kill();
             finished = false;
             core = CreateTweener(startValue, endValue, durationInSeconds);
-            core.OnComplete(OnTweenComplete);
         }
 
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
@@ -44,12 +43,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            core.SetEase(ease).SetAutoKill(false).Goto(tweenModelCurrentTime, isPlaying);
-        }
-        
-        private void OnTweenComplete()
-        {
-            finished = true;
+            core.SetEase(ease).SetAutoKill(false).OnComplete(() => { finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
         }
     }
 }
