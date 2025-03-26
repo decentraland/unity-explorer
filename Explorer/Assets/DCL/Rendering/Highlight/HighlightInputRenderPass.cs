@@ -100,7 +100,7 @@ namespace DCL.Rendering.Highlight
             {
                 CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName)!;
 
-                using (new ProfilingScope(null!, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(commandBuffer, new ProfilingSampler(profilerTag)))
                 {
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
@@ -153,7 +153,7 @@ namespace DCL.Rendering.Highlight
                     return nOutputTexture;
 
                 CommandBuffer cmd = CommandBufferPool.Get(bufferName)!;
-                using (new ProfilingScope(null!, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                     {
@@ -173,7 +173,7 @@ namespace DCL.Rendering.Highlight
             private void ExecuteCommandCopy(ScriptableRenderContext context, RenderingData renderingData, RTHandle sourceRT, RTHandle destinationRT, string bufferName, string profilerTag)
             {
                 CommandBuffer cmd = CommandBufferPool.Get(bufferName);
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
                     Blit(cmd, sourceRT, destinationRT);
                     context.ExecuteCommandBuffer(cmd);
