@@ -51,6 +51,7 @@ namespace DCL.Rendering.Highlight
             {
                 m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
                 m_HighLightRenderers = highLightRenderers;
+                m_ProfilingSamplers = new Dictionary<string, ProfilingSampler>();
             }
 
             public void Setup(Material _highLightInputMaterial,
