@@ -24,6 +24,7 @@ namespace CrdtEcsBridge.Components.Transform
         public CRDTEntity ParentId = 0;
         public Vector3 Scale = Vector3.one;
         public bool IsDirty { get; set; }
+        public bool DelayDirtyReset { get; set; }
 
         public MessageDescriptor Descriptor => throw new NotSupportedException($"{nameof(Descriptor)} is not supported for {nameof(SDKTransform)}");
 

@@ -44,5 +44,6 @@ namespace DCL.Multiplayer.SDK.Components
         public bool AssignedToScene => SceneFacade != null;
 
         public bool IsDirty { get; set; }
+        public bool DelayDirtyReset { get; set; }
     }
 }
