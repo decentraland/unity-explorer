@@ -123,7 +123,7 @@ namespace DCL.Chat
         {
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
-            scrollRect.SetScrollSensitivityBasedOnPlatform();
+            scrollRect.SetScrollSensitivityBasedOnPlatform(0.15f, 0.45f);
         }
 
         /// <summary>
