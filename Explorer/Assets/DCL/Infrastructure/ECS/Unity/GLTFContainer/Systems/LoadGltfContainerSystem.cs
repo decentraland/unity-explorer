@@ -23,7 +23,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     ///     Starts GltfContainerAsset loading initially or upon the SDK Component change
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
-    [ThrottlingEnabled]
+    // [ThrottlingEnabled]
     public partial class LoadGltfContainerSystem : BaseUnityLoopSystem
     {
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
@@ -95,7 +95,11 @@ namespace ECS.Unity.GLTFContainer.Systems
                     }
 
                     eventsBuffer.Add(entity, component);
-                    return;
+                    break;
+
+                case LoadingState.Loading:
+                    sdkComponent.DelayDirtyReset = true;
+                    break;
 
                 // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here
                 // Do nothing if finished with error
@@ -103,7 +107,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     Assert.IsTrue(component.Promise.Result.HasValue);
 
                     // if promise was unsuccessful nothing to do
-                    StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result.Value;
+                    StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result!.Value;
 
                     if (!result.Succeeded)
                         return;
@@ -125,8 +129,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     }
 
                     entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
-
-                    return;
+                    break;
             }
         }
     }
