@@ -327,7 +327,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (World.Has<SceneLODInfo>(entity) && candidateBy == VisualSceneState.SHOWING_LOD
                                                 && sceneState.VisualSceneState != VisualSceneState.SHOWING_LOD)
             {
-                UnityEngine.Debug.Log("JUANI HERE IS A PROBLEM");
                 sceneState.VisualSceneState = VisualSceneState.SHOWING_LOD;
                 return;
             }
@@ -349,8 +348,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             switch (sceneState.VisualSceneState)
             {
                 case VisualSceneState.SHOWING_LOD:
-                    if (World.Has<SceneLODInfo>(entity))
-                        UnityEngine.Debug.Log("JUANI HERE IS A PROBLEM");
                     World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:
