@@ -9,13 +9,15 @@ namespace DCL.SDKComponents.Tween.Components
     {
         public static void UpdateMaterial(this ITweener self, Material material, TextureMovementType movementType)
         {
+            if (self is not Vector2Tweener vector2Tweener) return;
+            
             switch (movementType)
             {
                 case TextureMovementType.TmtOffset:
-                    material.SetTextureOffset(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, ((ICustomTweener<Vector2>)self).CurrentValue);
+                    material.SetTextureOffset(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, vector2Tweener.CurrentValue);
                     break;
                 case TextureMovementType.TmtTiling:
-                    material.SetTextureScale(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, ((ICustomTweener<Vector2>)self).CurrentValue);
+                    material.SetTextureScale(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, vector2Tweener.CurrentValue);
                     break;
             }
         }
@@ -25,13 +27,16 @@ namespace DCL.SDKComponents.Tween.Components
             switch (updateType)
             {
                 case PBTween.ModeOneofCase.Move:
-                    transform.localPosition = ((ICustomTweener<Vector3>)self).CurrentValue;
-                    break;
                 case PBTween.ModeOneofCase.Scale:
-                    transform.localScale = ((ICustomTweener<Vector3>)self).CurrentValue;
+                    if (self is not Vector3Tweener vector3Tweener) return;
+                    if (updateType == PBTween.ModeOneofCase.Move)
+                        transform.localPosition = vector3Tweener.CurrentValue;
+                    else
+                        transform.localScale = vector3Tweener.CurrentValue;
                     break;
                 case PBTween.ModeOneofCase.Rotate:
-                    transform.localRotation = ((ICustomTweener<Quaternion>)self).CurrentValue;
+                    if (self is not QuaternionTweener quaternionTweener) return;
+                    transform.localRotation = quaternionTweener.CurrentValue;
                     break;
             }
         }
@@ -41,13 +46,16 @@ namespace DCL.SDKComponents.Tween.Components
             switch (updateType)
             {
                 case PBTween.ModeOneofCase.Move:
-                    sdkTransform.Position.Value = ((ICustomTweener<Vector3>)self).CurrentValue;
-                    break;
                 case PBTween.ModeOneofCase.Scale:
-                    sdkTransform.Scale = ((ICustomTweener<Vector3>)self).CurrentValue;
+                    if (self is not Vector3Tweener vector3Tweener) return;
+                    if (updateType == PBTween.ModeOneofCase.Move)
+                        sdkTransform.Position.Value = vector3Tweener.CurrentValue;
+                    else
+                        sdkTransform.Scale = vector3Tweener.CurrentValue;
                     break;
                 case PBTween.ModeOneofCase.Rotate:
-                    sdkTransform.Rotation.Value = ((ICustomTweener<Quaternion>)self).CurrentValue;
+                    if (self is not QuaternionTweener quaternionTweener) return;
+                    sdkTransform.Rotation.Value = quaternionTweener.CurrentValue;
                     break;
             }
         }
