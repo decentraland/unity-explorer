@@ -22,6 +22,8 @@ namespace DCL.Chat
     /// </summary>
     public class ChatMessageViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
     {
+        private const float SCROLL_OVERRIDE_WINDOWS = 0.15f;
+        private const float SCROLL_OVERRIDE_MAC_OS = 0.45f;
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
         public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
@@ -123,7 +125,7 @@ namespace DCL.Chat
         {
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
-            scrollRect.SetScrollSensitivityBasedOnPlatform(0.15f, 0.45f);
+            scrollRect.SetScrollSensitivityBasedOnPlatform(SCROLL_OVERRIDE_WINDOWS, SCROLL_OVERRIDE_MAC_OS);
         }
 
         /// <summary>
