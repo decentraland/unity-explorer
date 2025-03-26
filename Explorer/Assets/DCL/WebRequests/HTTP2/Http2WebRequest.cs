@@ -29,6 +29,10 @@ namespace DCL.WebRequests.HTTP2
         public void Dispose()
         {
             // TODO
+            // var response = httpRequest.Response;
+            //
+            // if (response is {DownStream: {IsDetached: true}})
+            //     response.Dispose();
         }
 
         public void SetRequestHeader(string name, string value)

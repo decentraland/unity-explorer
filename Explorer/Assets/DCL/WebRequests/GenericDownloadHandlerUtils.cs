@@ -45,7 +45,9 @@ namespace DCL.WebRequests
             CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
             JsonSerializerSettings? serializerSettings = null)
         {
-            string text = (await request.SendAsync(ct)).Response.Text;
+            using IWebRequest? rqs = await request.SendAsync(ct);
+
+            string text = rqs.Response.Text;
 
             await SwitchToThreadAsync(threadFlags);
 
@@ -76,6 +78,14 @@ namespace DCL.WebRequests
             }
             finally { await SwitchToMainThreadAsync(threadFlags); }
         }
+
+        public static UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
+            this ITypedWebRequest request,
+            CancellationToken ct,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
+            JsonSerializerSettings? serializerSettings = null) =>
+            request.CreateFromJson<T>(WRJsonParser.Newtonsoft, ct, threadFlags, serializerSettings, createCustomExceptionOnFailure);
 
         public static async UniTask<T> CreateFromJson<T>(this ITypedWebRequest request,
             WRJsonParser jsonParser,
@@ -129,16 +139,16 @@ namespace DCL.WebRequests
         }
 
         /// <summary>
-        ///     Executes the web request and does nothing with the result
+        ///     Executes the web request and does nothing with the result <br/>
+        /// On Exception: Throws a new exception created by the provided factory method
         /// </summary>
-        public async UniTask<WebRequestUtils.NoOp<TRequest>> WithCustomExceptionAsync(Func<UnityWebRequestException, Exception> newExceptionFactoryMethod)
+        public static async UniTask WithCustomExceptionAsync(this ITypedWebRequest webRequest, Func<WebRequestException, Exception> newExceptionFactoryMethod, CancellationToken ct)
         {
             try
             {
-                await SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
-                return new WebRequestUtils.NoOp<TRequest>();
+                await webRequest.SendAsync(ct);
             }
-            catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
+            catch (WebRequestException e) { throw newExceptionFactoryMethod(e); }
         }
     }
 }

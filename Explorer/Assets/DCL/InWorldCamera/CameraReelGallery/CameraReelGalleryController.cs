@@ -11,6 +11,7 @@ using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.WebRequests;
 using DG.Tweening;
 using MVC;
 using System;
@@ -195,7 +196,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     response.isPublic = isPublic;
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
                 }
-                catch (UnityWebRequestException e)
+                catch (WebRequestException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
@@ -280,7 +281,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
             }
-            catch (UnityWebRequestException e)
+            catch (WebRequestException e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
 

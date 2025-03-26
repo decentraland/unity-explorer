@@ -1,4 +1,5 @@
 ﻿using Best.HTTP;
+using DCL.Diagnostics;
 using System;
 using UnityEngine.Networking;
 
@@ -31,5 +32,15 @@ namespace DCL.WebRequests
         }
 
         protected virtual void OnDispose() { }
+
+        public override string ToString() =>
+            $"{GetType().Name}\nArgs: {Args.ToString()}\n{Envelope.CommonArguments.URL}";
+
+        ~TypedWebRequestBase()
+        {
+            ReportHub.LogError(new ReportData(ReportCategory.GENERIC_WEB_REQUEST, ReportHint.SessionStatic), $"${this} was not disposed properly. It may lead to leaks and crashes");
+
+            Dispose();
+        }
     }
 }

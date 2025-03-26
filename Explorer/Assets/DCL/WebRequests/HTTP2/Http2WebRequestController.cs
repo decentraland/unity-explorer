@@ -25,7 +25,6 @@ namespace DCL.WebRequests.HTTP2
 
             RequestEnvelope envelope = requestWrap.Envelope;
 
-            // TODO proper disposal
             using ITypedWebRequest _ = requestWrap;
             HTTPRequest nativeRequest = requestWrap.CreateHttp2Request();
 

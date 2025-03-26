@@ -7,5 +7,3 @@ namespace DCL.WebRequests.RequestsHub
             where TWebRequest: ITypedWebRequest<TArgs>;
     }
 }
-
-__

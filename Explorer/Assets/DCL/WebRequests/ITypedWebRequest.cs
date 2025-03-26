@@ -4,6 +4,9 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
+    /// <summary>
+    ///     Defines a set of parameters from which a request can be created
+    /// </summary>
     public interface ITypedWebRequest : IDisposable
     {
         /// <summary>
@@ -13,7 +16,7 @@ namespace DCL.WebRequests
         IWebRequestController Controller { get; set; }
 
         /// <summary>
-        /// Parameters associated with a request
+        ///     Parameters associated with a request
         /// </summary>
         RequestEnvelope Envelope { get; }
 

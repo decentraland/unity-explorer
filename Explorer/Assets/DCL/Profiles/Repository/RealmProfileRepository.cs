@@ -101,9 +101,10 @@ namespace DCL.Profiles
             try
             {
                 URLAddress url = Url(id, fromCatalyst);
-                GenericGetRequest response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+                GenericGetRequest response = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
+                    ct,
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
                     serializerSettings: SERIALIZER_SETTINGS);
 
@@ -125,7 +126,7 @@ namespace DCL.Profiles
 
                 return profile;
             }
-            catch (UnityWebRequestException e)
+            catch (WebRequestException e)
             {
                 if (e.ResponseCode == WebRequestUtils.NOT_FOUND)
                     return null;

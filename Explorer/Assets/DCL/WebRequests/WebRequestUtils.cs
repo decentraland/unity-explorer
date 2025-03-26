@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 
 namespace DCL.WebRequests
 {
@@ -16,6 +17,35 @@ namespace DCL.WebRequests
         public const int BAD_REQUEST = 400;
         public const int FORBIDDEN_ACCESS = 403;
         public const int NOT_FOUND = 404;
+
+        public static UniTask<TResult?> SuppressAnyExceptionWithFallback<TResult>(this UniTask<TResult?> coreOp,
+            TResult fallbackValue, ReportData? reportData = null) =>
+            coreOp.SuppressExceptionWithFallbackAsync(fallbackValue, SuppressExceptionWithFallback.Behaviour.SuppressAnyException, reportData);
+
+        public static async UniTask<TResult?> SuppressExceptionWithFallbackAsync<TResult>(this UniTask<TResult?> coreOp,
+            TResult fallbackValue,
+            SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default,
+            ReportData? reportData = null)
+        {
+            try { return await coreOp; }
+            catch (WebRequestException e)
+            {
+                ReportException(e);
+                return fallbackValue;
+            }
+            catch (OperationCanceledException) when (EnumUtils.HasFlag(behaviour, SuppressExceptionWithFallback.Behaviour.SuppressCancellation)) { return fallbackValue; }
+            catch (Exception e) when (EnumUtils.HasFlag(behaviour, SuppressExceptionWithFallback.Behaviour.SuppressAnyException))
+            {
+                ReportException(e);
+                return fallbackValue;
+            }
+
+            void ReportException(Exception e)
+            {
+                if (reportData != null)
+                    ReportHub.LogException(e, reportData.Value);
+            }
+        }
 
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
             new (coreOp, fallbackValue, behaviour, reportContext);

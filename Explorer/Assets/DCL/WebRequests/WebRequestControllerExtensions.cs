@@ -63,67 +63,43 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
         ) =>
-            new (new RequestEnvelope<GenericGetArguments>(commonArguments, new GenericGetArguments(), reportData, headersInfo, signInfo, ignoreErrorCodes), controller);
+            new (new RequestEnvelope(commonArguments, reportData, headersInfo, signInfo, ignoreErrorCodes), new GenericGetArguments(), controller);
 
-        public static UniTask<PartialDownloadedData> GetPartialAsync(
+        public static GenericPostRequest PostAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            CancellationToken ct,
-            ReportData reportData,
-            ArrayPool<byte> buffersPool,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
-        )
-        {
-            PartialDownloadHandler handler = new PartialDownloadHandler(PARTIAL_DOWNLOAD_BUFFER, buffersPool);
-            return controller.SendAsync<PartialDownloadRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadedData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
-        }
-
-        public static UniTask<TResult> PostAsync<TOp, TResult>(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            TOp webRequestOp,
-            GenericPostArguments arguments,
-            CancellationToken ct,
+            GenericUploadArguments arguments,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPostRequest, TResult> =>
-            controller.SendAsync<GenericPostRequest, GenericPostArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) =>
+            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
 
-        public static UniTask<TResult> PutAsync<TOp, TResult>(
+        public static GenericPutRequest PutAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            TOp webRequestOp,
-            GenericPutArguments arguments,
-            CancellationToken ct,
+            GenericUploadArguments arguments,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPutRequest, TResult> =>
-            controller.SendAsync<GenericPutRequest, GenericPutArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) =>
+            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
 
-        public static UniTask<TResult> DeleteAsync<TOp, TResult>(
+        public static GenericDeleteRequest DeleteAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            TOp webRequestOp,
-            GenericDeleteArguments arguments,
-            CancellationToken ct,
+            GenericUploadArguments arguments,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null
-        ) where TOp: struct, IWebRequestOp<GenericDeleteRequest, TResult> =>
-            controller.SendAsync<GenericDeleteRequest, GenericDeleteArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) =>
+            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
 
-        public static UniTask<TResult> PatchAsync<TOp, TResult>(
+        public static GenericPatchRequest PatchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            TOp webRequestOp,
-            GenericPatchArguments arguments,
-            CancellationToken ct,
+            GenericUploadArguments arguments,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPatchRequest, TResult> =>
-            controller.SendAsync<GenericPatchRequest, GenericPatchArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) =>
+            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
 
         public static UniTask<TResult> HeadAsync<TOp, TResult>(
             this IWebRequestController controller,
@@ -141,7 +117,7 @@ namespace DCL.WebRequests
             await UniTask.SwitchToMainThread();
 
             try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
-            catch (UnityWebRequestException unityWebRequestException)
+            catch (WebRequestException unityWebRequestException)
             {
                 // Endpoint was unreacheable
                 if (unityWebRequestException.Result == UnityWebRequest.Result.ConnectionError)

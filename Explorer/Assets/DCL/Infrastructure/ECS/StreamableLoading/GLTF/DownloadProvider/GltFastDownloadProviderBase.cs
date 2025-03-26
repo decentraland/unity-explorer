@@ -60,7 +60,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
             try
             {
-                downloadHandler = await webRequestController.GetAsync(commonArguments, new CancellationToken(), reportData).ExposeDownloadHandlerAsync();
+                downloadHandler = await webRequestController.GetAsync(commonArguments, reportData).ExposeDownloadHandlerAsync();
                 data = downloadHandler.data;
 
                 if (!GltfValidator.IsGltfBinaryFormat(downloadHandler.nativeData))
@@ -68,7 +68,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
                 error = downloadHandler.error;
             }
-            catch (UnityWebRequestException e)
+            catch (WebRequestException e)
             {
                 error = GetErrorMessage(downloadUri, e);
             }
@@ -105,7 +105,8 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         }
 
         protected abstract Uri GetDownloadUri(Uri uri);
-        protected abstract string GetErrorMessage(Uri downloadUri, UnityWebRequestException e);
+
+        protected abstract string GetErrorMessage(Uri downloadUri, WebRequestException e);
         protected abstract bool ShouldReleaseBudget(Uri uri);
         protected abstract string GetTextureErrorMessage(Promise promiseResult);
     }

@@ -37,10 +37,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 ReportHub.Log(reportData, $"Starting loading {intention}\nfrom source {intention.CommonArguments.CurrentSource}\n{partition}, attempts left: {attemptCount}");
 
                 try { return await flow(intention, state, partition, ct); }
-                catch (UnityWebRequestException unityWebRequestException)
+                catch (WebRequestException unityWebRequestException)
                 {
-                    // we can't access web request here as it is disposed already
-
                     // Decide if we can repeat or not
                     --attemptCount;
 

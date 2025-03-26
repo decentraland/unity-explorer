@@ -26,8 +26,12 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Executes the <see cref="requestWrap" />, waits for the whole data received, and disposes of it
         ///     <remarks>
-        ///         It will never finish for streaming requests. <br />
-        ///         Once launched it won't be possible to abort it outside the <see cref="ct" /> (e.g. gracefully).
+        ///         <list type="bullet">
+        ///             <item> It will never finish for streaming requests. </item>
+        ///             <item> Once launched it won't be possible to abort it outside the <see cref="ct" /> (e.g. gracefully) </item>
+        ///             <item> <see cref="requestWrap" /> will be disposed by the end of execution </item>
+        ///             <item> It is responsibility of the consumer to dispose of the return value</item>
+        ///         </list>
         ///     </remarks>
         /// </summary>
         UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct);

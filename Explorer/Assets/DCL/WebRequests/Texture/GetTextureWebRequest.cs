@@ -33,7 +33,7 @@ namespace DCL.WebRequests
         /// </summary>
         public async UniTask<IOwnedTexture2D?> CreateTextureAsync(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point, CancellationToken ct = default)
         {
-            using IWebRequest? wr = await Controller.SendAsync(Envelope, ct);
+            using IWebRequest? wr = await this.SendAsync(ct);
 
             // For simplicity simply switch
 
