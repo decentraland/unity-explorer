@@ -24,6 +24,8 @@ namespace DCL.Rendering.Highlight
             private const string PROFILER_TAG_ADDITIVE = "Custom Pass: Highlight Additive";
             private const string PROFILER_TAG_SUBTRACTIVE = "Custom Pass: Highlight Subtractive";
             private const string PROFILER_TAG_BLUR = "Custom Pass: Highlight Blur";
+            private const string PROFILER_TAG_SECOND_COPY = "Custom Pass: Highlight Blur Second Copy";
+            private const string PROFILER_TAG_FIRST_COPY = "Custom Pass: Highlight Blur First Copy";
 
             //private RTHandle destinationHandle;
             private readonly ShaderTagId m_ShaderTagId = new ("Highlight");
@@ -40,6 +42,8 @@ namespace DCL.Rendering.Highlight
             private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
 
             private readonly IReadOnlyDictionary<Renderer, HighlightSettings> m_HighLightRenderers;
+
+            private Dictionary<string, ProfilingSampler> m_ProfilingSamplers;
 
             private FilteringSettings m_FilteringSettings;
 
@@ -87,14 +91,16 @@ namespace DCL.Rendering.Highlight
 
                 ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", PROFILER_TAG_ADDITIVE);
 
-                ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", "firstCopy");
+                ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", GetSampler(PROFILER_TAG_FIRST_COPY));
                 uint nBlurCount = 4;
-                int nBlurRT = ExecuteCommandBlur(context, renderingData, nBlurCount, "_HighlightInputPass_Blur", PROFILER_TAG_BLUR);
+                int nBlurRT = ExecuteCommandBlur(context, renderingData, nBlurCount, "_HighlightInputPass_Blur", GetSampler(PROFILER_TAG_BLUR));
 
-                ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", "secondCopy");
+                ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", GetSampler(PROFILER_TAG_SECOND_COPY));
 
                 ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", PROFILER_TAG_SUBTRACTIVE);
             }
+
+
 
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
             {
@@ -146,14 +152,14 @@ namespace DCL.Rendering.Highlight
                 }
             }
 
-            private int ExecuteCommandBlur(ScriptableRenderContext context, RenderingData renderingData, uint _nBlurCount, string bufferName, string profilerTag)
+            private int ExecuteCommandBlur(ScriptableRenderContext context, RenderingData renderingData, uint _nBlurCount, string bufferName, ProfilingSampler profilingSampler)
             {
                 int nOutputTexture = -1;
                 if (_nBlurCount == 0)
                     return nOutputTexture;
 
                 CommandBuffer cmd = CommandBufferPool.Get(bufferName)!;
-                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(cmd, profilingSampler))
                 {
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                     {
@@ -170,15 +176,24 @@ namespace DCL.Rendering.Highlight
                 return nOutputTexture;
             }
 
-            private void ExecuteCommandCopy(ScriptableRenderContext context, RenderingData renderingData, RTHandle sourceRT, RTHandle destinationRT, string bufferName, string profilerTag)
+            private void ExecuteCommandCopy(ScriptableRenderContext context, RenderingData renderingData, RTHandle sourceRT, RTHandle destinationRT, string bufferName, ProfilingSampler profilingSampler)
             {
                 CommandBuffer cmd = CommandBufferPool.Get(bufferName);
-                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(cmd, profilingSampler))
                 {
                     Blit(cmd, sourceRT, destinationRT);
                     context.ExecuteCommandBuffer(cmd);
                     CommandBufferPool.Release(cmd);
                 }
+            }
+
+            private ProfilingSampler GetSampler(string bufferName)
+            {
+                ProfilingSampler sampler;
+                if (m_ProfilingSamplers.TryGetValue(bufferName, out sampler)) return sampler;
+                sampler = new ProfilingSampler(bufferName);
+                m_ProfilingSamplers.Add(bufferName, sampler);
+                return sampler;
             }
 
             public override void FrameCleanup(CommandBuffer cmd) { }
