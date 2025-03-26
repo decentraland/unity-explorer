@@ -105,6 +105,8 @@ namespace MVC
 
             OnViewClose();
 
+            await viewInstance.HideAsync(ct);
+
             State = ControllerState.ViewHidden;
         }
 
