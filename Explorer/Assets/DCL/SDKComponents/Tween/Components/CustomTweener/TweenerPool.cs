@@ -8,16 +8,9 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public class TweenerPool
     {
-        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool;
-        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool;
-        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool;
-
-        public TweenerPool()
-        {
-            vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
-            quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
-            vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
-        }
+        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
+        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
+        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds)
         {

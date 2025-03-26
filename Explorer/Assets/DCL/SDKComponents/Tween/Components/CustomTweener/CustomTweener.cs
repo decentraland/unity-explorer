@@ -8,18 +8,24 @@ namespace DCL.SDKComponents.Tween.Components
         where T: struct
         where TU: struct, IPlugOptions
     {
+        private readonly TweenCallback onCompleteCallback;
+
         private bool finished;
         private TweenerCore<T, T, TU> core;
         private ITweener customTweenerImplementation;
 
         public T CurrentValue { get; set; }
 
+        protected CustomTweener()
+        {
+            onCompleteCallback = OnTweenComplete;
+        }
+
         public void Initialize(T startValue, T endValue, float durationInSeconds)
         {
             core?.Kill();
             finished = false;
             core = CreateTweener(startValue, endValue, durationInSeconds);
-            core.OnComplete(OnTweenComplete);
         }
 
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
@@ -44,7 +50,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            core.SetEase(ease).SetAutoKill(false).Goto(tweenModelCurrentTime, isPlaying);
+            core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 
         private void OnTweenComplete()
