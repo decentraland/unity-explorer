@@ -30,6 +30,7 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView>
     {
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+        private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -174,7 +175,7 @@ namespace DCL.Chat
 
             OnFocus();
 
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewWelcomeMessage());
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
