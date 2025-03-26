@@ -13,10 +13,7 @@ namespace DCL.MarketplaceCreditsAPIService
         private const bool IS_SEASON_ENDED = false;
         private const bool ARE_ALL_WEEKLY_GOALS_CLAIMED = false;
 
-        public static string CurrentMockedEmail = "test@test.com";
-        public static bool CurrentMockedEmailConfirmed = true;
-
-        internal static async UniTask<CreditsProgramProgressResponse> MockCreditsProgramProgressAsync(string email, bool isEmailConfirmed, CancellationToken ct)
+        internal static async UniTask<CreditsProgramProgressResponse> MockCreditsProgramProgressAsync(CancellationToken ct)
         {
             int randomDelay = new System.Random().Next(1000, 3000);
             await UniTask.Delay(randomDelay, cancellationToken: ct);
@@ -36,8 +33,8 @@ namespace DCL.MarketplaceCreditsAPIService
                 },
                 user = new UserData
                 {
-                    email = email,
-                    isEmailConfirmed = isEmailConfirmed,
+                    email = "",
+                    isEmailConfirmed = false,
                 },
                 credits = new CreditsData
                 {
@@ -97,9 +94,6 @@ namespace DCL.MarketplaceCreditsAPIService
                 },
             };
 
-            CurrentMockedEmail = email;
-            CurrentMockedEmailConfirmed = isEmailConfirmed;
-
             return programRegistration;
         }
 
@@ -127,29 +121,6 @@ namespace DCL.MarketplaceCreditsAPIService
             };
 
             return responseData;
-        }
-
-        internal static async UniTask MockRemoveRegistrationAsync(CancellationToken ct)
-        {
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            CurrentMockedEmail = string.Empty;
-            CurrentMockedEmailConfirmed = false;
-        }
-
-        internal static async UniTask MockResendVerificationEmailAsync(CancellationToken ct)
-        {
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            MockEmailVerifiedAsync(ct).Forget();
-        }
-
-        private static async UniTask MockEmailVerifiedAsync(CancellationToken ct)
-        {
-            await UniTask.Delay(8000, cancellationToken: ct);
-            CurrentMockedEmailConfirmed = true;
         }
     }
 }

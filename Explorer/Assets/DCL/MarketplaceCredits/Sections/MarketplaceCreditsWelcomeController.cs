@@ -136,8 +136,10 @@ namespace DCL.MarketplaceCredits.Sections
             try
             {
                 view.SetAsLoading(true);
-                var programRegistrationResponse = await marketplaceCreditsAPIClient.RegisterInTheProgramAsync(walletId, email, ct);
-                RedirectToSection(programRegistrationResponse);
+                await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
+                currentCreditsProgramProgress.user.email = email;
+                currentCreditsProgramProgress.user.isEmailConfirmed = false;
+                RedirectToSection(currentCreditsProgramProgress);
                 view.SetAsLoading(false);
                 marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
             }

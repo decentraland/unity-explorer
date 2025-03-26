@@ -18,6 +18,7 @@ namespace DCL.MarketplaceCredits.Sections
         private CancellationTokenSource checkEmailVerificationCts;
         private CancellationTokenSource updateEmailCts;
         private CancellationTokenSource resendVerificationEmailCts;
+        private string currentEmail;
 
         public MarketplaceCreditsVerifyEmailController(
             MarketplaceCreditsVerifyEmailView view,
@@ -50,8 +51,11 @@ namespace DCL.MarketplaceCredits.Sections
             view.gameObject.SetActive(false);
         }
 
-        public void Setup(string email) =>
+        public void Setup(string email)
+        {
             view.SetEmailToVerify(email);
+            currentEmail = email;
+        }
 
         public void Dispose()
         {
@@ -107,7 +111,8 @@ namespace DCL.MarketplaceCredits.Sections
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
-                    await marketplaceCreditsAPIClient.RemoveRegistrationAsync(ownProfile.UserId, ct);
+                    // Removes email subscription
+                    await marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, ct);
                     marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WELCOME);
                 }
 
@@ -136,7 +141,8 @@ namespace DCL.MarketplaceCredits.Sections
 
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
-                    await marketplaceCreditsAPIClient.ResendVerificationEmailAsync(ownProfile.UserId, ct);
+                    // Reset the email subscription
+                    await marketplaceCreditsAPIClient.SubscribeEmailAsync(currentEmail, ct);
 
                 view.SetAsLoading(false);
             }

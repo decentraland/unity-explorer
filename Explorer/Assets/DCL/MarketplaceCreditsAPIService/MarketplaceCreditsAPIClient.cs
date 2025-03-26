@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCreditsAPIService
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.MarketplaceCredits);
+        private string emailSubscriptionsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.EmailSubscriptions);
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -28,10 +29,15 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
-            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
+            CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
 
-            CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(MarketplaceCreditsMockedData.CurrentMockedEmail, MarketplaceCreditsMockedData.CurrentMockedEmailConfirmed, ct);
+            //CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(ct);
+
+            // TODO (Santi): Remove this! This check should be done directly by the progress endpoint
+            EmailSubscriptionInfoResponse emailSubscriptionInfoResponse = await GetEmailSubscriptionInfoAsync(ct);
+            creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionInfoResponse.unconfirmedEmail) ? emailSubscriptionInfoResponse.unconfirmedEmail : emailSubscriptionInfoResponse.email;
+            creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionInfoResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionInfoResponse.email);
 
             return creditsProgramProgressResponse;
         }
@@ -71,36 +77,23 @@ namespace DCL.MarketplaceCreditsAPIService
             return claimCreditsResponseData;
         }
 
-        public async UniTask<CreditsProgramProgressResponse> RegisterInTheProgramAsync(string walletId, string email, CancellationToken ct)
+        public async UniTask SubscribeEmailAsync(string email, CancellationToken ct)
         {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/registration/{email}";
+            var url = $"{emailSubscriptionsBaseUrl}/set-email";
 
-            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
-            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
-
-            CreditsProgramProgressResponse programRegistrationResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(email, false, ct);
-
-            return programRegistrationResponse;
+            await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson("{\"email\":\"" + email + "\"}"), string.Empty, ct)
+                                      .WithNoOpAsync();
         }
 
-        public async UniTask RemoveRegistrationAsync(string walletId, CancellationToken ct)
+        // TODO (Santi): Remove this! This check should be done directly by the progress endpoint
+        private async UniTask<EmailSubscriptionInfoResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)
         {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/removeRegistration";
+            var url = $"{emailSubscriptionsBaseUrl}/subscription";
 
-            // await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
-            //                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
+            EmailSubscriptionInfoResponse emailSubscriptionInfoResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                                    .CreateFromJson<EmailSubscriptionInfoResponse>(WRJsonParser.Newtonsoft);
 
-            await MarketplaceCreditsMockedData.MockRemoveRegistrationAsync(ct);
-        }
-
-        public async UniTask ResendVerificationEmailAsync(string walletId, CancellationToken ct)
-        {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/resendVerificationEmail";
-
-            // await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
-            //                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
-
-            await MarketplaceCreditsMockedData.MockResendVerificationEmailAsync(ct);
+            return emailSubscriptionInfoResponse;
         }
     }
 }

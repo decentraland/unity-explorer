@@ -4,6 +4,7 @@ using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -29,6 +30,7 @@ namespace DCL.UI.Sidebar
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
@@ -53,6 +55,7 @@ namespace DCL.UI.Sidebar
             INotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
@@ -74,6 +77,7 @@ namespace DCL.UI.Sidebar
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
@@ -174,6 +178,7 @@ namespace DCL.UI.Sidebar
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
 
+            // TODO (Santi): Remove this!!
             TestMarketplaceCreditsNotificationAsync(CancellationToken.None).Forget();
         }
 
@@ -181,6 +186,9 @@ namespace DCL.UI.Sidebar
         {
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
             sidebarActionsBus.OpenWidget();
+
+            // TODO (Santi): Remove this!!
+            marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, CancellationToken.None).Forget();
         }
 
         private void OnAutoHideToggleChanged(bool value)
