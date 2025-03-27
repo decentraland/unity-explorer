@@ -99,6 +99,12 @@ namespace DCL.Nametags
 
 
         public float NameTagAlpha { private set; get; }
+
+        /// <summary>
+        /// This value represents the last calculated Sqr Distance to the camera,
+        /// we use this to avoid recalculating transparency and scale when distance hasnt changed.
+        /// </summary>
+        public float LastSqrDistance { get; set; } = 0f;
         public string Id { set; get; } = string.Empty;
 
         private void Awake()

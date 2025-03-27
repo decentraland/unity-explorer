@@ -16,13 +16,10 @@ using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.UI.Profiles.Helpers;
-using ECS.Unity.Transforms.Components;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
-using Unity.Burst;
 using Unity.Mathematics;
-using Unity.Collections;
 
 // #if UNITY_EDITOR
 // using Utility.Editor;
@@ -33,18 +30,11 @@ namespace DCL.Nametags
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     [LogCategory(ReportCategory.AVATAR)]
-    [BurstCompile]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
         private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
         private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
         private const float NAMETAG_MAX_HEIGHT = 4f;
-        private const float FOV_HALF_RAD = 0.5f * Mathf.Deg2Rad;
-
-        // Cache vectors to avoid allocations
-        private static readonly Vector3 Forward = Vector3.forward;
-        private static readonly Vector3 Up = Vector3.up;
-        private static readonly Vector3 HeightOffset = new(0f, NAMETAG_MAX_HEIGHT, 0f);
 
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly NametagsData nametagsData;
@@ -81,9 +71,9 @@ namespace DCL.Nametags
 
             var camera = playerCamera.GetCameraComponent(World);
 
-            float fovScaleFactor = Mathf.Tan(camera.Camera.fieldOfView * FOV_HALF_RAD) * NAMETAG_SCALE_MULTIPLIER;
-            var cameraForward = camera.Camera.transform.rotation * Forward;
-            var cameraUp = camera.Camera.transform.rotation * Up;
+            float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(camera.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
+            NametagMathHelper.CalculateCameraForward(camera.Camera.transform.rotation, out float3 cameraForward);
+            NametagMathHelper.CalculateCameraUp(camera.Camera.transform.rotation, out float3 cameraUp);
 
             EnableTagQuery(World);
             UpdateTagQuery(World, camera, fovScaleFactor, cameraForward, cameraUp);
@@ -95,30 +85,30 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(NametagView), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in Vector3 cameraForward, [Data] in Vector3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
-                IsOutOfRenderRange(camera, characterTransform))
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr))
                 return;
 
             var nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true, profile);
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
         [Query]
         [None(typeof(NametagView), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in Vector3 cameraForward, [Data] in Vector3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind ||
-                IsOutOfRenderRange(camera, characterTransform) ||
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr) ||
                 string.IsNullOrEmpty(avatarShape.Name))
                 return;
 
             var nametagView = CreateNameTagView(in avatarShape, true, false);
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
@@ -133,7 +123,7 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(PBAvatarShape))]
-        private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in Vector3 cameraForward, [Data] in Vector3 cameraUp, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
+        private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
             if (nametagView.Id == avatarShape.ID)
                 return;
@@ -142,8 +132,8 @@ namespace DCL.Nametags
             nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true, profile.UserNameColor);
             nametagView.gameObject.name = avatarShape.ID;
 
-            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position, fovScaleFactor);
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
+            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
         }
 
         [Query]
@@ -161,10 +151,10 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in Vector3 cameraForward, [Data] in Vector3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind ||
-                IsOutOfRenderRange(camera, characterTransform) ||
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr) ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
             {
                 nametagViewPool.Release(nametagView);
@@ -178,36 +168,29 @@ namespace DCL.Nametags
 //            avatarBounds.DrawInEditor(Color.red);
 //#endif
 
-            var position = characterTransform.Position;
-            position.y += Mathf.Min(avatarSkinningComponent.LocalBounds.max.y, NAMETAG_MAX_HEIGHT);
+            NametagMathHelper.CalculateTagPosition(characterTransform.Position, NAMETAG_MAX_HEIGHT, avatarSkinningComponent.LocalBounds.max.y, out float3 position);
 
-            UpdateTagPosition(nametagView, camera.Camera, position, cameraForward, cameraUp);
-            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position, fovScaleFactor);
+            UpdateTagPosition(nametagView, position, cameraForward, cameraUp);
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [BurstCompile]
-        private void UpdateTagPosition(NametagView view, Camera camera, Vector3 newPosition, Vector3 cameraForward, Vector3 cameraUp)
+        private void UpdateTagPosition(NametagView view, float3 newPosition, float3 cameraForward, float3 cameraUp)
         {
-            view.transform.position = newPosition;
-            view.transform.LookAt(view.transform.position + cameraForward, cameraUp);
+            var transform = view.transform;
+            transform.position = newPosition;
+            transform.LookAt(newPosition + cameraForward, cameraUp);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [BurstCompile]
-        private void UpdateTagTransparencyAndScale(NametagView view, Camera camera, Vector3 characterPosition, float fovScaleFactor)
+        private void UpdateTagTransparencyAndScale(NametagView view, float3 cameraPosition, float3 characterPosition, float fovScaleFactor)
         {
-            distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
-            view.gameObject.transform.localScale = Vector3.one * (fovScaleFactor * distanceFromCamera);
-            view.SetTransparency(distanceFromCamera, maxDistance);
-        }
+            if (!NametagMathHelper.HasDistanceChanged(cameraPosition, characterPosition, view.LastSqrDistance))
+                return;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [BurstCompile]
-        private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform)
-        {
-            float sqrDistance = (camera.Camera.transform.position - characterTransform.Position).sqrMagnitude;
-            return sqrDistance > maxDistanceSqr;
+            NametagMathHelper.CalculateDistance(cameraPosition, characterPosition, out float distance, out float sqrDistance);
+            view.LastSqrDistance = sqrDistance;
+            NametagMathHelper.CalculateTagScale(distance, fovScaleFactor, out float3 scale);
+            view.gameObject.transform.localScale = scale;
+            view.SetTransparency(distance, maxDistance);
         }
 
         private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon, Profile? profile = null)
