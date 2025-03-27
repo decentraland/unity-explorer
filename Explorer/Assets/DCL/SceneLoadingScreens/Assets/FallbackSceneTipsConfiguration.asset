@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FallbackSceneTipsConfiguration
   m_EditorClassIdentifier: 
   backgroundColors:
-  - {r: 0.6415094, g: 0.50558907, b: 0.19063723, a: 1}
+  - {r: 0.6415094, g: 0.38039216, b: 0.19063723, a: 1}
   - {r: 0.0102349585, g: 0.20316826, b: 0.4339623, a: 1}
   - {r: 0.011764706, g: 0.3764706, b: 0.3372846, a: 1}
   - {r: 0.5176471, g: 0.06666667, b: 0.36335522, a: 1}
