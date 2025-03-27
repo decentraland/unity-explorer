@@ -82,6 +82,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 marker.Dispose();
 
             markers.Clear();
+            isDataInitialized = false;
         }
 
         public void OnMapObjectBecameVisible(ISceneOfInterestMarker marker)
