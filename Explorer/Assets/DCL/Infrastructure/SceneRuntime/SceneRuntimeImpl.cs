@@ -141,12 +141,12 @@ namespace SceneRuntime
             Assert.IsTrue(result.IsEmpty);
         }
 
-        public ITypedArray<byte> CreateUint8Array(int length) =>
+        public ITypedArray<byte> CreateUint8Array(ulong length) =>
             (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()").EnsureNotNull();
 
         public ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory)
         {
-            var jsArray = CreateUint8Array(memory.Length);
+            ITypedArray<byte>? jsArray = CreateUint8Array((ulong)memory.Length);
             if (!memory.IsEmpty)
                 jsArray.Write(memory, (ulong)memory.Length, 0);
             return jsArray;
@@ -161,7 +161,7 @@ namespace SceneRuntime
             {
                 var memory = innerArray.Memory;
 
-                var innerJsArray = CreateUint8Array(memory.Length);
+                ITypedArray<byte>? innerJsArray = CreateUint8Array((ulong)memory.Length);
 
                 // Call into JS to write the data via a pointer
                 innerJsArray.Write(memory, (ulong)memory.Length, 0);

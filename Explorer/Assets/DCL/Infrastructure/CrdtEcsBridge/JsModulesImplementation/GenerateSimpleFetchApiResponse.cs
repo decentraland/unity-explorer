@@ -17,7 +17,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             string responseData = nativeRequest.Response.Text;
             Dictionary<string, string>? responseHeadersDictionary = nativeRequest.Response.FlattenHeaders();
             bool requestOk = nativeRequest.Response.IsSuccess;
-            bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
+            bool requestRedirected = nativeRequest.Redirected;
             int requestStatus = nativeRequest.Response.StatusCode;
             var requestStatusText = nativeRequest.Response.StatusCode.ToString();
             string requestUrl = nativeRequest.Url.EnsureNotNull();

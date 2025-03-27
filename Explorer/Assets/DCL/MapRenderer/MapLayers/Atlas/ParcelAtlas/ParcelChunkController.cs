@@ -68,8 +68,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
                 new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                ct,
                 ReportCategory.UI
             );
 
@@ -80,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
             try
             {
-                currentOwnedTexture = await textureTask!;
+                currentOwnedTexture = await textureTask.CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Trilinear, ct);
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture.Texture;
             }

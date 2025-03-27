@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.World
             framePrefabs,
             webRequestController,
             cacheCleaner,
-            new IWebContentSizes.Default(LazyMaxSize(out var lazyMaxSize)),
+            new IWebContentSizes.Default(LazyMaxSize(out ILazyMaxSize lazyMaxSize), webRequestController),
             lazyMaxSize,
             diskCache
         ) { }

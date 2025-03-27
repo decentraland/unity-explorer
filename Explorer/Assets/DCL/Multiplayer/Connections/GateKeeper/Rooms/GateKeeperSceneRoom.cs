@@ -154,8 +154,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
                                                              url,
                                                              meta.ToJson(),
-                                                             token)
-                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+                                                             ReportCategory.LIVEKIT)
+                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity, token);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");

@@ -184,8 +184,8 @@ namespace DCL.PlacesAPIService
         {
             var url = $"{mapApiUrl}?categories={category}";
 
-            List<OptimizedPlaceInMapResponse> categoryPlaces = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
-                                                                                 .CreateFromNewtonsoftJsonAsync<List<OptimizedPlaceInMapResponse>>(serializerSettings: SERIALIZER_SETTINGS);
+            List<OptimizedPlaceInMapResponse> categoryPlaces = await webRequestController.GetAsync(url, ReportCategory.UI)
+                                                                                         .CreateFromNewtonsoftJsonAsync<List<OptimizedPlaceInMapResponse>>(ct, serializerSettings: SERIALIZER_SETTINGS);
 
             if (categoryPlaces == null)
                 throw new Exception($"No Places for category {category} retrieved");

@@ -77,7 +77,7 @@ namespace DCL.WebRequests
         }
 
         public static bool IsIrrecoverableError(this WebRequestException exception, int attemptLeft) =>
-            attemptLeft <= 0 || exception.ResponseCode is NOT_FOUND || ((exception.IsAborted || exception.IsServerError()) && !exception.IsUnableToCompleteSSLConnection());
+            attemptLeft <= 0 || exception.ResponseCode is NOT_FOUND || ((exception.IsAborted || exception.IsServerError) && !exception.IsUnableToCompleteSSLConnection());
 
         public static bool IsUnableToCompleteSSLConnection(this WebRequestException exception)
         {
@@ -92,10 +92,10 @@ namespace DCL.WebRequests
         public static bool IsServerError(this IWebRequest webRequest) =>
             webRequest.Response is { StatusCode: >= 500 and < 600 };
 
-        public static string GetResponseContentType(this IWebRequest unityWebRequest) =>
+        public static string? GetResponseContentType(this IWebRequest unityWebRequest) =>
             unityWebRequest.Response.GetHeader(WebRequestHeaders.CONTENT_TYPE_HEADER);
 
-        public static string GetResponseContentEncoding(this IWebRequest unityWebRequest) =>
+        public static string? GetResponseContentEncoding(this IWebRequest unityWebRequest) =>
             unityWebRequest.Response.GetHeader("Content-Encoding");
 
         /// <summary>

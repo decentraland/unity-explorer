@@ -8,8 +8,11 @@ using Utility.Types;
 
 namespace DCL.WebRequests
 {
-    public static partial class WebRequestControllerExtensions
+    public static class WebRequestControllerExtensions
     {
+        /// <summary>
+        ///     Sends the web request and awaits its execution
+        /// </summary>
         public static UniTask<IWebRequest> SendAsync(this ITypedWebRequest request, CancellationToken ct) =>
             request.Controller.SendAsync(request, ct);
 

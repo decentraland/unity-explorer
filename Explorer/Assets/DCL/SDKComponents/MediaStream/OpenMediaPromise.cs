@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -27,7 +28,8 @@ namespace DCL.SDKComponents.MediaStream
             isReachable = false;
             this.url = url;
 
-            isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(this.url), ct);
+            Result result = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(this.url), ct);
+            isReachable = result.Success;
             //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly
             if (!isReachable)
                 isReachable = await webRequestController.IsGetReachableAsync(reportData, URLAddress.FromString(this.url), ct);

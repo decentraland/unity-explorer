@@ -38,13 +38,14 @@ namespace DCL.Profiles
 
             try
             {
-                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                IOwnedTexture2D? ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(thumbnailUrl)),
                     new GetTextureArguments(TextureType.Albedo),
-                    GetTextureWebRequest.CreateTextureAsync(TextureWrapMode.Clamp),
-                    ct,
                     ReportCategory.UI
-                );
+                                                                           )
+                                                                          .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);
+
+                if (ownedTexture == null) return null;
 
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;

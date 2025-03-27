@@ -3,7 +3,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.WebRequests

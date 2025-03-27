@@ -54,7 +54,7 @@ namespace DCL.WebRequests
             postData == null ? Empty : CreateJson(postData);
 
         public override string ToString() =>
-            "GenericPostArguments:"
+            "GenericUploadArguments:"
             + $"\nMultipartFormSections: {MultipartFormSections}"
             + $"\nWWWForm: {WebFormToString(WWWForm)}"
             + $"\nPostData: {PostData}"

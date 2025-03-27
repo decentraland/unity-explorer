@@ -25,14 +25,14 @@ namespace DCL.AvatarRendering.Wearables.ThirdParty
         public async UniTask<IReadOnlyList<ThirdPartyNftProviderDefinition>> GetAsync(ReportData reportData, CancellationToken ct)
         {
             if (providers != null) return providers;
-            URLBuilder urlBuilder = new URLBuilder();
+            var urlBuilder = new URLBuilder();
 
             URLAddress url = urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                                              .AppendPath(URLPath.FromString("third-party-integrations"))
-                                              .Build();
+                                       .AppendPath(URLPath.FromString("third-party-integrations"))
+                                       .Build();
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> request = webRequestController.GetAsync(new CommonArguments(url), ct, reportData);
-            ThirdPartyProviderListJsonDto providersDto = await request.CreateFromJson<ThirdPartyProviderListJsonDto>(WRJsonParser.Unity);
+            GenericGetRequest request = webRequestController.GetAsync(new CommonArguments(url), reportData);
+            ThirdPartyProviderListJsonDto providersDto = await request.CreateFromJson<ThirdPartyProviderListJsonDto>(WRJsonParser.Unity, ct);
             providers = providersDto.data;
             return providers;
         }

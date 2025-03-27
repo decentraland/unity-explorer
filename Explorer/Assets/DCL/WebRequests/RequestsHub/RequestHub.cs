@@ -38,13 +38,13 @@ namespace DCL.WebRequests.RequestsHub
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, texturesFuse, isTextureCompressionEnabled))
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, texturesFuse, isTextureCompressionEnabled));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericGetArguments args) => new GenericGetRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPostRequest(envelope, args, controller));
         }
 
         //     Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
-        //     Add<GenericPostArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
+        //     Add<GenericUploadArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
         //     Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
         //     Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
         //     Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);

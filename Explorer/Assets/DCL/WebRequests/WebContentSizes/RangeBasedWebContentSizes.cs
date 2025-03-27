@@ -13,19 +13,15 @@ namespace DCL.WebRequests.WebContentSizes
     public class RangeBasedWebContentSizes : IWebContentSizes
     {
         private readonly IMaxSize maxSize;
-        private readonly Action<string> reasonLog;
         private const ulong TRESS_HOLD_BYTES = 2048;
         private const ulong UPPER_LIMIT = TRESS_HOLD_BYTES * 2;
 
-        public RangeBasedWebContentSizes(IMaxSize maxSize) : this(
-            maxSize,
-            s => ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, s)
-        ) { }
+        private readonly IWebRequestController webRequestController;
 
-        public RangeBasedWebContentSizes(IMaxSize maxSize, Action<string> reasonLog)
+        public RangeBasedWebContentSizes(IMaxSize maxSize, IWebRequestController webRequestController)
         {
             this.maxSize = maxSize;
-            this.reasonLog = reasonLog;
+            this.webRequestController = webRequestController;
         }
 
         public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken token)
@@ -38,8 +34,8 @@ namespace DCL.WebRequests.WebContentSizes
             {
                 if (request.downloadedBytes > UPPER_LIMIT)
                 {
-                    reasonLog($"Seems the remote server doesn't support Range Header, Downloaded bytes {request.downloadedBytes} exceeded upper limit {UPPER_LIMIT}, aborting request");
-                    reasonLog(ReadableResponseHeaders(request));
+                    ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, $"Seems the remote server doesn't support Range Header, Downloaded bytes {request.downloadedBytes} exceeded upper limit {UPPER_LIMIT}, aborting request");
+                    ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, ReadableResponseHeaders(request));
                     request.Abort();
                     return false;
                 }
@@ -49,33 +45,31 @@ namespace DCL.WebRequests.WebContentSizes
 
             if (IsResultError(request))
             {
-                reasonLog($"Error while checking size of {url}: {request.error}");
+                ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, $"Error while checking size of {url}: {request.error}");
                 return false;
             }
 
             if (IsDownloadedTooMuch(request))
             {
-                reasonLog($"Size of {url} is {request.downloadedBytes} bytes, which is greater than the tress hold of {TRESS_HOLD_BYTES} bytes");
+                ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, $"Size of {url} is {request.downloadedBytes} bytes, which is greater than the tress hold of {TRESS_HOLD_BYTES} bytes");
                 return false;
             }
 
             return true;
         }
 
-        private UnityWebRequest NewRequest(string url)
+        private GenericGetRequest NewRequest(string url)
         {
-            var request = UnityWebRequest.Get(url)!;
             ulong max = maxSize.MaxSizeInBytes();
             ulong tressHold = max + TRESS_HOLD_BYTES;
-            request.SetRequestHeader("Range", $"bytes:{max}-{tressHold}");
-            request.SetRequestHeader("Accept-Range", $"bytes:{max}-{tressHold}");
+            GenericGetRequest request = webRequestController.GetAsync(url, ReportCategory.GENERIC_WEB_REQUEST, new WebRequestHeadersInfo().WithRange((long)max, (long)tressHold))
             return request;
         }
 
-        private static bool IsDownloadedTooMuch(UnityWebRequest request) =>
+        private static bool IsDownloadedTooMuch(IWebRequest request) =>
             request.downloadedBytes > TRESS_HOLD_BYTES;
 
-        private static bool IsResultError(UnityWebRequest request) =>
+        private static bool IsResultError(IWebRequest request) =>
             request.result
                 is UnityWebRequest.Result.ConnectionError
                 or UnityWebRequest.Result.ProtocolError

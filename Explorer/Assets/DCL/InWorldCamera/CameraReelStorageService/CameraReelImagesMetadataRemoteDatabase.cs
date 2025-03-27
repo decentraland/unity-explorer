@@ -38,8 +38,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelStorageResponse responseData = await webRequestController
-                                                          .SignedFetchGetAsync(url, string.Empty, ct)
-                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity);
+                                                          .SignedFetchGetAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
+                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -53,8 +53,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelStorageResponse responseData = await webRequestController
-                                                          .GetAsync(url, ct, ReportCategory.CAMERA_REEL)
-                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity);
+                                                          .GetAsync(url, ReportCategory.CAMERA_REEL)
+                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -69,8 +69,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelResponse responseData = await webRequestController
-                                                   .SignedFetchGetAsync(url, string.Empty, ct)
-                                                   .CreateFromJson<CameraReelResponse>(WRJsonParser.Unity);
+                                                   .SignedFetchGetAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
+                                                   .CreateFromJson<CameraReelResponse>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -85,8 +85,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelResponses responseData = await webRequestController
-                                                    .SignedFetchGetAsync(url, string.Empty, ct)
-                                                    .CreateFromJson<CameraReelResponses>(WRJsonParser.Unity);
+                                                    .SignedFetchGetAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
+                                                    .CreateFromJson<CameraReelResponses>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -101,8 +101,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelResponsesCompact responseData = await webRequestController
-                                                           .SignedFetchGetAsync(url, string.Empty, ct)
-                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+                                                           .SignedFetchGetAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -117,8 +117,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelResponsesCompact responseData = await webRequestController
-                                                           .SignedFetchGetAsync(url, string.Empty, ct)
-                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+                                                           .SignedFetchGetAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -133,8 +133,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelResponsesCompact responseData = await webRequestController
-                                                           .GetAsync(url, ct, ReportCategory.CAMERA_REEL)
-                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+                                                           .GetAsync(url, ReportCategory.CAMERA_REEL)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -148,8 +148,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             CameraReelStorageResponse responseData = await webRequestController
-                                                          .SignedFetchDeleteAsync(url, string.Empty, ct)
-                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity);
+                                                          .SignedFetchDeleteAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
+                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity, ct);
 
             return responseData;
         }
@@ -164,8 +164,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             await webRequestController
-                 .SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ct)
-                 .WithNoOpAsync();
+                 .SignedFetchPatchAsync(url, GenericUploadArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ReportCategory.CAMERA_REEL)
+                 .SendAsync(ct);
         }
 
         public async UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
@@ -180,8 +180,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             };
 
             CameraReelUploadResponse responseData = await webRequestController
-                                                         .SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
-                                                         .CreateFromJson<CameraReelUploadResponse>(WRJsonParser.Unity);
+                                                         .SignedFetchPostAsync(url, GenericUploadArguments.CreateMultipartForm(formData), string.Empty, ReportCategory.CAMERA_REEL)
+                                                         .CreateFromJson<CameraReelUploadResponse>(WRJsonParser.Unity, ct);
 
             return responseData;
         }

@@ -32,8 +32,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             SceneEntityDefinition sceneEntityDefinition = await
-                webRequestController.GetAsync(intention.CommonArguments, ct, GetReportData())
-                                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                webRequestController.GetAsync(intention.CommonArguments, GetReportData())
+                                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
 
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 

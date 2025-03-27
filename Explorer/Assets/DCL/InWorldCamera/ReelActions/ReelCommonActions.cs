@@ -1,7 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using System.Text;
@@ -41,19 +44,17 @@ namespace DCL.InWorldCamera.ReelActions
         ///     Downloads a reel image to local storage in {home_directory}/{DECENTRALAND_REELS_HOME_FOLDER}/{reelId}
         ///     and opens the default file browser at that location
         /// </summary>
-        public static async UniTask DownloadReelToFileAsync(string reelUrl, CancellationToken ct)
+        public static async UniTask DownloadReelToFileAsync(IWebRequestController webRequestController, string reelUrl, CancellationToken ct)
         {
-            using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(reelUrl))
+            using IOwnedTexture2D texture = await webRequestController.GetTextureAsync(reelUrl, new GetTextureArguments(TextureType.Albedo), ReportCategory.CAMERA_REEL)
+                                                                      .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct)
+                                                                      .WithCustomExceptionAsync(e => new Exception("Error while downloading reel", e));
+
             {
                 Uri uri = new Uri(reelUrl);
-                await webRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
 
-                if (webRequest.result != UnityWebRequest.Result.Success)
-                    throw new Exception($"Error while downloading reel: {webRequest.error}");
-
-                Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
                 StringBuilder absolutePathBuilder = new StringBuilder();
-                byte[] imageBytes = texture.EncodeToPNG();
+                byte[] imageBytes = texture.Texture.EncodeToPNG();
 
                 absolutePathBuilder.Append(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))
                                    .Append("/")

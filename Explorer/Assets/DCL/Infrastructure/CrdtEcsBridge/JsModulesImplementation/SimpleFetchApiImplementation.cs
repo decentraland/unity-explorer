@@ -72,20 +72,20 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         return await webController.GetAsync(commonArguments, GetReportData(), webRequestHeaders).ToSimpleFetchResponseAsync(ct);
                     case RequestMethod.POST:
                         string postContentType = webRequestHeaders.HeaderContentType();
-                        var postArguments = GenericPostArguments.Create(body, postContentType);
-                        return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, GetReportData(), webRequestHeaders);
+                        var postArguments = GenericUploadArguments.Create(body, postContentType);
+                        return await webController.PostAsync(commonArguments, postArguments, GetReportData(), webRequestHeaders).ToSimpleFetchResponseAsync(ct);
                     case RequestMethod.PUT:
                         string putContentType = webRequestHeaders.HeaderContentType();
-                        var putArguments = GenericPutArguments.Create(body, putContentType);
-                        return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, GetReportData(), webRequestHeaders);
+                        var putArguments = GenericUploadArguments.Create(body, putContentType);
+                        return await webController.PutAsync(commonArguments, putArguments, GetReportData(), webRequestHeaders).ToSimpleFetchResponseAsync(ct);
                     case RequestMethod.DELETE:
                         string deleteContentType = webRequestHeaders.HeaderContentType();
-                        var deleteArguments = GenericDeleteArguments.Create(body, deleteContentType);
-                        return await webController.DeleteAsync<GenerateResponseOp<GenericDeleteRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericDeleteRequest>(), deleteArguments, ct, GetReportData(), webRequestHeaders);
+                        var deleteArguments = GenericUploadArguments.Create(body, deleteContentType);
+                        return await webController.DeleteAsync(commonArguments, deleteArguments, GetReportData(), webRequestHeaders).ToSimpleFetchResponseAsync(ct);
                     case RequestMethod.PATCH:
                         string patchContentType = webRequestHeaders.HeaderContentType();
-                        var patchArguments = GenericPatchArguments.Create(body, patchContentType);
-                        return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, GetReportData(), webRequestHeaders);
+                        var patchArguments = GenericUploadArguments.Create(body, patchContentType);
+                        return await webController.PatchAsync(commonArguments, patchArguments, GetReportData(), webRequestHeaders).ToSimpleFetchResponseAsync(ct);
                     case RequestMethod.HEAD: throw new NotImplementedException();
                     case RequestMethod.INVALID:
                     default: throw new ArgumentOutOfRangeException();
@@ -96,7 +96,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 return new ISimpleFetchApi.Response
                 {
                     Ok = false,
-                    Status = (int)e.ResponseCode,
+                    Status = e.ResponseCode,
                     StatusText = e.ResponseCode.ToString(),
                     Data = e.Text,
                     Headers = e.ResponseHeaders,
@@ -127,35 +127,5 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private static RequestMethod ParseRequestMethod(string request) =>
             Enum.TryParse(request, true, out RequestMethod method) ? method : RequestMethod.INVALID;
-
-        private struct GenerateResponseOp<TGenericRequest> : IWebRequestOp<TGenericRequest, ISimpleFetchApi.Response>
-            where TGenericRequest: struct, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest, ITypedWebRequest
-        {
-            public async UniTask<ISimpleFetchApi.Response> ExecuteAsync(TGenericRequest request, CancellationToken ct)
-            {
-                UnityWebRequest unityWebRequest = request.UnityWebRequest;
-                string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
-                Dictionary<string, string>? responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
-                bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
-                bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
-                var requestStatus = (int)unityWebRequest.responseCode;
-                var requestStatusText = unityWebRequest.responseCode.ToString();
-                string requestUrl = unityWebRequest.url.EnsureNotNull();
-
-                var result = new ISimpleFetchApi.Response
-                {
-                    Headers = responseHeadersDictionary,
-                    Ok = requestOk,
-                    Redirected = requestRedirected,
-                    Status = requestStatus,
-                    StatusText = requestStatusText,
-                    URL = requestUrl,
-                    Data = responseData,
-                    Type = "basic", //Handle Response Types properly  type ResponseType = 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect'
-                };
-
-                return result;
-            }
-        }
     }
 }

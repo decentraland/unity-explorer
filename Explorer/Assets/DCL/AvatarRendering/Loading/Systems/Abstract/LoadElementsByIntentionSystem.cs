@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -59,9 +58,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                                 attemptsCount: intention.CommonArguments.Attempts
                             ),
                             string.Empty,
-                            ct
-                        )
-                    );
+                            GetReportData()
+                        ), ct);
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     LoadBuilderItem(ref intention, lambdaResponse);
@@ -75,10 +73,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                                 url,
                                 attemptsCount: intention.CommonArguments.Attempts
                             ),
-                            ct,
-                            GetReportCategory()
-                        )
-                    );
+                            GetReportData()
+                        ), ct);
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     Load(ref intention, lambdaResponse);
@@ -133,9 +129,9 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
         }
 
-        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct);
 
-        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 

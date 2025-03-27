@@ -41,15 +41,13 @@ namespace DCL.ApplicationVersionGuard
 
         public async UniTask<string> GetLatestVersionAsync(CancellationToken ct)
         {
-            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+            var response = await webRequestController.GetAsync(
                 IDecentralandUrlsSource.EXPLORER_LATEST_RELEASE_URL,
-                new FlatFetchResponse<GenericGetRequest>(),
-                ct,
                 ReportCategory.VERSION_CONTROL,
-                new WebRequestHeadersInfo());
+                new WebRequestHeadersInfo())
+                                                     .CreateFromJson<GitHubRelease>(WRJsonParser.Unity, ct);
 
-            GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-            string latestVersion = latestRelease.tag_name.TrimStart('v');
+            string latestVersion = response.tag_name.TrimStart('v');
 
             return latestVersion;
         }
@@ -105,15 +103,13 @@ namespace DCL.ApplicationVersionGuard
 
             async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken cancellationToken)
             {
-                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                var response = await webRequestController.GetAsync(
                     IDecentralandUrlsSource.LAUNCHER_LATEST_RELEASE_URL,
-                    new FlatFetchResponse<GenericGetRequest>(),
-                    cancellationToken,
                     ReportCategory.VERSION_CONTROL,
-                    new WebRequestHeadersInfo());
+                    new WebRequestHeadersInfo())
+                                                         .CreateFromJson<GitHubRelease>(WRJsonParser.Unity, cancellationToken);
 
-                GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-                string version = latestRelease.tag_name.TrimStart('v');
+                string version = response.tag_name.TrimStart('v');
 
                 string assetName = GetLauncherAssetName();
                 return $"{IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL}/{version}/{assetName}";

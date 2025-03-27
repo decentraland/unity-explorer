@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -15,9 +16,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         public string error;
         public string code;
     }
-    
-    [Serializable]
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
+
     public struct FlatFetchResponse
     {
         public readonly bool ok;
@@ -39,19 +38,12 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         }
     }
 
-    public struct FlatFetchResponse<TRequest> : IWebRequestOp<TRequest, FlatFetchResponse> where TRequest : struct, ITypedWebRequest
+    public static class FlatFetchExtensions
     {
-        public UniTask<FlatFetchResponse> ExecuteAsync(TRequest request, CancellationToken ct)
+        public static async UniTask<FlatFetchResponse> ToFlatFetchResponseAsync(this ITypedWebRequest request, CancellationToken ct)
         {
-            var webRequest = request.UnityWebRequest;
-
-            return UniTask.FromResult(new FlatFetchResponse(
-                webRequest.result is UnityWebRequest.Result.Success,
-                webRequest.responseCode,
-                webRequest.responseCode.ToString()!,
-                webRequest.downloadHandler?.text ?? string.Empty,
-                webRequest.GetResponseHeaders()!
-            ));
+            using IWebRequest? sentRequest = await request.SendAsync(ct);
+            return new FlatFetchResponse(sentRequest.Response.IsSuccess, sentRequest.Response.StatusCode, sentRequest.Response.StatusCode.ToString(), sentRequest.Response.Text, sentRequest.Response.FlattenHeaders()!);
         }
     }
 }

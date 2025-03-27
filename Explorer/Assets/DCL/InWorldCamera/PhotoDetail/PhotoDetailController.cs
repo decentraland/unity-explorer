@@ -7,6 +7,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
 using DG.Tweening;
 using MVC;
 using System;
@@ -37,6 +38,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
         private readonly PhotoDetailStringMessages photoDetailStringMessages;
+        private readonly IWebRequestController webRequestController;
 
         private AspectRatioFitter aspectRatioFitter;
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
@@ -55,7 +57,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebBrowser webBrowser,
-            PhotoDetailStringMessages photoDetailStringMessages)
+            PhotoDetailStringMessages photoDetailStringMessages,
+            IWebRequestController webRequestController)
             : base(viewFactory)
         {
             this.PhotoDetailInfoController = photoDetailInfoController;
@@ -64,6 +67,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
             this.photoDetailStringMessages = photoDetailStringMessages;
+            this.webRequestController = webRequestController;
 
             this.PhotoDetailInfoController.JumpIn += JumpInClicked;
         }
@@ -165,7 +169,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             {
                 try
                 {
-                    await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
+                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, inputData.AllReels[currentReelIndex].url, ct);
                     ScreenshotDownloaded?.Invoke();
                     viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
                 }

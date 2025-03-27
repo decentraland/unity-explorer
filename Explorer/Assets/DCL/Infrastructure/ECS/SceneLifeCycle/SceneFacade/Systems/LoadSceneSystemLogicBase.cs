@@ -39,7 +39,7 @@ namespace ECS.SceneLifeCycle.Systems
                 ? intention.IpfsRealm.ContentBaseUrl
                 : ipfsPath.BaseUrl;
 
-            var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
+            ISceneContent? hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory, ct);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
             var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
@@ -67,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
 
-        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
+        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
         {
@@ -120,8 +120,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             var target = intention.DefinitionComponent.Definition.metadata;
 
-            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
-                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), reportCategory)
+                                      .OverwriteFromJsonAsync(target, WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
             intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
 

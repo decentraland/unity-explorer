@@ -11,6 +11,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using System;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -27,12 +28,13 @@ namespace DCL.AvatarRendering.Emotes.Load
             string? builderContentURL = null
         ) : base(world, cache, emoteStorage, webRequestController, realmData, builderContentURL) { }
 
-        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, ct);
 
-        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+        protected override UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
             throw new NotImplementedException();
         // => await adapter.CreateFromJson<WearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft); // TODO: Adapt for 'EmoteDTO'
+
 
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>
             new (intention.Result, intention.TotalAmount);

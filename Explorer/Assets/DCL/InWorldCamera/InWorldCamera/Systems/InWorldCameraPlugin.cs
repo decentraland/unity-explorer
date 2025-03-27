@@ -177,7 +177,8 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 decentralandUrlsSource,
                 webBrowser,
-                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
+                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
+                webRequestController));
 
 
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);

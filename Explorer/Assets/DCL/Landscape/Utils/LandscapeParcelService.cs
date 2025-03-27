@@ -97,9 +97,9 @@ namespace DCL.Landscape.Utils
             try
             {
                 var result = await webRequestController
-                    .GetAsync(new CommonArguments(URLAddress.FromString(currentManifestURL)), ct,
+                                  .GetAsync(new CommonArguments(URLAddress.FromString(currentManifestURL)),
                         ReportCategory.LANDSCAPE)
-                                                           .StoreTextAsync();
+                                  .StoreTextAsync(ct);
 
                 if (result != null)
                 {

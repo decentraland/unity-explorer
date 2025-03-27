@@ -25,8 +25,8 @@ namespace DCL.Multiplayer.Connectivity
         }
 
         public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(CancellationToken ct) =>
-            await webRequestController.GetAsync(baseUrl, ct, ReportCategory.MULTIPLAYER)
-                                      .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(serializerSettings: SERIALIZER_SETTINGS);
+            await webRequestController.GetAsync(baseUrl, ReportCategory.MULTIPLAYER)
+                                      .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(ct, serializerSettings: SERIALIZER_SETTINGS);
 
         public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(IEnumerable<string> userIds, CancellationToken ct)
         {
@@ -36,8 +36,8 @@ namespace DCL.Multiplayer.Connectivity
             foreach (string userId in userIds)
                 urlBuilder.AppendParameter(new URLParameter("id", userId));
 
-            return await webRequestController.GetAsync(urlBuilder.Build(), ct, ReportCategory.MULTIPLAYER)
-                                             .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(serializerSettings: SERIALIZER_SETTINGS);
+            return await webRequestController.GetAsync(urlBuilder.Build(), ReportCategory.MULTIPLAYER)
+                                             .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(ct, serializerSettings: SERIALIZER_SETTINGS);
         }
     }
 }

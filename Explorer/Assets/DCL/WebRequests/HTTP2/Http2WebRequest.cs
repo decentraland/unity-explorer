@@ -117,12 +117,14 @@ namespace DCL.WebRequests.HTTP2
 
             public bool IsSuccess => request.State == HTTPRequestStates.Finished;
 
+            public ulong DataLength => (ulong)(request.Response?.DownStream?.Length ?? 0);
+
             internal Http2Response(HTTPRequest request)
             {
                 this.request = request;
             }
 
-            public string GetHeader(string headerName) =>
+            public string? GetHeader(string headerName) =>
                 request.Response.GetFirstHeaderValue(headerName);
 
             public Dictionary<string, string>? FlattenHeaders() =>

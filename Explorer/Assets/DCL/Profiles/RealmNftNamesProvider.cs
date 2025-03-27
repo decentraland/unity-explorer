@@ -30,10 +30,9 @@ namespace DCL.Profiles
             urlBuilder.AppendParameter(new URLParameter("pageNum", pageNumber.ToString()));
             urlBuilder.AppendParameter(new URLParameter("pageSize", pageSize.ToString()));
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter = webRequestController.GetAsync(
-                new CommonArguments(urlBuilder.Build()), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+            GenericGetRequest adapter = webRequestController.GetAsync(new CommonArguments(urlBuilder.Build()), ReportCategory.REALM);
 
-            RealmNamesResponse jsonResponse = await adapter.CreateFromJson<RealmNamesResponse>(WRJsonParser.Unity);
+            RealmNamesResponse jsonResponse = await adapter.CreateFromJson<RealmNamesResponse>(WRJsonParser.Unity, ct).SuppressExceptionWithFallbackAsync(default(RealmNamesResponse), ignoreTheseErrorCodesOnly: WebRequestUtils.IGNORE_NOT_FOUND);
 
             var response = new INftNamesProvider.PaginatedNamesResponse(jsonResponse.totalAmount, jsonResponse.elements.Select(element => element.name));
 

@@ -60,19 +60,17 @@ namespace DCL.WebRequests.Analytics
                     await webRequestController.GetTextureAsync(
                         new CommonArguments(FAIL, attemptsCount: retriesCount),
                         new GetTextureArguments(TextureType.Albedo),
-                        new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
-                        CancellationToken.None,
                         reportData: ReportCategory.DEBUG
-                    );
+                                               )
+                                              .CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Bilinear, CancellationToken.None);
                 else
 
                     // binary data
                     await webRequestController.GetAsync(
                                                    new CommonArguments(SUCCESS, attemptsCount: retriesCount),
-                                                   CancellationToken.None,
                                                    reportData: ReportCategory.DEBUG
                                                )
-                                              .WithNoOpAsync();
+                                              .SendAsync(CancellationToken.None);
 
                 ReportHub.Log(ReportCategory.DEBUG, $"Request #{requestNumber} successfully completed");
             }

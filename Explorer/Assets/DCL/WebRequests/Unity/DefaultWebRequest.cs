@@ -65,12 +65,14 @@ namespace DCL.WebRequests
 
             public bool IsSuccess => unityWebRequest.result == UnityWebRequest.Result.Success;
 
+            public ulong DataLength => (ulong)unityWebRequest.downloadHandler.nativeData.Length;
+
             public DefaultWebRequestResponse(UnityWebRequest unityWebRequest)
             {
                 this.unityWebRequest = unityWebRequest;
             }
 
-            public string GetHeader(string headerName) =>
+            public string? GetHeader(string headerName) =>
                 unityWebRequest.GetResponseHeader(headerName);
 
             public Dictionary<string, string>? FlattenHeaders() =>

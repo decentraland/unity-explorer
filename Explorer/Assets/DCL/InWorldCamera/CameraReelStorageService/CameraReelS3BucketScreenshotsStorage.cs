@@ -28,10 +28,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         // TODO memory disposing
         private async UniTask<Texture2D> GetImageAsync(string url, CancellationToken ct = default)
         {
-            var texture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTextureAsync(TextureWrapMode.Clamp), ct, ReportCategory.CAMERA_REEL);
+            IOwnedTexture2D texture = await webRequestController.GetTextureAsync(
+                                                                     new CommonArguments(URLAddress.FromString(url)),
+                                                                     new GetTextureArguments(TextureType.Albedo), ReportCategory.CAMERA_REEL)
+                                                                .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);
 
             return texture.Texture;
         }

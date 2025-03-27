@@ -1,141 +1,88 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
+﻿using DCL.Diagnostics;
 using DCL.WebRequests.GenericDelete;
 using System;
-using System.Threading;
 using Utility.Times;
 
 namespace DCL.WebRequests
 {
     public static class SignedWebRequestControllerExtensions
     {
-        public static UniTask<TResult> SignedFetchPostAsync<TOp, TResult>(
+        public static GenericPostRequest SignedFetchPostAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            TOp webRequestOp,
             string signatureMetadata,
-            ReportData reportData,
-            CancellationToken ct
+            ReportData reportData
+        ) =>
+            SignedFetchPostAsync(controller, commonArguments, GenericUploadArguments.Empty, signatureMetadata, reportData);
+
+        public static GenericPostRequest SignedFetchPostAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GenericUploadArguments arguments,
+            string signatureMetadata,
+            ReportData reportData
         )
-            where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return controller.PostAsync<TOp, TResult>(
+            return controller.PostAsync(
                 commonArguments,
-                webRequestOp,
-                GenericPostArguments.Empty,
-                ct,
+                arguments,
                 reportData,
-                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
+                new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp),
+                WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post")
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
+        public static GenericGetRequest SignedFetchGetAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             string jsonMetaData,
-            CancellationToken ct
+            ReportData reportData
         )
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments>(
-                controller,
+            return controller.GetAsync(
                 commonArguments,
-                GenericPostArguments.Empty,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
+                reportData,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null
-            );
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"));
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
+        public static GenericDeleteRequest SignedFetchDeleteAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericPostArguments postArguments,
             string jsonMetaData,
-            CancellationToken ct
+            ReportData reportData
         )
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments>(
-                controller,
+            return controller.DeleteAsync(
                 commonArguments,
-                postArguments,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
+                GenericUploadArguments.Empty,
+                reportData,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "delete")
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> SignedFetchGetAsync(
+        public static GenericPatchRequest SignedFetchPatchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
+            GenericUploadArguments patchArguments,
             string jsonMetaData,
-            CancellationToken ct
-        )
+            ReportData reportData)
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments>(
-                controller,
-                commonArguments,
-                new GenericGetArguments(),
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
-                null
-            );
-        }
-
-        public static GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments> SignedFetchDeleteAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments>(
-                controller,
-                commonArguments,
-                GenericDeleteArguments.Empty,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "delete"),
-                null
-            );
-        }
-
-        public static GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPatchArguments> SignedFetchPatchAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            GenericPatchArguments patchArguments,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPatchArguments>(
-                controller,
+            return controller.PatchAsync(
                 commonArguments,
                 patchArguments,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
+                reportData,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch"),
-                null
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch")
             );
         }
     }

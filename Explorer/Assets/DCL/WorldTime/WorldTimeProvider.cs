@@ -74,12 +74,12 @@ namespace DCL.Time
             return cycleHour > 0? cycleHour : STARTING_CYCLE_HOUR;
         }
 
-        private async UniTask<StreamableLoadingResult<string>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<string?>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
         {
-            string date = await webRequestController.GetAsync(TIME_SERVER_URL, ct, ReportCategory.JAVASCRIPT)
-                                                    .GetResponseHeaderAsync("date");
+            string? date = await webRequestController.GetAsync(TIME_SERVER_URL, ReportCategory.JAVASCRIPT)
+                                                     .GetResponseHeaderAsync("date", ct);
 
-            return new StreamableLoadingResult<string>(date);
+            return new StreamableLoadingResult<string?>(date);
         }
 
         private DateTime ObtainDateTimeFromServerTime(string serverDate)

@@ -93,7 +93,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public async Task ParallelABLoadsWithoutCacheShould()
         {
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(ITexturesFuse.NewDefault(), true));
+            IWebRequestController webRequestController = new DefaultWebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(ITexturesFuse.NewDefault(), true));
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 

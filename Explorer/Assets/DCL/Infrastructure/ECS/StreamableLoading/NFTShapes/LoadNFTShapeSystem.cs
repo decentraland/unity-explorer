@@ -63,8 +63,8 @@ namespace ECS.StreamableLoading.NFTShapes
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> infoRequest = webRequestController.GetAsync(commonArguments, ct, GetReportData());
-            var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+            GenericGetRequest? infoRequest = webRequestController.GetAsync(commonArguments, GetReportData());
+            NftInfoDto nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchBackToMainThread);
             return nft.ImageUrl();
         }
     }

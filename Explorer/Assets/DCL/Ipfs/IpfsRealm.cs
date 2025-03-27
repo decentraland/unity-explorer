@@ -130,10 +130,10 @@ namespace DCL.Ipfs
             //to reduce the chances of parallel profiles deployments
             return webRequestController.PostAsync(
                 new CommonArguments(url, attemptsDelay: 2000f),
-                GenericPostArguments.CreateWWWForm(form),
-                ct,
+                GenericUploadArguments.CreateWWWForm(form),
                 ReportCategory.REALM
-            ).WithNoOpAsync();
+                                        )
+                                       .SendAsync(ct);
         }
 
         private URLAddress GetEntitiesUrl()

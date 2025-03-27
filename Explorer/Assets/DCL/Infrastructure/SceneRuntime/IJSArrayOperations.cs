@@ -8,7 +8,7 @@ namespace SceneRuntime
 {
     public interface IJsOperations : IDisposable
     {
-        ITypedArray<byte> CreateUint8Array(int bytes);
+        ITypedArray<byte> CreateUint8Array(ulong bytes);
 
         ScriptObject ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays);
 

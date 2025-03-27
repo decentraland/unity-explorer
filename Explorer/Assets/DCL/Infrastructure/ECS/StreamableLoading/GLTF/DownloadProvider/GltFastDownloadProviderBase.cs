@@ -10,6 +10,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
@@ -56,17 +57,14 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             string text = string.Empty;
             bool success = false;
 
-            DownloadHandler? downloadHandler = null;
-
             try
             {
-                downloadHandler = await webRequestController.GetAsync(commonArguments, reportData).ExposeDownloadHandlerAsync();
-                data = downloadHandler.data;
+                data = await webRequestController.GetAsync(commonArguments, reportData).GetDataCopyAsync(CancellationToken.None);
 
-                if (!GltfValidator.IsGltfBinaryFormat(downloadHandler.nativeData))
-                    text = downloadHandler.text;
+                if (!GltfValidator.IsGltfBinaryFormat(data))
+                    text = Encoding.UTF8.GetString(data);
 
-                error = downloadHandler.error;
+                success = true;
             }
             catch (WebRequestException e)
             {
@@ -77,7 +75,6 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
                 if (ShouldReleaseBudget(uri))
                     acquiredBudget.Release();
                 success = string.IsNullOrEmpty(error);
-                downloadHandler?.Dispose();
             }
 
             return new GltfDownloadResult(data, text, error, success);

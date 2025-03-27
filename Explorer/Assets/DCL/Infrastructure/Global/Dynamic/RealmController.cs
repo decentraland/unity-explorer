@@ -158,7 +158,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
-            await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
+            (await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct)).Success;
 
         public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {

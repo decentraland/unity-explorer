@@ -1,9 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Best.HTTP;
+using Best.HTTP.Response;
+using Best.HTTP.Shared.PlatformSupport.Memory;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility;
 
 namespace DCL.WebRequests
@@ -14,6 +20,9 @@ namespace DCL.WebRequests
     public static class GenericDownloadHandlerUtils
     {
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
+
+        public delegate void TransformChunk<in T>(T context, NativeArray<byte>.ReadOnly chunk, ulong chunkIndex);
+        public delegate T PrepareContext<out T>(ulong dataLength);
 
         public static async UniTask<TResult> ProcessAndDispose<TResult>(this ITypedWebRequest request, Func<IWebRequest, TResult> getResult, CancellationToken ct)
         {
@@ -27,7 +36,7 @@ namespace DCL.WebRequests
         public static UniTask<byte[]> GetDataCopyAsync(this ITypedWebRequest request, CancellationToken ct) =>
             request.ProcessAndDispose(static r => r.Response.Data, ct);
 
-        public static async UniTask<string> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
+        public static async UniTask<string?> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
         {
             using IWebRequest req = await request.SendAsync(ct);
             return req.Response.GetHeader(headerName);
@@ -120,6 +129,66 @@ namespace DCL.WebRequests
                     throw;
             }
             finally { await SwitchToMainThreadAsync(threadFlags); }
+        }
+
+        /// <summary>
+        ///     Executes the request, transforms the output data and disposes of the request <br />
+        ///     It's an efficient method to process data without allocations
+        ///     <remarks>
+        ///         <list type="bullet">
+        ///             <item> The underlying downloaded data will be disposed upon completion </item>
+        ///         </list>
+        ///     </remarks>
+        /// </summary>
+        public static async UniTask<T> TransformDataAsync<T>(this ITypedWebRequest request, PrepareContext<T> prepareContext, TransformChunk<T> transformChunk, CancellationToken ct, WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread)
+        {
+            using IWebRequest? sentRequest = await request.SendAsync(ct);
+
+            await SwitchToThreadAsync(threadFlags);
+
+            T context = prepareContext(sentRequest.Response.DataLength);
+
+            switch (sentRequest.nativeRequest)
+            {
+                case UnityWebRequest uwr:
+                    NativeArray<byte>.ReadOnly nativeData = uwr.downloadHandler.nativeData;
+
+                    transformChunk(context, nativeData, 0);
+                    break;
+                case HTTPRequest http2Req:
+                    await using (http2Req.Response.DownStream)
+                        ProcessSegments(http2Req.Response.DownStream);
+
+                    break;
+            }
+
+            return context;
+
+            unsafe void ProcessSegments(DownloadContentStream stream)
+            {
+                ulong offsetFromStart = 0;
+
+                while (stream.TryTake(out BufferSegment segment))
+                {
+                    // Convert segment to native array
+                    fixed (byte* segmentPtr = segment.Data)
+                    {
+                        void* ptr = segmentPtr + segment.Offset;
+                        NativeArray<byte> nativeArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, segment.Count, Allocator.None);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                        NativeArrayUnsafeUtility.SetAtomicSafetyHandle(
+                            ref nativeArray,
+                            AtomicSafetyHandle.Create()
+                        );
+#endif
+
+                        transformChunk(context, nativeArray.AsReadOnly(), offsetFromStart);
+                    }
+
+                    offsetFromStart += (ulong)segment.Count;
+                }
+            }
         }
 
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)

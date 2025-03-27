@@ -91,10 +91,10 @@ namespace PortableExperiences.Controller
             var portableExperiencePath = URLDomain.FromString(worldUrl);
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericGetRequest genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
 
             var serverAbout = new ServerAbout();
-            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity, ct);
 
             if (result.configurations.scenesUrn.Count == 0)
 

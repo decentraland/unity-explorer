@@ -14,6 +14,7 @@ using ECS;
 using ECS.StreamableLoading.Cache;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
@@ -47,6 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
                 var url = new Uri(intention.CommonArguments.URL);
+
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))
                           .AppendSubDirectory(URLSubdirectory.FromString(url.AbsolutePath));
             }
@@ -66,13 +68,10 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected override WearablesResponse AssetFromPreparedIntention(in GetWearableByParamIntention intention) =>
             new (intention.Results, intention.TotalAmount);
 
-        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, ct);
 
-        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter)
-        {
-            var result = await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
-            return result;
-        }
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft, ct);
     }
 }

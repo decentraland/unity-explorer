@@ -75,6 +75,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
+        private readonly IWebRequestController webRequestController;
 
         private bool isLoading;
         private bool isDragging;
@@ -97,6 +98,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
+            IWebRequestController webRequestController,
             CameraReelOptionButtonView? optionButtonView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
@@ -117,6 +119,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollBarDragHandler.EndDrag += ScrollEndDrag;
             this.elementMaskRect = this.view.elementMask.GetWorldRect();
             this.useSignedRequest = useSignedRequest;
+            this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.systemClipboard = systemClipboard;
             this.webBrowser = webBrowser;
@@ -160,7 +163,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 try
                 {
-                    await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
+                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, response.url, ct);
                     ScreenshotDownloaded?.Invoke();
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
                 }

@@ -110,55 +110,49 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     switch (method)
                     {
                         case null:
-                            response = await webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
+                            response = await webController.SignedFetchPostAsync(
                                 request.url,
-                                new FlatFetchResponse<GenericPostRequest>(),
                                 signatureMetadata,
-                                GetReportData(),
-                                cancellationTokenSource.Token);
+                                GetReportData())
+                                                          .ToFlatFetchResponseAsync(cancellationTokenSource.Token);
 
                             break;
                         case "post":
-                            response = await webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
+                            response = await webController.PostAsync(
                                 request.url,
-                                new FlatFetchResponse<GenericPostRequest>(),
-                                GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                cancellationTokenSource.Token,
-                                headersInfo:
-                                headers,
+                                GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
+                                headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: GetReportData());
+                                reportCategory: GetReportData())
+                                                          .ToFlatFetchResponseAsync(cancellationTokenSource.Token);
 
                             break;
                         case "get":
-                            response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                            response = await webController.GetAsync(
                                 request.url,
-                                new FlatFetchResponse<GenericGetRequest>(),
-                                cancellationTokenSource.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportData: GetReportData());
+                                reportData: GetReportData())
+                                                          .ToFlatFetchResponseAsync(cancellationTokenSource.Token);
 
                             break;
                         case "put":
-                            response = await webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
+                            response = await webController.PutAsync(
                                 request.url,
-                                new FlatFetchResponse<GenericPutRequest>(),
-                                GenericPutArguments.CreateJsonOrDefault(request.init?.body),
-                                cancellationTokenSource.Token,
+                                GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: GetReportData());
+                                reportCategory: GetReportData())
+                                                          .ToFlatFetchResponseAsync(cancellationTokenSource.Token);
                             break;
                         case "delete":
-                            response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
+                            response = await webController.DeleteAsync(
                                 request.url,
-                                new FlatFetchResponse<GenericDeleteRequest>(),
-                                GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
-                                cancellationTokenSource.Token,
+                                GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: GetReportData());
+                                reportCategory: GetReportData())
+                                                          .ToFlatFetchResponseAsync(cancellationTokenSource.Token);
 
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");

@@ -79,14 +79,14 @@ namespace SceneRunner.Scene
             return fileToHash.TryGetValue(name, out hash);
         }
 
-        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory)
+        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory, CancellationToken ct)
         {
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
             try
             {
-                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), new CancellationToken(), reportCategory)
-                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                SceneEntityDefinition? sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), reportCategory)
+                                                                                         .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
@@ -108,7 +108,8 @@ namespace SceneRunner.Scene
                    contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory,
+            CancellationToken ct)
         {
             IGetHash getHash;
             switch (remoteContentServer)
@@ -127,7 +128,7 @@ namespace SceneRunner.Scene
                     return false;
             }
 
-            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory);
+            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory, ct);
             if (success)
             {
                 remoteSceneID = sceneHash;

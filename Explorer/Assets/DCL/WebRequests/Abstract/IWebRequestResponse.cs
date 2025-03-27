@@ -38,11 +38,13 @@ namespace DCL.WebRequests
 
         bool IsSuccess { get; }
 
+        ulong DataLength { get; }
+
         /// <summary>
         ///     Gets the first value of the given header
         /// </summary>
         /// <returns></returns>
-        string GetHeader(string headerName);
+        string? GetHeader(string headerName);
 
         /// <summary>
         ///     <list type="bullet"></list>

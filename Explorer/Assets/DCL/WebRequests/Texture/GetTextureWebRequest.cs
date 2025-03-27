@@ -31,7 +31,7 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Creates the texture
         /// </summary>
-        public async UniTask<IOwnedTexture2D?> CreateTextureAsync(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point, CancellationToken ct = default)
+        public async UniTask<IOwnedTexture2D> CreateTextureAsync(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point, CancellationToken ct = default)
         {
             using IWebRequest? wr = await this.SendAsync(ct);
 
@@ -47,7 +47,7 @@ namespace DCL.WebRequests
             }
         }
 
-        private UniTask<IOwnedTexture2D?> ExecuteNoCompressionAsync(UnityWebRequest webRequest, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
+        private UniTask<IOwnedTexture2D> ExecuteNoCompressionAsync(UnityWebRequest webRequest, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
         {
             Texture2D? texture;
 
@@ -73,7 +73,7 @@ namespace DCL.WebRequests
             return UniTask.FromResult((IOwnedTexture2D)new IOwnedTexture2D.Const(texture));
         }
 
-        private async UniTask<IOwnedTexture2D?> ExecuteWithCompressionAsync(UnityWebRequest request, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
+        private async UniTask<IOwnedTexture2D> ExecuteWithCompressionAsync(UnityWebRequest request, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
         {
             NativeArray<byte>.ReadOnly? data = request.downloadHandler?.nativeData;
 
