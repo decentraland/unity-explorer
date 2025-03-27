@@ -1,6 +1,7 @@
 using DCL.MarketplaceCreditsAPIService;
 using System;
 using System.Globalization;
+using UnityEngine;
 
 namespace DCL.MarketplaceCredits
 {
@@ -14,6 +15,7 @@ namespace DCL.MarketplaceCredits
         public const int CREDITS_UNLOCKED_DURATION = 5;
         public const int ERROR_NOTIFICATION_DURATION = 3;
         public const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
+        private const string PROGRAM_STARTED_MARK_LOCAL_STORAGE_KEY = "MarketplaceCredits_ProgramStarted";
 
         public static string FormatEndOfTheWeekDate(uint timeLeftInMilliseconds)
         {
@@ -44,6 +46,18 @@ namespace DCL.MarketplaceCredits
             DateTime startDateDT = DateTime.ParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
             DateTime endDateDT = DateTime.ParseExact(endDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
             return $"{startDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}";
+        }
+
+        public static bool IsProgramMarkedAsStarted() =>
+            PlayerPrefs.GetInt(PROGRAM_STARTED_MARK_LOCAL_STORAGE_KEY, 0) == 1;
+
+        public static void MarkProgramAsStarted()
+        {
+            if (IsProgramMarkedAsStarted())
+                return;
+
+            PlayerPrefs.SetInt(PROGRAM_STARTED_MARK_LOCAL_STORAGE_KEY, 1);
+            PlayerPrefs.Save();
         }
 
         public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
