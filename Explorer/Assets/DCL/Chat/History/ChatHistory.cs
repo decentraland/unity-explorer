@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.Chat.History
 {
@@ -25,11 +26,7 @@ namespace DCL.Chat.History
             {
                 if (!isReadMessagesDirty) return cachedReadMessages;
 
-                cachedReadMessages = 0;
-                foreach (var channel in channels.Values)
-                {
-                    cachedReadMessages += channel.ReadMessages;
-                }
+                cachedReadMessages = channels.Values.Sum(channel => channel.ReadMessages);
                 isReadMessagesDirty = false;
                 return cachedReadMessages;
             }
@@ -41,11 +38,7 @@ namespace DCL.Chat.History
             {
                 if (!isTotalMessagesDirty) return cachedTotalMessages;
 
-                cachedTotalMessages = 0;
-                foreach (var channel in channels.Values)
-                {
-                    cachedTotalMessages += channel.Messages.Count;
-                }
+                cachedTotalMessages = channels.Values.Sum(channel => channel.Messages.Count);
                 isTotalMessagesDirty = false;
                 return cachedTotalMessages;
             }
@@ -129,6 +122,10 @@ namespace DCL.Chat.History
             {
                 channel.Clear();
             }
+
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+
         }
 
         public void ClearAllChannels()
@@ -137,6 +134,9 @@ namespace DCL.Chat.History
             {
                 channel.Clear();
             }
+            
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
         }
 
         public void DeleteAllChannels()
