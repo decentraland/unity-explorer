@@ -62,7 +62,7 @@ namespace DCL.MarketplaceCredits.Sections
 
             view.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
             view.StartWithEmailButton.onClick.AddListener(RegisterInTheProgram);
-            view.StartButton.onClick.AddListener(GoToGoalsOfTheWeekSection);
+            view.StartButton.onClick.AddListener(EnterTheProgram);
             view.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
         }
 
@@ -87,8 +87,8 @@ namespace DCL.MarketplaceCredits.Sections
         public void Dispose()
         {
             view.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
-            view.StartButton.onClick.RemoveListener(RegisterInTheProgram);
             view.StartWithEmailButton.onClick.RemoveListener(RegisterInTheProgram);
+            view.StartButton.onClick.RemoveListener(EnterTheProgram);
             view.EmailInput.onValueChanged.RemoveListener(OnEmailInputValueChanged);
             fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
             registerInTheProgramCts.SafeCancelAndDispose();
@@ -120,10 +120,17 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void RegisterInTheProgram()
         {
+            MarketplaceCreditsUtils.MarkProgramAsStarted();
             registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
             RegisterInTheProgramAsync(
                 string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? view.EmailInput.text : currentCreditsProgramProgress.user.email,
                 registerInTheProgramCts.Token).Forget();
+        }
+
+        private void EnterTheProgram()
+        {
+            MarketplaceCreditsUtils.MarkProgramAsStarted();
+            RedirectToSection();
         }
 
         private async UniTaskVoid RegisterInTheProgramAsync(string email, CancellationToken ct)
@@ -170,6 +177,9 @@ namespace DCL.MarketplaceCredits.Sections
                 return;
             }
 
+            if (!MarketplaceCreditsUtils.IsProgramMarkedAsStarted())
+                return;
+
             // REGISTERED BUT NON-VERIFIED USER FLOW
             if (!currentCreditsProgramProgress.IsUserEmailVerified())
             {
@@ -184,15 +194,11 @@ namespace DCL.MarketplaceCredits.Sections
                 marketplaceCreditsWeekGoalsCompletedController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
             }
-            else if (ownProfile != null && MarketplaceCreditsUtils.IsProgramMarkedAsStarted())
-                GoToGoalsOfTheWeekSection();
-        }
-
-        private void GoToGoalsOfTheWeekSection()
-        {
-            marketplaceCreditsGoalsOfTheWeekController.Setup(ownProfile.UserId, currentCreditsProgramProgress);
-            marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
-            MarketplaceCreditsUtils.MarkProgramAsStarted();
+            else if (ownProfile != null)
+            {
+                marketplaceCreditsGoalsOfTheWeekController.Setup(ownProfile.UserId, currentCreditsProgramProgress);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+            }
         }
 
         private void OpenLearnMoreLink() =>
