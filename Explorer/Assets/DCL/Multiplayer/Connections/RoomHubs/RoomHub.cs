@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
                 gateKeeperSceneRoom.StopIfNotAsync(),
-                sharedPrivateConversationsRoom.StartIfNotAsync()
+                sharedPrivateConversationsRoom.StopIfNotAsync()
             );
     }
 }
