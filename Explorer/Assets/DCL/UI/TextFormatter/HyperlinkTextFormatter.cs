@@ -21,7 +21,7 @@ namespace DCL.UI.InputFieldFormatting
 
         // Regex patterns for each type of link
         private const string URL_PATTERN = @"(?<url>(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$))";
-        private const string SCENE_PATTERN = @"(?<scene>(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|!|\?|\.|,|$))";
+        private const string SCENE_PATTERN = @"(?<scene>(?<=^|\s)(?<x>-?\d{1,3}),(?<y>-?\d{1,3})(?=\s|!|\?|\.|,|$))";
         private const string WORLD_PATTERN = @"(?<world>(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
         private const string USERNAME_PATTERN = @"(?<username>(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$))";
         private const string RICH_TEXT_PATTERN = @"(?<richtext><(?!\/?(b|i)(>|\s))[^>]+>)";
@@ -124,7 +124,9 @@ namespace DCL.UI.InputFieldFormatting
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ProcessSceneMatch(Match match)
         {
-            if (!AreCoordsValid(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)))
+            if (!AreCoordsValid(
+                int.Parse(match.Groups["x"].Value),
+                int.Parse(match.Groups["y"].Value)))
             {
                 mainStringBuilder.Append(match);
                 return;
