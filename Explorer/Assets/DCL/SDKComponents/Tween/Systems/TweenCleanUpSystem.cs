@@ -15,12 +15,12 @@ namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.TWEEN)]
-    public partial class SystemClassSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class TweenCleanUpSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public SystemClassSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
+        public TweenCleanUpSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.tweenerPool = tweenerPool;
