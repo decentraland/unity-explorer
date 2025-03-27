@@ -26,8 +26,6 @@ namespace DCL.UI.Sidebar
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
-        private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
-        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
@@ -50,8 +48,6 @@ namespace DCL.UI.Sidebar
             IMVCManager mvcManager,
             INotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
-            MarketplaceCreditsMenuController marketplaceCreditsMenuController,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
@@ -70,8 +66,6 @@ namespace DCL.UI.Sidebar
             this.profileMenuController = profileMenuMenuWidgetController;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
-            this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
-            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
@@ -128,7 +122,6 @@ namespace DCL.UI.Sidebar
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
-            viewInstance.MarketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;

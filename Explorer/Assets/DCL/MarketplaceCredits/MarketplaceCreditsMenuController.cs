@@ -8,9 +8,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.SidebarBus;
 using DCL.UI.Buttons;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -30,8 +28,6 @@ namespace DCL.MarketplaceCredits
 
         private readonly MarketplaceCreditsMenuView view;
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
-        private readonly ISidebarBus sidebarBus;
-        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
         private readonly MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
         private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
@@ -55,8 +51,6 @@ namespace DCL.MarketplaceCredits
         public MarketplaceCreditsMenuController(
             MarketplaceCreditsMenuView view,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
-            ISidebarBus sidebarBus,
-            ISidebarActionsBus sidebarActionsBus,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
@@ -69,12 +63,10 @@ namespace DCL.MarketplaceCredits
         {
             this.sidebarButton = sidebarButton;
             this.view = view;
-            this.sidebarBus = sidebarBus;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
 
@@ -136,7 +128,6 @@ namespace DCL.MarketplaceCredits
             if (!view.gameObject.activeSelf)
                 return;
 
-            sidebarBus.UnblockSidebar();
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
@@ -253,11 +244,8 @@ namespace DCL.MarketplaceCredits
             SetSidebarButtonAsClaimIndicator(true);
         }
 
-        private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
-        {
-            sidebarActionsBus.CloseAllWidgets();
+        private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
             OpenPanel();
-        }
 
         private async UniTaskVoid CheckForSidebarButtonStateAsync(CancellationToken ct)
         {

@@ -5,7 +5,6 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +13,7 @@ namespace DCL.UI.Sidebar
     public class SidebarView : ViewBase, IView
     {
         [field: Header("Notifications")]
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator notificationsButton { get; private set; }
+        [field: SerializeField] public Button notificationsButton { get; private set; }
         [field: SerializeField] public NotificationsMenuView NotificationsMenuView { get; private set; }
         [field: SerializeField] internal GameObject backpackNotificationIndicator { get; private set; }
 
@@ -23,12 +22,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; }
         [field: SerializeField] internal GameObject profileMenu { get; private set; }
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; }
-
-        [field: Header("Marketplace Credits")]
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator MarketplaceCreditsButton { get; private set; }
-        [field: SerializeField] public Animator MarketplaceCreditsButtonAnimator { get; private set; }
-        [field: SerializeField] public GameObject MarketplaceCreditsClaimIndicator { get; private set; }
-        [field: SerializeField] public MarketplaceCreditsMenuView MarketplaceCreditsMenuView { get; private set; }
 
         [field: Header("Explore Panel Shortcuts")]
         [field: SerializeField] public Button InWorldCameraButton { get; private set; }
