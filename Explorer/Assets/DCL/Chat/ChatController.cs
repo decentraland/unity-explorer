@@ -15,12 +15,15 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
+using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -30,6 +33,7 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView>
     {
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+        private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -46,7 +50,7 @@ namespace DCL.Chat
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private readonly IChatEventBus chatEventBus;
-        private readonly IRoomHub roomHub;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -57,6 +61,8 @@ namespace DCL.Chat
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
+        private Web3Address currentUserAddress;
+        private bool isNewIdentity = true;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -79,7 +85,9 @@ namespace DCL.Chat
             IRoomHub roomHub,
             ChatAudioSettingsAsset chatAudioSettings,
             ITextFormatter hyperlinkTextFormatter,
-            IProfileCache profileCache, IChatEventBus chatEventBus) : base(viewFactory)
+            IProfileCache profileCache,
+            IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -90,12 +98,12 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
-            this.roomHub = roomHub;
             this.islandRoom = roomHub.IslandRoom();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
@@ -112,6 +120,8 @@ namespace DCL.Chat
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat -= Clear;
             chatEventBus.InsertTextInChat -= OnEventTextInserted;
+            web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
+            web3IdentityCache.OnIdentityCleared -= OnIdentityCleared;
 
             if (viewInstance != null)
             {
@@ -173,21 +183,48 @@ namespace DCL.Chat
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
 
             OnFocus();
-
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewWelcomeMessage());
-            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
-
+            
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.AllChannelsRemoved += OnChatHistoryOnAllChannelsRemoved;
+
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
+            ShowWelcomeMessage();
+        }
+
+        private void OnChatHistoryOnAllChannelsRemoved()
+        {
+            viewInstance!.RemoveAllConversations();
+        }
+
+        private void ShowWelcomeMessage()
+        {
+            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.Nearby);
+            viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
+        }
+
+        private void OnIdentityCleared()
+        {
+            chatHistory.DeleteAllChannels();
+            Debug.LogError("CHAT - Identity Cleared");
+        }
+
+        private void OnIdentityChanged()
+        {
+            ShowWelcomeMessage();
+            Debug.LogError("CHAT - Identity Changed");
         }
 
         private void OnOpenConversation(string userId)
         {
-            var channel = chatHistory.AddOrGetChannel(ChatChannel.ChatChannelType.User, new ChatChannel.ChannelId(userId));
+            var channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.FocusInputBox();
         }
@@ -233,7 +270,6 @@ namespace DCL.Chat
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
         {
             chatHistory.RemoveChannel(channelId);
-            viewInstance.RemoveConversation(channelId);
         }
 
         private void OnViewFoldingChanged(bool isUnfolded)

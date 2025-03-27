@@ -16,6 +16,7 @@ using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -42,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
         private readonly IChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private ChatController chatController;
 
@@ -62,7 +64,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -78,6 +81,7 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
@@ -113,7 +117,8 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
                 profileCache,
-                chatEventBus
+                chatEventBus,
+                web3IdentityCache
             );
 
             mvcManager.RegisterController(chatController);
