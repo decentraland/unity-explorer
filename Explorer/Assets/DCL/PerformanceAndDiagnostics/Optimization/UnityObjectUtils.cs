@@ -8,10 +8,6 @@ namespace Utility
 {
     public static class UnityObjectUtils
     {
-#if UNITY_EDITOR
-        // Can't take shortcuts in editor. Have to clean everything up properly.
-        public static bool IsQuitting => false;
-#else
         public static bool IsQuitting { get; private set; }
 
         [RuntimeInitializeOnLoadMethod]
@@ -26,7 +22,6 @@ namespace Utility
 
             Application.quitting += SetQuitting;
         }
-#endif
 
         /// <summary>
         ///     Tries to destroy Game Object based on the current state of the Application
