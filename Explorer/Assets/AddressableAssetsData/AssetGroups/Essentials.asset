@@ -387,6 +387,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b785183905d534b788d41dbce8ef7b4e
+    m_Address: MVFWImg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bd64e7058e4a44a1eafef49d75c5f0d0
     m_Address: LoadingRainbowGradient
     m_ReadOnly: 0
@@ -424,11 +429,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e052984ad30813240bd28c945f4cab60
     m_Address: DottedLineRenderer
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e4f1395814ee0473e86cb6c06009fc6e
-    m_Address: BuilderImg
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
