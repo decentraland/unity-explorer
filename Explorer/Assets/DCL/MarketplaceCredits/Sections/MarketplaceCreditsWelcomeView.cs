@@ -25,7 +25,13 @@ namespace DCL.MarketplaceCredits.Sections
         public TMP_InputField EmailInput { get; private set; }
 
         [field: SerializeField]
-        public GameObject EmailErrorOutline { get; private set; }
+        public Image EmailInputOutline { get; private set; }
+
+        [field: SerializeField]
+        public Color OutlineNormalColor { get; private set; }
+
+        [field: SerializeField]
+        public Color OutlineErrorColor { get; private set; }
 
         [field: SerializeField]
         public GameObject EmailErrorMark { get; private set; }
@@ -52,7 +58,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void ShowEmailError(bool show)
         {
-            EmailErrorOutline.SetActive(show);
+            EmailInputOutline.color = show ? OutlineErrorColor : OutlineNormalColor;
             EmailErrorMark.SetActive(show);
         }
 
