@@ -7,13 +7,11 @@ namespace DCL.Nametags
     [BurstCompile]
     public struct NametagMathHelper
     {
-        public static readonly float3 FORWARD = new (0f, 0f, 1f);
-        public static readonly float3 UP = new (0f, 1f, 0f);
-        public static readonly float3 NAMETAG_MAX_HEIGHT = new (0f, 4f, 0f);
-        public static readonly float3 ONE = new (1f, 1f, 1f);
+        private static readonly float3 FORWARD = new (0f, 0f, 1f);
+        private static readonly float3 UP = new (0f, 1f, 0f);
+        private static readonly float3 ONE = new (1f, 1f, 1f);
         private const float DISTANCE_CHANGE_THRESHOLD = 0.0001f;
         private const float HALF_DEGREES_TO_RADIANS = 0.5f * math.PI / 180f;
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]
