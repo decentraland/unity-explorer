@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Ipfs;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -13,6 +14,8 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Tests
 {
@@ -34,9 +37,18 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Create resolve promise
             var promise = AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world, new GetSceneFacadeIntention(), PartitionComponent.TOP_PRIORITY);
+
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata
+                {
+                    scene = new SceneMetadataScene
+                        { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
+                },
+            }, new IpfsPath());
             world.Add(promise.Entity, new StreamableLoadingResult<ISceneFacade>(scene));
 
-            Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
 
             system.Update(0f);
 
@@ -51,10 +63,19 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Create resolve promise
             var promise = AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world, new GetSceneFacadeIntention(), PartitionComponent.TOP_PRIORITY);
+
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata
+                {
+                    scene = new SceneMetadataScene
+                        { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
+                },
+            }, new IpfsPath());
             world.Add(promise.Entity, new StreamableLoadingResult<ISceneFacade>(scene));
 
             var partition = new PartitionComponent { Bucket = 3 };
-            Entity e = world.Create(promise, partition);
+            Entity e = world.Create(promise, partition, sceneDefinitionComponent);
             realmPartitionSettings.GetSceneUpdateFrequency(in partition).Returns(15);
 
             system.Update(0f);

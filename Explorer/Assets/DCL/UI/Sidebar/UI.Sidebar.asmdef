@@ -9,7 +9,6 @@
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
         "GUID:4698f2c6b4c3a4967b2a279a86796c82",
         "GUID:01f7bfa188da76f4b8eedc875c66b334",
-        "GUID:ff9608d635a64a03a75efb8e221a9d57",
         "GUID:828002f0a2864c3cbbca4d1de01c7455",
         "GUID:254c118155004a75a699a9410d44311f",
         "GUID:e56a0d6a94c144c784012e63b6043100",
@@ -26,10 +25,7 @@
         "GUID:ff38b7506167d314d987b4b8e8406988",
         "GUID:809870cbfd80a7b46bcf72b178ab210b",
         "GUID:766b242fb43af451aaa331f39872177d",
-        "GUID:ead265f036164eb7899edc341131f4d5",
-        "GUID:26b8f796ecc6b4a2ab621c9a7e70fd11",
-        "MarketplaceCredits",
-        "GUID:de1abe913222c33488ef01f2fbf0ea1b"
+        "GUID:ead265f036164eb7899edc341131f4d5"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

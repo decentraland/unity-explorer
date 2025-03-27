@@ -5,12 +5,12 @@ using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.SidebarBus;
-using DCL.UI.Buttons;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
@@ -21,7 +21,7 @@ using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuController : IDisposable
+    public class NotificationsMenuController : IDisposable, IPanelInSharedSpace<ControllerNoData>
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
@@ -39,8 +39,6 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
-        private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
-        private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
@@ -51,14 +49,16 @@ namespace DCL.Notifications.NotificationsMenu
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
 
+        public bool IsVisibleInSharedSpace => view.gameObject.activeSelf;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
-            HoverableAndSelectableButtonWithAnimator sidebarButton,
-            ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache)
         {
@@ -69,8 +69,6 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
-            this.sidebarButton = sidebarButton;
-            this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
             this.view.OnViewShown += OnViewShown;
@@ -90,24 +88,25 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
-        private void ClosePanel()
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ControllerNoData parameters)
         {
-            sidebarBus.UnblockSidebar();
             notificationPanelCts = notificationPanelCts.SafeRestart();
-            view.HideAsync(notificationPanelCts.Token).Forget();
-            sidebarButton.Deselect();
+            await view.ShowAsync(notificationPanelCts.Token);
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.WaitUntilCanceled(notificationPanelCts.Token);
+            await view.HideAsync(notificationPanelCts.Token);
         }
 
-        public void ToggleNotificationsPanel(bool forceClose)
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
 
-            if (!forceClose && !view.gameObject.activeSelf) { view.ShowAsync(notificationPanelCts.Token).Forget(); }
-            else if (view.gameObject.activeSelf)
-            {
-                view.HideAsync(notificationPanelCts.Token).Forget();
-                sidebarButton.Deselect();
-            }
+            await UniTask.WaitUntil(() => !view.gameObject.activeSelf, PlayerLoopTiming.Update, ct);
+        }
+
+        private void ClosePanel()
+        {
+            notificationPanelCts = notificationPanelCts.SafeRestart();
         }
 
         private void OnViewShown()

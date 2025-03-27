@@ -12,15 +12,13 @@ using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
-using DCL.Profiles.Self;
-using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -48,9 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly ISidebarBus sidebarBus;
         private readonly DCLInput input;
-        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
@@ -58,9 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ViewDependencies viewDependencies;
-        private readonly IInputBlock inputBlock;
-        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -75,9 +69,7 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            ISidebarBus sidebarBus,
             DCLInput input,
-            ISidebarActionsBus sidebarActionsBus,
             Arch.Core.World world,
             Entity playerEntity,
             bool includeCameraReel,
@@ -85,9 +77,7 @@ namespace DCL.PluginSystem.Global
             bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ViewDependencies viewDependencies,
-            IInputBlock inputBlock,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile)
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -101,9 +91,7 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.sidebarBus = sidebarBus;
             this.input = input;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
@@ -111,9 +99,7 @@ namespace DCL.PluginSystem.Global
             this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
             this.viewDependencies = viewDependencies;
-            this.inputBlock = inputBlock;
-            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
-            this.selfProfile = selfProfile;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose() { }
@@ -140,21 +126,18 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, mainUIView.SidebarView.notificationsButton, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
-                new MarketplaceCreditsMenuController(mainUIView.SidebarView.MarketplaceCreditsMenuView, mainUIView.SidebarView.MarketplaceCreditsButton, sidebarBus, sidebarActionsBus, webBrowser, inputBlock, marketplaceCreditsAPIClient, selfProfile, webRequestController, mvcManager, notificationsBusController, mainUIView.SidebarView.MarketplaceCreditsButtonAnimator, mainUIView.SidebarView.MarketplaceCreditsClaimIndicator),
-                marketplaceCreditsAPIClient,
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
-                sidebarBus,
                 webBrowser,
-                sidebarActionsBus,
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
                 mainUIView.ChatView,
-                chatHistory
+                chatHistory,
+                sharedSpaceManager
             ));
         }
 
