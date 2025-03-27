@@ -4,17 +4,12 @@ namespace DCL.WebRequests.Analytics
 {
     public interface IRequestMetric
     {
-        /// <summary>
-        ///     Should be updated every frame
-        /// </summary>
-        void Update() { }
+        DebugLongMarkerDef.Unit GetUnit();
 
-        public DebugLongMarkerDef.Unit GetUnit();
+        ulong GetMetric();
 
-        public ulong GetMetric();
+        internal void OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest);
 
-        public void OnRequestStarted(ITypedWebRequest request);
-
-        public void OnRequestEnded(ITypedWebRequest request);
+        internal void OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest);
     }
 }

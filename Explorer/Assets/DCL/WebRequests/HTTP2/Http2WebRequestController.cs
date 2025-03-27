@@ -1,10 +1,9 @@
 ﻿using Best.HTTP;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
-using System;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -13,10 +12,14 @@ namespace DCL.WebRequests.HTTP2
     public class Http2WebRequestController : IWebRequestController
     {
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IWebRequestsAnalyticsContainer analyticsContainer;
+        private readonly IRequestHub requestHub;
 
-        public Http2WebRequestController(IWeb3IdentityCache identityCache)
+        public Http2WebRequestController(IWeb3IdentityCache identityCache, IWebRequestsAnalyticsContainer analyticsContainer, IRequestHub requestHub)
         {
             this.identityCache = identityCache;
+            this.analyticsContainer = analyticsContainer;
+            this.requestHub = requestHub;
         }
 
         public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct)
@@ -33,7 +36,7 @@ namespace DCL.WebRequests.HTTP2
             envelope.InitializedWebRequest(identityCache, requestAdapter);
             nativeRequest.RetrySettings.MaxRetries = envelope.CommonArguments.TotalAttempts();
 
-            try { await nativeRequest.GetHTTPResponseAsync(ct); }
+            try { await ExecuteWithAnalytics(requestWrap, requestAdapter, ct); }
             catch (AsyncHTTPException exception)
             {
                 if (!envelope.SuppressErrors)
@@ -44,12 +47,26 @@ namespace DCL.WebRequests.HTTP2
                         $"Exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with args {requestWrap.ArgsToString()},\n with {envelope}\n"
                     );
 
-                // TODO convert into a common exception
+                // Dispose adapter on exception asa it won't be returned to the caller
+                requestAdapter.Dispose();
+
+                // convert into a common exception
+                throw new Http2WebRequestException(requestAdapter, exception);
             }
 
             return requestAdapter;
         }
 
-        IRequestHub IWebRequestController.requestHub => throw new NotImplementedException();
+        private async UniTask ExecuteWithAnalytics(ITypedWebRequest request, Http2WebRequest adapter, CancellationToken ct)
+        {
+            var analytics = new Http2WebRequestAnalytics(adapter.httpRequest);
+
+            analyticsContainer.OnRequestStarted(request, adapter, analytics);
+
+            try { await adapter.httpRequest.GetHTTPResponseAsync(ct); }
+            finally { analyticsContainer.OnRequestFinished(request, adapter, analytics); }
+        }
+
+        IRequestHub IWebRequestController.requestHub => requestHub;
     }
 }

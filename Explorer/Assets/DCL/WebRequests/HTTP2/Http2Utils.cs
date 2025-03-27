@@ -2,6 +2,7 @@
 using Best.HTTP.Hosts.Connections.HTTP1;
 using Best.HTTP.Shared.Extensions;
 using Best.HTTP.Shared.PlatformSupport.Memory;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -10,6 +11,18 @@ namespace DCL.WebRequests.HTTP2
 {
     public static class Http2Utils
     {
+        public static Dictionary<string, string>? FlattenHeaders(this Dictionary<string, List<string>>? headers)
+        {
+            if (headers == null) return null;
+
+            var dict = new Dictionary<string, string>(headers.Count);
+
+            foreach (KeyValuePair<string, List<string>> header in headers)
+                dict[header.Key] = string.Join(',', header.Value);
+
+            return dict;
+        }
+
         /// <summary>
         ///     It's a copy of <see cref="HTTPResponse.ReadTo" /> as it's not exposed
         /// </summary>

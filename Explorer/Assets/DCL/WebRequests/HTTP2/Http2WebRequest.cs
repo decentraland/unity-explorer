@@ -10,15 +10,19 @@ namespace DCL.WebRequests.HTTP2
 {
     public class Http2WebRequest : IWebRequest
     {
-        private readonly HTTPRequest httpRequest;
+        internal readonly HTTPRequest httpRequest;
 
         public string Url => httpRequest.Uri.OriginalString;
 
-        public IWebRequest.IResponse Response { get; }
+        public IWebRequestResponse Response { get; }
 
-        object IWebRequest.nativeRequest => httpRequest;
+        public bool IsTimedOut => httpRequest.State is HTTPRequestStates.TimedOut or HTTPRequestStates.ConnectionTimedOut;
+
+        public bool IsAborted => httpRequest.State == HTTPRequestStates.Aborted || !Response.Received;
 
         public bool Redirected => httpRequest.RedirectSettings.IsRedirected && httpRequest.RedirectSettings.RedirectCount > 0;
+
+        object IWebRequest.nativeRequest => httpRequest;
 
         public Http2WebRequest(HTTPRequest httpRequest)
         {
@@ -28,11 +32,12 @@ namespace DCL.WebRequests.HTTP2
 
         public void Dispose()
         {
-            // TODO
-            // var response = httpRequest.Response;
-            //
-            // if (response is {DownStream: {IsDetached: true}})
-            //     response.Dispose();
+            // Disposal is done automatically by the framework
+        }
+
+        public void Abort()
+        {
+            httpRequest.Abort();
         }
 
         public void SetRequestHeader(string name, string value)
@@ -45,9 +50,11 @@ namespace DCL.WebRequests.HTTP2
             httpRequest.TimeoutSettings.Timeout = TimeSpan.FromSeconds(timeout);
         }
 
-        internal class Http2Response : IWebRequest.IResponse
+        internal class Http2Response : IWebRequestResponse
         {
             private readonly HTTPRequest request;
+
+            public bool Received => request.Response != null;
 
             public string Text
             {
@@ -109,8 +116,6 @@ namespace DCL.WebRequests.HTTP2
             public int StatusCode => request.Response.StatusCode;
 
             public bool IsSuccess => request.State == HTTPRequestStates.Finished;
-            public bool IsAborted => request.State == HTTPRequestStates.Aborted;
-            public bool IsTimedOut => request.State is HTTPRequestStates.TimedOut or HTTPRequestStates.Error;
 
             internal Http2Response(HTTPRequest request)
             {
@@ -120,17 +125,8 @@ namespace DCL.WebRequests.HTTP2
             public string GetHeader(string headerName) =>
                 request.Response.GetFirstHeaderValue(headerName);
 
-            public Dictionary<string, string>? FlattenHeaders()
-            {
-                if (request.Response == null) return null;
-
-                var dict = new Dictionary<string, string>(request.Response.Headers.Count);
-
-                foreach (KeyValuePair<string, List<string>> header in request.Response.Headers)
-                    dict[header.Key] = string.Join(',', header.Value);
-
-                return dict;
-            }
+            public Dictionary<string, string>? FlattenHeaders() =>
+                request.Response?.Headers.FlattenHeaders();
         }
     }
 }

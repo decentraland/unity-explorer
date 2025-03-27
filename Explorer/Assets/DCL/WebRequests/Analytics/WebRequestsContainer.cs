@@ -58,13 +58,13 @@ namespace DCL.WebRequests.Analytics
 
             var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
 
-            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+            IWebRequestController coreWebRequestController = new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                             .WithLog()
                                                             .WithArtificialDelay(options)
                                                             .WithBudget(coreBudget, coreAvailableBudget);
 
-            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+            IWebRequestController sceneWebRequestController = new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                                              .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                              .WithLog()
                                                              .WithArtificialDelay(options)

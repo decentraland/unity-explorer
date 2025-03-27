@@ -1,46 +1,47 @@
 ﻿using Cysharp.Threading.Tasks;
+using NSubstitute;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GetAssetBundleWebRequest : ITypedWebRequest
+    public class GetAssetBundleWebRequest : TypedWebRequestBase<GetAssetBundleArguments>
     {
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        public GetAssetBundleWebRequest(UnityWebRequest unityWebRequest, AssetBundleLoadingMutex assetBundleLoadingMutex)
+        internal GetAssetBundleWebRequest(AssetBundleLoadingMutex assetBundleLoadingMutex, RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
             this.assetBundleLoadingMutex = assetBundleLoadingMutex;
-            UnityWebRequest = unityWebRequest;
         }
 
-        public UnityWebRequest UnityWebRequest { get; }
-
-        internal static GetAssetBundleWebRequest Initialize(in CommonArguments commonArguments, GetAssetBundleArguments arguments)
+        public override UnityWebRequest CreateUnityWebRequest()
         {
             UnityWebRequest unityWebRequest =
-                arguments.CacheHash.HasValue
-                    ? UnityWebRequestAssetBundle.GetAssetBundle(commonArguments.URL, arguments.CacheHash.Value)
-                    : UnityWebRequestAssetBundle.GetAssetBundle(commonArguments.URL);
+                Args.CacheHash.HasValue
+                    ? UnityWebRequestAssetBundle.GetAssetBundle(Envelope.CommonArguments.URL, Args.CacheHash.Value)
+                    : UnityWebRequestAssetBundle.GetAssetBundle(Envelope.CommonArguments.URL);
 
-            ((DownloadHandlerAssetBundle)unityWebRequest.downloadHandler).autoLoadAssetBundle = arguments.AutoLoadAssetBundle;
+            ((DownloadHandlerAssetBundle)unityWebRequest.downloadHandler).autoLoadAssetBundle = Args.AutoLoadAssetBundle;
 
-            return new GetAssetBundleWebRequest(unityWebRequest, arguments.LoadingMutex);
+            return unityWebRequest;
         }
 
-        public struct CreateAssetBundleOp : IWebRequestOp<GetAssetBundleWebRequest, AssetBundleLoadingResult>
+        public async UniTask<AssetBundleLoadingResult> CreateAsyncBundleAsync(CancellationToken ct)
         {
-            public async UniTask<AssetBundleLoadingResult> ExecuteAsync(GetAssetBundleWebRequest webRequest, CancellationToken ct)
-            {
-                AssetBundle assetBundle;
+            using IWebRequest? wr = await this.SendAsync(ct);
 
-                using (AssetBundleLoadingMutex.LoadingRegion _ = await webRequest.assetBundleLoadingMutex.AcquireAsync(ct))
-                    assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest.UnityWebRequest);
+            if (wr.nativeRequest is not UnityWebRequest unityWebRequest)
+                throw new NotSupportedException($"{nameof(CreateAsyncBundleAsync)} supports {nameof(UnityWebRequest)} only");
 
-                string? error = assetBundle == null ? webRequest.UnityWebRequest.downloadHandler.error : null;
-                return new AssetBundleLoadingResult(assetBundle, error);
-            }
+            AssetBundle assetBundle;
+
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await assetBundleLoadingMutex.AcquireAsync(ct))
+                assetBundle = DownloadHandlerAssetBundle.GetContent(unityWebRequest);
+
+            string? error = assetBundle == null ? unityWebRequest.downloadHandler.error : null;
+            return new AssetBundleLoadingResult(assetBundle, error);
         }
     }
 }

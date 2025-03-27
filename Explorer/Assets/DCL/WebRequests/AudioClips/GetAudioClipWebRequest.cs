@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiling;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -10,46 +11,32 @@ namespace DCL.WebRequests
     /// <summary>
     ///     Representation of the created web request dedicated to download an audio clip
     /// </summary>
-    public readonly struct GetAudioClipWebRequest : ITypedWebRequest
+    public class GetAudioClipWebRequest : TypedWebRequestBase<GetAudioClipArguments>
     {
-        private readonly string url;
+        internal GetAudioClipWebRequest(RequestEnvelope envelope, GetAudioClipArguments args, IWebRequestController controller) : base(envelope, args, controller) { }
 
-        public UnityWebRequest UnityWebRequest { get; }
+        public override UnityWebRequest CreateUnityWebRequest() =>
+            UnityWebRequestMultimedia.GetAudioClip(Envelope.CommonArguments.URL, Args.AudioType);
 
-        private GetAudioClipWebRequest(UnityWebRequest unityWebRequest, string url)
+        public async UniTask<AudioClip?> CreateAudioClipAsync(CancellationToken ct)
         {
-            this.url = url;
-            UnityWebRequest = unityWebRequest;
-        }
+            using IWebRequest? wr = await this.SendAsync(ct);
 
-        public struct CreateAudioClipOp : IWebRequestOp<GetAudioClipWebRequest, AudioClip>
-        {
-            /// <summary>
-            ///     Creates the audio clip
-            /// </summary>
-            public UniTask<AudioClip?> ExecuteAsync(GetAudioClipWebRequest webRequest, CancellationToken ct)
-            {
-                UnityWebRequest unityWebRequest = webRequest.UnityWebRequest;
+            if (wr.nativeRequest is not UnityWebRequest unityWebRequest)
+                throw new NotSupportedException($"{nameof(CreateAudioClipAsync)} supports {nameof(UnityWebRequest)} only");
 
-                // files bigger than 1MB will be treated as streaming
-                if (unityWebRequest.downloadedBytes > 1000000)
-                    ((DownloadHandlerAudioClip)unityWebRequest.downloadHandler).streamAudio = true;
+            // files bigger than 1MB will be treated as streaming
+            if (unityWebRequest.downloadedBytes > 1000000)
+                ((DownloadHandlerAudioClip)unityWebRequest.downloadHandler).streamAudio = true;
 
-                AudioClip clip = DownloadHandlerAudioClip.GetContent(unityWebRequest);
+            AudioClip clip = DownloadHandlerAudioClip.GetContent(unityWebRequest);
 
-                unityWebRequest.Dispose();
+            unityWebRequest.Dispose();
 
-                clip.SetDebugName(webRequest.url);
-                ProfilingCounters.AudioClipsAmount.Value++;
+            clip.SetDebugName(wr.Url);
+            ProfilingCounters.AudioClipsAmount.Value++;
 
-                return UniTask.FromResult(clip)!;
-            }
-        }
-
-        internal static GetAudioClipWebRequest Initialize(in CommonArguments commonArguments, GetAudioClipArguments audioClipArguments)
-        {
-            UnityWebRequest wr = UnityWebRequestMultimedia.GetAudioClip(commonArguments.URL, audioClipArguments.AudioType);
-            return new GetAudioClipWebRequest(wr, commonArguments.URL);
+            return clip;
         }
     }
 }

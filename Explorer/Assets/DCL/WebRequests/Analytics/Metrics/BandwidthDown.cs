@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class BandwidthDown : IRequestMetric
+    internal class BandwidthDown : IRequestMetric
     {
         private ulong bandwidth { get; set; }
 
@@ -12,16 +12,14 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             bandwidth;
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
-            if (request.UnityWebRequest.result == UnityWebRequest.Result.Success)
-            {
-                bandwidth += (request.UnityWebRequest.downloadedBytes);
-            }
+            if (webRequest.Response.IsSuccess)
+                bandwidth += webRequestAnalytics.DownloadedBytes;
         }
     }
 }

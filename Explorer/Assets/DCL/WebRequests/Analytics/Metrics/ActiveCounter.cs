@@ -2,7 +2,7 @@
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class ActiveCounter : IRequestMetric
+    internal class ActiveCounter : IRequestMetric
     {
         private ulong counter { get; set; }
 
@@ -11,12 +11,12 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             counter;
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
             counter++;
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
             counter--;
         }

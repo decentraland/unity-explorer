@@ -7,10 +7,8 @@ namespace DCL.WebRequests.Analytics.Metrics
     /// <summary>
     ///     Reversed of <see cref="ServeTimePerMBAverage" />
     /// </summary>
-    public class FillRateAverage : IRequestMetric
+    internal class FillRateAverage : IRequestMetric
     {
-        private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
-
         private ulong bytesTransferred;
         private double seconds;
 
@@ -20,20 +18,16 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             (ulong)(bytesTransferred / seconds);
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
-            pendingRequests.Add(request, DateTime.Now);
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
-            if (!pendingRequests.Remove(request, out DateTime startTime))
-                return;
+            if (webRequestAnalytics.DownloadedBytes < ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
 
-            if (request.UnityWebRequest.downloadedBytes < ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
-
-            seconds += (DateTime.Now - startTime).TotalSeconds;
-            bytesTransferred += request.UnityWebRequest.downloadedBytes;
+            seconds += (DateTime.Now - webRequestAnalytics.CreationTime).TotalSeconds;
+            bytesTransferred += webRequestAnalytics.DownloadedBytes;
         }
     }
 }

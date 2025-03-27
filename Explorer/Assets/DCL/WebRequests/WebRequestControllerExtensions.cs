@@ -2,55 +2,26 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.GenericDelete;
-using System;
-using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
-using DCL.WebRequests.CustomDownloadHandlers;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System.Buffers;
-using UnityEngine;
-using UnityEngine.Networking;
+using Utility.Types;
 
 namespace DCL.WebRequests
 {
     public static partial class WebRequestControllerExtensions
     {
-        private static readonly byte[] PARTIAL_DOWNLOAD_BUFFER = new byte[1024 * 1024];
-
         public static UniTask<IWebRequest> SendAsync(this ITypedWebRequest request, CancellationToken ct) =>
             request.Controller.SendAsync(request, ct);
 
-        public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
-            this IWebRequestController controller,
+        public static TRequest Create<TRequest, TArgs>(this IWebRequestController controller,
+            TArgs args,
             CommonArguments commonArguments,
-            TWebRequestArgs args,
-            TWebRequestOp op,
-            CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null,
-            bool suppressErrors = false,
-            DownloadHandler? downloadHandler = null
-        )
-            where TWebRequestArgs: struct
-            where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp: struct, IWebRequestOp<TWebRequest, TResult> =>
-            controller.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
-                new RequestEnvelope<TWebRequest, TWebRequestArgs>(
-                    controller.requestHub.RequestDelegateFor<TWebRequestArgs, TWebRequest>(),
-                    commonArguments,
-                    args,
-                    ct,
-                    reportData,
-                    headersInfo ?? WebRequestHeadersInfo.NewEmpty(),
-                    signInfo,
-                    ignoreErrorCodes,
-                    suppressErrors,
-                    downloadHandler
-                ), op
-            )!;
+            bool suppressErrors = false) where TRequest: ITypedWebRequest<TArgs> where TArgs: struct =>
+            controller.requestHub.RequestDelegateFor<TArgs, TRequest>()(controller,
+                new RequestEnvelope(commonArguments, reportData, headersInfo, signInfo, suppressErrors), args);
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data
@@ -60,10 +31,9 @@ namespace DCL.WebRequests
             CommonArguments commonArguments,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null,
-            ISet<long>? ignoreErrorCodes = null
+            WebRequestSignInfo? signInfo = null
         ) =>
-            new (new RequestEnvelope(commonArguments, reportData, headersInfo, signInfo, ignoreErrorCodes), new GenericGetArguments(), controller);
+            controller.Create<GenericGetRequest, GenericGetArguments>(new GenericGetArguments(), commonArguments, reportData, headersInfo, signInfo);
 
         public static GenericPostRequest PostAsync(
             this IWebRequestController controller,
@@ -72,7 +42,7 @@ namespace DCL.WebRequests
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
+            controller.Create<GenericPostRequest, GenericUploadArguments>(arguments, commonArguments, reportCategory, headersInfo, signInfo);
 
         public static GenericPutRequest PutAsync(
             this IWebRequestController controller,
@@ -81,7 +51,7 @@ namespace DCL.WebRequests
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
+            controller.Create<GenericPutRequest, GenericUploadArguments>(arguments, commonArguments, reportCategory, headersInfo, signInfo);
 
         public static GenericDeleteRequest DeleteAsync(
             this IWebRequestController controller,
@@ -90,7 +60,7 @@ namespace DCL.WebRequests
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
+            controller.Create<GenericDeleteRequest, GenericUploadArguments>(arguments, commonArguments, reportCategory, headersInfo, signInfo);
 
         public static GenericPatchRequest PatchAsync(
             this IWebRequestController controller,
@@ -99,46 +69,43 @@ namespace DCL.WebRequests
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (new RequestEnvelope(commonArguments, reportCategory, headersInfo, signInfo), arguments, controller);
+            controller.Create<GenericPatchRequest, GenericUploadArguments>(arguments, commonArguments, reportCategory, headersInfo, signInfo);
 
-        public static UniTask<TResult> HeadAsync<TOp, TResult>(
+        public static GenericHeadRequest HeadAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            TOp webRequestOp,
-            GenericHeadArguments arguments,
-            CancellationToken ct,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
-            controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) =>
+            controller.Create<GenericHeadRequest, GenericHeadArguments>(new GenericHeadArguments(), commonArguments, reportCategory, headersInfo, signInfo);
 
-        public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
+        public static async UniTask<Result> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
         {
-            await UniTask.SwitchToMainThread();
-
-            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
-            catch (WebRequestException unityWebRequestException)
+            try
+            {
+                await controller.HeadAsync(url, reportData).SendAsync(ct);
+                return Result.SuccessResult();
+            }
+            catch (WebRequestException e)
             {
                 // Endpoint was unreacheable
-                if (unityWebRequestException.Result == UnityWebRequest.Result.ConnectionError)
-                    return false;
+                if (!e.ResponseReceived)
+                    return Result.ErrorResult($"{url} is unreachable");
 
                 // HEAD request might not be fully supported by the streaming platforms
-                switch (unityWebRequestException.ResponseCode)
+                switch (e.ResponseCode)
                 {
                     // It means there is no such end-point at all
                     case WebRequestUtils.BAD_REQUEST:
                     case WebRequestUtils.FORBIDDEN_ACCESS:
                     case WebRequestUtils.NOT_FOUND:
-                        return false;
+                    case WebRequestUtils.INTERNAL_SERVER_ERROR:
+                        return Result.ErrorResult($"{url} responded with {e.ResponseCode}");
                 }
 
                 // Assume everything else means that there is such an endpoint for Non-HEAD ops
-                return true;
+                return Result.SuccessResult();
             }
-            catch (Exception) { return false; }
-
-            return true;
         }
 
         public static async UniTask<bool> IsGetReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
@@ -162,38 +129,40 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
         ) =>
-            controller.requestHub.RequestDelegateFor<GetTextureArguments, GetTextureWebRequest>()(controller, new RequestEnvelope<GetTextureArguments>(
+            controller.requestHub.RequestDelegateFor<GetTextureArguments, GetTextureWebRequest>()(controller, new RequestEnvelope(
                 commonArguments,
-                args,
                 reportData,
                 headersInfo,
                 signInfo
-            ));
+            ), args);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip
         /// </summary>
-        public static UniTask<AudioClip> GetAudioClipAsync<TOp>(
+        public static GetAudioClipWebRequest GetAudioClipAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetAudioClipArguments args,
-            TOp webRequestOp,
-            CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
-            controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) =>
+            controller.Create<GetAudioClipWebRequest, GetAudioClipArguments>(args, commonArguments, reportData, headersInfo, signInfo);
 
-        public static UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
+        public static GetAssetBundleWebRequest GetAssetBundleAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetAssetBundleArguments args,
-            CancellationToken ct,
             string reportCategory = ReportCategory.ASSET_BUNDLES,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             bool suppressErrors = false) =>
-            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
+            controller.requestHub.RequestDelegateFor<GetAssetBundleArguments, GetAssetBundleWebRequest>()(controller, new RequestEnvelope(
+                commonArguments,
+                new ReportData(reportCategory),
+                headersInfo,
+                signInfo,
+                suppressErrors: suppressErrors
+            ), args);
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);

@@ -5,49 +5,31 @@ using UnityEngine.Pool;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class TimeToFirstByteAverage : IRequestMetric
+    internal class TimeToFirstByteAverage : IRequestMetric
     {
-        private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
-
         private double sum;
         private uint count;
 
         public DebugLongMarkerDef.Unit GetUnit() =>
             DebugLongMarkerDef.Unit.TimeNanoseconds;
 
-        public void Update()
-        {
-            TrackFirstByteDownloaded();
-        }
-
         public ulong GetMetric() =>
             (ulong)(sum / count) * 1_000_000UL;
 
-        private void TrackFirstByteDownloaded()
+        private void TrackFirstByteDownloaded(IWebRequestAnalytics analytics)
         {
-            using PooledObject<List<ITypedWebRequest>> pooledObject = ListPool<ITypedWebRequest>.Get(out List<ITypedWebRequest>? resolved);
-
-            foreach ((ITypedWebRequest key, DateTime startTime) in pendingRequests)
-            {
-                if (key.UnityWebRequest.downloadedBytes <= 0) continue;
-
-                resolved.Add(key);
-                count++;
-                sum += (DateTime.Now - startTime).TotalMilliseconds;
-            }
-
-            foreach (ITypedWebRequest? key in resolved)
-                pendingRequests.Remove(key);
+            count++;
+            sum += (DateTime.Now - analytics.CreationTime).TotalMilliseconds;
         }
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
-            pendingRequests.Add(request, DateTime.Now);
+            webRequestAnalytics.OnDownloadStarted += TrackFirstByteDownloaded;
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
-            pendingRequests.Remove(request);
+            webRequestAnalytics.OnDownloadStarted -= TrackFirstByteDownloaded;
         }
     }
 }

@@ -3,13 +3,39 @@ using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsAnalyticsContainer : IMutableWebRequestsAnalyticsContainer
+    public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
         private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
         private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();
 
         public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) =>
             requestTypesWithMetrics.GetValueOrDefault(requestType);
+
+        void IWebRequestsAnalyticsContainer.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest, IWebRequestAnalytics webRequestAnalytics)
+        {
+            Type type = request.GetType();
+
+            if (!requestTypesWithMetrics.TryGetValue(type, out List<IRequestMetric> metrics))
+            {
+                metrics = new List<IRequestMetric>();
+
+                foreach ((_, Func<IRequestMetric> ctor) in requestMetricTypes)
+                    metrics.Add(ctor());
+
+                requestTypesWithMetrics.Add(type, metrics);
+            }
+
+            foreach (IRequestMetric? metric in metrics) { metric.OnRequestStarted(request, webRequestAnalytics, webRequest); }
+        }
+
+        void IWebRequestsAnalyticsContainer.OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest, IWebRequestAnalytics webRequestAnalytics)
+        {
+            Type type = request.GetType();
+
+            if (!requestTypesWithMetrics.TryGetValue(type, out List<IRequestMetric> metrics)) return;
+
+            foreach (IRequestMetric? metric in metrics) { metric.OnRequestEnded(request, webRequestAnalytics, webRequest); }
+        }
 
         public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>
             requestMetricTypes;
@@ -18,33 +44,6 @@ namespace DCL.WebRequests.Analytics
         {
             requestMetricTypes.Add(typeof(T), () => new T());
             return this;
-        }
-        void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
-        {
-            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics))
-            {
-                metrics = new List<IRequestMetric>();
-
-                foreach ((_, Func<IRequestMetric> ctor) in requestMetricTypes)
-                    metrics.Add(ctor());
-
-                requestTypesWithMetrics.Add(typeof(T), metrics);
-            }
-
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestStarted(request);
-            }
-        }
-
-        void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
-        {
-            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics)) return;
-
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestEnded(request);
-            }
         }
     }
 }

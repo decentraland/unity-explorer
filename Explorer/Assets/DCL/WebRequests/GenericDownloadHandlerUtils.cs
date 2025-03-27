@@ -21,20 +21,17 @@ namespace DCL.WebRequests
             return getResult(req);
         }
 
-        public static async UniTask<TResult> ProcessAndDispose<TResult>(this ITypedWebRequest request, Func<IWebRequest, UniTask<TResult>> getResult, CancellationToken ct)
-        {
-            using IWebRequest? req = await request.SendAsync(ct);
-            return await getResult(req);
-        }
-
         public static UniTask<string> StoreTextAsync(this ITypedWebRequest request, CancellationToken ct) =>
             request.ProcessAndDispose(static r => r.Response.Text, ct);
 
         public static UniTask<byte[]> GetDataCopyAsync(this ITypedWebRequest request, CancellationToken ct) =>
             request.ProcessAndDispose(static r => r.Response.Data, ct);
 
-        public static async UniTask<string> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct) =>
-            (await request.SendAsync(ct)).Response.GetHeader(headerName);
+        public static async UniTask<string> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
+        {
+            using IWebRequest req = await request.SendAsync(ct);
+            return req.Response.GetHeader(headerName);
+        }
 
         public static async UniTask<T> OverwriteFromJsonAsync<T>(
             this ITypedWebRequest request,
@@ -139,14 +136,14 @@ namespace DCL.WebRequests
         }
 
         /// <summary>
-        ///     Executes the web request and does nothing with the result <br/>
-        /// On Exception: Throws a new exception created by the provided factory method
+        ///     Executes the web request and does nothing with the result <br />
+        ///     On Exception: Throws a new exception created by the provided factory method
         /// </summary>
         public static async UniTask WithCustomExceptionAsync(this ITypedWebRequest webRequest, Func<WebRequestException, Exception> newExceptionFactoryMethod, CancellationToken ct)
         {
             try
             {
-                await webRequest.SendAsync(ct);
+                using IWebRequest? _ = await webRequest.SendAsync(ct);
             }
             catch (WebRequestException e) { throw newExceptionFactoryMethod(e); }
         }

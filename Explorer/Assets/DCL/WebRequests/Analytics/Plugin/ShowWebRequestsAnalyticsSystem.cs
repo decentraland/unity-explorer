@@ -66,16 +66,6 @@ namespace DCL.WebRequests.Analytics
         {
             if (visibilityBinding is { IsExpanded: true })
             {
-                // Some metrics may require update without throttling
-                foreach (RequestType requestType in requestTypes)
-                {
-                    IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
-                    if (metrics == null) continue;
-
-                    foreach (IRequestMetric metric in metrics)
-                        metric.Update();
-                }
-
                 if (lastTimeSinceMetricsUpdate > THROTTLE)
                 {
                     lastTimeSinceMetricsUpdate = 0;

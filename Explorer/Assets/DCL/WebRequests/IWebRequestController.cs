@@ -10,7 +10,7 @@ namespace DCL.WebRequests
 {
     public interface IWebRequestController
     {
-        static readonly IWebRequestController DEFAULT = new WebRequestController(
+        static readonly IWebRequestController DEFAULT = new DefaultWebRequestController(
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
@@ -18,8 +18,6 @@ namespace DCL.WebRequests
                 false
             )
         );
-
-        public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { WebRequestUtils.NOT_FOUND };
 
         internal IRequestHub requestHub { get; }
 

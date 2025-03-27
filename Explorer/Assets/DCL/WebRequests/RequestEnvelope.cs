@@ -1,13 +1,10 @@
 using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
-using DCL.WebRequests.RequestsHub;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading;
-using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
@@ -23,7 +20,6 @@ namespace DCL.WebRequests
 
         public readonly WebRequestHeadersInfo HeadersInfo;
         public readonly WebRequestSignInfo? SignInfo;
-        public readonly ISet<long>? ResponseCodeIgnores;
 
         private const string NONE = "NONE";
 
@@ -32,7 +28,6 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            ISet<long>? responseCodeIgnores = null,
             bool suppressErrors = false
         )
         {
@@ -41,7 +36,6 @@ namespace DCL.WebRequests
             HeadersInfo = headersInfo ?? WebRequestHeadersInfo.NewEmpty();
             SignInfo = signInfo;
             SuppressErrors = suppressErrors;
-            ResponseCodeIgnores = responseCodeIgnores;
         }
 
         public override string ToString() =>
@@ -61,14 +55,6 @@ namespace DCL.WebRequests
         {
             // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
             HeadersInfo.Dispose();
-        }
-
-        public bool ShouldIgnoreResponseError(IWebRequest webRequest)
-        {
-            if (webRequest.Response.IsSuccess)
-                return true;
-
-            return ResponseCodeIgnores?.Contains(webRequest.Response.StatusCode) ?? false;
         }
 
         private void AssignHeaders(IWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)

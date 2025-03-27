@@ -2,20 +2,19 @@
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class Total : IRequestMetric
+    internal class Total : IRequestMetric
     {
         private ulong counter { get; set; }
 
-        public DebugLongMarkerDef.Unit GetUnit() => DebugLongMarkerDef.Unit.NoFormat;
+        public DebugLongMarkerDef.Unit GetUnit() =>
+            DebugLongMarkerDef.Unit.NoFormat;
 
         public ulong GetMetric() =>
             counter;
 
-        public void OnRequestStarted(ITypedWebRequest request)
-        {
-       }
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest) { }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
             counter++;
         }

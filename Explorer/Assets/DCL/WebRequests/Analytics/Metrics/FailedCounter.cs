@@ -3,22 +3,21 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class TotalFailed : IRequestMetric
+    internal class TotalFailed : IRequestMetric
     {
         private ulong counter { get; set; }
 
-        public DebugLongMarkerDef.Unit GetUnit() => DebugLongMarkerDef.Unit.NoFormat;
+        public DebugLongMarkerDef.Unit GetUnit() =>
+            DebugLongMarkerDef.Unit.NoFormat;
 
         public ulong GetMetric() =>
             counter;
 
-        public void OnRequestStarted(ITypedWebRequest request)
-        {
-       }
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest) { }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
         {
-            if (request.UnityWebRequest.result != UnityWebRequest.Result.Success) counter++;
+            if (webRequest.Response.IsSuccess) counter++;
         }
     }
 }
