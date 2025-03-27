@@ -8,6 +8,8 @@ namespace DCL.Chat.History
     /// </summary>
     public class ChatChannel
     {
+        private static readonly ChatMessage PADDING_MESSAGE = new ChatMessage(true);
+
         /// <summary>
         /// The type of channel which limits who can participate in the channel.
         /// </summary>
@@ -26,15 +28,17 @@ namespace DCL.Chat.History
             /// <summary>
             /// A private channel in which the current player chats with another user.
             /// </summary>
-            User
+            User,
+
+            Undefined,
         }
 
         /// <summary>
         /// The unique identifier of a chat channel.
         /// </summary>
-        public struct ChannelId : IEquatable<ChannelId>
+        public readonly struct ChannelId : IEquatable<ChannelId>
         {
-            public string Id { get; }
+            public readonly string Id;
 
             public ChannelId(string id)
             {
@@ -92,7 +96,6 @@ namespace DCL.Chat.History
         public int ReadMessages
         {
             get => readMessages;
-
             set
             {
                 if (value != readMessages)
@@ -105,6 +108,7 @@ namespace DCL.Chat.History
 
         private readonly List<ChatMessage> messages = new ();
         private int readMessages;
+        private bool isInitialized;
 
         public ChatChannel(ChatChannelType channelType, string channelId)
         {
@@ -118,23 +122,28 @@ namespace DCL.Chat.History
         /// <param name="message">A message.</param>
         public void AddMessage(ChatMessage message)
         {
-            // TODO: It makes no sense to store padding stuff in the chat data
-            if (messages.Count is 0)
+            if (!isInitialized)
             {
-                // Adding two elements to count as top and bottom padding
-                messages.Add(new ChatMessage(true));
-                messages.Add(new ChatMessage(true));
-                readMessages = 2; // both paddings
+                InitializeChannel();
             }
 
             // Removing padding element and reversing list due to infinite scroll view behaviour
             messages.Remove(messages[^1]);
             messages.Reverse();
             messages.Add(message);
-            messages.Add(new ChatMessage(true));
+            messages.Add(PADDING_MESSAGE);
             messages.Reverse();
 
             MessageAdded?.Invoke(this, message);
+        }
+
+        private void InitializeChannel()
+        {
+            // Adding two elements to count as top and bottom padding
+            messages.Add(PADDING_MESSAGE);
+            messages.Add(PADDING_MESSAGE);
+            readMessages = 2; // both paddings
+            isInitialized = true;
         }
 
         /// <summary>
@@ -143,8 +152,8 @@ namespace DCL.Chat.History
         public void Clear()
         {
             messages.Clear();
+            isInitialized = false;
             MarkAllMessagesAsRead();
-
             Cleared?.Invoke(this);
         }
 

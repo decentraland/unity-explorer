@@ -9,6 +9,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 using Button = UnityEngine.UI.Button;
 
 namespace DCL.Chat
@@ -117,6 +118,18 @@ namespace DCL.Chat
             items.Remove(channelId);
             UpdateScrollButtonsVisibility();
         }
+
+        /// <summary>
+        /// Removes all conversation items from the toolbar UI. It does not change any data.
+        /// </summary>
+        public void RemoveAllConversations()
+        {
+            foreach (var itemsValue in items.Values)
+                Destroy(itemsValue.gameObject);
+            items.Clear();
+            UpdateScrollButtonsVisibility();
+        }
+
 
         /// <summary>
         /// Replaces the value of unread messages to show next to the icon of an item.

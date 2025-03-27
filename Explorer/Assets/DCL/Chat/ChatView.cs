@@ -614,6 +614,14 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Removes all items from the conversations toolbar.
+        /// </summary>
+        public void RemoveAllConversations()
+        {
+            conversationsToolbar.RemoveAllConversations();
+        }
+
+        /// <summary>
         /// Replaces the number of unread messages in an item of the conversations toolbar.
         /// </summary>
         /// <param name="destinationChannel">The Id of the conversation.</param>
