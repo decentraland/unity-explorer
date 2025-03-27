@@ -1,12 +1,14 @@
 using CrdtEcsBridge.Components.Transform;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.ECSComponents;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
     public static class CustomTweenerExtensions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateMaterial(this ITweener self, Material material, TextureMovementType movementType)
         {
             if (self is not Vector2Tweener vector2Tweener) return;
@@ -22,6 +24,7 @@ namespace DCL.SDKComponents.Tween.Components
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateTransform(this ITweener self, Transform transform, PBTween.ModeOneofCase updateType)
         {
             switch (updateType)
@@ -41,6 +44,7 @@ namespace DCL.SDKComponents.Tween.Components
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateSDKTransform(this ITweener self, ref SDKTransform sdkTransform, PBTween.ModeOneofCase updateType)
         {
             switch (updateType)

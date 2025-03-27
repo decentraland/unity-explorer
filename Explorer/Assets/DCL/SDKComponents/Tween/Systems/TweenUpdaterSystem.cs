@@ -16,7 +16,7 @@ using ECS.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
-using Unity.Profiling;
+using System.Runtime.CompilerServices;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -65,6 +65,7 @@ namespace DCL.SDKComponents.Tween.Systems
             [EfEaseoutback] = OutBack,
             [EfEaseback] = InOutBack,
         };
+
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -76,22 +77,12 @@ namespace DCL.SDKComponents.Tween.Systems
             this.sceneStateProvider = sceneStateProvider;
         }
 
-        static readonly ProfilerMarker m_UpdateTweenTransformSequence = new ("VVV.UpdateTweenTransformSequence.Update");
-
         protected override void Update(float t)
         {
             UpdatePBTweenQuery(World);
-
-            using (m_UpdateTweenTransformSequence.Auto())
-                UpdateTweenTransformSequenceQuery(World);
-
+            UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
         }
-
-        static readonly ProfilerMarker m_LegacySetupSupport = new ("VVV.LegacySetupSupport");
-        static readonly ProfilerMarker m_SetupTween = new ("VVV.SetupTween");
-        static readonly ProfilerMarker m_UpdateTweenStateAndPosition = new ("VVV.UpdateTweenStateAndPosition");
-        static readonly ProfilerMarker m_UpdateTweenState = new ("VVV.UpdateTweenState");
 
         [Query]
         private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
@@ -100,19 +91,13 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (sdkTweenComponent.IsDirty)
             {
-                using (m_LegacySetupSupport.Auto())
-                    LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
-
-                using (m_SetupTween.Auto())
-                    SetupTween(ref sdkTweenComponent, in pbTween);
-
-                using (m_UpdateTweenStateAndPosition.Auto())
-                    UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
+                SetupTween(ref sdkTweenComponent, in pbTween);
+                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
             else
             {
-                using (m_UpdateTweenState.Auto())
-                    UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent);
+                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent);
             }
         }
 
@@ -130,6 +115,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
@@ -142,18 +128,21 @@ namespace DCL.SDKComponents.Tween.Systems
             else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent); }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
         {
             UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenMaterial(SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isInCurrentScene)
         {
             if (materialComponent.Result)
                 TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent, ref materialComponent, movementType, isInCurrentScene);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
@@ -175,6 +164,7 @@ namespace DCL.SDKComponents.Tween.Systems
             sdkTweenComponent.IsDirty = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
@@ -184,21 +174,27 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
-            else if (newState == TweenStateStatus.TsActive) { UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent); }
+            else if (newState == TweenStateStatus.TsActive)
+            {
+                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+            }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene)
         {
             UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, isInCurrentScene);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene)
         {
             TweenSDKComponentHelper.UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
             TweenSDKComponentHelper.WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying)
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
@@ -210,6 +206,7 @@ namespace DCL.SDKComponents.Tween.Systems
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void LegacySetupSupport(SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform,
             ref TransformComponent transformComponent, CRDTEntity entity, bool isInCurrentScene)
         {
@@ -223,6 +220,7 @@ namespace DCL.SDKComponents.Tween.Systems
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
         {
             if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
