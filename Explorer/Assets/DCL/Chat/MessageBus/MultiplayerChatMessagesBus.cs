@@ -1,3 +1,4 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -117,7 +118,7 @@ namespace DCL.Chat.MessageBus
 
         }
 
-        private void SendTo(string message, double timestamp, IMessagePipe messagePipe, string recipient = null)
+        private void SendTo(string message, double timestamp, IMessagePipe messagePipe, string? recipient = null)
         {
             MessageWrap<Decentraland.Kernel.Comms.Rfc4.Chat> chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             if (recipient != null)

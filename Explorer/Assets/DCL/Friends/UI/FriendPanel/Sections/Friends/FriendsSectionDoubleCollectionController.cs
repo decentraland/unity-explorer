@@ -16,7 +16,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
-        private const float DELAY_BETWEEN_CLICKS = 1f;
+        private const float DELAY_BETWEEN_CLICKS = 0.5f;
 
         private readonly IPassportBridge passportBridge;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -119,12 +119,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             else
             {
                 openPassportCts = openPassportCts.SafeRestart();
-                WaitAndOpenPassport(profile, openPassportCts.Token).Forget();
+                WaitAndOpenPassportAsync(profile, openPassportCts.Token).Forget();
             }
 
         }
 
-        private async UniTaskVoid WaitAndOpenPassport(FriendProfile profile, CancellationToken ct)
+        private async UniTaskVoid WaitAndOpenPassportAsync(FriendProfile profile, CancellationToken ct)
         {
             elementClicked = true;
             if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.OFFLINE)

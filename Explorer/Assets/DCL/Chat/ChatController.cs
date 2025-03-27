@@ -19,10 +19,8 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -31,8 +29,6 @@ namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView>
     {
-        private const string WELCOME_MESSAGE = "Type /help for available commands.";
-
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -178,7 +174,7 @@ namespace DCL.Chat
 
             OnFocus();
 
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewWelcomeMessage());
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;

@@ -598,7 +598,7 @@ namespace DCL.Chat
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
         public void AddConversation(ChatChannel channelToAdd)
         {
-            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL))
+            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL.Id))
                 conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
             else
                 conversationsToolbar.AddConversation(channelToAdd);

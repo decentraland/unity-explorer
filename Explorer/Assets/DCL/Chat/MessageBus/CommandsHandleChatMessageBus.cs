@@ -1,3 +1,4 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -15,7 +16,7 @@ namespace DCL.Chat.MessageBus
         private readonly Dictionary<string, IChatCommand> commands;
         private CancellationTokenSource commandCts = new ();
 
-        public event Action<ChatChannel.ChannelId, ChatMessage> MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
         public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands)
         {
@@ -74,7 +75,7 @@ namespace DCL.Chat.MessageBus
             SendFromSystem(channelId, "🔴 Command not found.");
         }
 
-        private void SendFromSystem(ChatChannel.ChannelId channelId, string message)
+        private void SendFromSystem(ChatChannel.ChannelId channelId, string? message)
         {
             if (string.IsNullOrEmpty(message)) return;
 
