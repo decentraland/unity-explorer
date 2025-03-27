@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Emotes
             ((IAvatarAttachment<EmoteDTO>)this).ToString();
 
         public bool IsLooping() =>
-            Model.Asset.metadata.emoteDataADR74.loop;
+            Model.Asset is { metadata: { emoteDataADR74: { loop: true } } };
 
         public bool HasSameClipForAllGenders()
         {
