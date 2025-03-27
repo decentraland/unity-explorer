@@ -11,7 +11,6 @@ namespace DCL.MarketplaceCredits
         public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
         public const string SUBSCRIBE_LINK = "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend";
         public const string X_LINK = "https://x.com/decentraland";
-        public const string WEEK_RESET_MESSAGE = "Resets Sunday 11:59pm UTC";
         public const int CREDITS_UNLOCKED_DURATION = 5;
         public const int ERROR_NOTIFICATION_DURATION = 3;
         public const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
