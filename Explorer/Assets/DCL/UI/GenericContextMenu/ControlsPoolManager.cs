@@ -17,7 +17,6 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuToggleWithIconView> toggleWithIconPool;
         private readonly IObjectPool<GenericContextMenuUserProfileView> userProfilePool;
         private readonly IObjectPool<GenericContextMenuButtonWithStringDelegateView> buttonWithStringDelegatePool;
-
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
@@ -70,6 +69,7 @@ namespace DCL.UI.GenericContextMenu
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
                 actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
+
         }
 
         public void Dispose() =>
@@ -166,6 +166,9 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case GenericContextMenuButtonWithStringDelegateView buttonView:
                         buttonWithStringDelegatePool.Release(buttonView);
+                        break;
+                    case GenericContextMenuBlockUserButtonView buttonView:
+                        blockUserButtonPool.Release(buttonView);
                         break;
                 }
             }

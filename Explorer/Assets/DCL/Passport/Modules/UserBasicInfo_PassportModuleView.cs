@@ -8,7 +8,7 @@ namespace DCL.Passport.Modules
     {
         [field: SerializeField] public UserNameElement UserNameElement { get; private set; }
         [field: SerializeField] public UserWalletAddressElement UserWalletAddressElement { get; private set; }
-        [field: SerializeField] public Button EditionButton { get; private set; }
-
+        [field: SerializeField] public Button ClaimNameButton { get; private set; }
+        [field: SerializeField] public Button EditNameButton { get; private set; }
     }
 }

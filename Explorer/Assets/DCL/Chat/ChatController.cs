@@ -13,12 +13,13 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
@@ -30,8 +31,32 @@ using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView, ChatController.ShowParams>, IControllerInSharedSpace<ChatView, ChatController.ShowParams>
     {
+        public struct ShowParams
+        {
+            /// <summary>
+            /// Indicates whether the chat panel should be folded or unfolded when its view is shown.
+            /// </summary>
+            public readonly bool ShowUnfolded;
+
+            /// <summary>
+            /// Indicates whether the input box of the chat panel should gain the focus after showing.
+            /// </summary>
+            public readonly bool HasToFocusInputBox;
+
+            /// <summary>
+            /// Constructor with all fields.
+            /// </summary>
+            /// <param name="showUnfolded">Indicates whether the chat panel should be folded or unfolded when its view is shown.</param>
+            /// <param name="hasToFocusInputBox">Indicates whether the input box of the chat panel should gain the focus after showing</param>
+            public ShowParams(bool showUnfolded, bool hasToFocusInputBox = false)
+            {
+                ShowUnfolded = showUnfolded;
+                HasToFocusInputBox = hasToFocusInputBox;
+            }
+        }
+
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
@@ -51,6 +76,7 @@ namespace DCL.Chat
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -63,12 +89,35 @@ namespace DCL.Chat
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
         private Web3Address currentUserAddress;
         private bool isNewIdentity = true;
+        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
+        private readonly IRoomHub roomHub;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
+        public bool IsUnfolded
+        {
+            get => viewInstance.IsUnfolded;
+
+            set
+            {
+                viewInstance.IsUnfolded = value;
+
+                // When opened from outside, it should show the unread messages
+                if (value)
+                    viewInstance.ShowNewMessages();
+
+                if (value)
+                    viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
+                else
+                    viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
+            }
+
+        }
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -78,7 +127,6 @@ namespace DCL.Chat
             NametagsData nametagsData,
             World world,
             Entity playerEntity,
-            IChatLifecycleBusController chatLifecycleBusController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
@@ -87,7 +135,8 @@ namespace DCL.Chat
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache) : base(viewFactory)
+            IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -99,12 +148,14 @@ namespace DCL.Chat
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
             this.islandRoom = roomHub.IslandRoom();
+            this.roomHub = roomHub;
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
+            this.loadingStatus = loadingStatus;
         }
 
         public void Clear() // Called by a command
@@ -140,16 +191,60 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
 
             memberListCts.SafeCancelAndDispose();
         }
 
-        private void HideBusCommandReceived()
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ShowParams showParams)
         {
-            HideViewAsync(CancellationToken.None).Forget();
+            if(State != ControllerState.ViewHidden)
+            {
+                if(!GetViewVisibility())
+                    SetViewVisibility(true);
+
+                IsUnfolded = showParams.ShowUnfolded;
+
+                if(showParams.HasToFocusInputBox)
+                    FocusInputBox();
+
+                ViewShowingComplete?.Invoke(this);
+            }
+
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            IsUnfolded = false;
+            await UniTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// Makes the input box gain the focus so the user can start typing.
+        /// </summary>
+        public void FocusInputBox()
+        {
+            viewInstance.FocusInputBox();
+        }
+
+        /// <summary>
+        /// Makes the chat panel (including the input box) invisible or visible (it does not hide the view).
+        /// </summary>
+        /// <param name="visibility">Whether to make the panel visible.</param>
+        public void SetViewVisibility(bool visibility)
+        {
+            viewInstance.gameObject.SetActive(visibility);
+        }
+
+        /// <summary>
+        /// Indicates whether the panel is invisible or not (the view is never hidden as it is a Persistent panel).
+        /// </summary>
+        /// <returns>True if the panel is visible; False otherwise.</returns>
+        public bool GetViewVisibility()
+        {
+            return viewInstance.gameObject.activeInHierarchy;
         }
 
         protected override void OnViewInstantiated()
@@ -166,7 +261,7 @@ namespace DCL.Chat
             chatEventBus.OpenConversation += OnOpenConversation;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
+            viewInstance!.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants, loadingStatus);
 
             viewInstance.PointerEnter += OnViewPointerEnter;
             viewInstance.PointerExit += OnViewPointerExit;
@@ -294,7 +389,7 @@ namespace DCL.Chat
 
             while (!memberListCts.IsCancellationRequested)
             {
-                // If the player jumps to another room (like a world) while the member list is visible, it must refresh
+                // If the player jumps to another island room (like a world) while the member list is visible, it must refresh
                 if (previousRoomSid != islandRoom.Info.Sid && viewInstance!.IsMemberListVisible)
                 {
                     previousRoomSid = islandRoom.Info.Sid;
@@ -302,8 +397,9 @@ namespace DCL.Chat
                 }
 
                 // Updates the amount of members
-                if(canUpdateParticipants && islandRoom.Participants.RemoteParticipantIdentities().Count != viewInstance!.MemberCount)
-                    viewInstance!.MemberCount = islandRoom.Participants.RemoteParticipantIdentities().Count;
+                int participantsCount = roomHub.ParticipantsCount();
+                if(roomHub.HasAnyRoomConnected() && participantsCount != viewInstance!.MemberCount)
+                    viewInstance!.MemberCount = participantsCount;
 
                 await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
             }
@@ -311,7 +407,6 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
             viewInstance!.DisableInputBoxSubmissions();
         }
 
@@ -320,7 +415,6 @@ namespace DCL.Chat
             if (viewInstance!.IsFocused) return;
 
             viewInstance.EnableInputBoxSubmissions();
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
         }
 
         protected override void OnViewShow()
@@ -328,8 +422,9 @@ namespace DCL.Chat
             base.OnViewShow();
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed += OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+
+            viewInstance.IsUnfolded = inputData.ShowUnfolded;
         }
 
         protected override void OnViewClose()
@@ -337,7 +432,6 @@ namespace DCL.Chat
             base.OnViewClose();
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
 
             MarkCurrentChannelAsRead();
@@ -349,8 +443,11 @@ namespace DCL.Chat
             messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannelId].ReadMessages;
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.Never(ct);
+        }
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
@@ -426,11 +523,6 @@ namespace DCL.Chat
         private void OnViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
 
-        private void OnOpenChatShortcutPerformed(InputAction.CallbackContext obj)
-        {
-            viewInstance!.FocusInputBoxWithText(string.Empty);
-        }
-
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
             viewInstance!.FocusInputBoxWithText("/");
@@ -472,10 +564,8 @@ namespace DCL.Chat
 
         private void OnViewMemberListVisibilityChanged(bool isVisible)
         {
-            if (isVisible && canUpdateParticipants)
-            {
+            if (isVisible && roomHub.HasAnyRoomConnected())
                 RefreshMemberList();
-            }
         }
 
         private List<ChatMemberListView.MemberData> GenerateMemberList()
@@ -524,14 +614,11 @@ namespace DCL.Chat
         {
             outProfiles.Clear();
 
-            // Island room
-            IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
-
-            foreach (string identity in islandIdentities)
+            foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
                 Profile profile = profileCache.Get(identity);
 
-                if(profile != null)
+                if (profile != null)
                     outProfiles.Add(profile);
             }
         }

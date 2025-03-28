@@ -309,6 +309,9 @@ jobs:
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
 
+      - name: Set short SHA
+        run: echo "SHA_SHORT=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
       - name: Upload artifact to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}

@@ -4,15 +4,22 @@ using DG.Tweening.Plugins.Options;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public abstract class CustomTweener<T, TU> : ICustomTweener<T>
+    public abstract class CustomTweener<T, TU> : ITweener
         where T: struct
         where TU: struct, IPlugOptions
     {
+        private readonly TweenCallback onCompleteCallback;
+
         private bool finished;
         private TweenerCore<T, T, TU> core;
-        private ICustomTweener<T> customTweenerImplementation;
+        private ITweener customTweenerImplementation;
 
         public T CurrentValue { get; set; }
+
+        protected CustomTweener()
+        {
+            onCompleteCallback = OnTweenComplete;
+        }
 
         public void Initialize(T startValue, T endValue, float durationInSeconds)
         {
@@ -43,7 +50,12 @@ namespace DCL.SDKComponents.Tween.Components
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            core.SetEase(ease).SetAutoKill(false).OnComplete(() => { finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
+            core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
+        }
+
+        private void OnTweenComplete()
+        {
+            finished = true;
         }
     }
 }

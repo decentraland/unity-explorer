@@ -3,6 +3,7 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
@@ -53,6 +54,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
+        private readonly bool includeUserBlocking;
 
 
         private CancellationTokenSource cancellationTokenSource;
@@ -127,6 +129,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
+            blockUserButtonContextMenuControlSettings.SetData(profile);
+            blockUserElement.Enabled = includeUserBlocking && contextMenuFriendshipStatus != UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED;
 
             if (anchorPoint == GenericContextMenuAnchorPoint.DEFAULT)
                 anchorPoint = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
@@ -255,10 +259,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             chatEventBus.OpenConversationUsingUserId(userId);
         }
 
-        private void OnBlockUserClicked(string userId)
-        {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
-        }
+        private void OnBlockUserClicked(Profile profile) =>
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         private void OnJumpInClicked(string userId)
         {

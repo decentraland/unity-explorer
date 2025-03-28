@@ -92,7 +92,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             for (int i = 0; i < materials.Count; ++i)
             {
-                materials[i].usedMaterial.SetFloat(ComputeShaderConstants.SHADER_FADINGDISTANCE_PARAM_ID, distance);
+                materials[i].usedMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, distance);
             }
         }
 

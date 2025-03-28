@@ -115,7 +115,7 @@ namespace DCL.Nametags
         [None(typeof(PBAvatarShape))]
         private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            if (nametagView.Id == avatarShape.ID)
+            if (nametagView.Id == avatarShape.ID && nametagView.IsName(profile.ValidatedName, profile.WalletId, profile.HasClaimedName))
                 return;
 
             nametagView.Id = avatarShape.ID;
@@ -149,7 +149,7 @@ namespace DCL.Nametags
         [None(typeof(DeleteEntityIntention))]
         private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
+            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) || World.Has<BlockedPlayerComponent>(e))
             {
                 nametagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);
