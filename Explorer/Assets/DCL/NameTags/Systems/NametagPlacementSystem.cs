@@ -143,7 +143,7 @@ namespace DCL.Nametags
                 return;
 
             if (nametagsData.showChatBubbles)
-                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.SenderDisplayName);
+                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.ReceiverValidatedName, chatBubbleComponent.ReceiverWalletId, chatBubbleComponent.ReceiverNameColor);
 
             chatBubbleComponent.IsDirty = false;
         }

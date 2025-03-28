@@ -32,6 +32,7 @@ namespace DCL.Nametags
         private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
         private const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\"LiberationSans SDF\">";
         private const string WALLET_ID_CLOSING_STYLE = "</font></color>";
+        private const string RECEIVER_NAME_START_STRING = "<color=#FFFFFF>for</color> ";
 
         private static readonly Regex SINGLE_EMOJI_REGEX = new (@"^\s*\\U[0-9a-fA-F]{8}\s*$", RegexOptions.Compiled);
         private static readonly int SURFACE_PROPERTY = Shader.PropertyToID("_Surface");
@@ -100,6 +101,7 @@ namespace DCL.Nametags
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
         private Color spriteColor = new (1, 1, 1,1 );
+        private Color receiverNameColor;
 
         // Cached widths
         private float cachedUsernameWidth;
@@ -256,7 +258,7 @@ namespace DCL.Nametags
             UpdateMaterialState(finalAlpha < 1f);
         }
 
-        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string senderDisplayName)
+        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string receiverValidatedName, string receiverWalletId, Color receiverNameColor)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
@@ -279,7 +281,11 @@ namespace DCL.Nametags
                 privateMessageText.gameObject.SetActive(hasPrivateMessageText);
                 if (hasPrivateMessageText)
                 {
-                    privateMessageText.SetText(senderDisplayName); //FORMAT THIS TEXT PROPERLY
+                    string receiverName = BuildReceiverName(receiverValidatedName, receiverWalletId, string.IsNullOrEmpty(receiverWalletId));
+                    this.receiverNameColor = receiverNameColor;
+                    privateMessageText.SetText(receiverName);
+                    receiverNameColor.a = 0;
+                    privateMessageText.color = receiverNameColor;
                     privateMessageText.rectTransform.sizeDelta = new Vector2(privateMessageText.preferredWidth, DEFAULT_HEIGHT);
 
                     Vector2 privateMessageTextInitialPosition = CalculatePrivateMessageTextPosition(
@@ -435,7 +441,7 @@ namespace DCL.Nametags
                     );
                     privateMessageTextFinalPosition.y = usernameFinalPosition.y;
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(privateMessageTextFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                                   .Join(privateMessageText.DOColor(TEXT_COLOR, animationInDuration / 4));
+                                   .Join(privateMessageText.DOColor(receiverNameColor, animationInDuration / 4));
                 }
             }
 
@@ -521,6 +527,8 @@ namespace DCL.Nametags
 
             await currentSequence.Play().ToUniTask(cancellationToken: ct);
 
+            privateMessageIconRenderer.gameObject.SetActive(false);
+            privateMessageText.gameObject.SetActive(false);
             messageContent.gameObject.SetActive(false);
             BackgroundSprite.gameObject.SetActive(true);
             mentionBackgroundSprite.gameObject.SetActive(false);
@@ -685,5 +693,9 @@ namespace DCL.Nametags
 
         private string BuildName(string username, string? walletId, bool hasClaimedName) =>
             hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}";
+
+        private string BuildReceiverName(string username, string? walletId, bool hasClaimedName) =>
+            string.Concat(RECEIVER_NAME_START_STRING, hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}");
+
     }
 }

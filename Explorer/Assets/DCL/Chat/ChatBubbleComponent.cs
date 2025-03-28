@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace DCL.Chat
 {
     public struct ChatBubbleComponent
@@ -12,7 +14,7 @@ namespace DCL.Chat
         public readonly bool IsPrivateMessage;
         public readonly bool IsOwnMessage;
         public bool IsDirty;
-
+        public readonly Color ReceiverNameColor;
         public ChatBubbleComponent(
             string chatMessage,
             string senderDisplayName,
@@ -22,7 +24,8 @@ namespace DCL.Chat
             string channelId,
             bool isOwnMessage,
             string receiverValidatedName,
-            string receiverWalletId)
+            string receiverWalletId,
+            Color receiverNameColor)
         {
             ChatMessage = chatMessage;
             SenderDisplayName = senderDisplayName;
@@ -33,6 +36,7 @@ namespace DCL.Chat
             IsOwnMessage = isOwnMessage;
             ReceiverValidatedName = receiverValidatedName;
             ReceiverWalletId = receiverWalletId;
+            ReceiverNameColor = receiverNameColor;
             IsDirty = true;
         }
     }
