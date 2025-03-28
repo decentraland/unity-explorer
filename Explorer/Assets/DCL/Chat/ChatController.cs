@@ -48,6 +48,7 @@ namespace DCL.Chat
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private readonly IChatInputBus chatInputBus;
+        private readonly ChatStorage chatStorage;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -80,7 +81,9 @@ namespace DCL.Chat
             IRoomHub roomHub,
             ChatAudioSettingsAsset chatAudioSettings,
             ITextFormatter hyperlinkTextFormatter,
-            IProfileCache profileCache, IChatInputBus chatInputBus) : base(viewFactory)
+            IProfileCache profileCache,
+            IChatInputBus chatInputBus,
+            ChatStorage chatStorage) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -97,6 +100,7 @@ namespace DCL.Chat
             this.profileCache = profileCache;
             this.chatInputBus = chatInputBus;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
+            this.chatStorage = chatStorage;
         }
 
         public void Clear() // Called by a command
@@ -126,6 +130,7 @@ namespace DCL.Chat
                 viewInstance.FoldingChanged -= OnViewFoldingChanged;
                 viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
+                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChanged;
                 viewInstance.Dispose();
             }
 
@@ -169,6 +174,7 @@ namespace DCL.Chat
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
+            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChanged;
 
             OnFocus();
 
@@ -205,6 +211,9 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
+
+            chatStorage.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
+            // TODO: Load messages when entering a conversation
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -243,6 +252,12 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
                     viewInstance.RefreshUnreadMessages(destinationChannel.Id);
                 }
             }
+        }
+
+        private void OnViewCurrentChannelChanged()
+        {
+            if(!chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
+                chatStorage.InitializeChannelWithMessages(viewInstance.CurrentChannelId);
         }
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
@@ -343,7 +358,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
             // Chat bubble over the avatars
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
@@ -365,7 +380,7 @@ viewDependencies.DclInput.TESTS.Action3.performed += (x) => { chatHistory.AddMes
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention));
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.SenderWalletAddress, chatMessage.IsMention));
         }
 
         private void DisableUnwantedInputs()

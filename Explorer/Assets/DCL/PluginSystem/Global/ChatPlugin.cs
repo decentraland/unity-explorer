@@ -16,6 +16,7 @@ using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -42,6 +43,8 @@ namespace DCL.PluginSystem.Global
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
         private readonly IChatInputBus chatInputBus;
+        private readonly IWeb3IdentityCache identityCache;
+        private ChatStorage chatStorage;
 
         private ChatController chatController;
 
@@ -62,7 +65,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
-            IChatInputBus chatInputBus)
+            IChatInputBus chatInputBus,
+            IWeb3IdentityCache identityCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -82,14 +86,21 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.roomHub = roomHub;
+            this.identityCache = identityCache;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            chatStorage.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
+            // TODO: This instance has to be re-created when a different user logs in
+            chatStorage = new ChatStorage(chatHistory, identityCache.Identity!.Address);
+
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             chatController = new ChatController(
@@ -113,7 +124,8 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
                 profileCache,
-                chatInputBus
+                chatInputBus,
+                chatStorage
             );
 
             mvcManager.RegisterController(chatController);

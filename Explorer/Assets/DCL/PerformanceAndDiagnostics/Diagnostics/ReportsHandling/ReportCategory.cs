@@ -311,5 +311,10 @@ namespace DCL.Diagnostics
 
         public const string ALWAYS = nameof(ALWAYS);
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
+
+        /// <summary>
+        /// Used for debugging the chat history storage.
+        /// </summary>
+        public const string CHAT_HISTORY = nameof(CHAT_HISTORY);
     }
 }

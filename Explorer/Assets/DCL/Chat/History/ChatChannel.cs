@@ -38,14 +38,21 @@ namespace DCL.Chat.History
 
             public ChannelId(ChatChannelType type, string name)
             {
-                Id = type + ":" + name;
+                Id = /*type + ":" +*/ name;
+            }
+
+            public ChannelId(string name)
+            {
+                Id = name;
             }
 
             public static void GetTypeAndNameFromId(string id, out ChatChannelType channelType, out string channelName)
             {
-                channelName = id.Substring(id.LastIndexOf(':') + 1);
+                channelName = id;
+                channelType = ChatChannelType.NearBy;
+                /*channelName = id.Substring(id.LastIndexOf(':') + 1);
                 string channelIdType = id.Substring(0, id.LastIndexOf(':'));
-                Enum.TryParse(channelIdType, out channelType);
+                Enum.TryParse(channelIdType, out channelType);*/
             }
         }
 
@@ -112,6 +119,18 @@ namespace DCL.Chat.History
         {
             Id = new ChannelId(channelType, channelName);
             ChannelType = channelType;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="messagesToStore"></param>
+        public void FillChannel(List<ChatMessage> messagesToStore)
+        {
+            // Adding two elements to count as top and bottom padding
+            messages.Add(new ChatMessage(true));
+            messages.AddRange(messagesToStore);
+            messages.Add(new ChatMessage(true));
         }
 
         /// <summary>

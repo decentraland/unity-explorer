@@ -1,7 +1,12 @@
 {
     "name": "DCL.Chat.History",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:8361fcd8348a45c1a0c36b22ae18723c",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

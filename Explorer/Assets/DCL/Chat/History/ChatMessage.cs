@@ -8,7 +8,7 @@ namespace DCL.Chat.History
         public readonly string Message;
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
-        public readonly string WalletAddress;
+        public readonly string SenderWalletAddress;
         public readonly bool SentByOwnUser;
         public readonly bool SystemMessage;
         public readonly bool IsMention;
@@ -16,7 +16,7 @@ namespace DCL.Chat.History
         public ChatMessage(
             string message,
             string senderValidatedName,
-            string walletAddress,
+            string senderWalletAddress,
             bool sentByOwnUser,
             string senderWalletId,
             bool isMention = false,
@@ -24,7 +24,7 @@ namespace DCL.Chat.History
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
-            WalletAddress = walletAddress;
+            SenderWalletAddress = senderWalletAddress;
             SentByOwnUser = sentByOwnUser;
             IsPaddingElement = false;
             SenderWalletId = senderWalletId;
@@ -39,13 +39,26 @@ namespace DCL.Chat.History
             SenderWalletId = string.Empty;
             Message = string.Empty;
             SenderValidatedName = string.Empty;
-            WalletAddress = string.Empty;
+            SenderWalletAddress = string.Empty;
             SentByOwnUser = false;
             SystemMessage = false;
         }
 
+        public ChatMessage(string message, bool sentByOwnUser)
+        {
+            Message = message;
+            SentByOwnUser = sentByOwnUser;
+
+            IsPaddingElement = false;
+            IsMention = false;
+            SenderWalletId = string.Empty;
+            SenderValidatedName = string.Empty;
+            SenderWalletAddress = string.Empty;
+            SystemMessage = false;
+        }
+
         public static ChatMessage CopyWithNewMessage(string message, ChatMessage chatMessage) =>
-            new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.SentByOwnUser, chatMessage.SenderWalletId, chatMessage.IsMention, chatMessage.SystemMessage);
+            new (message, chatMessage.SenderValidatedName, chatMessage.SenderWalletAddress, chatMessage.SentByOwnUser, chatMessage.SenderWalletId, chatMessage.IsMention, chatMessage.SystemMessage);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, "DCL System", string.Empty, true,
@@ -56,7 +69,7 @@ namespace DCL.Chat.History
             Message == other.Message &&
             SenderValidatedName == other.SenderValidatedName &&
             SenderWalletId == other.SenderWalletId &&
-            WalletAddress == other.WalletAddress &&
+            SenderWalletAddress == other.SenderWalletAddress &&
             SentByOwnUser == other.SentByOwnUser &&
             SystemMessage == other.SystemMessage &&
             IsMention == other.IsMention;
@@ -66,6 +79,6 @@ namespace DCL.Chat.History
 
         public override int GetHashCode() =>
             HashCode.Combine(IsPaddingElement, Message, SenderValidatedName, SenderWalletId,
-                WalletAddress, SentByOwnUser, SystemMessage, IsMention);
+                SenderWalletAddress, SentByOwnUser, SystemMessage, IsMention);
     }
 }

@@ -364,7 +364,7 @@ namespace DCL.Chat
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {
-                Profile? profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
+                Profile? profile = await viewDependencies.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {
