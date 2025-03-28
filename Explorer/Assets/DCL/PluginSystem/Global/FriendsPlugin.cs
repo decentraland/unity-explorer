@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat.ChatLifecycleBus;
+using DCL.Chat.EventBus;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
@@ -60,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController? analyticsController;
         private readonly ViewDependencies viewDependencies;
         private readonly bool useAnalytics;
+        private readonly IChatEventBus chatEventBus;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -93,7 +95,7 @@ namespace DCL.PluginSystem.Global
             ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies, IChatEventBus chatEventBus)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -121,6 +123,7 @@ namespace DCL.PluginSystem.Global
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
             this.viewDependencies = viewDependencies;
+            this.chatEventBus = chatEventBus;
         }
 
         public void Dispose()
@@ -185,6 +188,7 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 sidebarActionsBus,
+                chatEventBus,
                 includeUserBlocking,
                 isConnectivityStatusEnabled
                 );

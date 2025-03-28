@@ -4,6 +4,8 @@ namespace DCL.Chat.History
 {
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
+        private const string DCL_SYSTEM_SENDER = "DCL System";
+
         public readonly bool IsPaddingElement;
         public readonly string Message;
         public readonly string SenderValidatedName;
@@ -61,24 +63,47 @@ namespace DCL.Chat.History
             new (message, chatMessage.SenderValidatedName, chatMessage.SenderWalletAddress, chatMessage.SentByOwnUser, chatMessage.SenderWalletId, chatMessage.IsMention, chatMessage.SystemMessage);
 
         public static ChatMessage NewFromSystem(string message) =>
-            new (message, "DCL System", string.Empty, true,
+            new (message, DCL_SYSTEM_SENDER, string.Empty, true,
                 null, false, true);
 
-        public bool Equals(ChatMessage other) =>
-            IsPaddingElement == other.IsPaddingElement &&
-            Message == other.Message &&
-            SenderValidatedName == other.SenderValidatedName &&
-            SenderWalletId == other.SenderWalletId &&
-            SenderWalletAddress == other.SenderWalletAddress &&
-            SentByOwnUser == other.SentByOwnUser &&
-            SystemMessage == other.SystemMessage &&
-            IsMention == other.IsMention;
+        public bool Equals(ChatMessage other)
+        {
+            if (IsPaddingElement != other.IsPaddingElement)
+                return false;
+            if (IsPaddingElement)
+                return true;
+
+            if (SystemMessage != other.SystemMessage)
+                return false;
+            if (SystemMessage)
+                return Message == other.Message;
+
+            return Message == other.Message &&
+                   SenderValidatedName == other.SenderValidatedName &&
+                   SenderWalletId == other.SenderWalletId &&
+                   SenderWalletAddress == other.SenderValidatedName &&
+                   SentByOwnUser == other.SentByOwnUser &&
+                   IsMention == other.IsMention;
+        }
 
         public override bool Equals(object? obj) =>
             obj is ChatMessage other && Equals(other);
 
-        public override int GetHashCode() =>
-            HashCode.Combine(IsPaddingElement, Message, SenderValidatedName, SenderWalletId,
-                SenderWalletAddress, SentByOwnUser, SystemMessage, IsMention);
+        public override int GetHashCode()
+        {
+            if (IsPaddingElement)
+                return 1;
+
+            if (SystemMessage)
+                return HashCode.Combine(Message, true);
+
+            return HashCode.Combine(Message, SenderValidatedName, SenderWalletId,
+                SenderWalletAddress, SentByOwnUser, IsMention);
+        }
+
+        public override string ToString() =>
+            IsPaddingElement ? "[Padding]" :
+            SystemMessage ? $"[System] {Message}" :
+            $"[{SenderValidatedName}] {Message}";
     }
 }

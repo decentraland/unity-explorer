@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatLifecycleBus;
+using DCL.Chat.EventBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -68,6 +69,7 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ISidebarActionsBus sidebarActionsBus,
+            IChatEventBus chatEventBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled) : base(viewFactory)
         {
@@ -88,7 +90,8 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking);
+                    includeUserBlocking,
+                    chatEventBus);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
             }

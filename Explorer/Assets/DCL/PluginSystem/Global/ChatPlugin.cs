@@ -7,7 +7,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.ChatLifecycleBus;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -42,8 +42,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
-        private readonly IChatInputBus chatInputBus;
-        private readonly IWeb3IdentityCache identityCache;
+        private readonly IChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private ChatStorage chatStorage;
 
         private ChatController chatController;
@@ -65,8 +65,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
-            IChatInputBus chatInputBus,
-            IWeb3IdentityCache identityCache)
+            IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -81,12 +81,12 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
-            this.chatInputBus = chatInputBus;
+            this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.roomHub = roomHub;
-            this.identityCache = identityCache;
         }
 
         public void Dispose()
@@ -99,7 +99,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             // TODO: This instance has to be re-created when a different user logs in
-            chatStorage = new ChatStorage(chatHistory, identityCache.Identity!.Address);
+            chatStorage = new ChatStorage(chatHistory, web3IdentityCache.Identity!.Address);
 
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
@@ -124,7 +124,8 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
                 profileCache,
-                chatInputBus,
+                chatEventBus,
+                web3IdentityCache,
                 chatStorage
             );
 

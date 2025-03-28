@@ -23,7 +23,7 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat;
 using DCL.Chat.ChatLifecycleBus;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -32,6 +32,8 @@ using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -351,19 +353,24 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
+
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
             LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
 
+            var privateConversationsRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
+
             IRoomHub roomHub = new RoomHub(
                 localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                gateKeeperSceneRoom
+                gateKeeperSceneRoom,
+                privateConversationsRoom
             );
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
+            var chatThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
 
-            var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool, islandThroughputBunch, sceneThroughputBunch);
+            var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool, islandThroughputBunch, sceneThroughputBunch, chatThroughputBunch);
 
             var roomsStatus = new RoomsStatus(
                 roomHub,
@@ -552,10 +559,10 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
-            IChatInputBus chatInputBus = new ChatInputBus();
+            IChatEventBus chatEventBus = new ChatEventBus();
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
-            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus, genericUserProfileContextMenuSettingsSo, includeUserBlocking, bootstrapContainer.Analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
+            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatEventBus, genericUserProfileContextMenuSettingsSo, includeUserBlocking, bootstrapContainer.Analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata);
 
@@ -641,7 +648,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     hyperlinkTextFormatter,
                     profileCache,
-                    chatInputBus,
+                    chatEventBus,
                     identityCache),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -836,7 +843,8 @@ namespace Global.Dynamic
                     sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
-                    viewDependencies));
+                    viewDependencies,
+                    chatEventBus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

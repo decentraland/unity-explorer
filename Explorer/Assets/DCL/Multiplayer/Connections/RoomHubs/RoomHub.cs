@@ -9,11 +9,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     {
         private readonly IConnectiveRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IConnectiveRoom sharedPrivateConversationsRoom;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom)
+        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom sharedPrivateConversationsRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.sharedPrivateConversationsRoom = sharedPrivateConversationsRoom;
         }
 
         public IRoom IslandRoom() =>
@@ -22,11 +24,15 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IGateKeeperSceneRoom SceneRoom() =>
             gateKeeperSceneRoom;
 
+        public IRoom SharedPrivateConversationsRoom() =>
+            sharedPrivateConversationsRoom.Room();
+
         public async UniTask<bool> StartAsync()
         {
             var result = await UniTask.WhenAll(
                 archipelagoIslandRoom.StartIfNotAsync(),
-                gateKeeperSceneRoom.StartIfNotAsync()
+                gateKeeperSceneRoom.StartIfNotAsync(),
+                sharedPrivateConversationsRoom.StartIfNotAsync()
             );
 
             return result is { Item1: true, Item2: true };
@@ -35,7 +41,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public UniTask StopAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
-                gateKeeperSceneRoom.StopIfNotAsync()
+                gateKeeperSceneRoom.StopIfNotAsync(),
+                sharedPrivateConversationsRoom.StopIfNotAsync()
             );
     }
 }

@@ -1,7 +1,9 @@
+using System;
+
 namespace DCL.UI.InputFieldFormatting
 {
     public interface ITextFormatter
     {
-        string FormatText(string text);
+        string FormatText(ReadOnlySpan<char> text);
     }
 }
