@@ -43,6 +43,7 @@ namespace DCL.InWorldCamera.UI
 
         public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
 
+        private UniTaskCompletionSource? closeViewTask;
 
         public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
@@ -53,6 +54,7 @@ namespace DCL.InWorldCamera.UI
             this.sharedSpaceManager = sharedSpaceManager;
 
             ctx = new CancellationTokenSource();
+            closeViewTask = new UniTaskCompletionSource();
 
             storageService.ScreenshotUploaded += OnScreenshotUploaded;
             sidebarButton.onClick.AddListener(ToggleInWorldCamera);
@@ -114,10 +116,20 @@ namespace DCL.InWorldCamera.UI
             viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(
-                viewInstance!.CloseButton.OnClickAsync(ct),
-                viewInstance.CameraReelButton.OnClickAsync(ct));
+        public void Close()
+        {
+            // Effectively hides the controller in the MVC system (otherwise it waits forever in WaitForCloseIntentAsync when it has not been closed using the UI buttons)
+            closeViewTask?.TrySetResult();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            closeViewTask?.TrySetCanceled(ct);
+            closeViewTask = new UniTaskCompletionSource();
+
+            return UniTask.WhenAny(closeViewTask.Task,
+                                        viewInstance!.CloseButton.OnClickAsync(ct));
+        }
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
@@ -128,6 +140,8 @@ namespace DCL.InWorldCamera.UI
         private async void OpenCameraReelGalleryAsync()
         {
             RequestDisableInWorldCamera();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden);
 
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
         }
