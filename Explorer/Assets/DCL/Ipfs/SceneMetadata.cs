@@ -1,4 +1,3 @@
-using DCL.Utilities.Json;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using UnityEngine;
 namespace DCL.Ipfs
 {
     [Serializable]
-    public class SceneMetadata : PreserveOriginalJson
+    public class SceneMetadata
     {
         public string main;
         public SceneMetadataScene scene;
@@ -16,6 +15,9 @@ namespace DCL.Ipfs
         public List<string> requiredPermissions;
         public List<SpawnPoint>? spawnPoints;
         public bool isPortableExperience;
+
+        [JsonIgnore]
+        public string OriginalJson { get; set; }
 
         [Serializable]
         public struct SpawnPoint
