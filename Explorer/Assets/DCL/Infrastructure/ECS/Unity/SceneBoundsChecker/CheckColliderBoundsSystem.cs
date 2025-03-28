@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.Time;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -29,7 +28,6 @@ namespace ECS.Unity.SceneBoundsChecker
 
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
-        private readonly IPhysicsTickProvider physicsTickEntity;
         private Bounds auxiliaryBounds = new Bounds();
 
         /// <summary>
@@ -37,19 +35,16 @@ namespace ECS.Unity.SceneBoundsChecker
         /// </summary>
         private int lastFixedFrameChecked;
 
-        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry, IPhysicsTickProvider physicsTickEntity) : base(world)
+        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry) : base(world)
         {
             this.scenePartition = scenePartition;
             this.sceneGeometry = sceneGeometry;
-            this.physicsTickEntity = physicsTickEntity;
         }
 
         protected override void Update(float t)
         {
-            int tick = physicsTickEntity.Tick;
-            if (tick == lastFixedFrameChecked) return;
-
-            lastFixedFrameChecked = tick;
+            // We cannot skip updates here based on the physicsTickEntity.Tick because PBGltfContainer properties
+            // updates (that may require to process their colliders again) can be lost between skipped cycles...
 
             CheckPrimitives();
             CheckGltfAssetQuery(World);
@@ -82,7 +77,7 @@ namespace ECS.Unity.SceneBoundsChecker
         }
 
         [Query]
-        private void CheckGltfAsset(ref GltfContainerComponent component, ref PartitionComponent partitionComponent)
+        private void CheckGltfAsset(ref GltfContainerComponent component, ref PartitionComponent partitionComponent, in PBGltfContainer pbComponent)
         {
             if (component.State != LoadingState.Finished) return;
 
@@ -94,14 +89,17 @@ namespace ECS.Unity.SceneBoundsChecker
 
             // Process all colliders
 
-            // Visible meshes colliders are created on demand
+            // Visible meshes colliders are created on demand.
+            // 'force' based on the dirtyness of PBGltfContainer is needed because properties like the
+            // 'visibleLayerMask' may end up creating colliders that need to be processed here even when the
+            // transform didn't change...
             if (asset.DecodedVisibleSDKColliders != null)
-                ProcessColliders(asset.DecodedVisibleSDKColliders);
+                ProcessColliders(asset.DecodedVisibleSDKColliders, force: pbComponent.IsDirty);
 
             ProcessColliders(asset.InvisibleColliders);
             return;
 
-            void ProcessColliders(List<SDKCollider> colliders)
+            void ProcessColliders(List<SDKCollider> colliders, bool force = false)
             {
                 for (var i = 0; i < colliders.Count; i++)
                 {
@@ -112,7 +110,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
-                    if (!sdkCollider.HasMoved())
+                    if (!sdkCollider.HasMoved() && !force)
                         continue;
 
                     // We use an auxiliary bounds object as Unity physics may take at least an extra frame to
@@ -123,7 +121,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
                     sdkCollider.ForceActiveBySceneBounds(auxiliaryBounds.extents == Vector3.zero
-                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(sdkCollider.Collider.bounds)));
+                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(auxiliaryBounds)));
 
                     // write the structure back
                     colliders[i] = sdkCollider;

@@ -78,6 +78,10 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (!sdkComponent.IsDirty) return;
 
+            // So that the new changes don't get lost and are processed when the Finished state is reached
+            if (component.State != LoadingState.Finished)
+                sdkComponent.DelayDirtyReset = true;
+
             switch (component.State)
             {
                 // The source is changed, should start downloading over again
@@ -95,7 +99,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     }
 
                     eventsBuffer.Add(entity, component);
-                    return;
+                    break;
 
                 // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here
                 // Do nothing if finished with error
@@ -103,7 +107,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     Assert.IsTrue(component.Promise.Result.HasValue);
 
                     // if promise was unsuccessful nothing to do
-                    StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result.Value;
+                    StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result!.Value;
 
                     if (!result.Succeeded)
                         return;
@@ -125,8 +129,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     }
 
                     entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
-
-                    return;
+                    break;
             }
         }
     }

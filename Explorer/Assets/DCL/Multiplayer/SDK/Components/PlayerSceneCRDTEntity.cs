@@ -10,11 +10,13 @@ namespace DCL.Multiplayer.SDK.Components
     {
         public readonly CRDTEntity CRDTEntity;
         public bool IsDirty { get; set; }
+        public bool DelayDirtyReset { get; set; }
 
         public PlayerSceneCRDTEntity(CRDTEntity crdtEntity)
         {
             CRDTEntity = crdtEntity;
             IsDirty = true;
+            DelayDirtyReset = false;
         }
     }
 }

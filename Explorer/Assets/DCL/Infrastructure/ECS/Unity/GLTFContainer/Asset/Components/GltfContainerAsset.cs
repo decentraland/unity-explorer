@@ -74,7 +74,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
-            AssetData.Dereference();
+            AssetData?.Dereference();
 
             // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
             if (AssetData is GLTFData)
