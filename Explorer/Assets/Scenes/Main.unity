@@ -535,7 +535,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: franfranfran.dcl.eth
+    targetWorld: olavra.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -561,7 +561,7 @@ MonoBehaviour:
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
-    showSplash: 0
+    showSplash: 1
     showAuthentication: 1
     showLoading: 1
     enableLandscape: 0
