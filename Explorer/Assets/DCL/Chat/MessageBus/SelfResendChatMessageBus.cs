@@ -55,6 +55,8 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
+            var isPrivate = !channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID);
+
             Profile ownProfile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
             MessageAdded?.Invoke(
@@ -66,7 +68,8 @@ namespace DCL.Chat.MessageBus
                     true,
                     ownProfile?.WalletId ?? null,
                     channelId,
-                    isMention: false
+                    isMention: false,
+                    isPrivateMessage: isPrivate
                 )
             );
         }

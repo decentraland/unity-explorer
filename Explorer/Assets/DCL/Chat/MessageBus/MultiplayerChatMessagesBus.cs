@@ -82,7 +82,10 @@ namespace DCL.Chat.MessageBus
                         false,
                         profile?.WalletId ?? null,
                         parsedChannelId,
-                        isMention
+                        isPrivate,
+                        isMention,
+                        false,
+                        false
                     )
                 );
             }
