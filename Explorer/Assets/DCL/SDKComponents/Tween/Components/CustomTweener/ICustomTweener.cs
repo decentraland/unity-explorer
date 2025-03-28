@@ -18,11 +18,4 @@ namespace DCL.SDKComponents.Tween.Components
 
         bool IsActive();
     }
-
-    public interface ICustomTweener<T> : ITweener
-    {
-        public T CurrentValue { get; set; }
-
-        void Initialize(T startValue, T endValue, float durationInSeconds);
-    }
 }

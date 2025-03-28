@@ -87,7 +87,7 @@ namespace DCL.InWorldCamera.Systems
 
             if (ScreenshotIsRequested() && exposedCameraData.CinemachineBrain.OutputCamera != null&& cameraReelStorageService.StorageStatus.HasFreeSpace)
             {
-                hudController.Hide(isInstant: true);
+                hudController.SetViewCanvasActive(false);
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot(exposedCameraData.CinemachineBrain.OutputCamera));
                 CollectMetadata();
             }
@@ -102,7 +102,7 @@ namespace DCL.InWorldCamera.Systems
             {
                 cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, currentSource, ctx.Token).Forget();
 
-                hudController.Show();
+                hudController.SetViewCanvasActive(true);
                 hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
                 hudController.DebugCapture(screenshot, metadata);
             }
