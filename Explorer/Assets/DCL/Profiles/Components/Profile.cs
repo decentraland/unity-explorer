@@ -198,13 +198,13 @@ namespace DCL.Profiles
 
         private void GenerateAndValidateName()
         {
-            ValidatedName = "";
-            DisplayName = "";
+            ValidatedName = string.Empty;
+            DisplayName = string.Empty;
             WalletId = null;
 
             if (string.IsNullOrEmpty(Name)) return;
 
-            var result = "";
+            string result = string.Empty;
             MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
 
             foreach (Match match in matches)

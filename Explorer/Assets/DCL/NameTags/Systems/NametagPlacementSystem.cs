@@ -12,7 +12,6 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.UI.Profiles.Helpers;
@@ -153,10 +152,10 @@ namespace DCL.Nametags
         [None(typeof(DeleteEntityIntention))]
         private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) || World.Has<BlockedPlayerComponent>(e))
-            if (partitionComponent.IsBehind ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr) ||
-                (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
+            if (partitionComponent.IsBehind
+                || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr)
+                || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
+                || World.Has<BlockedPlayerComponent>(e))
             {
                 nametagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);
@@ -200,9 +199,13 @@ namespace DCL.Nametags
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
 
-            var usernameColor = profile?.UserNameColor != Color.white
-                ? profile.UserNameColor
-                : ProfileNameColorHelper.GetNameColor(profile?.DisplayName ?? avatarShape.Name);
+            Color usernameColor;
+            if (profile != null)
+                usernameColor = profile.UserNameColor != Color.white ?
+                    profile.UserNameColor :
+                    ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            else
+                usernameColor = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
 
             var walletId = profile?.WalletId ?? (avatarShape.ID.Length >= 4
                 ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()

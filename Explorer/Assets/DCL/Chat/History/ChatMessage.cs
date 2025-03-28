@@ -17,7 +17,6 @@ namespace DCL.Chat.History
         public readonly bool IsMention;
         public readonly bool IsPrivateMessage;
 
-
         public ChatMessage(
             string message,
             string senderValidatedName,
@@ -43,7 +42,16 @@ namespace DCL.Chat.History
         }
 
         public static ChatMessage NewPaddingElement() =>
-            new (string.Empty, string.Empty, string.Empty, false, string.Empty, ChatChannel.EMPTY_CHANNEL_ID,false, false, false, true);
+            new (string.Empty,
+                string.Empty,
+                string.Empty,
+                false,
+                string.Empty,
+                ChatChannel.EMPTY_CHANNEL_ID,
+                false,
+                false,
+                false,
+                true);
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
             new (newMessage,

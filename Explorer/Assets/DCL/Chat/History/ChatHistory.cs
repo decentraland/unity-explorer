@@ -123,7 +123,6 @@ namespace DCL.Chat.History
 
             isReadMessagesDirty = true;
             isTotalMessagesDirty = true;
-
         }
 
         public void ClearAllChannels()

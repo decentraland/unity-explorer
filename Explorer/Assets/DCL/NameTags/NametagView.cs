@@ -159,8 +159,10 @@ namespace DCL.Nametags
         public bool IsName(string username, string? walletId, bool hasClaimedName)
         {
             // Small performance improvement to prevent to build the name for a valid comparison
-            if (!Username.text.StartsWith(username)) return false;
-            return Username.text == BuildName(username, walletId, hasClaimedName);
+            if (!usernameText.text.StartsWith(username)) return false;
+
+            usernameText.SetText(BuildName(username, walletId, hasClaimedName));
+            return true;
         }
 
         public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon, Color usernameColor)
@@ -175,10 +177,9 @@ namespace DCL.Nametags
 
             privateMessageIcon.gameObject.SetActive(false);
             privateMessageText.gameObject.SetActive(false);
-            Username.text = BuildName(username, walletId, hasClaimedName);
 
             this.usernameText.color = usernameColor;
-            this.usernameText.SetText(hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}");
+            this.usernameText.SetText(BuildName(username, walletId, hasClaimedName));
             this.usernameText.rectTransform.sizeDelta = new Vector2(this.usernameText.preferredWidth, DEFAULT_HEIGHT);
             cachedUsernameWidth = this.usernameText.preferredWidth;
             messageContent.color = STARTING_TEXT_COLOR;

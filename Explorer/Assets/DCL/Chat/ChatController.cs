@@ -448,7 +448,6 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            // Chat bubble over the avatars
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
@@ -465,10 +464,25 @@ namespace DCL.Chat
                 }
             }
             else if (isSentByOwnUser)
-                GenerateChatBubbleComponent(playerEntity, chatMessage);
+            {
+                if (chatMessage.IsPrivateMessage)
+                {
+                    Profile? profile = profileCache.Get(channel.Id.Id);
+
+                    if (profile == null)
+                    {
+                        GenerateChatBubbleComponent(playerEntity, chatMessage);
+                        return;
+                    }
+
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, profile.ValidatedName, profile.UserId);
+                }
+                else
+                    GenerateChatBubbleComponent(playerEntity, chatMessage);
+            }
         }
 
-        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
             {
@@ -479,7 +493,9 @@ namespace DCL.Chat
                     chatMessage.IsMention,
                     chatMessage.IsPrivateMessage,
                     chatMessage.ChannelId.Id,
-                    chatMessage.IsSentByOwnUser));
+                    chatMessage.IsSentByOwnUser,
+                    receiverDisplayName?? string.Empty,
+                    receiverWalletId?? string.Empty));
             }
         }
 
@@ -622,7 +638,7 @@ namespace DCL.Chat
 
             foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
-                Profile profile = profileCache.Get(identity);
+                Profile? profile = profileCache.Get(identity);
 
                 if (profile != null)
                     outProfiles.Add(profile);
