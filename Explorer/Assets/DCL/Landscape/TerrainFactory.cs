@@ -10,6 +10,9 @@ namespace DCL.Landscape
 {
     public class TerrainFactory
     {
+        private const string TERRAIN_LAYER = "Floor";
+        private const string BORDERS_LAYER = "InvisibleColliders";
+
         private readonly TerrainGenerationData terrainGenData;
 
         private TreePrototype[] treePrototypes;
@@ -72,7 +75,7 @@ namespace DCL.Landscape
         {
             BoxCollider collider = new GameObject(name).AddComponent<BoxCollider>();
             collider.transform.SetParent(parent);
-            collider.gameObject.layer = LayerMask.NameToLayer("InvisibleColliders");
+            collider.gameObject.layer = LayerMask.NameToLayer(BORDERS_LAYER);
 
             collider.size = size;
             collider.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yRotation, 0));
@@ -95,6 +98,8 @@ namespace DCL.Landscape
 
             terrain.transform.position = new Vector3(at.x, -terrainGenData.minHeight, at.y);
             terrain.transform.SetParent(parent, false);
+
+            terrain.gameObject.layer = LayerMask.NameToLayer(TERRAIN_LAYER);
 
             return terrain;
         }
