@@ -175,16 +175,14 @@ namespace DCL.MapRenderer.MapLayers.Users
         }
     }
 
-    [UpdateAfter(typeof(AvatarGroup))]
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class TrackPlayersPositionSystem : ControllerECSBridgeSystem
     {
         internal TrackPlayersPositionSystem(World world) : base(world) { }
     }
 
-    [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(TrackPlayersPositionSystem))]
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class RemovedTrackedPlayersPositionSystem : ControllerECSBridgeSystem
     {
         internal RemovedTrackedPlayersPositionSystem(World world) : base(world) { }
