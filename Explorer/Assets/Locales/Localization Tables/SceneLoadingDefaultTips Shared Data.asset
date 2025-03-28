@@ -63,14 +63,6 @@ MonoBehaviour:
     m_Key: BODY-5
     m_Metadata:
       m_Items: []
-  - m_Id: 159346651179245568
-    m_Key: TITLE-6
-    m_Metadata:
-      m_Items: []
-  - m_Id: 159346685018890240
-    m_Key: BODY-6
-    m_Metadata:
-      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
