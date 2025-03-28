@@ -34,18 +34,18 @@ namespace DCL.WebRequests
             // ensure disposal of headersInfo
             using ITypedWebRequest _ = requestWrap;
 
-            var analytics = new DefaultWebRequestAnalytics();
-
             while (attemptsLeft > 0)
             {
                 UnityWebRequest nativeRequest = requestWrap.CreateUnityWebRequest();
                 var adapter = new DefaultWebRequest(nativeRequest);
 
+                envelope.OnCreated?.Invoke(adapter);
+
                 envelope.InitializedWebRequest(web3IdentityCache, adapter);
 
                 try
                 {
-                    await ExecuteWithAnalytics(requestWrap, adapter, analytics, ct);
+                    await ExecuteWithAnalytics(requestWrap, adapter, ct);
                 }
                 catch (UnityWebRequestException exception)
                 {
@@ -85,30 +85,31 @@ namespace DCL.WebRequests
             throw new Exception($"{nameof(DefaultWebRequestController)}: Unexpected code path!");
         }
 
-        private async UniTask ExecuteWithAnalytics(ITypedWebRequest request, DefaultWebRequest adapter, DefaultWebRequestAnalytics analytics, CancellationToken ct)
+        private async UniTask ExecuteWithAnalytics(ITypedWebRequest request, DefaultWebRequest adapter, CancellationToken ct)
         {
             var requestFinished = false;
 
-            analytics.OnStarted(adapter.unityWebRequest);
+            UnityWebRequest uwr = adapter.unityWebRequest;
 
             try
             {
-                analyticsContainer.OnRequestStarted(request, adapter, analytics);
+                analyticsContainer.OnRequestStarted(request, adapter);
 
-                await UniTask.WhenAny(adapter.unityWebRequest.SendWebRequest().WithCancellation(ct), UpdateAnalytics());
+                await UniTask.WhenAny(uwr.SendWebRequest().WithCancellation(ct), UpdateAdapter());
 
                 requestFinished = true;
 
-                async UniTask UpdateAnalytics()
+                // Updating every frame is necessary to converge the API
+                async UniTask UpdateAdapter()
                 {
                     while (!ct.IsCancellationRequested && !requestFinished)
                     {
-                        analytics.Update();
+                        adapter.Update();
                         await UniTask.Yield();
                     }
                 }
             }
-            finally { analyticsContainer.OnRequestFinished(request, adapter, analytics); }
+            finally { analyticsContainer.OnRequestFinished(request, adapter); }
         }
 
         IRequestHub IWebRequestController.requestHub => requestHub;

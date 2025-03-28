@@ -16,20 +16,20 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             (ulong)(sum / count) * 1_000_000UL;
 
-        private void TrackFirstByteDownloaded(IWebRequestAnalytics analytics)
+        private void TrackFirstByteDownloaded(IWebRequest analytics)
         {
             count++;
             sum += (DateTime.Now - analytics.CreationTime).TotalMilliseconds;
         }
 
-        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
-            webRequestAnalytics.OnDownloadStarted += TrackFirstByteDownloaded;
+            webRequest.OnDownloadStarted += TrackFirstByteDownloaded;
         }
 
-        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            webRequestAnalytics.OnDownloadStarted -= TrackFirstByteDownloaded;
+            webRequest.OnDownloadStarted -= TrackFirstByteDownloaded;
         }
     }
 }

@@ -4,6 +4,8 @@ using DCL.Diagnostics;
 using DCL.WebRequests.GenericDelete;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Utilities.Extensions;
+using System;
 using Utility.Types;
 
 namespace DCL.WebRequests
@@ -22,9 +24,10 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            bool suppressErrors = false) where TRequest: ITypedWebRequest<TArgs> where TArgs: struct =>
+            bool suppressErrors = false,
+            Action<IWebRequest>? onRequestCreated = null) where TRequest: ITypedWebRequest<TArgs> where TArgs: struct =>
             controller.requestHub.RequestDelegateFor<TArgs, TRequest>()(controller,
-                new RequestEnvelope(commonArguments, reportData, headersInfo, signInfo, suppressErrors), args);
+                new RequestEnvelope(commonArguments, reportData, headersInfo, signInfo, suppressErrors, onRequestCreated), args);
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data
@@ -34,9 +37,11 @@ namespace DCL.WebRequests
             CommonArguments commonArguments,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false,
+            Action<IWebRequest>? onRequestCreated = null
         ) =>
-            controller.Create<GenericGetRequest, GenericGetArguments>(new GenericGetArguments(), commonArguments, reportData, headersInfo, signInfo);
+            controller.Create<GenericGetRequest, GenericGetArguments>(new GenericGetArguments(), commonArguments, reportData, headersInfo, signInfo, suppressErrors, onRequestCreated);
 
         public static GenericPostRequest PostAsync(
             this IWebRequestController controller,
@@ -111,14 +116,23 @@ namespace DCL.WebRequests
             }
         }
 
+        /// <summary>
+        ///     Get is Reachable when the downloading started
+        /// </summary>
         public static async UniTask<bool> IsGetReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
         {
-            await UniTask.SwitchToMainThread();
+            var downloadStarted = false;
 
-            try { await GetAsync<WebRequestUtils.NoOp<GenericGetRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericGetRequest>(), ct, reportData); }
-            catch (UnityWebRequestException) { return false; }
+            void OnCreated(IWebRequest webRequest)
+            {
+                webRequest.OnDownloadStarted += _ => downloadStarted = true;
+            }
 
-            return true;
+            // We are not interested in exception
+            GenericGetRequest getRequest = controller.GetAsync(url, reportData, suppressErrors: true, onRequestCreated: OnCreated);
+            await getRequest.SendAsync(ct).SuppressToResultAsync();
+
+            return downloadStarted;
         }
 
         /// <summary>

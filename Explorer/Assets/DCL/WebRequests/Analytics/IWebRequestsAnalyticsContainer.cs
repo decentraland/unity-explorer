@@ -12,9 +12,9 @@ namespace DCL.WebRequests.Analytics
 
         IReadOnlyList<IRequestMetric>? GetMetric(Type requestType);
 
-        internal void OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest, IWebRequestAnalytics webRequestAnalytics);
+        internal void OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest);
 
-        internal void OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest, IWebRequestAnalytics webRequestAnalytics);
+        internal void OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest);
 
 
         public static readonly IWebRequestsAnalyticsContainer DEFAULT = new WebRequestsAnalyticsContainer();

@@ -18,13 +18,13 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             (ulong)(sum / count) * 1_000_000UL;
 
-        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
         }
 
-        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            double elapsedMs = (DateTime.Now - webRequestAnalytics.CreationTime).TotalMilliseconds / BytesFormatter.Convert(webRequestAnalytics.DownloadedBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            double elapsedMs = (DateTime.Now - webRequest.CreationTime).TotalMilliseconds / BytesFormatter.Convert(webRequest.DownloadedBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
             count++;
             sum += elapsedMs;
         }

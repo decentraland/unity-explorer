@@ -58,10 +58,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.WebLoading
                     URLAddress.FromString(option.url)
                 ),
                 new GetTextureArguments(option.textureType),
-                new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
-                destroyCancellationToken,
                 ReportCategory.UNSPECIFIED
-            );
+                                            )
+                                           .CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Bilinear, destroyCancellationToken);
 
             current = texture.Texture;
             display.Display(current);

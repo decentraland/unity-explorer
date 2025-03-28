@@ -2,9 +2,9 @@
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    internal class Total : IRequestMetric
+    internal class CannotConnectCounter : IRequestMetric
     {
-        private ulong counter { get; set; }
+        private ulong counter;
 
         public DebugLongMarkerDef.Unit GetUnit() =>
             DebugLongMarkerDef.Unit.NoFormat;
@@ -14,9 +14,10 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest) { }
 
-        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest wr)
         {
-            counter++;
+            if (!wr.Response.IsSuccess && wr.Response.Error.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
+                counter++;
         }
     }
 }

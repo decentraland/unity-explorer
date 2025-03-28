@@ -18,16 +18,16 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             (ulong)(bytesTransferred / seconds);
 
-        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
         }
 
-        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            if (webRequestAnalytics.DownloadedBytes < ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
+            if (webRequest.DownloadedBytes < ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
 
-            seconds += (DateTime.Now - webRequestAnalytics.CreationTime).TotalSeconds;
-            bytesTransferred += webRequestAnalytics.DownloadedBytes;
+            seconds += (DateTime.Now - webRequest.CreationTime).TotalSeconds;
+            bytesTransferred += webRequest.DownloadedBytes;
         }
     }
 }

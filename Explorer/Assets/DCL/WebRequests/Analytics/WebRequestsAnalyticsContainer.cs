@@ -11,7 +11,7 @@ namespace DCL.WebRequests.Analytics
         public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) =>
             requestTypesWithMetrics.GetValueOrDefault(requestType);
 
-        void IWebRequestsAnalyticsContainer.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest, IWebRequestAnalytics webRequestAnalytics)
+        void IWebRequestsAnalyticsContainer.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
             Type type = request.GetType();
 
@@ -25,16 +25,16 @@ namespace DCL.WebRequests.Analytics
                 requestTypesWithMetrics.Add(type, metrics);
             }
 
-            foreach (IRequestMetric? metric in metrics) { metric.OnRequestStarted(request, webRequestAnalytics, webRequest); }
+            foreach (IRequestMetric? metric in metrics) { metric.OnRequestStarted(request, webRequest); }
         }
 
-        void IWebRequestsAnalyticsContainer.OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest, IWebRequestAnalytics webRequestAnalytics)
+        void IWebRequestsAnalyticsContainer.OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest)
         {
             Type type = request.GetType();
 
             if (!requestTypesWithMetrics.TryGetValue(type, out List<IRequestMetric> metrics)) return;
 
-            foreach (IRequestMetric? metric in metrics) { metric.OnRequestEnded(request, webRequestAnalytics, webRequest); }
+            foreach (IRequestMetric? metric in metrics) { metric.OnRequestEnded(request, webRequest); }
         }
 
         public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>

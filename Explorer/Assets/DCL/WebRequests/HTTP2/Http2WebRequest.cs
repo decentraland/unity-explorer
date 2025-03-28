@@ -14,6 +14,12 @@ namespace DCL.WebRequests.HTTP2
 
         public string Url => httpRequest.Uri.OriginalString;
 
+        public DateTime CreationTime { get; }
+
+        public ulong DownloadedBytes { get; private set; }
+
+        public ulong UploadedBytes { get; private set; }
+
         public IWebRequestResponse Response { get; }
 
         public bool IsTimedOut => httpRequest.State is HTTPRequestStates.TimedOut or HTTPRequestStates.ConnectionTimedOut;
@@ -24,10 +30,32 @@ namespace DCL.WebRequests.HTTP2
 
         object IWebRequest.nativeRequest => httpRequest;
 
+        public event Action<IWebRequest>? OnDownloadStarted;
+
         public Http2WebRequest(HTTPRequest httpRequest)
         {
             this.httpRequest = httpRequest;
             Response = new Http2Response(httpRequest);
+            CreationTime = DateTime.Now;
+
+            httpRequest.DownloadSettings.OnDownloadStarted += OnStarted;
+            httpRequest.DownloadSettings.OnDownloadProgress += OnDownloadProgress;
+            httpRequest.UploadSettings.OnUploadProgress += OnUploadProgress;
+        }
+
+        private void OnDownloadProgress(HTTPRequest req, long progress, long length)
+        {
+            DownloadedBytes = (ulong)progress;
+        }
+
+        private void OnUploadProgress(HTTPRequest req, long progress, long length)
+        {
+            UploadedBytes = (ulong)progress;
+        }
+
+        private void OnStarted(HTTPRequest req, HTTPResponse resp, DownloadContentStream stream)
+        {
+            OnDownloadStarted?.Invoke(this);
         }
 
         public void Dispose()
@@ -109,7 +137,7 @@ namespace DCL.WebRequests.HTTP2
                 }
             }
 
-            public string? Error => IsSuccess ? null : request.Response.Message;
+            public string Error => IsSuccess ? string.Empty : request.Response?.Message ?? string.Empty;
 
             public byte[] Data => request.Response?.Data ?? Array.Empty<byte>();
 

@@ -8,8 +8,8 @@ namespace DCL.WebRequests.Analytics
 
         ulong GetMetric();
 
-        internal void OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest);
+        internal void OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest);
 
-        internal void OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest);
+        internal void OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest);
     }
 }

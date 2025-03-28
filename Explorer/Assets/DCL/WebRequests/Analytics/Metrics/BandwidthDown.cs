@@ -12,14 +12,14 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             bandwidth;
 
-        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
         }
 
-        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
             if (webRequest.Response.IsSuccess)
-                bandwidth += webRequestAnalytics.DownloadedBytes;
+                bandwidth += webRequest.DownloadedBytes;
         }
     }
 }

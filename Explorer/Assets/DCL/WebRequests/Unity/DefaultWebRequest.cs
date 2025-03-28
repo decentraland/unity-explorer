@@ -1,5 +1,4 @@
-﻿using NSubstitute;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
@@ -12,6 +11,8 @@ namespace DCL.WebRequests
     {
         internal readonly UnityWebRequest unityWebRequest;
 
+        private bool downloadStarted;
+
         public string Url => unityWebRequest.url;
 
         public IWebRequestResponse Response { get; }
@@ -20,13 +21,29 @@ namespace DCL.WebRequests
 
         public bool IsTimedOut => unityWebRequest is { error: "Request timeout" };
         public bool IsAborted => !Response.Received && unityWebRequest is { error: "Request aborted" or "User Aborted" };
+        public DateTime CreationTime { get; }
+
+        public ulong DownloadedBytes => unityWebRequest.downloadedBytes;
+        public ulong UploadedBytes => unityWebRequest.uploadedBytes;
 
         object IWebRequest.nativeRequest => unityWebRequest;
+
+        public event Action<IWebRequest>? OnDownloadStarted;
 
         public DefaultWebRequest(UnityWebRequest unityWebRequest)
         {
             this.unityWebRequest = unityWebRequest;
             Response = new DefaultWebRequestResponse(unityWebRequest);
+            CreationTime = DateTime.Now;
+        }
+
+        public void Update()
+        {
+            if (DownloadedBytes > 0 && !downloadStarted)
+            {
+                OnDownloadStarted?.Invoke(this);
+                downloadStarted = true;
+            }
         }
 
         public void Dispose()
@@ -57,7 +74,7 @@ namespace DCL.WebRequests
 
             public string Text => unityWebRequest.downloadHandler.text;
 
-            public string? Error => unityWebRequest.error;
+            public string Error => unityWebRequest.error ?? string.Empty;
 
             public byte[] Data => unityWebRequest.downloadHandler.data;
 

@@ -5,6 +5,9 @@ using DCL.WebRequests.RequestsHub;
 
 namespace DCL.WebRequests
 {
+    /// <summary>
+    ///     TODO Unify with IRequestMetric
+    /// </summary>
     public class DebugMetricsWebRequestController : IWebRequestController
     {
         private readonly IWebRequestController origin;

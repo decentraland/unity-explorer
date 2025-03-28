@@ -36,6 +36,8 @@ namespace DCL.WebRequests.HTTP2
             envelope.InitializedWebRequest(identityCache, requestAdapter);
             nativeRequest.RetrySettings.MaxRetries = envelope.CommonArguments.TotalAttempts();
 
+            envelope.OnCreated?.Invoke(requestAdapter);
+
             try { await ExecuteWithAnalytics(requestWrap, requestAdapter, ct); }
             catch (AsyncHTTPException exception)
             {
@@ -59,12 +61,10 @@ namespace DCL.WebRequests.HTTP2
 
         private async UniTask ExecuteWithAnalytics(ITypedWebRequest request, Http2WebRequest adapter, CancellationToken ct)
         {
-            var analytics = new Http2WebRequestAnalytics(adapter.httpRequest);
-
-            analyticsContainer.OnRequestStarted(request, adapter, analytics);
+            analyticsContainer.OnRequestStarted(request, adapter);
 
             try { await adapter.httpRequest.GetHTTPResponseAsync(ct); }
-            finally { analyticsContainer.OnRequestFinished(request, adapter, analytics); }
+            finally { analyticsContainer.OnRequestFinished(request, adapter); }
         }
 
         IRequestHub IWebRequestController.requestHub => requestHub;

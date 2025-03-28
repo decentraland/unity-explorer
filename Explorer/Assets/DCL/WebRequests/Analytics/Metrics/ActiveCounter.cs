@@ -1,4 +1,5 @@
 ﻿using DCL.DebugUtilities;
+using System;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
@@ -11,12 +12,12 @@ namespace DCL.WebRequests.Analytics.Metrics
         public ulong GetMetric() =>
             counter;
 
-        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
             counter++;
         }
 
-        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequestAnalytics webRequestAnalytics, IWebRequest webRequest)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
             counter--;
         }

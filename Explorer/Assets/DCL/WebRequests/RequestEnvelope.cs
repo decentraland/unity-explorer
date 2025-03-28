@@ -21,6 +21,11 @@ namespace DCL.WebRequests
         public readonly WebRequestHeadersInfo HeadersInfo;
         public readonly WebRequestSignInfo? SignInfo;
 
+        /// <summary>
+        ///     Allows to hook into the web request creation and observe/manipulate its state during the execution of the process (before it's fully complete)
+        /// </summary>
+        public readonly Action<IWebRequest>? OnCreated;
+
         private const string NONE = "NONE";
 
         public RequestEnvelope(
@@ -28,14 +33,15 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            bool suppressErrors = false
-        )
+            bool suppressErrors = false,
+            Action<IWebRequest>? onCreated = null)
         {
             this.CommonArguments = commonArguments;
             ReportData = reportData;
             HeadersInfo = headersInfo ?? WebRequestHeadersInfo.NewEmpty();
             SignInfo = signInfo;
             SuppressErrors = suppressErrors;
+            OnCreated = onCreated;
         }
 
         public override string ToString() =>

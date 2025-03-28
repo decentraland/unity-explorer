@@ -18,6 +18,8 @@ namespace DCL.WebRequests
         /// </summary>
         void Abort();
 
+        event Action<IWebRequest> OnDownloadStarted;
+
         string Url { get; }
 
         IWebRequestResponse Response { get; }

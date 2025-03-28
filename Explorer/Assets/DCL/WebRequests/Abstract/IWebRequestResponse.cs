@@ -22,9 +22,9 @@ namespace DCL.WebRequests
 
         /// <summary>
         ///     A human-readable string describing any system errors encountered by this UnityWebRequest object while handling HTTP requests or responses.
-        ///     The default value is null is set if no response is received or the request has successfully finished.
+        ///     The default value is string.Empty is set if no response is received or the request has successfully finished.
         /// </summary>
-        string? Error { get; }
+        string Error { get; }
 
         /// <summary>
         ///     Creates a new array from the response
