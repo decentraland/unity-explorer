@@ -159,7 +159,7 @@ namespace DCL.Landscape
 
         public async UniTask GenerateTerrainAndShowAsync(
             uint worldSeed = 1,
-            bool withHoles = true,
+            bool withHoles = false,
             bool hideTrees = false,
             bool hideDetails = false,
             AsyncLoadProcessReport processReport = null,
