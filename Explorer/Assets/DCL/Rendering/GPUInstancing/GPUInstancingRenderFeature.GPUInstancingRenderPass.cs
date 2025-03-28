@@ -62,11 +62,12 @@ namespace DCL.Rendering.GPUInstancing
 
                             cmd.SetGlobalBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
                             cmd.SetGlobalBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
-                            //cmd.SetGlobalBuffer("unity_IndirectDrawArgs", buffers.DrawArgs);
+                            cmd.SetGlobalBuffer("unity_IndirectDrawArgs", buffers.DrawArgs);
                             int ForwardPass = combinedLodRenderer.RenderParamsArray.material.FindPass("ForwardLit");
 
                             for (int j = 0; j < combinedLodRenderer.CombinedMesh.subMeshCount; j++)
                             {
+                                cmd.SetGlobalInt("unity_BaseCommandID", j);
                                 cmd.DrawMeshInstancedIndirect(combinedLodRenderer.CombinedMesh, j, combinedLodRenderer.RenderParamsArray.material, ForwardPass, buffers.DrawArgs, ((i * lodCount) + j) * GraphicsBuffer.IndirectDrawIndexedArgs.size);
                             }
                         }
