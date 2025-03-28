@@ -18,9 +18,6 @@ namespace ECS.Unity.Transforms.Components
         {
             public Vector3 WorldPosition;
             public Quaternion WorldRotation;
-            public Vector3 LocalPosition;
-            public Quaternion LocalRotation;
-            public Vector3 LocalScale;
 
             public CachedTransform(Transform transform) : this()
             {
@@ -31,9 +28,6 @@ namespace ECS.Unity.Transforms.Components
             {
                 WorldPosition = transform.position;
                 WorldRotation = transform.rotation;
-                LocalPosition = transform.localPosition;
-                LocalRotation = transform.localRotation;
-                LocalScale = transform.localScale;
             }
         }
 
@@ -52,12 +46,6 @@ namespace ECS.Unity.Transforms.Components
             Parent = EntityReference.Null;
 
             Cached = new CachedTransform(transform);
-        }
-
-        public TransformComponent(Transform transform, string name, Vector3 startPosition) : this(transform)
-        {
-            transform.name = name;
-            transform.localPosition = startPosition;
         }
 
         public void SetTransform(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
@@ -90,14 +78,12 @@ namespace ECS.Unity.Transforms.Components
         public void Apply(Quaternion rotation)
         {
             Cached.WorldRotation = Transform.rotation = rotation;
-            Cached.LocalRotation = Transform.localRotation;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Apply(Vector3 worldPosition)
         {
             Cached.WorldPosition = Transform.position = worldPosition;
-            Cached.LocalPosition = Transform.localPosition;
         }
 
         readonly Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
