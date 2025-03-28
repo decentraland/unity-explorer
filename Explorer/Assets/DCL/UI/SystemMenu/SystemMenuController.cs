@@ -78,7 +78,9 @@ namespace DCL.UI.SystemMenu
             viewInstance.ExitAppButton.onClick.AddListener(CloseView);
             viewInstance.PrivacyPolicyButton.onClick.AddListener(CloseView);
             viewInstance.TermsOfServiceButton.onClick.AddListener(CloseView);
-            viewInstance.PreviewProfileButton.onClick.AddListener(CloseView);
+            // Closing the popup provokes inconsistencies in the popup chain: system menu->passport->name editor
+            // Making the name editor be behind the passport
+            // viewInstance.PreviewProfileButton.onClick.AddListener(CloseView);
         }
 
         private void CloseView()
