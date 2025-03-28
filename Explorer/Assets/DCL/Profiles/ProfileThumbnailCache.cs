@@ -31,8 +31,8 @@ namespace DCL.Profiles
 
             public void IncreaseCooldown()
             {
-                nextAvailableAttempt = DateTime.Now.AddSeconds(ATTEMPT_SECONDS_UNIT * attempts);
                 attempts++;
+                nextAvailableAttempt = DateTime.Now.AddSeconds(ATTEMPT_SECONDS_UNIT * attempts);
             }
 
             public bool CanRetry() =>
