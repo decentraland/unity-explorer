@@ -480,7 +480,7 @@ namespace DCL.Chat
                     }
 
                     Color nameColor = profile.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, profile.ValidatedName, profile.UserId);
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, profile.ValidatedName, profile.WalletId);
                 }
                 else
                     GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
