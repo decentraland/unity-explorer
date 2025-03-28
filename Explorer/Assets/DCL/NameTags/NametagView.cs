@@ -211,19 +211,6 @@ namespace DCL.Nametags
             }
         }
 
-
-        [BurstCompile]
-        private static float CalculateTransparency(float distance, float maxDistance, float fullOpacityMaxDistance, float previousDistance, float distanceThreshold, out bool shouldUpdate)
-        {
-            shouldUpdate = math.abs(distance - previousDistance) >= distanceThreshold;
-
-            if (!shouldUpdate)
-                return 1f;
-
-            float normalizedDistance = (distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance);
-            return curveEvaluator.Evaluate(normalizedDistance);
-        }
-
         public void SetTransparency(float distance, float maxDistance)
         {
             float alpha = CalculateTransparency(distance, maxDistance, fullOpacityMaxDistance, previousDistance, DISTANCE_THRESHOLD, out bool shouldUpdate);
@@ -266,6 +253,8 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
             this.isMention = isMention;
             hasPrivateMessageIcon = isPrivateMessage;
+            privateMessageIcon.gameObject.SetActive(hasPrivateMessageIcon);
+            privateMessageText.gameObject.SetActive(false);
             if (isPrivateMessage)
             {
                 cachedPrivateMessageIconWidth = privateMessageIcon.sizeDelta.x;
@@ -278,6 +267,7 @@ namespace DCL.Nametags
                 privateMessageIcon.anchoredPosition = privateMessageInitialPosition;
 
                 hasPrivateMessageText = isPrivateMessage && isOwnMessage;
+                privateMessageText.gameObject.SetActive(hasPrivateMessageText);
                 if (hasPrivateMessageText)
                 {
                     privateMessageText.SetText(channelId); //FORMAT THIS TEXT PROPERLY
@@ -296,6 +286,18 @@ namespace DCL.Nametags
             }
 
             StartChatBubbleFlowAsync(chatMessage, cts.Token).Forget();
+        }
+
+        [BurstCompile]
+        private static float CalculateTransparency(float distance, float maxDistance, float fullOpacityMaxDistance, float previousDistance, float distanceThreshold, out bool shouldUpdate)
+        {
+            shouldUpdate = math.abs(distance - previousDistance) >= distanceThreshold;
+
+            if (!shouldUpdate)
+                return 1f;
+
+            float normalizedDistance = (distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance);
+            return curveEvaluator.Evaluate(normalizedDistance);
         }
 
         private void ResetElement()
