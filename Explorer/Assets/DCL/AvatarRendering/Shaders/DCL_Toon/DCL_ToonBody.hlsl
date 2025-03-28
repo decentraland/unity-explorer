@@ -439,7 +439,8 @@ VertexOutput vert (VertexInput v)
 
     OUTPUT_LIGHTMAP_UV(v.lightmapUV, unity_LightmapST, o.lightmapUV);
     #if UNITY_VERSION >= 202317
-        OUTPUT_SH4(positionWS, o.normalDir.xyz, GetWorldSpaceNormalizeViewDir(positionWS), o.vertexSH);
+        float4 outOcclusion;
+        OUTPUT_SH4(positionWS, o.normalDir.xyz, GetWorldSpaceNormalizeViewDir(positionWS), o.vertexSH, outOcclusion);
     #elif UNITY_VERSION >= 202310
         OUTPUT_SH(positionWS, o.normalDir.xyz, GetWorldSpaceNormalizeViewDir(positionWS), o.vertexSH);
     #else
