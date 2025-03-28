@@ -167,9 +167,6 @@ namespace DCL.UI.GenericContextMenu
                     case GenericContextMenuButtonWithStringDelegateView buttonView:
                         buttonWithStringDelegatePool.Release(buttonView);
                         break;
-                    case GenericContextMenuBlockUserButtonView buttonView:
-                        blockUserButtonPool.Release(buttonView);
-                        break;
                 }
             }
 

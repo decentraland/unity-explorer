@@ -446,12 +446,6 @@ namespace DCL.Chat
                 chatInputBox.DisableInputBoxSubmissions();
         }
 
-        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
-        {
-            if (memberListView.IsVisible)
-                OnMemberListClosingButtonClicked();
-        }
-
         private void OnScrollToEndButtonClicked()
         {
             chatMessageViewer.ShowLastMessage(true);
@@ -815,11 +809,6 @@ namespace DCL.Chat
         {
             if (memberListView.IsVisible)
                 OnMemberListClosingButtonClicked();
-        }
-
-        private void OnScrollToEndButtonClicked()
-        {
-            chatMessageViewer.ShowLastMessage(true);
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)

@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
-using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
@@ -54,11 +52,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
-        private readonly bool includeUserBlocking;
 
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
+        private Profile targetProfile;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -111,6 +109,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
+            targetProfile = profile;
 
             if (friendServiceProxy.Configured)
             {
@@ -129,8 +128,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
-            blockUserButtonContextMenuControlSettings.SetData(profile);
-            blockUserElement.Enabled = includeUserBlocking && contextMenuFriendshipStatus != UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED;
 
             if (anchorPoint == GenericContextMenuAnchorPoint.DEFAULT)
                 anchorPoint = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
@@ -259,8 +256,16 @@ namespace DCL.UI.GenericContextMenu.Controllers
             chatEventBus.OpenConversationUsingUserId(userId);
         }
 
-        private void OnBlockUserClicked(Profile profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
+        private void OnBlockUserClicked(string userId)
+        {
+            ShowBlockUserPromptAsync(targetProfile).Forget();
+        }
+
+
+        private async UniTaskVoid ShowBlockUserPromptAsync(Profile profile)
+        {
+            await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
+        }
 
         private void OnJumpInClicked(string userId)
         {

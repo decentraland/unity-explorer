@@ -4,7 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.Input.Component;
@@ -20,6 +19,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
@@ -154,7 +154,6 @@ namespace DCL.Chat
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
-            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
             this.loadingStatus = loadingStatus;
         }
 

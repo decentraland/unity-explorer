@@ -15,14 +15,13 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Chat;
 using DCL.Friends.Passport;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -569,9 +568,28 @@ namespace Global.Dynamic
 
             IChatEventBus chatEventBus = new ChatEventBus();
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
-            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatEventBus, genericUserProfileContextMenuSettingsSo, includeUserBlocking, bootstrapContainer.Analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
+            IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
+                mvcManager,
+                profileCache,
+                friendServiceProxy,
+                chatEventBus,
+                includeUserBlocking,
+                genericUserProfileContextMenuSettingsSo,
+                bootstrapContainer.Analytics,
+                onlineUsersProvider,
+                realmNavigator,
+                friendOnlineStatusCacheProxy);
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata, userBlockingCacheProxy);
+            var viewDependencies = new ViewDependencies(
+                dclInput,
+                unityEventSystem,
+                menusAccessFacade,
+                clipboardManager,
+                dclCursor,
+                profileThumbnailCache,
+                profileRepository,
+                remoteMetadata,
+                userBlockingCacheProxy);
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -865,8 +883,8 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
-                    viewDependencies,
                     chatEventBus,
+                    viewDependencies,
                     sharedSpaceManager));
             }
 

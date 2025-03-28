@@ -3850,6 +3850,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Emotes.enabled, "This will cause a leak and performance issues, DCLInput.Emotes.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_EmoteWheel.enabled, "This will cause a leak and performance issues, DCLInput.EmoteWheel.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_InWorldCamera.enabled, "This will cause a leak and performance issues, DCLInput.InWorldCamera.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_TESTS.enabled, "This will cause a leak and performance issues, DCLInput.TESTS.Disable() has not been called.");
     }
 
     public void Dispose()

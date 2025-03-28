@@ -93,7 +93,6 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
-            ViewDependencies viewDependencies,
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager)
