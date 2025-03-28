@@ -144,7 +144,7 @@ namespace DCL.Nametags
                 return;
 
             if (nametagsData.showChatBubbles)
-                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention);
+                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.ChannelId);
 
             chatBubbleComponent.IsDirty = false;
         }

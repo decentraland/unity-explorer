@@ -183,7 +183,7 @@ namespace DCL.Chat
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
 
             OnFocus();
-            
+
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
@@ -231,7 +231,7 @@ namespace DCL.Chat
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
-            bool isSentByOwnUser = addedMessage is { SystemMessage: false, SentByOwnUser: true };
+            bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
             CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
@@ -364,7 +364,7 @@ namespace DCL.Chat
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
             // Chat bubble over the avatars
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
+            if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
@@ -388,7 +388,14 @@ namespace DCL.Chat
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
             {
                 bool isPrivateMessage = viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID);
-                world.AddOrSet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention, isPrivateMessage));
+                world.AddOrSet(e, new ChatBubbleComponent(
+                    chatMessage.Message,
+                    chatMessage.SenderValidatedName,
+                    chatMessage.WalletAddress,
+                    chatMessage.IsMention,
+                    isPrivateMessage,
+                    chatMessage.ChannelId.Id,
+                    chatMessage.IsSentByOwnUser));
             }
         }
 
@@ -472,7 +479,7 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            if (!chatMessage.SystemMessage)
+            if (!chatMessage.IsSystemMessage)
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
                 var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);

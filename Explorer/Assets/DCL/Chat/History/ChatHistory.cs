@@ -109,12 +109,10 @@ namespace DCL.Chat.History
             channel.AddMessage(newMessage);
         }
 
-        private static ChatChannel.ChatChannelType GetChannelTypeFromId(ChatChannel.ChannelId channelId)
-        {
-            return channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)
+        private static ChatChannel.ChatChannelType GetChannelTypeFromId(ChatChannel.ChannelId channelId) =>
+            channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)
                 ? ChatChannel.ChatChannelType.Nearby
                 : ChatChannel.ChatChannelType.User;
-        }
 
         public void ClearChannel(ChatChannel.ChannelId channelId)
         {
@@ -134,7 +132,7 @@ namespace DCL.Chat.History
             {
                 channel.Clear();
             }
-            
+
             isReadMessagesDirty = true;
             isTotalMessagesDirty = true;
         }

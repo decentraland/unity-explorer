@@ -6,52 +6,50 @@ namespace DCL.Chat.History
     {
         private const string DCL_SYSTEM_SENDER = "DCL System";
 
-        public readonly bool IsPaddingElement;
         public readonly string Message;
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
         public readonly string WalletAddress;
-        public readonly bool SentByOwnUser;
-        public readonly bool SystemMessage;
+        public readonly ChatChannel.ChannelId ChannelId;
+        public readonly bool IsPaddingElement;
+        public readonly bool IsSentByOwnUser;
+        public readonly bool IsSystemMessage;
         public readonly bool IsMention;
+        public readonly bool IsPrivateMessage;
+
 
         public ChatMessage(
             string message,
             string senderValidatedName,
             string walletAddress,
-            bool sentByOwnUser,
+            bool isSentByOwnUser,
             string senderWalletId,
+            ChatChannel.ChannelId channelId,
+            bool isPrivateMessage = false,
             bool isMention = false,
-            bool systemMessage = false)
+            bool isSystemMessage = false)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
             WalletAddress = walletAddress;
-            SentByOwnUser = sentByOwnUser;
+            IsSentByOwnUser = isSentByOwnUser;
             IsPaddingElement = false;
             SenderWalletId = senderWalletId;
+            ChannelId = channelId;
+            IsPrivateMessage = isPrivateMessage;
             IsMention = isMention;
-            SystemMessage = systemMessage;
+            IsSystemMessage = isSystemMessage;
         }
 
-        public ChatMessage(bool isPaddingElement)
-        {
-            IsPaddingElement = isPaddingElement;
-            IsMention = false;
-            SenderWalletId = string.Empty;
-            Message = string.Empty;
-            SenderValidatedName = string.Empty;
-            WalletAddress = string.Empty;
-            SentByOwnUser = false;
-            SystemMessage = false;
-        }
+        public static ChatMessage NewPaddingElement() =>
+            new (string.Empty, string.Empty, string.Empty, false, string.Empty, ChatChannel.EMPTY_CHANNEL_ID);
 
         public static ChatMessage CopyWithNewMessage(string message, ChatMessage chatMessage) =>
-            new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.SentByOwnUser, chatMessage.SenderWalletId, chatMessage.IsMention, chatMessage.SystemMessage);
+            new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsSentByOwnUser, chatMessage.SenderWalletId, chatMessage.ChannelId, chatMessage.IsMention, chatMessage.IsSystemMessage);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, false, true);
+                null, ChatChannel.NEARBY_CHANNEL_ID,false, true);
 
         public bool Equals(ChatMessage other)
         {
@@ -60,16 +58,16 @@ namespace DCL.Chat.History
             if (IsPaddingElement)
                 return true;
 
-            if (SystemMessage != other.SystemMessage)
+            if (IsSystemMessage != other.IsSystemMessage)
                 return false;
-            if (SystemMessage)
+            if (IsSystemMessage)
                 return Message == other.Message;
 
             return Message == other.Message &&
                    SenderValidatedName == other.SenderValidatedName &&
                    SenderWalletId == other.SenderWalletId &&
                    WalletAddress == other.WalletAddress &&
-                   SentByOwnUser == other.SentByOwnUser &&
+                   IsSentByOwnUser == other.IsSentByOwnUser &&
                    IsMention == other.IsMention;
         }
 
@@ -81,16 +79,16 @@ namespace DCL.Chat.History
             if (IsPaddingElement)
                 return 1;
 
-            if (SystemMessage)
+            if (IsSystemMessage)
                 return HashCode.Combine(Message, true);
 
             return HashCode.Combine(Message, SenderValidatedName, SenderWalletId,
-                WalletAddress, SentByOwnUser, IsMention);
+                WalletAddress, IsSentByOwnUser, IsMention);
         }
 
         public override string ToString() =>
             IsPaddingElement ? "[Padding]" :
-            SystemMessage ? $"[System] {Message}" :
+            IsSystemMessage ? $"[System] {Message}" :
             $"[{SenderValidatedName}] {Message}";
     }
 }

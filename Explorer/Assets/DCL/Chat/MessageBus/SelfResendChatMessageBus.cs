@@ -65,6 +65,7 @@ namespace DCL.Chat.MessageBus
                     identity.Address,
                     true,
                     ownProfile?.WalletId ?? null,
+                    channelId,
                     isMention: false
                 )
             );

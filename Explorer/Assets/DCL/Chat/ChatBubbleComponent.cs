@@ -4,18 +4,29 @@ namespace DCL.Chat
     {
         public readonly string ChatMessage;
         public readonly bool IsMention;
-        public readonly string SenderName;
-        public readonly string SenderId;
+        public readonly string SenderDisplayName;
+        public readonly string SenderWalletId;
+        public readonly string ChannelId;
         public readonly bool IsPrivateMessage;
+        public readonly bool IsOwnMessage;
         public bool IsDirty;
 
-        public ChatBubbleComponent(string chatMessage, string senderName, string senderId, bool isMention, bool isPrivateMessage)
+        public ChatBubbleComponent(
+            string chatMessage,
+            string senderDisplayName,
+            string senderWalletId,
+            bool isMention,
+            bool isPrivateMessage,
+            string channelId,
+            bool isOwnMessage)
         {
             ChatMessage = chatMessage;
-            SenderName = senderName;
-            SenderId = senderId;
+            SenderDisplayName = senderDisplayName;
+            SenderWalletId = senderWalletId;
             IsMention = isMention;
             IsPrivateMessage = isPrivateMessage;
+            ChannelId = channelId;
+            IsOwnMessage = isOwnMessage;
             IsDirty = true;
         }
     }

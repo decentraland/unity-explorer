@@ -61,12 +61,12 @@ namespace DCL.Chat.MessageBus
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
                     return;
 
-                Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
+                Profile? profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
                 string chatMessage = receivedMessage.Payload.Message;
 
-                Profile ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+                Profile? ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
 
                 var isMention = false;
 
@@ -81,6 +81,7 @@ namespace DCL.Chat.MessageBus
                         receivedMessage.FromWalletId,
                         false,
                         profile?.WalletId ?? null,
+                        parsedChannelId,
                         isMention
                     )
                 );
