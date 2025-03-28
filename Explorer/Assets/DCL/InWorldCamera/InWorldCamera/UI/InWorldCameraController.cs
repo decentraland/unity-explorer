@@ -128,8 +128,7 @@ namespace DCL.InWorldCamera.UI
             closeViewTask = new UniTaskCompletionSource();
 
             return UniTask.WhenAny(closeViewTask.Task,
-                                        viewInstance!.CloseButton.OnClickAsync(ct),
-                                        viewInstance.CameraReelButton.OnClickAsync(ct));
+                                        viewInstance!.CloseButton.OnClickAsync(ct));
         }
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
@@ -141,6 +140,8 @@ namespace DCL.InWorldCamera.UI
         private async void OpenCameraReelGalleryAsync()
         {
             RequestDisableInWorldCamera();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden);
 
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
         }
