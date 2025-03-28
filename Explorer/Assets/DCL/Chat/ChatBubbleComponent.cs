@@ -5,6 +5,7 @@ namespace DCL.Chat
         public readonly string ChatMessage;
         public readonly bool IsMention;
         public readonly string SenderDisplayName;
+        public readonly string ReceiverDisplayName;
         public readonly string SenderWalletId;
         public readonly string ChannelId;
         public readonly bool IsPrivateMessage;
@@ -18,7 +19,8 @@ namespace DCL.Chat
             bool isMention,
             bool isPrivateMessage,
             string channelId,
-            bool isOwnMessage)
+            bool isOwnMessage,
+            string receiverDisplayName)
         {
             ChatMessage = chatMessage;
             SenderDisplayName = senderDisplayName;
@@ -27,6 +29,7 @@ namespace DCL.Chat
             IsPrivateMessage = isPrivateMessage;
             ChannelId = channelId;
             IsOwnMessage = isOwnMessage;
+            ReceiverDisplayName = receiverDisplayName;
             IsDirty = true;
         }
     }

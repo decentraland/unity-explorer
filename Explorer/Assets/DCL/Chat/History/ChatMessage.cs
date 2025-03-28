@@ -47,7 +47,7 @@ namespace DCL.Chat.History
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
             new (newMessage,
-                chatMessage.SenderValidatedName, 
+                chatMessage.SenderValidatedName,
                 chatMessage.WalletAddress,
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,

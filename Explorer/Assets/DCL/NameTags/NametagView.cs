@@ -247,7 +247,7 @@ namespace DCL.Nametags
             UpdateMaterialState(finalAlpha < 1f);
         }
 
-        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string channelId)
+        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string senderDisplayName)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
@@ -270,7 +270,7 @@ namespace DCL.Nametags
                 privateMessageText.gameObject.SetActive(hasPrivateMessageText);
                 if (hasPrivateMessageText)
                 {
-                    privateMessageText.SetText(channelId); //FORMAT THIS TEXT PROPERLY
+                    privateMessageText.SetText(senderDisplayName); //FORMAT THIS TEXT PROPERLY
                     privateMessageText.rectTransform.sizeDelta = new Vector2(privateMessageText.preferredWidth, DEFAULT_HEIGHT);
 
                     Vector2 privateMessageTextInitialPosition = CalculatePrivateMessageTextPosition(
