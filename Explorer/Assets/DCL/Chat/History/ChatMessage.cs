@@ -27,13 +27,14 @@ namespace DCL.Chat.History
             ChatChannel.ChannelId channelId,
             bool isPrivateMessage = false,
             bool isMention = false,
-            bool isSystemMessage = false)
+            bool isSystemMessage = false,
+            bool isPaddingElement = false)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
             WalletAddress = walletAddress;
             IsSentByOwnUser = isSentByOwnUser;
-            IsPaddingElement = false;
+            IsPaddingElement = isPaddingElement;
             SenderWalletId = senderWalletId;
             ChannelId = channelId;
             IsPrivateMessage = isPrivateMessage;
@@ -42,14 +43,14 @@ namespace DCL.Chat.History
         }
 
         public static ChatMessage NewPaddingElement() =>
-            new (string.Empty, string.Empty, string.Empty, false, string.Empty, ChatChannel.EMPTY_CHANNEL_ID);
+            new (string.Empty, string.Empty, string.Empty, false, string.Empty, ChatChannel.EMPTY_CHANNEL_ID,false, false, false, true);
 
         public static ChatMessage CopyWithNewMessage(string message, ChatMessage chatMessage) =>
             new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsSentByOwnUser, chatMessage.SenderWalletId, chatMessage.ChannelId, chatMessage.IsMention, chatMessage.IsSystemMessage);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, ChatChannel.NEARBY_CHANNEL_ID,false, true);
+                null, ChatChannel.NEARBY_CHANNEL_ID,false, false, true, false);
 
         public bool Equals(ChatMessage other)
         {

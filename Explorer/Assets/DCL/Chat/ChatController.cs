@@ -387,13 +387,12 @@ namespace DCL.Chat
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
             {
-                bool isPrivateMessage = viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID);
                 world.AddOrSet(e, new ChatBubbleComponent(
                     chatMessage.Message,
                     chatMessage.SenderValidatedName,
                     chatMessage.WalletAddress,
                     chatMessage.IsMention,
-                    isPrivateMessage,
+                    chatMessage.IsPrivateMessage,
                     chatMessage.ChannelId.Id,
                     chatMessage.IsSentByOwnUser));
             }
