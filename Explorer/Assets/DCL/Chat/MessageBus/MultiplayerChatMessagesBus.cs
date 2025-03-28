@@ -82,8 +82,8 @@ namespace DCL.Chat.MessageBus
                         false,
                         profile?.WalletId ?? null,
                         parsedChannelId,
-                        isPrivate,
-                        isMention,
+                        isPrivateMessage:isPrivate,
+                        isMention: isMention,
                         false,
                         false
                     )

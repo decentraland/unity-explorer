@@ -45,8 +45,17 @@ namespace DCL.Chat.History
         public static ChatMessage NewPaddingElement() =>
             new (string.Empty, string.Empty, string.Empty, false, string.Empty, ChatChannel.EMPTY_CHANNEL_ID,false, false, false, true);
 
-        public static ChatMessage CopyWithNewMessage(string message, ChatMessage chatMessage) =>
-            new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsSentByOwnUser, chatMessage.SenderWalletId, chatMessage.ChannelId, chatMessage.IsMention, chatMessage.IsSystemMessage);
+        public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
+            new (newMessage,
+                chatMessage.SenderValidatedName, 
+                chatMessage.WalletAddress,
+                chatMessage.IsSentByOwnUser,
+                chatMessage.SenderWalletId,
+                chatMessage.ChannelId,
+                chatMessage.IsPrivateMessage,
+                chatMessage.IsMention,
+                chatMessage.IsSystemMessage,
+                chatMessage.IsPaddingElement);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
