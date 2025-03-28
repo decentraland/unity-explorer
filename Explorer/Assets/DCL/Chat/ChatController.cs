@@ -121,7 +121,6 @@ namespace DCL.Chat
             chatCommandsBus.OnClearChat -= Clear;
             chatEventBus.InsertTextInChat -= OnEventTextInserted;
             web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
-            web3IdentityCache.OnIdentityCleared -= OnIdentityCleared;
 
             if (viewInstance != null)
             {
@@ -190,7 +189,6 @@ namespace DCL.Chat
             chatHistory.AllChannelsRemoved += OnChatHistoryOnAllChannelsRemoved;
 
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
@@ -210,16 +208,9 @@ namespace DCL.Chat
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
 
-        private void OnIdentityCleared()
-        {
-            chatHistory.DeleteAllChannels();
-            Debug.LogError("CHAT - Identity Cleared");
-        }
-
         private void OnIdentityChanged()
         {
             ShowWelcomeMessage();
-            Debug.LogError("CHAT - Identity Changed");
         }
 
         private void OnOpenConversation(string userId)
