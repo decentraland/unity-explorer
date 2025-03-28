@@ -28,6 +28,7 @@ namespace DCL.UI.ProfileNames
             public TMP_Text characterCountLabel;
             public TMP_Text userHashLabel;
             public Button saveButton;
+            public GameObject saveLoading;
             public TMP_Text saveButtonText;
             public Button cancelButton;
             public Button claimNameButton;
@@ -53,6 +54,7 @@ namespace DCL.UI.ProfileNames
             public NonClaimedNameConfig NonClaimedNameTabConfig;
 
             public Button saveButton;
+            public GameObject saveLoading;
             public TMP_Text saveButtonText;
             public Button cancelButton;
             public TMP_Dropdown claimedNameDropdown;
