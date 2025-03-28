@@ -201,6 +201,7 @@ MonoBehaviour:
   scrollbarCanvasGroup: {fileID: 5299699939936977056}
   chatEntriesCanvasGroup: {fileID: 6636967551683476283}
   loopList: {fileID: 4226233381184064841}
+  scrollRect: {fileID: 5266907368250149817}
 --- !u!1 &1464650193662970722
 GameObject:
   m_ObjectHideFlags: 0

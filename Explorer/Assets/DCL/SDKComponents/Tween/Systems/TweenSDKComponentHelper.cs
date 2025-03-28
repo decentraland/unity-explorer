@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
+using System.Runtime.CompilerServices;
 
 namespace DCL.SDKComponents.Tween.Helpers
 {
@@ -16,6 +17,7 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, bool shouldUpdateTransform)
         {
             sdkTweenComponent.CustomTweener.UpdateSDKTransform(ref sdkTransform, sdkTweenComponent.TweenMode);
@@ -38,6 +40,7 @@ namespace DCL.SDKComponents.Tween.Helpers
                 sdkTweenComponent.CustomTweener.UpdateMaterial(materialComponent.Result!, movementType);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteSDKTransformUpdateInCRDT(SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)
         {
             ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>((component, transform) =>

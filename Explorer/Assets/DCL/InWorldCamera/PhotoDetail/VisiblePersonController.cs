@@ -80,18 +80,20 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userName.text = visiblePerson.userName;
             view.userName.color = userColor;
             view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
+            view.profilePictureView.SetupOnlyColor(userColor);
+            view.profilePictureView.SetLoadingState(true);
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
 
             if (profile is not null)
             {
                 view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
-                view.profilePictureView.SetupWithDependencies(viewDependencies, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress);
+                await view.profilePictureView.SetupWithDependenciesAsync(viewDependencies, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else
             {
                 view.userNameTag.gameObject.SetActive(false);
-                view.profilePictureView.SetupOnlyColor(userColor);
+                view.profilePictureView.SetDefaultThumbnail();
             }
         }
 

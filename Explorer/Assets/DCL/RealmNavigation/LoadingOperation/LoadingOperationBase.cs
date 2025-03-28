@@ -14,7 +14,7 @@ namespace DCL.RealmNavigation.LoadingOperation
 
         protected LoadingOperationBase(string reportCategory = ReportCategory.SCENE_LOADING)
         {
-            createError = e => EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, $"Exception in {GetType().Name}:\n{e}");
+            createError = e => EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, $"Exception in {GetType().Name}:\n{e}", e);
             this.reportCategory = reportCategory;
         }
 

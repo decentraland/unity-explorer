@@ -8,53 +8,54 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public class TweenerPool
     {
-        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool;
-        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool;
-        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool;
-
-        public TweenerPool()
-        {
-            vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
-            quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
-            vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
-        }
+        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
+        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
+        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds)
         {
-            ITweener tweener;
-
             switch (pbTween.ModeCase)
             {
                 case PBTween.ModeOneofCase.Move:
-                    tweener = vector3TweenerPool.Get();
-                    ((ICustomTweener<Vector3>)tweener).Initialize(pbTween.Move.Start, pbTween.Move.End, durationInSeconds);
-                    break;
+                    return GetVector3Tweener(pbTween.Move.Start, pbTween.Move.End, durationInSeconds);
                 case PBTween.ModeOneofCase.Rotate:
-                    tweener = quaternionTweenerPool.Get();
-
                     // These conversions are needed because the Decentraland.Common.Quaternion type from the protobuf file
                     // is not directly compatible with the UnityEngine.Quaternion
                     Quaternion start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
                     Quaternion end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
-                    ((ICustomTweener<Quaternion>)tweener).Initialize(start, end, durationInSeconds);
-                    break;
+                    return GetQuaternionTweener(start, end, durationInSeconds);
                 case PBTween.ModeOneofCase.Scale:
-                    tweener = vector3TweenerPool.Get();
-                    ((ICustomTweener<Vector3>)tweener).Initialize(pbTween.Scale.Start, pbTween.Scale.End, durationInSeconds);
-                    break;
+                    return GetVector3Tweener(pbTween.Scale.Start, pbTween.Scale.End, durationInSeconds);
                 case PBTween.ModeOneofCase.TextureMove:
-                    tweener = vector2TweenerPool.Get();
-                    ((ICustomTweener<Vector2>)tweener).Initialize(pbTween.TextureMove.Start, pbTween.TextureMove.End, durationInSeconds);
-                    break;
+                    return GetVector2Tweener(pbTween.TextureMove.Start, pbTween.TextureMove.End, durationInSeconds);
                 case PBTween.ModeOneofCase.None:
                 default:
                     throw new ArgumentException($"No Tweener defined for tween mode: {pbTween.ModeCase}");
             }
+        }
 
+        private Vector3Tweener GetVector3Tweener(Vector3 start, Vector3 end, float durationInSeconds)
+        {
+            Vector3Tweener tweener = vector3TweenerPool.Get();
+            tweener.Initialize(start, end, durationInSeconds);
             return tweener;
         }
 
-        public void Return(SDKTweenComponent sdkTweenComponent)
+        private QuaternionTweener GetQuaternionTweener(Quaternion start, Quaternion end, float durationInSeconds)
+        {
+            QuaternionTweener tweener = quaternionTweenerPool.Get();
+            tweener.Initialize(start, end, durationInSeconds);
+            return tweener;
+        }
+
+        private Vector2Tweener GetVector2Tweener(Vector2 start, Vector2 end, float durationInSeconds)
+        {
+            Vector2Tweener tweener = vector2TweenerPool.Get();
+            tweener.Initialize(start, end, durationInSeconds);
+            return tweener;
+        }
+
+        public void ReleaseCustomTweenerFrom(SDKTweenComponent sdkTweenComponent)
         {
             if (sdkTweenComponent.CustomTweener == null)
                 return;
@@ -71,6 +72,8 @@ namespace DCL.SDKComponents.Tween.Components
                     quaternionTweenerPool.Release(quaternionTweener);
                     break;
             }
+
+            sdkTweenComponent.CustomTweener = null;
         }
     }
 }

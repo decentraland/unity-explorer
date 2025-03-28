@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e9688ad39b441d8ae030ef9406f1015, type: 3}
+  m_Name: RealmPartitionSettings
+  m_EditorClassIdentifier: 
+  fpsBuckets: 280000001e0000000f0000000a0000000500000000000000
+  behindFps: 1
+  aggregatePositionTolerance: 0.5
+  maxLoadingDistanceInParcels: 20
+  <MinLoadingDistanceInParcels>k__BackingField: 20
+  <AggregateAngleTolerance>k__BackingField: 10
+  <UnloadingDistanceToleranceInParcels>k__BackingField: 1
+  <ScenesRequestBatchSize>k__BackingField: 6
+  <ScenesDefinitionsRequestBatchSize>k__BackingField: 30
+  <MaximumAmountOfScenesThatCanLoad>k__BackingField: 500
+  <MaximumAmountOfLODsThatCanLoad>k__BackingField: 500
+  <MaximumAmountOfReductedLODsThatCanLoad>k__BackingField: 0

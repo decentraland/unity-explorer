@@ -156,6 +156,13 @@ namespace DCL.Nametags
             messageContentAnchoredPosition.y = bubbleMarginOffsetHeight / 3;
         }
 
+        public bool IsName(string username, string? walletId, bool hasClaimedName)
+        {
+            // Small performance improvement to prevent to build the name for a valid comparison
+            if (!Username.text.StartsWith(username)) return false;
+            return Username.text == BuildName(username, walletId, hasClaimedName);
+        }
+
         public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon, Color usernameColor)
         {
             ResetElement();
@@ -168,6 +175,7 @@ namespace DCL.Nametags
 
             privateMessageIcon.gameObject.SetActive(false);
             privateMessageText.gameObject.SetActive(false);
+            Username.text = BuildName(username, walletId, hasClaimedName);
 
             this.usernameText.color = usernameColor;
             this.usernameText.SetText(hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}");
@@ -674,5 +682,7 @@ namespace DCL.Nametags
             }
         }
 
+        private string BuildName(string username, string? walletId, bool hasClaimedName) =>
+            hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}";
     }
 }

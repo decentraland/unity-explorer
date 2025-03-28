@@ -10,7 +10,6 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
-using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream

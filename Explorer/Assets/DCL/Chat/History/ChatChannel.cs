@@ -8,14 +8,14 @@ namespace DCL.Chat.History
     /// </summary>
     public class ChatChannel
     {
+        private static readonly ChatMessage PADDING_MESSAGE = new ChatMessage(true);
+
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
         public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.Nearby.ToString());
         public static readonly ChannelId EMPTY_CHANNEL_ID = new ();
         public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.Nearby, ChatChannelType.Nearby.ToString());
-
-        private static readonly ChatMessage PADDING_MESSAGE = ChatMessage.NewPaddingElement();
 
         /// <summary>
         /// The unique identifier of a chat channel.
