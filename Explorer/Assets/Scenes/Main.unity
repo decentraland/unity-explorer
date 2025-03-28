@@ -561,7 +561,7 @@ MonoBehaviour:
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
-    showSplash: 1
+    showSplash: 0
     showAuthentication: 1
     showLoading: 1
     enableLandscape: 0
@@ -620,6 +620,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <AppVerRedirectionScreenPrefab>k__BackingField:
       m_AssetGUID: f2df2b2c3721c5840b06c8fe73d5d665
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <BlockedScreenPrefab>k__BackingField:
+      m_AssetGUID: 36bcbe134ec574902b49db6464414b03
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
@@ -915,6 +920,7 @@ MonoBehaviour:
   m_DeselectOnBackgroundClick: 1
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
 --- !u!1 &1800558272
 GameObject:
   m_ObjectHideFlags: 0
