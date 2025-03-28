@@ -23,7 +23,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     ///     Starts GltfContainerAsset loading initially or upon the SDK Component change
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
-    // [ThrottlingEnabled]
+    [ThrottlingEnabled]
     public partial class LoadGltfContainerSystem : BaseUnityLoopSystem
     {
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
@@ -78,6 +78,10 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (!sdkComponent.IsDirty) return;
 
+            // So that the new changes don't get lost and are processed when the Finished state is reached
+            if (component.State != LoadingState.Finished)
+                sdkComponent.DelayDirtyReset = true;
+
             switch (component.State)
             {
                 // The source is changed, should start downloading over again
@@ -95,10 +99,6 @@ namespace ECS.Unity.GLTFContainer.Systems
                     }
 
                     eventsBuffer.Add(entity, component);
-                    break;
-
-                case LoadingState.Loading:
-                    sdkComponent.DelayDirtyReset = true;
                     break;
 
                 // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here

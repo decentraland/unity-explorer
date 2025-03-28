@@ -1,5 +1,4 @@
 ﻿using DCL.ECSComponents;
-using DCL.Time;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -21,14 +20,10 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             scenePartition = Substitute.For<IPartitionComponent>();
             scenePartition.Bucket.Returns(CheckColliderBoundsSystem.BUCKET_THRESHOLD);
 
-            IPhysicsTickProvider physicsTickProvider = Substitute.For<IPhysicsTickProvider>();
-            physicsTickProvider.Tick.Returns(2);
-
             system = new CheckColliderBoundsSystem(
                 world,
                 scenePartition,
-                new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f), 50.0f),
-                physicsTickProvider);
+                new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f), 50.0f));
 
             collider = new GameObject(nameof(ColliderBoundsCheckerShould)).AddComponent<BoxCollider>();
         }
