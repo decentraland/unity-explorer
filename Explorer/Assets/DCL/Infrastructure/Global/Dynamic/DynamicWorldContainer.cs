@@ -414,6 +414,7 @@ namespace Global.Dynamic
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
             bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.MARKETPLACE_CREDITS)) || Application.isEditor;
+            includeMarketplaceCredits = false;
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel);
@@ -626,7 +627,7 @@ namespace Global.Dynamic
                     assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
                     notificationsRequestController, identityCache, profileRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
+                    marketplaceCreditsAPIClient, webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
@@ -857,6 +858,22 @@ namespace Global.Dynamic
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     viewDependencies,
+                    sharedSpaceManager));
+            }
+
+            if (includeMarketplaceCredits)
+            {
+                globalPlugins.Add(new MarketplaceCreditsPlugin(
+                    mainUIView,
+                    assetsProvisioner,
+                    webBrowser,
+                    staticContainer.InputBlock,
+                    marketplaceCreditsAPIClient,
+                    selfProfile,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mvcManager,
+                    notificationsBusController,
+                    staticContainer.RealmData,
                     sharedSpaceManager));
             }
 

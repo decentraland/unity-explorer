@@ -4,6 +4,7 @@ using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
+using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -29,6 +30,7 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
@@ -52,6 +54,7 @@ namespace DCL.UI.Sidebar
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
@@ -68,11 +71,13 @@ namespace DCL.UI.Sidebar
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -122,6 +127,11 @@ namespace DCL.UI.Sidebar
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+
+            if(includeMarketplaceCredits)
+                viewInstance.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+
+            viewInstance.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
@@ -200,15 +210,26 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
+        private async void OnMarketplaceCreditsButtonClickedAsync()
+        {
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits);
+        }
+
         private void OnHelpButtonClicked()
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
+
+            // TODO (Santi): Remove this!!
+            TestMarketplaceCreditsNotificationAsync(CancellationToken.None).Forget();
         }
 
         private void OnControlsButtonClicked()
         {
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
+
+            // TODO (Santi): Remove this!!
+            marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, CancellationToken.None).Forget();
         }
 
         private async void OpenSidebarSettingsAsync()
@@ -254,5 +275,24 @@ namespace DCL.UI.Sidebar
         }
 
         #endregion
+
+        private async UniTaskVoid TestMarketplaceCreditsNotificationAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(5000, cancellationToken: ct);
+            notificationsBusController.AddNotification(new MarketplaceCreditsNotification
+            {
+                Type = NotificationType.MARKETPLACE_CREDITS,
+                Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
+                Id = $"SantiTest{DateTime.Now.Ticks}",
+                Read = false,
+                Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString(),
+                Metadata = new MarketplaceCreditsNotificationMetadata
+                {
+                    Title = "Weekly Goal Completed!",
+                    Description = "Claim your Credits to unlock them",
+                    Image = "https://i.ibb.co/4L0WD2j/Credits-Icn.png",
+                }
+            });
+        }
     }
 }

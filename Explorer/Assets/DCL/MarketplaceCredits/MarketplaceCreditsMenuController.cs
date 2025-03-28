@@ -9,39 +9,48 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
+using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
+using ECS;
+using JetBrains.Annotations;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 
 namespace DCL.MarketplaceCredits
 {
-    public class MarketplaceCreditsMenuController : IDisposable
+    public class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView>, IControllerInSharedSpace<MarketplaceCreditsMenuView>
     {
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
 
         private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID = Animator.StringToHash("isAlert");
         private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_PAUSED_ID = Animator.StringToHash("isPaused");
 
-        private readonly MarketplaceCreditsMenuView view;
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
-        private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
-        private readonly MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
-        private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
-        private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
-        private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
+        private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
+        private readonly INotificationsBusController notificationBusController;
         private readonly Animator sidebarCreditsButtonAnimator;
         private readonly GameObject sidebarCreditsButtonIndicator;
+        private readonly IRealmData realmData;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
-        private CancellationTokenSource showHideMenuCts;
+        private MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
+        private MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
+        private MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
+        private MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
+        private MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
+
+        private UniTaskCompletionSource closeTaskCompletionSource;
         private CancellationTokenSource showCreditsUnlockedCts;
         private CancellationTokenSource showErrorNotificationCts;
         private CancellationTokenSource sidebarButtonStateCts;
@@ -49,7 +58,7 @@ namespace DCL.MarketplaceCredits
         private Profile ownProfile;
 
         public MarketplaceCreditsMenuController(
-            MarketplaceCreditsMenuView view,
+            ViewFactoryMethod viewFactory,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
@@ -59,49 +68,58 @@ namespace DCL.MarketplaceCredits
             IMVCManager mvcManager,
             INotificationsBusController notificationBusController,
             Animator sidebarCreditsButtonAnimator,
-            GameObject sidebarCreditsButtonIndicator)
+            GameObject sidebarCreditsButtonIndicator,
+            IRealmData realmData,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
-            this.view = view;
             this.webBrowser = webBrowser;
+            this.inputBlock = inputBlock;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
+            this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
+            this.notificationBusController = notificationBusController;
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
+            this.realmData = realmData;
+            this.sharedSpaceManager = sharedSpaceManager;
 
+            CheckForSidebarButtonState();
+        }
+
+        protected override void OnViewInstantiated()
+        {
             mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
-            view.OnAnyPlaceClick += OnAnyPlaceClicked;
-            view.InfoLinkButton.onClick.AddListener(OpenInfoLink);
-            view.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
-            foreach (Button closeButton in view.CloseButtons)
-                closeButton.onClick.AddListener(ClosePanel);
+            viewInstance!.OnAnyPlaceClick += OnAnyPlaceClicked;
+            viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
+            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
 
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationClicked);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
-                view.GoalsOfTheWeekView,
+                viewInstance.GoalsOfTheWeekView,
                 marketplaceCreditsAPIClient,
                 webRequestController,
                 this);
 
             marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(
-                view.WeekGoalsCompletedView);
+                viewInstance.WeekGoalsCompletedView);
 
             marketplaceCreditsProgramEndedController = new MarketplaceCreditsProgramEndedController(
-                view.ProgramEndedView,
+                viewInstance.ProgramEndedView,
                 webBrowser);
 
             marketplaceCreditsVerifyEmailController = new MarketplaceCreditsVerifyEmailController(
-                view.VerifyEmailView,
+                viewInstance.VerifyEmailView,
                 selfProfile,
                 marketplaceCreditsAPIClient,
                 this);
 
             marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
-                view.WelcomeView,
-                view.TotalCreditsWidget,
+                viewInstance.WelcomeView,
+                viewInstance.TotalCreditsWidget,
                 this,
                 marketplaceCreditsVerifyEmailController,
                 marketplaceCreditsGoalsOfTheWeekController,
@@ -112,34 +130,40 @@ namespace DCL.MarketplaceCredits
                 selfProfile,
                 inputBlock);
 
-            view.ErrorNotification.Hide(true, CancellationToken.None);
+            viewInstance.ErrorNotification.Hide(true, CancellationToken.None);
         }
 
-        public void OpenPanel()
+        protected override void OnBeforeViewShow()
         {
-            showHideMenuCts = showHideMenuCts.SafeRestart();
-            view.ShowAsync(showHideMenuCts.Token).Forget();
+            closeTaskCompletionSource = new UniTaskCompletionSource();
             OpenSection(MarketplaceCreditsSection.WELCOME);
             SetSidebarButtonAnimationAsPaused(true);
         }
 
-        public void ClosePanel()
+        protected override void OnViewClose()
         {
-            if (!view.gameObject.activeSelf)
-                return;
-
-            showHideMenuCts = showHideMenuCts.SafeRestart();
-            view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
             CloseAllSections();
             SetSidebarButtonAnimationAsPaused(false);
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            closeTaskCompletionSource.TrySetResult();
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         public void OpenSection(MarketplaceCreditsSection section)
         {
             CloseAllSections();
 
-            view.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: false);
+            viewInstance!.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: false);
 
             switch (section)
             {
@@ -156,12 +180,12 @@ namespace DCL.MarketplaceCredits
                     marketplaceCreditsWeekGoalsCompletedController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
-                    view.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
+                    viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedController.OpenSection();
                     break;
             }
 
-            view.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
+            viewInstance.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
         public void ShowCreditsUnlockedPanel(float claimedCredits)
@@ -176,26 +200,16 @@ namespace DCL.MarketplaceCredits
             ShowErrorNotificationAsync(message, showErrorNotificationCts.Token).Forget();
         }
 
-        public void CheckForSidebarButtonState()
+        public override void Dispose()
         {
-            sidebarButtonStateCts = sidebarButtonStateCts.SafeRestart();
-            CheckForSidebarButtonStateAsync(sidebarButtonStateCts.Token).Forget();
-        }
-
-        public void Dispose()
-        {
-            showHideMenuCts.SafeCancelAndDispose();
             showCreditsUnlockedCts.SafeCancelAndDispose();
             showErrorNotificationCts.SafeCancelAndDispose();
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             mvcManager.OnViewClosed -= OnCreditsUnlockedPanelClosed;
-            view.OnAnyPlaceClick -= OnAnyPlaceClicked;
-            view.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
-            view.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
-
-            foreach (Button closeButton in view.CloseButtons)
-                closeButton.onClick.RemoveListener(ClosePanel);
+            viewInstance!.OnAnyPlaceClick -= OnAnyPlaceClicked;
+            viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
+            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
 
             marketplaceCreditsWelcomeController.Dispose();
             marketplaceCreditsVerifyEmailController.Dispose();
@@ -224,10 +238,10 @@ namespace DCL.MarketplaceCredits
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
-            view.ErrorNotification.SetText(message);
-            view.ErrorNotification.Show(ct);
+            viewInstance!.ErrorNotification.SetText(message);
+            viewInstance.ErrorNotification.Show(ct);
             await UniTask.Delay(MarketplaceCreditsUtils.ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
-            view.ErrorNotification.Hide(false, ct);
+            viewInstance.ErrorNotification.Hide(false, ct);
         }
 
         private void OnCreditsUnlockedPanelClosed(IController controller)
@@ -245,12 +259,19 @@ namespace DCL.MarketplaceCredits
         }
 
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
-            OpenPanel();
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits);
+
+        private void CheckForSidebarButtonState()
+        {
+            sidebarButtonStateCts = sidebarButtonStateCts.SafeRestart();
+            CheckForSidebarButtonStateAsync(sidebarButtonStateCts.Token).Forget();
+        }
 
         private async UniTaskVoid CheckForSidebarButtonStateAsync(CancellationToken ct)
         {
             try
             {
+                await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
                 ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {

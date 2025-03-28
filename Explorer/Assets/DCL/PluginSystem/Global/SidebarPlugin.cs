@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
-using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Notifications;
@@ -25,7 +24,6 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -42,6 +40,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
@@ -65,6 +64,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -87,6 +87,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -114,10 +115,6 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
-            CreditsUnlockedView creditsUnlockedView = (await assetsProvisioner.ProvideMainAssetAsync(settings.CreditsUnlockedPrefab, ct)).Value.GetComponent<CreditsUnlockedView>();
-            CreditsUnlockedController creditsUnlockedController = new CreditsUnlockedController(CreditsUnlockedController.CreateLazily(creditsUnlockedView, null));
-
-            mvcManager.RegisterController(creditsUnlockedController);
             mvcManager.RegisterController(new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
@@ -131,6 +128,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
+                marketplaceCreditsAPIClient,
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
@@ -154,9 +152,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject ControlsPanelPrefab;
-
-            [field: SerializeField]
-            public AssetReferenceGameObject CreditsUnlockedPrefab;
         }
     }
 }

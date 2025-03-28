@@ -59,6 +59,11 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button unreadMessagesButton { get; private set; }
         [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; }
 
+        [field: Header("Marketplace Credits")]
+        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator marketplaceCreditsButton { get; private set; }
+        [field: SerializeField] public Animator marketplaceCreditsButtonAnimator { get; private set; }
+        [field: SerializeField] public GameObject marketplaceCreditsButtonAlertMark { get; private set; }
+
         public delegate void BlockStatusChangedDelegate(bool status);
         public delegate void AutohideStatusChangedDelegate(bool status);
 

@@ -243,7 +243,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &163350759804178884
 RectTransform:
   m_ObjectHideFlags: 0
@@ -602,7 +602,6 @@ GameObject:
   - component: {fileID: 1044753565871584497}
   - component: {fileID: 1294365732413967683}
   - component: {fileID: 2799808484097172145}
-  - component: {fileID: 3010431317392945909}
   - component: {fileID: 3907901269748301517}
   - component: {fileID: 3765102252090958517}
   m_Layer: 5
@@ -659,14 +658,14 @@ Canvas:
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
-  m_OverrideSorting: 0
+  m_OverrideSorting: 1
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 500
   m_TargetDisplay: 0
 --- !u!114 &1294365732413967683
 MonoBehaviour:
@@ -697,26 +696,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &3010431317392945909
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4785629390260472247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IgnoreLayout: 1
-  m_MinWidth: -1
-  m_MinHeight: -1
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
 --- !u!114 &3907901269748301517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -748,16 +727,13 @@ MonoBehaviour:
   <viewAnimationElement>k__BackingField: {fileID: 3907901269748301517}
   <TotalCreditsWidget>k__BackingField: {fileID: 7463072906583247113}
   <InfoLinkButton>k__BackingField: {fileID: 8412040699094680254}
-  <CloseButtons>k__BackingField:
-  - {fileID: 759566672434952338}
-  - {fileID: 4723671895938667204}
+  <CloseButton>k__BackingField: {fileID: 4723671895938667204}
   <WelcomeView>k__BackingField: {fileID: 4266060441270789246}
   <VerifyEmailView>k__BackingField: {fileID: 2826341061384331396}
   <GoalsOfTheWeekView>k__BackingField: {fileID: 6987591857266816133}
   <WeekGoalsCompletedView>k__BackingField: {fileID: 2769573504672181379}
   <ProgramEndedView>k__BackingField: {fileID: 5023345625708864108}
   <ErrorNotification>k__BackingField: {fileID: 5140657797053299228}
-  <ErrorNotificationDuration>k__BackingField: 3
 --- !u!1 &5019498267584366488
 GameObject:
   m_ObjectHideFlags: 0
