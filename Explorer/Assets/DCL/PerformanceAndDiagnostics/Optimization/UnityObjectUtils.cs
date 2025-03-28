@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using DCL.Diagnostics;
+using Sentry;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -7,18 +8,16 @@ namespace Utility
 {
     public static class UnityObjectUtils
     {
-        private static bool isQuitting;
-
-        // Can't check Application.isPlaying if called from the background thread
-        public static bool IsQuitting => (!PlayerLoopHelper.IsMainThread || Application.isPlaying) && isQuitting;
+        public static bool IsQuitting { get; private set; }
 
         [RuntimeInitializeOnLoadMethod]
         private static void StartTrackingApplicationStatus()
         {
             void SetQuitting()
             {
-                isQuitting = true;
-                Application.quitting -= SetQuitting;
+                IsQuitting = true;
+                ReportHub.Log(LogType.Log, ReportCategory.ALWAYS, "Application is quitting");
+                SentrySdk.AddBreadcrumb("Application is quitting");
             }
 
             Application.quitting += SetQuitting;

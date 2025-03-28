@@ -2,6 +2,7 @@
     "name": "ScreencaptureCamera",
     "rootNamespace": "",
     "references": [
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "GUID:75469ad4d38634e559750d17036d5f7c",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:f0968673e9444d64b49cde6a40d7df7a",
