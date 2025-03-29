@@ -50,12 +50,17 @@ namespace DCL.Nametags
         [field: SerializeField] internal SpriteRenderer privateMessageIconRenderer { get; private set; }
         [field: SerializeField] internal TMP_Text privateMessageText { get; private set; }
 
-        private bool isAnimatingIn;
+        private enum AnimationState
+        {
+            ANIMATING,
+            IDLE
+        }
+
+        private AnimationState animationState = AnimationState.IDLE;
+
         private bool isClaimedName;
         private bool isMention;
-        private bool isSingleEmoji;
         private bool isTransparent;
-        private bool isWaiting;
         private bool hasPrivateMessageIcon;
         private bool hasPrivateMessageText;
 
@@ -73,14 +78,13 @@ namespace DCL.Nametags
         private Sequence? currentSequence;
         private Color spriteColor = new (1, 1, 1,1 );
         private Color receiverNameColor;
-
         private float cachedUsernameWidth;
 
         public float NameTagAlpha { private set; get; }
 
         /// <summary>
         /// This value represents the last calculated Sqr Distance to the camera,
-        /// we use this to avoid recalculating transparency and scale when distance hasnt changed.
+        /// we use this to avoid recalculating transparency and scale when distance hasn't changed.
         /// </summary>
         public float LastSqrDistance { get; set; } = 0f;
         public string Id { set; get; } = string.Empty;
@@ -279,7 +283,6 @@ namespace DCL.Nametags
             mentionBackgroundSprite.size = NametagViewConstants.ZERO_VECTOR;
             previousDistance = 0;
             mentionBackgroundSprite.gameObject.SetActive(false);
-            isSingleEmoji = false;
             hasPrivateMessageIcon = false;
             hasPrivateMessageText = false;
             privateMessageIcon.gameObject.SetActive(false);
@@ -292,24 +295,16 @@ namespace DCL.Nametags
         {
             try
             {
-                if (isAnimatingIn || isWaiting)
+                if (animationState == AnimationState.ANIMATING)
                     await AnimateOutAsync(ct);
 
                 await AnimateInAsync(messageText, ct);
-
-                isAnimatingIn = false;
-                isWaiting = true;
-
                 await UniTask.Delay(bubbleIdleTime + AdditionalMessageVisibilityTimeMs(messageText), cancellationToken: ct);
-
-                isWaiting = false;
-
                 await AnimateOutAsync(ct);
             }
             catch (OperationCanceledException)
             {
-                isAnimatingIn = false;
-                isWaiting = false;
+                animationState = AnimationState.IDLE;
             }
         }
 
@@ -336,7 +331,7 @@ namespace DCL.Nametags
         {
             ct.ThrowIfCancellationRequested();
 
-            isAnimatingIn = true;
+            animationState = AnimationState.ANIMATING;
             messageContent.gameObject.SetActive(true);
             bubbleTailSprite.gameObject.SetActive(true);
             bubbleTailSprite.color = isMention ? NametagViewConstants.MENTIONED_BUBBLE_TAIL_COLOR : NametagViewConstants.NORMAL_BUBBLE_TAIL_COLOR;
@@ -412,7 +407,7 @@ namespace DCL.Nametags
 
         private void SetHeightAndTextStyle(string message)
         {
-            isSingleEmoji = NametagViewConstants.SINGLE_EMOJI_REGEX.Match(message).Success;
+            bool isSingleEmoji = NametagViewConstants.SINGLE_EMOJI_REGEX.Match(message).Success;
             if (isSingleEmoji)
             {
                 additionalHeight = singleEmojiExtraHeight;
@@ -453,19 +448,14 @@ namespace DCL.Nametags
             else
                 currentSequence.Join(usernameText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDuration / 2).SetEase(Ease.Linear));
 
-            if (hasPrivateMessageIcon || hasPrivateMessageText)
+            if (hasPrivateMessageIcon)
             {
-                if (hasPrivateMessageIcon)
-                {
-                    currentSequence.Join(privateMessageIcon.DOAnchorPos(Vector2.zero, animationOutDuration / 2).SetEase(Ease.Linear))
-                                   .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.TRANSPARENT_COLOR, animationOutDuration / 10));
-                }
+                currentSequence.Join(privateMessageIcon.DOAnchorPos(Vector2.zero, animationOutDuration / 2).SetEase(Ease.Linear))
+                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.TRANSPARENT_COLOR, animationOutDuration / 10));
 
                 if (hasPrivateMessageText)
-                {
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(Vector2.zero, animationOutDuration / 2).SetEase(Ease.Linear))
                                    .Join(privateMessageText.DOColor(NametagViewConstants.TRANSPARENT_COLOR, animationOutDuration / 10));
-                }
             }
 
             currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear))
@@ -487,14 +477,14 @@ namespace DCL.Nametags
 
         private Vector2 CalculatePreferredSize() =>
             CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
-                additionalHeight, messageContent.preferredHeight, isClaimedName, hasPrivateMessageIcon, hasPrivateMessageText,
-                (hasPrivateMessageIcon || hasPrivateMessageText) ? privateMessageText.preferredWidth + privateMessageIconWidth : 0);
+                additionalHeight, messageContent.preferredHeight, isClaimedName, hasPrivateMessageIcon,
+                privateMessageText.preferredWidth, privateMessageIconWidth);
 
         [BurstCompile]
         private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float messageWidth, float maxWidth,
-            float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, bool hasPrivateMessageText, float privateMessageWidth)
+            float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth)
         {
-            float baseWidth = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0) + ((hasPrivateMessageIcon || hasPrivateMessageText) ? privateMessageWidth : 0);
+            float baseWidth = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageTextWidth + privateMessageIconWidth : 0);
             float width = math.min(math.max(baseWidth, messageWidth), maxWidth);
             float height = preferredHeight + additionalHeight;
             preferredSize.x = width;
