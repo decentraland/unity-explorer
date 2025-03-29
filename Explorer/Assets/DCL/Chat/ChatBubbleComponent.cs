@@ -7,14 +7,14 @@ namespace DCL.Chat
         public readonly string ChatMessage;
         public readonly bool IsMention;
         public readonly string SenderDisplayName;
-        public readonly string ReceiverValidatedName;
-        public readonly string ReceiverWalletId;
+        public readonly string RecipientValidatedName;
+        public readonly string RecipientWalletId;
         public readonly string SenderWalletId;
         public readonly string ChannelId;
         public readonly bool IsPrivateMessage;
         public readonly bool IsOwnMessage;
         public bool IsDirty;
-        public readonly Color ReceiverNameColor;
+        public readonly Color RecipientNameColor;
         public ChatBubbleComponent(
             string chatMessage,
             string senderDisplayName,
@@ -23,9 +23,9 @@ namespace DCL.Chat
             bool isPrivateMessage,
             string channelId,
             bool isOwnMessage,
-            string receiverValidatedName,
-            string receiverWalletId,
-            Color receiverNameColor)
+            string recipientValidatedName,
+            string recipientWalletId,
+            Color recipientNameColor)
         {
             ChatMessage = chatMessage;
             SenderDisplayName = senderDisplayName;
@@ -34,9 +34,9 @@ namespace DCL.Chat
             IsPrivateMessage = isPrivateMessage;
             ChannelId = channelId;
             IsOwnMessage = isOwnMessage;
-            ReceiverValidatedName = receiverValidatedName;
-            ReceiverWalletId = receiverWalletId;
-            ReceiverNameColor = receiverNameColor;
+            RecipientValidatedName = recipientValidatedName;
+            RecipientWalletId = recipientWalletId;
+            RecipientNameColor = recipientNameColor;
             IsDirty = true;
         }
     }

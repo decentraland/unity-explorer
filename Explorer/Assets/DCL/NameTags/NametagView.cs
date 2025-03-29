@@ -63,8 +63,8 @@ namespace DCL.Nametags
         private bool isClaimedName;
         private bool isMention;
         private bool isTransparent;
-        private bool hasPrivateMessageIcon;
-        private bool hasPrivateMessageText;
+        private bool isPrivateMessage;
+        private bool showPrivateMessageRecipient;
 
         private float previousDistance;
         private Material sharedMaterial;
@@ -78,8 +78,8 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
-        private Color spriteColor = new (1, 1, 1,1 );
-        private Color receiverNameColor;
+        private Color spritesColor = new (1, 1, 1,1 );
+        private Color recipientNameColor;
         private float cachedUsernameWidth;
 
         public float NameTagAlpha { private set; get; }
@@ -247,36 +247,36 @@ namespace DCL.Nametags
             usernameText.color = originalUsernameColor;
             privateMessageText.color = originalPrivateMessageColor;
 
-            spriteColor.a = finalAlpha;
-            BackgroundSprite.color = spriteColor;
-            mentionBackgroundSprite.color = spriteColor;
-            bubbleTailSprite.color = spriteColor;
-            verifiedIconRenderer.color = spriteColor;
-            privateMessageIconRenderer.color = spriteColor;
+            spritesColor.a = finalAlpha;
+            BackgroundSprite.color = spritesColor;
+            mentionBackgroundSprite.color = spritesColor;
+            bubbleTailSprite.color = spritesColor;
+            verifiedIconRenderer.color = spritesColor;
+            privateMessageIconRenderer.color = spritesColor;
 
             // Only update material state when transparency state changes
             UpdateMaterialState(finalAlpha < 1f);
         }
 
-        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string receiverValidatedName, string receiverWalletId, Color receiverNameColor)
+        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             this.isMention = isMention;
-            hasPrivateMessageIcon = isPrivateMessage;
-            privateMessageIcon.gameObject.SetActive(hasPrivateMessageIcon);
+            this.isPrivateMessage = isPrivateMessage;
+            privateMessageIcon.gameObject.SetActive(this.isPrivateMessage);
             privateMessageText.gameObject.SetActive(false);
             if (isPrivateMessage)
             {
-                hasPrivateMessageText = isPrivateMessage && isOwnMessage;
-                privateMessageText.gameObject.SetActive(hasPrivateMessageText);
-                if (hasPrivateMessageText)
+                showPrivateMessageRecipient = isOwnMessage;
+                privateMessageText.gameObject.SetActive(showPrivateMessageRecipient);
+                if (showPrivateMessageRecipient)
                 {
-                    string receiverName = BuildReceiverName(receiverValidatedName, receiverWalletId, string.IsNullOrEmpty(receiverWalletId));
-                    this.receiverNameColor = receiverNameColor;
-                    privateMessageText.SetText(receiverName);
-                    receiverNameColor.a = 0;
-                    privateMessageText.color = receiverNameColor;
+                    string recipientName = BuildRecipientName(recipientValidatedName, recipientWalletId, string.IsNullOrEmpty(recipientWalletId));
+                    this.recipientNameColor = recipientNameColor;
+                    privateMessageText.SetText(recipientName);
+                    recipientNameColor.a = 0;
+                    privateMessageText.color = recipientNameColor;
                     privateMessageText.rectTransform.sizeDelta = new Vector2(privateMessageText.preferredWidth, NametagViewConstants.DEFAULT_HEIGHT);
                 }
             }
@@ -297,8 +297,8 @@ namespace DCL.Nametags
             mentionBackgroundSprite.size = ZERO_VECTOR;
             previousDistance = 0;
             mentionBackgroundSprite.gameObject.SetActive(false);
-            hasPrivateMessageIcon = false;
-            hasPrivateMessageText = false;
+            isPrivateMessage = false;
+            showPrivateMessageRecipient = false;
             privateMessageIcon.gameObject.SetActive(false);
             privateMessageText.gameObject.SetActive(false);
             privateMessageText.SetText(string.Empty);
@@ -383,7 +383,7 @@ namespace DCL.Nametags
                 currentSequence.Join(verifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve));
             }
 
-            if (hasPrivateMessageIcon)
+            if (isPrivateMessage)
             {
                 Vector2 privateMessageFinalPosition = CalculatePrivateMessageIconPosition(
                     usernameFinalPosition.x,
@@ -396,7 +396,7 @@ namespace DCL.Nametags
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(privateMessageFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
                                .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_COLOR, NametagViewConstants.ANIMATION_IN_DURATION_QUARTER));
 
-                if (hasPrivateMessageText)
+                if (showPrivateMessageRecipient)
                 {
                     Vector2 privateMessageTextFinalPosition = CalculatePrivateMessageTextPosition(
                         privateMessageFinalPosition.x,
@@ -404,7 +404,7 @@ namespace DCL.Nametags
                     );
                     privateMessageTextFinalPosition.y = usernameFinalPosition.y;
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(privateMessageTextFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                                   .Join(privateMessageText.DOColor(receiverNameColor, NametagViewConstants.ANIMATION_IN_DURATION_QUARTER));
+                                   .Join(privateMessageText.DOColor(recipientNameColor, NametagViewConstants.ANIMATION_IN_DURATION_QUARTER));
                 }
             }
 
@@ -462,12 +462,12 @@ namespace DCL.Nametags
             else
                 currentSequence.Join(usernameText.rectTransform.DOAnchorPos(ZERO_VECTOR, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear));
 
-            if (hasPrivateMessageIcon)
+            if (isPrivateMessage)
             {
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(ZERO_VECTOR, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear))
                                .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.TRANSPARENT_COLOR, NametagViewConstants.ANIMATION_OUT_DURATION_TENTH));
 
-                if (hasPrivateMessageText)
+                if (showPrivateMessageRecipient)
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(ZERO_VECTOR, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear))
                                    .Join(privateMessageText.DOColor(NametagViewConstants.TRANSPARENT_COLOR, NametagViewConstants.ANIMATION_OUT_DURATION_TENTH));
             }
@@ -491,7 +491,7 @@ namespace DCL.Nametags
 
         private Vector2 CalculatePreferredSize() =>
             CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
-                additionalHeight, messageContent.preferredHeight, isClaimedName, hasPrivateMessageIcon,
+                additionalHeight, messageContent.preferredHeight, isClaimedName, isPrivateMessage,
                 privateMessageText.preferredWidth, privateMessageIconWidth);
 
         [BurstCompile]
@@ -593,8 +593,8 @@ namespace DCL.Nametags
         private string BuildName(string username, string? walletId, bool hasClaimedName) =>
             hasClaimedName ? username : $"{username}{NametagViewConstants.WALLET_ID_OPENING_STYLE}{walletId}{NametagViewConstants.WALLET_ID_CLOSING_STYLE}";
 
-        private string BuildReceiverName(string username, string? walletId, bool hasClaimedName) =>
-            string.Concat(NametagViewConstants.RECEIVER_NAME_START_STRING, hasClaimedName ? username : $"{username}{NametagViewConstants.WALLET_ID_OPENING_STYLE}{walletId}{NametagViewConstants.WALLET_ID_CLOSING_STYLE}");
+        private string BuildRecipientName(string username, string? walletId, bool hasClaimedName) =>
+            string.Concat(NametagViewConstants.RECIPIENT_NAME_START_STRING, hasClaimedName ? username : $"{username}{NametagViewConstants.WALLET_ID_OPENING_STYLE}{walletId}{NametagViewConstants.WALLET_ID_CLOSING_STYLE}");
 
     }
 }
