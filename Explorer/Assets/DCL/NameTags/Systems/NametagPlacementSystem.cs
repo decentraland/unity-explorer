@@ -124,11 +124,11 @@ namespace DCL.Nametags
         [None(typeof(PBAvatarShape))]
         private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            if (nametagView.Id == avatarShape.ID && nametagView.IsName(profile.ValidatedName, profile.WalletId, profile.HasClaimedName))
+            if (nametagView.Id == avatarShape.ID && nametagView.IsSameName(profile.ValidatedName, profile.WalletId, profile.HasClaimedName))
                 return;
 
             nametagView.Id = avatarShape.ID;
-            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true, profile.UserNameColor);
+            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, profile.UserNameColor);
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
@@ -212,7 +212,7 @@ namespace DCL.Nametags
                 : NAMETAG_DEFAULT_WALLET_ID);
 
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
-            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, useVerifiedIcon, usernameColor);
+            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, usernameColor);
 
             return nametagView;
         }

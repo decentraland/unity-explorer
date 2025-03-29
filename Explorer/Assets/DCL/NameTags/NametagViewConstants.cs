@@ -32,6 +32,12 @@ namespace DCL.Nametags
         internal static readonly Color TRANSPARENT_COLOR = new (1, 1, 1, 0);
         internal static readonly Vector2 ZERO_VECTOR = Vector2.zero;
         internal static readonly Color DEFAULT_COLOR = new (1, 1, 1, 1);
+        internal static readonly float ANIMATION_IN_DURATION_THIRD = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION / 3f;
+        internal static readonly float ANIMATION_IN_DURATION_QUARTER = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION / 4f;
+        internal static readonly float ANIMATION_OUT_DURATION_HALF = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 2f;
+        internal static readonly float ANIMATION_OUT_DURATION_TENTH = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 10f;
+        internal static readonly float BUBBLE_MARGIN_HEIGHT_THIRD = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT / 3f;
+        internal static readonly int WALLET_ID_LENGTH = 5 + NametagViewConstants.WALLET_ID_OPENING_STYLE.Length + NametagViewConstants.WALLET_ID_CLOSING_STYLE.Length;
 
         internal static readonly Color MENTIONED_BUBBLE_TAIL_COLOR = new (0.5568f, 0.2549f, 0.5490f, 1);
         internal static readonly Color NORMAL_BUBBLE_TAIL_COLOR = new (0.2627f, 0.2509f, 0.2862f, 1);
