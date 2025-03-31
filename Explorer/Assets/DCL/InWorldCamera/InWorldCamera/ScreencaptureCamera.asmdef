@@ -2,6 +2,7 @@
     "name": "ScreencaptureCamera",
     "rootNamespace": "",
     "references": [
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "GUID:75469ad4d38634e559750d17036d5f7c",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:f0968673e9444d64b49cde6a40d7df7a",
@@ -26,7 +27,9 @@
         "GUID:9ca29a7d75ab84bab806a20bbd350fd8",
         "GUID:029c1c1b674aaae47a6841a0b89ad80e",
         "GUID:e7751264a6735a942a64770d71eb49e0",
-        "GUID:91cf8206af184dac8e30eb46747e9939"
+        "GUID:ff38b7506167d314d987b4b8e8406988",
+        "GUID:91cf8206af184dac8e30eb46747e9939",
+        "GUID:422b93d277444c569adf5e25ecef10ba"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

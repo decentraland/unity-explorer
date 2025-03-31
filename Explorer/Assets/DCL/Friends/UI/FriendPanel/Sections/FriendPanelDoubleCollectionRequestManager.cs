@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -11,12 +11,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
+        private readonly ViewDependencies viewDependencies;
+        private readonly LoopListView2 loopListView;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
         private readonly bool disablePagination;
 
-        private readonly IWebRequestController webRequestController;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly FriendPanelStatus firstCollectionStatus;
         private readonly FriendPanelStatus secondCollectionStatus;
         private readonly int statusElementIndex;
@@ -28,6 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private int totalFetched;
         private int totalToFetch;
         private bool isFetching;
+        private bool isInitializing;
 
         private bool excludeFirstCollection;
         private bool excludeSecondCollection;
@@ -41,8 +42,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
+            ViewDependencies viewDependencies,
+            LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold,
             FriendPanelStatus firstCollectionStatus,
@@ -54,8 +55,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
-            this.webRequestController = webRequestController;
-            this.profileThumbnailCache = profileThumbnailCache;
+            this.viewDependencies = viewDependencies;
+            this.loopListView = loopListView;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
             this.firstCollectionStatus = firstCollectionStatus;
@@ -81,6 +82,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
+            // TODO: possible NRE
             LoopListViewItem2 listItem = null;
             int onlineFriendMarker = excludeFirstCollection ? 0 : GetFirstCollectionCount();
             if (GetFirstCollectionCount() == 0 && !excludeFirstCollection) onlineFriendMarker++; //Count the empty element
@@ -103,13 +105,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
+                    friendListUserView.InjectDependencies(viewDependencies);
                     int collectionIndex = index - 1;
-                    friendListUserView.Configure(GetFirstCollectionElement(collectionIndex), webRequestController, profileThumbnailCache);
+                    friendListUserView.Configure(GetFirstCollectionElement(collectionIndex));
                     CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
-                    friendListUserView.RemoveSpriteLoadedListeners();
-                    friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.Address.ToString(), sprite);
                 }
             }
             else if (index == onlineFriendMarker + 1)
@@ -128,13 +129,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
+                    friendListUserView.InjectDependencies(viewDependencies);
                     int collectionIndex = index - onlineFriendMarker - 2;
-                    friendListUserView.Configure(GetSecondCollectionElement(collectionIndex), webRequestController, profileThumbnailCache);
+                    friendListUserView.Configure(GetSecondCollectionElement(collectionIndex));
                     CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
-                    friendListUserView.RemoveSpriteLoadedListeners();
-                    friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.Address.ToString(), sprite);
 
                     if (!disablePagination && collectionIndex >= GetSecondCollectionCount() - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
                         FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
@@ -186,9 +186,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             HasElements = false;
             WasInitialised = false;
+            isInitializing = false;
             pageNumber = 0;
             totalFetched = 0;
             ResetCollections();
+            RefreshLoopList();
+        }
+
+        protected void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetElementsNumber(), false);
+            loopListView.RefreshAllShownItem();
         }
 
         protected abstract void ResetCollections();
@@ -197,10 +205,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public async UniTask InitAsync(CancellationToken ct)
         {
+            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes
+            if (isInitializing) return;
+
+            isInitializing = true;
+
             await FetchDataInternalAsync(ct);
 
             HasElements = GetFirstCollectionCount() + GetSecondCollectionCount() > 0;
             WasInitialised = true;
+            isInitializing = false;
         }
 
         private void FolderClick(bool isFolded, FriendPanelStatus panelStatus)

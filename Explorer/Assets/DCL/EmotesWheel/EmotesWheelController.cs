@@ -12,6 +12,7 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -21,10 +22,10 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>
+    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IControllerInSharedSpace<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly World world;
@@ -32,18 +33,20 @@ namespace DCL.EmotesWheel
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IInputBlock inputBlock;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
-        private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
         private readonly DCLInput dclInput;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IEmoteStorage emoteStorage,
             NftTypeIconSO rarityBackgrounds,
             World world,
@@ -51,8 +54,8 @@ namespace DCL.EmotesWheel
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
             DCLInput dclInput,
-            IMVCManager mvcManager,
-            ICursor cursor)
+            ICursor cursor,
+            ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -64,8 +67,8 @@ namespace DCL.EmotesWheel
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             emoteWheelInput = this.dclInput.EmoteWheel;
-            this.mvcManager = mvcManager;
             this.cursor = cursor;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -82,10 +85,17 @@ namespace DCL.EmotesWheel
             UnregisterSlotsInput(emoteWheelInput);
         }
 
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            Close();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+        }
+
         protected override void OnViewInstantiated()
         {
-            viewInstance!.OnClose += Close;
-            viewInstance.EditButton.onClick.AddListener(OpenBackpack);
+            viewInstance!.Closed += Close;
+            viewInstance.EditButton.onClick.AddListener(OpenBackpackAsync);
             viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
@@ -108,7 +118,7 @@ namespace DCL.EmotesWheel
 
             async UniTaskVoid InitializeEverythingAsync(CancellationToken ct)
             {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                Profile? profile = selfProfile.OwnProfile ?? await selfProfile.ProfileAsync(ct);
 
                 if (profile == null)
                 {
@@ -120,8 +130,10 @@ namespace DCL.EmotesWheel
             }
         }
 
-        protected override void OnViewShow() =>
+        protected override void OnViewShow()
+        {
             ListenToSlotsInput(this.dclInput.EmoteWheel);
+        }
 
         protected override void OnViewClose()
         {
@@ -139,6 +151,8 @@ namespace DCL.EmotesWheel
             closeViewTask = new UniTaskCompletionSource();
 
             UnblockShortcutToEmoteSlotsSetup();
+
+            ViewShowingComplete?.Invoke(this);
 
             await closeViewTask.Task;
         }
@@ -211,6 +225,9 @@ namespace DCL.EmotesWheel
 
         private void PlayEmote(int slot)
         {
+            if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
+                return;
+
             world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
 
             Close();
@@ -218,26 +235,28 @@ namespace DCL.EmotesWheel
 
         private void PlayEmote(InputAction.CallbackContext context)
         {
+            if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
+                return;
+
             string actionName = context.action.name;
             int slot = GetSlotFromInputName(actionName);
             PlayEmote(slot);
         }
 
-        private void OpenBackpack(InputAction.CallbackContext context) =>
-            OpenBackpack();
-
-        private void OpenBackpack()
+        private void OpenBackpack(InputAction.CallbackContext context)
         {
-            mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(
-                    new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
+                OpenBackpackAsync();
+        }
 
-            Close();
+        private async void OpenBackpackAsync()
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes));
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES);
         }
 
         // Note: This must be called once the menu has loaded and is ready to be closed
@@ -249,7 +268,7 @@ namespace DCL.EmotesWheel
         private void BlockUnwantedInputs()
         {
             inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
-            inputBlock.Enable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTES);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
@@ -272,8 +291,11 @@ namespace DCL.EmotesWheel
             }
         }
 
-        private void Close(InputAction.CallbackContext context) =>
-            Close();
+        private void Close(InputAction.CallbackContext context)
+        {
+            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
+                Close();
+        }
 
         private void Close() =>
             closeViewTask?.TrySetResult();

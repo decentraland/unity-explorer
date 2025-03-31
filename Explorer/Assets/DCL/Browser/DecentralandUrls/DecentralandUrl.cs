@@ -24,7 +24,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ApiEvents,
 
         ApiAuth,
-        AuthSignature,
+        AuthSignatureWebApp,
+        ApiRpc,
 
         GateKeeperSceneAdapter,
         LocalGateKeeperSceneAdapter,
@@ -44,6 +45,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         FeatureFlags,
 
         Market,
+        MarketplaceClaimName,
 
         AssetBundlesCDN,
 
@@ -59,5 +61,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BuilderApiDtos,
         BuilderApiContent,
+
+        Blocklist
     }
 }

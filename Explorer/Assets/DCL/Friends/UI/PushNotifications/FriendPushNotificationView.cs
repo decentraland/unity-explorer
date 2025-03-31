@@ -1,25 +1,21 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat;
-using DCL.UI;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.Friends.UI.PushNotifications
 {
-    public class FriendPushNotificationView : ViewBase, IView
+    public class FriendPushNotificationView : ViewBase, IView, IViewWithGlobalDependencies
     {
-        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
-        [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
         [field: SerializeField] public TMP_Text UserNameText { get; private set; }
         [field: SerializeField] public TMP_Text UserAddressText { get; private set; }
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
         [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; }
-        [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
 
         [field:Header("Toast Animation")]
         [field: SerializeField] public float toastFadeInDuration = 0.3f;
@@ -39,19 +35,15 @@ namespace DCL.Friends.UI.PushNotifications
             PanelCanvasGroup.alpha = 0f;
         }
 
-        internal void ConfigureForFriend(FriendProfile friendProfile, Sprite? profileThumbnail)
+        internal void ConfigureForFriend(FriendProfile friendProfile)
         {
-            Color userColor = ChatEntryConfiguration.GetNameColor(friendProfile.Name);
-            ThumbnailBackground.color = userColor;
+            Color userColor = friendProfile.UserNameColor;
             UserNameText.color = userColor;
-
             UserNameText.text = friendProfile.Name;
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
-
-            if (profileThumbnail != null)
-                ThumbnailImageView.SetImage(profileThumbnail);
+            ProfilePictureView.Setup(friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 
         internal async UniTask ShowToastAsync(CancellationToken ct)
@@ -60,6 +52,11 @@ namespace DCL.Friends.UI.PushNotifications
             await PanelCanvasGroup.DOFade(1f, toastFadeInDuration).ToUniTask(cancellationToken: ct);
             await UniTask.Delay((int)(toastVisibleDuration * 1000), cancellationToken: ct);
             await PanelCanvasGroup.DOFade(0f, toastVFadeOutDuration).ToUniTask(cancellationToken: ct);
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            ProfilePictureView.InjectDependencies(dependencies);
         }
     }
 }

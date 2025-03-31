@@ -33,6 +33,7 @@ namespace DCL.InWorldCamera.Systems
         private readonly ICoroutineRunner coroutineRunner;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly InWorldCameraController hudController;
+        private readonly ExposedCameraData exposedCameraData;
         private readonly CancellationTokenSource ctx;
         private readonly Entity playerEntity;
 
@@ -48,7 +49,8 @@ namespace DCL.InWorldCamera.Systems
             ScreenshotMetadataBuilder metadataBuilder,
             ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService,
-            InWorldCameraController hudController)
+            InWorldCameraController hudController,
+            ExposedCameraData exposedCameraData)
             : base(world)
         {
             this.recorder = recorder;
@@ -57,6 +59,7 @@ namespace DCL.InWorldCamera.Systems
             this.coroutineRunner = coroutineRunner;
             this.cameraReelStorageService = cameraReelStorageService;
             this.hudController = hudController;
+            this.exposedCameraData = exposedCameraData;
 
             ctx = new CancellationTokenSource();
         }
@@ -82,10 +85,10 @@ namespace DCL.InWorldCamera.Systems
                 return;
             }
 
-            if (ScreenshotIsRequested() && cameraReelStorageService.StorageStatus.HasFreeSpace)
+            if (ScreenshotIsRequested() && exposedCameraData.CinemachineBrain.OutputCamera != null&& cameraReelStorageService.StorageStatus.HasFreeSpace)
             {
-                hudController.Hide(isInstant: true);
-                coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());
+                hudController.SetViewCanvasActive(false);
+                coroutineRunner.StartCoroutine(recorder.CaptureScreenshot(exposedCameraData.CinemachineBrain.OutputCamera));
                 CollectMetadata();
             }
         }
@@ -99,7 +102,7 @@ namespace DCL.InWorldCamera.Systems
             {
                 cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, currentSource, ctx.Token).Forget();
 
-                hudController.Show();
+                hudController.SetViewCanvasActive(true);
                 hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
                 hudController.DebugCapture(screenshot, metadata);
             }

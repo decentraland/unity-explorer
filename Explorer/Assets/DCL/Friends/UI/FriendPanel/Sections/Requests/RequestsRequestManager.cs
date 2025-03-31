@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -23,26 +23,30 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         public event Action<FriendRequest>? DeleteRequestClicked;
         public event Action<FriendRequest>? AcceptRequestClicked;
+        public event Action<FriendRequest>? CancelRequestClicked;
         public event Action<FriendProfile, Vector2, RequestUserView>? ContextMenuClicked;
         public event Action<FriendRequest>? RequestClicked;
 
         public RequestsRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
+            ViewDependencies viewDependencies,
             int pageSize,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
+            : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
         {
             this.loopListView = loopListView;
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
             this.friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
             this.friendEventBus.OnOtherUserCancelledTheRequest += ReceivedRemoved;
+            this.friendEventBus.OnYouBlockedProfile += ReceivedRemoved;
+            this.friendEventBus.OnYouBlockedByUser += ReceivedRemoved;
 
             this.friendEventBus.OnOtherUserRejectedYourRequest += SentRemoved;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += SentRemoved;
             this.friendEventBus.OnYouCancelledFriendRequestSentToOtherUser += SentRemoved;
+            this.friendEventBus.OnYouBlockedProfile += SentRemoved;
+            this.friendEventBus.OnYouBlockedByUser += SentRemoved;
 
             this.friendEventBus.OnYouSentFriendRequestToOtherUser += CreateNewSentRequest;
             this.friendEventBus.OnFriendRequestReceived += CreateNewReceivedRequest;
@@ -53,10 +57,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= ReceivedRemoved;
             friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= ReceivedRemoved;
             friendEventBus.OnOtherUserCancelledTheRequest -= ReceivedRemoved;
+            friendEventBus.OnYouBlockedProfile -= ReceivedRemoved;
+            friendEventBus.OnYouBlockedByUser -= ReceivedRemoved;
 
             friendEventBus.OnOtherUserRejectedYourRequest -= SentRemoved;
             friendEventBus.OnOtherUserAcceptedYourRequest -= SentRemoved;
             friendEventBus.OnYouCancelledFriendRequestSentToOtherUser -= SentRemoved;
+            friendEventBus.OnYouBlockedProfile -= SentRemoved;
+            friendEventBus.OnYouBlockedByUser -= SentRemoved;
 
             friendEventBus.OnYouSentFriendRequestToOtherUser -= CreateNewSentRequest;
             friendEventBus.OnFriendRequestReceived -= CreateNewReceivedRequest;
@@ -81,24 +89,26 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RefreshLoopList();
         }
 
+        private void SentRemoved(BlockedProfile profile) =>
+            SentRemoved(profile.Address);
+
         private void SentRemoved(string friendId)
         {
-            sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
+            if (sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId)) <= 0) return;
+
             RefreshLoopList();
             loopListView.ResetListView();
         }
+
+        private void ReceivedRemoved(BlockedProfile profile) =>
+            ReceivedRemoved(profile.Address);
 
         private void ReceivedRemoved(string friendId)
         {
-            receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId));
+            if (receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId)) <= 0) return;
+
             RefreshLoopList();
             loopListView.ResetListView();
-        }
-
-        private void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetElementsNumber(), false);
-            loopListView.RefreshAllShownItem();
         }
 
         internal int GetReceivedRequestCount() =>
@@ -127,6 +137,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
                 elementView.AcceptButton.onClick.RemoveAllListeners();
                 elementView.AcceptButton.onClick.AddListener(() => AcceptRequestClicked?.Invoke(receivedRequests[collectionIndex]));
+            }
+            else
+            {
+                elementView.CancelButton.onClick.RemoveAllListeners();
+                elementView.CancelButton.onClick.AddListener(() => CancelRequestClicked?.Invoke(sentRequests[collectionIndex]));
             }
 
             elementView.SafelyResetMainButtonListeners();

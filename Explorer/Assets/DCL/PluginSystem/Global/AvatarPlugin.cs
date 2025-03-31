@@ -7,7 +7,6 @@ using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
@@ -26,6 +25,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
@@ -53,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
@@ -80,6 +80,10 @@ namespace DCL.PluginSystem.Global
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
 
+        private float startFadeDistanceDithering;
+        private float endFadeDistanceDithering;
+
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -90,13 +94,13 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
             RemoteEntities remoteEntities,
-            ExposedTransform playerTransform
+            ExposedTransform playerTransform,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -105,7 +109,6 @@ namespace DCL.PluginSystem.Global
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.memoryBudget = memoryBudget;
             this.rendererFeaturesCache = rendererFeaturesCache;
@@ -114,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
@@ -131,6 +135,8 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             chatBubbleConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatBubbleConfiguration, ct)).Value;
+            startFadeDistanceDithering = settings.startFadeDistanceDithering;
+            endFadeDistanceDithering = settings.endFadeDistanceDithering;
 
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
@@ -169,12 +175,12 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
                 avatarTransformMatrixJobWrapper);
 
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, rendererFeaturesCache);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
 
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, nametagsData, chatBubbleConfiguration);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagViewPool);
 
             //Debug scripts
@@ -213,12 +219,30 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
-            ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
+            Material toonMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct)).Value;
+            Material faceFeatureMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct)).Value;
+
+#if UNITY_EDITOR
+
+            //Avoid generating noise in editor git by creating a copy of the material
+            toonMaterial = new Material(toonMaterial);
+            faceFeatureMaterial = new Material(faceFeatureMaterial);
+#endif
+
+            //Set initial dither properties obtained through settings
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_END_PARAM_ID, endFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+
+            //Default should be visible
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
 
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
-                toonMaterial.Value, faceFeatureMaterial.Value
+                toonMaterial, faceFeatureMaterial,
             }, settings.defaultMaterialCapacity, textureArrayContainerFactory);
         }
 
@@ -251,6 +275,12 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             private AssetReferenceMaterial? faceFeatureMaterial;
+
+            [field: SerializeField]
+            public float startFadeDistanceDithering = 2;
+
+            [field: SerializeField]
+            public float endFadeDistanceDithering = 0.8f;
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;

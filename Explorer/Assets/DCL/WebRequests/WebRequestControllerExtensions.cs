@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.CustomDownloadHandlers;
-using DCL.WebRequests.PartialDownload;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
 using UnityEngine;
@@ -15,7 +14,7 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public static class WebRequestControllerExtensions
+    public static partial class WebRequestControllerExtensions
     {
         private const string CONTENT_RANGE_HEADER = "Content-Range";
         private const string CONTENT_LENGTH_HEADER = "Content-Length";
@@ -79,32 +78,9 @@ namespace DCL.WebRequests
         )
         {
             PartialDownloadHandler handler = new PartialDownloadHandler(PARTIAL_DOWNLOAD_BUFFER, buffersPool);
-            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadedData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
+            return controller.SendAsync<PartialDownloadRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadedData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
         }
 
-        private struct PartialDownloadOp : IWebRequestOp<GenericGetRequest, PartialDownloadedData>
-        {
-            public async UniTask<PartialDownloadedData> ExecuteAsync(GenericGetRequest webRequest, CancellationToken ct)
-            {
-                var partialDownloadHandler = (PartialDownloadHandler)webRequest.UnityWebRequest.downloadHandler;
-                int fullFileSize;
-
-                if (DownloadHandlersUtils.TryGetFullSize(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_RANGE_HEADER), out int fullSize))
-                {
-                    fullFileSize = fullSize;
-                }
-                else if (int.TryParse(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_LENGTH_HEADER), out int contentSize))
-                {
-                    fullFileSize = contentSize;
-                }
-                else
-                {
-                    fullFileSize = Convert.ToInt32(webRequest.UnityWebRequest.downloadedBytes);
-                }
-
-                return new PartialDownloadedData(partialDownloadHandler.PartialData, partialDownloadHandler.DownloadedSize, fullFileSize);
-            }
-        }
         public static UniTask<TResult> PostAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
@@ -161,11 +137,11 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
             controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
+        public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct, int timeout = 0)
         {
             await UniTask.SwitchToMainThread();
 
-            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
+            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url, timeout: timeout, attemptsCount: 1), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
             catch (UnityWebRequestException unityWebRequestException)
             {
                 // Endpoint was unreacheable

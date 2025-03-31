@@ -16,7 +16,6 @@ using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.Systems
@@ -35,9 +34,7 @@ namespace DCL.InWorldCamera.Systems
         private readonly CharacterController followTarget;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ICursor cursor;
-        private readonly IMVCManager mvcManager;
         private readonly DCLInput.InWorldCameraActions inputSchema;
-        private readonly UIDocument sceneUIRoot;
         private readonly NametagsData nametagsData;
 
         private SingleInstanceEntity camera;
@@ -46,6 +43,7 @@ namespace DCL.InWorldCamera.Systems
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera inWorldVirtualCamera;
         private bool wasDebugVisible;
+        private CameraMode prevCameraMode;
 
         public ToggleInWorldCameraActivitySystem(
             World world,
@@ -54,9 +52,7 @@ namespace DCL.InWorldCamera.Systems
             CharacterController followTarget,
             IDebugContainerBuilder debugContainerBuilder,
             ICursor cursor,
-            IMVCManager mvcManager,
             DCLInput.InWorldCameraActions inputSchema,
-            UIDocument sceneUIRoot,
             NametagsData nametagsData) : base(world)
         {
             this.settings = settings;
@@ -64,9 +60,7 @@ namespace DCL.InWorldCamera.Systems
             this.followTarget = followTarget;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cursor = cursor;
-            this.mvcManager = mvcManager;
             this.inputSchema = inputSchema;
-            this.sceneUIRoot = sceneUIRoot;
             this.nametagsData = nametagsData;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
@@ -98,15 +92,15 @@ namespace DCL.InWorldCamera.Systems
             }
 
             if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
-                ToggleCamera(request.IsEnable);
+                ToggleCamera(request.IsEnable, request.TargetCameraMode);
         }
 
-        private void ToggleCamera(bool enable)
+        private void ToggleCamera(bool enable, CameraMode? targetMode)
         {
             if (enable)
                 EnableCamera();
             else
-                DisableCamera();
+                DisableCamera(targetMode);
         }
 
         private void SetFollowTarget()
@@ -128,8 +122,11 @@ namespace DCL.InWorldCamera.Systems
             aim.m_Damping = settings.AimDamping;
         }
 
-        private void DisableCamera()
+        private void DisableCamera(CameraMode? targetMode)
         {
+            if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
+                return;
+            
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
@@ -140,7 +137,7 @@ namespace DCL.InWorldCamera.Systems
                 Except = hudController
             });
 
-            SwitchToThirdPersonCamera();
+            TransitionCameraTo(targetMode);
 
             cursor.Unlock();
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
@@ -149,10 +146,15 @@ namespace DCL.InWorldCamera.Systems
             SwitchCameraInput(to: Kind.PLAYER);
 
             World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
+
+            hudController.Close();
         }
 
         private void EnableCamera()
         {
+            if(hudController.State != ControllerState.ViewHidden)
+                return;
+
             if (debugContainerBuilder?.Container != null)
             {
                 wasDebugVisible = debugContainerBuilder.IsVisible;
@@ -184,42 +186,37 @@ namespace DCL.InWorldCamera.Systems
                 new InWorldCameraInput());
         }
 
-        private void SwitchToThirdPersonCamera()
+        private void TransitionCameraTo(CameraMode? targetMode)
         {
             inWorldVirtualCamera.Follow = null;
             inWorldVirtualCamera.LookAt = null;
             followTarget.enabled = false;
 
-            float distanceToThirdPersonView =
-                Mathf.Abs(cinemachinePreset.ThirdPersonCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
-
-            float distanceToDroneCameraView =
-                Mathf.Abs(cinemachinePreset.DroneViewCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
-
-            camera.GetCameraComponent(World).Mode = distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson;
+            camera.GetCameraComponent(World).Mode = targetMode ?? prevCameraMode;
         }
 
         private void SwitchToInWorldCamera()
         {
             ref CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
+            prevCameraMode = cameraComponent.Mode;
 
             ref CinemachineCameraState cameraState = ref World.Get<CinemachineCameraState>(camera);
             cameraState.CurrentCamera.enabled = false;
 
-            SetCameraTransition(cameraComponent.Mode);
+            SetCameraTransition(cameraComponent.Mode, cameraComponent.Camera.transform);
 
             cameraState.CurrentCamera = inWorldVirtualCamera;
             cameraState.CurrentCamera.enabled = true;
             cameraComponent.Mode = CameraMode.InWorld;
         }
 
-        private void SetCameraTransition(CameraMode currentCameraMode)
+        private void SetCameraTransition(CameraMode currentCameraMode, Transform currentCameraTransform)
         {
             if (currentCameraMode == CameraMode.FirstPerson)
             {
                 inWorldVirtualCamera.m_Transitions.m_InheritPosition = false;
-                inWorldVirtualCamera.transform.position = CalculateBehindPosition();
-                inWorldVirtualCamera.transform.rotation = cinemachinePreset.FirstPersonCameraData.Camera.transform.rotation;
+                inWorldVirtualCamera.transform.position = CalculateBehindPosition(currentCameraTransform);
+                inWorldVirtualCamera.transform.rotation = currentCameraTransform.rotation;
             }
             else
                 inWorldVirtualCamera.m_Transitions.m_InheritPosition = true;
@@ -236,11 +233,8 @@ namespace DCL.InWorldCamera.Systems
                 _ => 60f,
             };
 
-        private Vector3 CalculateBehindPosition()
-        {
-            Vector3 lookDirection = cinemachinePreset.FirstPersonCameraData.Camera.transform.forward;
-            return cinemachinePreset.FirstPersonCameraData.Camera.transform.position - (lookDirection * settings.BehindDirectionOffset) + behindUpOffset;
-        }
+        private Vector3 CalculateBehindPosition(Transform currentCameraTransform) =>
+            currentCameraTransform.position - (currentCameraTransform.forward * settings.BehindDirectionOffset) + behindUpOffset;
 
         private void SwitchCameraInput(Kind to)
         {

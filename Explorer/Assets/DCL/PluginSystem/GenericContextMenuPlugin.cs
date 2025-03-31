@@ -8,6 +8,7 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem
 {
@@ -15,15 +16,18 @@ namespace DCL.PluginSystem
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly ViewDependencies viewDependencies;
 
         private GenericContextMenuController? genericContextMenuController;
 
         public GenericContextMenuPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ViewDependencies viewDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.viewDependencies = viewDependencies;
         }
 
         public void Dispose()
@@ -45,9 +49,12 @@ namespace DCL.PluginSystem
             GenericContextMenuButtonWithTextView buttonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonPrefab, ct)).GetComponent<GenericContextMenuButtonWithTextView>();
             GenericContextMenuToggleView togglePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuTogglePrefab, ct)).GetComponent<GenericContextMenuToggleView>();
             GenericContextMenuUserProfileView userProfilePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuUserProfilePrefab, ct)).GetComponent<GenericContextMenuUserProfileView>();
+            GenericContextMenuOpenUserProfileButtonView viewUserProfileButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuViewUserProfileButtonPrefab, ct)).GetComponent<GenericContextMenuOpenUserProfileButtonView>();
+            GenericContextMenuMentionUserButtonView mentionUserButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuMentionUserButtonPrefab, ct)).GetComponent<GenericContextMenuMentionUserButtonView>();
+            GenericContextMenuBlockUserButtonView blockUserButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuViewBlockUserButtonPrefab, ct)).GetComponent<GenericContextMenuBlockUserButtonView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
-                new ControlsPoolManager(panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, userProfilePrefab));
+                new ControlsPoolManager(viewDependencies, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, userProfilePrefab, viewUserProfileButtonPrefab, mentionUserButtonPrefab, blockUserButtonPrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 
@@ -68,6 +75,13 @@ namespace DCL.PluginSystem
             public AssetReferenceGameObject GenericContextMenuTogglePrefab;
             [field: SerializeField]
             public AssetReferenceGameObject GenericContextMenuUserProfilePrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuMentionUserButtonPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuViewUserProfileButtonPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuViewBlockUserButtonPrefab;
+
         }
     }
 }

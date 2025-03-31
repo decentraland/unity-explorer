@@ -47,6 +47,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 36bcbe134ec574902b49db6464414b03
+    m_Address: BlockedScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37b740e9dd5ba324c91cd05632ea002c
     m_Address: TeleportPrompt
     m_ReadOnly: 0
@@ -79,6 +84,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6dfe28bda416549a9b6598e822044ba1
     m_Address: CommonTexturesAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 734732fb25eed5944b9c5a5814249f81
+    m_Address: MentionUserButton.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -127,6 +137,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c325bf3c176cc034d83115896fd851da
+    m_Address: OpenUserProfileButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c522d0b7573224f59a5c1fde68c734e3
     m_Address: PersistentEmoteWheelOpener.prefab
     m_ReadOnly: 0
@@ -149,6 +164,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d504e2da7abe71a4582c8c2e08e3c285
     m_Address: NftPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d67c9347412c7d04aa84f48952e986fc
+    m_Address: Assets/DCL/UI/Assets/PastePopupToastView.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -15,6 +15,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         string SessionID { get; }
 
+        string ServiceInfo { get; }
+
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
         void Initialize(IWeb3Identity? web3Identity);
@@ -35,6 +37,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
             public string SessionID => string.Empty;
+
+            public string ServiceInfo => UNDEFINED;
 
             private NullAnalytics() { }
 

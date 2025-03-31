@@ -4,18 +4,18 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Chat;
+using DCL.Chat.History;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
-using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -42,14 +42,14 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly ISidebarBus sidebarBus;
         private readonly DCLInput input;
-        private readonly ISidebarActionsBus sidebarActionsBus;
-        private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly IChatHistory chatHistory;
+        private readonly ViewDependencies viewDependencies;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -64,14 +64,14 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            ISidebarBus sidebarBus,
             DCLInput input,
-            ChatEntryConfigurationSO chatEntryConfigurationSo,
-            ISidebarActionsBus sidebarActionsBus,
             Arch.Core.World world,
             Entity playerEntity,
             bool includeCameraReel,
-            bool includeFriends)
+            bool includeFriends,
+            IChatHistory chatHistory,
+            ViewDependencies viewDependencies,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -85,14 +85,14 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.sidebarBus = sidebarBus;
             this.input = input;
-            this.chatEntryConfigurationSo = chatEntryConfigurationSo;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
+            this.chatHistory = chatHistory;
+            this.viewDependencies = viewDependencies;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose() { }
@@ -101,10 +101,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(SidebarSettings settings, CancellationToken ct)
         {
-            NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
+            NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
-            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
+            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
             mvcManager.RegisterController(new SidebarController(() =>
@@ -115,19 +115,17 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
-                sidebarBus,
-                chatEntryConfigurationSo,
-                web3IdentityCache,
-                profileRepository,
                 webBrowser,
-                sidebarActionsBus,
                 includeCameraReel,
-                includeFriends
+                includeFriends,
+                mainUIView.ChatView,
+                chatHistory,
+                sharedSpaceManager
             ));
         }
 

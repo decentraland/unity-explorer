@@ -1,7 +1,5 @@
-using CommunicationData.URLHelpers;
-using DCL.Chat;
-using DCL.UI;
-using DCL.WebRequests;
+using DCL.UI.ProfileElements;
+using MVC;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -11,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
-    public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
     {
         protected readonly List<Button> buttons = new ();
 
@@ -21,19 +19,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public Button MainButton { get; private set; }
 
         [field: Header("User")]
-        [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
-        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
-        [field: SerializeField] public ImageView ProfileImageView { get; private set; }
+        [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; }
 
         private bool canUnHover = true;
-        private ImageController? imageController;
 
         public FriendProfile UserProfile { get; protected set; }
+
         public event Action<FriendProfile>? MainButtonClicked;
-        public event Action<Sprite>? SpriteLoaded;
 
         internal bool CanUnHover
         {
@@ -66,36 +61,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButtonClicked = null;
         }
 
-        public void RemoveSpriteLoadedListeners()
+        public virtual void Configure(FriendProfile friendProfile)
         {
-            SpriteLoaded = null;
-        }
-
-        public virtual void Configure(FriendProfile friendProfile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
-        {
-            if (imageController == null)
-            {
-                imageController = new ImageController(ProfileImageView, webRequestController);
-                imageController.SpriteLoaded += sprite => SpriteLoaded?.Invoke(sprite);
-            }
-
             UnHover();
             UserProfile = friendProfile;
 
-            Color userColor = ChatEntryConfiguration.GetNameColor(friendProfile.Name);
+            Color userColor = friendProfile.UserNameColor;
 
             UserName.text = friendProfile.Name;
             UserName.color = userColor;
             UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
-            ThumbnailBackground.color = userColor;
-
-            Sprite? thumbnail = profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString());
-            if (thumbnail != null)
-                imageController.SetImage(thumbnail);
-            else if (friendProfile.FacePictureUrl != URLAddress.EMPTY)
-                imageController.RequestImage(friendProfile.FacePictureUrl, removePrevious: true);
+            ProfilePicture.Setup(friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 
         protected virtual void ToggleButtonView(bool isActive)
@@ -123,6 +101,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             if (canUnHover)
                 UnHover();
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            ProfilePicture.InjectDependencies(dependencies);
         }
     }
 }

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using System;
@@ -70,7 +71,9 @@ namespace DCL.Profiles.Self
                 for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
 
-            OwnProfile = profile;
+            if (OwnProfile == null || profile.Version > OwnProfile.Version)
+                OwnProfile = profile;
+
             return profile;
         }
 
@@ -109,9 +112,27 @@ namespace DCL.Profiles.Self
             if (newProfile.Avatar.IsSameAvatar(profile.Avatar))
                 return profile;
 
-            OwnProfile = profile;
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
 
             await profileRepository.SetAsync(newProfile, publish, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+        }
+
+        public async UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct)
+        {
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
+            Profile newProfile = profileBuilder.From(profile)
+                                               .WithVersion(profile!.Version + 1)
+                                               .Build();
+
+            newProfile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
+
+            await profileRepository.SetAsync(newProfile, true, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
@@ -130,6 +151,8 @@ namespace DCL.Profiles.Self
                                                .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
 
             await profileRepository.SetAsync(newProfile, publish: true, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);

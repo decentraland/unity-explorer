@@ -1973,6 +1973,7 @@ MonoBehaviour:
   <LoopList>k__BackingField: {fileID: 7938108256350581850}
   <LoadingObject>k__BackingField: {fileID: 7859236159390316119}
   <EmptyState>k__BackingField: {fileID: 662478350243721222}
+  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: bd3da6961ab7d4cdd9e1d115464a5a7a, type: 2}
 --- !u!1 &7365772032245514364
 GameObject:
   m_ObjectHideFlags: 0
@@ -2459,7 +2460,6 @@ MonoBehaviour:
   <LoadingObject>k__BackingField: {fileID: 177029839170546256}
   <EmptyState>k__BackingField: {fileID: 5376825434192449184}
   <TabNotificationIndicator>k__BackingField: {fileID: 1205339925646602635}
-  <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 299c6c9d8edbc42f59268a946bf4b95b, type: 2}
 --- !u!1 &8535229563382706920
 GameObject:
@@ -2727,7 +2727,6 @@ MonoBehaviour:
   <LoopList>k__BackingField: {fileID: 5426848382744531652}
   <LoadingObject>k__BackingField: {fileID: 3062264601300482726}
   <EmptyState>k__BackingField: {fileID: 7649171565629304203}
-  <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 07e0683d80a294ef987133cec67f6d99, type: 2}
 --- !u!1 &9016221308760038758
 GameObject:
@@ -3531,11 +3530,31 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 94932550049558447, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 7.47
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 94932550049558447, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 14.53
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 94932550049558447, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 94932550049558447, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1465399142383621682, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_text
+      value: +9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1465399142383621682, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_fontSize
+      value: 9.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 1465399142383621682, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_fontSizeMin
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 3076032502904695219, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
       propertyPath: m_Name
@@ -4191,7 +4210,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5301629697619209875, guid: f84bd542057664f38a68a03603fd66c5, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7388305185337490272, guid: f84bd542057664f38a68a03603fd66c5, type: 3}
       propertyPath: m_Pivot.x
@@ -4697,11 +4716,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2988973775201219658, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 12
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2988973775201219658, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 12
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 3783773368439746124, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_Color.a

@@ -2,12 +2,15 @@
     "name": "GenericContextMenu",
     "rootNamespace": "",
     "references": [
-        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:e169fa6683c924c7e99a85981a91d953",
         "GUID:b97826ed91484ac1af953a8afc03316e",
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:9cce9838ccdc58d46b673e02f1058718",
+        "GUID:52421c42d33594c47a6fbd48b45b1259",
+        "GUID:e56a0d6a94c144c784012e63b6043100"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

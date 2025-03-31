@@ -5,6 +5,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.InWorldCamera;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -112,6 +113,9 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
+            if (globalWorld.Has<InWorldCameraComponent>(cameraEntityProxy.Object))
+                globalWorld.Add(cameraEntityProxy.Object, new ToggleInWorldCameraRequest { IsEnable = false, TargetCameraMode = targetCameraMode});
+
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
 
             cameraModeBeforeLastAreaEnter = camera.Mode;
@@ -129,7 +133,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputChangeEnabled)
-                camera.Mode = cameraModeBeforeLastAreaEnter;
+                camera.Mode = cameraModeBeforeLastAreaEnter == CameraMode.InWorld? CameraMode.ThirdPerson : cameraModeBeforeLastAreaEnter;
 
             sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
         }

@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
 using LiveKit.Proto;
@@ -33,6 +32,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
         public event Room.MetaDelegate? RoomMetadataChanged;
+        public event Room.SidDelegate? RoomSidChanged;
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -129,6 +129,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             dataPipe.Assign(room.DataPipe);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
+            room.RoomSidChanged += RoomOnRoomSidChanged;
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
             room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
             room.TrackPublished += RoomOnTrackPublished;
@@ -145,6 +146,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private void Unsubscribe(IRoom previous)
         {
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+            previous.RoomSidChanged -= RoomOnRoomSidChanged;
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
@@ -216,6 +218,11 @@ namespace DCL.Multiplayer.Connections.Rooms
         private void RoomOnRoomMetadataChanged(string metadata)
         {
             RoomMetadataChanged?.Invoke(metadata);
+        }
+
+        private void RoomOnRoomSidChanged(string sid)
+        {
+            RoomSidChanged?.Invoke(sid);
         }
 
         public void UpdateLocalMetadata(string metadata) =>

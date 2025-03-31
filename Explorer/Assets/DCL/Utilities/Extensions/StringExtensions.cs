@@ -28,6 +28,11 @@ namespace DCL.Utilities.Extensions
                 return false;
 
             int domainEndIndex = restOfUrlSpan.IndexOf(SLASH);
+
+            //Validates the rest of the url as domain when no SLASH char is found Ex: lvpr.tv?v=videoId
+            if (domainEndIndex == -1)
+                return IsValid(restOfUrlSpan);
+
             return domainEndIndex == 0 || IsValid(restOfUrlSpan[..domainEndIndex]); // Check for the domain
         }
 

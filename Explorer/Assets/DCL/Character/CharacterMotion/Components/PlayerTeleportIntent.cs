@@ -10,10 +10,12 @@ namespace DCL.CharacterMotion.Components
         public readonly struct JustTeleported
         {
             public readonly int ExpireFrame;
+            public readonly Vector2Int Parcel;
 
-            public JustTeleported(int expireFrame)
+            public JustTeleported(int expireFrame, Vector2Int parcel)
             {
                 ExpireFrame = expireFrame;
+                Parcel = parcel;
             }
         }
 

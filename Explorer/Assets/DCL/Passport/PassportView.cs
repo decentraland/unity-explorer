@@ -1,10 +1,10 @@
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using MVC;
 using SoftMasking;
 using System;
@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport
 {
-    public class PassportView : ViewBase, IView
+    public class PassportView : ViewBase, IView, IViewWithGlobalDependencies
     {
         [field: SerializeField]
         public Button CloseButton { get; private set; }
@@ -98,11 +98,12 @@ namespace DCL.Passport
         public Button CancelFriendButton { get; private set; }
 
         [field: SerializeField]
+        public Button UnblockFriendButton { get; private set; }
+
+        [field: SerializeField]
         public MutualFriendsConfig MutualFriends { get; private set; }
 
         [field: Header("Context menu")]
-        [field: SerializeField]
-        public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
         [field: SerializeField]
         public Button ContextMenuButton { get; private set; }
 
@@ -129,7 +130,7 @@ namespace DCL.Passport
             public struct MutualThumbnail
             {
                 public GameObject Root;
-                public ImageView Image;
+                public ProfilePictureView Picture;
             }
         }
 
@@ -182,6 +183,12 @@ namespace DCL.Passport
             MainScroll.content = OverviewSectionPanel.transform as RectTransform;
             MainScroll.verticalNormalizedPosition = 1;
             CharacterPreviewView.gameObject.SetActive(true);
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            foreach (MutualFriendsConfig.MutualThumbnail thumbnail in MutualFriends.Thumbnails)
+                thumbnail.Picture.InjectDependencies(dependencies);
         }
     }
 }

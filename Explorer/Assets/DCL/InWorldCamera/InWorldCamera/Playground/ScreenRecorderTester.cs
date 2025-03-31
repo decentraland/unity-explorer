@@ -8,6 +8,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -15,8 +16,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Browser.DecentralandUrls;
-using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Rendering.GPUInstancing;
 using UnityEngine;
 using Utility;
 
@@ -43,9 +43,9 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(Screenshot))]
         private IEnumerator Screenshot()
         {
-            recorder ??= new ScreenRecorder(canvasRectTransform);
+            recorder ??= new ScreenRecorder(canvasRectTransform, new GPUInstancingService(null));
 
-            StartCoroutine(recorder.CaptureScreenshot());
+            StartCoroutine(recorder.CaptureScreenshot(Camera.main));
             yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME;
 
             Texture = recorder.GetScreenshotAndReset();
@@ -56,7 +56,7 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
-            Profile profile = await CreateProfile().ProfileAsync(default(CancellationToken));
+            Profile profile = await CreateProfile().ProfileAsync(CancellationToken.None);
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
             builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());

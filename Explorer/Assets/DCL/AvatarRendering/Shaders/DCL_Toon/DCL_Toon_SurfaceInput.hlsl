@@ -24,8 +24,7 @@ half Alpha(half albedoAlpha, half4 color, half cutoff)
 
 half4 SampleAlbedoAlpha(float2 uv)
 {
-    int nBaseMapArrID = _BaseMapArr_ID;
-    return half4(SAMPLE_BASEMAP(uv,nBaseMapArrID));
+    return half4(1.0,1.0,1.0,1.0);
 }
 
 half3 SampleNormal(float2 uv, half scale = half(1.0))
