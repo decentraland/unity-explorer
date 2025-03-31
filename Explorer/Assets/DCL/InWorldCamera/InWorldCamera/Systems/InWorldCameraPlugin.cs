@@ -27,6 +27,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Rendering.GPUInstancing;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -103,7 +104,8 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             GPUInstancingService gpuInstancingBuffers,
             ExposedCameraData exposedCameraData,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -134,7 +136,9 @@ namespace DCL.PluginSystem.Global
             this.gpuInstancingBuffers = gpuInstancingBuffers;
             this.exposedCameraData = exposedCameraData;
             this.sharedSpaceManager = sharedSpaceManager;
+
             factory = new InWorldCameraFactory();
+            web3IdentityCache.OnIdentityChanged += () => cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity!.Address, CancellationToken.None).Forget();
         }
 
         public void Dispose()
