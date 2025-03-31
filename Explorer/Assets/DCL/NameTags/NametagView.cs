@@ -24,6 +24,11 @@ namespace DCL.Nametags
         private static Material? transparentMaterial;
         private static Vector2 claimedNameInitialPosition;
         private static Vector2 messageContentAnchoredPosition;
+
+        // Note: I have made all of these static, as they are the same for all nametags - FOR NOW -
+        // In case in the future we decide to change that, we just need to make these non-static so each nametag
+        // loads its own configuration file independently
+        private static bool isExternalConfigurationLoaded;
         private static int bubbleIdleTime = NametagViewConstants.DEFAULT_BUBBLE_IDLE_TIME_MS;
         private static int additionalMsPerCharacter = NametagViewConstants.DEFAULT_ADDITIONAL_MS_PER_CHARACTER;
         private static float animationInDuration = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION;
@@ -93,6 +98,7 @@ namespace DCL.Nametags
         /// </summary>
         public float LastSqrDistance { get; set; } = 0f;
         public string Id { set; get; } = string.Empty;
+        public int ProfileVersion { set; get; } = -1;
 
         private void Awake()
         {
@@ -144,6 +150,9 @@ namespace DCL.Nametags
 
         public void InjectConfiguration(ChatBubbleConfigurationSO chatBubbleConfigurationSo)
         {
+            if (isExternalConfigurationLoaded) return;
+
+            isExternalConfigurationLoaded = true;
             nametagMarginOffsetHeight = chatBubbleConfigurationSo.nametagMarginOffsetHeight;
             nametagMarginOffsetWidth = chatBubbleConfigurationSo.nametagMarginOffsetWidth;
             bubbleMarginOffsetWidth = chatBubbleConfigurationSo.bubbleMarginOffsetWidth;
@@ -196,7 +205,7 @@ namespace DCL.Nametags
             usernameText.SetText(BuildName(username, walletId, hasClaimedName));
             usernameText.rectTransform.sizeDelta = new Vector2(this.usernameText.preferredWidth, NametagViewConstants.DEFAULT_HEIGHT);
             cachedUsernameWidth = usernameText.preferredWidth;
-            messageContent.color = NametagViewConstants.TRANSPARENT_COLOR;
+            messageContent.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
 
             if (hasClaimedName)
             {
@@ -361,7 +370,7 @@ namespace DCL.Nametags
             bubbleTailSprite.color = isMention ? NametagViewConstants.MENTIONED_BUBBLE_TAIL_COLOR : NametagViewConstants.NORMAL_BUBBLE_TAIL_COLOR;
             BackgroundSprite.gameObject.SetActive(!isMention);
             mentionBackgroundSprite.gameObject.SetActive(isMention);
-            BackgroundSprite.color = NametagViewConstants.DEFAULT_COLOR;
+            BackgroundSprite.color = NametagViewConstants.DEFAULT_OPAQUE_COLOR;
 
             messageContent.SetText(messageText);
             SetHeightAndTextStyle(messageText);
@@ -383,7 +392,7 @@ namespace DCL.Nametags
             currentSequence = DOTween.Sequence();
 
             currentSequence.AppendInterval(animationInDurationThird)
-                           .Append(this.messageContent.DOColor(NametagViewConstants.DEFAULT_COLOR, animationInDurationQuarter));
+                           .Append(this.messageContent.DOColor(NametagViewConstants.DEFAULT_OPAQUE_COLOR, animationInDurationQuarter));
 
             if (isClaimedName)
             {
@@ -403,7 +412,7 @@ namespace DCL.Nametags
 
                 privateMessageFinalPosition.y = usernameFinalPosition.y;
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(privateMessageFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_COLOR, animationInDurationQuarter));
+                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_OPAQUE_COLOR, animationInDurationQuarter));
 
                 if (showPrivateMessageRecipient)
                 {
@@ -474,15 +483,15 @@ namespace DCL.Nametags
             if (isPrivateMessage)
             {
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.TRANSPARENT_COLOR, amAnimationOutDurationTenth));
+                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, amAnimationOutDurationTenth));
 
                 if (showPrivateMessageRecipient)
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                                   .Join(privateMessageText.DOColor(NametagViewConstants.TRANSPARENT_COLOR, amAnimationOutDurationTenth));
+                                   .Join(privateMessageText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, amAnimationOutDurationTenth));
             }
 
             currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                           .Join(messageContent.DOColor(NametagViewConstants.TRANSPARENT_COLOR, amAnimationOutDurationTenth));
+                           .Join(messageContent.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, amAnimationOutDurationTenth));
 
             if (isMention)
                 currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));

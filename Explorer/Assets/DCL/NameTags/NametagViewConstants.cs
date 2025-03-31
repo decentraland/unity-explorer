@@ -6,6 +6,7 @@ namespace DCL.Nametags
 {
     public static class NametagViewConstants
     {
+        //Default values in case scriptable object is missing or not assigned
         internal const float DEFAULT_HEIGHT = 0.3f;
         internal const float DEFAULT_MARGIN_OFFSET_HEIGHT = 0.15f;
         internal const float DEFAULT_MARGIN_OFFSET_WIDTH = 0.2f;
@@ -30,13 +31,11 @@ namespace DCL.Nametags
         internal static readonly int SRC_BLEND_PROPERTY = Shader.PropertyToID("_SrcBlend");
         internal static readonly int DST_BLEND_PROPERTY = Shader.PropertyToID("_DstBlend");
         internal static readonly int Z_WRITE_PROPERTY = Shader.PropertyToID("_ZWrite");
-        internal static readonly Color TRANSPARENT_COLOR = new (1, 1, 1, 0);
         internal static readonly Vector2 ZERO_VECTOR = Vector2.zero;
-        internal static readonly Color DEFAULT_COLOR = new (1, 1, 1, 1);
         internal static readonly Ease LINEAR_EASE = Ease.Linear;
-
         internal static readonly int WALLET_ID_LENGTH = 5 + WALLET_ID_OPENING_STYLE.Length + WALLET_ID_CLOSING_STYLE.Length;
-
+        internal static readonly Color DEFAULT_OPAQUE_COLOR = new (1, 1, 1, 1);
+        internal static readonly Color DEFAULT_TRANSPARENT_COLOR = new (1, 1, 1, 0);
         internal static readonly Color MENTIONED_BUBBLE_TAIL_COLOR = new (0.5568f, 0.2549f, 0.5490f, 1);
         internal static readonly Color NORMAL_BUBBLE_TAIL_COLOR = new (0.2627f, 0.2509f, 0.2862f, 1);
 

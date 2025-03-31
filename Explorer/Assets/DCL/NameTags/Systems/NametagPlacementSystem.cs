@@ -40,7 +40,6 @@ namespace DCL.Nametags
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
 
         private SingleInstanceEntity playerCamera;
-        private float distanceFromCamera;
         private float maxDistance;
         private float maxDistanceSqr;
 
@@ -124,8 +123,13 @@ namespace DCL.Nametags
         [None(typeof(PBAvatarShape))]
         private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            if (nametagView.Id == avatarShape.ID && nametagView.IsSameName(profile.ValidatedName, profile.HasClaimedName))
+            if (nametagView.Id == avatarShape.ID
+                && nametagView.ProfileVersion == profile.Version)
                 return;
+
+            nametagView.ProfileVersion = profile.Version;
+
+            if (nametagView.IsSameName(profile.ValidatedName, profile.HasClaimedName)) return;
 
             nametagView.Id = avatarShape.ID;
             nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, profile.UserNameColor);
