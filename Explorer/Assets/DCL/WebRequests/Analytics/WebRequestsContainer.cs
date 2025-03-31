@@ -16,12 +16,12 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestController SceneWebRequestController { get; }
 
-        public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
+        public WebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
             IWebRequestController sceneWebRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer)
+            WebRequestsAnalyticsContainer analyticsContainer)
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
@@ -39,16 +39,7 @@ namespace DCL.WebRequests.Analytics
         {
             var options = new ElementBindingOptions();
 
-            WebRequestsAnalyticsContainer analyticsContainer = new WebRequestsAnalyticsContainer()
-                                                              .AddTrackedMetric<ActiveCounter>()
-                                                              .AddTrackedMetric<Total>()
-                                                              .AddTrackedMetric<TotalFailed>()
-                                                              .AddTrackedMetric<BandwidthDown>()
-                                                              .AddTrackedMetric<BandwidthUp>()
-                                                              .AddTrackedMetric<ServerTimeSmallFileAverage>()
-                                                              .AddTrackedMetric<ServeTimePerMBAverage>()
-                                                              .AddTrackedMetric<FillRateAverage>()
-                                                              .AddTrackedMetric<TimeToFirstByteAverage>();
+            var analyticsContainer = WebRequestsAnalyticsContainer.Create(debugContainerBuilder.TryAddWidget("Web Requests"));
 
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 

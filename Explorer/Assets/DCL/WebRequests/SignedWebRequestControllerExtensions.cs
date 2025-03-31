@@ -1,5 +1,4 @@
 ﻿using DCL.Diagnostics;
-using DCL.WebRequests.GenericDelete;
 using System;
 using Utility.Times;
 

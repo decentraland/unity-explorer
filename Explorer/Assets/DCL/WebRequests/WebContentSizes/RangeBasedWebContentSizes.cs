@@ -1,15 +1,13 @@
-#nullable enable
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.WebContentSizes.Sizes;
-using System;
 using System.Linq;
 using System.Threading;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests.WebContentSizes
 {
+    // TODO жуть
     public class RangeBasedWebContentSizes : IWebContentSizes
     {
         private readonly IMaxSize maxSize;

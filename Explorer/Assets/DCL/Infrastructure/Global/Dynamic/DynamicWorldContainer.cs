@@ -695,7 +695,7 @@ namespace Global.Dynamic
                     viewDependencies
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
-                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
+                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.FeatureFlagsCache),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,

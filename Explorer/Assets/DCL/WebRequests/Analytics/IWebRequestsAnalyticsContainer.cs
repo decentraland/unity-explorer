@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics
@@ -8,14 +7,13 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics();
+        IReadOnlyList<MetricRegistration> GetTrackedMetrics();
 
-        IReadOnlyList<IRequestMetric>? GetMetric(Type requestType);
+        IReadOnlyList<MetricRegistration.AggregatedMetric> GetAggregatedMetrics();
 
         internal void OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest);
 
         internal void OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest);
-
 
         public static readonly IWebRequestsAnalyticsContainer DEFAULT = new WebRequestsAnalyticsContainer();
     }

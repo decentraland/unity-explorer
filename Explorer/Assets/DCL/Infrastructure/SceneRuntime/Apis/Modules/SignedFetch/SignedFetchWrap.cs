@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using ECS;
 using JetBrains.Annotations;
 using Newtonsoft.Json;

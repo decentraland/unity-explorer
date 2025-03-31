@@ -2,7 +2,7 @@
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    internal class Total : IRequestMetric
+    internal class TotalCounter : IRequestMetric
     {
         private ulong counter { get; set; }
 

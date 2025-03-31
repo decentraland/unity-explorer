@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using Microsoft.ClearScript;
 using SceneRuntime.Apis.Modules.FetchApi;
 using System;

@@ -1,7 +1,7 @@
 ﻿using Best.HTTP;
 using UnityEngine.Networking;
 
-namespace DCL.WebRequests.GenericDelete
+namespace DCL.WebRequests
 {
     public class GenericDeleteRequest : GenericUploadRequestBase
     {

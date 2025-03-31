@@ -1,49 +1,145 @@
-﻿using System;
+﻿using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
+using DCL.WebRequests.Analytics.Metrics;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Utility;
 
 namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
-        private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
-        private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();
+        private static readonly MetricRegistration.RequestType[] SUPPORTED_REQUESTS =
+        {
+            new (typeof(GetAssetBundleWebRequest), "Asset Bundle"),
+            new (typeof(GenericGetRequest), "Get"),
 
-        public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) =>
-            requestTypesWithMetrics.GetValueOrDefault(requestType);
+            // TODO new (typeof(PartialDownloadRequest), "Partial"),
+            new (typeof(GenericPostRequest), "Post"),
+            new (typeof(GenericPutRequest), "Put"),
+            new (typeof(GenericPatchRequest), "Patch"),
+            new (typeof(GenericHeadRequest), "Head"),
+            new (typeof(GenericDeleteRequest), "Delete"),
+            new (typeof(GetTextureWebRequest), "Texture"),
+            new (typeof(GetAudioClipWebRequest), "Audio"),
+        };
+
+        private static readonly MetricRegistration.MetricType[] METRICS =
+        {
+            new (typeof(ActiveCounter)),
+            new (typeof(TotalCounter), MetricAggregationMode.SUM),
+            new (typeof(TotalFailed)),
+            new (typeof(CannotConnectCounter), MetricAggregationMode.SUM),
+            new (typeof(BandwidthDown)),
+            new (typeof(BandwidthUp)),
+            new (typeof(ServerTimeSmallFileAverage)),
+            new (typeof(ServeTimePerMBAverage)),
+            new (typeof(FillRateAverage)),
+            new (typeof(TimeToFirstByteAverage)),
+        };
+
+        public DebugWidgetBuilder? Widget { get; private set; }
+
+        private readonly Dictionary<Type, IReadOnlyList<MetricRegistration>> createdMetrics = new (SUPPORTED_REQUESTS.Length);
+
+        private readonly List<MetricRegistration.AggregatedMetric> aggregatedMetrics = new (EnumUtils.Values<MetricAggregationMode>().Length);
+
+        public static WebRequestsAnalyticsContainer Create(DebugWidgetBuilder? debugWidgetBuilder)
+        {
+            var container = new WebRequestsAnalyticsContainer { Widget = debugWidgetBuilder };
+
+            Dictionary<Type, IReadOnlyList<MetricRegistration>> createdMetrics = container.createdMetrics;
+
+            var aggregatedMetrics = new Dictionary<Type, List<IRequestMetric>>();
+
+            // Create an instance of every metric and pair it with the request type
+            foreach (MetricRegistration.RequestType requestType in SUPPORTED_REQUESTS)
+            {
+                var registrations = new List<MetricRegistration>(METRICS.Length);
+
+                // Create an instance of the metric for each metric type
+
+                foreach (MetricRegistration.MetricType metricType in METRICS)
+                {
+                    var instance = (IRequestMetric)Activator.CreateInstance(metricType.Type);
+
+                    ElementBinding<ulong>? binding = null;
+
+                    // Create a debug marker for each metric
+                    if (debugWidgetBuilder != null)
+                    {
+                        binding = new ElementBinding<ulong>(0);
+                        debugWidgetBuilder.AddMarker(requestType.MarkerName + "-" + requestType.Type.Name, binding, instance.GetUnit());
+                    }
+
+                    var registration = new MetricRegistration(instance, binding);
+                    registrations.Add(registration);
+                    ;
+
+                    // Add to the aggregated metrics
+                    if (metricType.AggregationMode != MetricAggregationMode.NONE)
+                    {
+                        if (!aggregatedMetrics.TryGetValue(metricType.Type, out List<IRequestMetric>? list))
+                        {
+                            list = new List<IRequestMetric>();
+                            aggregatedMetrics.Add(metricType.Type, list);
+                        }
+
+                        list.Add(instance);
+                    }
+                }
+
+                createdMetrics.Add(requestType.Type, registrations);
+            }
+
+            foreach (MetricRegistration.MetricType metricType in METRICS)
+            {
+                if (metricType.AggregationMode == MetricAggregationMode.NONE) continue;
+
+                if (!aggregatedMetrics.TryGetValue(metricType.Type, out List<IRequestMetric>? list)) continue;
+
+                ElementBinding<ulong>? binding = null;
+
+                if (debugWidgetBuilder != null)
+                {
+                    binding = new ElementBinding<ulong>(0);
+                    debugWidgetBuilder.AddMarker($"{metricType.AggregationMode}-{metricType.Type.Name}", binding, list[0].GetUnit());
+                }
+
+                var aggregatedMetric = new MetricRegistration.AggregatedMetric(list, metricType.AggregationMode, binding);
+                container.aggregatedMetrics.Add(aggregatedMetric);
+            }
+
+            return container;
+        }
+
+        public IReadOnlyList<MetricRegistration> GetTrackedMetrics() =>
+            createdMetrics.SelectMany(c => c.Value).ToList();
+
+        public IReadOnlyList<MetricRegistration.AggregatedMetric> GetAggregatedMetrics() =>
+            aggregatedMetrics;
 
         void IWebRequestsAnalyticsContainer.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
             Type type = request.GetType();
 
-            if (!requestTypesWithMetrics.TryGetValue(type, out List<IRequestMetric> metrics))
-            {
-                metrics = new List<IRequestMetric>();
+            if (!createdMetrics.TryGetValue(type, out IReadOnlyList<MetricRegistration>? metrics))
+                return;
 
-                foreach ((_, Func<IRequestMetric> ctor) in requestMetricTypes)
-                    metrics.Add(ctor());
-
-                requestTypesWithMetrics.Add(type, metrics);
-            }
-
-            foreach (IRequestMetric? metric in metrics) { metric.OnRequestStarted(request, webRequest); }
+            foreach (MetricRegistration registration in metrics)
+                registration.metric.OnRequestStarted(request, webRequest);
         }
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished(ITypedWebRequest request, IWebRequest webRequest)
         {
             Type type = request.GetType();
 
-            if (!requestTypesWithMetrics.TryGetValue(type, out List<IRequestMetric> metrics)) return;
+            if (!createdMetrics.TryGetValue(type, out IReadOnlyList<MetricRegistration>? metrics))
+                return;
 
-            foreach (IRequestMetric? metric in metrics) { metric.OnRequestEnded(request, webRequest); }
-        }
-
-        public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>
-            requestMetricTypes;
-
-        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new()
-        {
-            requestMetricTypes.Add(typeof(T), () => new T());
-            return this;
+            foreach (MetricRegistration registration in metrics)
+                registration.metric.OnRequestEnded(request, webRequest);
         }
     }
 }

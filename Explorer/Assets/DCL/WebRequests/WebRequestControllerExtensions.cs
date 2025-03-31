@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests.GenericDelete;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Utilities.Extensions;
