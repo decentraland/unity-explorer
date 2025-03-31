@@ -334,6 +334,7 @@ namespace DCL.Nametags
                 await AnimateInAsync(messageText, ct);
                 await UniTask.Delay(bubbleIdleTime + AdditionalMessageVisibilityTimeMs(messageText), cancellationToken: ct);
                 await AnimateOutAsync(ct);
+                animationState = AnimationState.IDLE;
             }
             catch (OperationCanceledException)
             {
@@ -403,6 +404,7 @@ namespace DCL.Nametags
 
             if (isPrivateMessage)
             {
+                privateMessageIcon.gameObject.SetActive(true);
                 Vector2 privateMessageFinalPosition = CalculatePrivateMessageIconPosition(
                     usernameFinalPosition.x,
                     cachedUsernameWidth,
@@ -416,6 +418,7 @@ namespace DCL.Nametags
 
                 if (showPrivateMessageRecipient)
                 {
+                    privateMessageText.gameObject.SetActive(true);
                     Vector2 privateMessageTextFinalPosition = CalculatePrivateMessageTextPosition(
                         privateMessageFinalPosition.x,
                         privateMessageIconWidth

@@ -84,6 +84,7 @@ namespace DCL.Friends.UI.FriendPanel
                     chatEventBus);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
+                friendSectionControllerConnectivity.OpenConversationClicked += CloseFriendsPanel;
             }
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
@@ -166,8 +167,11 @@ namespace DCL.Friends.UI.FriendPanel
             dclInput.UI.Close.performed -= CloseFriendsPanel;
         }
 
-        internal void CloseFriendsPanel(InputAction.CallbackContext obj) =>
+        private void CloseFriendsPanel() =>
             closeTaskCompletionSource.TrySetResult();
+
+        private void CloseFriendsPanel(InputAction.CallbackContext obj) =>
+            CloseFriendsPanel();
 
         protected override void OnViewShow()
         {

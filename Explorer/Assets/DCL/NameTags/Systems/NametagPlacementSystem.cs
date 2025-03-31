@@ -77,8 +77,8 @@ namespace DCL.Nametags
             UpdateTagQuery(World, camera, fovScaleFactor, cameraForward, cameraUp);
             AddTagForPlayerAvatarsQuery(World, camera, cameraForward, cameraUp);
             AddTagForNonPlayerAvatarsQuery(World, camera, cameraForward, cameraUp);
-            ProcessChatBubbleComponentsQuery(World);
             UpdateOwnTagQuery(World, camera, fovScaleFactor, cameraForward, cameraUp);
+            ProcessChatBubbleComponentsQuery(World);
         }
 
         [Query]
@@ -129,6 +129,8 @@ namespace DCL.Nametags
 
             nametagView.ProfileVersion = profile.Version;
 
+            // If version is different, it might be because some part of the profile was updated, but not necessarily the name, so we also check
+            // if the name is different in this case, otherwise we dont re-setup the own tag.
             if (nametagView.IsSameName(profile.ValidatedName, profile.HasClaimedName)) return;
 
             nametagView.Id = avatarShape.ID;
