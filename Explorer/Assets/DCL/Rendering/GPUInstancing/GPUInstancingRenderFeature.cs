@@ -26,7 +26,7 @@ namespace DCL.Rendering.GPUInstancing
 
             instancingRenderPass = new GPUInstancingRenderPass(instancingService, m_Settings.settings)
             {
-                renderPassEvent = RenderPassEvent.BeforeRenderingOpaques
+                renderPassEvent = RenderPassEvent.AfterRenderingOpaques
             };
         }
 
