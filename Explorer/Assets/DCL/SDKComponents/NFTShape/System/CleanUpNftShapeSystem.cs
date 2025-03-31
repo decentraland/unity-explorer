@@ -50,6 +50,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             nftLoadingComponent.Promise.TryDereference(World);
 
+            // ForgetLoading() has to be called AFTER the Dereference to avoid the "double de-referencing" crash
             if (forgetPromise)
                 nftLoadingComponent.Promise.ForgetLoading(World);
         }

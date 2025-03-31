@@ -16,14 +16,15 @@ namespace DCL.SDKComponents.AudioSources
     {
         public static void CleanUp(this ref AudioSourceComponent component, World world)
         {
-            component.ClipPromise.ForgetLoading(world);
-
             if (component.AudioSource == null) return; // loading in progress
 
             if (component.AudioSource.isPlaying)
                 component.AudioSource.Stop();
 
             component.ClipPromise.TryDereference(world);
+
+            // ForgetLoading() has to be called AFTER the Dereference to avoid the "double de-referencing" crash
+            component.ClipPromise.ForgetLoading(world);
         }
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)
