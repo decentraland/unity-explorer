@@ -99,19 +99,24 @@ namespace DCL.Profiles
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.PROFILE));
 
-                if (failedThumbnails.TryGetValue(userId, out RequestAttempts requestAttempts))
-                    if (requestAttempts.CanIncreaseCooldown())
-                        requestAttempts.IncreaseCooldown();
-                    else
-                    {
-                        unsolvableThumbnails.Add(userId);
-                        failedThumbnails.Remove(userId);
-                    }
-                else
-                    failedThumbnails[userId] = RequestAttempts.FirstAttempt();
+                HandleCooldown(userId);
 
                 return null;
             }
+        }
+
+        private void HandleCooldown(string userId)
+        {
+            if (failedThumbnails.TryGetValue(userId, out RequestAttempts requestAttempts))
+                if (requestAttempts.CanIncreaseCooldown())
+                    requestAttempts.IncreaseCooldown();
+                else
+                {
+                    unsolvableThumbnails.Add(userId);
+                    failedThumbnails.Remove(userId);
+                }
+            else
+                failedThumbnails[userId] = RequestAttempts.FirstAttempt();
         }
 
         private bool TestCooldownCondition(string userId) =>
