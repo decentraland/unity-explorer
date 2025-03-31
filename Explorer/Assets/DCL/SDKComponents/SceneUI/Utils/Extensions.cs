@@ -157,7 +157,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiInputComponent)
         {
-            uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+            if(uiInputComponent.currentOnValueChanged!=null)
+                uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
         }
     }
 }
