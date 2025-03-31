@@ -63,12 +63,52 @@ namespace DCL.Diagnostics
         private static void AddSceneDebugConsoleReportHandler(List<(ReportHandler, IReportHandler)> handlers)
         {
             var jsOnlyMatrix = new CategorySeverityMatrix();
-            var entries = new List<CategorySeverityMatrix.Entry>();
-            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Error });
-            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Exception });
-            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
+
+            var entries = GetMatrixEntriesList(
+                    new []
+                    {
+                        ReportCategory.JAVASCRIPT,
+                        ReportCategory.UNSPECIFIED,
+                        ReportCategory.PLAYER_SDK_DATA,
+                        ReportCategory.AVATAR,
+                        ReportCategory.GLTF_CONTAINER,
+                        ReportCategory.PRIMITIVE_COLLIDERS,
+                        ReportCategory.PRIMITIVE_MESHES,
+                        ReportCategory.NFT_INFO_WEB_REQUEST,
+                        ReportCategory.NFT_SHAPE_WEB_REQUEST,
+                        ReportCategory.MATERIALS,
+                        ReportCategory.ANIMATOR,
+                        ReportCategory.SCENE_UI,
+                        ReportCategory.INPUT,
+                        ReportCategory.MEDIA_STREAM,
+                        ReportCategory.CHARACTER_TRIGGER_AREA,
+                        ReportCategory.SDK_AUDIO_SOURCES,
+                        ReportCategory.TWEEN,
+                        ReportCategory.AVATAR_ATTACH,
+                        ReportCategory.SDK_CAMERA,
+                        ReportCategory.LIGHT_SOURCE,
+                    }, logType: false);
+            entries.Add(new () { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
+
             jsOnlyMatrix.entries = entries;
             handlers.Add((ReportHandler.DebugLog, new SceneDebugConsoleReportHandler(jsOnlyMatrix, false)));
+        }
+
+        private static List<CategorySeverityMatrix.Entry> GetMatrixEntriesList(string[] reportCategories, bool errorType = true, bool exceptionType = true, bool logType = true)
+        {
+            var entries = new List<CategorySeverityMatrix.Entry>();
+
+            for (var i = 0; i < reportCategories.Length; i++)
+            {
+                if (errorType)
+                    entries.Add(new () { Category = reportCategories[i], Severity = LogType.Error });
+                if(exceptionType)
+                    entries.Add(new () { Category = reportCategories[i], Severity = LogType.Exception });
+                if(logType)
+                    entries.Add(new () { Category = reportCategories[i], Severity = LogType.Log });
+            }
+
+            return entries;
         }
     }
 }
