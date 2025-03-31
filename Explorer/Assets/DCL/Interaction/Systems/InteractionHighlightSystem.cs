@@ -66,7 +66,7 @@ namespace DCL.Interaction.Systems
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
             if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
-                && World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
+                && (!highlightComponent.CurrentEntityOrNull().IsAlive(World) || World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull())))
                 highlightComponent.Disable();
 
             if (highlightComponent.ReadyForMaterial())
