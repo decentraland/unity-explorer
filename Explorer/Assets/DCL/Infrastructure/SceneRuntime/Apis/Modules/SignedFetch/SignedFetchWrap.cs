@@ -213,9 +213,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 // For example the hostname can be used to form a request to: https://{hostname}/comms/peers to check the user is currently on that parcel
                 realm = new SignatureMetadata.Realm
                 {
-                    hostname = realmData.Hostname,
+                    hostname = "https://worlds-content-server.decentraland.org/",
                     protocol = realmData.Protocol,
-                    serverName = realmData.RealmName,
+                    serverName = "boedo.dcl.eth",
                 },
                 hashPayload = hashPayload
             };
