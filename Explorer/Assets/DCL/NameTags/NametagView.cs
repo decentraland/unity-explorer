@@ -20,23 +20,26 @@ namespace DCL.Nametags
         private static bool isInitialized;
         private static float verifiedIconWidth;
         private static float privateMessageIconWidth;
-        private static Material opaqueMaterial;
-        private static Material transparentMaterial;
+        private static Material? opaqueMaterial;
+        private static Material? transparentMaterial;
         private static Vector2 claimedNameInitialPosition;
-        private static readonly Vector2 ZERO_VECTOR = Vector2.zero;
         private static Vector2 messageContentAnchoredPosition;
-
-        private int bubbleIdleTime = NametagViewConstants.DEFAULT_BUBBLE_IDLE_TIME_MS;
-        private int additionalMsPerCharacter = NametagViewConstants.DEFAULT_ADDITIONAL_MS_PER_CHARACTER;
-        private float animationInDuration = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION;
-        private float animationOutDuration = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION;
-        private float nametagMarginOffsetHeight = NametagViewConstants.DEFAULT_MARGIN_OFFSET_HEIGHT;
-        private float nametagMarginOffsetWidth = NametagViewConstants.DEFAULT_MARGIN_OFFSET_WIDTH;
-        private float singleEmojiExtraHeight = NametagViewConstants.DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT;
-        private float singleEmojiSize = NametagViewConstants.DEFAULT_SINGLE_EMOJI_SIZE;
-        private float fullOpacityMaxDistance = NametagViewConstants.DEFAULT_OPACITY_MAX_DISTANCE;
-        private float bubbleMarginOffsetHeight = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT;
-        private float bubbleMarginOffsetWidth = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_WIDTH;
+        private static int bubbleIdleTime = NametagViewConstants.DEFAULT_BUBBLE_IDLE_TIME_MS;
+        private static int additionalMsPerCharacter = NametagViewConstants.DEFAULT_ADDITIONAL_MS_PER_CHARACTER;
+        private static float animationInDuration = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION;
+        private static float animationOutDuration = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION;
+        private static float nametagMarginOffsetHeight = NametagViewConstants.DEFAULT_MARGIN_OFFSET_HEIGHT;
+        private static float nametagMarginOffsetWidth = NametagViewConstants.DEFAULT_MARGIN_OFFSET_WIDTH;
+        private static float singleEmojiExtraHeight = NametagViewConstants.DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT;
+        private static float singleEmojiSize = NametagViewConstants.DEFAULT_SINGLE_EMOJI_SIZE;
+        private static float fullOpacityMaxDistance = NametagViewConstants.DEFAULT_OPACITY_MAX_DISTANCE;
+        private static float bubbleMarginOffsetHeight = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT;
+        private static float bubbleMarginOffsetWidth = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_WIDTH;
+        private static float animationInDurationThird = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION / 3f;
+        private static float animationInDurationQuarter = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION / 4f;
+        private static float animationOutDurationHalf = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 2f;
+        private static float amAnimationOutDurationTenth = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 10f;
+        private static float bubbleMarginOffsetHeightThird = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT / 3f;
 
         [field: SerializeField] public SpriteRenderer BackgroundSprite { get; private set; }
         [field: SerializeField] internal TMP_Text usernameText { get; private set; }
@@ -132,8 +135,11 @@ namespace DCL.Nametags
 
         private void OnDestroy()
         {
-            currentSequence?.Kill();
-            currentSequence = null;
+            if (currentSequence != null)
+            {
+                currentSequence.Kill();
+                currentSequence = null;
+            }
         }
 
         public void InjectConfiguration(ChatBubbleConfigurationSO chatBubbleConfigurationSo)
@@ -150,9 +156,14 @@ namespace DCL.Nametags
             singleEmojiSize = chatBubbleConfigurationSo.singleEmojiSize;
             additionalMsPerCharacter = chatBubbleConfigurationSo.additionalMsPerCharacter;
             messageContentAnchoredPosition.y = bubbleMarginOffsetHeight / 3;
+            animationInDurationThird = animationInDuration / 3f;
+            animationInDurationQuarter = animationInDuration / 4f;
+            animationOutDurationHalf = animationOutDuration / 2f;
+            amAnimationOutDurationTenth = animationOutDuration / 10f;
+            bubbleMarginOffsetHeightThird = bubbleMarginOffsetHeight / 3f;
         }
 
-        public bool IsSameName(string username, string? walletId, bool hasClaimedName)
+        public bool IsSameName(string username, bool hasClaimedName)
         {
             string currentText = usernameText.text;
 
@@ -165,8 +176,7 @@ namespace DCL.Nametags
 
             int expectedLength = username.Length + NametagViewConstants.WALLET_ID_LENGTH;
             if (currentText.Length != expectedLength) return false;
-            if (!currentText.StartsWith(username, StringComparison.Ordinal)) return false;
-            return true;
+            return currentText.StartsWith(username, StringComparison.Ordinal);
         }
 
         public void SetUsername(string username, string? walletId, bool hasClaimedName, Color usernameColor)
@@ -264,7 +274,7 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
             this.isMention = isMention;
             this.isPrivateMessage = isPrivateMessage;
-            privateMessageIcon.gameObject.SetActive(this.isPrivateMessage);
+            privateMessageIcon.gameObject.SetActive(isPrivateMessage);
             privateMessageText.gameObject.SetActive(false);
             if (isPrivateMessage)
             {
@@ -286,15 +296,15 @@ namespace DCL.Nametags
 
         private void ResetElement()
         {
-            preferredSize = ZERO_VECTOR;
-            backgroundFinalSize = ZERO_VECTOR;
-            textContentInitialPosition = ZERO_VECTOR;
-            usernamePos = ZERO_VECTOR;
+            preferredSize = NametagViewConstants.ZERO_VECTOR;
+            backgroundFinalSize = NametagViewConstants.ZERO_VECTOR;
+            textContentInitialPosition = NametagViewConstants.ZERO_VECTOR;
+            usernamePos = NametagViewConstants.ZERO_VECTOR;
             usernameText.SetText(string.Empty);
-            usernameText.rectTransform.anchoredPosition = ZERO_VECTOR;
+            usernameText.rectTransform.anchoredPosition = NametagViewConstants.ZERO_VECTOR;
             messageContent.SetText(string.Empty);
-            BackgroundSprite.size = ZERO_VECTOR;
-            mentionBackgroundSprite.size = ZERO_VECTOR;
+            BackgroundSprite.size = NametagViewConstants.ZERO_VECTOR;
+            mentionBackgroundSprite.size = NametagViewConstants.ZERO_VECTOR;
             previousDistance = 0;
             mentionBackgroundSprite.gameObject.SetActive(false);
             isPrivateMessage = false;
@@ -358,7 +368,6 @@ namespace DCL.Nametags
             messageContent.ForceMeshUpdate();
 
             preferredSize = CalculatePreferredSize();
-
             messageContentRectTransform.sizeDelta = preferredSize;
 
             textContentInitialPosition = CalculateMessageContentPosition(preferredSize.x, preferredSize.y);
@@ -368,13 +377,13 @@ namespace DCL.Nametags
             preferredSize.y += bubbleMarginOffsetHeight;
 
             usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, usernameText.preferredWidth, bubbleMarginOffsetWidth);
-            usernameFinalPosition.y = messageContentRectTransform.sizeDelta.y + NametagViewConstants.BUBBLE_MARGIN_HEIGHT_THIRD;
+            usernameFinalPosition.y = messageContentRectTransform.sizeDelta.y + bubbleMarginOffsetHeightThird;
 
             currentSequence?.Kill();
             currentSequence = DOTween.Sequence();
 
-            currentSequence.AppendInterval(NametagViewConstants.ANIMATION_IN_DURATION_THIRD)
-                           .Append(this.messageContent.DOColor(NametagViewConstants.DEFAULT_COLOR, NametagViewConstants.ANIMATION_IN_DURATION_QUARTER));
+            currentSequence.AppendInterval(animationInDurationThird)
+                           .Append(this.messageContent.DOColor(NametagViewConstants.DEFAULT_COLOR, animationInDurationQuarter));
 
             if (isClaimedName)
             {
@@ -394,7 +403,7 @@ namespace DCL.Nametags
 
                 privateMessageFinalPosition.y = usernameFinalPosition.y;
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(privateMessageFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_COLOR, NametagViewConstants.ANIMATION_IN_DURATION_QUARTER));
+                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_COLOR, animationInDurationQuarter));
 
                 if (showPrivateMessageRecipient)
                 {
@@ -404,7 +413,7 @@ namespace DCL.Nametags
                     );
                     privateMessageTextFinalPosition.y = usernameFinalPosition.y;
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(privateMessageTextFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                                   .Join(privateMessageText.DOColor(recipientNameColor, NametagViewConstants.ANIMATION_IN_DURATION_QUARTER));
+                                   .Join(privateMessageText.DOColor(recipientNameColor, animationInDurationQuarter));
                 }
             }
 
@@ -456,29 +465,29 @@ namespace DCL.Nametags
 
             if (isClaimedName)
             {
-                currentSequence.Join(usernameText.rectTransform.DOAnchorPos(claimedNameInitialPosition, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear));
-                currentSequence.Join(verifiedIcon.DOAnchorPos(verifiedIconInitialPosition, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear));
+                currentSequence.Join(usernameText.rectTransform.DOAnchorPos(claimedNameInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
+                currentSequence.Join(verifiedIcon.DOAnchorPos(verifiedIconInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
             }
             else
-                currentSequence.Join(usernameText.rectTransform.DOAnchorPos(ZERO_VECTOR, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear));
+                currentSequence.Join(usernameText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
 
             if (isPrivateMessage)
             {
-                currentSequence.Join(privateMessageIcon.DOAnchorPos(ZERO_VECTOR, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear))
-                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.TRANSPARENT_COLOR, NametagViewConstants.ANIMATION_OUT_DURATION_TENTH));
+                currentSequence.Join(privateMessageIcon.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
+                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.TRANSPARENT_COLOR, amAnimationOutDurationTenth));
 
                 if (showPrivateMessageRecipient)
-                    currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(ZERO_VECTOR, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear))
-                                   .Join(privateMessageText.DOColor(NametagViewConstants.TRANSPARENT_COLOR, NametagViewConstants.ANIMATION_OUT_DURATION_TENTH));
+                    currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
+                                   .Join(privateMessageText.DOColor(NametagViewConstants.TRANSPARENT_COLOR, amAnimationOutDurationTenth));
             }
 
-            currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, NametagViewConstants.ANIMATION_OUT_DURATION_HALF).SetEase(Ease.Linear))
-                           .Join(messageContent.DOColor(NametagViewConstants.TRANSPARENT_COLOR, NametagViewConstants.ANIMATION_OUT_DURATION_TENTH));
+            currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
+                           .Join(messageContent.DOColor(NametagViewConstants.TRANSPARENT_COLOR, amAnimationOutDurationTenth));
 
             if (isMention)
-                currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear));
+                currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
             else
-                currentSequence.Join(DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear));
+                currentSequence.Join(DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
 
             await currentSequence.Play().ToUniTask(cancellationToken: ct);
 
