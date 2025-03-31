@@ -35,6 +35,8 @@
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
 
+        public const string IDENTITY_EXPIRATION_DURATION = "identity-expiration-duration";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

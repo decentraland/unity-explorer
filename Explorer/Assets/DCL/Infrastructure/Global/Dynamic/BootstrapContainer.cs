@@ -112,7 +112,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
 
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
+                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
 
                 if (container.enableAnalytics)
                 {
@@ -214,7 +214,8 @@ namespace Global.Dynamic
                 IWeb3IdentityCache identityCache,
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
-                IDecentralandUrlsSource decentralandUrlsSource)
+                IDecentralandUrlsSource decentralandUrlsSource,
+                IAppArgs appArgs)
         {
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
@@ -225,7 +226,8 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                decentralandUrlsSource.Environment
+                decentralandUrlsSource.Environment,
+                appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
