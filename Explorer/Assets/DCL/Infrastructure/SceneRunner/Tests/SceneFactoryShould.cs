@@ -39,7 +39,7 @@ namespace SceneRunner.Tests
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-            engineFactory = new V8EngineFactory();
+            engineFactory = new V8EngineFactory(Vector2Int.zero, null, false);
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 

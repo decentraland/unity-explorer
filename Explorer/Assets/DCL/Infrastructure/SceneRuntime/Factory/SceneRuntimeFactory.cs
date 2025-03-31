@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization;
@@ -70,7 +69,7 @@ namespace SceneRuntime.Factory
         /// </summary>
         internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
             string sourceCode,
-            IInstancePoolsProvider instancePoolsProvider,
+            string sourceCodePath,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
@@ -90,10 +89,13 @@ namespace SceneRuntime.Factory
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-            string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            
+
+            string wrappedSource = WrapInModuleCommonJs(
+                jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode,
+                out bool wasWrapped);
+
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
-                engineFactory);
+                engineFactory, sourceCodePath, wasWrapped);
         }
 
         /// <summary>
@@ -101,14 +103,16 @@ namespace SceneRuntime.Factory
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
             URLAddress path,
-            IInstancePoolsProvider instancePoolsProvider,
+            string sourceCodePath,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+
+            return await CreateBySourceCodeAsync(sourceCode, sourceCodePath, sceneShortInfo, ct,
+                instantiationBehavior);
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()
@@ -137,7 +141,7 @@ namespace SceneRuntime.Factory
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct), out bool wasWrapped));
 
         private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
         {
@@ -148,17 +152,22 @@ namespace SceneRuntime.Factory
 
         // Wrapper https://nodejs.org/api/modules.html#the-module-wrapper
         // Wrap the source code in a CommonJS module wrapper
-        internal string WrapInModuleCommonJs(string source)
+        internal string WrapInModuleCommonJs(string source, out bool wasWrapped)
         {
             const string HEAD = "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {";
             const string FOOT = "\n}).call(this, exports, require, module, __filename, __dirname); })";
 
             if (source.StartsWith(HEAD))
+            {
+                wasWrapped = false;
                 return source;
+            }
 
             // create a wrapper for the script
             source = Regex.Replace(source, @"^#!.*?\n", "");
             source = $"{HEAD}{source}{FOOT}";
+
+            wasWrapped = true;
             return source;
         }
     }

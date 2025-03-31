@@ -37,6 +37,8 @@ namespace Global.Dynamic
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
 
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
+        [SerializeField] internal string debugLocalPath;
+        [SerializeField] internal bool waitForDebugger;
 
         private bool isLocalSceneDevelopmentRealm;
 

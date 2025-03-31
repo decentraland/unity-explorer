@@ -42,7 +42,8 @@ namespace Global
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
-            IWebJsSources webJsSources)
+            IWebJsSources webJsSources,
+            RealmLaunchSettings realmLaunchSettings)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -56,7 +57,9 @@ namespace Global
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
+                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(),
+                        new V8EngineFactory(realmLaunchSettings.targetScene,
+                            realmLaunchSettings.debugLocalPath, realmLaunchSettings.waitForDebugger),
                         webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),

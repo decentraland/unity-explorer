@@ -27,7 +27,7 @@ namespace SceneRuntime.Factory.Tests
         [SetUp]
         public void SetUp()
         {
-            engineFactory = new V8EngineFactory();
+            engineFactory = new V8EngineFactory(Vector2Int.zero, null, false);
             webJsSources = new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE));
         }
 
@@ -55,7 +55,7 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
-                    instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                    "", new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.ExecuteSceneJson();
 
@@ -83,8 +83,8 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>())
                                      .Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), _ => { }));
 
-                using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
-                    instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, "cube.js",
+                    new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
@@ -104,7 +104,7 @@ namespace SceneRuntime.Factory.Tests
             var sourceCode = "console.log('Hello, world!');";
 
             // Act
-            string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
+            string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode, out _);
 
             // Assert: Check that the module compiles
             using var engine = engineFactory.Create(new SceneShortInfo());

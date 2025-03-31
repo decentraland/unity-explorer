@@ -36,7 +36,8 @@ namespace SceneRuntime.Tests
 
         private static SceneRuntimeFactory NewSceneRuntimeFactory()
         {
-            return new SceneRuntimeFactory(new IRealmData.Fake(), new V8EngineFactory(),
+            return new SceneRuntimeFactory(new IRealmData.Fake(),
+                new V8EngineFactory(Vector2Int.zero, null, false),
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
         }
 
@@ -55,7 +56,9 @@ namespace SceneRuntime.Tests
         ";
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code,
+                    "", new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineAPI(engineApi, Substitute.For<IInstancePoolsProvider>(), sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
@@ -82,7 +85,10 @@ namespace SceneRuntime.Tests
         ";
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code,
+                    "", new SceneShortInfo(), CancellationToken.None);
+
                 sceneRuntime.RegisterEngineAPI(engineApi, poolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
@@ -120,7 +126,10 @@ namespace SceneRuntime.Tests
         ";
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code,
+                    "", new SceneShortInfo(), CancellationToken.None);
+
                 sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
 
@@ -147,7 +156,9 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path,
+                    "cube.js", new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineAPI(engineApi, poolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();

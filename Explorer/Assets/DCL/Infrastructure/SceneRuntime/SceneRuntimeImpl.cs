@@ -11,6 +11,7 @@ using SceneRuntime.ModuleHub;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine.Assertions;
 using Utility;
 
@@ -34,7 +35,9 @@ namespace SceneRuntime
             (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
             SceneShortInfo sceneShortInfo,
-            V8EngineFactory engineFactory
+            V8EngineFactory engineFactory,
+            string sceneCodePath,
+            bool wasWrapped
         )
         {
             resetableSource = new JSTaskResolverResetable();
@@ -46,8 +49,14 @@ namespace SceneRuntime
 
             moduleHub.LoadAndCompileJsModules(jsModules);
 
-            // Compile Scene Code
-            V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
+            DocumentInfo sourceCodeInfo;
+
+            if (!wasWrapped && sceneShortInfo.BaseParcel == engineFactory.DebugBaseParcel)
+                sourceCodeInfo = new DocumentInfo(new Uri(Path.Combine(engineFactory.DebugLocalPath, sceneCodePath)));
+            else
+                sourceCodeInfo = new DocumentInfo(sceneCodePath);
+
+            V8Script sceneScript = engine.Compile(sourceCodeInfo, sourceCode);
 
             // Initialize init API
             // TODO: This is only needed for the LifeCycle
@@ -150,14 +159,16 @@ namespace SceneRuntime
         public ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory)
         {
             var jsArray = CreateUint8Array(memory.Length);
+
             if (!memory.IsEmpty)
                 jsArray.Write(memory, (ulong)memory.Length, 0);
+
             return jsArray;
         }
 
         public ScriptObject ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
         {
-            var js2DArray = (ScriptObject) engine.Evaluate("[]"); // create an outer array
+            var js2DArray = (ScriptObject)engine.Evaluate("[]"); // create an outer array
 
             // for every inner array create ITypedArray<byte>
             foreach (var innerArray in byteArrays)

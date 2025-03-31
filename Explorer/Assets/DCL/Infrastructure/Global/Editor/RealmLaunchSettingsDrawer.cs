@@ -152,6 +152,16 @@ namespace Global.Editor
                         position.y += singleLineHeight;
                     }
                 }
+
+                EditorGUI.PropertyField(position, parent.FindPropertyRelative(
+                    nameof(RealmLaunchSettings.debugLocalPath)));
+
+                position.y += singleLineHeight;
+
+                EditorGUI.PropertyField(position, parent.FindPropertyRelative(
+                    nameof(RealmLaunchSettings.waitForDebugger)));
+
+                position.y += singleLineHeight;
             }
 
             return position;
@@ -253,7 +263,7 @@ namespace Global.Editor
             switch (initialRealmValue)
             {
                 case InitialRealm.Localhost:
-                    var fieldToAdd = 1;
+                    var fieldToAdd = 3;
 
                     if (property.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles)).boolValue)
                     {

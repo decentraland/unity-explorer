@@ -26,6 +26,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using Global.Dynamic;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -108,7 +109,8 @@ namespace Global.Tests.PlayMode
                 ),
                 new IMessagePipesHub.Fake(),
                 Substitute.For<IRemoteMetadata>(),
-                webJsSources
+                webJsSources,
+                new RealmLaunchSettings()
             );
 
             return (staticContainer, sceneSharedContainer);
