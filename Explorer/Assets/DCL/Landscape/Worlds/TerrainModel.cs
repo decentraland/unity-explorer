@@ -23,8 +23,8 @@ namespace DCL.Landscape
 
         public int ChunkSizeInUnits; //  in [units]
 
-        private int chunkSizeInParcels; //  in [parcels]
-        private int sizeInChunks; // Number of chunks along one side of the square terrain
+        public int chunkSizeInParcels; //  in [parcels]
+        public int sizeInChunks; // Number of chunks along one side of the square terrain
 
         public TerrainModel(int parcelSize, WorldModel world, int paddingInParcels)
         {

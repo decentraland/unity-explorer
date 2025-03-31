@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.Landscape.Systems
 {
@@ -19,7 +20,10 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainShown) return;
+            if (terrainGenerator.IsTerrainShown)
+            {
+                terrainGenerator.GetTerrainForParcel().GetComponent<Collider>().enabled = true;
+            };
 
         }
     }

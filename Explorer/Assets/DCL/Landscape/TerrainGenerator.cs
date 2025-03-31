@@ -89,6 +89,22 @@ namespace DCL.Landscape
             terrains = new List<Terrain>();
         }
 
+        public Terrain GetTerrainForParcel(Vector2Int parcel)
+        {
+            // Смещение данного парселя относительно начала всех чанков:
+            int offsetX = parcel.x - terrainModel.MinParcel.x;
+            int offsetY = parcel.y - terrainModel.MinParcel.y;
+
+            // Индекс чанка в координатах "по чанкам"
+            int chunkX = offsetX / terrainModel.chunkSizeInParcels;
+            int chunkY = offsetY / terrainModel.chunkSizeInParcels;
+
+            // Глобальный индекс в массиве чанков
+            int chunkIndex = chunkX + (chunkY * terrainModel.sizeInChunks);
+
+            return terrains[chunkIndex];
+        }
+
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
             ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone)
         {
