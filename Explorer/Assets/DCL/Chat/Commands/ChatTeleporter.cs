@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -21,12 +20,13 @@ namespace DCL.Chat.Commands
         private readonly IRealmNavigator realmNavigator;
         private readonly Dictionary<string, string> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
-        private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
+        private readonly URLDomain worldDomain;
 
         public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.realmNavigator = realmNavigator;
             this.environmentValidator = environmentValidator;
+            worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer));
 
             paramUrls = new Dictionary<string, string>
             {

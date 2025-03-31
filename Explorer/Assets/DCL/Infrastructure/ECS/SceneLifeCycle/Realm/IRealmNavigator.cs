@@ -43,7 +43,6 @@ namespace ECS.SceneLifeCycle.Realm
 
     public interface IRealmNavigator
     {
-        public const string WORLDS_DOMAIN = "https://worlds-content-server.decentraland.org/world";
         public const string LOCALHOST = "http://127.0.0.1:8000";
 
         public const string GOERLI_OLD_URL = "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main";
