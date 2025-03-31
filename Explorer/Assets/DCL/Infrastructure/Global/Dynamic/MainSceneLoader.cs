@@ -2,9 +2,11 @@ using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationBlocklistGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -81,8 +83,6 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-
-
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -245,6 +245,8 @@ namespace Global.Dynamic
                     return;
                 }
 
+                await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
+
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
 
@@ -280,6 +282,17 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
+        {
+            var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
+
+            ControllerBase<BlockedScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                BlockedScreenController.CreateLazily(blockedPopupPrefab.Value.GetComponent<BlockedScreenView>(), null);
+
+            var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
+            dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
@@ -340,7 +353,6 @@ namespace Global.Dynamic
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
                 return IDiskCache<PartialLoadingState>.Null.INSTANCE;
             }
-
 
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {

@@ -26,8 +26,16 @@ namespace Utility
             new (int2.x, int2.y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 GetSceneRelativePosition(Vector3 position, Vector3 scenePosition) =>
-            position - scenePosition;
+        public static Vector3 FromGlobalToSceneRelativePosition(this Vector3 globalPosition, Vector3 sceneGlobalPosition) =>
+            globalPosition - sceneGlobalPosition;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 FromGlobalToSceneRelativePosition(this Vector3 globalPosition, Vector2Int sceneBaseParcelCoords) =>
+            globalPosition - sceneBaseParcelCoords.ParcelToPositionFlat();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 FromSceneRelativeToGlobalPosition(this Vector3 sceneRelativePosition, Vector2Int sceneBaseParcelCoords) =>
+            sceneBaseParcelCoords.ParcelToPositionFlat() + sceneRelativePosition;
 
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition, bool adaptYPositionToTerrain = false)
         {

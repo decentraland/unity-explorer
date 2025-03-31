@@ -14,6 +14,7 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
 using DCL.Nametags;
 using ECS.Abstract;
+using MVC;
 using UnityEngine;
 using static DCL.Input.Component.InputMapComponent;
 
@@ -42,6 +43,7 @@ namespace DCL.InWorldCamera.Systems
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera inWorldVirtualCamera;
         private bool wasDebugVisible;
+        private CameraMode prevCameraMode;
 
         public ToggleInWorldCameraActivitySystem(
             World world,
@@ -122,6 +124,9 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera(CameraMode? targetMode)
         {
+            if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
+                return;
+            
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
@@ -141,10 +146,15 @@ namespace DCL.InWorldCamera.Systems
             SwitchCameraInput(to: Kind.PLAYER);
 
             World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
+
+            hudController.Close();
         }
 
         private void EnableCamera()
         {
+            if(hudController.State != ControllerState.ViewHidden)
+                return;
+
             if (debugContainerBuilder?.Container != null)
             {
                 wasDebugVisible = debugContainerBuilder.IsVisible;
@@ -182,18 +192,13 @@ namespace DCL.InWorldCamera.Systems
             inWorldVirtualCamera.LookAt = null;
             followTarget.enabled = false;
 
-            float distanceToThirdPersonView =
-                Mathf.Abs(cinemachinePreset.ThirdPersonCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
-
-            float distanceToDroneCameraView =
-                Mathf.Abs(cinemachinePreset.DroneViewCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
-
-            camera.GetCameraComponent(World).Mode = targetMode ?? (distanceToDroneCameraView < distanceToThirdPersonView ? CameraMode.DroneView : CameraMode.ThirdPerson);
+            camera.GetCameraComponent(World).Mode = targetMode ?? prevCameraMode;
         }
 
         private void SwitchToInWorldCamera()
         {
             ref CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
+            prevCameraMode = cameraComponent.Mode;
 
             ref CinemachineCameraState cameraState = ref World.Get<CinemachineCameraState>(camera);
             cameraState.CurrentCamera.enabled = false;
