@@ -408,6 +408,7 @@ namespace DCL.UI.SharedSpaceManager
 
             const string SOURCE_SHORTCUT = "Shortcut";
             ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
+            // Clue: It is handled by ToggleInWorldCameraActivitySystem
         }
 #endregion
     }
