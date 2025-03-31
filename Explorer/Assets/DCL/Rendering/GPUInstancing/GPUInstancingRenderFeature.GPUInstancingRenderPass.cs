@@ -22,6 +22,8 @@ namespace DCL.Rendering.GPUInstancing
 
             private static readonly int MAT_PER_INSTANCE_BUFFER = Shader.PropertyToID("_PerInstanceBuffer");
             private static readonly int PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER = Shader.PropertyToID("_PerInstanceLookUpAndDitherBuffer");
+            private static readonly int INDIRECT_DRAWARGS_BUFFER = Shader.PropertyToID("unity_IndirectDrawArgs");
+            private static readonly int BASE_COMMAND_ID = Shader.PropertyToID("unity_BaseCommandID");
 
             private readonly int[] arrLOD = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -62,12 +64,12 @@ namespace DCL.Rendering.GPUInstancing
 
                             cmd.SetGlobalBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
                             cmd.SetGlobalBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
-                            cmd.SetGlobalBuffer("unity_IndirectDrawArgs", buffers.DrawArgs);
-                            int ForwardPass = combinedLodRenderer.RenderParamsArray.material.FindPass("ForwardLit");
+                            cmd.SetGlobalBuffer(INDIRECT_DRAWARGS_BUFFER, buffers.DrawArgs);
+                            int ForwardPass = 0;//combinedLodRenderer.RenderParamsArray.material.FindPass("ForwardLit");
 
                             for (int j = 0; j < combinedLodRenderer.CombinedMesh.subMeshCount; j++)
                             {
-                                cmd.SetGlobalInt("unity_BaseCommandID", j);
+                                cmd.SetGlobalInt(BASE_COMMAND_ID, j);
                                 cmd.DrawMeshInstancedIndirect(combinedLodRenderer.CombinedMesh, j, combinedLodRenderer.RenderParamsArray.material, ForwardPass, buffers.DrawArgs, ((i * lodCount) + j) * GraphicsBuffer.IndirectDrawIndexedArgs.size);
                             }
                         }
