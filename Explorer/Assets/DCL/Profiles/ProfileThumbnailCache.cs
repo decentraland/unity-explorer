@@ -109,7 +109,10 @@ namespace DCL.Profiles
         {
             if (failedThumbnails.TryGetValue(userId, out RequestAttempts requestAttempts))
                 if (requestAttempts.CanIncreaseCooldown())
+                {
                     requestAttempts.IncreaseCooldown();
+                    failedThumbnails[userId] = requestAttempts;
+                }
                 else
                 {
                     unsolvableThumbnails.Add(userId);
