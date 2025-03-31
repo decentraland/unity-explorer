@@ -23,7 +23,7 @@ namespace DCL.Nametags
         internal const float MESSAGE_CONTENT_FONT_SIZE = 1.3f;
         internal const float DISTANCE_THRESHOLD = 0.1f;
         internal const float MAX_BUBBLE_WIDTH = 2.5f;
-        internal const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\"Inter-Regular SDF\">";
+        internal const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\"LiberationSans SDF\">";
         internal const string WALLET_ID_CLOSING_STYLE = "</font></color>";
         internal const string RECIPIENT_NAME_START_STRING = "<color=#FFFFFF>for</color> ";
         internal static readonly Regex SINGLE_EMOJI_REGEX = new (@"^\s*\\U[0-9a-fA-F]{8}\s*$", RegexOptions.Compiled);
