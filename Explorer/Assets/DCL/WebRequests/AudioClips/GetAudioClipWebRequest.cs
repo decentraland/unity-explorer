@@ -15,6 +15,8 @@ namespace DCL.WebRequests
     {
         internal GetAudioClipWebRequest(RequestEnvelope envelope, GetAudioClipArguments args, IWebRequestController controller) : base(envelope, args, controller) { }
 
+        public override bool Http2Supported => false;
+
         public override UnityWebRequest CreateUnityWebRequest() =>
             UnityWebRequestMultimedia.GetAudioClip(Envelope.CommonArguments.URL, Args.AudioType);
 

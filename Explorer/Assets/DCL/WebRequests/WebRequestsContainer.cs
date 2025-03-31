@@ -2,13 +2,14 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics.Metrics;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using Utility.Multithreading;
 using Utility.Storage;
 
-namespace DCL.WebRequests.Analytics
+namespace DCL.WebRequests
 {
     public class WebRequestsContainer
     {
@@ -32,6 +33,7 @@ namespace DCL.WebRequests.Analytics
             IWeb3IdentityCache web3IdentityProvider,
             ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
+            WebRequestsMode webRequestsMode,
             int coreBudget,
             int sceneBudget,
             bool isTextureCompressionEnabled
@@ -49,17 +51,15 @@ namespace DCL.WebRequests.Analytics
 
             var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
 
-            IWebRequestController coreWebRequestController = new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
-                                                            .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+            IWebRequestController baseWebRequestController = new RedirectWebRequestController(webRequestsMode,
+                                                                 new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub),
+                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub),
+                                                                 textureFuseRequestHub)
                                                             .WithLog()
-                                                            .WithArtificialDelay(options)
-                                                            .WithBudget(coreBudget, coreAvailableBudget);
+                                                            .WithArtificialDelay(options);
 
-            IWebRequestController sceneWebRequestController = new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
-                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                                                             .WithLog()
-                                                             .WithArtificialDelay(options)
-                                                             .WithBudget(sceneBudget, sceneAvailableBudget);
+            IWebRequestController coreWebRequestController = baseWebRequestController.WithBudget(coreBudget, coreAvailableBudget);
+            IWebRequestController sceneWebRequestController = baseWebRequestController.WithBudget(sceneBudget, sceneAvailableBudget);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();

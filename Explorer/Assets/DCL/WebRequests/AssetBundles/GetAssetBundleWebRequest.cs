@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using NSubstitute;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,10 +10,13 @@ namespace DCL.WebRequests
     {
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        internal GetAssetBundleWebRequest(AssetBundleLoadingMutex assetBundleLoadingMutex, RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller) : base(envelope, args, controller)
+        internal GetAssetBundleWebRequest(AssetBundleLoadingMutex assetBundleLoadingMutex, RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller, bool partialDownloadEnabled) : base(envelope, args, controller)
         {
             this.assetBundleLoadingMutex = assetBundleLoadingMutex;
+            Http2Supported = partialDownloadEnabled;
         }
+
+        public override bool Http2Supported { get; }
 
         public override UnityWebRequest CreateUnityWebRequest()
         {

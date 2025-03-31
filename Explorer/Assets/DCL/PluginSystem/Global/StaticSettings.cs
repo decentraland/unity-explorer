@@ -7,6 +7,7 @@ using DCL.Roads.Settings;
 using DCL.AvatarRendering;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
+using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Profiling;
@@ -48,9 +49,9 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
+        [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
         [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
         [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
-
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>

@@ -18,6 +18,8 @@ namespace DCL.WebRequests
         public RequestEnvelope Envelope { get; }
         public TArgs Args { get; }
 
+        public virtual bool Http2Supported => true;
+
         public virtual UnityWebRequest CreateUnityWebRequest() =>
             throw new NotSupportedException($"{nameof(CreateUnityWebRequest)} is not supported by {GetType().Name}");
 

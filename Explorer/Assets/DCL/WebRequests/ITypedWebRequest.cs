@@ -20,6 +20,11 @@ namespace DCL.WebRequests
         /// </summary>
         RequestEnvelope Envelope { get; }
 
+        /// <summary>
+        ///     If Http2 is enabled then the request will be sent via <see cref="HTTPRequest" />
+        /// </summary>
+        bool Http2Supported { get; }
+
         string ArgsToString();
 
         UnityWebRequest CreateUnityWebRequest();

@@ -28,6 +28,8 @@ namespace DCL.WebRequests
             this.isTextureCompressionEnabled = isTextureCompressionEnabled;
         }
 
+        public override bool Http2Supported => false;
+
         /// <summary>
         ///     Creates the texture
         /// </summary>

@@ -44,6 +44,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.Roads.GPUInstancing;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;

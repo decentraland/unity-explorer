@@ -15,7 +15,7 @@ namespace DCL.WebRequests.HTTP2
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IRequestHub requestHub;
 
-        public Http2WebRequestController(IWeb3IdentityCache identityCache, IWebRequestsAnalyticsContainer analyticsContainer, IRequestHub requestHub)
+        public Http2WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache identityCache, IRequestHub requestHub)
         {
             this.identityCache = identityCache;
             this.analyticsContainer = analyticsContainer;
