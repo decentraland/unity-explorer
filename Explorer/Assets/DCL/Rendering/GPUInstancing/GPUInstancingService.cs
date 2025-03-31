@@ -261,9 +261,9 @@ namespace DCL.Rendering.GPUInstancing
                     ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;
                     rparams.camera = renderCamera;
                     rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
-                    //rparams.matProps = new MaterialPropertyBlock();
-                    rparams.material.SetBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
-                    rparams.material.SetBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
+                    rparams.matProps = new MaterialPropertyBlock();
+                    rparams.matProps.SetBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
+                    rparams.matProps.SetBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
                 }
             }
         }
