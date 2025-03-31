@@ -28,7 +28,8 @@ namespace DCL.CharacterMotion.Tests
         [SetUp]
         public void Setup()
         {
-            system = new TeleportCharacterSystem(world, sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>());
+            sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
+            system = new TeleportCharacterSystem(world, sceneReadinessReportQueue, true);
             characterController = new GameObject().AddComponent<CharacterController>();
             camera = new GameObject().AddComponent<Camera>();
 

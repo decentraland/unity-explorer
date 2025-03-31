@@ -24,10 +24,13 @@ namespace DCL.CharacterMotion.Systems
     {
         private const int COUNTDOWN_FRAMES = 20;
 
+        private readonly bool enableTimeout;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
-        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+        internal TeleportCharacterSystem(World world,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, bool enableTimeout) : base(world)
         {
+            this.enableTimeout = enableTimeout;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
@@ -68,7 +71,7 @@ namespace DCL.CharacterMotion.Systems
 
                 // pending cases left
 
-                if (teleportIntent.TimedOut)
+                if (enableTimeout && teleportIntent.TimedOut)
                 {
                     var exception = new TimeoutException("Teleport timed out");
                     loadReport?.SetException(exception);

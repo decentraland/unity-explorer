@@ -22,6 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly bool localSceneDevelopment;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
@@ -31,13 +32,15 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ISceneReadinessReportQueue sceneReadinessReportQueue)
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            bool localSceneDevelopment)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         public void Dispose()
@@ -69,7 +72,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
-            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
+            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, localSceneDevelopment);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
