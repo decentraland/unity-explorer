@@ -14,6 +14,7 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
 using DCL.Nametags;
 using ECS.Abstract;
+using MVC;
 using UnityEngine;
 using static DCL.Input.Component.InputMapComponent;
 
@@ -123,6 +124,9 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera(CameraMode? targetMode)
         {
+            if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
+                return;
+            
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
@@ -142,10 +146,15 @@ namespace DCL.InWorldCamera.Systems
             SwitchCameraInput(to: Kind.PLAYER);
 
             World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
+
+            hudController.Close();
         }
 
         private void EnableCamera()
         {
+            if(hudController.State != ControllerState.ViewHidden)
+                return;
+
             if (debugContainerBuilder?.Container != null)
             {
                 wasDebugVisible = debugContainerBuilder.IsVisible;
