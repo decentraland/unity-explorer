@@ -124,7 +124,8 @@ namespace DCL.Landscape
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
                 terrains.Add(
-                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial).Item1);
+                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, enableColliders: true)
+                           .Item1);
             }
 
             await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);

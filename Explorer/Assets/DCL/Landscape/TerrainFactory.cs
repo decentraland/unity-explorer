@@ -83,7 +83,7 @@ namespace DCL.Landscape
             return collider;
         }
 
-        public (Terrain, Collider) CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material)
+        public (Terrain, Collider) CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material, bool enableColliders = false)
         {
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
                                      .GetComponent<Terrain>();
@@ -102,7 +102,7 @@ namespace DCL.Landscape
             terrain.gameObject.layer = LayerMask.NameToLayer(TERRAIN_LAYER);
 
             var collider = terrain.GetComponent<Collider>();
-            collider.enabled = false;
+            collider.enabled = enableColliders;
 
             return (terrain, collider);
         }
