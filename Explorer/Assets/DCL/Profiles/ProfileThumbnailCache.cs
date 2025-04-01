@@ -47,6 +47,7 @@ namespace DCL.Profiles
         private readonly IWebRequestController webRequestController;
         private readonly Dictionary<string, Sprite> thumbnails = new ();
         private readonly Dictionary<string, RequestAttempts> failedThumbnails = new ();
+        private readonly Dictionary<string, UniTask<Sprite?>> currentTaskThumbnails = new ();
         private readonly HashSet<string> unsolvableThumbnails = new ();
 
         public ProfileThumbnailCache(IWebRequestController webRequestController)
@@ -63,7 +64,17 @@ namespace DCL.Profiles
             if (sprite != null)
                 return sprite;
 
-            return await DownloadThumbnailAsync(userId, thumbnailUrl, ct);
+            //Avoid multiple requests for the same thumbnail
+            if (currentTaskThumbnails.TryGetValue(userId, out UniTask<Sprite?> task))
+            {
+                Sprite? result = await task;
+                currentTaskThumbnails.Remove(userId);
+                return result;
+            }
+
+            UniTask<Sprite?> spriteTask = DownloadThumbnailAsync(userId, thumbnailUrl, ct);
+            currentTaskThumbnails[userId] = spriteTask;
+            return await spriteTask;
         }
 
         private async UniTask<Sprite?> DownloadThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
