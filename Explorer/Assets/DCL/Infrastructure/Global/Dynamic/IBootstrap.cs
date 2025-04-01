@@ -27,7 +27,6 @@ namespace Global.Dynamic
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
-            ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
             CancellationToken ct

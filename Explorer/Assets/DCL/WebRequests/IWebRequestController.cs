@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
 
 namespace DCL.WebRequests
@@ -13,8 +12,7 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
-                ITexturesFuse.NewDefault(),
-                false
+                true
             )
         );
 

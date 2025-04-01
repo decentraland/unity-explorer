@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiling;
+using KtxUnity;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
@@ -16,17 +17,13 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
-        private readonly ITexturesFuse texturesFuse;
         private readonly string url;
-        private readonly TextureType textureType;
-        private readonly bool isTextureCompressionEnabled;
+        private readonly bool ktxEnabled;
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest, ITexturesFuse texturesFuse, string url, TextureType textureType, bool isTextureCompressionEnabled)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url, bool ktxEnabled)
         {
             this.url = url;
-            this.textureType = textureType;
-            this.isTextureCompressionEnabled = isTextureCompressionEnabled;
-            this.texturesFuse = texturesFuse;
+            this.ktxEnabled = ktxEnabled;
             UnityWebRequest = unityWebRequest;
         }
 
@@ -38,10 +35,12 @@ namespace DCL.WebRequests
         public static CreateTextureOp CreateTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point) =>
             new (wrapMode, filterMode);
 
-        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
+        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, bool ktxEnabled)
         {
-            UnityWebRequest wr = isTextureCompressionEnabled ? UnityWebRequest.Get(commonArguments.URL)! : UnityWebRequestTexture.GetTexture(commonArguments.URL, false);
-            return new GetTextureWebRequest(wr, texturesFuse, commonArguments.URL, textureArguments.TextureType, isTextureCompressionEnabled);
+            // TODO mihak: Unhardcode this
+            var convertUrl = $"https://media-opticonverter.decentraland.zone/convert?ktx2={ktxEnabled}&fileUrl={Uri.EscapeDataString(commonArguments.URL)}";
+            UnityWebRequest wr = UnityWebRequest.Get(convertUrl);
+            return new GetTextureWebRequest(wr, convertUrl, ktxEnabled);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>
@@ -57,78 +56,60 @@ namespace DCL.WebRequests
 
             public UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                if (webRequest.isTextureCompressionEnabled)
-                    return ExecuteWithCompressionAsync(webRequest, ct);
-
-                return ExecuteNoCompressionAsync(webRequest, ct);
+                return webRequest.ktxEnabled ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
             }
 
-            private UniTask<IOwnedTexture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<IOwnedTexture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 Texture2D? texture;
 
-                if (webRequest.UnityWebRequest.downloadHandler is DownloadHandlerTexture)
-                {
-                    texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
-                }
+                if (webRequest.UnityWebRequest.downloadHandler is DownloadHandlerTexture) { texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest); }
                 else
                 {
                     // If there's no DownloadHandlerTexture the texture needs to be created from scratch with the
                     // downloaded tex data
                     var data = webRequest.UnityWebRequest.downloadHandler?.data;
+
                     if (data == null)
                         throw new Exception("Texture content is empty");
 
                     texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                    if (!texture.LoadImage(data))
-                    {
-                        throw new Exception($"Failed to load image from data: {webRequest.url}");
-                    }
+
+                    if (!texture.LoadImage(data)) { throw new Exception($"Failed to load image from data: {webRequest.url}"); }
                 }
 
                 texture.wrapMode = wrapMode;
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult((IOwnedTexture2D)new IOwnedTexture2D.Const(texture));
+                return UniTask.FromResult((IOwnedTexture2D?)new IOwnedTexture2D.Const(texture));
             }
 
-            private async UniTask<IOwnedTexture2D?> ExecuteWithCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<IOwnedTexture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                using var request = webRequest.UnityWebRequest;
-                var data = request.downloadHandler?.nativeData;
+                var ktxTexture = new KtxTexture();
 
-                if (data == null)
-                    throw new Exception("Texture content is empty");
+                using var bufferWrapped = new ManagedNativeArray(webRequest.UnityWebRequest.downloadHandler.data);
 
-                var result = await webRequest.texturesFuse
-                                             .TextureFromBytesAsync(
-                                                  AsPointer(data.Value),
-                                                  data.Value.Length,
-                                                  webRequest.textureType,
-                                                  ct
-                                              );
+                var result = await ktxTexture.LoadFromBytes(
+                    bufferWrapped.nativeArray,
+                    false,
+                    0,
+                    0,
+                    0,
+                    true
+                );
 
-                // Fallback to uncompressed texture if compression fails
-                if (result.Success == false)
-                    return await ExecuteNoCompressionAsync(webRequest, ct);
+                if (result == null)
+                    throw new Exception($"Failed to load ktx texture from data: {webRequest.url}");
 
-                var texture = result.Value.Texture;
+                var finalTex = result.texture;
 
-                texture.wrapMode = wrapMode;
-                texture.filterMode = filterMode;
-                texture.SetDebugName(webRequest.url);
+                finalTex.wrapMode = wrapMode;
+                finalTex.filterMode = filterMode;
+                finalTex.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return result.Value;
-            }
-
-            private static IntPtr AsPointer<T>(NativeArray<T>.ReadOnly readOnly) where T: struct
-            {
-                unsafe
-                {
-                    var ptr = readOnly.GetUnsafeReadOnlyPtr();
-                    return new IntPtr(ptr!);
-                }
+                return new IOwnedTexture2D.Const(finalTex);
             }
         }
     }

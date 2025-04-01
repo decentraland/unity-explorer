@@ -54,14 +54,13 @@ namespace Global.Dynamic
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
-            ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
             CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, scenesUIRoot, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 

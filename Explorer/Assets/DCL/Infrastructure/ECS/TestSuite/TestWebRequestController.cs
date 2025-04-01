@@ -14,7 +14,7 @@ namespace ECS.TestSuite
         public static readonly IWebRequestController INSTANCE = new WebRequestController(
             Substitute.For<IWebRequestsAnalyticsContainer>(),
             Substitute.For<IWeb3IdentityCache>(),
-            new RequestHub(ITexturesFuse.NewTestInstance(), false)
+            new RequestHub(false)
         );
     }
 }

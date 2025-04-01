@@ -30,11 +30,10 @@ namespace DCL.WebRequests.Analytics
 
         public static WebRequestsContainer Create(
             IWeb3IdentityCache web3IdentityProvider,
-            ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
             int coreBudget,
             int sceneBudget,
-            bool isTextureCompressionEnabled
+            bool ktxEnabled
         )
         {
             var options = new ElementBindingOptions();
@@ -56,7 +55,7 @@ namespace DCL.WebRequests.Analytics
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
-            var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
+            var textureFuseRequestHub = new RequestHub(ktxEnabled);
 
             IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)

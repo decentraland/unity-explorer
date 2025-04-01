@@ -79,7 +79,6 @@ namespace Global
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
         private IAssetsProvisioner assetsProvisioner;
-        private ITexturesFuse texturesFuse;
         public Entity PlayerEntity { get; set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
@@ -123,7 +122,6 @@ namespace Global
             partitionSettings.Dispose();
             QualityContainer.Dispose();
             Profiler.Dispose();
-            texturesFuse.Dispose();
             SceneRestrictionBusController.Dispose();
         }
 
@@ -144,7 +142,6 @@ namespace Global
             IReportsHandlingSettings reportHandlingSettings,
             IDebugContainerBuilder debugContainerBuilder,
             WebRequestsContainer webRequestsContainer,
-            ITexturesFuse texturesFuse,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -179,7 +176,6 @@ namespace Global
             container.assetsProvisioner = assetsProvisioner;
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
-            container.texturesFuse = texturesFuse;
             container.LaunchMode = launchMode;
 
             var exposedPlayerTransform = new ExposedTransform();
