@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DCL.MarketplaceCreditsAPIService
 {
@@ -95,21 +94,6 @@ namespace DCL.MarketplaceCreditsAPIService
             };
 
             return programRegistration;
-        }
-
-        internal static async UniTask<ClaimCreditsResponse> MockClaimCreditsAsync(CancellationToken ct)
-        {
-            float randomClaimedCredits = ((float)new System.Random().NextDouble() * 4) + 1;
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            ClaimCreditsResponse responseData = new ClaimCreditsResponse
-            {
-                ok = true,
-                claimedCredits = randomClaimedCredits,
-            };
-
-            return responseData;
         }
     }
 }

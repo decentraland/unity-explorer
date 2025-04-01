@@ -69,8 +69,6 @@ namespace DCL.MarketplaceCreditsAPIService
             ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                                                                       .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
 
-            //ClaimCreditsResponse claimCreditsResponseData = await MarketplaceCreditsMockedData.MockClaimCreditsAsync(ct);
-
             return claimCreditsResponseData;
         }
 
