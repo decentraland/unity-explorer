@@ -138,7 +138,8 @@ namespace Global.Dynamic
                 ct
             );
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
+            BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,

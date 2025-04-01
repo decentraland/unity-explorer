@@ -63,9 +63,7 @@ namespace DCL.SDKComponents.MediaStream
                 cachedCameraTanValue = Mathf.Tan(cameraHalfFov);
             }
             else
-            {
                 ReportHub.LogError(GetReportData(), "Missing cinemachine brain while initializing UpdateMediaPlayerPrioritizationSystem!");
-            }
         }
 
         protected override void Update(float t)
@@ -76,7 +74,6 @@ namespace DCL.SDKComponents.MediaStream
             UpdateVideoStateDependingOnPriorityQuery(World, videoPrioritizationSettings.MaximumSimultaneousVideos);
 
 #if DEBUG_VIDEO_PRIORITIES
-
             ReportHub.Log(GetReportData(), $"<color=cyan>Currently playing: {debugPlayingVideoCount}</color>");
             debugPlayingVideoCount = 0;
 
@@ -123,23 +120,23 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         [Query]
         private void UpdateVideoPriorities([Data] float cameraFov, [Data] float cameraHorizontalFov,
-                                           [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
-                                           in MediaPlayerComponent mediaPlayer,
-                                           ref VideoStateByPriorityComponent videoStateByPriority,
-                                           ref VideoTextureConsumer videoTextureConsumer)
+            [Data] Vector3 cameraWorldPosition, [Data] Quaternion cameraWorldRotation,
+            in MediaPlayerComponent mediaPlayer,
+            ref VideoStateByPriorityComponent videoStateByPriority,
+            ref VideoTextureConsumer videoTextureConsumer)
         {
-
 #if DEBUG_VIDEO_PRIORITIES
             videoStateByPriority.DebugPrioritySign.transform.position = videoTextureConsumer.BoundsMax;
             videoStateByPriority.DebugPrioritySign.material.color = Color.black;
 #endif
+
             // If the state of the video was changed manually...
-            if (videoStateByPriority.IsPlaying != mediaPlayer.MediaPlayer.Control.IsPlaying())
+            if (videoStateByPriority.IsPlaying != mediaPlayer.MediaPlayer.IsPlaying)
             {
-                if (mediaPlayer.MediaPlayer.Control.IsPlaying())
+                if (mediaPlayer.MediaPlayer.IsPlaying)
                 {
                     videoStateByPriority.WantsToPlay = true;
-                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup - (float)mediaPlayer.MediaPlayer.Control.GetCurrentTime();
+                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup - mediaPlayer.MediaPlayer.CurrentTime;
 
 #if DEBUG_VIDEO_PRIORITIES
                     ReportHub.Log(GetReportData(),$"Video: PLAYED MANUALLY: {videoStateByPriority.MediaPlayStartTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()}");
@@ -232,9 +229,7 @@ namespace DCL.SDKComponents.MediaStream
             bool mustPlay = false;
 
             if (sortedVideoPriorities.Count <= maxSimultaneousVideos)
-            {
                 mustPlay = videoStateByPriority.WantsToPlay;
-            }
             else
             {
                 int playingVideoCount = Mathf.Min(maxSimultaneousVideos, sortedVideoPriorities.Count);
@@ -256,11 +251,11 @@ namespace DCL.SDKComponents.MediaStream
                 double pauseDuration = Time.realtimeSinceStartup - videoStateByPriority.MediaPlayStartTime;
                 double seekTime = pauseDuration % mediaPlayer.Duration;
 
-                if (!mediaPlayer.MediaPlayer.Control.IsPlaying())
+                if (!mediaPlayer.MediaPlayer.IsPlaying)
                 {
                     // Videos are resumed at the current time, not at the time it was paused
-                    mediaPlayer.MediaPlayer.Control.Play();
-                    mediaPlayer.MediaPlayer.Control.Seek(seekTime);
+                    mediaPlayer.MediaPlayer.Play();
+                    mediaPlayer.MediaPlayer.TrySeek(seekTime);
                 }
 
                 videoStateByPriority.IsPlaying = true;
@@ -269,12 +264,10 @@ namespace DCL.SDKComponents.MediaStream
                 ReportHub.Log(GetReportData(),$"VIDEO RESUMED BY PRIORITY:  [{videoStateByPriority.Entity.Id}]  t: {seekTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()} -- {videoStateByPriority.MediaPlayStartTime}");
 #endif
             }
-            else if(!mustPlay && (videoStateByPriority.IsPlaying || mediaPlayer.MediaPlayer.Control.IsPlaying()))
+            else if (!mustPlay && (videoStateByPriority.IsPlaying || mediaPlayer.MediaPlayer.IsPlaying))
             {
-                if (mediaPlayer.MediaPlayer.Control.IsPlaying())
-                {
-                    mediaPlayer.MediaPlayer.Control.Pause();
-                }
+                if (mediaPlayer.MediaPlayer.IsPlaying)
+                    mediaPlayer.MediaPlayer.Pause();
 
                 videoStateByPriority.IsPlaying = false;
 
@@ -315,7 +308,6 @@ namespace DCL.SDKComponents.MediaStream
         }
 
 #if DEBUG_VIDEO_PRIORITIES
-
         private static GameObject CreateDebugPrioritySign()
         {
             GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -332,6 +324,5 @@ namespace DCL.SDKComponents.MediaStream
         }
 
 #endif
-
     }
 }
