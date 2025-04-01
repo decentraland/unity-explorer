@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             while (true)
             {
-                //We will do this analysis every two minutes
+                //We will do this analysis every two minute
                 await UniTask.Delay(TimeSpan.FromMinutes(2));
                 float now = Time.realtimeSinceStartup;
                 keysToRemove.Clear();
@@ -59,8 +59,8 @@ namespace DCL.SDKComponents.MediaStream
                 {
                     Queue<MediaPlayerInfo>? queue = kvp.Value;
 
-                    //IF the video hasnt been used in two minutes, then it will be get closed and destroyed
-                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > 120f)
+                    //IF the video hasnt been used in five minutes, then it will be get closed and destroyed
+                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > 300f)
                     {
                         MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
                         expiredPlayerInfo.mediaPlayer.CloseMedia();
