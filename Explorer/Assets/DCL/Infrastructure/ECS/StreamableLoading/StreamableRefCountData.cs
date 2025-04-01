@@ -82,10 +82,13 @@ namespace ECS.StreamableLoading
 
         public void Dereference()
         {
-            referenceCount--;
+            if (referenceCount == 0)
+            {
+                ReportHub.LogError(reportCategory, $"Reference count of {typeof(TAsset).Name} should never be negative! Dereference() aborted.");
+                return;
+            }
 
-            if (referenceCount < 0)
-                ReportHub.LogError(reportCategory, $"Reference count of {typeof(TAsset).Name} should never be negative!");
+            referenceCount--;
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
 
