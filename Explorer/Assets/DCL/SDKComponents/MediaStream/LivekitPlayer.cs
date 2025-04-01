@@ -1,5 +1,7 @@
 using DCL.Multiplayer.Connections.RoomHubs;
+using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.VideoStreaming;
 using System;
 using UnityEngine;
@@ -28,7 +30,11 @@ namespace DCL.SDKComponents.MediaStream
             switch (livekitAddress.StreamKind)
             {
                 case LivekitAddress.Kind.CURRENT_STREAM:
-                    //TODO
+                    var firstTrack = FirstAvailableTrack();
+
+                    if (firstTrack.HasValue)
+                        currentStream = room.VideoStreams.VideoStream(firstTrack.Value.identity, firstTrack.Value.sid);
+
                     break;
                 case LivekitAddress.Kind.USER_STREAM:
                     (string identity, string sid) = livekitAddress.UserStream;
@@ -38,6 +44,23 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             playerState = PlayerState.PLAYING;
+        }
+
+        private (string identity, string sid)? FirstAvailableTrack()
+        {
+            foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+            {
+                var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
+
+                if (participant == null)
+                    continue;
+
+                foreach ((string sid, TrackPublication value) in participant.Tracks)
+                    if (value.Kind is TrackKind.KindVideo)
+                        return (remoteParticipantIdentity, sid);
+            }
+
+            return null;
         }
 
         public void CloseCurrentStream()
