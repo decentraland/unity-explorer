@@ -47,7 +47,7 @@ namespace DCL.Profiles
         private readonly IWebRequestController webRequestController;
         private readonly Dictionary<string, Sprite> thumbnails = new ();
         private readonly Dictionary<string, RequestAttempts> failedThumbnails = new ();
-        private readonly Dictionary<string, UniTask<Sprite?>> currentTaskThumbnails = new ();
+        private readonly Dictionary<string, UniTask<Sprite?>> currentThumbnailTasks = new ();
         private readonly HashSet<string> unsolvableThumbnails = new ();
 
         public ProfileThumbnailCache(IWebRequestController webRequestController)
@@ -65,15 +65,15 @@ namespace DCL.Profiles
                 return sprite;
 
             //Avoid multiple requests for the same thumbnail
-            if (currentTaskThumbnails.TryGetValue(userId, out UniTask<Sprite?> task))
+            if (currentThumbnailTasks.TryGetValue(userId, out UniTask<Sprite?> thumbnailTask))
             {
-                Sprite? result = await task;
-                currentTaskThumbnails.Remove(userId);
+                Sprite? result = await thumbnailTask;
+                currentThumbnailTasks.Remove(userId);
                 return result;
             }
 
             UniTask<Sprite?> spriteTask = DownloadThumbnailAsync(userId, thumbnailUrl, ct);
-            currentTaskThumbnails[userId] = spriteTask;
+            currentThumbnailTasks[userId] = spriteTask;
             return await spriteTask;
         }
 
@@ -95,15 +95,19 @@ namespace DCL.Profiles
 
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
+
                 Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+
                 SetThumbnailIntoCache(userId, downloadedSprite);
                 failedThumbnails.Remove(userId);
+                currentThumbnailTasks.Remove(userId);
 
                 return downloadedSprite;
             }
             catch (OperationCanceledException e)
             {
+                currentThumbnailTasks.Remove(userId);
                 return null;
             }
             catch (Exception e)
@@ -111,6 +115,7 @@ namespace DCL.Profiles
                 ReportHub.LogException(e, new ReportData(ReportCategory.PROFILE));
 
                 HandleCooldown(userId);
+                currentThumbnailTasks.Remove(userId);
 
                 return null;
             }
