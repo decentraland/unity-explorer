@@ -64,6 +64,7 @@ namespace DCL.Landscape
         private Transform rootGo;
         private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
+        private int activeChunk = -1;
 
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
@@ -91,17 +92,15 @@ namespace DCL.Landscape
             terrainChunkColliders = new List<Collider>();
         }
 
-        private int activeChunk = -1;
-
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
             int offsetX = parcel.x - terrainModel.MinParcel.x;
             int offsetY = parcel.y - terrainModel.MinParcel.y;
 
-            int chunkX = offsetX / terrainModel.chunkSizeInParcels;
-            int chunkY = offsetY / terrainModel.chunkSizeInParcels;
+            int chunkX = offsetX / terrainModel.ChunkSizeInParcels;
+            int chunkY = offsetY / terrainModel.ChunkSizeInParcels;
 
-            int chunkIndex = chunkX + (chunkY * terrainModel.sizeInChunks);
+            int chunkIndex = chunkX + (chunkY * terrainModel.SizeInChunks);
 
             if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
                 return;
