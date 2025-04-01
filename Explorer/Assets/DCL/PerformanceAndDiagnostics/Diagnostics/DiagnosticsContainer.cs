@@ -87,6 +87,17 @@ namespace DCL.Diagnostics
                         ReportCategory.AVATAR_ATTACH,
                         ReportCategory.SDK_CAMERA,
                         ReportCategory.LIGHT_SOURCE,
+                        ReportCategory.REALM,
+                        ReportCategory.HIGHLIGHTS,
+                        ReportCategory.GENERIC_WEB_REQUEST,
+                        ReportCategory.TEXTURE_WEB_REQUEST,
+                        ReportCategory.AUDIO_CLIP_WEB_REQUEST,
+                        ReportCategory.TEXTURES,
+                        ReportCategory.RESTRICTED_ACTIONS,
+                        ReportCategory.SDK_OBSERVABLES,
+                        ReportCategory.LIVEKIT,
+                        ReportCategory.SCENE_FETCH_REQUEST,
+                        ReportCategory.PORTABLE_EXPERIENCE,
                     }, logType: false);
             entries.Add(new () { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
 
