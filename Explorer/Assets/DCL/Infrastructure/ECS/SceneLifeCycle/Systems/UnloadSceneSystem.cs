@@ -3,11 +3,13 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -33,6 +35,10 @@ namespace ECS.SceneLifeCycle.Systems
         {
             UnloadLoadedSceneQuery(World);
             UnloadLoadedPortableExperienceSceneQuery(World);
+
+            CleanSceneFacadeWhenLODQuery(World);
+            CleanScenePromiseWhenLODQuery(World);
+
             AbortLoadingScenesQuery(World);
         }
 
@@ -42,17 +48,47 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention)), None(typeof(PortableExperienceComponent))]
+        [All(typeof(SceneLODInfo))]
+        private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+        {
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
+            {
+                //TODO: Wait until LOD is Ready
+                //Dispose scene
+                sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
+                    sceneDefinitionComponent.Parcels);
+
+                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            }
+        }
+
+        [Query]
+        [All(typeof(SceneLODInfo))]
+        private void CleanScenePromiseWhenLOD(in Entity entity,
+            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneLoadingState sceneLoadingState)
+        {
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
+            {
+                //TODO: Wait until LOD is Ready
+                //Dispose scene
+                promise.ForgetLoading(World);
+                World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            }
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        [None(typeof(PortableExperienceComponent))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
-
             ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
-
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
-                World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
+                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
+
 
         [Query]
         [All(typeof(DeleteEntityIntention), (typeof(PortableExperienceComponent)))]
@@ -68,7 +104,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(entity);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
 
         [Query]

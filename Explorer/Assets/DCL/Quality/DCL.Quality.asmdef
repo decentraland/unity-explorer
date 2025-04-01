@@ -2,6 +2,7 @@
     "name": "DCL.Quality",
     "rootNamespace": "",
     "references": [
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "GUID:15fc0a57446b3144c949da3e2b9737a9",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
         "GUID:df380645f10b7bc4b97d4f5eb6303d95",
