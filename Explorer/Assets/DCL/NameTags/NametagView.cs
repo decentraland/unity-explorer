@@ -400,8 +400,7 @@ namespace DCL.Nametags
             currentSequence?.Kill();
             currentSequence = DOTween.Sequence();
 
-            currentSequence.AppendInterval(animationInDurationThird)
-                           .Append(this.messageContent.DOColor(currentSpritesColor, animationInDurationQuarter));
+            currentSequence.AppendInterval(animationInDurationThird);
 
             if (isClaimedName)
             {
@@ -438,7 +437,9 @@ namespace DCL.Nametags
             }
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                           .Join(this.messageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve));
+                           .Join(this.messageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
+                           .Join(this.messageContent.DOColor(currentSpritesColor, animationInDurationQuarter));
+
 
             if (isMention)
                 currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve));
