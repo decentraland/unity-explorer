@@ -21,10 +21,22 @@ namespace DCL.SDKComponents.MediaStream
             room = roomHub.StreamingRoom();
         }
 
-        public void OpenMedia(string identity, string sid)
+        public void OpenMedia(LivekitAddress livekitAddress)
         {
             CloseCurrentStream();
-            currentStream = room.VideoStreams.VideoStream(identity, sid);
+
+            switch (livekitAddress.StreamKind)
+            {
+                case LivekitAddress.Kind.CURRENT_STREAM:
+                    //TODO
+                    break;
+                case LivekitAddress.Kind.USER_STREAM:
+                    (string identity, string sid) = livekitAddress.UserStream;
+                    currentStream = room.VideoStreams.VideoStream(identity, sid);
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+
             playerState = PlayerState.PLAYING;
         }
 

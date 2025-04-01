@@ -13,9 +13,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public readonly Kind MediaKind;
         private readonly string url;
-
-        private readonly string identity;
-        private readonly string sid;
+        private readonly LivekitAddress livekitAddress;
 
         public string Url
         {
@@ -28,57 +26,54 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        public (string identity, string sid) Livekit
+        public LivekitAddress Livekit
         {
             get
             {
                 if (MediaKind is not Kind.LIVEKIT)
                     throw new Exception("This MediaAddress is not a LIVEKIT");
 
-                return (identity, sid);
+                return Livekit;
             }
         }
 
         public bool IsEmpty => MediaKind switch
                                {
                                    Kind.URL => string.IsNullOrEmpty(url),
-                                   Kind.LIVEKIT => string.IsNullOrEmpty(identity) || string.IsNullOrEmpty(sid),
+                                   Kind.LIVEKIT => livekitAddress.IsEmpty,
                                    _ => throw new ArgumentOutOfRangeException()
                                };
 
-        private MediaAddress(Kind mediaKind, string url, string identity, string sid)
+        private MediaAddress(Kind mediaKind, string url, LivekitAddress livekitAddress)
         {
             MediaKind = mediaKind;
             this.url = url;
-            this.identity = identity;
-            this.sid = sid;
+            this.livekitAddress = livekitAddress;
         }
 
         public static MediaAddress New(string rawAddress)
         {
             if (rawAddress.IsLivekitAddress())
             {
-                (string identity, string sid) = rawAddress.DeconstructLivekitAddress();
-                return new MediaAddress(Kind.LIVEKIT, string.Empty, identity, sid);
+                var livekitAddress = LivekitAddress.New(rawAddress);
+                return new MediaAddress(Kind.LIVEKIT, string.Empty, livekitAddress);
             }
 
-            return new MediaAddress(Kind.URL, rawAddress, string.Empty, string.Empty);
+            return new MediaAddress(Kind.URL, rawAddress, LivekitAddress.EMPTY);
         }
 
         public override string ToString() =>
-            MediaKind is Kind.URL ? Url : identity.ToLivekitAddress(sid);
+            MediaKind is Kind.URL ? Url : livekitAddress.ToString();
 
         public bool Equals(MediaAddress other) =>
             MediaKind == other.MediaKind
             && url == other.url
-            && identity == other.identity
-            && sid == other.sid;
+            && livekitAddress == other.livekitAddress;
 
         public static bool operator ==(MediaAddress left, MediaAddress right) =>
             left.MediaKind == right.MediaKind
             && left.url == right.url
-            && left.identity == right.identity
-            && left.sid == right.sid;
+            && left.livekitAddress == right.livekitAddress;
 
         public static bool operator !=(MediaAddress left, MediaAddress right) =>
             !(left == right);
@@ -87,6 +82,6 @@ namespace DCL.SDKComponents.MediaStream
             obj is MediaAddress other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine((int)MediaKind, url, identity, sid);
+            HashCode.Combine((int)MediaKind, url, livekitAddress.GetHashCode());
     }
 }

@@ -1,5 +1,6 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
+using LiveKit.Rooms.TrackPublications;
 using Microsoft.ClearScript.V8.SplitProxy;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -59,6 +60,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 writer.WriteStartArray();
 
                 var participants = roomHub.StreamingRoom().Participants;
+                (string identity, TrackPublication publication)? asCurrent = null;
 
                 foreach (string remoteParticipantIdentity in participants.RemoteParticipantIdentities())
                 {
@@ -69,7 +71,15 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                     foreach (var track in participant.Tracks.Values)
                         if (track.Kind == TrackKind.KindVideo)
+                        {
                             GetActiveVideoStreamsResponse.WriteTo(writer, remoteParticipantIdentity, track);
+
+                            if (asCurrent == null)
+                            {
+                                asCurrent = (remoteParticipantIdentity, track);
+                                GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer, remoteParticipantIdentity, track);
+                            }
+                        }
                 }
 
                 writer.WriteEndArray();

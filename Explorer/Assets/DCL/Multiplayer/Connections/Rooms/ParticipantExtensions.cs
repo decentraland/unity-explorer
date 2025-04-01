@@ -6,6 +6,11 @@ namespace DCL.Multiplayer.Connections.Rooms
 {
     public static class ParticipantExtensions
     {
+        /// <summary>
+        /// Contract predefined value
+        /// </summary>
+        public const string LIVEKIT_CURRENT_STREAM = "livekit-video://current-stream";
+
         public static string ReadableString(this Participant participant) =>
             $"Participant {participant.Name} - {participant.Sid} - {participant.Identity} - {participant.Metadata} - {participant.Speaking} - {participant.AudioLevel} - {participant.ConnectionQuality}";
 

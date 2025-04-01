@@ -211,7 +211,7 @@ namespace DCL.SDKComponents.MediaStream
                     break;
                 case MediaAddress.Kind.LIVEKIT:
                     var livekitAddress = mediaAddress.Livekit;
-                    livekitMediaPlayer!.OpenMedia(livekitAddress.identity!, livekitAddress.sid!);
+                    livekitMediaPlayer!.OpenMedia(livekitAddress);
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
