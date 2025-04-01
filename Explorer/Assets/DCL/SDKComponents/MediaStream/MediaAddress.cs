@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.MediaStream
                 if (MediaKind is not Kind.LIVEKIT)
                     throw new Exception("This MediaAddress is not a LIVEKIT");
 
-                return Livekit;
+                return livekitAddress;
             }
         }
 
