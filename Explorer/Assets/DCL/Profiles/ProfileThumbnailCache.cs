@@ -83,6 +83,7 @@ namespace DCL.Profiles
 
             if (unsolvableThumbnails.Contains(userId) || !TestCooldownCondition(userId)) return null;
 
+            Sprite? result = null;
             try
             {
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
@@ -96,29 +97,22 @@ namespace DCL.Profiles
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
 
-                Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                result = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
-                SetThumbnailIntoCache(userId, downloadedSprite);
+                SetThumbnailIntoCache(userId, result);
                 failedThumbnails.Remove(userId);
-                currentThumbnailTasks.Remove(userId);
-
-                return downloadedSprite;
             }
-            catch (OperationCanceledException e)
-            {
-                currentThumbnailTasks.Remove(userId);
-                return null;
-            }
+            catch (OperationCanceledException){}
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.PROFILE));
 
                 HandleCooldown(userId);
-                currentThumbnailTasks.Remove(userId);
-
-                return null;
             }
+
+            currentThumbnailTasks.Remove(userId);
+            return result;
         }
 
         private void HandleCooldown(string userId)
