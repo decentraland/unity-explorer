@@ -825,7 +825,8 @@ namespace Global.Dynamic
                     viewDependencies,
                     staticContainer.GPUInstancingService,
                     exposedGlobalDataContainer.ExposedCameraData,
-                    sharedSpaceManager));
+                    sharedSpaceManager,
+                    identityCache));
 
             if (includeFriends)
             {
