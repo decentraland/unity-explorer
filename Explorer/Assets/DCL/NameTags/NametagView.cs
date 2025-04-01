@@ -86,8 +86,11 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
-        private Color spritesColor = new (1, 1, 1,1 );
-        private Color recipientNameColor;
+        private Color currentSpritesColor = new (1, 1, 1,1 );
+        private Color currentBubbleTailSpriteColor;
+        private Color currentRecipientNameColor;
+        private Color currentUsernameColor;
+
         private float cachedUsernameWidth;
 
         public float NameTagAlpha { private set; get; }
@@ -201,6 +204,7 @@ namespace DCL.Nametags
             privateMessageIcon.gameObject.SetActive(false);
             privateMessageText.gameObject.SetActive(false);
 
+            this.currentUsernameColor = usernameColor;
             usernameText.color = usernameColor;
             usernameText.SetText(BuildName(username, walletId, hasClaimedName));
             usernameText.rectTransform.sizeDelta = new Vector2(this.usernameText.preferredWidth, NametagViewConstants.DEFAULT_HEIGHT);
@@ -250,31 +254,27 @@ namespace DCL.Nametags
 
             previousDistance = distance;
             NameTagAlpha = alpha;
-            bool shouldApplyAlpha = distance > fullOpacityMaxDistance;
-            float finalAlpha = shouldApplyAlpha ? NameTagAlpha : 1f;
 
-            // Update text colors while preserving original colors
-            Color originalUsernameColor = usernameText.color;
-            Color originalMessageColor = messageContent.color;
-            Color originalPrivateMessageColor = privateMessageText.color;
+            // Update name text colors (as they got their own colors)
+            currentRecipientNameColor.a = NameTagAlpha;
+            currentUsernameColor.a = NameTagAlpha;
+            usernameText.color = currentUsernameColor;
+            privateMessageText.color = currentRecipientNameColor;
 
-            originalUsernameColor.a = finalAlpha;
-            originalMessageColor.a = finalAlpha;
-            originalPrivateMessageColor.a = finalAlpha;
+            // Update the bubble tail sprite color as it changes depending on mention state
+            currentBubbleTailSpriteColor = bubbleTailSprite.color;
+            currentBubbleTailSpriteColor.a = NameTagAlpha;
+            bubbleTailSprite.color = currentBubbleTailSpriteColor;
 
-            messageContent.color = originalMessageColor;
-            usernameText.color = originalUsernameColor;
-            privateMessageText.color = originalPrivateMessageColor;
+            // Update the rest of the sprites and text that share the same color
+            currentSpritesColor.a = NameTagAlpha;
+            messageContent.color = currentSpritesColor;
+            BackgroundSprite.color = currentSpritesColor;
+            mentionBackgroundSprite.color = currentSpritesColor;
+            verifiedIconRenderer.color = currentSpritesColor;
+            privateMessageIconRenderer.color = currentSpritesColor;
 
-            spritesColor.a = finalAlpha;
-            BackgroundSprite.color = spritesColor;
-            mentionBackgroundSprite.color = spritesColor;
-            bubbleTailSprite.color = spritesColor;
-            verifiedIconRenderer.color = spritesColor;
-            privateMessageIconRenderer.color = spritesColor;
-
-            // Only update material state when transparency state changes
-            UpdateMaterialState(finalAlpha < 1f);
+            UpdateMaterialState(NameTagAlpha < 1f);
         }
 
         public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor)
@@ -287,12 +287,13 @@ namespace DCL.Nametags
             privateMessageText.gameObject.SetActive(false);
             if (isPrivateMessage)
             {
+                privateMessageIconRenderer.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
                 showPrivateMessageRecipient = isOwnMessage;
                 privateMessageText.gameObject.SetActive(showPrivateMessageRecipient);
                 if (showPrivateMessageRecipient)
                 {
                     string recipientName = BuildRecipientName(recipientValidatedName, recipientWalletId, string.IsNullOrEmpty(recipientWalletId));
-                    this.recipientNameColor = recipientNameColor;
+                    this.currentRecipientNameColor = recipientNameColor;
                     privateMessageText.SetText(recipientName);
                     recipientNameColor.a = 0;
                     privateMessageText.color = recipientNameColor;
@@ -368,11 +369,18 @@ namespace DCL.Nametags
             animationState = AnimationState.ANIMATING;
             messageContent.gameObject.SetActive(true);
             bubbleTailSprite.gameObject.SetActive(true);
-            bubbleTailSprite.color = isMention ? NametagViewConstants.MENTIONED_BUBBLE_TAIL_COLOR : NametagViewConstants.NORMAL_BUBBLE_TAIL_COLOR;
+
+            currentBubbleTailSpriteColor = isMention ? NametagViewConstants.MENTIONED_BUBBLE_TAIL_COLOR : NametagViewConstants.NORMAL_BUBBLE_TAIL_COLOR;
+            currentBubbleTailSpriteColor.a = NameTagAlpha;
+            bubbleTailSprite.color = currentBubbleTailSpriteColor;
+
             BackgroundSprite.gameObject.SetActive(!isMention);
             mentionBackgroundSprite.gameObject.SetActive(isMention);
-            BackgroundSprite.color = NametagViewConstants.DEFAULT_OPAQUE_COLOR;
 
+            BackgroundSprite.color = currentSpritesColor;
+            mentionBackgroundSprite.color = currentSpritesColor;
+
+            messageContent.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
             messageContent.SetText(messageText);
             SetHeightAndTextStyle(messageText);
             messageContent.ForceMeshUpdate();
@@ -393,7 +401,7 @@ namespace DCL.Nametags
             currentSequence = DOTween.Sequence();
 
             currentSequence.AppendInterval(animationInDurationThird)
-                           .Append(this.messageContent.DOColor(NametagViewConstants.DEFAULT_OPAQUE_COLOR, animationInDurationQuarter));
+                           .Append(this.messageContent.DOColor(currentSpritesColor, animationInDurationQuarter));
 
             if (isClaimedName)
             {
@@ -414,7 +422,7 @@ namespace DCL.Nametags
 
                 privateMessageFinalPosition.y = usernameFinalPosition.y;
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(privateMessageFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_OPAQUE_COLOR, animationInDurationQuarter));
+                               .Join(privateMessageIconRenderer.DOColor(currentSpritesColor, animationInDurationQuarter));
 
                 if (showPrivateMessageRecipient)
                 {
@@ -425,7 +433,7 @@ namespace DCL.Nametags
                     );
                     privateMessageTextFinalPosition.y = usernameFinalPosition.y;
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(privateMessageTextFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                                   .Join(privateMessageText.DOColor(recipientNameColor, animationInDurationQuarter));
+                                   .Join(privateMessageText.DOColor(currentRecipientNameColor, animationInDurationQuarter));
                 }
             }
 
