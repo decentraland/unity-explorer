@@ -73,10 +73,7 @@ namespace DCL.SDKComponents.NFTShape.System
 
             changedNftShapes.Add(entity, nftShapeRendererComponent);
             loadingComponent.Promise.TryDereference(World);
-
-            // ForgetLoading() has to be called AFTER the Dereference to avoid the "double de-referencing" crash
             loadingComponent.Promise.ForgetLoading(World);
-
             World.Remove<NFTLoadingComponent>(entity);
 
         }
