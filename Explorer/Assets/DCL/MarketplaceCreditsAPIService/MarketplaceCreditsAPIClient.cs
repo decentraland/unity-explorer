@@ -27,7 +27,7 @@ namespace DCL.MarketplaceCreditsAPIService
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
             // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Newtonsoft);
+            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
             CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(ct);
 
@@ -56,7 +56,6 @@ namespace DCL.MarketplaceCreditsAPIService
             }
             finally
             {
-                Debug.Log("SANTI LOG --> downloadHandler DISPOSED!!");
                 downloadHandler?.Dispose();
             }
         }
@@ -64,10 +63,11 @@ namespace DCL.MarketplaceCreditsAPIService
         public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(float captchaValue, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/captcha";
-            var jsonBody = $"{{\"x\":{captchaValue}}}";
+            var formattedCaptchaValue = captchaValue.ToString("F2");
+            var jsonBody = $"{{\"x\":{formattedCaptchaValue}}}";
 
             ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, jsonBody, ct)
-                                                                                      .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Newtonsoft);
+                                                                                      .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
 
             //ClaimCreditsResponse claimCreditsResponseData = await MarketplaceCreditsMockedData.MockClaimCreditsAsync(ct);
 
@@ -89,7 +89,7 @@ namespace DCL.MarketplaceCreditsAPIService
             var url = $"{emailSubscriptionsBaseUrl}/subscription";
 
             EmailSubscriptionInfoResponse emailSubscriptionInfoResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                    .CreateFromJson<EmailSubscriptionInfoResponse>(WRJsonParser.Newtonsoft);
+                                                                                                    .CreateFromJson<EmailSubscriptionInfoResponse>(WRJsonParser.Unity);
 
             return emailSubscriptionInfoResponse;
         }
