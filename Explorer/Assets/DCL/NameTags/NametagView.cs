@@ -9,6 +9,7 @@ using Utility;
 using Unity.Mathematics;
 using Unity.Burst;
 using Unity.Collections;
+using UnityEngine.Rendering;
 
 namespace DCL.Nametags
 {
@@ -19,6 +20,8 @@ namespace DCL.Nametags
         private static bool isInitialized;
         private static float verifiedIconWidth;
         private static float privateMessageIconWidth;
+        private static Material? opaqueMaterial;
+        private static Material? transparentMaterial;
         private static Vector2 claimedNameInitialPosition;
         private static Vector2 messageContentAnchoredPosition;
 
@@ -72,6 +75,7 @@ namespace DCL.Nametags
         private bool showPrivateMessageRecipient;
 
         private float previousDistance;
+        private Material sharedMaterial;
         private float additionalHeight;
         private Vector2 preferredSize;
         private Vector2 textContentInitialPosition;
@@ -109,11 +113,30 @@ namespace DCL.Nametags
 
             claimedNameInitialPosition = new Vector2(-verifiedIconWidth / 2, 0);
             messageContentAnchoredPosition = new Vector2(0, bubbleMarginOffsetHeight / 3);
+            opaqueMaterial = new Material(BackgroundSprite.sharedMaterial);
+            transparentMaterial = new Material(BackgroundSprite.sharedMaterial);
+
+            opaqueMaterial.SetInt(NametagViewConstants.SURFACE_PROPERTY, 0); // Opaque
+            opaqueMaterial.SetInt(NametagViewConstants.SRC_BLEND_PROPERTY, (int)BlendMode.One);
+            opaqueMaterial.SetInt(NametagViewConstants.DST_BLEND_PROPERTY, (int)BlendMode.Zero);
+            opaqueMaterial.SetInt(NametagViewConstants.Z_WRITE_PROPERTY, 1);
+
+            transparentMaterial.SetInt(NametagViewConstants.SURFACE_PROPERTY, 1); // Transparent
+            transparentMaterial.SetInt(NametagViewConstants.SRC_BLEND_PROPERTY, (int)BlendMode.SrcAlpha);
+            transparentMaterial.SetInt(NametagViewConstants.DST_BLEND_PROPERTY, (int)BlendMode.OneMinusSrcAlpha);
+            transparentMaterial.SetInt(NametagViewConstants.Z_WRITE_PROPERTY, 0);
+
+            sharedMaterial = opaqueMaterial;
+            BackgroundSprite.sharedMaterial = sharedMaterial;
+            mentionBackgroundSprite.sharedMaterial = sharedMaterial;
+            bubbleTailSprite.sharedMaterial = sharedMaterial;
+            verifiedIconRenderer.sharedMaterial = sharedMaterial;
         }
 
         private void OnEnable()
         {
             isTransparent = false;
+            UpdateMaterialState(false);
         }
 
         private void OnDestroy()
@@ -249,6 +272,9 @@ namespace DCL.Nametags
             bubbleTailSprite.color = spritesColor;
             verifiedIconRenderer.color = spritesColor;
             privateMessageIconRenderer.color = spritesColor;
+
+            // Only update material state when transparency state changes
+            UpdateMaterialState(finalAlpha < 1f);
         }
 
         public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor)
@@ -499,6 +525,15 @@ namespace DCL.Nametags
             preferredSize.x = width;
             preferredSize.y = height;
             return preferredSize;
+        }
+
+        private void UpdateMaterialState(bool transparent)
+        {
+            if (isTransparent == transparent)
+                return;
+
+            isTransparent = transparent;
+            sharedMaterial = transparent ? transparentMaterial : opaqueMaterial;
         }
 
         [BurstCompile]
