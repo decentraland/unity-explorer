@@ -13,14 +13,16 @@ jobs:
         with:
           ref: dev
           
-      - name: Get current date
-        id: get_date
-        run: echo "current_date=$(date +"%d-%m-%Y")" >> $GITHUB_ENV
+      - name: Get release date and branch name
+        run: |
+          RELEASE_DATE=$(date +'%Y-%m-%d')
+          echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
+          echo "BRANCH_NAME=release/$RELEASE_DATE" >> $GITHUB_ENV
 
       - name: Create or update branch
         run: |
-          git checkout -B release/release-${{ env.current_date }}
-          git push --force --set-upstream origin release/release-${{ env.current_date }}
+          git checkout -B $BRANCH_NAME
+          git push --force --set-upstream origin $BRANCH_NAME
 
       - name: Create pull request using GitHub CLI
         env:
@@ -28,7 +30,7 @@ jobs:
         run: |
           gh pr create \
             --base main \
-            --head release/release-${{ env.current_date }} \
-            --title "release: ${{ env.current_date }}" \
+            --head $BRANCH_NAME \
+            --title "release: $RELEASE_DATE" \
             --body ":rocket: Automated release PR" \
-            --label release,auto-pr \
+            --label release,auto-pr

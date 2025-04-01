@@ -6,17 +6,18 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -35,7 +36,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
-        private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoomHub roomHub;
@@ -44,6 +44,8 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
         private ChatStorage chatStorage;
         private ChatMessageFactory chatMessageFactory;
 
@@ -57,7 +59,6 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             MainUIView mainUIView,
             IInputBlock inputBlock,
-            IChatLifecycleBusController chatLifecycleBusController,
             Arch.Core.World world,
             Entity playerEntity,
             ViewDependencies viewDependencies,
@@ -68,6 +69,8 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus,
+            ISharedSpaceManager sharedSpaceManager,
             ChatMessageFactory chatMessageFactory)
         {
             this.mvcManager = mvcManager;
@@ -85,10 +88,11 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.loadingStatus = loadingStatus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
-            this.chatLifecycleBusController = chatLifecycleBusController;
             this.roomHub = roomHub;
+            this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
         }
 
@@ -119,7 +123,6 @@ namespace DCL.PluginSystem.Global
                 nametagsData,
                 world,
                 playerEntity,
-                chatLifecycleBusController,
                 inputBlock,
                 viewDependencies,
                 chatCommandsBus,
@@ -129,8 +132,11 @@ namespace DCL.PluginSystem.Global
                 profileCache,
                 chatEventBus,
                 web3IdentityCache,
+                loadingStatus,
                 chatStorage
             );
+
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 
             mvcManager.RegisterController(chatController);
         }

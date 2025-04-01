@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.Web3;
 using MVC;
@@ -187,6 +188,7 @@ namespace DCL.Chat
         private bool isChatContextMenuOpen;
         private CancellationTokenSource popupCts;
         private bool pointerExit;
+        private ILoadingStatus loadingStatus;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -333,11 +335,21 @@ namespace DCL.Chat
             isMemberListCountDirty = false;
         }
 
+
         public void Dispose()
         {
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
+
+            loadingStatus.CurrentStage.OnUpdate -= SetInputFieldInteractable;
+            memberListView.VisibilityChanged -= OnMemberListViewVisibilityChanged;
+            chatInputBox.InputBoxSelectionChanged -= OnInputBoxSelectionChanged;
+            chatInputBox.EmojiSelectionVisibilityChanged -= OnEmojiSelectionVisibilityChanged;
+            chatInputBox.InputChanged -= OnInputChanged;
+            chatInputBox.InputSubmitted -= OnInputSubmitted;
+
+            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -387,10 +399,11 @@ namespace DCL.Chat
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             bool areChatBubblesVisible,
             ChatAudioSettingsAsset chatAudioSettings,
-            GetParticipantProfilesDelegate getParticipantProfilesDelegate
-        )
+            GetParticipantProfilesDelegate getParticipantProfilesDelegate,
+            ILoadingStatus loadingStatus)
         {
             channels = chatChannels;
+
             chatTitleBar.Initialize(areChatBubblesVisible);
             chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
@@ -398,6 +411,9 @@ namespace DCL.Chat
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ChatBubblesVisibilityChanged += OnToggleChatBubblesValueChanged;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
+
+            this.loadingStatus = loadingStatus;
+            loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
 
             chatMessageViewer.Initialize();
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
@@ -420,6 +436,19 @@ namespace DCL.Chat
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
                 AddConversation(channelPair.Value);
+        }
+
+        private void SetInputFieldInteractable(LoadingStatus.LoadingStage status)
+        {
+            if(status == LoadingStatus.LoadingStage.Completed)
+                chatInputBox.EnableInputBoxSubmissions();
+            else
+                chatInputBox.DisableInputBoxSubmissions();
+        }
+
+        private void OnScrollToEndButtonClicked()
+        {
+            chatMessageViewer.ShowLastMessage(true);
         }
 
         /// <summary>
@@ -780,11 +809,6 @@ namespace DCL.Chat
         {
             if (memberListView.IsVisible)
                 OnMemberListClosingButtonClicked();
-        }
-
-        private void OnScrollToEndButtonClicked()
-        {
-            chatMessageViewer.ShowLastMessage(true);
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)

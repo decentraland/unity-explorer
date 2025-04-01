@@ -1,6 +1,7 @@
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.DebugUtilities;
+using DCL.RealmNavigation;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
@@ -31,8 +32,8 @@ namespace DCL.Chat.MessageBus
             return messagesBus;
         }
 
-        public static IChatMessagesBus WithCommands(this IChatMessagesBus messagesBus, IReadOnlyList<IChatCommand> commands) =>
-            new CommandsHandleChatMessageBus(messagesBus, commands);
+        public static IChatMessagesBus WithCommands(this IChatMessagesBus messagesBus, IReadOnlyList<IChatCommand> commands, ILoadingStatus loadingStatus) =>
+            new CommandsHandleChatMessageBus(messagesBus, commands, loadingStatus);
 
         public static IChatMessagesBus WithIgnoreSymbols(this IChatMessagesBus messagesBus) =>
             new IgnoreWithSymbolsChatMessageBus(messagesBus);

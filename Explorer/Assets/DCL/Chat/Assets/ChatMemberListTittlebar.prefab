@@ -138,7 +138,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.6}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.98039216}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -457,16 +457,20 @@ PrefabInstance:
     m_TransformParent: {fileID: 1769859218446921337}
     m_Modifications:
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: m_TargetGraphic
+      value: 
+      objectReference: {fileID: 350483544216629445}
+    - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_NormalColor.b
-      value: 0
+      value: 0.09411765
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_NormalColor.g
-      value: 0
+      value: 0.08235294
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_NormalColor.r
-      value: 0
+      value: 0.08627451
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_PressedColor.b
@@ -674,6 +678,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
   m_PrefabInstance: {fileID: 2945168134676797221}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &350483544216629445 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3171233690257926112, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+  m_PrefabInstance: {fileID: 2945168134676797221}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963321004403268451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &963321004403268451 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2702495720024624198, guid: 83437f351686bca419378abea4d2ed07, type: 3}
@@ -903,6 +918,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChatTitleBarCloseButton
       objectReference: {fileID: 0}
+    - target: {fileID: 1479259760242829374, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+      propertyPath: m_TargetGraphic
+      value: 
+      objectReference: {fileID: 5908644534169925996}
+    - target: {fileID: 1479259760242829374, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+      propertyPath: m_Colors.m_NormalColor.b
+      value: 0.09411765
+      objectReference: {fileID: 0}
+    - target: {fileID: 1479259760242829374, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+      propertyPath: m_Colors.m_NormalColor.g
+      value: 0.08235294
+      objectReference: {fileID: 0}
+    - target: {fileID: 1479259760242829374, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+      propertyPath: m_Colors.m_NormalColor.r
+      value: 0.08627451
+      objectReference: {fileID: 0}
     - target: {fileID: 5407499520862043377, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -988,6 +1019,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+--- !u!114 &5908644534169925996 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7948083753892530320, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+  m_PrefabInstance: {fileID: 4590009104685150716}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &8410948238978485517 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5407499520862043377, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}

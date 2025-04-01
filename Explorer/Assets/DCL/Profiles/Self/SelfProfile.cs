@@ -71,7 +71,9 @@ namespace DCL.Profiles.Self
                 for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
 
-            OwnProfile = profile;
+            if (OwnProfile == null || profile.Version > OwnProfile.Version)
+                OwnProfile = profile;
+
             return profile;
         }
 
@@ -117,6 +119,23 @@ namespace DCL.Profiles.Self
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
+        public async UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct)
+        {
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
+            Profile newProfile = profileBuilder.From(profile)
+                                               .WithVersion(profile!.Version + 1)
+                                               .Build();
+
+            newProfile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
+
+            await profileRepository.SetAsync(newProfile, true, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+        }
+
         public async UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct)
         {
             Profile? profile = await ProfileAsync(ct);
@@ -133,6 +152,7 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
 
             await profileRepository.SetAsync(newProfile, publish: true, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);

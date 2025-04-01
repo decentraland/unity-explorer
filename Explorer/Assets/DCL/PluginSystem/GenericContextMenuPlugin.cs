@@ -54,7 +54,6 @@ namespace DCL.PluginSystem
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
                 new ControlsPoolManager(viewDependencies, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab));
-
             mvcManager.RegisterController(genericContextMenuController);
         }
 

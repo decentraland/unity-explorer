@@ -47,6 +47,8 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
+  <ChatSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField: []
   references:
     version: 2
     RefIds:

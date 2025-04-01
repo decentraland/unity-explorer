@@ -1,9 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
-using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
-using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
@@ -57,6 +56,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
+        private Profile targetProfile;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -109,6 +109,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
+            targetProfile = profile;
 
             if (friendServiceProxy.Configured)
             {
@@ -257,7 +258,13 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private void OnBlockUserClicked(string userId)
         {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
+            ShowBlockUserPromptAsync(targetProfile).Forget();
+        }
+
+
+        private async UniTaskVoid ShowBlockUserPromptAsync(Profile profile)
+        {
+            await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
         }
 
         private void OnJumpInClicked(string userId)

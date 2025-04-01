@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Rendering.GPUInstancing;
+using System;
 using System.Collections;
 using UnityEngine;
 using Utility;
@@ -25,6 +26,7 @@ namespace DCL.InWorldCamera
 
         private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;
+        private readonly GPUInstancingService gpuInstancingService;
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
 
@@ -34,12 +36,13 @@ namespace DCL.InWorldCamera
 
         public RecordingState State { get; private set; } = RecordingState.IDLE;
 
-        public ScreenRecorder(RectTransform canvasRectTransform)
+        public ScreenRecorder(RectTransform canvasRectTransform, GPUInstancingService gpuInstancingService)
         {
             targetAspectRatio = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
             Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
 
             this.canvasRectTransform = canvasRectTransform;
+            this.gpuInstancingService = gpuInstancingService;
         }
 
         public void Dispose()
@@ -51,7 +54,7 @@ namespace DCL.InWorldCamera
                 RenderTexture.ReleaseTemporary(originalBaseTargetTexture);
         }
 
-        public IEnumerator CaptureScreenshot()
+        public IEnumerator CaptureScreenshot(Camera camera)
         {
             State = RecordingState.CAPTURING;
 
@@ -60,14 +63,24 @@ namespace DCL.InWorldCamera
             ScreenFrameData currentScreenFrame = CalculateCurrentScreenFrame();
             float targetRescale = CalculateScaleFactorToTargetSize(currentScreenFrame);
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
-
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
+
+            // Workaround to fix roads appearance on the screenshot (since they are rendered indirectly).
+            // TODO (Vit): Remove this workaround when GPU Instancing is moved to the RenderFeature approach.
+            RenderTexture rt = RenderTexture.GetTemporary((int)rescaledScreenFrame.ScreenWidth, (int)currentScreenFrame.ScreenHeight, 24, RenderTextureFormat.ARGB32);
+            RenderTexture previousCamRT = camera.targetTexture;
+            camera.targetTexture = rt;
+
+            gpuInstancingService.RenderIndirect();
+            camera.Render();
 
             Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(roundedUpscale); // upscaled Screen Frame resolution
             screenshotTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
             ResizeTexture2D(screenshotTexture);
 
             Object.Destroy(screenshotTexture);
+            RenderTexture.ReleaseTemporary(rt);
+            camera.targetTexture = previousCamRT;
 
             State = RecordingState.SCREENSHOT_READY;
         }

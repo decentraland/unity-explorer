@@ -535,7 +535,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: franfranfran.dcl.eth
+    targetWorld: olavra.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -620,6 +620,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <AppVerRedirectionScreenPrefab>k__BackingField:
       m_AssetGUID: f2df2b2c3721c5840b06c8fe73d5d665
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <BlockedScreenPrefab>k__BackingField:
+      m_AssetGUID: 36bcbe134ec574902b49db6464414b03
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
@@ -915,6 +920,7 @@ MonoBehaviour:
   m_DeselectOnBackgroundClick: 1
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
 --- !u!1 &1800558272
 GameObject:
   m_ObjectHideFlags: 0
