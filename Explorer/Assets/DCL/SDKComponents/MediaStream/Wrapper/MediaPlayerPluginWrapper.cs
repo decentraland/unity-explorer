@@ -14,14 +14,11 @@ using RenderHeads.Media.AVProVideo;
 using DCL.FeatureFlags;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings;
-using System.Linq;
-using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
     public class MediaPlayerPluginWrapper
     {
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
@@ -31,7 +28,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
 
         public MediaPlayerPluginWrapper(
-            IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IExtendedObjectPool<Texture2D> videoTexturePool,
@@ -45,7 +41,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.videoPrioritizationSettings = videoPrioritizationSettings;
 
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
 
             this.videoTexturePool = videoTexturePool;
