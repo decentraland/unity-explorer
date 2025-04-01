@@ -55,8 +55,6 @@ namespace DCL.Audio
         {
             var groupParamString = groupParam.ToString();
 
-            if (string.IsNullOrEmpty(groupParamString)) return;
-
             foreach (string exposedParam in allExposedParams)
             {
                 if (exposedParam != groupParamString)
