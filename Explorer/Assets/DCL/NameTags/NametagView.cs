@@ -43,7 +43,7 @@ namespace DCL.Nametags
         private static float animationInDurationThird = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION / 3f;
         private static float animationInDurationQuarter = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_IN_DURATION / 4f;
         private static float animationOutDurationHalf = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 2f;
-        private static float amAnimationOutDurationTenth = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 10f;
+        private static float animationOutDurationTenth = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 10f;
         private static float bubbleMarginOffsetHeightThird = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT / 3f;
 
         [field: SerializeField] public SpriteRenderer BackgroundSprite { get; private set; }
@@ -171,7 +171,7 @@ namespace DCL.Nametags
             animationInDurationThird = animationInDuration / 3f;
             animationInDurationQuarter = animationInDuration / 4f;
             animationOutDurationHalf = animationOutDuration / 2f;
-            amAnimationOutDurationTenth = animationOutDuration / 10f;
+            animationOutDurationTenth = animationOutDuration / 10f;
             bubbleMarginOffsetHeightThird = bubbleMarginOffsetHeight / 3f;
         }
 
@@ -494,15 +494,15 @@ namespace DCL.Nametags
             if (isPrivateMessage)
             {
                 currentSequence.Join(privateMessageIcon.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, amAnimationOutDurationTenth));
+                               .Join(privateMessageIconRenderer.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
 
                 if (showPrivateMessageRecipient)
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                                   .Join(privateMessageText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, amAnimationOutDurationTenth));
+                                   .Join(privateMessageText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
             }
 
             currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                           .Join(messageContent.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, amAnimationOutDurationTenth));
+                           .Join(messageContent.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
 
             if (isMention)
                 currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
