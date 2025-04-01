@@ -11,10 +11,11 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using RenderHeads.Media.AVProVideo;
-using DCL.ECSComponents;
 using DCL.FeatureFlags;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings;
+using System.Linq;
+using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
@@ -24,10 +25,10 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly IExposedCameraData exposedCameraData;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
+        private readonly MediaPlayerReusableHandler mediaPlayerReusableHandler;
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -53,10 +54,13 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
 
-            mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
+            //TODO: Fix this loopy situation
+            Transform mediaPlayerPoolTransform = new GameObject("MEDIA_PLAYER").transform;
+
+            GameObjectPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
                 creationHandler: () =>
                 {
-                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab, mediaPlayerPool!.PoolContainerTransform);
+                    MediaPlayer? mediaPlayer = Object.Instantiate(mediaPlayerPrefab, mediaPlayerPoolTransform);
                     mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
                     mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
                     //Add other options if we release on other platforms :D
@@ -69,19 +73,21 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
                 },
                 onRelease: mediaPlayer =>
                 {
-                    mediaPlayer.CloseCurrentStream();
+                    //mediaPlayer.CloseCurrentStream();
                     mediaPlayer.enabled = false;
                 });
 
             cacheCleaner.Register(mediaPlayerPool);
 #endif
+            mediaPlayerReusableHandler = new MediaPlayerReusableHandler(mediaPlayerPool);
+
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems, FeatureFlagsCache featureFlagsCache)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
 
-            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
+            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerReusableHandler, sceneStateProvider, frameTimeBudget);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget, worldVolumeMacBus);
 
             if(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
@@ -89,8 +95,10 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
-            finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool));
+            finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerReusableHandler, videoTexturePool));
 #endif
         }
+
+
     }
 }
