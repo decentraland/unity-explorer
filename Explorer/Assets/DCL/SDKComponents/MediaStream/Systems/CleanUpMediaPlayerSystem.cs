@@ -18,10 +18,10 @@ namespace DCL.SDKComponents.MediaStream
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class CleanUpMediaPlayerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly MediaPlayerReusableHandler mediaPlayerPool;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
 
-        internal CleanUpMediaPlayerSystem(World world, MediaPlayerReusableHandler mediaPlayerPool, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
+        internal CleanUpMediaPlayerSystem(World world, MediaPlayerCustomPool mediaPlayerPool, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
         {
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;

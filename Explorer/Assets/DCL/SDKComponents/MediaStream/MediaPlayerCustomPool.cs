@@ -1,19 +1,24 @@
-using DCL.Optimization.Pools;
+using Cysharp.Threading.Tasks;
 using RenderHeads.Media.AVProVideo;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public class MediaPlayerReusableHandler
+    public class MediaPlayerCustomPool
     {
-        public GameObjectPool<MediaPlayer> mediaPlayerPool;
-        public Dictionary<string, Stack<MediaPlayer>> OfflineMediaPlayers;
+        private readonly MediaPlayer mediaPlayerPrefab;
+        private readonly Dictionary<string, Stack<MediaPlayer>> OfflineMediaPlayers;
+        private readonly Transform rootContainerTransform;
 
-        public MediaPlayerReusableHandler(GameObjectPool<MediaPlayer> mediaPlayerPool)
+        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
         {
+            this.mediaPlayerPrefab = mediaPlayerPrefab;
+            rootContainerTransform = new GameObject("POOL_CONTAINER_MEDIA_PLAYER").transform;
             OfflineMediaPlayers = new Dictionary<string, Stack<MediaPlayer>>();
-            this.mediaPlayerPool = mediaPlayerPool;
+            TryUnloadAsync().Forget();
         }
 
         public MediaPlayer TryGetReusableMediaPlayer(string url)
@@ -27,8 +32,7 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
-                mediaPlayer = mediaPlayerPool.Get();
-
+                mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
                 //Add other options if we release on other platforms :D
                 mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
                 mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
@@ -37,9 +41,26 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayer.AutoOpen = false;
             mediaPlayer.enabled = true;
 
-            //HACK: this should be handled by the pool itself.
-            mediaPlayer.transform.SetParent(mediaPlayerPool.PoolContainerTransform);
             return mediaPlayer;
+        }
+
+        private async UniTask TryUnloadAsync()
+        {
+            while (true)
+            {
+                await UniTask.Delay(TimeSpan.FromMinutes(2));
+
+                foreach (KeyValuePair<string, Stack<MediaPlayer>> kvp in OfflineMediaPlayers)
+                {
+                    foreach (MediaPlayer? player in kvp.Value)
+                    {
+                        player.CloseMedia();
+                        GameObject.Destroy(player.gameObject);
+                    }
+                }
+
+                OfflineMediaPlayers.Clear();
+            }
         }
 
         public void ReleaseMediaPlayer(string url, MediaPlayer mediaPlayer)
@@ -48,6 +69,7 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
 
+            mediaPlayer.CloseMedia();
             if (!OfflineMediaPlayers.ContainsKey(url))
             {
                 Stack<MediaPlayer> mediaPlayerStack = new ();

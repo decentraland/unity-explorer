@@ -29,11 +29,11 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly MediaPlayerReusableHandler mediaPlayerPool;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
 
-        public CreateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, MediaPlayerReusableHandler mediaPlayerPool, ISceneStateProvider sceneStateProvider,
+        public CreateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget) : base(world)
         {
             this.webRequestController = webRequestController;

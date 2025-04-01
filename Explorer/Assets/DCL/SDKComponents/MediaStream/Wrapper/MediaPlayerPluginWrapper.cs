@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly IExposedCameraData exposedCameraData;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
-        private readonly MediaPlayerReusableHandler mediaPlayerReusableHandler;
+        private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -53,23 +53,15 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
 
-            GameObjectPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
-                creationHandler: () =>
-                {
-                    MediaPlayer? mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
-                    return mediaPlayer;
-                });
-
-            cacheCleaner.Register(mediaPlayerPool);
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
 #endif
-            mediaPlayerReusableHandler = new MediaPlayerReusableHandler(mediaPlayerPool);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems, FeatureFlagsCache featureFlagsCache)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
 
-            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerReusableHandler, sceneStateProvider, frameTimeBudget);
+            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerCustomPool, sceneStateProvider, frameTimeBudget);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget, worldVolumeMacBus);
 
             if(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
@@ -77,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
-            finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerReusableHandler, videoTexturePool));
+            finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerCustomPool, videoTexturePool));
 #endif
         }
 

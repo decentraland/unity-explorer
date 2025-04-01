@@ -12,18 +12,17 @@ namespace DCL.Optimization.Pools
         private static readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
 
         private readonly IExtendedObjectPool<T> gameObjectPool;
+        private readonly Transform parentContainer;
 
         private readonly Action<T>? onRelease;
         private readonly Action<T>? onGet;
 
         public int CountInactive => gameObjectPool.CountInactive;
 
-        public Transform PoolContainerTransform { get; }
-
         public GameObjectPool(Transform rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
         {
-            PoolContainerTransform = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
-            PoolContainerTransform.SetParent(rootContainer);
+            parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
+            parentContainer.SetParent(rootContainer);
 
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
@@ -89,7 +88,7 @@ namespace DCL.Optimization.Pools
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
 
-            component.gameObject.transform.SetParent(PoolContainerTransform, false);
+            component.gameObject.transform.SetParent(parentContainer, false);
         }
     }
 }
