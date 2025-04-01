@@ -94,7 +94,7 @@ namespace DCL.SDKComponents.MediaStream
                     url = mediaUrl;
             }
 
-            MediaPlayer mediaPlayer = mediaPlayerPool.TryGetReusableMediaPlayer(url);
+            MediaPlayer mediaPlayer = mediaPlayerPool.GetOrCreateReusableMediaPlayer(url);
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayer,

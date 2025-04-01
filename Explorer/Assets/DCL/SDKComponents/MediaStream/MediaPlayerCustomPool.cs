@@ -15,6 +15,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly List<string> keysToRemove = new ();
 
+        private readonly int tryCleanOfflineMediaPlayersDelayInMinutes = 2;
+        private readonly float maxOfflineTimePossibleInSeconds = 300f;
+
         public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
         {
             this.mediaPlayerPrefab = mediaPlayerPrefab;
@@ -23,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
             TryUnloadAsync().Forget();
         }
 
-        public MediaPlayer TryGetReusableMediaPlayer(string url)
+        public MediaPlayer GetOrCreateReusableMediaPlayer(string url)
         {
             MediaPlayer mediaPlayer;
 
@@ -51,7 +54,7 @@ namespace DCL.SDKComponents.MediaStream
             while (true)
             {
                 //We will do this analysis every two minute
-                await UniTask.Delay(TimeSpan.FromMinutes(2));
+                await UniTask.Delay(TimeSpan.FromMinutes(tryCleanOfflineMediaPlayersDelayInMinutes));
                 float now = Time.realtimeSinceStartup;
                 keysToRemove.Clear();
 
@@ -60,7 +63,7 @@ namespace DCL.SDKComponents.MediaStream
                     Queue<MediaPlayerInfo>? queue = kvp.Value;
 
                     //IF the video hasnt been used in five minutes, then it will be get closed and destroyed
-                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > 300f)
+                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > maxOfflineTimePossibleInSeconds)
                     {
                         MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
                         expiredPlayerInfo.mediaPlayer.CloseMedia();
