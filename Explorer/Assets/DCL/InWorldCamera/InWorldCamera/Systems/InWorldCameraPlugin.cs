@@ -79,6 +79,7 @@ namespace DCL.PluginSystem.Global
         private readonly GPUInstancingService gpuInstancingBuffers;
         private readonly ExposedCameraData exposedCameraData;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -136,9 +137,10 @@ namespace DCL.PluginSystem.Global
             this.gpuInstancingBuffers = gpuInstancingBuffers;
             this.exposedCameraData = exposedCameraData;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.web3IdentityCache = web3IdentityCache;
 
             factory = new InWorldCameraFactory();
-            web3IdentityCache.OnIdentityChanged += () => cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity!.Address, CancellationToken.None).Forget();
+            web3IdentityCache.OnIdentityChanged += FetchCameraReelStorage;
         }
 
         public void Dispose()
@@ -200,6 +202,14 @@ namespace DCL.PluginSystem.Global
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
+        }
+
+        private void FetchCameraReelStorage()
+        {
+            if (web3IdentityCache.Identity == null)
+                return;
+
+            cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, CancellationToken.None).Forget();
         }
 
         [Serializable]
