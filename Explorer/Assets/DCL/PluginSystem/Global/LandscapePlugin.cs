@@ -11,6 +11,7 @@ using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -37,9 +38,11 @@ namespace DCL.PluginSystem.Global
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
+        private IScenesCache scenesCache;
 
         public LandscapePlugin(
             IRealmData realmData,
+            IScenesCache sceneCache,
             TerrainGenerator terrainGenerator,
             WorldTerrainGenerator worldTerrainGenerator,
             IAssetsProvisioner assetsProvisioner,
@@ -50,6 +53,7 @@ namespace DCL.PluginSystem.Global
             bool isZone)
         {
             this.realmData = realmData;
+            this.scenesCache = sceneCache;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;

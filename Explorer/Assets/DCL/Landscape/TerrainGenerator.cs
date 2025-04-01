@@ -40,6 +40,7 @@ namespace DCL.Landscape
         private readonly IMemoryProfiler profilingProvider;
         private readonly bool forceCacheRegen;
         private readonly List<Terrain> terrains;
+        private readonly List<Collider> terrainChunkColliders;
 
         private int parcelSize;
         private TerrainGenerationData terrainGenData;
@@ -87,22 +88,31 @@ namespace DCL.Landscape
 
             // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
+            terrainChunkColliders = new List<Collider>();
         }
 
-        public Terrain GetTerrainForParcel(Vector2Int parcel)
+        private int activeChunk = -1;
+
+        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
-            // Смещение данного парселя относительно начала всех чанков:
             int offsetX = parcel.x - terrainModel.MinParcel.x;
             int offsetY = parcel.y - terrainModel.MinParcel.y;
 
-            // Индекс чанка в координатах "по чанкам"
             int chunkX = offsetX / terrainModel.chunkSizeInParcels;
             int chunkY = offsetY / terrainModel.chunkSizeInParcels;
 
-            // Глобальный индекс в массиве чанков
             int chunkIndex = chunkX + (chunkY * terrainModel.sizeInChunks);
 
-            return terrains[chunkIndex];
+            if (chunkIndex != activeChunk && activeChunk >= 0)
+            {
+                terrainChunkColliders[activeChunk].enabled = false;
+                terrainChunkColliders[chunkIndex].enabled = isEnabled;
+            }
+
+            activeChunk = chunkIndex;
+
+            Debug.Log($"VVV for {parcel} we have {chunkIndex} = {chunkX} , {chunkY}");
+            Debug.Log($"VVV Chunk {terrainModel.ChunkModels[chunkIndex].MinParcel} {terrainModel.ChunkModels[chunkIndex].MinParcel}");
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
@@ -169,6 +179,8 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
+                terrainChunkColliders[activeChunk].enabled = false;
+
                 IsTerrainShown = false;
             }
         }
@@ -338,8 +350,10 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                terrains.Add(
-                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
+                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial);
+
+                terrains.Add(terrain);
+                terrainChunkColliders.Add(terrainCollider);
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;

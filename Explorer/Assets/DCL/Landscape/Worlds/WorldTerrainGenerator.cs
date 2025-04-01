@@ -120,8 +120,12 @@ namespace DCL.Landscape
 
             // Generate Terrain GameObjects
             terrains.Clear();
+
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
+            {
+                terrains.Add(
+                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial).Item1);
+            }
 
             await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
             // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it

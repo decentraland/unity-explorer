@@ -83,7 +83,7 @@ namespace DCL.Landscape
             return collider;
         }
 
-        public Terrain CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material)
+        public (Terrain, Collider) CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material)
         {
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
                                      .GetComponent<Terrain>();
@@ -101,7 +101,10 @@ namespace DCL.Landscape
 
             terrain.gameObject.layer = LayerMask.NameToLayer(TERRAIN_LAYER);
 
-            return terrain;
+            var collider = terrain.GetComponent<Collider>();
+            collider.enabled = false;
+
+            return (terrain, collider);
         }
 
         public TerrainData CreateTerrainData(int terrainChunkSize, float maxHeight) =>
