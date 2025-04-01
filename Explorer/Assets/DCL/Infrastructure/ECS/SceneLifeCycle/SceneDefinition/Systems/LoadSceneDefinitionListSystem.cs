@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
@@ -31,6 +32,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // cache
         private readonly StringBuilder bodyBuilder = new ();
+        private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
@@ -67,12 +69,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
             var nativeData = downloadHandler.nativeData;
+
             var serializer = JsonSerializer.CreateDefault();
-            var targetList = intention.TargetCollection;
+            serializer.Converters.Add(SCENE_METADATA_CONVERTER);
 
             unsafe
             {
                 var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
+
+                serializer.Context = new StreamingContext(0,
+                    new SceneMetadataConverterContext(dataPtr));
 
                 using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
                     nativeData.Length, FileAccess.Read);
@@ -80,24 +86,34 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 using var textReader = new StreamReader(stream, Encoding.UTF8);
                 using var jsonReader = new JsonTextReader(textReader);
 
-                jsonReader.Read();
+                serializer.Populate(jsonReader, intention.TargetCollection);
+            }
 
-                if (jsonReader.TokenType != JsonToken.StartArray)
-                    throw new JsonReaderException(
-                        $"Expected token StartArray, got {jsonReader.TokenType}", jsonReader.Path,
-                        jsonReader.LineNumber, jsonReader.LinePosition, null);
+            return new StreamableLoadingResult<SceneDefinitions>(
+                new SceneDefinitions(intention.TargetCollection));
+        }
 
-                int charPosition = 0;
-                int startByte = 0;
+        private sealed class SceneMetadataConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) =>
+                typeof(SceneMetadata).IsAssignableFrom(objectType);
 
-                while (jsonReader.Read() && jsonReader.TokenType != JsonToken.EndArray)
+            public override object ReadJson(JsonReader reader, Type objectType, object? existingValue,
+                JsonSerializer serializer)
+            {
+                var jsonReader = (JsonTextReader)reader;
+
+                if (jsonReader.LineNumber != 1)
+                    throw new NotImplementedException("Can't parse multi-line json");
+
+                var context = (SceneMetadataConverterContext)serializer.Context.Context;
+                int readerPosition = jsonReader.LinePosition;
+
+                unsafe
                 {
-                    if (jsonReader.TokenType != JsonToken.StartObject)
-                        throw new JsonReaderException(
-                            $"Expected token StartObject, got {jsonReader.TokenType}", jsonReader.Path,
-                            jsonReader.LineNumber, jsonReader.LinePosition, null);
-
-                    int readerPosition = jsonReader.LinePosition;
+                    byte* dataPtr = context.DataPtr;
+                    int charPosition = context.CharPosition;
+                    int startByte = context.StartByte;
 
                     while (charPosition < readerPosition)
                     {
@@ -108,10 +124,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                         charPosition += (charSize >> 2) + 1;
                     }
 
-                    var scene = serializer.Deserialize<SceneEntityDefinition>(jsonReader);
+                    // Else, Deserialize will call this converter again and so on until we have a
+                    // stack overflow.
+                    serializer.Converters.RemoveAt(0);
 
-                    if (jsonReader.LineNumber != 1)
-                        throw new NotImplementedException("Can't parse multi-line json");
+                    SceneMetadata metadata;
+                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader); }
+                    finally { serializer.Converters.Add(this); }
 
                     int endByte = startByte;
                     readerPosition = jsonReader.LinePosition;
@@ -123,23 +142,34 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                         charPosition += (charSize >> 2) + 1;
                     }
 
-                    if (scene != null)
-                    {
-                        // All the complexity here is so that we can obtain this one OriginalJson string
-                        // without excess of allocations. Because the sole purpose of this string is to
-                        // be passed on to JavaScript, it would be even better if we created a V8Value
-                        // directly without decoding the bytes at all.
-                        scene.metadata.OriginalJson = Encoding.UTF8.GetString(dataPtr + startByte - 1,
-                            endByte - startByte + 1);
+                    // All the complexity here is so that we can obtain this one OriginalJson string
+                    // without excess of allocations. Because the sole purpose of this string is to be
+                    // passed on to JavaScript, it would be even better if we created a V8Value
+                    // directly without decoding the bytes at all.
+                    metadata.OriginalJson = Encoding.UTF8.GetString(dataPtr + startByte - 1,
+                        endByte - startByte + 1);
 
-                        targetList.Add(scene);
-                    }
+                    context.CharPosition = charPosition;
+                    context.StartByte = endByte;
 
-                    startByte = endByte;
+                    return metadata;
                 }
             }
 
-            return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(targetList));
+            public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) =>
+                throw new NotImplementedException();
+        }
+
+        private sealed unsafe class SceneMetadataConverterContext
+        {
+            public readonly byte* DataPtr;
+            public int CharPosition;
+            public int StartByte;
+
+            public SceneMetadataConverterContext(byte* dataPtr)
+            {
+                DataPtr = dataPtr;
+            }
         }
     }
 }
