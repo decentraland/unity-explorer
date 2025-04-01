@@ -204,7 +204,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d8a2ca8e7094397a8282c4e41f4f51d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <backgroundDefaultColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.69803923}
+  <backgroundDefaultColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.9019608}
   <backgroundMentionedColor>k__BackingField: {r: 0.22745098, g: 0.05882353, b: 0.3137255, a: 1}
   <usernameElement>k__BackingField: {fileID: 7863012580743549792}
   <backgroundRectTransform>k__BackingField: {fileID: 6709421707846502462}
