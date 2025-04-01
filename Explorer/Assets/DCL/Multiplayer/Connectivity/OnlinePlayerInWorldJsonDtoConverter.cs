@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connectivity
 
             existingValue = new OnlineUserData
             {
-                worldName = dataObject.world.Replace(SCENE_ROOM_PREFIX, ""),
+                worldName = dataObject.world.Replace(SCENE_ROOM_PREFIX, string.Empty),
                 avatarId = dataObject.wallet
             };
 

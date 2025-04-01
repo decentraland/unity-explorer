@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.Connectivity
     {
         public bool IsInWorld => !string.IsNullOrEmpty(worldName);
         public Vector3 position;
-        public string worldName;
+        public string? worldName;
         public string avatarId;
 
         public override int GetHashCode() =>
