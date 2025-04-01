@@ -501,8 +501,10 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
-                                                 .WithSelfResend(identityCache, profileRepository)
+            ChatMessageFactory chatMessageFactory = new ChatMessageFactory(selfProfile, profileRepository);
+
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>())
+                                                 .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands)
                                                  .WithDebugPanel(debugBuilder);
@@ -649,7 +651,8 @@ namespace Global.Dynamic
                     hyperlinkTextFormatter,
                     profileCache,
                     chatEventBus,
-                    identityCache),
+                    identityCache,
+                    chatMessageFactory),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

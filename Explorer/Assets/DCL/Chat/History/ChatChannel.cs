@@ -119,12 +119,18 @@ namespace DCL.Chat.History
         /// <summary>
         ///
         /// </summary>
-        /// <param name="messagesToStore"></param>
+        /// <param name="messagesToStore">The messages of the channel, in the order they were sent.</param>
         public void FillChannel(List<ChatMessage> messagesToStore)
         {
+            messages.Capacity = messagesToStore.Count + 2;
+
             // Adding two elements to count as top and bottom padding
             messages.Add(new ChatMessage(true));
-            messages.AddRange(messagesToStore);
+
+            // Messages are added in inverse order
+            for (int i = messagesToStore.Count - 1; i >= 0; --i)
+                messages.Add(messagesToStore[i]);
+
             messages.Add(new ChatMessage(true));
         }
 

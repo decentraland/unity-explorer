@@ -23,7 +23,6 @@ using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -138,7 +137,7 @@ namespace DCL.Chat
                 viewInstance.FoldingChanged -= OnViewFoldingChanged;
                 viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
-                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChanged;
+                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.Dispose();
             }
 
@@ -184,7 +183,7 @@ namespace DCL.Chat
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
-            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChanged;
+            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
 
             OnFocus();
 
@@ -200,7 +199,6 @@ namespace DCL.Chat
             ShowWelcomeMessage();
 
             chatStorage.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
-            // TODO: Load messages when entering a conversation
         }
 
         private void OnChatHistoryOnAllChannelsRemoved()
@@ -223,7 +221,7 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
-            var channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
+            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.FocusInputBox();
         }
@@ -266,10 +264,14 @@ namespace DCL.Chat
             }
         }
 
-        private void OnViewCurrentChannelChanged()
+        private async void OnViewCurrentChannelChangedAsync()
         {
-            if(!chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
-                chatStorage.InitializeChannelWithMessages(viewInstance.CurrentChannelId);
+            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.User &&
+                !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
+            {
+                await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
+                viewInstance.RefreshMessages();
+            }
         }
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
@@ -553,6 +555,7 @@ namespace DCL.Chat
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
             viewInstance!.RemoveConversation(removedChannel);
+            viewInstance.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)

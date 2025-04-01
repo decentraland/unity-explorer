@@ -24,12 +24,12 @@ namespace DCL.Chat.History
         public class UserConversationsSettings
         {
             [SerializeField]
-            public string[] ConversationFileNames; // Already sorted, a conversation is closed if it does not appear here
+            public List<string> ConversationFilePaths; // Already sorted, a conversation is closed if it does not appear here
         }
 
         private class ChannelFile
         {
-            public string EncryptedChannelId;
+            public string Path;
             public Stream Content;
             public bool IsInitialized;
             public float LastMessageTime;
@@ -41,8 +41,14 @@ namespace DCL.Chat.History
             public ChatMessage Message;
         }
 
+        private const int ENTRY_SENT_BY_LOCAL_USER = 0;
+        private const int ENTRY_MESSAGE = 1;
+        private const int ENTRY_USERNAME = 2;
+
         private readonly IChatHistory chatHistory;
+        private readonly ChatMessageFactory messageFactory;
         private readonly byte[] encryptionKey;
+        private readonly string localUserWalletAddress;
 
         private readonly Dictionary<ChatChannel.ChannelId, ChannelFile> channelFiles = new Dictionary<ChatChannel.ChannelId, ChannelFile>();
         private readonly Queue<MessageToProcess> messagesToProcess = new();
@@ -50,51 +56,49 @@ namespace DCL.Chat.History
         private readonly CancellationTokenSource cts = new();
         private readonly object queueLocker = new object();
 
-//        private readonly CryptoStream channelIdEncryptorStream;
-//        private readonly CryptoStream channelIdDecryptorStream;
-//        private readonly MemoryStream auxiliarChannelIdStream = new MemoryStream(2048); // Enough to not need resizing
         private readonly AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
-        private byte[] channelIdEncryptionBuffer = new byte[2048]; // Enough to not need resizing
-        private byte[] channelIdEncryptionBuffer2 = new byte[8048]; // Enough to not need resizing
+        private readonly byte[] channelIdEncryptionBuffer = new byte[2048]; // Enough to not need resizing
 
-//        private readonly StreamWriter auxiliarChannelIdWriter;
         private readonly List<ChatMessage> messagesBuffer = new List<ChatMessage>();
 
         private readonly string channelFilesFolder;
         private readonly string userFilesFolder;
         private readonly string userConversationSettingsFile;
+        private UserConversationsSettings conversationSettings;
 
-        /// <summary>
-        ///
-        /// </summary>
-        public UserConversationsSettings ConversationsSettings { get; private set; }
+        private bool areAllChannelsLoaded;
 
-        public ChatStorage(IChatHistory chatHistory, string encryptionKey)
+        private const string LOCAL_USER_TRUE_VALUE = "T";
+        private const string LOCAL_USER_FALSE_VALUE = "F";
+        private readonly StringBuilder builder = new StringBuilder(128);
+        private readonly string[] entryValues = new string[3];
+
+        private readonly ReportData reportData = new ReportData(ReportCategory.CHAT_HISTORY);
+
+        public ChatStorage(IChatHistory chatHistory, ChatMessageFactory messageFactory, string localUserWalletAddress)
         {
-            channelFilesFolder = Application.persistentDataPath + "/channels/";
+            channelFilesFolder = Application.persistentDataPath + "/c/";
 
-            this.encryptionKey = HashKey.FromString(encryptionKey).Hash.Memory;
+            this.encryptionKey = HashKey.FromString(localUserWalletAddress).Hash.Memory;
             this.chatHistory = chatHistory;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+            this.messageFactory = messageFactory;
+            this.localUserWalletAddress = localUserWalletAddress;
+            chatHistory.MessageAdded += OnChatHistoryMessageAddedAsync;
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
+            chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
+            chatHistory.ChannelCleared += OnChatHistoryChannelCleared;
 
             // Encryption initialization
             cryptoProvider.Key = this.encryptionKey;
             cryptoProvider.IV = this.encryptionKey.AsSpan(0, 16).ToArray();
-//            channelIdEncryptorStream = new CryptoStream(auxiliarChannelIdStream, cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write);
-//            channelIdDecryptorStream = new CryptoStream(auxiliarChannelIdStream, cryptoProvider.CreateDecryptor(), CryptoStreamMode.Read);
+            cryptoProvider.Mode = CipherMode.ECB; // TODO: USE CBC
+            cryptoProvider.Padding = PaddingMode.Zeros; // TODO: USE PKCS7
 
- //           auxiliarChannelIdWriter = new StreamWriter(auxiliarChannelIdStream);
-
-            userFilesFolder = channelFilesFolder + StringToFileName(encryptionKey) + "/";
+            userFilesFolder = channelFilesFolder + StringToFileName(localUserWalletAddress) + "/";
             userConversationSettingsFile = userFilesFolder + StringToFileName("SettingsSettingsSettingsSettingsSettingsSettingsSettings");
 
             UniTask.RunOnThreadPool(() => ProcessQueueAsync(cts.Token)).Forget();
             UniTask.RunOnThreadPool(() => CheckChannelFileTimeoutsAsync(cts.Token)).Forget();
-
-            string yeah = StringToFileName(encryptionKey);
-            ChatChannel.ChannelId id = FileNameToChannelId(yeah);
-            string yeah2 = StringToFileName(encryptionKey);
         }
 
         /// <summary>
@@ -102,33 +106,50 @@ namespace DCL.Chat.History
         /// </summary>
         public void LoadAllChannelsWithoutMessages()
         {
+            areAllChannelsLoaded = false;
+
             if (Directory.Exists(userFilesFolder))
             {
                 LoadConversationSettings();
 
-                ChatChannel.ChatChannelType channelType = ChatChannel.ChatChannelType.User;
+                bool isConversationSettingsPresent = conversationSettings != null;
 
-                string[] fileNames = ConversationsSettings.ConversationFileNames;
+                List<string> filePaths = conversationSettings?.ConversationFilePaths;
 
-                if (fileNames == null || fileNames.Length == 0)
-                    fileNames = Directory.GetFiles(userFilesFolder);
-
-                for (int i = 0; i < fileNames.Length; ++i)
+                // If there is no settings file, all stored conversations will be visible
+                if (!isConversationSettingsPresent)
                 {
-                    if (fileNames[i] == userConversationSettingsFile)
+                    filePaths = new List<string>(Directory.GetFiles(userFilesFolder));
+                    conversationSettings = new UserConversationsSettings(){ ConversationFilePaths = new List<string>(filePaths.Count) };
+                }
+
+                for (int i = 0; i < filePaths.Count; ++i)
+                {
+                    if (filePaths[i] == userConversationSettingsFile)
                         continue;
 
                     ChannelFile newFile = new ChannelFile();
 
-                    string currentFileName = Path.GetFileName(fileNames[i]);
+                    string currentFileName = Path.GetFileName(filePaths[i]);
                     ChatChannel.ChannelId fileChannelId = FileNameToChannelId(currentFileName);
-                    newFile.EncryptedChannelId = currentFileName;
+                    newFile.Path = filePaths[i];
 
-                    ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Creating channel for file " + fileNames[i] + " for channel with Id: " + fileChannelId.Id);
+                    ReportHub.Log(reportData, $"Creating channel for file " + filePaths[i] + " for channel with Id: " + fileChannelId.Id);
 
                     channelFiles.Add(fileChannelId, newFile);
-                    //chatHistory.AddChannel(channelType, fileChannelId.Id);
+                    chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.User);
+
+                    // All stored conversations will be added to the settings file, when it is not present
+                    if(!isConversationSettingsPresent)
+                        conversationSettings.ConversationFilePaths.Add(filePaths[i]);
+
+                    ReportHub.Log(reportData, $"Channel with Id " + fileChannelId.Id + " created.");
                 }
+
+                if (!isConversationSettingsPresent)
+                    StoreConversationSettings();
+
+                areAllChannelsLoaded = true;
             }
         }
 
@@ -136,12 +157,19 @@ namespace DCL.Chat.History
         ///
         /// </summary>
         /// <param name="channelId"></param>
-        public void InitializeChannelWithMessages(ChatChannel.ChannelId channelId)
+        public async UniTask InitializeChannelWithMessagesAsync(ChatChannel.ChannelId channelId)
         {
-            messagesBuffer.Clear();
-            ReadMessagesFromFile(channelId, messagesBuffer);
+            // If already reading or if the file did not exist, ignore it
+            if(!channelFiles.ContainsKey(channelId) ||
+               (channelFiles[channelId].Content != null && channelFiles[channelId].Content.CanRead))
+                return;
 
-            chatHistory.Channels[channelId].FillChannel(messagesBuffer);
+            messagesBuffer.Clear();
+            await ReadMessagesFromFileAsync(channelId, messagesBuffer);
+
+            if (messagesBuffer.Count > 0)
+                chatHistory.Channels[channelId].FillChannel(messagesBuffer);
+
             channelFiles[channelId].IsInitialized = true;
         }
 
@@ -151,11 +179,11 @@ namespace DCL.Chat.History
         /// <param name="channelId"></param>
         /// <returns></returns>
         public bool IsChannelInitialized(ChatChannel.ChannelId channelId) =>
-            channelFiles[channelId].IsInitialized;
+            channelFiles.TryGetValue(channelId, out ChannelFile channelFile) && channelFile.IsInitialized;
 
         private void LoadConversationSettings()
         {
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Reading conversation settings from " + userConversationSettingsFile);
+            ReportHub.Log(reportData, $"Reading conversation settings from " + userConversationSettingsFile);
 
             try
             {
@@ -168,72 +196,75 @@ namespace DCL.Chat.History
                             using (JsonTextReader jsonReader = new JsonTextReader(streamReader))
                             {
                                 JObject jsonObject = (JObject)JToken.ReadFrom(jsonReader);
-                                ConversationsSettings = JsonConvert.DeserializeObject<UserConversationsSettings>(jsonObject.ToString());
+                                conversationSettings = JsonConvert.DeserializeObject<UserConversationsSettings>(jsonObject.ToString());
                             }
                         }
                     }
 
-                    ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Conversation settings file read from " + userConversationSettingsFile);
+                    ReportHub.Log(reportData, $"Conversation settings file read from " + userConversationSettingsFile);
+                }
+                else
+                {
+                    ReportHub.LogWarning(reportData, "The conversation settings file was not present. Default values will be used.");
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
-            }
-            finally
-            {
-
+                ReportHub.LogError(reportData, "An error occurred while loading the conversation history settings. " + e.Message + e.StackTrace);
             }
         }
 
         private void StoreConversationSettings()
         {
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Storing conversation settings at " + userConversationSettingsFile);
+            ReportHub.Log(reportData, $"Storing conversation settings at " + userConversationSettingsFile);
 
             try
             {
-                using (CryptoStream fileStream = new CryptoStream(new FileStream(userConversationSettingsFile, FileMode.CreateNew, FileAccess.Write), cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write))
+                using (CryptoStream fileStream = new CryptoStream(new FileStream(userConversationSettingsFile, FileMode.Create, FileAccess.Write), cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write))
                 {
                     using (StreamWriter streamWriter = new StreamWriter(fileStream))
                     {
-                        if (ConversationsSettings == null)
-                        {
-                            ConversationsSettings = new UserConversationsSettings
-                                {
-                                    ConversationFileNames = Array.Empty<string>(),
-                                };
-                        }
-
-                        string serializedSettings = JsonConvert.SerializeObject(ConversationsSettings);
+                        string serializedSettings = JsonConvert.SerializeObject(conversationSettings);
                         streamWriter.Write(serializedSettings);
                     }
                 }
 
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Conversation settings file stored at " + userConversationSettingsFile);
+                ReportHub.Log(reportData, $"Conversation settings file stored at " + userConversationSettingsFile);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
-            }
-            finally
-            {
-
+                ReportHub.LogError(reportData, "An error occurred while storing the conversation history settings file. " + e.Message + e.StackTrace);
             }
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
         {
-            OpenChannelFileForReading(addedChannel.Id);
+            if(!areAllChannelsLoaded) // Avoids reacting to itself
+                return;
+
+            if (addedChannel.ChannelType == ChatChannel.ChatChannelType.User)
+            {
+                conversationSettings.ConversationFilePaths.Add(userFilesFolder + StringToFileName(addedChannel.Id.Id));
+                StoreConversationSettings();
+                GetOrCreateChannelFile(addedChannel.Id);
+            }
         }
 
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
-            lock (queueLocker)
+            if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.User)
             {
-                if(destinationChannel.ChannelType == ChatChannel.ChatChannelType.User)
-                    messagesToProcess.Enqueue(new MessageToProcess(){ DestinationChannelId = destinationChannel.Id, Message = addedMessage});
+                if (!IsChannelInitialized(destinationChannel.Id))
+                {
+                    GetOrCreateChannelFile(destinationChannel.Id);
+                    await InitializeChannelWithMessagesAsync(destinationChannel.Id);
+                }
+
+                lock (queueLocker)
+                {
+                    if(destinationChannel.ChannelType == ChatChannel.ChatChannelType.User)
+                        messagesToProcess.Enqueue(new MessageToProcess(){ DestinationChannelId = destinationChannel.Id, Message = addedMessage});
+                }
             }
         }
 
@@ -322,6 +353,8 @@ namespace DCL.Chat.History
                     using (StreamReader srDecrypt = new(channelIdDecryptorStream))
                     {
                         string id = srDecrypt.ReadToEnd();
+                        // Removes the padding added by the AES algorithm
+                        id = id.Replace("\0", string.Empty); // TODO: This will change according to the chosen padding mode
                         result = new ChatChannel.ChannelId(id);
                     }
                 }
@@ -332,26 +365,26 @@ namespace DCL.Chat.History
 
         private ChannelFile OpenChannelFileForWriting(ChatChannel.ChannelId channelId)
         {
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Opening channel file (writing) for " + channelId.Id);
+            ReportHub.Log(reportData, $"Opening channel file (writing) for " + channelId.Id);
 
             ChannelFile channelFile = GetOrCreateChannelFile(channelId);
 
+            if(channelFile == null)
+                return null;
+
             try
             {
-                if(channelFile.Content == null)
-                    channelFile.Content = new CryptoStream(new FileStream(userFilesFolder + channelFile.EncryptedChannelId, FileMode.Append),
+                if (channelFile.Content == null)
+                    channelFile.Content = new CryptoStream(new FileStream(channelFile.Path, FileMode.Append),
                                                         cryptoProvider.CreateEncryptor(),
                                                                 CryptoStreamMode.Write);
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Channel file opened (writing) for " + channelId.Id);
+                ReportHub.Log(reportData, $"Channel file opened (writing) for " + channelId.Id);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
-            }
-            finally
-            {
+                ReportHub.LogError(reportData, $"An error occurred while opening the channel file for writing: {channelFile.Path} for Id: {channelId.Id}. {e.Message} {e.StackTrace}");
 
+                channelFile.Content?.Dispose();
             }
 
             return channelFile;
@@ -359,27 +392,32 @@ namespace DCL.Chat.History
 
         private ChannelFile OpenChannelFileForReading(ChatChannel.ChannelId channelId)
         {
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Opening channel file (reading) for " + channelId.Id);
+            ReportHub.Log(reportData, $"Opening channel file (reading) for " + channelId.Id);
 
             ChannelFile channelFile = GetOrCreateChannelFile(channelId);
 
-            try
-            {
-                if(channelFile.Content == null)
-                    channelFile.Content = new CryptoStream(new FileStream(userFilesFolder + channelFile.EncryptedChannelId, FileMode.Open, FileAccess.Read),
-                                                        cryptoProvider.CreateDecryptor(),
-                                                                CryptoStreamMode.Read);
+            if(channelFile == null)
+                return null;
 
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Channel file opened (reading) for " + channelId.Id);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-            finally
-            {
+            long fileSize = new FileInfo(userFilesFolder + StringToFileName(channelId.Id)).Length;
 
+            if (fileSize > 0)
+            {
+                try
+                {
+                    if(channelFile.Content == null)
+                        channelFile.Content = new CryptoStream(new FileStream(channelFile.Path, FileMode.Open, FileAccess.Read),
+                                                            cryptoProvider.CreateDecryptor(),
+                                                                    CryptoStreamMode.Read);
+
+                    ReportHub.Log(reportData, $"Channel file opened (reading) for " + channelId.Id);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogError(reportData, $"An error occurred while opening the channel file for reading: {channelFile.Path} for Id: {channelId.Id}. {e.Message} {e.StackTrace}");
+
+                    channelFile.Content?.Dispose();
+                }
             }
 
             return channelFile;
@@ -390,78 +428,125 @@ namespace DCL.Chat.History
             ChannelFile channelFile;
 
             if (!channelFiles.TryGetValue(channelId, out channelFile) || channelFile.Content == null)
+            {
+                ReportHub.LogWarning(reportData, $"Trying to close a channel file that was not open for Id: {channelId.Id}. The call will be ignored.");
                 return;
+            }
 
             try
             {
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Closing channel file for " + channelId.Id);
+                ReportHub.Log(reportData, $"Closing channel file {channelFile.Path} for Id {channelId.Id}");
 
-                channelFile.Content.Close();
                 channelFile.Content.Dispose();
                 channelFile.Content = null;
 
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Channel file closed for " + channelId.Id);
+                ReportHub.Log(reportData, $"Channel file closed for " + channelId.Id);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
-            }
-            finally
-            {
+                ReportHub.LogError(reportData, $"An error occurred while closing the channel file: {channelFile.Path} for Id: {channelId.Id}. {e.Message} {e.StackTrace}");
 
+                channelFile.Content = null;
             }
         }
 
         private void AppendMessageToFile(ChatChannel.ChannelId channelId, ChatMessage messageToAppend)
         {
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Appending message to file. Message: " + messageToAppend.Message);
+            ReportHub.Log(reportData, $"Appending message to file. Message: " + messageToAppend.Message);
 
             ChannelFile channelFile = OpenChannelFileForWriting(channelId);
             channelFile.LastMessageTime = Time.realtimeSinceStartup;
 
-            channelFile.Content.Write(Encoding.UTF8.GetBytes($"{(messageToAppend.SentByOwnUser ? "T": "F")},{messageToAppend.Message}\n")); // TODO: Reuse a string builder?
+            entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.SentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
+            entryValues[ENTRY_MESSAGE] = messageToAppend.Message;
+            entryValues[ENTRY_USERNAME] = messageToAppend.SenderValidatedName;
 
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Message appended to file. Message: " + messageToAppend.Message);
+            channelFile.Content.Write(CreateHistoryEntry(entryValues));
+            channelFile.Content.Flush();
+            channelFile.IsInitialized = true; // It could be the first message to be written to the file, so it makes sure the channel is marked as initialized
+
+            ReportHub.Log(reportData, $"Message appended to file. Message: " + messageToAppend.Message);
         }
 
-        private void ReadMessagesFromFile(ChatChannel.ChannelId channelId, List<ChatMessage> messages)
+        private byte[] CreateHistoryEntry(string[] values)
         {
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Reading messages from file for " + channelId.Id);
+            builder.Clear();
+
+            for (int i = 0; i < values.Length; ++i)
+            {
+                builder.Append(entryValues[i]);
+
+                if(i < values.Length - 1)
+                    builder.Append(",");
+            }
+
+            builder.Append("\n");
+            return Encoding.UTF8.GetBytes(builder.ToString());
+        }
+
+        private async UniTask ReadMessagesFromFileAsync(ChatChannel.ChannelId channelId, List<ChatMessage> messages)
+        {
+            ReportHub.Log(reportData, $"Reading messages from file for " + channelId.Id);
+
+            string fullFileContent = string.Empty;
 
             ChannelFile channelFile = OpenChannelFileForReading(channelId);
-            string fullFileContent;
+            long fileSize = new FileInfo(userFilesFolder + StringToFileName(channelId.Id)).Length;
 
-            using (StreamReader reader = new StreamReader(channelFile.Content))
+            if (fileSize > 0)
             {
-                fullFileContent = reader.ReadToEnd();
-            }
-
-            using (StreamReader reader = new StreamReader(fullFileContent))
-            {
-                while(!reader.EndOfStream)
+                using (StreamReader reader = new StreamReader(channelFile.Content))
                 {
-                    string currentLine = reader.ReadLine();
-
-                    string[] values = currentLine.Split(',');
-
-                    ChatMessage newMessage;
-
-                    // TODO: Detect channel type
-                    // If private conversation:
-                    newMessage = new ChatMessage(values[1], values[0] == "T");
-                    messages.Add(newMessage);
+                    fullFileContent = await reader.ReadToEndAsync();
+                    // Removes the paddings of the AES algorithm
+                    fullFileContent = fullFileContent.Replace("\0", string.Empty); // TODO: This will change according to the chosen padding mode
                 }
+
+                using (StringReader reader2 = new StringReader(fullFileContent))
+                {
+                    string currentLine = reader2.ReadLine();
+
+                    while(currentLine != null)
+                    {
+                        ChatMessage newMessage = default(ChatMessage);
+
+                        // If private conversation:
+                        if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.User)
+                        {
+                            ParseEntryValues(currentLine, entryValues);
+                            bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
+                            string walletAddress = sentByLocalUser ? localUserWalletAddress : channelId.Id;
+                            newMessage = await messageFactory.CreateChatMessageAsync(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], cts.Token);
+                        }
+
+                        messages.Add(newMessage);
+                        currentLine = reader2.ReadLine();
+                    }
+
+                    channelFile.IsInitialized = true;
+                }
+
+                CloseChannelFile(channelId);
+            }
+            else
+            {
+                ReportHub.Log(reportData, $"The file was empty.");
             }
 
-            CloseChannelFile(channelId);
+            ReportHub.Log(reportData, $"Messages read from file for " + channelId.Id);
+        }
 
-            ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Messages read from file for " + channelId.Id);
+        private static void ParseEntryValues(string entry, string[] values)
+        {
+            string[] entryParts = entry.Split(',');
+            values[ENTRY_SENT_BY_LOCAL_USER] = (entryParts.Length >= ENTRY_SENT_BY_LOCAL_USER + 1) ? entryParts[ENTRY_SENT_BY_LOCAL_USER] : LOCAL_USER_FALSE_VALUE;
+            values[ENTRY_MESSAGE] = (entryParts.Length >= ENTRY_MESSAGE + 1) ? entryParts[ENTRY_MESSAGE] : string.Empty;
+            values[ENTRY_USERNAME] = (entryParts.Length >= ENTRY_USERNAME + 1) ? entryParts[ENTRY_USERNAME] : string.Empty;
         }
 
         public void Dispose()
         {
-            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
+            chatHistory.MessageAdded -= OnChatHistoryMessageAddedAsync;
             chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
             cts.SafeCancelAndDispose();
 
@@ -475,46 +560,81 @@ namespace DCL.Chat.History
 
         private ChannelFile GetOrCreateChannelFile(ChatChannel.ChannelId channelId)
         {
-            // Makes sure the channels folder exists
-            if (!Directory.Exists(channelFilesFolder))
+            ChannelFile channelFile = null;
+
+            try
             {
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), "Creating channels directory at " + channelFilesFolder);
-                Directory.CreateDirectory(channelFilesFolder);
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), "Channels directory created at " + channelFilesFolder);
-            }
-
-            // Makes sure the user folder and the conversation settings file exist
-            if (!Directory.Exists(userFilesFolder))
-            {
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), "Creating user directory at " + userFilesFolder);
-                Directory.CreateDirectory(userFilesFolder);
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), "User directory created at " + userFilesFolder);
-
-                StoreConversationSettings();
-            }
-
-            ChannelFile channelFile;
-
-            if (!channelFiles.TryGetValue(channelId, out channelFile))
-            {
-                // Registers the channel if it does not exist
-                channelFile = new ChannelFile()
+                // Makes sure the channels folder exists
+                if (!Directory.Exists(channelFilesFolder))
                 {
-                    LastMessageTime = Time.realtimeSinceStartup,
-                    EncryptedChannelId = StringToFileName(channelId.Id)
-                };
+                    ReportHub.Log(reportData, "Creating channels directory at " + channelFilesFolder);
+                    Directory.CreateDirectory(channelFilesFolder);
+                    ReportHub.Log(reportData, "Channels directory created at " + channelFilesFolder);
+                }
+
+                // Makes sure the user folder and the conversation settings file exist
+                if (!Directory.Exists(userFilesFolder))
+                {
+                    ReportHub.Log(reportData, "Creating user directory at " + userFilesFolder);
+                    Directory.CreateDirectory(userFilesFolder);
+                    ReportHub.Log(reportData, "User directory created at " + userFilesFolder);
+
+                    StoreConversationSettings();
+                }
+
+                if (!channelFiles.TryGetValue(channelId, out channelFile))
+                {
+                    // Registers the channel if it does not exist
+                    channelFile = new ChannelFile()
+                    {
+                        LastMessageTime = float.MaxValue,
+                        Path = userFilesFolder + StringToFileName(channelId.Id)
+                    };
+
+                    channelFiles.Add(channelId, channelFile);
+                }
+
+                if (!File.Exists(channelFile.Path))
+                {
+                    ReportHub.Log(reportData, "Creating channel file at " + channelFile.Path);
+                    File.Create(channelFile.Path).Dispose();
+                    ReportHub.Log(reportData, "Channel file created at " + channelFile.Path);
+                }
             }
-
-            string filePath = userFilesFolder + channelFile.EncryptedChannelId;
-
-            if (!File.Exists(filePath))
+            catch (Exception e)
             {
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Creating channel file at " + filePath);
-                File.Create(filePath).Close();
-                ReportHub.Log(new ReportData(ReportCategory.CHAT_HISTORY), $"Channel file created at " + filePath);
+                ReportHub.LogError(reportData, "Error while trying to get or create the channel file. " + e.Message + e.StackTrace);
             }
 
             return channelFile;
+        }
+
+        private void OnChatHistoryChannelCleared(ChatChannel clearedChannel)
+        {
+            ChannelFile channelFile;
+            channelFiles.TryGetValue(clearedChannel.Id, out channelFile);
+
+            if (!File.Exists(channelFile.Path))
+            {
+                ReportHub.Log(reportData, $"Clearing channel file at " + channelFile.Path);
+                File.Create(channelFile.Path).Dispose();
+                ReportHub.Log(reportData, $"Channel file cleared at " + channelFile.Path);
+            }
+        }
+
+        private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
+        {
+            ChannelFile channelFile = channelFiles[removedChannel];
+
+            channelFiles.Remove(removedChannel);
+            conversationSettings.ConversationFilePaths.Remove(channelFile.Path);
+            StoreConversationSettings();
+
+            channelFile.LastMessageTime = float.MaxValue;
+            channelFile.IsInitialized = false;
+            channelFile.Path = null;
+            channelFile.Content?.Dispose();
+            channelFile.Content = null;
         }
     }
 }

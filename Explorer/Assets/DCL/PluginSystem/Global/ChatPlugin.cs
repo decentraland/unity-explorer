@@ -45,6 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private ChatStorage chatStorage;
+        private ChatMessageFactory chatMessageFactory;
 
         private ChatController chatController;
 
@@ -66,7 +67,8 @@ namespace DCL.PluginSystem.Global
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            ChatMessageFactory chatMessageFactory)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -87,6 +89,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.roomHub = roomHub;
+            this.chatMessageFactory = chatMessageFactory;
         }
 
         public void Dispose()
@@ -99,7 +102,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             // TODO: This instance has to be re-created when a different user logs in
-            chatStorage = new ChatStorage(chatHistory, web3IdentityCache.Identity!.Address);
+            chatStorage = new ChatStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
 
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
