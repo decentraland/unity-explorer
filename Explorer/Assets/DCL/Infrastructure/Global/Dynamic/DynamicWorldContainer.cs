@@ -314,6 +314,7 @@ namespace Global.Dynamic
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             bool builderWearablesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
             var realmContainer = RealmContainer.Create(
                 staticContainer,
                 identityCache,
@@ -324,9 +325,11 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
                 staticContainer.FeatureFlagsCache,
-                appArgs);
+                appArgs,
+                teleportController);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
+            teleportController.SetTerrain(terrainContainer.GenesisTerrain);
 
             var playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
             var localDevelopmentMetaDataSource = ConstSceneRoomMetaDataSource.FromMachineUUID().WithLog();

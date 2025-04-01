@@ -4,8 +4,8 @@ using DCL.Character;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
+using DCL.Landscape;
 using DCL.Utilities;
-using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Collections.Generic;
@@ -27,6 +27,7 @@ namespace DCL.RealmNavigation
         private static readonly Random RANDOM = new ();
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private TerrainGenerator terrain;
 
         private IRetrieveScene? retrieveScene;
         private World? world;
@@ -58,9 +59,16 @@ namespace DCL.RealmNavigation
             retrieveScene = null;
         }
 
+        public void SetTerrain(TerrainGenerator terrain)
+        {
+            this.terrain = terrain;
+        }
+
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, PickTargetDelegate pickTargetDelegate,
             AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
+            terrain.SetTerrainCollider(parcel, true);
+
             if (retrieveScene == null)
             {
                 TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, ct, loadReport));

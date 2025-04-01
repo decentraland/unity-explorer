@@ -21,7 +21,7 @@ namespace Global.Dynamic
 
         public LandscapePlugin CreatePlugin(StaticContainer staticContainer, BootstrapContainer bootstrapContainer, MapRendererContainer mapRendererContainer,
             IDebugContainerBuilder debugBuilder) =>
-            new (staticContainer.RealmData, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
+            new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, landscapeEnabled,
                 bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone));

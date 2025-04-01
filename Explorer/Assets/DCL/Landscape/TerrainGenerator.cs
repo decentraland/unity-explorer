@@ -103,16 +103,15 @@ namespace DCL.Landscape
 
             int chunkIndex = chunkX + (chunkY * terrainModel.sizeInChunks);
 
-            if (chunkIndex != activeChunk && activeChunk >= 0)
-            {
-                terrainChunkColliders[activeChunk].enabled = false;
-                terrainChunkColliders[chunkIndex].enabled = isEnabled;
-            }
+            if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
+                return;
 
+            if (chunkIndex != activeChunk && activeChunk >= 0)
+                terrainChunkColliders[activeChunk].enabled = false;
+
+            terrainChunkColliders[chunkIndex].enabled = isEnabled;
             activeChunk = chunkIndex;
 
-            Debug.Log($"VVV for {parcel} we have {chunkIndex} = {chunkX} , {chunkY}");
-            Debug.Log($"VVV Chunk {terrainModel.ChunkModels[chunkIndex].MinParcel} {terrainModel.ChunkModels[chunkIndex].MinParcel}");
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
