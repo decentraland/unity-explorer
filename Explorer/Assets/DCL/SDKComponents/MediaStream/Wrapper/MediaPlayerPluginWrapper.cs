@@ -39,8 +39,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             MediaPlayer mediaPlayerPrefab,
             WorldVolumeMacBus worldVolumeMacBus,
             IExposedCameraData exposedCameraData,
-            VideoPrioritizationSettings videoPrioritizationSettings,
-            FeatureFlagsCache featureFlagsCache)
+            VideoPrioritizationSettings videoPrioritizationSettings)
         {
             this.exposedCameraData = exposedCameraData;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
@@ -54,33 +53,16 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
 
-            //TODO: Fix this loopy situation
-            Transform mediaPlayerPoolTransform = new GameObject("MEDIA_PLAYER").transform;
-
             GameObjectPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
                 creationHandler: () =>
                 {
-                    MediaPlayer? mediaPlayer = Object.Instantiate(mediaPlayerPrefab, mediaPlayerPoolTransform);
-                    mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
-                    mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
-                    //Add other options if we release on other platforms :D
+                    MediaPlayer? mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
                     return mediaPlayer;
-                },
-                onGet: mediaPlayer =>
-                {
-                    mediaPlayer.AutoOpen = false;
-                    mediaPlayer.enabled = true;
-                },
-                onRelease: mediaPlayer =>
-                {
-                    //mediaPlayer.CloseCurrentStream();
-                    mediaPlayer.enabled = false;
                 });
 
             cacheCleaner.Register(mediaPlayerPool);
 #endif
             mediaPlayerReusableHandler = new MediaPlayerReusableHandler(mediaPlayerPool);
-
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems, FeatureFlagsCache featureFlagsCache)
