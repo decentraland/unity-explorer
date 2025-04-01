@@ -10,30 +10,32 @@ namespace DCL.SDKComponents.MediaStream
     public class MediaPlayerCustomPool
     {
         private readonly MediaPlayer mediaPlayerPrefab;
-        private readonly Dictionary<string, Stack<MediaPlayer>> OfflineMediaPlayers;
+        private readonly Dictionary<string, Queue<MediaPlayerInfo>> offlineMediaPlayers;
         private readonly Transform rootContainerTransform;
+
+        private readonly List<string> keysToRemove = new ();
 
         public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
         {
             this.mediaPlayerPrefab = mediaPlayerPrefab;
             rootContainerTransform = new GameObject("POOL_CONTAINER_MEDIA_PLAYER").transform;
-            OfflineMediaPlayers = new Dictionary<string, Stack<MediaPlayer>>();
+            offlineMediaPlayers = new Dictionary<string, Queue<MediaPlayerInfo>>();
             TryUnloadAsync().Forget();
         }
 
         public MediaPlayer TryGetReusableMediaPlayer(string url)
         {
-            MediaPlayer mediaPlayer = null;
-            if (OfflineMediaPlayers.ContainsKey(url))
+            MediaPlayer mediaPlayer;
+
+            if (offlineMediaPlayers.TryGetValue(url, out Queue<MediaPlayerInfo>? queue) && queue.Count > 0)
             {
-                mediaPlayer = OfflineMediaPlayers[url].Pop();
+                mediaPlayer = queue.Dequeue().mediaPlayer;
                 mediaPlayer.enabled = true;
                 mediaPlayer.gameObject.SetActive(true);
             }
             else
             {
                 mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
-                //Add other options if we release on other platforms :D
                 mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
                 mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
             }
@@ -48,18 +50,29 @@ namespace DCL.SDKComponents.MediaStream
         {
             while (true)
             {
+                //We will do this analysis every two minutes
                 await UniTask.Delay(TimeSpan.FromMinutes(2));
+                float now = Time.realtimeSinceStartup;
+                keysToRemove.Clear();
 
-                foreach (KeyValuePair<string, Stack<MediaPlayer>> kvp in OfflineMediaPlayers)
+                foreach (KeyValuePair<string, Queue<MediaPlayerInfo>> kvp in offlineMediaPlayers)
                 {
-                    foreach (MediaPlayer? player in kvp.Value)
+                    Queue<MediaPlayerInfo>? queue = kvp.Value;
+
+                    //IF the video hasnt been used in two minutes, then it will be get closed and destroyed
+                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > 120f)
                     {
-                        player.CloseMedia();
-                        GameObject.Destroy(player.gameObject);
+                        MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
+                        expiredPlayerInfo.mediaPlayer.CloseMedia();
+                        GameObject.Destroy(expiredPlayerInfo.mediaPlayer.gameObject);
                     }
+
+                    if (queue.Count == 0)
+                        keysToRemove.Add(kvp.Key);
                 }
 
-                OfflineMediaPlayers.Clear();
+                foreach (string key in keysToRemove)
+                    offlineMediaPlayers.Remove(key);
             }
         }
 
@@ -69,15 +82,27 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
 
-            mediaPlayer.CloseMedia();
-            if (!OfflineMediaPlayers.ContainsKey(url))
+            var info = new MediaPlayerInfo(mediaPlayer, Time.realtimeSinceStartup);
+
+            if (!offlineMediaPlayers.TryGetValue(url, out Queue<MediaPlayerInfo>? queue))
             {
-                Stack<MediaPlayer> mediaPlayerStack = new ();
-                mediaPlayerStack.Push(mediaPlayer);
-                OfflineMediaPlayers.Add(url, mediaPlayerStack);
+                queue = new Queue<MediaPlayerInfo>();
+                offlineMediaPlayers[url] = queue;
             }
-            else
-                OfflineMediaPlayers[url].Push(mediaPlayer);
+
+            queue.Enqueue(info);
+        }
+    }
+
+    public class MediaPlayerInfo
+    {
+        public MediaPlayer mediaPlayer;
+        public float lastTimeUsed;
+
+        public MediaPlayerInfo(MediaPlayer mediaPlayer, float lastTimeUsed)
+        {
+            this.mediaPlayer = mediaPlayer;
+            this.lastTimeUsed = lastTimeUsed;
         }
     }
 }
