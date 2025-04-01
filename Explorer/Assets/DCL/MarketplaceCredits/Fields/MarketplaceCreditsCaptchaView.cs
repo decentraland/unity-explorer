@@ -79,6 +79,7 @@ namespace DCL.MarketplaceCredits.Fields
 
         public void SetAsErrorState(bool isError, bool isNonSolvedError = true)
         {
+            MainSlider.Slider.interactable = !isError;
             ControlContainer.SetActive(!isError);
             NotSolvedErrorContainer.gameObject.SetActive(isError && isNonSolvedError);
             NotLoadedErrorContainer.gameObject.SetActive(isError && !isNonSolvedError);
