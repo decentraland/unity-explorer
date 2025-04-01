@@ -58,9 +58,6 @@ namespace ECS.Unity.Materials
 
             Promise promiseValue = promise.Value;
 
-            if (forgetLoading)
-                promiseValue.ForgetLoading(world);
-
             if (promiseValue.LoadingIntention.IsVideoTexture)
             {
                 ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(entity, out bool hasConsumer);
@@ -75,6 +72,8 @@ namespace ECS.Unity.Materials
             }
 
             promiseValue.TryDereference(world);
+            if (forgetLoading)
+                promiseValue.ForgetLoading(world);
 
             // Nullify the entity reference
             promise = null;
