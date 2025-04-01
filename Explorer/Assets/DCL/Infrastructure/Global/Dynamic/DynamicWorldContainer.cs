@@ -206,7 +206,8 @@ namespace Global.Dynamic
             LODContainer lodContainer = null!;
 
             IOnlineUsersProvider onlineUsersProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
-                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)),
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
