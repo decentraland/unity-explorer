@@ -97,17 +97,6 @@ namespace DCL.MarketplaceCreditsAPIService
             return programRegistration;
         }
 
-        internal static async Task<CaptchaResponse> MockCaptchaAsync(CancellationToken ct)
-        {
-            int randomDelay = new System.Random().Next(1000, 3000);
-            await UniTask.Delay(randomDelay, cancellationToken: ct);
-
-            return new CaptchaResponse
-            {
-                captchaUrl = "https://i.ibb.co/RG48r508/Test-Captcha.png",
-            };
-        }
-
         internal static async UniTask<ClaimCreditsResponse> MockClaimCreditsAsync(CancellationToken ct)
         {
             float randomClaimedCredits = ((float)new System.Random().NextDouble() * 4) + 1;
@@ -116,7 +105,7 @@ namespace DCL.MarketplaceCreditsAPIService
 
             ClaimCreditsResponse responseData = new ClaimCreditsResponse
             {
-                success = true,
+                ok = true,
                 claimedCredits = randomClaimedCredits,
             };
 

@@ -5,7 +5,7 @@ namespace DCL.MarketplaceCreditsAPIService
     [Serializable]
     public class ClaimCreditsResponse
     {
-        public bool success;
+        public bool ok;
         public float claimedCredits;
     }
 }

@@ -1,12 +1,9 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System.Globalization;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility;
 
 namespace DCL.MarketplaceCreditsAPIService
@@ -42,37 +39,37 @@ namespace DCL.MarketplaceCreditsAPIService
             return creditsProgramProgressResponse;
         }
 
-        public async UniTask<Sprite> GenerateCaptchaAsync(string walletId, CancellationToken ct)
+        public async UniTask<Sprite> GenerateCaptchaAsync(CancellationToken ct)
         {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/captcha";
+            var url = $"{marketplaceCreditsBaseUrl}/captcha";
 
-            // CaptchaResponse captchaResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-            //                                                             .CreateFromJson<CaptchaResponse>(WRJsonParser.Newtonsoft);
+            DownloadHandler downloadHandler = null;
 
-            CaptchaResponse captchaResponse = await MarketplaceCreditsMockedData.MockCaptchaAsync(ct);
+            try
+            {
+                downloadHandler = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                            .ExposeDownloadHandlerAsync();
 
-            IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(captchaResponse.captchaUrl)),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                ct,
-                ReportCategory.UI
-            );
-
-            var texture = ownedTexture.Texture;
-            texture.filterMode = FilterMode.Bilinear;
-
-            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                Texture2D texture = new Texture2D(2, 2);
+                texture.LoadImage(downloadHandler.data);
+                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            }
+            finally
+            {
+                Debug.Log("SANTI LOG --> downloadHandler DISPOSED!!");
+                downloadHandler?.Dispose();
+            }
         }
 
-        public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
+        public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(float captchaValue, CancellationToken ct)
         {
-            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/claim";
+            var url = $"{marketplaceCreditsBaseUrl}/captcha";
+            var jsonBody = $"{{\"x\":{captchaValue}}}";
 
-            // ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, captchaValue.ToString(CultureInfo.InvariantCulture), ct)
-            //                                                                           .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Newtonsoft);
+            ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, jsonBody, ct)
+                                                                                      .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Newtonsoft);
 
-            ClaimCreditsResponse claimCreditsResponseData = await MarketplaceCreditsMockedData.MockClaimCreditsAsync(ct);
+            //ClaimCreditsResponse claimCreditsResponseData = await MarketplaceCreditsMockedData.MockClaimCreditsAsync(ct);
 
             return claimCreditsResponseData;
         }
@@ -80,8 +77,9 @@ namespace DCL.MarketplaceCreditsAPIService
         public async UniTask SubscribeEmailAsync(string email, CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/set-email";
+            var jsonBody = $"{{\"email\":\"{email}\"}}";
 
-            await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson("{\"email\":\"" + email + "\"}"), string.Empty, ct)
+            await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
                                       .WithNoOpAsync();
         }
 

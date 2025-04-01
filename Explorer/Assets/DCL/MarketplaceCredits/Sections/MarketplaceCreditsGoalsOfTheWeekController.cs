@@ -23,7 +23,6 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
-        private string currentWalletId;
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
 
@@ -63,8 +62,6 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void Setup(string walletId, CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            currentWalletId = walletId;
-
             ClearGoals();
 
             view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft);
@@ -133,15 +130,15 @@ namespace DCL.MarketplaceCredits.Sections
         private void ReloadCaptcha()
         {
             fetchCaptchaCts = fetchCaptchaCts.SafeRestart();
-            LoadCaptchaAsync(currentWalletId, fetchCaptchaCts.Token).Forget();
+            LoadCaptchaAsync(fetchCaptchaCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadCaptchaAsync(string walletId, CancellationToken ct)
+        private async UniTaskVoid LoadCaptchaAsync(CancellationToken ct)
         {
             try
             {
                 view.SetCaptchaAsLoading(true);
-                var captchaSprite = await marketplaceCreditsAPIClient.GenerateCaptchaAsync(walletId, ct);
+                var captchaSprite = await marketplaceCreditsAPIClient.GenerateCaptchaAsync(ct);
                 view.SetCaptchaTargetAreaImage(captchaSprite);
                 view.SetCaptchaAsLoading(false);
                 view.SetCaptchaPercentageValue(0f);
@@ -158,18 +155,18 @@ namespace DCL.MarketplaceCredits.Sections
         private void ClaimCredits(float captchaValue)
         {
             claimCreditsCts = claimCreditsCts.SafeRestart();
-            ClaimCreditsAsync(currentWalletId, captchaValue, claimCreditsCts.Token).Forget();
+            ClaimCreditsAsync(captchaValue * 100, claimCreditsCts.Token).Forget();
         }
 
-        private async UniTaskVoid ClaimCreditsAsync(string walletId, float captchaValue, CancellationToken ct)
+        private async UniTaskVoid ClaimCreditsAsync(float captchaValue, CancellationToken ct)
         {
             try
             {
                 view.SetCaptchaAsLoading(true);
-                var claimCreditsResponse = await marketplaceCreditsAPIClient.ClaimCreditsAsync(walletId, captchaValue, ct);
+                var claimCreditsResponse = await marketplaceCreditsAPIClient.ClaimCreditsAsync(captchaValue, ct);
                 view.SetCaptchaAsLoading(false);
 
-                if (claimCreditsResponse.success)
+                if (claimCreditsResponse.ok)
                 {
                     marketplaceCreditsMenuController.ShowCreditsUnlockedPanel(claimCreditsResponse.claimedCredits);
                     marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
