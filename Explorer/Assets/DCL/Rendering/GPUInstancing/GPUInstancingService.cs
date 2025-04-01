@@ -164,19 +164,11 @@ namespace DCL.Rendering.GPUInstancing
                 FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
                 FrustumCullingAndLODGenComputeShader.Dispatch(FrustumCullingAndLODGenComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)FrustumCullingAndLODGen_ThreadGroupSize_X), 1, 1);
 
-                buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
-
                 IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
                 IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
                 IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
                 IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
                 IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
-
-                // // Zero-out draw args - will be calculated by compute shaders
-                // for (var i = 0; i < buffers.DrawArgsCommandData.Length; i++)
-                //     buffers.DrawArgsCommandData[i].instanceCount = 0;
-                //
-                // buffers.DrawArgs.SetData(buffers.DrawArgsCommandData);
 
                 DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
                 DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);

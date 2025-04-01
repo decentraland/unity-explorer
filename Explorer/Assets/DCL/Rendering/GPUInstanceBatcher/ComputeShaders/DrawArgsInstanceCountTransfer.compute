@@ -34,4 +34,7 @@ void DrawArgsInstanceCountTransfer(uint3 id : SV_DispatchThreadID)
             IndirectDrawIndexedArgsBuffer[(nSubmesh * nSizeOfDrawArgs * nLODCount) + (nLOD * nSizeOfDrawArgs) + nInstanceCountOffsetInArgsBuffer] = arrLODCount[nLOD];
         }
     }
+
+    for (uint nLOD = 0; nLOD < 8; ++nLOD)
+        arrLODCount[nLOD] = 0;
 }

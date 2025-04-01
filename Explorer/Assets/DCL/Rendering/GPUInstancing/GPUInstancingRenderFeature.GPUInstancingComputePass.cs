@@ -88,8 +88,6 @@ namespace DCL.Rendering.GPUInstancing
                         cmd.SetComputeBufferParam(settings.FrustumCullingAndLODGenComputeShader, instancingService.FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
                         cmd.DispatchCompute(settings.FrustumCullingAndLODGenComputeShader,instancingService.FrustumCullingAndLODGenComputeShader_KernelIDs,  Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)instancingService.FrustumCullingAndLODGen_ThreadGroupSize_X), 1, 1);
 
-                        buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
-
                         cmd.SetComputeBufferParam(settings.IndirectBufferGenerationComputeShader, instancingService.IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
                         cmd.SetComputeBufferParam(settings.IndirectBufferGenerationComputeShader, instancingService.IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
                         cmd.SetComputeBufferParam(settings.IndirectBufferGenerationComputeShader, instancingService.IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
