@@ -66,7 +66,7 @@ namespace DCL.MarketplaceCreditsAPIService
             var formattedCaptchaValue = captchaValue.ToString("F2");
             var jsonBody = $"{{\"x\":{formattedCaptchaValue}}}";
 
-            ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, jsonBody, ct)
+            ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                                                                       .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
 
             //ClaimCreditsResponse claimCreditsResponseData = await MarketplaceCreditsMockedData.MockClaimCreditsAsync(ct);
