@@ -15,6 +15,7 @@ using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
@@ -58,6 +59,7 @@ namespace DCL.Chat
 
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
+        private static readonly Color DEFAULT_COLOR = Color.white;
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -87,12 +89,10 @@ namespace DCL.Chat
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
-        private bool isNewIdentity = true;
-        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
+        private Web3Address currentUserAddress;
         private readonly IRoomHub roomHub;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
-
         public bool IsUnfolded
         {
             get => viewInstance.IsUnfolded;
@@ -322,7 +322,7 @@ namespace DCL.Chat
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
-            bool isSentByOwnUser = addedMessage is { SystemMessage: false, SentByOwnUser: true };
+            bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
             CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
@@ -466,11 +466,13 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            // Chat bubble over the avatars
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
+            if (!nametagsData.showNameTags || !nametagsData.showChatBubbles)
+                return;
+
+            if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
-                GenerateChatBubbleComponent(entity, chatMessage);
+                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR);
 
                 switch (chatAudioSettings.chatAudioSettings)
                 {
@@ -483,13 +485,39 @@ namespace DCL.Chat
                 }
             }
             else if (isSentByOwnUser)
-                GenerateChatBubbleComponent(playerEntity, chatMessage);
+            {
+                if (chatMessage.IsPrivateMessage)
+                {
+                    if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                    {
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
+                        return;
+                    }
+
+                    Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, profile.ValidatedName, profile.WalletId);
+                }
+                else
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
+            }
         }
 
-        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.SenderWalletAddress, chatMessage.IsMention));
+            {
+                world.AddOrSet(e, new ChatBubbleComponent(
+                    chatMessage.Message,
+                    chatMessage.SenderValidatedName,
+                    chatMessage.SenderWalletAddress,
+                    chatMessage.IsMention,
+                    chatMessage.IsPrivateMessage,
+                    chatMessage.ChannelId.Id,
+                    chatMessage.IsSentByOwnUser,
+                    receiverDisplayName?? string.Empty,
+                    receiverWalletId?? string.Empty,
+                    receiverNameColor));
+            }
         }
 
         private void DisableUnwantedInputs()
@@ -567,7 +595,7 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            if (!chatMessage.SystemMessage)
+            if (!chatMessage.IsSystemMessage)
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
                 var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
@@ -632,9 +660,7 @@ namespace DCL.Chat
             foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
                 // TODO: Use new endpoint to get a bunch of profile info
-                Profile profile = profileCache.Get(identity);
-
-                if (profile != null)
+                if (profileCache.TryGet(identity, out var profile))
                     outProfiles.Add(profile);
             }
         }
