@@ -33,6 +33,9 @@ namespace DCL.MarketplaceCredits.Fields
         public GameObject CompletedMark { get; private set; }
 
         [field: SerializeField]
+        public GameObject ClaimedMark { get; private set; }
+
+        [field: SerializeField]
         public GameObject PendingToClaimMark { get; private set; }
 
         [field: SerializeField]
@@ -74,9 +77,10 @@ namespace DCL.MarketplaceCredits.Fields
         public void SetCredits(string credits) =>
             GoalCreditsValueText.text = credits;
 
-        public void SetAsCompleted(bool isCompleted)
+        public void SetAsCompleted(bool isCompleted, bool isClaimed)
         {
-            CompletedMark.SetActive(isCompleted);
+            CompletedMark.SetActive(isCompleted && !isClaimed);
+            ClaimedMark.SetActive(isClaimed);
             ProgressBar.gameObject.SetActive(!isCompleted);
         }
 

@@ -103,7 +103,7 @@ namespace DCL.MarketplaceCredits.Sections
             goalRow.SetupGoalImage(goalData.thumbnail);
             goalRow.SetTitle(goalData.title);
             goalRow.SetCredits(MarketplaceCreditsUtils.FormatGoalReward(goalData.reward));
-            goalRow.SetAsCompleted(goalData.progress.completedSteps == goalData.progress.totalSteps);
+            goalRow.SetAsCompleted(goalData.progress.completedSteps == goalData.progress.totalSteps, goalData.isClaimed);
             goalRow.SetClaimStatus(goalData.progress.completedSteps == goalData.progress.totalSteps && !goalData.isClaimed, goalData.isClaimed);
             goalRow.SetProgress(goalData.progress.GetProgressPercentage(), goalData.progress.completedSteps, goalData.progress.totalSteps);
 
