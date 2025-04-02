@@ -306,7 +306,7 @@ GameObject:
   - component: {fileID: 3721001069623505348}
   - component: {fileID: 6099333271793956856}
   - component: {fileID: 2110952359374055602}
-  - component: {fileID: 7731814500679257930}
+  - component: {fileID: -8158154697459095981}
   m_Layer: 5
   m_Name: SceneDebugConsole
   m_TagString: Untagged
@@ -374,7 +374,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &7731814500679257930
+--- !u!114 &-8158154697459095981
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -383,34 +383,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 9152785347356188261}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13720813be109467ba3f3d2c09134bcb, type: 3}
+  m_Script: {fileID: 11500000, guid: 9df880a8590ef4109b5c880eb10557c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
-  BackgroundFadeTime: 0.2
+  backgroundFadeTime: 0.2
   scrollToBottomButtonTimeBeforeHiding: 1
   scrollToBottomButtonFadeOutDuration: 0.5
-  chatBubblesToggle: {fileID: 0}
-  chatInputBox: {fileID: 5059819421467020040}
+  inputField: {fileID: 0}
   panelBackgroundCanvasGroup: {fileID: 1851953206125699832}
-  closeChatButton: {fileID: 0}
-  closeMemberListButton: {fileID: 0}
-  chatMessageViewer: {fileID: 682925133115260549}
-  memberListButton: {fileID: 0}
-  memberListNumberText: {fileID: 0}
-  memberListNumberText2: {fileID: 0}
-  memberListView: {fileID: 0}
-  memberListOpeningButton: {fileID: 0}
-  memberListClosingButton: {fileID: 0}
-  defaultChatTitlebar: {fileID: 0}
-  memberListTitlebar: {fileID: 0}
-  chatPanel: {fileID: 3553545222316724595}
+  closeConsoleButton: {fileID: 0}
+  logScrollRect: {fileID: 3397229834474510796}
+  logContentTransform: {fileID: 6334738306198345799}
+  logEntryPrefab: {fileID: 0}
+  clearButton: {fileID: 0}
+  consolePanel: {fileID: 3553545222316724595}
   scrollToBottomButton: {fileID: 905818817793794684}
   scrollToBottomNumberText: {fileID: 1163320548587618039}
   scrollToBottomCanvasGroup: {fileID: 1816663618216097524}
-  chatReceiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
-  chatReceiveMentionMessageAudio: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
 --- !u!1001 &1890474067062928347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -544,17 +535,6 @@ CanvasGroup:
   m_CorrespondingSourceObject: {fileID: 219064267116823855, guid: 32adea057761f4d97ad70bacb9b44939, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5059819421467020040 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6630502416812194003, guid: 32adea057761f4d97ad70bacb9b44939, type: 3}
-  m_PrefabInstance: {fileID: 1890474067062928347}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18b5dde3d1a0473dbcf0d7305ac86c38, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &7364144954060722805
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -668,17 +648,22 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
---- !u!114 &682925133115260549 stripped
+--- !u!114 &3397229834474510796 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8018815386684435696, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+  m_CorrespondingSourceObject: {fileID: 5266907368250149817, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
   m_PrefabInstance: {fileID: 7364144954060722805}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fcca689a66044b5b872965c591794ef, type: 3}
+  m_Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &6334738306198345799 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 3592518164887718450, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+  m_PrefabInstance: {fileID: 7364144954060722805}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &8211434791048164212 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1713147684895056129, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}

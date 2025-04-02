@@ -26,6 +26,14 @@ namespace DCL.UI.SceneDebugConsole
         [SerializeField]
         private float backgroundFadeTime = 0.2f;
 
+        [Tooltip("The time it waits, in seconds, since the scroll view reaches the bottom until the scroll-to-bottom button starts hiding.")]
+        [SerializeField]
+        private float scrollToBottomButtonTimeBeforeHiding = 2.0f;
+
+        [Tooltip("The time it takes, in seconds, for the scroll-to-bottom button to fade out.")]
+        [SerializeField]
+        private float scrollToBottomButtonFadeOutDuration = 0.5f;
+
         [Header("UI elements")]
         [SerializeField]
         private TMP_InputField inputField;
@@ -50,6 +58,15 @@ namespace DCL.UI.SceneDebugConsole
 
         [SerializeField]
         private GameObject consolePanel;
+
+        [SerializeField]
+        private Button scrollToBottomButton;
+
+        [SerializeField]
+        private TMP_Text scrollToBottomNumberText;
+
+        [SerializeField]
+        private CanvasGroup scrollToBottomCanvasGroup;
 
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the console window.
