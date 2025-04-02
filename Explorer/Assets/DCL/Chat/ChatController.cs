@@ -87,7 +87,6 @@ namespace DCL.Chat
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
-        private Web3Address currentUserAddress;
         private bool isNewIdentity = true;
         private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
         private readonly IRoomHub roomHub;
@@ -284,7 +283,7 @@ namespace DCL.Chat
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.AllChannelsRemoved += OnChatHistoryOnAllChannelsRemoved;
+            chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
 
@@ -295,7 +294,7 @@ namespace DCL.Chat
             chatStorage.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
         }
 
-        private void OnChatHistoryOnAllChannelsRemoved()
+        private void OnChatHistoryAllChannelsRemoved()
         {
             viewInstance!.RemoveAllConversations();
         }
@@ -310,6 +309,7 @@ namespace DCL.Chat
 
         private void OnIdentityChanged()
         {
+            chatStorage.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
             ShowWelcomeMessage();
         }
 

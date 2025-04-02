@@ -13,8 +13,8 @@ namespace DCL.Chat.History
     /// </summary>
     internal class ChatHistoryEncryptor
     {
-        private readonly AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
-        private readonly byte[] channelIdEncryptionBuffer = new byte[2048]; // Enough to not need resizing
+        private AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
+        private readonly byte[] channelIdEncryptionBuffer = new byte[256]; // Enough to not need resizing
 
         /// <summary>
         ///
@@ -22,12 +22,7 @@ namespace DCL.Chat.History
         /// <param name="encryptionKey"></param>
         public ChatHistoryEncryptor(string encryptionKey)
         {
-            byte[] hashedEncryptionKey = HashKey.FromString(encryptionKey).Hash.Memory;
-
-            cryptoProvider.Key = hashedEncryptionKey;
-            cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
-            cryptoProvider.Mode = CipherMode.ECB; // TODO: USE CBC
-            cryptoProvider.Padding = PaddingMode.Zeros; // TODO: USE PKCS7
+            SetNewEncryptionKey(encryptionKey);
         }
 
         /// <summary>
@@ -105,8 +100,6 @@ namespace DCL.Chat.History
                 length++;
             }
 
-Debug.Log("BUFFER LENGTH: " + length);
-
             // Converted to Base64 to avoid characters forbidden by the file system
             result = Convert.ToBase64String(channelIdEncryptionBuffer, 0, length);
             result = result.Replace('/', '_');
@@ -157,5 +150,19 @@ Debug.Log("BUFFER LENGTH: " + length);
         /// <returns></returns>
         public Stream CreateDecryptionStreamReader(Stream inputStream) =>
             new CryptoStream(inputStream, cryptoProvider.CreateDecryptor(), CryptoStreamMode.Read);
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="newEncryptionKey"></param>
+        public void SetNewEncryptionKey(string newEncryptionKey)
+        {
+            byte[] hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory;
+
+            cryptoProvider.Key = hashedEncryptionKey;
+            cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
+            cryptoProvider.Mode = CipherMode.ECB; // TODO: USE CBC
+            cryptoProvider.Padding = PaddingMode.Zeros; // TODO: USE PKCS7
+        }
     }
 }

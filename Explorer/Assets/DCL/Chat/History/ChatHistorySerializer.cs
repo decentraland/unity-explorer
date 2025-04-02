@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Chat.History
 {
@@ -18,7 +17,7 @@ namespace DCL.Chat.History
 
         private const string LOCAL_USER_TRUE_VALUE = "T";
         private const string LOCAL_USER_FALSE_VALUE = "F";
-        private readonly StringBuilder builder = new StringBuilder(128);
+        private readonly StringBuilder builder = new StringBuilder(256); // Enough not to be resized
 
         private readonly string[] entryValues = new string[3];
         private readonly ChatMessageFactory messageFactory;
@@ -92,7 +91,7 @@ namespace DCL.Chat.History
             }
 
             builder.Append("\n");
-Debug.Log("BUILDER CAPACITY: " + builder.Capacity);
+
             return Encoding.UTF8.GetBytes(builder.ToString());
         }
 

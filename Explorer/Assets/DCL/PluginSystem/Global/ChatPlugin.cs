@@ -46,8 +46,8 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ChatMessageFactory chatMessageFactory;
         private ChatStorage chatStorage;
-        private ChatMessageFactory chatMessageFactory;
 
         private ChatController chatController;
 
@@ -105,7 +105,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            // TODO: This instance has to be re-created when a different user logs in
             chatStorage = new ChatStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
 
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
