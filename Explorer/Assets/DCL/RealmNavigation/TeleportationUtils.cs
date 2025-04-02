@@ -14,27 +14,19 @@ namespace DCL.RealmNavigation
         private const string TRAM_LINE_TITLE = "Tram Line";
         private static readonly Random RANDOM = new ();
 
-        public static void PickTarget(SceneEntityDefinition? sceneDef, ref Vector2Int parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget)
+        public static (Vector3 targetWorldPosition, Vector3? cameraTarget) PickTargetWithOffset(SceneEntityDefinition? sceneDef, Vector2Int parcel)
         {
-            targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            cameraTarget = null;
-
-            if (sceneDef != null)
-                parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
-        }
-
-        public static void PickTargetWithOffset(SceneEntityDefinition? sceneDef, ref Vector2Int parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget)
-        {
-            cameraTarget = null;
+            Vector3? cameraTarget = null;
+            Vector3 targetWorldPosition;
 
             if (sceneDef == null || IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            {
                 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
+                return (targetWorldPosition, cameraTarget);
+            }
             else
             {
-                // Override parcel as it's a new target
-                parcel = sceneDef.metadata.scene.DecodedBase;
                 Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-
                 targetWorldPosition = parcelBaseWorldPosition;
 
                 List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
@@ -49,10 +41,12 @@ namespace DCL.RealmNavigation
                     if (spawnPoint.cameraTarget != null)
                         cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
                 }
+
+                return (targetWorldPosition, cameraTarget);
             }
         }
 
-         private static bool IsTramLine(ReadOnlySpan<char> originalJson) =>
+        public static bool IsTramLine(ReadOnlySpan<char> originalJson) =>
             ExtractTitleValue(originalJson).SequenceEqual(TRAM_LINE_TITLE.AsSpan());
 
         private static ReadOnlySpan<char> ExtractTitleValue(ReadOnlySpan<char> json)

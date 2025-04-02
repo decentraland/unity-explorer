@@ -21,7 +21,6 @@ namespace DCL.RealmNavigation
 {
     public class TeleportController : ITeleportController
     {
-        private delegate void PickTargetDelegate(SceneEntityDefinition? sceneDef, ref Vector2Int parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget);
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private TerrainGenerator terrain;
@@ -65,43 +64,41 @@ namespace DCL.RealmNavigation
         /// If current scene is still loading it will block the teleport until its assets are resolved or timed out
         /// </summary>
         public UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct) =>
-            TeleportAsync(parcel, TeleportationUtils.PickTargetWithOffset, loadReport, ct);
+            TeleportAsync(parcel, loadReport, false, ct);
+            // TeleportAsync(parcel, TeleportationUtils.PickTargetWithOffset, loadReport, ct);
 
         /// <summary>
         /// Debug teleportation
         /// </summary>
         public UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct) =>
-            TeleportAsync(parcel, TeleportationUtils.PickTarget, loadReport, ct);
+            TeleportAsync(parcel, loadReport, true, ct);
+            // TeleportAsync(parcel, TeleportationUtils.PickTarget, loadReport, ct);
 
-        private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, PickTargetDelegate pickTargetDelegate,
-            AsyncLoadProcessReport loadReport, CancellationToken ct)
-        {
-            terrain.SetTerrainCollider(parcel, true);
-
-            if (retrieveScene == null)
+            private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, bool isFromDebugWindow, CancellationToken ct)
             {
-                var position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithTerrainOffset();
+                terrain.SetTerrainCollider(parcel, true);
 
-                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(position, parcel, ct, loadReport));
+                if (retrieveScene == null)
+                {
+                    // var position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithTerrainOffset();
+                    world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, null, ct, loadReport));
+                    loadReport.SetProgress(1f);
+                    return null;
+                }
 
-                loadReport.SetProgress(1f);
-                return null;
-            }
+                SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+                if (sceneDef != null)
+                    if(isFromDebugWindow || !TeleportationUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+                        parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
 
-            pickTargetDelegate(sceneDef, ref parcel, out Vector3 targetWorldPosition, out Vector3? cameraTarget);
+                if (isFromDebugWindow)
+                    sceneDef = null;
 
-            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            PlayerTeleportIntent Intent2 = new PlayerTeleportIntent(targetWorldPosition, parcel, ct, loadReport);
-            world?.AddOrGet(playerEntity, Intent2);
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
 
-            if (cameraTarget != null)
-            {
-                world?.AddOrGet(cameraEntity, new CameraLookAtIntent(cameraTarget.Value, targetWorldPosition));
-                world?.AddOrGet(playerEntity, new PlayerLookAtIntent(cameraTarget.Value, targetWorldPosition));
-            }
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, position: null, ct, loadReport));
 
             if (sceneDef == null)
             {

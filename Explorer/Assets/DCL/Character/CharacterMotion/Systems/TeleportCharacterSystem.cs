@@ -123,18 +123,31 @@ namespace DCL.CharacterMotion.Systems
             World.Remove<PlayerTeleportIntent>(entity);
         }
 
-        private void ResolveAsSuccess(Entity entity, in PlayerTeleportIntent teleportIntent, CharacterController controller, ref CharacterPlatformComponent platformComponent)
+        private void ResolveAsSuccess(Entity playerEntity, in PlayerTeleportIntent teleportIntent, CharacterController characterController, ref CharacterPlatformComponent platformComponent)
         {
             FinalizeQueuedLoadReport(in teleportIntent, static report => report.SetProgress(1f));
 
-            // Teleport the character
-            controller.transform.position = teleportIntent.Position;
+            // if (teleportIntent.Position == null)
+            // {
+            //     (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportationUtils.PickTargetWithOffset(teleportIntent.SceneDef, teleportIntent.Parcel);
+            //
+            //     if (cameraTarget != null)
+            //     {
+            //         World?.AddOrGet(cameraEntity, new CameraLookAtIntent(cameraTarget.Value, targetWorldPosition));
+            //         World?.AddOrGet(playerEntity, new PlayerLookAtIntent(cameraTarget.Value, targetWorldPosition));
+            //     }
+            //
+            //     characterController.transform.position = targetWorldPosition;
+            // }
+            // else
+
+            characterController.transform.position = teleportIntent.Position.Value;
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
 
-            World.Remove<PlayerTeleportIntent>(entity);
-            World.Add(entity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
+            World.Remove<PlayerTeleportIntent>(playerEntity);
+            World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
         }
 
         [Query]
