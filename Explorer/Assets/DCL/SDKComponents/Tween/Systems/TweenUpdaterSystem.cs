@@ -9,8 +9,6 @@ using DCL.SDKComponents.Tween.Components;
 using DCL.SDKComponents.Tween.Helpers;
 using DG.Tweening;
 using ECS.Abstract;
-using ECS.LifeCycle;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
@@ -18,6 +16,7 @@ using ECS.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
+using System.Runtime.CompilerServices;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -28,7 +27,7 @@ namespace DCL.SDKComponents.Tween.Systems
     [UpdateAfter(typeof(TweenLoaderSystem))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
     [LogCategory(ReportCategory.TWEEN)]
-    public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class TweenUpdaterSystem : BaseUnityLoopSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
 
@@ -66,6 +65,7 @@ namespace DCL.SDKComponents.Tween.Systems
             [EfEaseoutback] = OutBack,
             [EfEaseback] = InOutBack,
         };
+
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -80,15 +80,8 @@ namespace DCL.SDKComponents.Tween.Systems
         protected override void Update(float t)
         {
             UpdatePBTweenQuery(World);
-
             UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
-
-            HandleEntityDestructionQuery(World);
-            HandleComponentRemovalQuery(World);
-
-            World.Remove<SDKTweenComponent>(in HandleEntityDestruction_QueryDescription);
-            World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         [Query]
@@ -103,7 +96,9 @@ namespace DCL.SDKComponents.Tween.Systems
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
             else
+            {
                 UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent);
+            }
         }
 
         [Query]
@@ -120,6 +115,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
@@ -132,18 +128,21 @@ namespace DCL.SDKComponents.Tween.Systems
             else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent); }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
         {
             UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
-        private void UpdateTweenMaterial(SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isInCurrentScene)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void UpdateTweenMaterial(SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isInCurrentScene)
         {
             if (materialComponent.Result)
                 TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent, ref materialComponent, movementType, isInCurrentScene);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
@@ -165,6 +164,7 @@ namespace DCL.SDKComponents.Tween.Systems
             sdkTweenComponent.IsDirty = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
@@ -174,24 +174,30 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
-            else if (newState == TweenStateStatus.TsActive) { UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent); }
+            else if (newState == TweenStateStatus.TsActive)
+            {
+                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+            }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene)
         {
             UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, isInCurrentScene);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene)
         {
             TweenSDKComponentHelper.UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
             TweenSDKComponentHelper.WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying)
         {
-            ReturnTweenToPool(ref sdkTweenComponent);
+            tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
@@ -200,6 +206,7 @@ namespace DCL.SDKComponents.Tween.Systems
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void LegacySetupSupport(SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform,
             ref TransformComponent transformComponent, CRDTEntity entity, bool isInCurrentScene)
         {
@@ -213,53 +220,16 @@ namespace DCL.SDKComponents.Tween.Systems
             }
         }
 
-        private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent)
-        {
-            ReturnTweenToPool(ref sdkTweenComponent);
-            ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
-        }
-
-        private void ReturnTweenToPool(ref SDKTweenComponent sdkTweenComponent)
-        {
-            tweenerPool.Return(sdkTweenComponent);
-            sdkTweenComponent.CustomTweener = null;
-        }
-
-        private TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
         {
             if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
             if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
             return TweenStateStatus.TsActive;
         }
 
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World);
-        }
-
         [Query]
-        [All(typeof(SDKTweenComponent))]
-        private void FinalizeComponents(CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
-        {
-            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
-        {
-            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
-        }
-
-        [Query]
-        [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
-        {
-            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
-        }
-
-        [Query]
-        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 

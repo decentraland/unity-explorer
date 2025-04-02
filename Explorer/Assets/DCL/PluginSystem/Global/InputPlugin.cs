@@ -11,6 +11,7 @@ using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Emotes;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using System;
 using System.Threading;

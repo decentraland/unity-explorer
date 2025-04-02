@@ -26,7 +26,7 @@ namespace DCL.CharacterMotion
 
             // spherecast downwards to check edges
             Vector3 rayPosition = currentPosition + characterController.center;
-            Vector3 rayDirection = Vector3.down * characterController.height * 0.6f;
+            Vector3 rayDirection = Vector3.down * (characterController.height * 0.6f);
 
             if (!Physics.SphereCast(rayPosition, characterController.radius, rayDirection.normalized, out RaycastHit sphereCastHitInfo, characterController.height * 0.6f, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
