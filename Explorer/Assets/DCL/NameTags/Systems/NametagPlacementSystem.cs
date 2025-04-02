@@ -43,6 +43,7 @@ namespace DCL.Nametags
         private float maxDistance;
         private float maxDistanceSqr;
         private CameraComponent cameraComponent;
+        private bool cameraInitialized;
 
         public NametagPlacementSystem(
             World world,
@@ -61,13 +62,18 @@ namespace DCL.Nametags
         public override void Initialize()
         {
             playerCamera = World.CacheCamera();
-            cameraComponent = playerCamera.GetCameraComponent(World);
         }
 
         protected override void Update(float t)
         {
             if (!nametagsData.showNameTags)
                 return;
+
+            if (!cameraInitialized)
+            {
+                cameraComponent = playerCamera.GetCameraComponent(World);
+                cameraInitialized = true;
+            }
 
             float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(cameraComponent.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
