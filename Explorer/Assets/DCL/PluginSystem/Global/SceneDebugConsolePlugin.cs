@@ -1,0 +1,78 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.Input;
+using DCL.UI.SceneDebugConsole;
+using DCL.UI.SceneDebugConsole.Commands;
+using DCL.UI.SceneDebugConsole.LogHistory;
+using DCL.UI.SceneDebugConsole.MessageBus;
+using DCL.UI.MainUI;
+using MVC;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+
+namespace DCL.PluginSystem.Global
+{
+    public class SceneDebugConsolePlugin : IDCLGlobalPlugin<SceneDebugConsolePluginSettings>
+    {
+        private readonly IMVCManager mvcManager;
+        private readonly ISceneDebugConsoleLogHistory logHistory;
+        private readonly ISceneDebugConsoleMessageBus logMessagesBus;
+        private readonly IInputBlock inputBlock;
+        private readonly MainUIView mainUIView;
+        private readonly ViewDependencies viewDependencies;
+        private readonly ISceneDebugConsoleCommandsBus consoleCommandsBus;
+
+        private SceneDebugConsoleController sceneDebugConsoleController;
+
+        public SceneDebugConsolePlugin(
+            IMVCManager mvcManager,
+            ISceneDebugConsoleMessageBus logMessagesBus,
+            ISceneDebugConsoleLogHistory logHistory,
+            MainUIView mainUIView,
+            IInputBlock inputBlock,
+            ViewDependencies viewDependencies,
+            ISceneDebugConsoleCommandsBus consoleCommandsBus)
+        {
+            this.mvcManager = mvcManager;
+            this.logHistory = logHistory;
+            this.logMessagesBus = logMessagesBus;
+            this.mainUIView = mainUIView;
+            this.inputBlock = inputBlock;
+            this.viewDependencies = viewDependencies;
+            this.consoleCommandsBus = consoleCommandsBus;
+        }
+
+        public void Dispose() { }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(SceneDebugConsolePluginSettings settings, CancellationToken ct)
+        {
+            sceneDebugConsoleController = new SceneDebugConsoleController(
+                () =>
+                {
+                    SceneDebugConsoleView? view = mainUIView.SceneDebugConsoleView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                logMessagesBus,
+                logHistory,
+                inputBlock,
+                viewDependencies,
+                consoleCommandsBus,
+                settings.ConsoleSettings
+            );
+
+            mvcManager.RegisterController(sceneDebugConsoleController);
+
+            await UniTask.CompletedTask;
+        }
+    }
+
+    public class SceneDebugConsolePluginSettings : IDCLPluginSettings
+    {
+        [field: SerializeField] public SceneDebugConsoleSettings ConsoleSettings { get; private set; }
+    }
+}

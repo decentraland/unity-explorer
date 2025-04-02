@@ -4,6 +4,7 @@ using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.Controls;
+using DCL.UI.SceneDebugConsole;
 using DCL.UI.Sidebar;
 using MVC;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace DCL.UI.MainUI
     public class MainUIView : ViewBase, IView
     {
         [field: SerializeField] public ChatView ChatView { get; private set; }
+        [field: SerializeField] public SceneDebugConsoleView SceneDebugConsoleView { get; private set; }
         [field: SerializeField] public FriendsPanelView FriendsPanelViewView { get; private set; }
         [field: SerializeField] public MinimapView MinimapView { get; private set; }
         [field: SerializeField] public FriendPushNotificationView FriendPushNotificationView { get; private set; }
