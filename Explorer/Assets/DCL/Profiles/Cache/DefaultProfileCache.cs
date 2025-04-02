@@ -13,6 +13,9 @@ namespace DCL.Profiles
         public Profile? Get(string id) =>
             profiles.ContainsKey(id) ? profiles[id] : null;
 
+        public bool TryGet(string id, out Profile profile) =>
+            profiles.TryGetValue(id, out profile);
+
         public Profile? GetByUserName(string userName)
         {
             if (userNameToIdMap.TryGetValue(userName, out string? profileId))

@@ -333,8 +333,8 @@ namespace DCL.Chat
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
-                    item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                    item = listView.NewListViewItem(itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
+                        itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
@@ -344,7 +344,7 @@ namespace DCL.Chat
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
-                    if (itemData is { SentByOwnUser: false, SystemMessage: false })
+                    if (itemData is { IsSentByOwnUser: false, IsSystemMessage: false })
                         itemScript.ChatEntryClicked += OnChatEntryClicked;
 
                     messageOptionsButton?.onClick.AddListener(() =>
@@ -373,7 +373,7 @@ namespace DCL.Chat
 
         private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
         {
-            if (itemData.SystemMessage)
+            if (itemData.IsSystemMessage)
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {

@@ -64,7 +64,7 @@ namespace DCL.Profiles
         public string ValidatedName { get; private set; }
 
         /// <summary>
-        ///     The # part of the name for users without claimed name, otherwise null, includes the # character at the beginning
+        ///     The # part of the name for users without claimed name, will be null for users with a claimed name, includes the # character at the beginning
         /// </summary>
         public string? WalletId { get; private set; }
 
@@ -198,13 +198,13 @@ namespace DCL.Profiles
 
         private void GenerateAndValidateName()
         {
-            ValidatedName = "";
-            DisplayName = "";
+            ValidatedName = string.Empty;
+            DisplayName = string.Empty;
             WalletId = null;
 
             if (string.IsNullOrEmpty(Name)) return;
 
-            var result = "";
+            string result = string.Empty;
             MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
 
             foreach (Match match in matches)

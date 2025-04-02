@@ -35,6 +35,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         internal event Action<string>? OnlineFriendClicked;
         internal event Action<string, Vector2Int>? JumpInClicked;
+        internal event Action OpenConversationClicked;
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
@@ -111,8 +112,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             if (elementClicked)
             {
+                OpenConversationClicked?.Invoke();
                 openPassportCts.Cancel();
-                //TODO FRAN: when refactor PR is merged, close friends panel
                 chatEventBus.OpenConversationUsingUserId(profile.Address);
                 elementClicked = false;
             }

@@ -8,30 +8,14 @@ namespace DCL.Chat.History
     /// </summary>
     public class ChatChannel
     {
-        private static readonly ChatMessage PADDING_MESSAGE = new ChatMessage(true);
+        private static readonly ChatMessage PADDING_MESSAGE = ChatMessage.NewPaddingElement();
 
         /// <summary>
-        /// The type of channel which limits who can participate in the channel.
+        /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
-        public enum ChatChannelType
-        {
-            /// <summary>
-            /// The channel in which all users in an island can participate.
-            /// </summary>
-            Nearby,
-
-            /// <summary>
-            /// A channel in which a limited group of users can participate.
-            /// </summary>
-            Community,
-
-            /// <summary>
-            /// A private channel in which the current player chats with another user.
-            /// </summary>
-            User,
-
-            Undefined,
-        }
+        public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.Nearby.ToString());
+        public static readonly ChannelId EMPTY_CHANNEL_ID = new ();
+        public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.Nearby, ChatChannelType.Nearby.ToString());
 
         /// <summary>
         /// The unique identifier of a chat channel.
@@ -48,13 +32,6 @@ namespace DCL.Chat.History
             public bool Equals(ChannelId other) =>
                 Id == other.Id;
         }
-
-        /// <summary>
-        /// The ID of the "near-by" channel, which is always the same.
-        /// </summary>
-        public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.Nearby.ToString());
-
-        public static readonly ChatChannel NEARBY_CHANNEL = new ChatChannel(ChatChannelType.Nearby, ChatChannelType.Nearby.ToString());
 
         public delegate void ClearedDelegate(ChatChannel clearedChannel);
         public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
@@ -163,6 +140,29 @@ namespace DCL.Chat.History
         public void MarkAllMessagesAsRead()
         {
             ReadMessages = messages.Count;
+        }
+
+        /// <summary>
+        /// The type of channel which limits who can participate in the channel.
+        /// </summary>
+        public enum ChatChannelType
+        {
+            /// <summary>
+            /// The channel in which all users in an island can participate.
+            /// </summary>
+            Nearby,
+
+            /// <summary>
+            /// A channel in which a limited group of users can participate.
+            /// </summary>
+            Community,
+
+            /// <summary>
+            /// A private channel in which the current player chats with another user.
+            /// </summary>
+            User,
+
+            Undefined,
         }
     }
 }
