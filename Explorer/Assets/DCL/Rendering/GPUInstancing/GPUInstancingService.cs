@@ -139,8 +139,14 @@ namespace DCL.Rendering.GPUInstancing
 
         public void RenderIndirect()
         {
-            if (renderCamera == null)
+            if (renderCamera == null || !Application.isFocused)
                 return;
+
+#if UNITY_EDITOR
+            var currentWindow = UnityEditor.EditorWindow.focusedWindow;
+            if (currentWindow != null && currentWindow.GetType().ToString() != "UnityEditor.GameView")
+                return;
+#endif
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
