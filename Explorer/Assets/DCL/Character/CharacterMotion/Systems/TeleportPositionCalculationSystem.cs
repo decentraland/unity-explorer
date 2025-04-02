@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Landscape;
 using DCL.RealmNavigation;
 using ECS.Abstract;
 using UnityEngine;
@@ -11,16 +12,17 @@ using UnityEngine;
 namespace DCL.Character.CharacterMotion.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    // [UpdateInGroup(typeof(PresentationSystemGroup))]
-    // [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
-    // [UpdateBefore(typeof(CheckCameraQualifiedForRepartitioningSystem))]
     [LogCategory(ReportCategory.MOTION)]
     public partial class TeleportPositionCalculationSystem : BaseUnityLoopSystem
     {
+        private readonly TerrainGenerator terrain;
         private SingleInstanceEntity playerEntity;
         private SingleInstanceEntity cameraEntity;
 
-        public TeleportPositionCalculationSystem(World world) : base(world) { }
+        public TeleportPositionCalculationSystem(World world, TerrainGenerator terrain) : base(world)
+        {
+            this.terrain = terrain;
+        }
 
         protected override void Update(float t)
         {
@@ -33,6 +35,8 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 if (teleportIntent.Position == null)
                 {
+                    terrain.SetTerrainCollider(teleportIntent.Parcel, true);
+
                     (Vector3 targetWorldPosition, Vector3? cameraTarget) =
                         TeleportationUtils.PickTargetWithOffset(teleportIntent.SceneDef, teleportIntent.Parcel);
 
@@ -43,9 +47,7 @@ namespace DCL.Character.CharacterMotion.Systems
                         World?.AddOrGet(cameraEntity, new CameraLookAtIntent(cameraTarget.Value, targetWorldPosition));
                         World?.AddOrGet(playerEntity, new PlayerLookAtIntent(cameraTarget.Value, targetWorldPosition));
                     }
-                    // characterController.transform.position = targetWorldPosition;
                 }
-                // else characterController.transform.position = teleportIntent.Position.Value;
             }
         }
     }

@@ -9,6 +9,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
+using DCL.Landscape;
 using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Reporting;
@@ -25,6 +26,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly TerrainGenerator terrain;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
@@ -32,13 +34,15 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ISceneReadinessReportQueue sceneReadinessReportQueue)
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            TerrainGenerator terrain)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.terrain = terrain;
         }
 
         public void Dispose()
@@ -70,7 +74,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
-            TeleportPositionCalculationSystem.InjectToWorld(ref builder);
+            TeleportPositionCalculationSystem.InjectToWorld(ref builder, terrain);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
