@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
@@ -28,7 +27,6 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<string, int> actionNameById = new ();
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
-        private readonly DCLInput.ShortcutsActions shortcuts;
         private readonly DCLInput.EmotesActions emotesActions;
 
         private int triggeredEmote = -1;
@@ -38,7 +36,6 @@ namespace DCL.AvatarRendering.Emotes
         private UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
             IMVCManager mvcManager) : base(world)
         {
-            shortcuts = dclInput.Shortcuts;
             emotesActions = dclInput.Emotes;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
@@ -73,21 +70,6 @@ namespace DCL.AvatarRendering.Emotes
                 TriggerEmoteQuery(World, triggeredEmote);
                 triggeredEmote = -1;
             }
-
-            if (shortcuts.EmoteWheel.WasReleasedThisFrame()
-                // Close and open actions conflicts each other since they are assigned to the same input key
-                // we need to avoid opening it again after it has been recently closed
-                // We also have to consider race conditions, so I see no other way than setting a delay
-                && framesAfterWheelWasClosed == 0)
-            {
-                if (!isWheelBlocked)
-                    OpenEmoteWheel();
-
-                isWheelBlocked = false;
-            }
-
-            if (framesAfterWheelWasClosed > 0)
-                framesAfterWheelWasClosed--;
         }
 
         [Query]
@@ -147,9 +129,6 @@ namespace DCL.AvatarRendering.Emotes
 
         private static string GetActionName(int i) =>
             $"Slot {i}";
-
-        private void OpenEmoteWheel() =>
-            mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
 
         private void OnEmoteWheelClosed(IController obj)
         {

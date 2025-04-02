@@ -179,7 +179,7 @@ namespace DCL.Interaction.Raycast.Systems
 
             // The range of Unity Layers is narrower than the range of SDK Layers
             // so we need to raycast against all (even if the query type is hit first) and then filter our each individual raycast hit
-            int hitsCount = Physics.RaycastNonAlloc(ray, SHARED_RAYCAST_HIT_ARRAY, sdkComponent.MaxDistance, collisionMask);
+            int hitsCount = Physics.RaycastNonAlloc(ray, SHARED_RAYCAST_HIT_ARRAY, Mathf.Min(sdkComponent.MaxDistance, ParcelMathHelper.PARCEL_SIZE), collisionMask);
 
             switch (sdkComponent.QueryType)
             {

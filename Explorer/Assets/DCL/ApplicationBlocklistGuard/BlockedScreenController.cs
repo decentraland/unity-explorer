@@ -27,11 +27,11 @@ namespace DCL.ApplicationBlocklistGuard
 
         public override void Dispose()
         {
-            if (viewInstance != null)
-            {
-                viewInstance.CloseButton.onClick.RemoveListener(OnExitClicked);
-                viewInstance.SupportButton.onClick.RemoveListener(OnSupportClicked);
-            }
+            if (viewInstance == null)
+                return;
+
+            viewInstance.CloseButton.onClick.RemoveListener(OnExitClicked);
+            viewInstance.SupportButton.onClick.RemoveListener(OnSupportClicked);
         }
 
         private static void OnExitClicked()

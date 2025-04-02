@@ -7,7 +7,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -30,11 +29,11 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
 
-        public CreateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider,
+        public CreateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget) : base(world)
         {
             this.webRequestController = webRequestController;
@@ -95,9 +94,10 @@ namespace DCL.SDKComponents.MediaStream
                     url = mediaUrl;
             }
 
+            MediaPlayer mediaPlayer = mediaPlayerPool.GetOrCreateReusableMediaPlayer(url);
             var component = new MediaPlayerComponent
             {
-                MediaPlayer = mediaPlayerPool.Get(),
+                MediaPlayer = mediaPlayer,
                 URL = url,
                 IsFromContentServer = url.Contains(CONTENT_SERVER_PREFIX),
                 PreviousCurrentTimeChecked = -1,
