@@ -67,7 +67,8 @@ namespace DCL.Friends.UI.FriendPanel
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             bool includeUserBlocking,
-            bool isConnectivityStatusEnabled, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            bool isConnectivityStatusEnabled,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
@@ -129,6 +130,7 @@ namespace DCL.Friends.UI.FriendPanel
             {
                 friendSectionControllerConnectivity.OnlineFriendClicked -= OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked -= JumpToFriendClick;
+                friendSectionControllerConnectivity.OpenConversationClicked -= OnOpenConversationClicked;
             }
 
             blockedSectionController.Dispose();
@@ -181,7 +183,6 @@ namespace DCL.Friends.UI.FriendPanel
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
             chatEventBus.OpenConversationUsingUserId(web3Address);
         }
-
 
         private void CloseFriendsPanel(InputAction.CallbackContext obj) =>
             closeTaskCompletionSource.TrySetResult();

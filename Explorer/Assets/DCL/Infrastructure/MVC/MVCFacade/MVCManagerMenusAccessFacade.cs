@@ -80,8 +80,7 @@ namespace MVC
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            Profile profile = profileCache.Get(walletId);
-            if (profile == null) return;
+            if (!profileCache.TryGet(walletId, out var profile)) return;
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint);
         }
 

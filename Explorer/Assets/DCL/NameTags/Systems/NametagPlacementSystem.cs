@@ -42,6 +42,8 @@ namespace DCL.Nametags
         private SingleInstanceEntity playerCamera;
         private float maxDistance;
         private float maxDistanceSqr;
+        private CameraComponent cameraComponent;
+        private bool cameraInitialized;
 
         public NametagPlacementSystem(
             World world,
@@ -67,17 +69,21 @@ namespace DCL.Nametags
             if (!nametagsData.showNameTags)
                 return;
 
-            var camera = playerCamera.GetCameraComponent(World);
+            if (!cameraInitialized)
+            {
+                cameraComponent = playerCamera.GetCameraComponent(World);
+                cameraInitialized = true;
+            }
 
-            float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(camera.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
-            NametagMathHelper.CalculateCameraForward(camera.Camera.transform.rotation, out float3 cameraForward);
-            NametagMathHelper.CalculateCameraUp(camera.Camera.transform.rotation, out float3 cameraUp);
+            float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(cameraComponent.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
+            NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
+            NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
             EnableTagQuery(World);
-            UpdateTagQuery(World, camera, fovScaleFactor, cameraForward, cameraUp);
-            AddTagForPlayerAvatarsQuery(World, camera, cameraForward, cameraUp);
-            AddTagForNonPlayerAvatarsQuery(World, camera, cameraForward, cameraUp);
-            UpdateOwnTagQuery(World, camera, fovScaleFactor, cameraForward, cameraUp);
+            UpdateTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
+            AddTagForPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
+            AddTagForNonPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
+            UpdateOwnTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
         }
 
