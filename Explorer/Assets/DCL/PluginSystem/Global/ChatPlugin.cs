@@ -7,6 +7,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -47,7 +48,8 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ChatMessageFactory chatMessageFactory;
-        private ChatStorage chatStorage;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private ChatStorage? chatStorage;
 
         private ChatController chatController;
 
@@ -71,7 +73,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
-            ChatMessageFactory chatMessageFactory)
+            ChatMessageFactory chatMessageFactory,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -94,18 +97,20 @@ namespace DCL.PluginSystem.Global
             this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose()
         {
-            chatStorage.Dispose();
+            chatStorage?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            chatStorage = new ChatStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
+            if(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+                chatStorage = new ChatStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
 
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 

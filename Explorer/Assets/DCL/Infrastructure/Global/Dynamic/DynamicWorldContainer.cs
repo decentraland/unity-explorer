@@ -681,7 +681,8 @@ namespace Global.Dynamic
                     identityCache,
                     staticContainer.LoadingStatus,
                     sharedSpaceManager,
-                    chatMessageFactory),
+                    chatMessageFactory,
+                    staticContainer.FeatureFlagsCache),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

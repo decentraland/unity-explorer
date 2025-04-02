@@ -79,7 +79,7 @@ namespace DCL.Chat
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
-        private readonly ChatStorage chatStorage;
+        private readonly ChatStorage? chatStorage;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -292,7 +292,7 @@ namespace DCL.Chat
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
             ShowWelcomeMessage();
 
-            chatStorage.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
+            chatStorage?.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
         }
 
         private void OnChatHistoryAllChannelsRemoved()
@@ -310,7 +310,7 @@ namespace DCL.Chat
 
         private void OnIdentityChanged()
         {
-            chatStorage.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
+            chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
             ShowWelcomeMessage();
         }
 
@@ -362,7 +362,7 @@ namespace DCL.Chat
         private async void OnViewCurrentChannelChangedAsync()
         {
             if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.User &&
-                !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
+                chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
             {
                 await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
                 viewInstance.RefreshMessages();
