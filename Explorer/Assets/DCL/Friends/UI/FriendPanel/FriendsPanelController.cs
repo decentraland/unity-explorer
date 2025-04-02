@@ -124,6 +124,7 @@ namespace DCL.Friends.UI.FriendPanel
             {
                 friendSectionControllerConnectivity.OnlineFriendClicked -= OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked -= JumpToFriendClick;
+                friendSectionControllerConnectivity.OpenConversationClicked -= CloseFriendsPanel;
             }
 
             blockedSectionController.Dispose();

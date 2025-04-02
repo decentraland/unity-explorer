@@ -471,15 +471,13 @@ namespace DCL.Chat
             {
                 if (chatMessage.IsPrivateMessage)
                 {
-                    Profile? profile = profileCache.Get(channel.Id.Id);
-
-                    if (profile == null)
+                    if (!profileCache.TryGet(channel.Id.Id, out var profile))
                     {
                         GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
                         return;
                     }
 
-                    Color nameColor = profile.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                    Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
                     GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, profile.ValidatedName, profile.WalletId);
                 }
                 else
@@ -644,9 +642,7 @@ namespace DCL.Chat
 
             foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
-                Profile? profile = profileCache.Get(identity);
-
-                if (profile != null)
+                if (profileCache.TryGet(identity, out var profile))
                     outProfiles.Add(profile);
             }
         }
