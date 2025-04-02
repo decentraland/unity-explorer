@@ -34,7 +34,7 @@ namespace DCL.Chat.History
         /// <param name="destination"></param>
         public void AppendPrivateConversationMessage(ChatMessage messageToAppend, Stream destination)
         {
-            entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.SentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
+            entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.IsSentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
             entryValues[ENTRY_MESSAGE] = messageToAppend.Message;
             entryValues[ENTRY_USERNAME] = messageToAppend.SenderValidatedName;
 

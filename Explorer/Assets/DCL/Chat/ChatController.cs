@@ -25,6 +25,7 @@ using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -472,7 +473,8 @@ namespace DCL.Chat
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
-                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR);
+                bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.User;
+                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
 
                 switch (chatAudioSettings.chatAudioSettings)
                 {
@@ -486,23 +488,24 @@ namespace DCL.Chat
             }
             else if (isSentByOwnUser)
             {
-                if (chatMessage.IsPrivateMessage)
+                if (channel.ChannelType == ChatChannel.ChatChannelType.User)
                 {
                     if (!profileCache.TryGet(channel.Id.Id, out var profile))
                     {
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
-                        return;
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
                     }
-
-                    Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, profile.ValidatedName, profile.WalletId);
+                    else
+                    {
+                        Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                    }
                 }
                 else
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id);
             }
         }
 
-        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, string? receiverDisplayName = null, string? receiverWalletId = null)
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
             {
@@ -511,8 +514,8 @@ namespace DCL.Chat
                     chatMessage.SenderValidatedName,
                     chatMessage.SenderWalletAddress,
                     chatMessage.IsMention,
-                    chatMessage.IsPrivateMessage,
-                    chatMessage.ChannelId.Id,
+                    isPrivateMessage,
+                    messageChannelId.Id,
                     chatMessage.IsSentByOwnUser,
                     receiverDisplayName?? string.Empty,
                     receiverWalletId?? string.Empty,

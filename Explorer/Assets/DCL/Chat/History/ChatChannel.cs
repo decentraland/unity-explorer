@@ -102,13 +102,13 @@ namespace DCL.Chat.History
             messages.Capacity = messagesToStore.Count + 2;
 
             // Adding two elements to count as top and bottom padding
-            messages.Add(new ChatMessage(true));
+            messages.Add(PADDING_MESSAGE);
 
             // Messages are added in inverse order
             for (int i = messagesToStore.Count - 1; i >= 0; --i)
                 messages.Add(messagesToStore[i]);
 
-            messages.Add(new ChatMessage(true));
+            messages.Add(PADDING_MESSAGE);
         }
 
         /// <summary>

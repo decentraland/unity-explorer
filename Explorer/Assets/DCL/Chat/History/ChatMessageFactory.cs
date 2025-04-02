@@ -67,7 +67,8 @@ namespace DCL.Chat.History
                     senderWalletAddress,
                     false,
                     profile?.WalletId,
-                    isMention
+                    isMention,
+                    false
                 );
             }
         }
