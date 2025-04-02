@@ -47,7 +47,7 @@ namespace DCL.Profiles
         private readonly IWebRequestController webRequestController;
         private readonly Dictionary<string, Sprite> thumbnails = new ();
         private readonly Dictionary<string, RequestAttempts> failedThumbnails = new ();
-        private readonly Dictionary<string, UniTask<Sprite?>> currentThumbnailTasks = new ();
+        private readonly Dictionary<string, UniTaskCompletionSource<Sprite?>> currentThumbnailTasks = new ();
         private readonly HashSet<string> unsolvableThumbnails = new ();
 
         public ProfileThumbnailCache(IWebRequestController webRequestController)
@@ -65,25 +65,32 @@ namespace DCL.Profiles
                 return sprite;
 
             //Avoid multiple requests for the same thumbnail
-            if (currentThumbnailTasks.TryGetValue(userId, out UniTask<Sprite?> thumbnailTask))
-            {
-                Sprite? result = await thumbnailTask;
-                currentThumbnailTasks.Remove(userId);
-                return result;
-            }
+            if (currentThumbnailTasks.TryGetValue(userId, out UniTaskCompletionSource<Sprite?> thumbnailTask))
+                return await thumbnailTask.Task;
 
-            UniTask<Sprite?> spriteTask = DownloadThumbnailAsync(userId, thumbnailUrl, ct);
-            currentThumbnailTasks[userId] = spriteTask;
-            return await spriteTask;
+            UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
+            if (currentThumbnailTasks.TryAdd(userId, spriteTaskCompletionSource))
+                DownloadThumbnailAsync(userId, thumbnailUrl, spriteTaskCompletionSource, ct).Forget();
+
+            return await spriteTaskCompletionSource.Task;
         }
 
-        private async UniTask<Sprite?> DownloadThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
+        private async UniTaskVoid DownloadThumbnailAsync(string userId, string thumbnailUrl, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
-            if (URLAddress.EMPTY.Equals(thumbnailUrl)) return null;
-
-            if (unsolvableThumbnails.Contains(userId) || !TestCooldownCondition(userId)) return null;
-
             Sprite? result = null;
+
+            if (URLAddress.EMPTY.Equals(thumbnailUrl))
+            {
+                tcs.TrySetResult(result);
+                return;
+            }
+
+            if (unsolvableThumbnails.Contains(userId) || !TestCooldownCondition(userId))
+            {
+                tcs.TrySetResult(result);
+                return;
+            }
+
             try
             {
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
@@ -112,7 +119,7 @@ namespace DCL.Profiles
             }
 
             currentThumbnailTasks.Remove(userId);
-            return result;
+            tcs.TrySetResult(result);
         }
 
         private void HandleCooldown(string userId)
