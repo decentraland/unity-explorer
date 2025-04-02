@@ -18,7 +18,7 @@ namespace DCL.UI.InputFieldFormatting
         private const int ESTIMATED_LINK_TAG_LENGTH = 32; // Average length of a link tag including opening and closing styles
         private const int INITIAL_STRING_BUILDER_CAPACITY = 256;
         private const int TEMP_STRING_BUILDER_CAPACITY = 128;
-        private const float ESTIMATED_CAPACITY_PER_CHAR = 3.2f;
+        private const int ESTIMATED_CAPACITY_PER_CHAR = 3;
 
         private const string URL_GROUP_NAME = "url";
         private const string SCENE_GROUP_NAME = "scene";
@@ -76,7 +76,7 @@ namespace DCL.UI.InputFieldFormatting
         private void ProcessMainStringBuilder()
         {
             var text = mainStringBuilder.ToString();
-            var estimatedCapacity = text.Length + (text.Length * ESTIMATED_CAPACITY_PER_CHAR);
+            int estimatedCapacity = text.Length + (text.Length * ESTIMATED_CAPACITY_PER_CHAR);
             mainStringBuilder.Clear();
             mainStringBuilder.EnsureCapacity(estimatedCapacity);
 
