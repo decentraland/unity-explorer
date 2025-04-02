@@ -1,4 +1,5 @@
-﻿using DCL.Utilities;
+﻿using DCL.Ipfs;
+using DCL.Utilities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -19,12 +20,13 @@ namespace DCL.CharacterMotion.Components
             }
         }
 
-        public static readonly TimeSpan TIMEOUT = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromMinutes(2);
+        private readonly float creationTime;
 
         public readonly Vector2Int Parcel;
-        public readonly Vector3 Position;
-
         public readonly CancellationToken CancellationToken;
+        public readonly SceneEntityDefinition SceneDef;
+        public readonly bool OverrideParcel;
 
         /// <summary>
         ///     Strictly it's the same report added to "SceneReadinessReportQueue" <br />
@@ -33,17 +35,16 @@ namespace DCL.CharacterMotion.Components
         /// </summary>
         public readonly AsyncLoadProcessReport? AssetsResolution;
 
-        public readonly float CreationTime;
+        public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(Vector3 position, Vector2Int parcel, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null)
+        public PlayerTeleportIntent(Vector2Int parcel, CancellationToken cancellationToken, bool overrideParcel, AsyncLoadProcessReport? assetsResolution = null, SceneEntityDefinition sceneDef = null)
         {
-            Position = position;
             Parcel = parcel;
             CancellationToken = cancellationToken;
             AssetsResolution = assetsResolution;
-            CreationTime = Time.realtimeSinceStartup;
+            creationTime = Time.realtimeSinceStartup;
+            SceneDef = sceneDef;
+            OverrideParcel = overrideParcel;
         }
-
-        public bool TimedOut => Time.realtimeSinceStartup - CreationTime > TIMEOUT.TotalSeconds;
     }
 }
