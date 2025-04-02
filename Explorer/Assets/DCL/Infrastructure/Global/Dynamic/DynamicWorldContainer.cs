@@ -73,6 +73,9 @@ using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SceneDebugConsole.Commands;
+using DCL.UI.SceneDebugConsole.LogHistory;
+using DCL.UI.SceneDebugConsole.MessageBus;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -512,6 +515,11 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
+            // Scene Debug Console
+            /*var sceneDebugConsoleLogMessagesBus = new SceneDebugConsoleCommandsBus();
+            var sceneDebugConsoleLogsHistory = new SceneDebugConsoleLogHistory();
+            var sceneDebugConsoleCommandsBus = new SceneDebugConsoleCommandsBus();*/
+
             var coreBackpackEventBus = new BackpackEventBus();
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -869,6 +877,16 @@ namespace Global.Dynamic
                         cameraReelStorageService
                     )
                 );
+
+            if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
+                globalPlugins.Add(new SceneDebugConsolePlugin(
+                    mvcManager,
+                    new SceneDebugConsoleMessageBus(),
+                    new SceneDebugConsoleLogHistory(),
+                    mainUIView,
+                    staticContainer.InputBlock,
+                    viewDependencies,
+                    new SceneDebugConsoleCommandsBus()));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
