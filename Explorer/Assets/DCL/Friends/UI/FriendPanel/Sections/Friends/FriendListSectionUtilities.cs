@@ -1,4 +1,6 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -17,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public static class FriendListSectionUtilities
     {
+        private const string WORLDS_BASE_URL = "https://worlds-content-server.decentraland.org/world/";
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
@@ -42,9 +45,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     return;
 
                 OnlineUserData userData = onlineData.First();
-                Vector2Int parcel = userData.position.ToParcel();
-                realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
-                parcelCalculatedCallback?.Invoke(parcel);
+
+                if (userData.IsInWorld)
+                {
+                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()), ct).Forget();
+                }
+                else
+                {
+                    Vector2Int parcel = userData.position.ToParcel();
+                    realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
+                    parcelCalculatedCallback?.Invoke(parcel);
+                }
             }
         }
 

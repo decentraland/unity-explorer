@@ -205,8 +205,13 @@ namespace Global.Dynamic
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
 
-            IOnlineUsersProvider onlineUsersProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
+            IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
+
+            var onlineUsersProvider = new WorldInfoOnlineUsersProviderDecorator(
+                baseUserProvider,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
