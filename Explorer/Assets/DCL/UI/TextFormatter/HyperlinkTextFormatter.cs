@@ -19,12 +19,22 @@ namespace DCL.UI.InputFieldFormatting
         private const int INITIAL_STRING_BUILDER_CAPACITY = 256;
         private const int TEMP_STRING_BUILDER_CAPACITY = 128;
 
+        // Regex group names
+        private const string URL_GROUP_NAME = "url";
+        private const string SCENE_GROUP_NAME = "scene";
+        private const string WORLD_GROUP_NAME = "world";
+        private const string USERNAME_FULL_GROUP_NAME = "username";
+        private const string USERNAME_NAME_GROUP_NAME = "name";
+        private const string RICHTEXT_GROUP_NAME = "richtext";
+        private const string X_COORD_GROUP_NAME = "x";
+        private const string Y_COORD_GROUP_NAME = "y";
+
         // Regex patterns for each type of link
-        private const string URL_PATTERN = @"(?<url>(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$))";
-        private const string SCENE_PATTERN = @"(?<scene>(?<=^|\s)(?<x>-?\d{1,3}),(?<y>-?\d{1,3})(?=\s|!|\?|\.|,|$))";
-        private const string WORLD_PATTERN = @"(?<world>(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
-        private const string USERNAME_PATTERN = @"(?<username>(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$))";
-        private const string RICH_TEXT_PATTERN = @"(?<richtext><(?!\/?(b|i)(>|\s))[^>]+>)";
+        private const string URL_PATTERN = @"(?<" + URL_GROUP_NAME + @">(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$))";
+        private const string SCENE_PATTERN = @"(?<" + SCENE_GROUP_NAME + @">(?<=^|\s)(?<" + X_COORD_GROUP_NAME + @">-?\d{1,3}),(?<" + Y_COORD_GROUP_NAME + @">-?\d{1,3})(?=\s|!|\?|\.|,|$))";
+        private const string WORLD_PATTERN = @"(?<" + WORLD_GROUP_NAME + @">(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
+        private const string USERNAME_PATTERN = @"(?<" + USERNAME_FULL_GROUP_NAME + @">(?<=^|\s)@(?<" + USERNAME_NAME_GROUP_NAME + @">[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$))";
+        private const string RICH_TEXT_PATTERN = @"(?<" + RICHTEXT_GROUP_NAME + @"><(?!\/?(b|i)(>|\s))[^>]+>)";
 
         // Combined regex for better performance - matches all link types in one pass
         private static readonly Regex COMBINED_LINK_REGEX = new (
@@ -87,15 +97,15 @@ namespace DCL.UI.InputFieldFormatting
                 }
 
                 // Process the match based on its group
-                if (match.Groups["url"].Success)
+                if (match.Groups[URL_GROUP_NAME].Success)
                     ProcessUrlMatch(match);
-                else if (match.Groups["scene"].Success)
+                else if (match.Groups[SCENE_GROUP_NAME].Success)
                     ProcessSceneMatch(match);
-                else if (match.Groups["world"].Success)
+                else if (match.Groups[WORLD_GROUP_NAME].Success)
                     ProcessWorldMatch(match);
-                else if (match.Groups["username"].Success)
+                else if (match.Groups[USERNAME_FULL_GROUP_NAME].Success)
                     ProcessUsernameMatch(match);
-                else if (match.Groups["richtext"].Success)
+                else if (match.Groups[RICHTEXT_GROUP_NAME].Success)
                     ProcessRichTextMatch(match);
 
                 lastIndex = match.Index + match.Length;
@@ -125,8 +135,8 @@ namespace DCL.UI.InputFieldFormatting
         private void ProcessSceneMatch(Match match)
         {
             if (!AreCoordsValid(
-                int.Parse(match.Groups["x"].Value),
-                int.Parse(match.Groups["y"].Value)))
+                int.Parse(match.Groups[X_COORD_GROUP_NAME].Value),
+                int.Parse(match.Groups[Y_COORD_GROUP_NAME].Value)))
             {
                 mainStringBuilder.Append(match);
                 return;
@@ -158,7 +168,7 @@ namespace DCL.UI.InputFieldFormatting
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ProcessUsernameMatch(Match match)
         {
-            string username = match.Groups[1].Value;
+            string username = match.Groups[USERNAME_NAME_GROUP_NAME].Value;
             if (IsOwnUsername(username))
             {
                 tempStringBuilder.Clear();
@@ -206,8 +216,14 @@ namespace DCL.UI.InputFieldFormatting
             GenesisCityData.IsInsideBounds(x, y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsOwnUsername(string username) =>
-            selfProfile.OwnProfile?.DisplayName == username;
+        private bool IsOwnUsername(ReadOnlySpan<char> username)
+        {
+            ReadOnlySpan<char> displayName = selfProfile.OwnProfile!.DisplayName;
+
+            if (displayName.Length != username.Length) return false;
+
+            return displayName == username;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsUserNameValid(string username) =>
