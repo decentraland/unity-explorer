@@ -94,6 +94,8 @@ namespace DCL.Landscape
 
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
+            if(terrainModel == null) return;
+
             int offsetX = parcel.x - terrainModel.MinParcel.x;
             int offsetY = parcel.y - terrainModel.MinParcel.y;
 
