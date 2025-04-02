@@ -67,7 +67,7 @@ namespace DCL.RealmNavigation
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, PickTargetDelegate pickTargetDelegate,
             AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            terrain?.SetTerrainCollider(parcel, true);
+            terrain.SetTerrainCollider(parcel, true);
 
             if (retrieveScene == null)
             {
