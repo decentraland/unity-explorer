@@ -640,6 +640,12 @@ namespace DCL.Chat
         public void RemoveConversation(ChatChannel.ChannelId channelToRemove)
         {
             conversationsToolbar.RemoveConversation(channelToRemove);
+
+            if (currentChannel != null && currentChannel.Id.Equals(channelToRemove))
+            {
+                //TODO FRAN & ALE: Fix this, it should show the previous conversation if you are closing the current one??
+                CurrentChannelId = ChatChannel.NEARBY_CHANNEL.Id;
+            }
         }
 
         /// <summary>

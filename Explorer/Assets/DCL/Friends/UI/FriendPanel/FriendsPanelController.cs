@@ -141,9 +141,7 @@ namespace DCL.Friends.UI.FriendPanel
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             closeTaskCompletionSource.TrySetResult();
-
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-            //here add opening the conversation if flag set or something
         }
 
         private void OnlineFriendClick(string targetAddress) =>
