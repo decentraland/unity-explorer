@@ -18,9 +18,8 @@ namespace DCL.UI.InputFieldFormatting
         private const int ESTIMATED_LINK_TAG_LENGTH = 32; // Average length of a link tag including opening and closing styles
         private const int INITIAL_STRING_BUILDER_CAPACITY = 256;
         private const int TEMP_STRING_BUILDER_CAPACITY = 128;
-        private const int ESTIMATED_CAPACITY_PER_CHAR = 320; // 10 * ESTIMATED_LINK_TAG_LENGTH
+        private const float ESTIMATED_CAPACITY_PER_CHAR = 3.2f;
 
-        // Regex group names
         private const string URL_GROUP_NAME = "url";
         private const string SCENE_GROUP_NAME = "scene";
         private const string WORLD_GROUP_NAME = "world";
@@ -77,7 +76,7 @@ namespace DCL.UI.InputFieldFormatting
         private void ProcessMainStringBuilder()
         {
             var text = mainStringBuilder.ToString();
-            var estimatedCapacity = text.Length + (text.Length / ESTIMATED_CAPACITY_PER_CHAR); // Rough estimate of potential matches
+            var estimatedCapacity = text.Length + (text.Length * ESTIMATED_CAPACITY_PER_CHAR);
             mainStringBuilder.Clear();
             mainStringBuilder.EnsureCapacity(estimatedCapacity);
 
@@ -86,13 +85,11 @@ namespace DCL.UI.InputFieldFormatting
 
             while (currentMatch.Success)
             {
-                // Append text before the match
                 if (currentMatch.Index > lastIndex)
                 {
                     mainStringBuilder.Append(text.AsSpan(lastIndex, currentMatch.Index - lastIndex));
                 }
 
-                // Process the match based on its group
                 if (currentMatch.Groups[URL_GROUP_NAME].Success)
                     ProcessUrlMatch(currentMatch);
                 else if (currentMatch.Groups[SCENE_GROUP_NAME].Success)
@@ -108,7 +105,6 @@ namespace DCL.UI.InputFieldFormatting
                 currentMatch = currentMatch.NextMatch();
             }
 
-            // Append remaining text
             if (lastIndex < text.Length)
             {
                 mainStringBuilder.Append(text.AsSpan(lastIndex));
