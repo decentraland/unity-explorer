@@ -631,6 +631,7 @@ namespace DCL.Chat
 
             foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
+                // TODO: Use new endpoint to get a bunch of profile info
                 Profile profile = profileCache.Get(identity);
 
                 if (profile != null)

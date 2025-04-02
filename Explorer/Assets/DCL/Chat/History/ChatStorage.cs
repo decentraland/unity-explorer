@@ -32,7 +32,7 @@ namespace DCL.Chat.History
             public string Path;
             public Stream Content;
             public bool IsInitialized;
-            public float LastMessageTime;
+            public float LastMessageTime = float.MaxValue;
         }
 
         private struct MessageToProcess
@@ -115,14 +115,17 @@ namespace DCL.Chat.History
 
                 for (int i = 0; i < filePaths.Count; ++i)
                 {
+                    // Ignores the user conversation settings file
                     if (filePaths[i] == userConversationSettingsFile)
                         continue;
 
-                    ChannelFile newFile = new ChannelFile();
-
                     string currentFileName = Path.GetFileName(filePaths[i]);
                     ChatChannel.ChannelId fileChannelId = chatEncryptor.FileNameToChannelId(currentFileName);
-                    newFile.Path = filePaths[i];
+
+                    ChannelFile newFile = new ChannelFile
+                        {
+                            Path = filePaths[i],
+                        };
 
                     ReportHub.Log(reportData, $"Creating channel for file " + filePaths[i] + " for channel with Id: " + fileChannelId.Id);
 
