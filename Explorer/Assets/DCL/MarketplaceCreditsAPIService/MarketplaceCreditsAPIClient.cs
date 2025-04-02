@@ -32,9 +32,9 @@ namespace DCL.MarketplaceCreditsAPIService
             CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(ct);
 
             // TODO (Santi): Remove this! This check should be done directly by the progress endpoint
-            EmailSubscriptionInfoResponse emailSubscriptionInfoResponse = await GetEmailSubscriptionInfoAsync(ct);
-            creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionInfoResponse.unconfirmedEmail) ? emailSubscriptionInfoResponse.unconfirmedEmail : emailSubscriptionInfoResponse.email;
-            creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionInfoResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionInfoResponse.email);
+            EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
+            creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
+            creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
 
             return creditsProgramProgressResponse;
         }
@@ -63,8 +63,7 @@ namespace DCL.MarketplaceCreditsAPIService
         public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(float captchaValue, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/captcha";
-            var formattedCaptchaValue = captchaValue.ToString("F2");
-            var jsonBody = $"{{\"x\":{formattedCaptchaValue}}}";
+            string jsonBody = JsonUtility.ToJson(new ClaimCreditsBody { x = captchaValue });
 
             ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                                                                       .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
@@ -75,21 +74,21 @@ namespace DCL.MarketplaceCreditsAPIService
         public async UniTask SubscribeEmailAsync(string email, CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/set-email";
-            var jsonBody = $"{{\"email\":\"{email}\"}}";
+            string jsonBody = JsonUtility.ToJson(new EmailSubscriptionBody { email = email });
 
             await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
                                       .WithNoOpAsync();
         }
 
         // TODO (Santi): Remove this! This check should be done directly by the progress endpoint
-        private async UniTask<EmailSubscriptionInfoResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)
+        private async UniTask<EmailSubscriptionResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/subscription";
 
-            EmailSubscriptionInfoResponse emailSubscriptionInfoResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                    .CreateFromJson<EmailSubscriptionInfoResponse>(WRJsonParser.Unity);
+            EmailSubscriptionResponse emailSubscriptionResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                                    .CreateFromJson<EmailSubscriptionResponse>(WRJsonParser.Unity);
 
-            return emailSubscriptionInfoResponse;
+            return emailSubscriptionResponse;
         }
     }
 }
