@@ -23,10 +23,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 712099487744
-    m_Localized: Genesis Plaza is built and maintained by the Decentraland Foundation
-      but is still in many ways a community project. Around here you'll find several
-      teleports that can take you directly to special scenes marked as points of
-      interest.
+    m_Localized: 'COMMING SOON
+
+      <i>Conned in Decentraland, Earn Credits, Go
+      Shopping!</i>'
     m_Metadata:
       m_Items: []
   - m_Id: 1078268747833344
@@ -87,6 +87,17 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 159346651179245568
     m_Localized: Get Your Outfits Ready!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 161948706800656384
+    m_Localized: '<color #FF531A>COMMING SOON</color>
+
+      <i>Conned in Decentraland,
+      Earn Credits, Go Shopping!</i>'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 161948701922680832
+    m_Localized: Marketplace Credits
     m_Metadata:
       m_Items: []
   references:
