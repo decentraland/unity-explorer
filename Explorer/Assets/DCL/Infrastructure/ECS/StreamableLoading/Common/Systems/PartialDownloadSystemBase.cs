@@ -30,15 +30,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             try
             {
-                // Currently Outgoing requests treat Different sources as different flows (so 2 flows can be launched for the same assets bundle intention, they are not mutually blocking)
-                // it's not a problem for a non-partial flow as if EMBEDDED does not exist if will fail immediately and won't lead to the second loading flow of the same file,
-                // However with partial downloading two flows end up with the same HashKey, and subsequently with the same valid file (because the file received from WEB could be already cached on DISK but now is requested from EMBEDDED) ,
-                // it can lead to loading of the same file twice
-                // The most proper solution would be to change OutgoingRequests to be agnostic to the CurrentSource, // TODO to be refactored later
-                // Currently, the solution is to launch disk cache for WEB only as it does not make sense to read from disk cache if the file is already available in EMBEDDED assets (on disk)
-
                 state.SetChunkData(new PartialLoadingState(await webRequestController.GetPartialAsync(intention.CommonArguments, new PartialDownloadArguments(state.PartialDownloadingData?.PartialDownloadStream), ct)));
-
                 return await ProcessCompletedDataAsync(state, intention, partition, ct);
             }
 

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using Arch.Core;
+using System.IO;
 
 namespace DCL.WebRequests
 {
@@ -31,6 +32,18 @@ namespace DCL.WebRequests
     /// </summary>
     public abstract class PartialDownloadStream : Stream
     {
+        /// <summary>
+        ///     There could be only one owner of the stream at a time: <br />
+        ///     It's by design as we should not even try to read/write to the partial stream in parallel <br />
+        ///     It's an easy way to prevent concurrency issues without complications
+        /// </summary>
+        public EntityReference Entity { get; private set; }
+
         public abstract bool IsFullyDownloaded { get; }
+
+        public void SetOwner(EntityReference entity)
+        {
+            Entity = entity;
+        }
     }
 }

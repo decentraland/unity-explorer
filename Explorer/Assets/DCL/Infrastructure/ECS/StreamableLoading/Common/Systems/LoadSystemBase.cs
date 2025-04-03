@@ -135,7 +135,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget?.Release();
@@ -145,8 +145,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    //Temporarly disabled as we don't have partial loading integrated
-                    //SynchronizePartialData(state, ongoingRequestResult);
+                    SynchronizePartialData(entity, state, ongoingRequestResult);
 
                     result = ongoingRequestResult.Result;
 
@@ -186,9 +185,12 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
         /// </summary>
-        private static void SynchronizePartialData(StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
+        private static void SynchronizePartialData(EntityReference entity, StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
         {
             state.PartialDownloadingData = ongoingRequestResult.PartialDownloadingData;
+
+            // As it's impossible to have the same requests in parallel, set the owner of the stream to the current entity
+            state.PartialDownloadingData?.PartialDownloadStream.SetOwner(entity);
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
@@ -202,14 +204,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
             state.DisposeBudgetIfExists();
 
-            //Temporarly disabled as we don't have partial loading integrated
             // Special path for partial downloading
-            /*if (state.PartialDownloadingData is { FullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
+            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: true } } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();
                 return;
-            }*/
+            }
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
@@ -274,7 +275,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
-            cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
+            cache.OngoingRequests.SyncTryAdd(intention, source);
             var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
@@ -333,7 +334,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (!ongoingRequestRemoved)
                 {
                     // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.GetCacheableURL());
+                    cache.OngoingRequests.SyncRemove(intention);
                     ongoingRequestRemoved = true;
                 }
             }

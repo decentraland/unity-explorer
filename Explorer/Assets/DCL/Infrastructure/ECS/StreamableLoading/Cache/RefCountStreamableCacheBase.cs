@@ -21,8 +21,7 @@ namespace ECS.StreamableLoading.Cache
 
         private bool disposed;
 
-        public IDictionary<string, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
-            = new Dictionary<string, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>();
+        public IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
 
         public IDictionary<string, StreamableLoadingResult<TAssetData>> IrrecoverableFailures { get; }
             = new Dictionary<string, StreamableLoadingResult<TAssetData>>();
@@ -32,6 +31,7 @@ namespace ECS.StreamableLoading.Cache
         protected RefCountStreamableCacheBase()
         {
             cache = new Dictionary<TLoadingIntention, TAssetData>(this);
+            OngoingRequests = new Dictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>(this);
         }
 
         public void Dispose()
