@@ -92,6 +92,7 @@ namespace DCL.Landscape
             terrainChunkColliders = new List<Collider>();
         }
 
+        // TODO : pre-calculate once and re-use
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
             if(terrainModel == null) return;

@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
@@ -23,21 +24,20 @@ namespace DCL.Character.CharacterMotion.Systems
     {
         private static readonly Random RANDOM = new ();
 
-        private readonly Entity playerEntity;
-
         private SingleInstanceEntity? cameraCached;
         private SingleInstanceEntity cameraEntity => cameraCached ??= World.CacheCamera();
 
-        public TeleportPositionCalculationSystem(World world, Entity playerEntity) : base(world)
-        {
-            this.playerEntity = playerEntity;
-        }
+        public TeleportPositionCalculationSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            ref PlayerTeleportIntent teleportIntent = ref World.TryGetRef<PlayerTeleportIntent>(playerEntity, out bool hasTeleportIntent);
+            CalculateTeleportPositionQuery(World);
+        }
 
-            if (!hasTeleportIntent || teleportIntent.IsForcedPosition || teleportIntent.SceneDef == null) return;
+        [Query]
+        private void CalculateTeleportPosition(in Entity playerEntity, ref PlayerTeleportIntent teleportIntent)
+        {
+            if (teleportIntent.IsForcedPosition || teleportIntent.SceneDef == null) return;
 
             if (TeleportUtils.IsTramLine(teleportIntent.SceneDef.metadata.OriginalJson.AsSpan()))
             {
