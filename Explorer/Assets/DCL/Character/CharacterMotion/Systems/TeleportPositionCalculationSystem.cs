@@ -5,7 +5,6 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Landscape;
 using DCL.RealmNavigation;
 using ECS.Abstract;
 using UnityEngine;

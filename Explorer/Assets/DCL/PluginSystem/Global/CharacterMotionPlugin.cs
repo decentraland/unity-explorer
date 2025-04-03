@@ -9,7 +9,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
-using DCL.Landscape;
 using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Reporting;
@@ -26,7 +25,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly TerrainGenerator terrain;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
