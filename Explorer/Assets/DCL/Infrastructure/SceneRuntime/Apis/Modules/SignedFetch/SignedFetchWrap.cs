@@ -54,7 +54,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         {
             Dictionary<string, string>? deserializedHeaders = JsonConvert.DeserializeObject<Dictionary<string, string>>(headers);
 
-            GetHeadersResponse response = GetSignedHeaders(new SignedFetchRequest
+            string response = GetSignedHeaders(new SignedFetchRequest
             {
                 url = url,
                 init = new FlatFetchInit
@@ -68,7 +68,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             return response;
         }
 
-        private GetHeadersResponse GetSignedHeaders(SignedFetchRequest request)
+        private string GetSignedHeaders(SignedFetchRequest request)
         {
             string? method = request.init?.method?.ToLower();
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
@@ -100,10 +100,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 authChainIndex++;
             }
 
-            return new GetHeadersResponse
-            {
-                headers = headers,
-            };
+            return JsonConvert.SerializeObject(headers);
         }
 
         [UsedImplicitly]
@@ -300,12 +297,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 public string protocol;
                 public string serverName;
             }
-        }
-
-        [Serializable]
-        public struct GetHeadersResponse
-        {
-            public Dictionary<string, string> headers;
         }
     }
 }

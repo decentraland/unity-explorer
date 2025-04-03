@@ -30,5 +30,9 @@ module.exports.getHeaders = async function(message) {
         method = message.init.method ?? ''
     }
     
-    return UnitySignedFetch.GetSignedHeaders(message.url, body, headers, method);
+    const json = UnitySignedFetch.GetSignedHeaders(message.url, body, headers, method);
+    
+    return {
+        headers: JSON.parse(json)
+    }
 }
