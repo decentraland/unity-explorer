@@ -517,6 +517,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             ReleaseGridViews();
             monthViews.Clear();
+
+            foreach (KeyValuePair<CameraReelResponseCompact, Texture> row in reelThumbnailCache)
+                GameObject.Destroy(row.Value);
+
             reelThumbnailCache.Clear();
             beginVisible = 0;
             endVisible = 0;
