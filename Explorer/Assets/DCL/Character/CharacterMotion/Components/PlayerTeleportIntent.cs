@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
-    public readonly struct PlayerTeleportIntent
+    public struct PlayerTeleportIntent
     {
         public readonly struct JustTeleported
         {
@@ -26,6 +26,8 @@ namespace DCL.CharacterMotion.Components
         public readonly Vector2Int Parcel;
         public readonly CancellationToken CancellationToken;
         public readonly SceneEntityDefinition? SceneDef;
+        public readonly bool IsForcedPosition;
+        public Vector3 Position;
 
         /// <summary>
         ///     Strictly it's the same report added to "SceneReadinessReportQueue" <br />
@@ -36,22 +38,14 @@ namespace DCL.CharacterMotion.Components
 
         public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null)
+        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isForcedPosition = false)
         {
             Parcel = parcel;
             CancellationToken = cancellationToken;
             AssetsResolution = assetsResolution;
             creationTime = Time.realtimeSinceStartup;
             SceneDef = sceneDef;
-        }
-    }
-
-    public readonly struct TeleportPosition
-    {
-        public readonly Vector3 Position;
-
-        public TeleportPosition(Vector3 position)
-        {
+            IsForcedPosition = isForcedPosition;
             Position = position;
         }
     }

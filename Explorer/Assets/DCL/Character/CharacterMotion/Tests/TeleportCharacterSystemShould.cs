@@ -45,8 +45,7 @@ namespace DCL.CharacterMotion.Tests
         [Test]
         public void ResolveTeleportImmediatelyWithoutAssetsToWait()
         {
-            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new PlayerTeleportIntent(null, new Vector2Int(22, 22), CancellationToken.None)
-            , new TeleportPosition(Vector3.one * 100));
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new PlayerTeleportIntent(null, new Vector2Int(22, 22), Vector3.one * 100, CancellationToken.None));
 
             system!.Update(0);
 
@@ -64,10 +63,9 @@ namespace DCL.CharacterMotion.Tests
 
             Entity camEntity = world.Create(new CameraComponent(camera!), cameraSamplingData);
             var loadReport = AsyncLoadProcessReport.Create(CancellationToken.None);
-            var teleportIntent = new PlayerTeleportIntent(null, new Vector2Int(22, 22), CancellationToken.None, loadReport);
-            var teleportPosition = new TeleportPosition(Vector3.one * 100);
+            var teleportIntent = new PlayerTeleportIntent(null, new Vector2Int(22, 22), Vector3.one * 100, CancellationToken.None, loadReport);
 
-            Entity e = world.Create(characterController, new CharacterPlatformComponent(), teleportIntent, teleportPosition);
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), teleportIntent);
 
             if (status == UniTaskStatus.Faulted)
             {

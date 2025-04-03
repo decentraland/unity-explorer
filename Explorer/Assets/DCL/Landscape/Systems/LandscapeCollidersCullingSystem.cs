@@ -9,14 +9,13 @@ using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Landscape.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    [UpdateBefore(typeof(TeleportPositionCalculationSystem))]
+    [UpdateAfter(typeof(TeleportPositionCalculationSystem))]
     [LogCategory(ReportCategory.LANDSCAPE)]
     public partial class LandscapeCollidersCullingSystem : BaseUnityLoopSystem
     {
@@ -24,6 +23,7 @@ namespace DCL.Landscape.Systems
         private readonly IScenesCache sceneCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity playerEntity;
+        private readonly Transform playerTransform;
 
         private Vector2Int prevParcel = new (int.MaxValue, int.MaxValue);
 
@@ -34,27 +34,30 @@ namespace DCL.Landscape.Systems
             this.loadingStatus = loadingStatus;
 
             playerEntity = world.CachePlayer();
+            playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
         }
 
         protected override void Update(float t)
         {
             // Enable terrain for proper raycasting on teleportation
             ref PlayerTeleportIntent teleportIntent = ref World.TryGetRef<PlayerTeleportIntent>(playerEntity, out bool hasTeleportIntent);
-            if (hasTeleportIntent)
+            if (hasTeleportIntent && !teleportIntent.IsForcedPosition && teleportIntent.SceneDef == null)
             {
                 prevParcel = teleportIntent.Parcel;
                 terrain.SetTerrainCollider(teleportIntent.Parcel, true);
+                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation().WithTerrainOffset();
                 return;
             }
 
-            if (!terrain.IsTerrainShown || loadingStatus.CurrentStage != LoadingStatus.LoadingStage.Completed)
-                return;
-
-            Vector2Int newParcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
-            if (prevParcel != newParcel)
+            if (terrain.IsTerrainShown && loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed)
             {
-                prevParcel = newParcel;
-                terrain.SetTerrainCollider(newParcel, true);
+                Vector2Int newParcel = playerTransform.ParcelPosition();
+
+                if (prevParcel != newParcel)
+                {
+                    prevParcel = newParcel;
+                    terrain.SetTerrainCollider(newParcel, true);
+                }
             }
         }
     }

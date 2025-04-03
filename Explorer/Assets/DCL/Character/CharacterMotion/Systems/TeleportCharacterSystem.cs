@@ -38,13 +38,13 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void TeleportPlayer(Entity entity, CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent, in TeleportPosition teleportPosition)
+        private void TeleportPlayer(Entity entity, CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
         {
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
             if (loadReport == null)
                 // If there are no assets to wait for, teleport immediately
-                ResolveAsSuccess(entity, in teleportIntent, in teleportPosition, controller, ref platformComponent);
+                ResolveAsSuccess(entity, in teleportIntent, controller, ref platformComponent);
             else
             {
                 AsyncLoadProcessReport.Status status = loadReport.GetStatus();
@@ -56,7 +56,7 @@ namespace DCL.CharacterMotion.Systems
                         controller.transform.position = MordorConstants.PLAYER_MORDOR_POSITION;
                         return;
                     case UniTaskStatus.Succeeded:
-                        ResolveAsSuccess(entity, in teleportIntent, in teleportPosition, controller, ref platformComponent);
+                        ResolveAsSuccess(entity, in teleportIntent, controller, ref platformComponent);
                         return;
                     case UniTaskStatus.Canceled:
                         ResolveAsCancelled(entity, in teleportIntent);
@@ -113,7 +113,6 @@ namespace DCL.CharacterMotion.Systems
             ReportHub.LogException(exception, GetReportData());
             RestoreCameraDataQuery(World);
             World.Remove<PlayerTeleportIntent>(entity);
-            World.Remove<TeleportPosition>(entity);
         }
 
         private void ResolveAsCancelled(Entity entity, in PlayerTeleportIntent playerTeleportIntent)
@@ -122,21 +121,18 @@ namespace DCL.CharacterMotion.Systems
 
             RestoreCameraDataQuery(World);
             World.Remove<PlayerTeleportIntent>(entity);
-            World.Remove<TeleportPosition>(entity);
         }
 
-        private void ResolveAsSuccess(Entity playerEntity, in PlayerTeleportIntent teleportIntent, in TeleportPosition position, CharacterController characterController, ref CharacterPlatformComponent platformComponent)
+        private void ResolveAsSuccess(Entity playerEntity, in PlayerTeleportIntent teleportIntent, CharacterController characterController, ref CharacterPlatformComponent platformComponent)
         {
             FinalizeQueuedLoadReport(in teleportIntent, static report => report.SetProgress(1f));
 
-            characterController.transform.position = position.Position;
+            characterController.transform.position = teleportIntent.Position;
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
-            World.Remove<TeleportPosition>(playerEntity);
-
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
         }
 

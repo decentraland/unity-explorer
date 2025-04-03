@@ -60,7 +60,7 @@ namespace DCL.RealmNavigation
         {
             if (retrieveScene == null)
             {
-                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, ct, loadReport));
+                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport));
                 loadReport.SetProgress(1f);
                 return null;
             }
@@ -77,12 +77,11 @@ namespace DCL.RealmNavigation
 
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
 
-            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, ct, loadReport));
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport));
 
             if (sceneDef == null)
             {
-                // Instant completion for empty parcels
-                loadReport.SetProgress(1f);
+                loadReport.SetProgress(1f); // Almost instant completion for empty parcels
                 return null;
             }
 

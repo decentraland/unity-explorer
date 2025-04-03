@@ -96,7 +96,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public async Task AllowOnlyOneSceneWhileTeleporting()
         {
-            world.Add(playerEntity, new PlayerTeleportIntent(null, Vector3.zero.ToParcel(), CancellationToken.None), new TeleportPosition(Vector3.zero));
+            world.Add(playerEntity, new PlayerTeleportIntent(null, Vector3.zero.ToParcel(), Vector3.zero, CancellationToken.None));
             realmPartitionSettings.ScenesRequestBatchSize.Returns(30);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
 

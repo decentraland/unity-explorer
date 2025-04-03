@@ -37,12 +37,17 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             ref PlayerTeleportIntent teleportIntent = ref World.TryGetRef<PlayerTeleportIntent>(playerEntity, out bool hasTeleportIntent);
 
-            if (hasTeleportIntent && !World.Has<TeleportPosition>(playerEntity))
-            {
-                (Vector3 targetWorldPosition, Vector3? cameraTarget) =
-                    PickTargetWithOffset(teleportIntent.SceneDef, teleportIntent.Parcel);
+            if (!hasTeleportIntent || teleportIntent.IsForcedPosition || teleportIntent.SceneDef == null) return;
 
-                World.Add(playerEntity, new TeleportPosition(targetWorldPosition));
+            if (TeleportUtils.IsTramLine(teleportIntent.SceneDef.metadata.OriginalJson.AsSpan()))
+            {
+                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation();
+            }
+            else
+            {
+                (Vector3 targetWorldPosition, Vector3? cameraTarget) = PickTargetWithOffset(teleportIntent.SceneDef, teleportIntent.Parcel);
+
+                teleportIntent.Position = targetWorldPosition;
 
                 if (cameraTarget != null)
                 {
@@ -55,16 +60,9 @@ namespace DCL.Character.CharacterMotion.Systems
         private static (Vector3 targetWorldPosition, Vector3? cameraTarget) PickTargetWithOffset(SceneEntityDefinition? sceneDef, Vector2Int parcel)
         {
             Vector3? cameraTarget = null;
-            Vector3 targetWorldPosition;
-
-            if (sceneDef == null || TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
-            {
-                targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
-                return (targetWorldPosition, cameraTarget);
-            }
 
             Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-            targetWorldPosition = parcelBaseWorldPosition;
+            Vector3 targetWorldPosition = parcelBaseWorldPosition;
 
             List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
 
