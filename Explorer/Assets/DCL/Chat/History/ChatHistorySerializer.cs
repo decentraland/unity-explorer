@@ -7,7 +7,7 @@ using System.Threading;
 namespace DCL.Chat.History
 {
     /// <summary>
-    ///
+    /// Provides a centralized way to build, parse and serialize chat messages.
     /// </summary>
     internal class ChatHistorySerializer
     {
@@ -28,10 +28,11 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Builds a new entry according to the data of a chat message (in a private conversation) and writes it at the end
+        /// of an output.
         /// </summary>
-        /// <param name="messageToAppend"></param>
-        /// <param name="destination"></param>
+        /// <param name="messageToAppend">The message to serialize.</param>
+        /// <param name="destination">The output where the new entry will be appended.</param>
         public void AppendPrivateConversationMessage(ChatMessage messageToAppend, Stream destination)
         {
             entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.IsSentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
@@ -43,13 +44,19 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Deserializes and parses all the chat messages (of a private conversation) in an input source and returns the filled
+        /// instances of all of them in the order they were stored.
         /// </summary>
-        /// <param name="messagesSource"></param>
-        /// <param name="localUserWalletAddress"></param>
-        /// <param name="remoteUserWalletAddress"></param>
-        /// <param name="obtainedMessages"></param>
-        /// <param name="ct"></param>
+        /// <remarks>
+        /// Please note that the username of both the local user or the remote user may have changed, but retrieved messages
+        /// will keep the old usernames.
+        /// </remarks>
+        /// <param name="messagesSource">The container of the serialized data to read.</param>
+        /// <param name="localUserWalletAddress">The wallet address of the current account. It will be used for messages of the local user.</param>
+        /// <param name="remoteUserWalletAddress">The wallet address of the remote account. It will be used for messages of the user the local user is talking with.</param>
+        /// <param name="obtainedMessages">The output list where all the deserialized messages will be stored.</param>
+        /// <param name="ct">A cancellation token.</param>
+        /// <returns>The task of the asynchronous operation.</returns>
         public async UniTask ReadAllPrivateConversationMessagesAsync(Stream messagesSource, string localUserWalletAddress, string remoteUserWalletAddress, List<ChatMessage> obtainedMessages, CancellationToken ct)
         {
             string fullFileContent;

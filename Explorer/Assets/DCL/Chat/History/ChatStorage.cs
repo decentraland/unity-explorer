@@ -10,18 +10,35 @@ using Utility;
 namespace DCL.Chat.History
 {
     /// <summary>
-    ///
+    /// Listens to the activity of the chat history and stores its data in a local disk. It also provides functions to retrieve that data from disk.
+    /// Data includes open channels, channel order, channel Id and channel messages.
     /// </summary>
+    /// <remarks>
+    /// Some technical details:
+    ///
+    /// - The chat data is stored in C:\Users\your user\AppData\LocalLow\Decentraland\Explorer\c (WINDOWS)
+    ///   or ~/Library/Application Support/Decentraland/Explorer/c (MAC).
+    /// - The content of all the files is encrypted using AES algorithm.
+    /// - The name of each file and folder are encrypted and transformed to Base64.
+    /// - There is one folder per account, so the user should be able to log in with different accounts in the same machine.
+    /// - There is an encrypted JSON file that stores the open conversations, in order. It is created the first time a conversation is open. In case it is corrupted
+    ///   or missing, a new one will be created that includes all the stored chats, even if they were closed in the past.
+    /// - There is one encrypted CSV file per conversation, created the first time that conversation receives a message.
+    /// - When a message is sent or received, the file of that conversation is open for writing for a period of time, so it is not opening / closing for every message.
+    /// - If a conversation is closed, its history remains stored in a file. When it is re-opened, that file is read.
+    /// - The only way to erase the history of a conversation is by clearing it.
+    /// - Usernames of the chat messages are stored, so when retrieved they will not show the current username, if it was changed.
+    /// </remarks>
     public class ChatStorage : IDisposable
     {
         /// <summary>
-        ///
+        /// A deserialized representation of the file that stores metadata about channels, which where open and in which order they are listed.
         /// </summary>
         [Serializable]
         public class UserConversationsSettings
         {
             /// <summary>
-            ///
+            /// The open conversations, in order of appearance. Any conversation that is no here is considered closed.
             /// </summary>
             [SerializeField]
             public List<string> ConversationFilePaths; // Already sorted, a conversation is closed if it does not appear here
@@ -90,8 +107,13 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Reads the user conversation settings file and asks the ChatHistory to create all the (open) channels that appear in
+        /// it, in order.
         /// </summary>
+        /// <remarks>
+        /// If the file is not present or is corrupt, all stored conversations will be considered as open and a new file will
+        /// be stored.
+        /// </remarks>
         public void LoadAllChannelsWithoutMessages()
         {
             ReportHub.Log(reportData, $"Loading all conversations (not their messages).");
@@ -155,9 +177,12 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Reads all the messages stored in a local file for a given channel and fills the existing channel in the ChatHistory.
         /// </summary>
-        /// <param name="channelId"></param>
+        /// <remarks>
+        /// If there is no file for the channel or if the channel was already initialized, nothing will be done.
+        /// </remarks>
+        /// <param name="channelId">The id of the channel that is to be filled.</param>
         public async UniTask InitializeChannelWithMessagesAsync(ChatChannel.ChannelId channelId)
         {
             ReportHub.Log(reportData, $"Initializing conversation with messages for channel: " + channelId.Id);
@@ -179,17 +204,20 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Checks whether a channel has been already initialized or not (<see cref="InitializeChannelWithMessagesAsync"/>).
         /// </summary>
-        /// <param name="channelId"></param>
+        /// <param name="channelId">The id of the channel.</param>
         /// <returns></returns>
         public bool IsChannelInitialized(ChatChannel.ChannelId channelId) =>
             channelFiles.TryGetValue(channelId, out ChannelFile channelFile) && channelFile.IsInitialized;
 
         /// <summary>
-        ///
+        /// Replaces the wallet address of the current user, which affects the place and the way files are encrypted.
         /// </summary>
-        /// <param name="newLocaluserWalletAddress"></param>
+        /// <remarks>
+        /// If a user is going to use the chat with a different account, this method must be called.
+        /// </remarks>
+        /// <param name="newLocalUserWalletAddress">The new wallet address.</param>
         public void SetNewLocalUserWalletAddress(string newLocalUserWalletAddress)
         {
             UnloadAllFiles();

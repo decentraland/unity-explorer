@@ -7,7 +7,7 @@ using System.Threading;
 namespace DCL.Chat.History
 {
     /// <summary>
-    ///
+    /// Builds chat messages according to some parameters and the data provided by the profile repository.
     /// </summary>
     public class ChatMessageFactory
     {
@@ -23,26 +23,27 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Generates a new chat message filled with the data provided in the parameters and also by the profile repository.
         /// </summary>
-        /// <param name="senderWalletAddress"></param>
-        /// <param name="isSentByLocalUser"></param>
-        /// <param name="message"></param>
-        /// <param name="currentUsername">Optional.</param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        public async UniTask<ChatMessage> CreateChatMessageAsync(string senderWalletAddress, bool isSentByLocalUser, string message, string currentUsername, CancellationToken ct)
+        /// <param name="senderWalletAddress">The wallet address of the user that sent the message.</param>
+        /// <param name="isSentByLocalUser">Whether the user that sent the message corresponds to the local user.</param>
+        /// <param name="message">The formatted text message.</param>
+        /// <param name="usernameOverride">Optional. A sender's username to use instead of the one stored in the profile currently.
+        /// Leave it null to use the one provided by the profile.</param>
+        /// <param name="ct">A cancellation token.</param>
+        /// <returns>The task of the asynchronous operation.</returns>
+        public async UniTask<ChatMessage> CreateChatMessageAsync(string senderWalletAddress, bool isSentByLocalUser, string message, string usernameOverride, CancellationToken ct)
         {
             Profile ownProfile = await selfProfile.ProfileAsync(ct);
 
             if (isSentByLocalUser)
             {
-                if(string.IsNullOrEmpty(currentUsername))
-                    currentUsername = ownProfile?.ValidatedName ?? string.Empty;
+                if(string.IsNullOrEmpty(usernameOverride))
+                    usernameOverride = ownProfile?.ValidatedName ?? string.Empty;
 
                 return new ChatMessage(
                     message,
-                    currentUsername,
+                    usernameOverride,
                     senderWalletAddress,
                     true,
                     ownProfile?.WalletId,
@@ -53,8 +54,8 @@ namespace DCL.Chat.History
             {
                 Profile profile = await profileRepository.GetAsync(senderWalletAddress, ct);
 
-                if(string.IsNullOrEmpty(currentUsername))
-                    currentUsername = profile?.ValidatedName ?? string.Empty;
+                if(string.IsNullOrEmpty(usernameOverride))
+                    usernameOverride = profile?.ValidatedName ?? string.Empty;
 
                 bool isMention = false;
 
@@ -63,7 +64,7 @@ namespace DCL.Chat.History
 
                 return new ChatMessage(
                     message,
-                    currentUsername,
+                    usernameOverride,
                     senderWalletAddress,
                     false,
                     profile?.WalletId,

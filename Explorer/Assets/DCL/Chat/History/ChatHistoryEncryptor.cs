@@ -4,32 +4,22 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Security.Cryptography;
-using UnityEngine;
 
 namespace DCL.Chat.History
 {
     /// <summary>
-    ///
+    /// Provides functionality to encrypt / decrypt chat data: channel ids, history file names or history file content.
     /// </summary>
     internal class ChatHistoryEncryptor
     {
-        private AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
+        private readonly AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
         private readonly byte[] channelIdEncryptionBuffer = new byte[256]; // Enough to not need resizing
 
         /// <summary>
-        ///
+        /// Reads an encrypted version of the user conversation settings and returns a decrypted deserialized instance.
         /// </summary>
-        /// <param name="encryptionKey"></param>
-        public ChatHistoryEncryptor(string encryptionKey)
-        {
-            SetNewEncryptionKey(encryptionKey);
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="encryptedStream"></param>
-        /// <returns></returns>
+        /// <param name="encryptedStream">The encrypted JSON-formatted text, with read permissions.</param>
+        /// <returns>The filled instance of the user conversation settings.</returns>
         public ChatStorage.UserConversationsSettings DecryptUserConversationSettings(Stream encryptedStream)
         {
             ChatStorage.UserConversationsSettings result;
@@ -50,10 +40,10 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Writes an encrypted version of the user conversation settings into a destination output.
         /// </summary>
-        /// <param name="conversationsSettingsToEncrypt"></param>
-        /// <param name="outputStream"></param>
+        /// <param name="conversationsSettingsToEncrypt">The instance to be encrypted and serialized.</param>
+        /// <param name="outputStream">The output where to store the encrypted JSON-formatted text, with writing permission.</param>
         public void EncryptUserConversationSettings(ChatStorage.UserConversationsSettings conversationsSettingsToEncrypt, Stream outputStream)
         {
             using (CryptoStream fileStream = new CryptoStream(outputStream, cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write))
@@ -67,10 +57,11 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Encrypts a string and converts the result to Base64 where slashes are replaced with underscores, so it does not
+        /// contain any character that may be rejected by common file systems.
         /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
+        /// <param name="str">Any string, normally file or folder names.</param>
+        /// <returns>The encrypted file system-friendly version of the string.</returns>
         public string StringToFileName(string str)
         {
             string result = null;
@@ -108,10 +99,10 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Decrypts a string that was encrypted with <see cref="StringToFileName"/> and creates a channel Id with it.
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
+        /// <param name="fileName">An encrypted string (normally a file or folder name).</param>
+        /// <returns>A valid channel Id.</returns>
         public ChatChannel.ChannelId FileNameToChannelId(string fileName)
         {
             ChatChannel.ChannelId result;
@@ -136,28 +127,29 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Provides a new stream ready to write encrypted bytes into another stream.
         /// </summary>
-        /// <param name="outputStream"></param>
-        /// <returns></returns>
+        /// <param name="outputStream">The stream that will receive the encrypted data.</param>
+        /// <returns>The new encrypting stream.</returns>
         public Stream CreateEncryptionStreamWriter(Stream outputStream) =>
             new CryptoStream(outputStream, cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write);
 
         /// <summary>
-        ///
+        /// Provides a new stream ready to read and decrypt bytes from another stream.
         /// </summary>
-        /// <param name="inputStream"></param>
-        /// <returns></returns>
+        /// <param name="inputStream">The stream whose content is to be decrypted.</param>
+        /// <returns>The new decrypting stream.</returns>
         public Stream CreateDecryptionStreamReader(Stream inputStream) =>
             new CryptoStream(inputStream, cryptoProvider.CreateDecryptor(), CryptoStreamMode.Read);
 
         /// <summary>
-        ///
+        /// Changes how the data will be encrypted / decrypted. If there are encryption / decryption streams in use,
+        /// they should be closed and re-created in order to use the new encryption key.
         /// </summary>
-        /// <param name="newEncryptionKey"></param>
+        /// <param name="newEncryptionKey">The encryption key to use in new streams.</param>
         public void SetNewEncryptionKey(string newEncryptionKey)
         {
-            byte[] hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory;
+            byte[] hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory; // SHA256
 
             cryptoProvider.Key = hashedEncryptionKey;
             cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
