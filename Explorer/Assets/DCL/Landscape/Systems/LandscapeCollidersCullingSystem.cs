@@ -54,7 +54,7 @@ namespace DCL.Landscape.Systems
             if (prevParcel != newParcel)
             {
                 prevParcel = newParcel;
-                terrain.SetTerrainCollider(newParcel, isEnabled: sceneCache.CurrentScene == null || sceneCache.CurrentScene.Contains(newParcel));
+                terrain.SetTerrainCollider(newParcel, true);
             }
         }
     }
