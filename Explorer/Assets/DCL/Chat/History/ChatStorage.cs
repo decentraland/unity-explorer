@@ -425,10 +425,13 @@ namespace DCL.Chat.History
         {
             ChannelFile channelFile;
 
-            if (!channelFiles.TryGetValue(channelId, out channelFile) || channelFile.Content == null)
+            lock (channelsLocker)
             {
-                ReportHub.LogWarning(reportData, $"Trying to close a channel file that was not open for Id: {channelId.Id}. The call will be ignored.");
-                return;
+                if (!channelFiles.TryGetValue(channelId, out channelFile) || channelFile.Content == null)
+                {
+                    ReportHub.LogWarning(reportData, $"Trying to close a channel file that was not open for Id: {channelId.Id}. The call will be ignored.");
+                    return;
+                }
             }
 
             try

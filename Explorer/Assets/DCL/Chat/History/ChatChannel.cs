@@ -94,7 +94,7 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
-        ///
+        /// Stores a set of chat messages in the channel. This operation will not trigger any event.
         /// </summary>
         /// <param name="messagesToStore">The messages of the channel, in the order they were sent.</param>
         public void FillChannel(List<ChatMessage> messagesToStore)
