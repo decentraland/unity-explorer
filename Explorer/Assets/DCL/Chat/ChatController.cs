@@ -20,7 +20,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
@@ -671,7 +670,6 @@ namespace DCL.Chat
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
             viewInstance!.RemoveConversation(removedChannel);
-            viewInstance.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)

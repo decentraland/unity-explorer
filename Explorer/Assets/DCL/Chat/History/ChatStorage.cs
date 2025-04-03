@@ -41,7 +41,7 @@ namespace DCL.Chat.History
             /// The open conversations, in order of appearance. Any conversation that is no here is considered closed.
             /// </summary>
             [SerializeField]
-            public List<string> ConversationFilePaths; // Already sorted, a conversation is closed if it does not appear here
+            public List<string> ConversationFilePaths;
         }
 
         private class ChannelFile
@@ -72,8 +72,8 @@ namespace DCL.Chat.History
         private readonly List<ChatMessage> messagesBuffer = new List<ChatMessage>();
 
         private readonly string channelFilesFolder;
-        private readonly string userFilesFolder;
-        private readonly string userConversationSettingsFile;
+        private string userFilesFolder;
+        private string userConversationSettingsFile;
         private UserConversationsSettings conversationSettings;
 
         private bool areAllChannelsLoaded;
@@ -85,22 +85,20 @@ namespace DCL.Chat.History
 
         public ChatStorage(IChatHistory chatHistory, ChatMessageFactory messageFactory, string localUserWalletAddress)
         {
-            channelFilesFolder = Application.persistentDataPath + "/c/";
-
-            chatEncryptor = new ChatHistoryEncryptor(localUserWalletAddress);
-            chatSerializer = new ChatHistorySerializer(messageFactory);
+            const string CHAT_HISTORY_FOLDER = "/c/";
+            channelFilesFolder = Application.persistentDataPath + CHAT_HISTORY_FOLDER;
 
             this.chatHistory = chatHistory;
+            chatEncryptor = new ChatHistoryEncryptor();
+            chatSerializer = new ChatHistorySerializer(messageFactory);
 
-            this.localUserWalletAddress = localUserWalletAddress;
+            SetNewLocalUserWalletAddress(localUserWalletAddress);
+
             chatHistory.MessageAdded += OnChatHistoryMessageAddedAsync;
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ChannelCleared += OnChatHistoryChannelCleared;
             chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
-
-            userFilesFolder = channelFilesFolder + chatEncryptor.StringToFileName(localUserWalletAddress) + "/";
-            userConversationSettingsFile = userFilesFolder + chatEncryptor.StringToFileName("Settings");
 
             UniTask.RunOnThreadPool(() => ProcessQueueAsync(cts.Token)).Forget();
             UniTask.RunOnThreadPool(() => CheckChannelFileTimeoutsAsync(cts.Token)).Forget();
@@ -116,7 +114,7 @@ namespace DCL.Chat.History
         /// </remarks>
         public void LoadAllChannelsWithoutMessages()
         {
-            ReportHub.Log(reportData, $"Loading all conversations (not their messages).");
+            ReportHub.Log(reportData, $"Loading all open conversations (not their messages).");
 
             areAllChannelsLoaded = false;
 
@@ -187,10 +185,16 @@ namespace DCL.Chat.History
         {
             ReportHub.Log(reportData, $"Initializing conversation with messages for channel: " + channelId.Id);
 
+            ChannelFile channelFile;
+
             // If already reading or if the file did not exist, ignore it
-            if(!channelFiles.ContainsKey(channelId) ||
-               (channelFiles[channelId].Content != null && channelFiles[channelId].Content.CanRead))
+            if (!channelFiles.TryGetValue(channelId, out channelFile) ||
+                channelFile.IsInitialized ||
+                (channelFile.Content != null && channelFile.Content.CanRead))
+            {
+                ReportHub.LogWarning(reportData, $"Initialization canceled. The file does not exist or the channel was already initialized: " + channelId.Id);
                 return;
+            }
 
             messagesBuffer.Clear();
             await ReadMessagesFromFileAsync(channelId, messagesBuffer);
@@ -198,7 +202,7 @@ namespace DCL.Chat.History
             if (messagesBuffer.Count > 0)
                 chatHistory.Channels[channelId].FillChannel(messagesBuffer);
 
-            channelFiles[channelId].IsInitialized = true;
+            channelFile.IsInitialized = true;
 
             ReportHub.Log(reportData, $"Conversation initialized.");
         }
@@ -222,7 +226,11 @@ namespace DCL.Chat.History
         {
             UnloadAllFiles();
             localUserWalletAddress = newLocalUserWalletAddress;
+
             chatEncryptor.SetNewEncryptionKey(localUserWalletAddress);
+
+            userFilesFolder = channelFilesFolder + chatEncryptor.StringToFileName(localUserWalletAddress) + "/";
+            userConversationSettingsFile = userFilesFolder + chatEncryptor.StringToFileName("UserConversationSettings");
         }
 
         public void Dispose()
@@ -535,10 +543,8 @@ namespace DCL.Chat.History
 
         private void OnChatHistoryChannelCleared(ChatChannel clearedChannel)
         {
-            ChannelFile channelFile;
-            channelFiles.TryGetValue(clearedChannel.Id, out channelFile);
-
-            if (!File.Exists(channelFile.Path))
+            if (channelFiles.TryGetValue(clearedChannel.Id, out ChannelFile channelFile) &&
+                File.Exists(channelFile.Path))
             {
                 ReportHub.Log(reportData, $"Clearing channel file at " + channelFile.Path);
                 File.Create(channelFile.Path).Dispose();

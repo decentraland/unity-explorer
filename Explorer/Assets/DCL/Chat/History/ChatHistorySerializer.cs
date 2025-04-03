@@ -105,9 +105,9 @@ namespace DCL.Chat.History
         private static void ParseEntryValues(string entry, string[] values)
         {
             string[] entryParts = entry.Split(',');
-            values[ENTRY_SENT_BY_LOCAL_USER] = (entryParts.Length >= ENTRY_SENT_BY_LOCAL_USER + 1) ? entryParts[ENTRY_SENT_BY_LOCAL_USER] : LOCAL_USER_FALSE_VALUE;
-            values[ENTRY_MESSAGE] =            (entryParts.Length >= ENTRY_MESSAGE + 1)            ? entryParts[ENTRY_MESSAGE] : string.Empty;
-            values[ENTRY_USERNAME] =           (entryParts.Length >= ENTRY_USERNAME + 1)           ? entryParts[ENTRY_USERNAME] : string.Empty;
+            values[ENTRY_SENT_BY_LOCAL_USER] = (entryParts.Length > ENTRY_SENT_BY_LOCAL_USER) ? entryParts[ENTRY_SENT_BY_LOCAL_USER] : LOCAL_USER_FALSE_VALUE;
+            values[ENTRY_MESSAGE] =            (entryParts.Length > ENTRY_MESSAGE)            ? entryParts[ENTRY_MESSAGE] : string.Empty;
+            values[ENTRY_USERNAME] =           (entryParts.Length > ENTRY_USERNAME)           ? entryParts[ENTRY_USERNAME] : string.Empty;
         }
     }
 }
