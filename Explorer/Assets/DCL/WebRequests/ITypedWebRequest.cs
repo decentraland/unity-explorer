@@ -25,6 +25,19 @@ namespace DCL.WebRequests
         /// </summary>
         bool Http2Supported { get; }
 
+        /// <summary>
+        ///     Maximum Size of the download buffer in bytes, used if <see cref="Http2Supported" /> is enabled.
+        ///     <remarks>
+        ///         If <see cref="StreamingSupported" /> is false (reading from the output stream on-the-go is not supported), the request will fail if the size of the content is higher than this value.
+        ///     </remarks>
+        /// </summary>
+        long DownloadBufferMaxSize { get; }
+
+        /// <summary>
+        ///     If streaming is supported download data is being read gradually
+        /// </summary>
+        bool StreamingSupported { get; }
+
         string ArgsToString();
 
         UnityWebRequest CreateUnityWebRequest();

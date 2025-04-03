@@ -2,6 +2,7 @@
 using Best.HTTP.Hosts.Connections.HTTP1;
 using Best.HTTP.Shared.Extensions;
 using Best.HTTP.Shared.PlatformSupport.Memory;
+using DCL.Diagnostics;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +22,17 @@ namespace DCL.WebRequests.HTTP2
                 dict[header.Key] = string.Join(',', header.Value);
 
             return dict;
+        }
+
+        public static bool TryParseHeader(Dictionary<string, List<string>> headers, string header, ReportData reportData, out int value)
+        {
+            string? headerValue = headers.GetFirstHeaderValue(header);
+
+            if (headerValue != null && int.TryParse(headerValue, out value)) return true;
+
+            ReportHub.LogError(reportData, $"{header} can't be parsed to \"int\"");
+            value = 0;
+            return false;
         }
 
         /// <summary>

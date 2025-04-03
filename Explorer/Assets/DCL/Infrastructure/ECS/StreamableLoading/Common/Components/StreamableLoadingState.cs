@@ -1,5 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
@@ -76,17 +77,11 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
 
-        public ReadOnlyMemory<byte> GetFullyDownloadedData()
+        public PartialDownloadStream ClaimOwnershipOverFullyDownloadedData()
         {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
-            return PartialDownloadingData!.Value.FullData;
-        }
-
-        public SlicedOwnedMemory<byte> ClaimOwnershipOverFullyDownloadedData()
-        {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            Assert.IsTrue(PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: true } });
             PartialLoadingState value = PartialDownloadingData!.Value;
-            SlicedOwnedMemory<byte> owner = value.TransferMemoryOwnership();
+            PartialDownloadStream? owner = value.TransferMemoryOwnership();
             PartialDownloadingData = value;
             return owner;
         }

@@ -19,6 +19,8 @@ namespace DCL.WebRequests
         public TArgs Args { get; }
 
         public virtual bool Http2Supported => true;
+        public virtual long DownloadBufferMaxSize => 30 * 1024 * 1024; // 30MB
+        public virtual bool StreamingSupported => false;
 
         public virtual UnityWebRequest CreateUnityWebRequest() =>
             throw new NotSupportedException($"{nameof(CreateUnityWebRequest)} is not supported by {GetType().Name}");

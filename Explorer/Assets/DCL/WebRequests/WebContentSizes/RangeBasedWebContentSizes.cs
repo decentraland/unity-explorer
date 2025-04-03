@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.WebContentSizes
 {
-    // TODO жуть
+    // TODO rework
     public class RangeBasedWebContentSizes : IWebContentSizes
     {
         private readonly IMaxSize maxSize;
@@ -22,9 +22,9 @@ namespace DCL.WebRequests.WebContentSizes
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken token)
-        {
-            using var request = NewRequest(url);
+        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken token) =>
+            true;
+        /*using var request = NewRequest(url);
             request.SendWebRequest().WithCancellation(token);
 
             while (token.IsCancellationRequested == false
@@ -53,14 +53,12 @@ namespace DCL.WebRequests.WebContentSizes
                 return false;
             }
 
-            return true;
-        }
-
-        private GenericGetRequest NewRequest(string url)
+            return true;*/
+        /*private GenericGetRequest NewRequest(string url)
         {
             ulong max = maxSize.MaxSizeInBytes();
             ulong tressHold = max + TRESS_HOLD_BYTES;
-            GenericGetRequest request = webRequestController.GetAsync(url, ReportCategory.GENERIC_WEB_REQUEST, new WebRequestHeadersInfo().WithRange((long)max, (long)tressHold))
+            GenericGetRequest request = webRequestController.GetAsync(url, ReportCategory.GENERIC_WEB_REQUEST, new WebRequestHeadersInfo().WithRange((long)max, (long)tressHold));
             return request;
         }
 
@@ -77,6 +75,6 @@ namespace DCL.WebRequests.WebContentSizes
         {
             var list = request.GetResponseHeaders()!.Select(e => $"{e.Key}: {e.Value}");
             return $"Headers of response:\n{string.Join('\n', list)}";
-        }
+        }*/
     }
 }

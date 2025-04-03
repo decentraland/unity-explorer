@@ -45,12 +45,11 @@ namespace ECS.StreamableLoading.NFTShapes
 
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            var result = await webRequestController.GetTextureAsync(
-                new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
-                new GetTextureArguments(TextureType.Albedo),
-                GetReportData()
-                                                    )
-                                                   .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);
+            IOwnedTexture2D? result = await webRequestController.GetTextureAsync(
+                                                                     new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
+                                                                     new GetTextureArguments(TextureType.Albedo),
+                                                                     GetReportData())
+                                                                .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);
 
             if (result == null)
                 return new StreamableLoadingResult<Texture2DData>(

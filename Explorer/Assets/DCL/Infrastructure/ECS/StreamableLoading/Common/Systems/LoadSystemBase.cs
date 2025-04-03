@@ -185,17 +185,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         /// <summary>
         ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
-        ///     <para>
-        ///         Provokes Partial Data to be copied in order to keep both promises independent
-        ///     </para>
         /// </summary>
         private static void SynchronizePartialData(StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
         {
-            state.PartialDownloadingData?.Dispose();
-            state.PartialDownloadingData = null;
-
-            if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
-                state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
+            state.PartialDownloadingData = ongoingRequestResult.PartialDownloadingData;
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
