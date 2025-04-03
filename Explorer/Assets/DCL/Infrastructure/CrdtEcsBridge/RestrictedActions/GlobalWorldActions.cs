@@ -36,7 +36,8 @@ namespace CrdtEcsBridge.RestrictedActions
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
         {
             // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
-            world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None));
+            world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, CancellationToken.None));
+            world.AddOrSet(playerEntity, new TeleportPosition(newPlayerPosition));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
-    public struct PlayerTeleportIntent
+    public readonly struct PlayerTeleportIntent
     {
         public readonly struct JustTeleported
         {
@@ -24,7 +24,6 @@ namespace DCL.CharacterMotion.Components
         private readonly float creationTime;
 
         public readonly Vector2Int Parcel;
-        public Vector3? Position;
         public readonly CancellationToken CancellationToken;
         public readonly SceneEntityDefinition? SceneDef;
 
@@ -37,14 +36,23 @@ namespace DCL.CharacterMotion.Components
 
         public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3? position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null)
+        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null)
         {
             Parcel = parcel;
-            Position = position;
             CancellationToken = cancellationToken;
             AssetsResolution = assetsResolution;
             creationTime = Time.realtimeSinceStartup;
             SceneDef = sceneDef;
+        }
+    }
+
+    public readonly struct TeleportPosition
+    {
+        public readonly Vector3 Position;
+
+        public TeleportPosition(Vector3 position)
+        {
+            Position = position;
         }
     }
 }

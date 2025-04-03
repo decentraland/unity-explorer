@@ -1,7 +1,10 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character;
+using DCL.Character.CharacterMotion.Systems;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using ECS.Abstract;
@@ -12,40 +15,47 @@ using Utility;
 
 namespace DCL.Landscape.Systems
 {
-    [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(UpdateCurrentSceneSystem))]
+    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateBefore(typeof(TeleportPositionCalculationSystem))]
     [LogCategory(ReportCategory.LANDSCAPE)]
     public partial class LandscapeCollidersCullingSystem : BaseUnityLoopSystem
     {
-        private readonly TerrainGenerator terrainGenerator;
+        private readonly TerrainGenerator terrain;
         private readonly IScenesCache sceneCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity playerEntity;
 
         private Vector2Int prevParcel = new (int.MaxValue, int.MaxValue);
 
-        public LandscapeCollidersCullingSystem(World world, TerrainGenerator terrainGenerator, IScenesCache sceneCache, ILoadingStatus loadingStatus) : base(world)
+        public LandscapeCollidersCullingSystem(World world, TerrainGenerator terrain, IScenesCache sceneCache, ILoadingStatus loadingStatus) : base(world)
         {
-            this.terrainGenerator = terrainGenerator;
+            this.terrain = terrain;
             this.sceneCache = sceneCache;
             this.loadingStatus = loadingStatus;
+
             playerEntity = world.CachePlayer();
         }
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainShown || loadingStatus.CurrentStage != LoadingStatus.LoadingStage.Completed) return;
+            // Enable terrain for proper raycasting on teleportation
+            ref PlayerTeleportIntent teleportIntent = ref World.TryGetRef<PlayerTeleportIntent>(playerEntity, out bool hasTeleportIntent);
+            if (hasTeleportIntent)
+            {
+                prevParcel = teleportIntent.Parcel;
+                terrain.SetTerrainCollider(teleportIntent.Parcel, true);
+                return;
+            }
 
-            Vector2Int newParcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
-
-            if (prevParcel == newParcel)
+            if (!terrain.IsTerrainShown || loadingStatus.CurrentStage != LoadingStatus.LoadingStage.Completed)
                 return;
 
-            prevParcel = newParcel;
-
-            bool enableTerrainCollider = sceneCache.CurrentScene == null || sceneCache.CurrentScene.Contains(newParcel);
-
-            terrainGenerator.SetTerrainCollider(newParcel, enableTerrainCollider);
+            Vector2Int newParcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
+            if (prevParcel != newParcel)
+            {
+                prevParcel = newParcel;
+                terrain.SetTerrainCollider(newParcel, isEnabled: sceneCache.CurrentScene == null || sceneCache.CurrentScene.Contains(newParcel));
+            }
         }
     }
 }

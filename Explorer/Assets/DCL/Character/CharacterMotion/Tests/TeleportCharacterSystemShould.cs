@@ -45,25 +45,29 @@ namespace DCL.CharacterMotion.Tests
         [Test]
         public void ResolveTeleportImmediatelyWithoutAssetsToWait()
         {
-            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new PlayerTeleportIntent(null, new Vector2Int(22, 22), new Vector3(100, 100, 100), CancellationToken.None));
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new PlayerTeleportIntent(null, new Vector2Int(22, 22), CancellationToken.None)
+            , new TeleportPosition(Vector3.one * 100));
 
             system!.Update(0);
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False);
-            Assert.That(characterController.transform.position, Is.EqualTo(new Vector3(100, 100, 100)));
+            Assert.That(characterController.transform.position, Is.EqualTo(Vector3.one * 100));
         }
 
         [Test]
         public async Task RestoreCameraDataOnFailureAsync([Values(UniTaskStatus.Faulted, UniTaskStatus.Canceled)] UniTaskStatus status)
         {
-            var cameraSamplingData = new CameraSamplingData();
-            cameraSamplingData.Position = new Vector3(50, 50, 0);
+            var cameraSamplingData = new CameraSamplingData
+            {
+                Position = new Vector3(50, 50, 0),
+            };
 
             Entity camEntity = world.Create(new CameraComponent(camera!), cameraSamplingData);
             var loadReport = AsyncLoadProcessReport.Create(CancellationToken.None);
-            var teleportIntent = new PlayerTeleportIntent(null, new Vector2Int(22, 22), new Vector3(100, 100, 100), CancellationToken.None, loadReport);
+            var teleportIntent = new PlayerTeleportIntent(null, new Vector2Int(22, 22), CancellationToken.None, loadReport);
+            var teleportPosition = new TeleportPosition(Vector3.one * 100);
 
-            Entity e = world.Create(characterController, new CharacterPlatformComponent(), teleportIntent);
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), teleportIntent, teleportPosition);
 
             if (status == UniTaskStatus.Faulted)
             {
