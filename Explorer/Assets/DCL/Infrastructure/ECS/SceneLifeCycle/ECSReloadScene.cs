@@ -83,9 +83,12 @@ namespace ECS.SceneLifeCycle
             //We wait until scene is fully disposed
             await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Equals(SceneState.Disposed), cancellationToken: ct);
 
-            SceneLoadingState sceneLoadingState = world.Get<SceneLoadingState>(entity);
-            sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
-            sceneLoadingState.PromiseCreated = false;
+            if (world.IsAlive(entity))
+            {
+                SceneLoadingState sceneLoadingState = world.Get<SceneLoadingState>(entity);
+                sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+                sceneLoadingState.PromiseCreated = false;
+            }
 
             if (localSceneDevelopment)
             {
