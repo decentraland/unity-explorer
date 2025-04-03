@@ -47,7 +47,7 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             UpdatePosition(deltaTime, characterTransformComponent, in characterInterpolationMovementComponent);
             UpdateRotation(deltaTime, characterTransformComponent, in characterInterpolationMovementComponent);
-            UpdateAnimations(deltaTime, view, characterTransformComponent, in characterInterpolationMovementComponent, ref animationComponent);
+            UpdateAnimations(deltaTime, view, in characterInterpolationMovementComponent, ref animationComponent);
             characterInterpolationMovementComponent.LastPosition = characterTransformComponent.Transform.position;
         }
 
@@ -113,11 +113,10 @@ namespace DCL.Character.CharacterMotion.Systems
         private static void UpdateAnimations(
             float deltaTime,
             IAvatarView view,
-            CharacterTransform characterTransformComponent,
             in CharacterInterpolationMovementComponent characterInterpolationMovementComponent,
             ref CharacterAnimationComponent animationComponent)
         {
-            float distanceToTarget = Vector3.Distance(characterTransformComponent.Transform.position, characterInterpolationMovementComponent.LastPosition);
+            float distanceToTarget = Vector3.Distance(characterInterpolationMovementComponent.TargetPosition, characterInterpolationMovementComponent.LastPosition);
             float movementBlendValue = 0;
 
             if (distanceToTarget > 0)

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Chat.History;
@@ -138,6 +139,11 @@ namespace DCL.UserInAppInitializationFlow
                             if (operationResult.Success)
                                 parentLoadReport.SetProgress(
                                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
+                            // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
+                            if (operationResult.Error is { Exception: UserBlockedException })
+                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+
                             return operationResult;
                         },
                         ct
@@ -181,6 +187,11 @@ namespace DCL.UserInAppInitializationFlow
         {
             if (result.Success)
                 return UniTask.CompletedTask;
+
+            if (result.Error is { Exception: UserBlockedException })
+            {
+                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+            }
 
             var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);

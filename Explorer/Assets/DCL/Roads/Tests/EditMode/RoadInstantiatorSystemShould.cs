@@ -13,6 +13,7 @@ using DCL.Roads.Systems;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
@@ -85,7 +86,6 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         // Arrange
         var roadInfo = new RoadInfo
         {
-            IsDirty = true,
         };
 
         var sceneEntityDefinition = new SceneEntityDefinition
@@ -110,13 +110,12 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         };
 
         Entity roadEntity
-            = world.Create(roadInfo, partitionComponent, sceneDefinitionComponent);
+            = world.Create(roadInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateRoad());
 
         // Act
         system.Update(0);
 
         // Assert
-        Assert.IsFalse(world.Get<RoadInfo>(roadEntity).IsDirty);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentAsset, existingInstantiatedRoad);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentKey, EXISTING_ROAD_KEY);
 
@@ -129,12 +128,6 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
     [Test]
     public void InstantiateDefaultRoad()
     {
-        // Arrange
-        var roadInfo = new RoadInfo
-        {
-            IsDirty = true,
-        };
-
         var sceneEntityDefinition = new SceneEntityDefinition
         {
             id = "fakeHash", metadata = new SceneMetadata
@@ -157,13 +150,12 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         };
 
         Entity roadEntity
-            = world.Create(roadInfo, partitionComponent, sceneDefinitionComponent);
+            = world.Create(RoadInfo.Create(), partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateRoad());
 
         // Act
         system.Update(0);
 
         // Assert
-        Assert.IsFalse(world.Get<RoadInfo>(roadEntity).IsDirty);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentAsset, existingInstantiatedRoad);
         Assert.AreEqual(world.Get<RoadInfo>(roadEntity).CurrentKey, NON_EXISTING_ROAD_KEY);
 

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5023767563212339286}
   - component: {fileID: 6478791590595259843}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: ree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -123,6 +123,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Rock02 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4265913260784404769, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      propertyPath: m_Layer
+      value: 17
+      objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
       propertyPath: m_LODs.Array.data[0].screenRelativeHeight
       value: 0.047659174
@@ -139,6 +143,14 @@ PrefabInstance:
       propertyPath: m_LODs.Array.data[0].renderers.Array.data[0].renderer
       value: 
       objectReference: {fileID: 7426796733171423171}
+    - target: {fileID: 5618547851546899180, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      propertyPath: m_Layer
+      value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 9031657785139116416, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      propertyPath: m_Layer
+      value: 17
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
