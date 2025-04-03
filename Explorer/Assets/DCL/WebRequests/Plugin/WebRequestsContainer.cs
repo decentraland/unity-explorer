@@ -1,59 +1,78 @@
+using Best.HTTP.Caching;
+using Best.HTTP.Shared;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.PluginSystem;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using Utility.Multithreading;
-using Utility.Storage;
+using System;
+using System.Threading;
+using UnityEngine;
 
 namespace DCL.WebRequests
 {
-    public class WebRequestsContainer
+    public class WebRequestsContainer : DCLGlobalContainer<WebRequestsContainer.Settings>
     {
-        public IWebRequestController WebRequestController { get; }
-
-        public IWebRequestController SceneWebRequestController { get; }
-
-        public WebRequestsAnalyticsContainer AnalyticsContainer { get; }
-
-        private WebRequestsContainer(
-            IWebRequestController webRequestController,
-            IWebRequestController sceneWebRequestController,
-            WebRequestsAnalyticsContainer analyticsContainer)
+        [Serializable]
+        public class Settings : IDCLPluginSettings
         {
-            WebRequestController = webRequestController;
-            AnalyticsContainer = analyticsContainer;
-            SceneWebRequestController = sceneWebRequestController;
+            [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
+            [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
+            [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+            [field: SerializeField] public ushort CacheSizeGB { get; private set; } = 2; // 2 GB by default
+            [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
         }
 
-        public static WebRequestsContainer Create(
+        public WebRequestsMode WebRequestsMode => settings.WebRequestsMode;
+
+        public IWebRequestController WebRequestController { get; private set; } = null!;
+
+        public IWebRequestController SceneWebRequestController { get; private set; } = null!;
+
+        public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; } = null!;
+
+        public static async UniTask<WebRequestsContainer> Create(
+            IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
-            WebRequestsMode webRequestsMode,
-            int coreBudget,
-            int sceneBudget,
-            bool isTextureCompressionEnabled
+            bool isTextureCompressionEnabled,
+            CancellationToken ct
         )
         {
-            var options = new ElementBindingOptions();
+            var container = new WebRequestsContainer();
+            await settingsContainer.InitializePluginAsync(container, ct);
+
+            ulong cacheSize = container.settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
+
+            // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
+            var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.MaxValue, cacheSize));
+            HTTPManager.LocalCache = httpCache;
+
+            var options = new ArtificialDelayOptions.ElementBindingOptions();
 
             var analyticsContainer = WebRequestsAnalyticsContainer.Create(debugContainerBuilder.TryAddWidget("Web Requests"));
 
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
+            int coreBudget = container.settings.CoreWebRequestsBudget;
+            int sceneBudget = container.settings.SceneWebRequestsBudget;
+
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
-            var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
+            var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
             var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
 
-            IWebRequestController baseWebRequestController = new RedirectWebRequestController(webRequestsMode,
+            int partialChunkSize = container.settings.PartialChunkSizeMB * 1024 * 1024;
+
+            IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
                                                                  new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub),
-                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub),
+                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub, httpCache, partialChunkSize),
                                                                  textureFuseRequestHub)
                                                             .WithLog()
                                                             .WithArtificialDelay(options);
@@ -65,7 +84,10 @@ namespace DCL.WebRequests
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer);
+            container.AnalyticsContainer = analyticsContainer;
+            container.WebRequestController = baseWebRequestController;
+            container.SceneWebRequestController = sceneWebRequestController;
+            return container;
 
             void CreateWebRequestsMetricsDebugUtility()
             {
@@ -141,39 +163,6 @@ namespace DCL.WebRequests
                                                                    .Forget();
                                               }),
                                           new DebugHintDef("Sequential"));
-            }
-        }
-
-        public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
-        {
-            public readonly IElementBinding<bool> Enable;
-            public readonly IElementBinding<float> Delay;
-            private readonly PersistentSetting<bool> enableSetting;
-            private readonly PersistentSetting<float> delaySetting;
-
-            public ElementBindingOptions() : this(
-                PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false),
-                PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10)
-            ) { }
-
-            public ElementBindingOptions(PersistentSetting<bool> enableSetting, PersistentSetting<float> delaySetting)
-            {
-                this.enableSetting = enableSetting;
-                this.delaySetting = delaySetting;
-                Enable = new PersistentElementBinding<bool>(enableSetting);
-                Delay = new PersistentElementBinding<float>(delaySetting);
-            }
-
-            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
-            {
-                await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
-                    return (Delay.Value, Enable.Value);
-            }
-
-            public void ApplyValues(bool enable, float delay)
-            {
-                enableSetting.ForceSave(enable);
-                delaySetting.ForceSave(delay);
             }
         }
     }

@@ -1,8 +1,9 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.PluginSystem.Global;
+using DCL.WebRequests.Analytics;
 
-namespace DCL.WebRequests.Analytics
+namespace DCL.WebRequests
 {
     public class WebRequestsPlugin : IDCLGlobalPlugin
     {

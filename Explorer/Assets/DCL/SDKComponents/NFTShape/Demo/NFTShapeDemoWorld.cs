@@ -66,7 +66,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
                         new MaxSize
                         {
                             maxSizeInBytes = 300 * 1024 * 1024
-                        }
+                        },
+                        IWebRequestController.DEFAULT
                     )
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),

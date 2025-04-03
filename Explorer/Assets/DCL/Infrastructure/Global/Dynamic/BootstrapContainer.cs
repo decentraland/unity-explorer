@@ -84,7 +84,6 @@ namespace Global.Dynamic
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
             DecentralandEnvironment decentralandEnvironment,
             DCLVersion dclVersion,
@@ -112,7 +111,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
 
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
 
                 if (container.enableAnalytics)
@@ -143,7 +142,6 @@ namespace Global.Dynamic
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,
             WebRequestsContainer webRequestsContainer,
             BootstrapSettings bootstrapSettings,
@@ -156,7 +154,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

@@ -2,6 +2,7 @@
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
+using System;
 using System.Threading;
 
 namespace DCL.WebRequests
@@ -34,6 +35,28 @@ namespace DCL.WebRequests
                 lock (debugBudget) { debugBudget.Value--; }
 
                 return await origin.SendAsync(requestWrap, ct);
+            }
+            finally
+            {
+                lock (debugBudget) { debugBudget.Value++; }
+
+                totalBudgetAcquired.Dispose();
+            }
+        }
+
+        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
+        {
+            IAcquiredBudget totalBudgetAcquired;
+
+            // Try bypass total budget
+            while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
+                await UniTask.Yield(ct);
+
+            try
+            {
+                lock (debugBudget) { debugBudget.Value--; }
+
+                return await origin.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
             }
             finally
             {

@@ -23,14 +23,30 @@ namespace DCL.WebRequests
 
             try
             {
-                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, $"WebRequestController send start: {envelope}");
+                ReportHub.Log(envelope.ReportData, $"WebRequestController send start: {envelope}");
                 IWebRequest? result = await origin.SendAsync(requestWrap, ct);
-                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, $"WebRequestController send finish: {envelope}");
+                ReportHub.Log(envelope.ReportData, $"WebRequestController send finish: {envelope}");
                 return result;
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, $"WebRequestController send error: {e}");
+                ReportHub.Log(envelope.ReportData, $"WebRequestController send error: {e}");
+                throw; // don't re-throw it as a new exception as we loose the original type in that case
+            }
+        }
+
+        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"WebRequestController {nameof(GetPartialAsync)} start: {commonArguments}");
+                PartialDownloadStream? result = await origin.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"WebRequestController {nameof(GetPartialAsync)} finish: {commonArguments}");
+                return result;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"WebRequestController {nameof(GetPartialAsync)} error: {e}");
                 throw; // don't re-throw it as a new exception as we loose the original type in that case
             }
         }

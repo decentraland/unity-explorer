@@ -50,6 +50,7 @@ MonoBehaviour:
   - rid: 2168772563850493955
   - rid: 7621844642437005314
   - rid: 7621844642437005315
+  - rid: 3440223528247361540
   references:
     version: 2
     RefIds:
@@ -413,6 +414,14 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 3440223528247361540
+      type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests, asm: DCL.Plugins}
+      data:
+        <WebRequestsMode>k__BackingField: 1
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
+        <CacheSizeGB>k__BackingField: 2
+        <PartialChunkSizeMB>k__BackingField: 2
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -594,6 +603,8 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        startFadeDistanceDithering: 2
+        endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
@@ -676,8 +687,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 15
-        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

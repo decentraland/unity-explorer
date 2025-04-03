@@ -37,7 +37,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer.gameObject.SetActive(false);
 
             cache = new Dictionary<string, List<GltfContainerAsset>>(this);
-            OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
+            OngoingRequests = FakeDictionaryCache<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>.INSTANCE;
             IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
 

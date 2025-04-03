@@ -20,6 +20,7 @@ MonoBehaviour:
   - rid: 1841402216112979968
   - rid: 2174542042650378246
   - rid: 5734404089553354752
+  - rid: 3440223528247361541
   references:
     version: 2
     RefIds:
@@ -67,6 +68,14 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 3440223528247361541
+      type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests, asm: DCL.Plugins}
+      data:
+        <WebRequestsMode>k__BackingField: 1
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
+        <CacheSizeGB>k__BackingField: 2
+        <PartialChunkSizeMB>k__BackingField: 2
     - rid: 5734404089553354752
       type: {class: PointerInputAudioPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -92,7 +101,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <WebRequestsBudget>k__BackingField: 20
     - rid: 6784895265412481024
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

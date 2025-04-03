@@ -41,9 +41,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool,
-            AssetBundleLoadingMutex loadingMutex,
-            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache)
+            AssetBundleLoadingMutex loadingMutex) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;

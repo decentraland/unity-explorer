@@ -67,7 +67,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, 1000, false),
+                await WebRequestsContainer.Create(globalSettingsContainer, new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), false, ct),
                 ITexturesFuse.NewTestInstance(),
                 globalSettingsContainer,
                 diagnosticsContainer,
@@ -82,7 +82,6 @@ namespace Global.Tests.PlayMode
                 enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
-                Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
                 ct,
                 enableGPUInstancing: false

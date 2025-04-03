@@ -1,5 +1,8 @@
-using DCL.WebRequests.Analytics;
+using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities.UIBindings;
 using UnityEngine;
+using Utility.Multithreading;
+using Utility.Storage;
 
 namespace DCL.WebRequests
 {
@@ -12,7 +15,7 @@ namespace DCL.WebRequests
         [ContextMenu(nameof(Upload))]
         public void Upload()
         {
-            WebRequestsContainer.ElementBindingOptions options = new ();
+            ElementBindingOptions options = new ();
             use = options.Enable.Value;
             delaySeconds = options.Delay.Value;
         }
@@ -20,7 +23,40 @@ namespace DCL.WebRequests
         [ContextMenu(nameof(Flush))]
         public void Flush()
         {
-            new WebRequestsContainer.ElementBindingOptions().ApplyValues(use, delaySeconds);
+            new ElementBindingOptions().ApplyValues(use, delaySeconds);
+        }
+
+        public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
+        {
+            public readonly IElementBinding<bool> Enable;
+            public readonly IElementBinding<float> Delay;
+            private readonly PersistentSetting<bool> enableSetting;
+            private readonly PersistentSetting<float> delaySetting;
+
+            public ElementBindingOptions() : this(
+                PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false),
+                PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10)
+            ) { }
+
+            public ElementBindingOptions(PersistentSetting<bool> enableSetting, PersistentSetting<float> delaySetting)
+            {
+                this.enableSetting = enableSetting;
+                this.delaySetting = delaySetting;
+                Enable = new PersistentElementBinding<bool>(enableSetting);
+                Delay = new PersistentElementBinding<float>(delaySetting);
+            }
+
+            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
+            {
+                await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
+                    return (Delay.Value, Enable.Value);
+            }
+
+            public void ApplyValues(bool enable, float delay)
+            {
+                enableSetting.ForceSave(enable);
+                delaySetting.ForceSave(delay);
+            }
         }
     }
 }

@@ -52,7 +52,6 @@ namespace Global.Dynamic
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
-        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -70,7 +69,6 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -81,7 +79,6 @@ namespace Global.Dynamic
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
-            this.partialsDiskCache = partialsDiskCache;
             this.world = world;
         }
 
@@ -135,7 +132,6 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
-                partialsDiskCache,
                 sceneUIRoot,
                 ct
             );
