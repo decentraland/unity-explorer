@@ -171,10 +171,10 @@ namespace Global.Dynamic
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
-            WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.Create(globalPluginSettingsContainer, identityCache, texturesFuse, debugContainerBuilder, compressionEnabled, ct);
+            WebRequestsContainer webRequestsContainer = await WebRequestsContainer.Create(globalPluginSettingsContainer, identityCache, texturesFuse, debugContainerBuilder, compressionEnabled, ct);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-            var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
+            IDiskCache diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings, webRequestsContainer.WebRequestsMode);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -321,7 +321,7 @@ namespace Global.Dynamic
                 InputMapComponent.Kind.EMOTE_WHEEL);
         }
 
-        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
+        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings, WebRequestsMode webRequestsMode)
         {
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
@@ -332,6 +332,12 @@ namespace Global.Dynamic
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return new IDiskCache.Fake();
+            }
+
+            if (webRequestsMode == WebRequestsMode.HTTP2)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cache disabled while using HTTP2");
                 return new IDiskCache.Fake();
             }
 

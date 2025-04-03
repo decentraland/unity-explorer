@@ -16,9 +16,6 @@ using System;
 using System.Threading;
 using AssetManagement;
 using DCL.WebRequests;
-using ECS.StreamableLoading.Cache.Disk;
-using System.Buffers;
-using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
