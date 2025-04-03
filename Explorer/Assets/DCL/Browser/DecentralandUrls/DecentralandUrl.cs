@@ -34,6 +34,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PeerAbout,
         RemotePeers,
+        RemotePeersWorld,
 
         DAO,
 

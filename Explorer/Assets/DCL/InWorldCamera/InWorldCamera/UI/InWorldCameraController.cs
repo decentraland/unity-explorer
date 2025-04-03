@@ -127,8 +127,7 @@ namespace DCL.InWorldCamera.UI
             closeViewTask?.TrySetCanceled(ct);
             closeViewTask = new UniTaskCompletionSource();
 
-            return UniTask.WhenAny(closeViewTask.Task,
-                                        viewInstance!.CloseButton.OnClickAsync(ct));
+            return closeViewTask.Task;
         }
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
