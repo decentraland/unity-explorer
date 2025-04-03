@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 7246539553070843855}
   - component: {fileID: 525813227583887873}
   - component: {fileID: 3081618947756515223}
+  - component: {fileID: 3756843960190110775}
   - component: {fileID: 289636701121798881}
   m_Layer: 5
   m_Name: MarketplaceCreditsUnlockedPanel
@@ -201,6 +202,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3756843960190110775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563801543860217921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 6718302533088270705}
+  <PanelContent>k__BackingField: {fileID: 8034362063734067201}
+  <PanelCanvasGroup>k__BackingField: {fileID: 525813227583887873}
 --- !u!114 &289636701121798881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -217,10 +233,9 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 1382458884897094379}
   <CreditsText>k__BackingField: {fileID: 2761606826594796304}
   <PanelCanvasGroup>k__BackingField: {fileID: 525813227583887873}
-  <RaysGameObject>k__BackingField: {fileID: 6718302533088270705}
-  <PanelContent>k__BackingField: {fileID: 8034362063734067201}
   <CloseButton>k__BackingField: {fileID: 3081618947756515223}
   <Sound>k__BackingField: {fileID: 11400000, guid: 63990f30d3b7f184da9b61390c5a7e31, type: 2}
+  <RewardBackgroundRaysAnimation>k__BackingField: {fileID: 3756843960190110775}
 --- !u!1 &1521652576325552226
 GameObject:
   m_ObjectHideFlags: 0
