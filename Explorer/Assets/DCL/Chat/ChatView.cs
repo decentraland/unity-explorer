@@ -643,7 +643,6 @@ namespace DCL.Chat
 
             if (currentChannel != null && currentChannel.Id.Equals(channelToRemove))
             {
-                //TODO FRAN & ALE: Fix this, it should show the previous conversation if you are closing the current one??
                 CurrentChannelId = ChatChannel.NEARBY_CHANNEL.Id;
             }
         }
