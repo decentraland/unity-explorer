@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ChatMessageFactory chatMessageFactory;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private ChatStorage? chatStorage;
+        private ChatHistoryStorage? chatStorage;
 
         private ChatController chatController;
 
@@ -110,7 +110,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             if(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
-                chatStorage = new ChatStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
+                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
 
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 

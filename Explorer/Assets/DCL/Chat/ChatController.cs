@@ -78,7 +78,7 @@ namespace DCL.Chat
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
-        private readonly ChatStorage? chatStorage;
+        private readonly ChatHistoryStorage? chatStorage;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -136,7 +136,7 @@ namespace DCL.Chat
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ChatStorage chatStorage) : base(viewFactory)
+            ChatHistoryStorage chatStorage) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;

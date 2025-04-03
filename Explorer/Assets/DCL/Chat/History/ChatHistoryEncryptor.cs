@@ -20,9 +20,9 @@ namespace DCL.Chat.History
         /// </summary>
         /// <param name="encryptedStream">The encrypted JSON-formatted text, with read permissions.</param>
         /// <returns>The filled instance of the user conversation settings.</returns>
-        public ChatStorage.UserConversationsSettings DecryptUserConversationSettings(Stream encryptedStream)
+        public ChatHistoryStorage.UserConversationsSettings DecryptUserConversationSettings(Stream encryptedStream)
         {
-            ChatStorage.UserConversationsSettings result;
+            ChatHistoryStorage.UserConversationsSettings result;
 
             using (CryptoStream fileStream = new CryptoStream(encryptedStream, cryptoProvider.CreateDecryptor(), CryptoStreamMode.Read))
             {
@@ -31,7 +31,7 @@ namespace DCL.Chat.History
                     using (JsonTextReader jsonReader = new JsonTextReader(streamReader))
                     {
                         JObject jsonObject = (JObject)JToken.ReadFrom(jsonReader);
-                        result = JsonConvert.DeserializeObject<ChatStorage.UserConversationsSettings>(jsonObject.ToString());
+                        result = JsonConvert.DeserializeObject<ChatHistoryStorage.UserConversationsSettings>(jsonObject.ToString());
                     }
                 }
             }
@@ -44,7 +44,7 @@ namespace DCL.Chat.History
         /// </summary>
         /// <param name="conversationsSettingsToEncrypt">The instance to be encrypted and serialized.</param>
         /// <param name="outputStream">The output where to store the encrypted JSON-formatted text, with writing permission.</param>
-        public void EncryptUserConversationSettings(ChatStorage.UserConversationsSettings conversationsSettingsToEncrypt, Stream outputStream)
+        public void EncryptUserConversationSettings(ChatHistoryStorage.UserConversationsSettings conversationsSettingsToEncrypt, Stream outputStream)
         {
             using (CryptoStream fileStream = new CryptoStream(outputStream, cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write))
             {

@@ -29,7 +29,7 @@ namespace DCL.Chat.History
     /// - The only way to erase the history of a conversation is by clearing it.
     /// - Usernames of the chat messages are stored, so when retrieved they will not show the current username, if it was changed.
     /// </remarks>
-    public class ChatStorage : IDisposable
+    public class ChatHistoryStorage : IDisposable
     {
         /// <summary>
         /// A deserialized representation of the file that stores metadata about channels, which where open and in which order they are listed.
@@ -83,7 +83,7 @@ namespace DCL.Chat.History
 
         private readonly ReportData reportData = new ReportData(ReportCategory.CHAT_HISTORY);
 
-        public ChatStorage(IChatHistory chatHistory, ChatMessageFactory messageFactory, string localUserWalletAddress)
+        public ChatHistoryStorage(IChatHistory chatHistory, ChatMessageFactory messageFactory, string localUserWalletAddress)
         {
             const string CHAT_HISTORY_FOLDER = "/c/";
             channelFilesFolder = Application.persistentDataPath + CHAT_HISTORY_FOLDER;
