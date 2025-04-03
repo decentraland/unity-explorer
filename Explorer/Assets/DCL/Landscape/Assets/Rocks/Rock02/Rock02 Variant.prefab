@@ -123,10 +123,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Rock02 Variant
       objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
-      propertyPath: m_Layer
-      value: 17
-      objectReference: {fileID: 0}
     - target: {fileID: 4265913260784404769, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
       propertyPath: m_Layer
       value: 17
