@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
-            TeleportPositionCalculationSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
+            TeleportPositionCalculationSystem.InjectToWorld(ref builder);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);

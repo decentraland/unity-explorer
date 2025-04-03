@@ -15,7 +15,7 @@ using Utility;
 namespace DCL.Landscape.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    [UpdateAfter(typeof(TeleportPositionCalculationSystem))]
+    [UpdateBefore(typeof(TeleportPositionCalculationSystem))]
     [LogCategory(ReportCategory.LANDSCAPE)]
     public partial class LandscapeCollidersCullingSystem : BaseUnityLoopSystem
     {
@@ -45,7 +45,6 @@ namespace DCL.Landscape.Systems
             {
                 prevParcel = teleportIntent.Parcel;
                 terrain.SetTerrainCollider(teleportIntent.Parcel, true);
-                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation().WithTerrainOffset();
                 return;
             }
 

@@ -37,9 +37,13 @@ namespace DCL.Character.CharacterMotion.Systems
         [Query]
         private void CalculateTeleportPosition(in Entity playerEntity, ref PlayerTeleportIntent teleportIntent)
         {
-            if (teleportIntent.IsForcedPosition || teleportIntent.SceneDef == null) return;
+            if (teleportIntent.IsForcedPosition) return;
 
-            if (TeleportUtils.IsTramLine(teleportIntent.SceneDef.metadata.OriginalJson.AsSpan()))
+            if (teleportIntent.SceneDef == null)
+            {
+                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation().WithTerrainOffset();
+            }
+            else if (TeleportUtils.IsTramLine(teleportIntent.SceneDef.metadata.OriginalJson.AsSpan()))
             {
                 teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation();
             }
