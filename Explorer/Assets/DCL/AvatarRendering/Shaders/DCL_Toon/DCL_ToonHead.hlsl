@@ -148,7 +148,7 @@ inline float3 UnityObjectToWorldNormal(in float3 norm)
         return UnityObjectToWorldDir(norm);
     #else
         // mul(IT_M, norm) => mul(norm, I_M) => {dot(norm, I_M.col0), dot(norm, I_M.col1), dot(norm, I_M.col2)}
-        return normalize(mul(norm, (float3x3)UNITY_MATRIX_M));
+        return SafeNormalize(mul(norm, (float3x3)GetWorldToObjectMatrix()));
     #endif
 }
 // normal should be normalized, w=1.0
