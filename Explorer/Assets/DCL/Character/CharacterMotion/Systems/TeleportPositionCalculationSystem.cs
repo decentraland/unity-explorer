@@ -5,8 +5,8 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.RealmNavigation;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 using Utility;
 using System;
@@ -57,7 +57,7 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3? cameraTarget = null;
             Vector3 targetWorldPosition;
 
-            if (sceneDef == null || TeleportationUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            if (sceneDef == null || TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
                 return (targetWorldPosition, cameraTarget);

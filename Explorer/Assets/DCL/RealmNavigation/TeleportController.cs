@@ -4,6 +4,7 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Utilities;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Threading;
@@ -66,7 +67,7 @@ namespace DCL.RealmNavigation
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            if (sceneDef != null && !TeleportationUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            if (sceneDef != null && !TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
 
@@ -82,7 +83,6 @@ namespace DCL.RealmNavigation
             {
                 // Instant completion for empty parcels
                 loadReport.SetProgress(1f);
-
                 return null;
             }
 
