@@ -311,7 +311,7 @@ jobs:
 
       - name: Set SHA, branch, and build prefix
         run: |
-          echo "SHA_SHORT=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
           echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
 
           case "${GITHUB_EVENT_NAME}" in
