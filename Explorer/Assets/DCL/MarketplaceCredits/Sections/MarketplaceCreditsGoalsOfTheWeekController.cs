@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
@@ -17,23 +16,29 @@ namespace DCL.MarketplaceCredits.Sections
     {
         private const int GOALS_POOL_DEFAULT_CAPACITY = 4;
 
+        public bool HasToPlayClaimCreditsAnimation { get; set; }
+
         private readonly MarketplaceCreditsGoalsOfTheWeekView view;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
+        private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
 
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
+        private CancellationTokenSource playClaimCreditsAnimationCts;
 
         public MarketplaceCreditsGoalsOfTheWeekController(
             MarketplaceCreditsGoalsOfTheWeekView view,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebRequestController webRequestController,
+            MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
             this.view = view;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
             marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
@@ -54,8 +59,23 @@ namespace DCL.MarketplaceCredits.Sections
                 actionOnRelease: goalRowView => goalRowView.gameObject.SetActive(false));
         }
 
-        public void OpenSection() =>
+        public void OpenSection()
+        {
             view.gameObject.SetActive(true);
+
+            if (HasToPlayClaimCreditsAnimation)
+            {
+                playClaimCreditsAnimationCts = playClaimCreditsAnimationCts.SafeRestart();
+                PlayClaimCreditsAnimationAsync(playClaimCreditsAnimationCts.Token).Forget();
+                HasToPlayClaimCreditsAnimation = false;
+            }
+        }
+
+        private async UniTaskVoid PlayClaimCreditsAnimationAsync(CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => totalCreditsWidgetView.TotalCreditsContainer.activeInHierarchy, cancellationToken: ct);
+            totalCreditsWidgetView.PlayClaimCreditsAnimation();
+        }
 
         public void CloseSection() =>
             view.gameObject.SetActive(false);
@@ -88,6 +108,7 @@ namespace DCL.MarketplaceCredits.Sections
             view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
             fetchCaptchaCts.SafeCancelAndDispose();
             claimCreditsCts.SafeCancelAndDispose();
+            playClaimCreditsAnimationCts.SafeCancelAndDispose();
         }
 
         private MarketplaceCreditsGoalRowView InstantiateGoalRowPrefab()

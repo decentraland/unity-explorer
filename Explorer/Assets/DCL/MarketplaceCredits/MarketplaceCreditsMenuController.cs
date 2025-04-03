@@ -56,6 +56,7 @@ namespace DCL.MarketplaceCredits
         private CancellationTokenSource sidebarButtonStateCts;
 
         private Profile ownProfile;
+        private bool haveJustClaimedCredits;
 
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
@@ -102,6 +103,7 @@ namespace DCL.MarketplaceCredits
                 viewInstance.GoalsOfTheWeekView,
                 marketplaceCreditsAPIClient,
                 webRequestController,
+                viewInstance.TotalCreditsWidget,
                 this);
 
             marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(
@@ -171,15 +173,19 @@ namespace DCL.MarketplaceCredits
                     marketplaceCreditsWelcomeController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
+                    haveJustClaimedCredits = false;
                     marketplaceCreditsVerifyEmailController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
+                    marketplaceCreditsGoalsOfTheWeekController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
                     marketplaceCreditsGoalsOfTheWeekController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
+                    haveJustClaimedCredits = false;
                     marketplaceCreditsWeekGoalsCompletedController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
+                    haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedController.OpenSection();
                     break;
@@ -249,6 +255,7 @@ namespace DCL.MarketplaceCredits
             if (controller is not CreditsUnlockedController)
                 return;
 
+            haveJustClaimedCredits = true;
             OpenSection(MarketplaceCreditsSection.WELCOME);
         }
 
