@@ -23,6 +23,20 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 {
     public class SignedFetchWrap : IJsApiWrapper
     {
+        private static readonly string[] AUTH_CHAIN_HEADER_NAMES =
+        {
+            // AuthLinkType.SIGNER
+            "x-identity-auth-chain-0",
+            // AuthLinkType.ECDSA_EPHEMERAL
+            "x-identity-auth-chain-1",
+            // AuthLinkType.ECDSA_SIGNED_ENTITY
+            "x-identity-auth-chain-2",
+            // AuthLinkType.ECDSA_EIP_1654_EPHEMERAL
+            "x-identity-auth-chain-3",
+            // AuthLinkType.ECDSA_EIP_1654_SIGNED_ENTITY
+            "x-identity-auth-chain-4",
+        };
+
         private readonly IWebRequestController webController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISceneData sceneData;
@@ -96,7 +110,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             foreach (AuthLink link in authChain)
             {
-                headers[$"x-identity-auth-chain-{authChainIndex}"] = link.ToJson();
+                headers[AUTH_CHAIN_HEADER_NAMES[authChainIndex]] = link.ToJson();
                 authChainIndex++;
             }
 
