@@ -147,6 +147,7 @@ namespace DCL.MarketplaceCredits
             sidebarButton.Deselect();
             CloseAllSections();
             SetSidebarButtonAnimationAsPaused(false);
+            haveJustClaimedCredits = false;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
