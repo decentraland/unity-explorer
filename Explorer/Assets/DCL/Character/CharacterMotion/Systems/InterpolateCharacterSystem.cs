@@ -60,9 +60,13 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
-            characterController.transform.position += rigidTransform.PlatformDelta;
-            Physics.SyncTransforms();
+            if (platformComponent.IsMovingPlatform && platformComponent.PlatformCollider != null)
+            {
+                // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
+                characterController.transform.position += rigidTransform.PlatformDelta;
+                Physics.SyncTransforms();
+            }
+
             CollisionFlags collisionFlags = characterController.Move(
                 movementDelta
                 + gravityDelta

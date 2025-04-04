@@ -82,7 +82,7 @@ namespace DCL.Chat
             {
                 case ChatChannel.ChatChannelType.Nearby:
                     newItem.SetConversationIcon(icon);
-                    newItem.SetConversationName("Near By"); // TODO: Localization
+                    newItem.SetConversationName("Nearby"); // TODO: Localization
                     newItem.SetClaimedNameIconVisibility(false);
                     newItem.SetConversationType(false);
                     break;

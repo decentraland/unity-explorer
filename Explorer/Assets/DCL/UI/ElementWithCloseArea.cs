@@ -39,7 +39,7 @@ namespace DCL.UI
 
         private void Awake()
         {
-            closeAreaButton.onClick.AddListener(OnCloseAreaButtonClicked);
+            closeAreaButton?.onClick.AddListener(OnCloseAreaButtonClicked);
         }
 
         private void OnCloseAreaButtonClicked()
