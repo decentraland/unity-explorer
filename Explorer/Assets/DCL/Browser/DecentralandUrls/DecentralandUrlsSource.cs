@@ -93,6 +93,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
+                DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
