@@ -1,6 +1,4 @@
 using DCL.Optimization.Hashing;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -14,47 +12,6 @@ namespace DCL.Chat.History
     {
         private readonly AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
         private readonly byte[] channelIdEncryptionBuffer = new byte[256]; // Enough to not need resizing
-
-        /// <summary>
-        /// Reads an encrypted version of the user conversation settings and returns a decrypted deserialized instance.
-        /// </summary>
-        /// <param name="encryptedStream">The encrypted JSON-formatted text, with read permissions.</param>
-        /// <returns>The filled instance of the user conversation settings.</returns>
-        public ChatHistoryStorage.UserConversationsSettings DecryptUserConversationSettings(Stream encryptedStream)
-        {
-            ChatHistoryStorage.UserConversationsSettings result;
-
-            using (CryptoStream fileStream = new CryptoStream(encryptedStream, cryptoProvider.CreateDecryptor(), CryptoStreamMode.Read))
-            {
-                using (StreamReader streamReader = new StreamReader(fileStream))
-                {
-                    using (JsonTextReader jsonReader = new JsonTextReader(streamReader))
-                    {
-                        JObject jsonObject = (JObject)JToken.ReadFrom(jsonReader);
-                        result = JsonConvert.DeserializeObject<ChatHistoryStorage.UserConversationsSettings>(jsonObject.ToString());
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Writes an encrypted version of the user conversation settings into a destination output.
-        /// </summary>
-        /// <param name="conversationsSettingsToEncrypt">The instance to be encrypted and serialized.</param>
-        /// <param name="outputStream">The output where to store the encrypted JSON-formatted text, with writing permission.</param>
-        public void EncryptUserConversationSettings(ChatHistoryStorage.UserConversationsSettings conversationsSettingsToEncrypt, Stream outputStream)
-        {
-            using (CryptoStream fileStream = new CryptoStream(outputStream, cryptoProvider.CreateEncryptor(), CryptoStreamMode.Write))
-            {
-                using (StreamWriter streamWriter = new StreamWriter(fileStream))
-                {
-                    string serializedSettings = JsonConvert.SerializeObject(conversationsSettingsToEncrypt);
-                    streamWriter.Write(serializedSettings);
-                }
-            }
-        }
 
         /// <summary>
         /// Encrypts a string and converts the result to Base64 where slashes are replaced with underscores, so it does not

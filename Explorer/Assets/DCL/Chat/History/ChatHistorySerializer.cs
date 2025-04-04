@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 
@@ -18,6 +21,7 @@ namespace DCL.Chat.History
         private const string LOCAL_USER_TRUE_VALUE = "T";
         private const string LOCAL_USER_FALSE_VALUE = "F";
         private readonly StringBuilder builder = new StringBuilder(256); // Enough not to be resized
+        private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
         private readonly string[] entryValues = new string[3];
         private readonly ChatMessageFactory messageFactory;
@@ -85,13 +89,46 @@ namespace DCL.Chat.History
             }
         }
 
+        /// <summary>
+        /// Reads a serialized version of the user conversation settings and returns a deserialized instance.
+        /// </summary>
+        /// <param name="inputStream">The JSON-formatted text, with read permissions.</param>
+        /// <returns>The filled instance of the user conversation settings.</returns>
+        public ChatHistoryStorage.UserConversationsSettings DeserializeUserConversationSettings(Stream inputStream)
+        {
+            ChatHistoryStorage.UserConversationsSettings result;
+
+            using (StreamReader streamReader = new StreamReader(inputStream))
+            {
+                using (JsonTextReader jsonReader = new JsonTextReader(streamReader))
+                {
+                    result = jsonSerializer.Deserialize<ChatHistoryStorage.UserConversationsSettings>(jsonReader);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Writes a serialized version of the user conversation settings into a destination output.
+        /// </summary>
+        /// <param name="conversationsSettingsToSerialize">The instance to be serialized.</param>
+        /// <param name="outputStream">The output where to store the JSON-formatted text, with writing permission.</param>
+        public void SerializeUserConversationSettings(ChatHistoryStorage.UserConversationsSettings conversationsSettingsToSerialize, Stream outputStream)
+        {
+            using (TextWriter streamWriter = new StreamWriter(outputStream))
+            {
+                jsonSerializer.Serialize(streamWriter, conversationsSettingsToSerialize);
+            }
+        }
+
         private byte[] CreateHistoryEntry(string[] values)
         {
             builder.Clear();
 
             for (int i = 0; i < values.Length; ++i)
             {
-                builder.Append(entryValues[i]);
+                builder.Append(values[i]);
 
                 if(i < values.Length - 1)
                     builder.Append(",");

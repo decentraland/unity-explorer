@@ -257,7 +257,8 @@ namespace DCL.Chat.History
                 {
                     using (FileStream encryptedStream = new FileStream(userConversationSettingsFile, FileMode.Open, FileAccess.Read))
                     {
-                        conversationSettings = chatEncryptor.DecryptUserConversationSettings(encryptedStream);
+                        Stream decryptingStream = chatEncryptor.CreateDecryptionStreamReader(encryptedStream);
+                        conversationSettings = chatSerializer.DeserializeUserConversationSettings(decryptingStream);
                     }
 
                     ReportHub.Log(reportData, $"Conversation settings file read from " + userConversationSettingsFile);
@@ -281,7 +282,8 @@ namespace DCL.Chat.History
             {
                 using (FileStream fileStream = new FileStream(userConversationSettingsFile, FileMode.Create, FileAccess.Write))
                 {
-                    chatEncryptor.EncryptUserConversationSettings(conversationSettings, fileStream);
+                    Stream encryptingStream = chatEncryptor.CreateEncryptionStreamWriter(fileStream);
+                    chatSerializer.SerializeUserConversationSettings(conversationSettings, encryptingStream);
                 }
 
                 ReportHub.Log(reportData, $"Conversation settings file stored at " + userConversationSettingsFile);
