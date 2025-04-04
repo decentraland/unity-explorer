@@ -180,7 +180,9 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
-                terrainChunkColliders[activeChunk].enabled = false;
+
+                foreach (var collider in terrainChunkColliders)
+                    if (collider.enabled) collider.enabled = false;
 
                 IsTerrainShown = false;
             }
