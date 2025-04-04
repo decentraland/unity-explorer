@@ -88,10 +88,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree03 Variant
       objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
-      propertyPath: m_Layer
-      value: 17
-      objectReference: {fileID: 0}
     - target: {fileID: 966206684026294590, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
       propertyPath: m_Layer
       value: 17
