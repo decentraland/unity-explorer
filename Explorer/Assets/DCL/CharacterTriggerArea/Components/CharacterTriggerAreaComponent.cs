@@ -18,7 +18,6 @@ namespace DCL.CharacterTriggerArea.Components
 
         public Vector3 AreaSize { get; private set; }
         public bool IsDirty { get; set; }
-        public bool DelayDirtyReset { get; set; }
 
         public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => hasMonoBehaviour
             ? monoBehaviour!.EnteredAvatarsToBeProcessed
@@ -41,7 +40,6 @@ namespace DCL.CharacterTriggerArea.Components
             hasMonoBehaviour = monoBehaviour != null;
 
             IsDirty = true;
-            DelayDirtyReset = false;
         }
 
         public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)

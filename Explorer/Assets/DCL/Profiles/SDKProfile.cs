@@ -14,7 +14,6 @@ namespace DCL.Profiles
         public SDKAvatar Avatar { get; } = new ();
 
         public bool IsDirty { get; set; }
-        public bool DelayDirtyReset { get; set; }
 
         public string? Name { get; internal set; }
 

@@ -28,10 +28,7 @@ namespace ECS.LifeCycle.Systems
         [Query]
         private void ResetDirty(ref T component)
         {
-            if (component.DelayDirtyReset)
-                component.DelayDirtyReset = false;
-            else
-                component.IsDirty = false;
+            component.IsDirty = false;
         }
     }
 }

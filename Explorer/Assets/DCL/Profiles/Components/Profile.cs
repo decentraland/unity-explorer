@@ -113,7 +113,6 @@ namespace DCL.Profiles
         ///     This flag can be moved elsewhere when the final flow is established
         /// </summary>
         public bool IsDirty { get; set; } = true;
-        public bool DelayDirtyReset { get; set; }
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
