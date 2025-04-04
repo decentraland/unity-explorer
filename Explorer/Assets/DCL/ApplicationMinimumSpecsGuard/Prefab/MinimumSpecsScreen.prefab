@@ -1521,8 +1521,8 @@ RectTransform:
   - {fileID: 1868718273699370987}
   - {fileID: 7706977244406606188}
   - {fileID: 8447337057876397155}
-  - {fileID: 6726236373714677536}
   - {fileID: 5241447189634986015}
+  - {fileID: 6726236373714677536}
   m_Father: {fileID: 7388528894934844871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1989,6 +1989,7 @@ GameObject:
   - component: {fileID: 2814871423585080172}
   - component: {fileID: 8169330921431457158}
   - component: {fileID: 8454101078806804241}
+  - component: {fileID: 1022174433715092330}
   m_Layer: 0
   m_Name: MinimumSpecsScreen
   m_TagString: Untagged
@@ -2080,6 +2081,23 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &1022174433715092330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5357728835287357475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77913aceb47b4bf2a0351dc716adacf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <canvas>k__BackingField: {fileID: 2814871423585080172}
+  <raycaster>k__BackingField: {fileID: 8454101078806804241}
+  <ExitButton>k__BackingField: {fileID: 4720656920351021949}
+  <ContinueButton>k__BackingField: {fileID: 6676896487512417843}
+  <ReadMoreButton>k__BackingField: {fileID: 5030589954808123067}
 --- !u!1 &5648600980457702302
 GameObject:
   m_ObjectHideFlags: 0
