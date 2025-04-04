@@ -421,9 +421,8 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
 
-            viewInstance.IsUnfolded = inputData.ShowUnfolded;
+            IsUnfolded = inputData.ShowUnfolded;
         }
 
         protected override void OnViewClose()
