@@ -229,7 +229,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         }
 
         [Test]
-        public void ProcessGltfColliderWhenPBComponentIsDirty()
+        public void ProcessGltfColliderWhenNeedsColliderBoundsCheckIsTrue()
         {
             // Create a collider GameObject
             var colliderObj = new GameObject("TestCollider");
@@ -247,7 +247,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var mockAssetData = Substitute.For<IStreamableRefCountData>();
             var gltfAsset = GltfContainerAsset.Create(testRoot, mockAssetData);
 
-            // Need to check if DecodedVisibleSDKColliders is null and initialize if needed
+            // Initialize DecodedVisibleSDKColliders if needed
             if (gltfAsset.DecodedVisibleSDKColliders == null)
             {
                 gltfAsset.DecodedVisibleSDKColliders = new List<SDKCollider>();
@@ -264,28 +264,91 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var result = new StreamableLoadingResult<GltfContainerAsset>(gltfAsset);
             world.Add(promiseEntity, result);
 
-            // Create the GltfContainerComponent with State = Loading first
+            // Create the GltfContainerComponent with Finished state and NeedsColliderBoundsCheck set to true
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone, assetPromise);
-            component.State = LoadingState.Loading;
-
-            // Create entity with a dirty PBComponent - this is the case we're testing
-            var pbComponent = new PBGltfContainer { IsDirty = true };
-            var entity = world.Create(component, pbComponent, PartitionComponent.TOP_PRIORITY);
-
-            // Important: We need to retrieve the result before setting state to Finished
-            // This simulates what happens in FinalizeGltfContainerLoadingSystem
+            component.State = LoadingState.Finished;
+            component.NeedsColliderBoundsCheck = true; // Set the flag to true - this is the key change
+            
+            // Ensure the result is available 
             bool resultRetrieved = component.Promise.TryGetResult(world, out _);
             Assert.IsTrue(resultRetrieved, "Failed to retrieve result from promise");
 
-            // Now we can set state to Finished
-            component.State = LoadingState.Finished;
-            world.Set(entity, component);
+            // Create entity with the component
+            var entity = world.Create(component, new PBGltfContainer { IsDirty = false }, PartitionComponent.TOP_PRIORITY);
 
-            // Update the system
+            // Update the system - it should process the collider due to NeedsColliderBoundsCheck being true
             system.Update(0);
 
-            // Check if the collider was processed - it should be active since PBComponent is dirty
-            Assert.IsTrue(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds);
+            // Check if the collider was processed and active
+            Assert.IsTrue(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds, 
+                "Collider should be processed due to NeedsColliderBoundsCheck flag");
+            
+            // Verify the flag was reset after processing
+            component = world.Get<GltfContainerComponent>(entity);
+            Assert.IsFalse(component.NeedsColliderBoundsCheck, "NeedsColliderBoundsCheck should be reset after processing");
+
+            // Clean up
+            UnityObjectUtils.SafeDestroy(colliderObj);
+        }
+        
+        [Test]
+        public void DoNotProcessGltfColliderWhenNeedsColliderBoundsCheckIsFalse()
+        {
+            // Create a collider GameObject
+            var colliderObj = new GameObject("TestCollider");
+            var boxCollider = colliderObj.AddComponent<BoxCollider>();
+
+            // Set position and mark hasChanged as false to simulate no movement
+            boxCollider.transform.position = new Vector3(10, 10, 10);
+            boxCollider.transform.hasChanged = false;
+
+            // Create an SDKCollider
+            var sdkCollider = new SDKCollider(boxCollider);
+            sdkCollider.IsActiveByEntity = true;
+            
+            // Explicitly set IsActiveBySceneBounds to false to verify it doesn't change
+            sdkCollider.ForceActiveBySceneBounds(false);
+
+            // Create and set up the mock asset
+            var mockAssetData = Substitute.For<IStreamableRefCountData>();
+            var gltfAsset = GltfContainerAsset.Create(testRoot, mockAssetData);
+
+            // Initialize DecodedVisibleSDKColliders
+            if (gltfAsset.DecodedVisibleSDKColliders == null)
+            {
+                gltfAsset.DecodedVisibleSDKColliders = new List<SDKCollider>();
+            }
+            gltfAsset.DecodedVisibleSDKColliders.Add(sdkCollider);
+
+            // Create a promise and component properly
+            var intent = new GetGltfContainerAssetIntention("test-src", "test-hash", new CancellationTokenSource());
+            var assetPromise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                world, intent, PartitionComponent.TOP_PRIORITY);
+
+            // Add our test result to the promise entity
+            Entity promiseEntity = assetPromise.Entity;
+            var result = new StreamableLoadingResult<GltfContainerAsset>(gltfAsset);
+            world.Add(promiseEntity, result);
+
+            // Create the GltfContainerComponent with Finished state and NeedsColliderBoundsCheck set to false
+            var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone, assetPromise);
+            component.State = LoadingState.Finished;
+            component.NeedsColliderBoundsCheck = false; // Set the flag to false - key for this test
+            
+            // Ensure the result is available 
+            bool resultRetrieved = component.Promise.TryGetResult(world, out _);
+            Assert.IsTrue(resultRetrieved, "Failed to retrieve result from promise");
+
+            // Create entity with the component
+            var entity = world.Create(component, new PBGltfContainer { IsDirty = false }, PartitionComponent.TOP_PRIORITY);
+
+            // Update the system - it should NOT process the collider since NeedsColliderBoundsCheck is false
+            // and the transform hasn't moved
+            system.Update(0);
+
+            // Check if the collider remains inactive - it should not be processed
+            Assert.IsFalse(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds, 
+                "Collider should not be processed when NeedsColliderBoundsCheck is false and transform hasn't moved");
 
             // Clean up
             UnityObjectUtils.SafeDestroy(colliderObj);
