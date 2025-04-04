@@ -31,7 +31,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Jump"",
                     ""type"": ""Button"",
                     ""id"": ""2e4337b6-e969-4032-bcd5-51c930a6e077"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3641,74 +3641,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
-        },
-        {
-            ""name"": ""TESTS"",
-            ""id"": ""d7f5294f-0c50-4e5d-8e4b-8c50f0344476"",
-            ""actions"": [
-                {
-                    ""name"": ""Action1"",
-                    ""type"": ""Button"",
-                    ""id"": ""413d4cbc-3238-4bf1-b1b6-df297b5cf7dd"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Action2"",
-                    ""type"": ""Button"",
-                    ""id"": ""5f108d09-75bb-46f0-9099-f181f68b4d1a"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Action3"",
-                    ""type"": ""Button"",
-                    ""id"": ""e994455e-af96-4736-9b85-a8b38c4621f0"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""328fe873-2460-4db8-afba-101b1b7d5c02"",
-                    ""path"": ""<Keyboard>/1"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Action1"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""58166869-1ba6-40c8-a117-e9ea1b998992"",
-                    ""path"": ""<Keyboard>/2"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Action2"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""7e3e26f9-0475-44c2-9172-d903e06d2996"",
-                    ""path"": ""<Keyboard>/3"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Action3"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
         }
     ],
     ""controlSchemes"": [
@@ -3833,11 +3765,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
         m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
         m_InWorldCamera_ToggleNametags = m_InWorldCamera.FindAction("ToggleNametags", throwIfNotFound: true);
-        // TESTS
-        m_TESTS = asset.FindActionMap("TESTS", throwIfNotFound: true);
-        m_TESTS_Action1 = m_TESTS.FindAction("Action1", throwIfNotFound: true);
-        m_TESTS_Action2 = m_TESTS.FindAction("Action2", throwIfNotFound: true);
-        m_TESTS_Action3 = m_TESTS.FindAction("Action3", throwIfNotFound: true);
     }
 
     ~@DCLInput()
@@ -3850,7 +3777,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Emotes.enabled, "This will cause a leak and performance issues, DCLInput.Emotes.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_EmoteWheel.enabled, "This will cause a leak and performance issues, DCLInput.EmoteWheel.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_InWorldCamera.enabled, "This will cause a leak and performance issues, DCLInput.InWorldCamera.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_TESTS.enabled, "This will cause a leak and performance issues, DCLInput.TESTS.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -4996,68 +4922,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         }
     }
     public InWorldCameraActions @InWorldCamera => new InWorldCameraActions(this);
-
-    // TESTS
-    private readonly InputActionMap m_TESTS;
-    private List<ITESTSActions> m_TESTSActionsCallbackInterfaces = new List<ITESTSActions>();
-    private readonly InputAction m_TESTS_Action1;
-    private readonly InputAction m_TESTS_Action2;
-    private readonly InputAction m_TESTS_Action3;
-    public struct TESTSActions
-    {
-        private @DCLInput m_Wrapper;
-        public TESTSActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Action1 => m_Wrapper.m_TESTS_Action1;
-        public InputAction @Action2 => m_Wrapper.m_TESTS_Action2;
-        public InputAction @Action3 => m_Wrapper.m_TESTS_Action3;
-        public InputActionMap Get() { return m_Wrapper.m_TESTS; }
-        public void Enable() { Get().Enable(); }
-        public void Disable() { Get().Disable(); }
-        public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(TESTSActions set) { return set.Get(); }
-        public void AddCallbacks(ITESTSActions instance)
-        {
-            if (instance == null || m_Wrapper.m_TESTSActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_TESTSActionsCallbackInterfaces.Add(instance);
-            @Action1.started += instance.OnAction1;
-            @Action1.performed += instance.OnAction1;
-            @Action1.canceled += instance.OnAction1;
-            @Action2.started += instance.OnAction2;
-            @Action2.performed += instance.OnAction2;
-            @Action2.canceled += instance.OnAction2;
-            @Action3.started += instance.OnAction3;
-            @Action3.performed += instance.OnAction3;
-            @Action3.canceled += instance.OnAction3;
-        }
-
-        private void UnregisterCallbacks(ITESTSActions instance)
-        {
-            @Action1.started -= instance.OnAction1;
-            @Action1.performed -= instance.OnAction1;
-            @Action1.canceled -= instance.OnAction1;
-            @Action2.started -= instance.OnAction2;
-            @Action2.performed -= instance.OnAction2;
-            @Action2.canceled -= instance.OnAction2;
-            @Action3.started -= instance.OnAction3;
-            @Action3.performed -= instance.OnAction3;
-            @Action3.canceled -= instance.OnAction3;
-        }
-
-        public void RemoveCallbacks(ITESTSActions instance)
-        {
-            if (m_Wrapper.m_TESTSActionsCallbackInterfaces.Remove(instance))
-                UnregisterCallbacks(instance);
-        }
-
-        public void SetCallbacks(ITESTSActions instance)
-        {
-            foreach (var item in m_Wrapper.m_TESTSActionsCallbackInterfaces)
-                UnregisterCallbacks(item);
-            m_Wrapper.m_TESTSActionsCallbackInterfaces.Clear();
-            AddCallbacks(instance);
-        }
-    }
-    public TESTSActions @TESTS => new TESTSActions(this);
     private int m_DesktopSchemeIndex = -1;
     public InputControlScheme DesktopScheme
     {
@@ -5188,11 +5052,5 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnShowHide(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
         void OnToggleNametags(InputAction.CallbackContext context);
-    }
-    public interface ITESTSActions
-    {
-        void OnAction1(InputAction.CallbackContext context);
-        void OnAction2(InputAction.CallbackContext context);
-        void OnAction3(InputAction.CallbackContext context);
     }
 }
