@@ -90,7 +90,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
-        [None(typeof(CharacterEmoteIntent))]
+        [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention))]
         private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             bool wantsToCancelEmote = emoteComponent.StopEmote;

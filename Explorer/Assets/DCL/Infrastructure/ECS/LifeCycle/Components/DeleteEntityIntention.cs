@@ -7,8 +7,5 @@
     public struct DeleteEntityIntention
     {
         public bool DeferDeletion;
-
-        public static DeleteEntityIntention DeferredDeletion => new ()
-            { DeferDeletion = true };
     }
 }
