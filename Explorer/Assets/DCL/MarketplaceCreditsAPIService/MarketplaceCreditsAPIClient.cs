@@ -26,10 +26,10 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
-            // CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-            //                                                                                           .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
+            CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
-            CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(ct);
+            //CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(ct);
 
             // TODO (Santi): Remove this! This check should be done directly by the progress endpoint
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
