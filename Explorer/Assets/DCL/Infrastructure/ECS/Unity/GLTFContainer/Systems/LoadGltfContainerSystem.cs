@@ -49,6 +49,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
             GltfContainerComponent component;
+            sdkComponent.IsDirty = false; // IsDirty is only relevant for ReConfiguration of the GLTFContainer
 
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
@@ -63,7 +64,10 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
                 var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
-                component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
+                component = new GltfContainerComponent(
+                    sdkComponent.GetVisibleMeshesCollisionMask(),
+                    sdkComponent.GetInvisibleMeshesCollisionMask(),
+                    promise);
                 component.State = LoadingState.Loading;
                 World.Add(entity, component);
             }
@@ -78,55 +82,57 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (!sdkComponent.IsDirty) return;
 
-            switch (component.State)
+            // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here
+            // Do nothing if finished with error
+
+            // The source is changed, should start downloading over again (change check at
+            // ResetGltfContainerSystem.InvalidatePromise() query)
+            if (component.State == LoadingState.Unknown)
             {
-                // The source is changed, should start downloading over again
-                case LoadingState.Unknown:
-                    if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
-                        component.SetFaulty(
-                            GetReportData(),
-                            new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
-                        );
-                    else
-                    {
-                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
-                        component.Promise = promise;
-                        component.State = LoadingState.Loading;
-                    }
+                sdkComponent.IsDirty = false;
 
-                    eventsBuffer.Add(entity, component);
+                if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
+                    component.SetFaulty(
+                        GetReportData(),
+                        new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
+                    );
+                else
+                {
+                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
+                    component.Promise = promise;
+                    component.State = LoadingState.Loading;
+                }
+
+                eventsBuffer.Add(entity, component);
+            }
+            else if (component.State == LoadingState.Finished)
+            {
+                sdkComponent.IsDirty = false;
+
+                Assert.IsTrue(component.Promise.Result.HasValue);
+
+                // if promise was unsuccessful nothing to do
+                StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result!.Value;
+                if (!result.Succeeded)
                     return;
 
-                // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here
-                // Do nothing if finished with error
-                case LoadingState.Finished:
-                    Assert.IsTrue(component.Promise.Result.HasValue);
+                ColliderLayer visibleCollisionMask = sdkComponent.GetVisibleMeshesCollisionMask();
 
-                    // if promise was unsuccessful nothing to do
-                    StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result.Value;
+                if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
+                {
+                    component.VisibleMeshesCollisionMask = visibleCollisionMask;
+                    ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset);
+                }
 
-                    if (!result.Succeeded)
-                        return;
+                ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
 
-                    ColliderLayer visibleCollisionMask = sdkComponent.GetVisibleMeshesCollisionMask();
+                if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
+                {
+                    component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
+                    ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
+                }
 
-                    if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
-                    {
-                        component.VisibleMeshesCollisionMask = visibleCollisionMask;
-                        ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset);
-                    }
-
-                    ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
-
-                    if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
-                    {
-                        component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
-                        ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
-                    }
-
-                    entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
-
-                    return;
+                entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
             }
         }
     }
