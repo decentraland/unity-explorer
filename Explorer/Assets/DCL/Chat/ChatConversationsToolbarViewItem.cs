@@ -147,7 +147,7 @@ namespace DCL.Chat
         /// Provides the data required to display the profile picture.
         /// </summary>
         /// <param name="viewDependencies">A set of system tools for views.</param>
-        /// <param name="userColor">The color of the user's profile picture.</param>
+        /// <param name="userColor">The color of the user's profile picture. It affects the tooltip too.</param>
         /// <param name="faceSnapshotUrl">The URL to the profile picture.</param>
         /// <param name="userId">The Id of the user (wallet Id).</param>
         public void SetProfileData(ViewDependencies viewDependencies, Color userColor, string faceSnapshotUrl, string userId)
@@ -155,6 +155,7 @@ namespace DCL.Chat
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
             profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
+            tooltipText.color = userColor;
         }
 
         /// <summary>
