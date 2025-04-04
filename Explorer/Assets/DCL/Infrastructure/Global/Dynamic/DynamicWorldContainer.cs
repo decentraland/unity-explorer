@@ -421,7 +421,8 @@ namespace Global.Dynamic
             bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
             bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
-            bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.MARKETPLACE_CREDITS)) || Application.isEditor;   
+            bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.MARKETPLACE_CREDITS)) || Application.isEditor;
+            includeMarketplaceCredits = true; // TODO (Santi): Remove this!!
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel);
