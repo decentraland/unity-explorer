@@ -439,6 +439,13 @@ namespace Global.Dynamic
             if (launchSettings.initialRealm != InitialRealm.Custom) return true;
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment) return true;
 
+            string realm = launchSettings.customRealm;
+
+            if (string.IsNullOrEmpty(realm)) return true;
+
+            var uri = new Uri(realm);
+            if (uri.Host == "127.0.0.1") return true;
+
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
             // If we want to save one http request, we could have a hardcoded list of trusted realms instead
@@ -447,7 +454,7 @@ namespace Global.Dynamic
             TrustedRealmApiResponse[] realms = await adapter.CreateFromJson<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft);
 
             foreach (TrustedRealmApiResponse trustedRealm in realms)
-                if (string.Equals(trustedRealm.baseUrl, launchSettings.customRealm, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(trustedRealm.baseUrl, realm, StringComparison.OrdinalIgnoreCase))
                     return true;
 
             return false;
@@ -460,10 +467,11 @@ namespace Global.Dynamic
             UntrustedRealmConfirmationController controller = new UntrustedRealmConfirmationController(
                 UntrustedRealmConfirmationController.CreateLazily(prefab.Value.GetComponent<UntrustedRealmConfirmationView>(), null));
 
-            dynamicWorldContainer!.MvcManager.RegisterController(controller);
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+            mvcManager.RegisterController(controller);
 
             var args = new UntrustedRealmConfirmationController.Args { realm = launchSettings.customRealm };
-            await dynamicWorldContainer!.MvcManager.ShowAsync(UntrustedRealmConfirmationController.IssueCommand(args), ct);
+            await mvcManager.ShowAsync(UntrustedRealmConfirmationController.IssueCommand(args), ct);
 
             return controller.SelectedOption;
         }
