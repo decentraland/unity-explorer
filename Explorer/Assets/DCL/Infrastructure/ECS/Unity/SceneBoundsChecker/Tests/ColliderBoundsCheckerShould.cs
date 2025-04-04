@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using DCL.Time;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common;
@@ -35,10 +36,14 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
                 new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f),
                 50.0f);
 
+            IPhysicsTickProvider physicsTickProvider = Substitute.For<IPhysicsTickProvider>();
+            physicsTickProvider.Tick.Returns(2);
+
             system = new CheckColliderBoundsSystem(
                 world,
                 scenePartition,
-                sceneGeometry);
+                sceneGeometry,
+                physicsTickProvider);
 
             collider = new GameObject(nameof(ColliderBoundsCheckerShould)).AddComponent<BoxCollider>();
             testRoot = new GameObject("TestRoot");

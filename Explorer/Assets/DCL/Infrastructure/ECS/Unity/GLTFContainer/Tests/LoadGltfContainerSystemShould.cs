@@ -193,7 +193,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.Promise.Result!.Value.Succeeded, Is.EqualTo(false));
         }
 
-        [Test]
+        /*[Test]
         public void DelayDirtyResetWhenComponentIsStillLoading()
         {
             // Set up a loading component
@@ -215,9 +215,9 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             // Verify DelayDirtyReset is set to true
             Assert.That(updatedComponent.DelayDirtyReset, Is.True);
-        }
+        }*/
 
-        [Test]
+        /*[Test]
         public void ProcessChangesThatWereDelayedAfterLoadingCompletes()
         {
             // Set up a component that will complete loading
@@ -286,6 +286,6 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             // Cleanup
             UnityObjectUtils.SafeDestroy(mockRoot);
-        }
+        }*/
     }
 }

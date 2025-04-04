@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Time;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -13,10 +14,12 @@ namespace DCL.PluginSystem.World
 {
     public class AssetsCollidersPlugin : IDCLWorldPluginWithoutSettings
     {
+        private readonly IPhysicsTickProvider physicsTickProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public AssetsCollidersPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
+        public AssetsCollidersPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IPhysicsTickProvider physicsTickProvider)
         {
+            this.physicsTickProvider = physicsTickProvider;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
 
             componentPoolsRegistry.AddGameObjectPool<MeshCollider>();
@@ -29,7 +32,7 @@ namespace DCL.PluginSystem.World
             InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
 
-            CheckColliderBoundsSystem.InjectToWorld(ref builder, sharedDependencies.ScenePartition, sharedDependencies.SceneData.Geometry);
+            CheckColliderBoundsSystem.InjectToWorld(ref builder, sharedDependencies.ScenePartition, sharedDependencies.SceneData.Geometry, physicsTickProvider);
 
             var releaseColliderSystem =
                 ReleasePoolableComponentSystem<Collider, PrimitiveColliderComponent>.InjectToWorld(ref builder,

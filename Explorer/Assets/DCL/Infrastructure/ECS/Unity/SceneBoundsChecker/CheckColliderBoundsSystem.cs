@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Time;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -28,6 +29,7 @@ namespace ECS.Unity.SceneBoundsChecker
 
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
+        private readonly IPhysicsTickProvider physicsTickEntity;
         private Bounds auxiliaryBounds = new Bounds();
 
         /// <summary>
@@ -35,16 +37,18 @@ namespace ECS.Unity.SceneBoundsChecker
         /// </summary>
         private int lastFixedFrameChecked;
 
-        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry) : base(world)
+        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry, IPhysicsTickProvider physicsTickEntity) : base(world)
         {
             this.scenePartition = scenePartition;
             this.sceneGeometry = sceneGeometry;
+            this.physicsTickEntity = physicsTickEntity;
         }
 
         protected override void Update(float t)
         {
-            // We cannot skip updates here based on the physicsTickEntity.Tick because PBGltfContainer properties
-            // updates (that may require to process their colliders again) can be lost between skipped cycles...
+            int tick = physicsTickEntity.Tick;
+            if (tick == lastFixedFrameChecked) return;
+            lastFixedFrameChecked = tick;
 
             CheckPrimitives();
             CheckGltfAssetQuery(World);
@@ -77,7 +81,7 @@ namespace ECS.Unity.SceneBoundsChecker
         }
 
         [Query]
-        private void CheckGltfAsset(ref GltfContainerComponent component, ref PartitionComponent partitionComponent, in PBGltfContainer pbComponent)
+        private void CheckGltfAsset(ref GltfContainerComponent component, ref PartitionComponent partitionComponent)
         {
             if (component.State != LoadingState.Finished) return;
 
@@ -89,14 +93,15 @@ namespace ECS.Unity.SceneBoundsChecker
 
             // Process all colliders
 
-            // Visible meshes colliders are created on demand.
-            // 'force' based on the dirtyness of PBGltfContainer is needed because properties like the
-            // 'visibleLayerMask' may end up creating colliders that need to be processed here even when the
-            // transform didn't change...
+            // Updates on the PBGltfContainer may reconfigure its colliders and they will need to be
+            // processed again here even when the Transform didn't change
             if (asset.DecodedVisibleSDKColliders != null)
-                ProcessColliders(asset.DecodedVisibleSDKColliders, force: pbComponent.IsDirty);
+                ProcessColliders(asset.DecodedVisibleSDKColliders, force: component.NeedsColliderBoundsCheck);
 
-            ProcessColliders(asset.InvisibleColliders);
+            ProcessColliders(asset.InvisibleColliders, force: component.NeedsColliderBoundsCheck);
+
+            component.NeedsColliderBoundsCheck = false;
+
             return;
 
             void ProcessColliders(List<SDKCollider> colliders, bool force = false)
