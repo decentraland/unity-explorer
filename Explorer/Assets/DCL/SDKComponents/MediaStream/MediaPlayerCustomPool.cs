@@ -18,12 +18,16 @@ namespace DCL.SDKComponents.MediaStream
         private readonly int tryCleanOfflineMediaPlayersDelayInMinutes = 2;
         private readonly float maxOfflineTimePossibleInSeconds = 300f;
 
+        private static bool applicationQuitting;
+
         public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
         {
             this.mediaPlayerPrefab = mediaPlayerPrefab;
             rootContainerTransform = new GameObject("POOL_CONTAINER_MEDIA_PLAYER").transform;
             offlineMediaPlayers = new Dictionary<string, Queue<MediaPlayerInfo>>();
             TryUnloadAsync().Forget();
+
+            Application.quitting += () => applicationQuitting = true;
         }
 
         public MediaPlayer GetOrCreateReusableMediaPlayer(string url)
@@ -81,6 +85,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public void ReleaseMediaPlayer(string url, MediaPlayer mediaPlayer)
         {
+            //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
+            if (applicationQuitting) return;
+            
             mediaPlayer.Stop();
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
