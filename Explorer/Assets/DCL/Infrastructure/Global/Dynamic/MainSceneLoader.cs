@@ -151,7 +151,7 @@ namespace Global.Dynamic
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainerBuilder, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainerBuilder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);

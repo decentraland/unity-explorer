@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests.GenericDelete;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -34,7 +35,7 @@ namespace DCL.WebRequests.RequestsHub
 
         private readonly IReadOnlyDictionary<Key, object> map;
 
-        public RequestHub(bool ktxEnabled)
+        public RequestHub(IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
@@ -48,7 +49,7 @@ namespace DCL.WebRequests.RequestsHub
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
             Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
             Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, ktxEnabled));
+            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
         }
 
         private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)

@@ -67,7 +67,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), 1000, 1000, false),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, 1000, 1000, false),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
