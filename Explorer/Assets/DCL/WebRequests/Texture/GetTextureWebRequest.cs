@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
 using KtxUnity;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -18,11 +18,13 @@ namespace DCL.WebRequests
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
         private readonly string url;
+        private readonly TextureType textureType;
         private readonly bool ktxEnabled;
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url, bool ktxEnabled)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url, TextureType textureType, bool ktxEnabled)
         {
             this.url = url;
+            this.textureType = textureType;
             this.ktxEnabled = ktxEnabled;
             UnityWebRequest = unityWebRequest;
         }
@@ -35,12 +37,14 @@ namespace DCL.WebRequests
         public static CreateTextureOp CreateTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point) =>
             new (wrapMode, filterMode);
 
-        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, bool ktxEnabled)
+        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            // TODO mihak: Unhardcode this
-            var convertUrl = $"https://media-opticonverter.decentraland.zone/convert?ktx2={ktxEnabled}&fileUrl={Uri.EscapeDataString(commonArguments.URL)}";
-            UnityWebRequest wr = UnityWebRequest.Get(convertUrl);
-            return new GetTextureWebRequest(wr, convertUrl, ktxEnabled);
+            // var baseUrl = $"http://localhost:8000/convert?ktx2={{0}}&fileUrl={{1}}";
+            string baseUrl = urlsSource.Url(DecentralandUrl.MediaConverter);
+            var requestUrl = string.Format(baseUrl, ktxEnabled ? "true" : "false", Uri.EscapeDataString(commonArguments.URL));
+
+            UnityWebRequest wr = UnityWebRequest.Get(requestUrl);
+            return new GetTextureWebRequest(wr, requestUrl, textureArguments.TextureType, ktxEnabled);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>
@@ -89,11 +93,12 @@ namespace DCL.WebRequests
             {
                 var ktxTexture = new KtxTexture();
 
+                // TODO: .data creates an array
                 using var bufferWrapped = new ManagedNativeArray(webRequest.UnityWebRequest.downloadHandler.data);
 
                 var result = await ktxTexture.LoadFromBytes(
                     bufferWrapped.nativeArray,
-                    false,
+                    webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
                     0,
                     0,
                     0,
