@@ -364,6 +364,7 @@ namespace DCL.Chat
                 chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
             {
                 await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
+                chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
                 viewInstance.RefreshMessages();
             }
         }
