@@ -57,7 +57,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 await UniTask.SwitchToThreadPool();
 
                 // create script byte array
-                ITypedArray<byte> array = jsOperations.CreateUint8Array(nativeBytes.Length);
+                ITypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);
 
                 // transfer data to script byte array
                 array.Write(nativeBytes, (ulong)nativeBytes.Length, 0);
