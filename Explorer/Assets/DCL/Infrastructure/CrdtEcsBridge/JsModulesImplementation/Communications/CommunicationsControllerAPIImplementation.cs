@@ -1,4 +1,6 @@
-﻿using SceneRunner.Scene;
+﻿using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
+using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.IO;
@@ -19,7 +21,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             string walletId = message.FromWalletId;
             int dataLength = message.Data.Length;
-            var uint8Array = jsOperations.GetTempUint8Array();
+            int dataOffset = 0;
+            var array = jsOperations.GetTempUint8Array();
 
             unsafe
             {
@@ -27,7 +30,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     var data = (IntPtr)dataPtr;
 
-                    uint8Array.InvokeWithDirectAccess(buffer =>
+                    array.InvokeWithDirectAccess(buffer =>
                     {
                         var bufferPtr = (byte*)buffer;
 
@@ -35,7 +38,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                             bufferPtr[0] = (byte)Encoding.UTF8.GetBytes(walletIdPtr, walletId.Length,
                                 bufferPtr + 1, byte.MaxValue);
 
-                        int dataOffset = bufferPtr[0] + 1;
+                        dataOffset = bufferPtr[0] + 1;
 
                         if (dataOffset + dataLength > IJsOperations.LIVEKIT_MAX_SIZE)
                             throw new InternalBufferOverflowException(
@@ -46,8 +49,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
             }
 
+            var arrayObj = (ScriptObject)array;
+
+            var subArray = (ITypedArray<byte>)arrayObj.InvokeMethod("subarray", 0,
+                dataOffset + dataLength);
+
             lock (eventsToProcess)
-                eventsToProcess.Add(uint8Array);
+                eventsToProcess.Add(subArray);
         }
     }
 }
