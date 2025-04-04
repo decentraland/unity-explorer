@@ -10,6 +10,7 @@ namespace DCL.UI.SharedSpaceManager
         EmotesWheel,
         SidebarSettings,
         SidebarProfile,
-        Explore
+        Explore,
+        MarketplaceCredits,
     }
 }

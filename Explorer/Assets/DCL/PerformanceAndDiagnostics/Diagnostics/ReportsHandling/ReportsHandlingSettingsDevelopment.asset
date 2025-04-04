@@ -506,6 +506,12 @@ MonoBehaviour:
       Severity: 1
     - Category: WEARABLE
       Severity: 1
+    - Category: MARKETPLACE_CREDITS
+      Severity: 0
+    - Category: MARKETPLACE_CREDITS
+      Severity: 4
+    - Category: MARKETPLACE_CREDITS
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1
