@@ -75,6 +75,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         private readonly IntPtr ptr;
 
         public Memory<T> Memory => memoryManager.Memory;
+        public IntPtr Ptr => ptr;
 
         public SlicedOwnedMemory(int length)
         {
