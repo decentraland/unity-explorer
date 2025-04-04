@@ -94,6 +94,24 @@ namespace DCL.Chat.History
         }
 
         /// <summary>
+        /// Stores a set of chat messages in the channel. This operation will not trigger any event.
+        /// </summary>
+        /// <param name="messagesToStore">The messages of the channel, in the order they were sent.</param>
+        public void FillChannel(List<ChatMessage> messagesToStore)
+        {
+            messages.Capacity = messagesToStore.Count + 2;
+
+            // Adding two elements to count as top and bottom padding
+            messages.Add(PADDING_MESSAGE);
+
+            // Messages are added in inverse order
+            for (int i = messagesToStore.Count - 1; i >= 0; --i)
+                messages.Add(messagesToStore[i]);
+
+            messages.Add(PADDING_MESSAGE);
+        }
+
+        /// <summary>
         /// Appends a new message to the channel.
         /// </summary>
         /// <param name="message">A message.</param>

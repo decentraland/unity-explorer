@@ -20,7 +20,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
@@ -79,6 +78,7 @@ namespace DCL.Chat
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ChatHistoryStorage? chatStorage;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -135,7 +135,8 @@ namespace DCL.Chat
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            ILoadingStatus loadingStatus) : base(viewFactory)
+            ILoadingStatus loadingStatus,
+            ChatHistoryStorage chatStorage) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -154,6 +155,7 @@ namespace DCL.Chat
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
+            this.chatStorage = chatStorage;
         }
 
         public void Clear() // Called by a command
@@ -184,6 +186,7 @@ namespace DCL.Chat
                 viewInstance.FoldingChanged -= OnViewFoldingChanged;
                 viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
+                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.Dispose();
             }
 
@@ -273,22 +276,25 @@ namespace DCL.Chat
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
+            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
 
             OnFocus();
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.AllChannelsRemoved += OnChatHistoryOnAllChannelsRemoved;
+            chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
             ShowWelcomeMessage();
+
+            chatStorage?.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
         }
 
-        private void OnChatHistoryOnAllChannelsRemoved()
+        private void OnChatHistoryAllChannelsRemoved()
         {
             viewInstance!.RemoveAllConversations();
         }
@@ -303,12 +309,13 @@ namespace DCL.Chat
 
         private void OnIdentityChanged()
         {
+            chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
             ShowWelcomeMessage();
         }
 
         private void OnOpenConversation(string userId)
         {
-            var channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
+            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.FocusInputBox();
         }
@@ -348,6 +355,17 @@ namespace DCL.Chat
                 {
                     viewInstance.RefreshUnreadMessages(destinationChannel.Id);
                 }
+            }
+        }
+
+        private async void OnViewCurrentChannelChangedAsync()
+        {
+            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.User &&
+                chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
+            {
+                await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
+                chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
+                viewInstance.RefreshMessages();
             }
         }
 
@@ -449,12 +467,14 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            if (!nametagsData.showNameTags || !nametagsData.showChatBubbles) return;
+            if (!nametagsData.showNameTags || !nametagsData.showChatBubbles)
+                return;
 
-            if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
+            if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
-                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR);
+                bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.User;
+                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
 
                 switch (chatAudioSettings.chatAudioSettings)
                 {
@@ -468,33 +488,34 @@ namespace DCL.Chat
             }
             else if (isSentByOwnUser)
             {
-                if (chatMessage.IsPrivateMessage)
+                if (channel.ChannelType == ChatChannel.ChatChannelType.User)
                 {
                     if (!profileCache.TryGet(channel.Id.Id, out var profile))
                     {
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
-                        return;
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
                     }
-
-                    Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, profile.ValidatedName, profile.WalletId);
+                    else
+                    {
+                        Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                    }
                 }
                 else
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR);
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id);
             }
         }
 
-        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, string? receiverDisplayName = null, string? receiverWalletId = null)
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
             {
                 world.AddOrSet(e, new ChatBubbleComponent(
                     chatMessage.Message,
                     chatMessage.SenderValidatedName,
-                    chatMessage.WalletAddress,
+                    chatMessage.SenderWalletAddress,
                     chatMessage.IsMention,
-                    chatMessage.IsPrivateMessage,
-                    chatMessage.ChannelId.Id,
+                    isPrivateMessage,
+                    messageChannelId.Id,
                     chatMessage.IsSentByOwnUser,
                     receiverDisplayName?? string.Empty,
                     receiverWalletId?? string.Empty,
@@ -641,6 +662,7 @@ namespace DCL.Chat
 
             foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
+                // TODO: Use new endpoint to get a bunch of profile info
                 if (profileCache.TryGet(identity, out var profile))
                     outProfiles.Add(profile);
             }

@@ -40,7 +40,7 @@ namespace DCL.Chat.History
         event ReadMessagesChangedDelegate ReadMessagesChanged;
 
         /// <summary>
-        /// Raised when all channels are removed
+        /// Raised when all channels are removed after calling DeleteAllChannels.
         /// </summary>
         event AllChannelsRemovedDelegate AllChannelsRemoved;
 
@@ -87,12 +87,10 @@ namespace DCL.Chat.History
         /// </summary>
         public void ClearAllChannels();
 
-
         /// <summary>
         /// Deletes all the messages in all the channels and then removes all the channels.
         /// </summary>
         public void DeleteAllChannels();
-
 
         /// <summary>
         /// Deletes all the messages in a channel.

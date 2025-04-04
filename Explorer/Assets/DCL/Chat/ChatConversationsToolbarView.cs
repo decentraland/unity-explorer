@@ -130,7 +130,6 @@ namespace DCL.Chat
             UpdateScrollButtonsVisibility();
         }
 
-
         /// <summary>
         /// Replaces the value of unread messages to show next to the icon of an item.
         /// </summary>

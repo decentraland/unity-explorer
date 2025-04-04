@@ -327,7 +327,7 @@ namespace DCL.Chat
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
-                else if (IsUserBlocked(itemData.WalletAddress))
+                else if (IsUserBlocked(itemData.SenderWalletAddress))
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
@@ -375,7 +375,7 @@ namespace DCL.Chat
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {
-                Profile? profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
+                Profile? profile = await viewDependencies.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {
