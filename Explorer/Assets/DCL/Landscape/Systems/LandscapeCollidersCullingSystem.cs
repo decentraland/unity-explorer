@@ -39,9 +39,9 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            // Enable terrain for proper raycasting on teleportation
+            // Enable terrain for proper raycasting on teleportation before final position is set
             ref PlayerTeleportIntent teleportIntent = ref World.TryGetRef<PlayerTeleportIntent>(playerEntity, out bool hasTeleportIntent);
-            if (hasTeleportIntent && !teleportIntent.IsForcedPosition && teleportIntent.SceneDef == null)
+            if (hasTeleportIntent && !teleportIntent.IsPositionSet && teleportIntent.SceneDef == null)
             {
                 prevParcel = teleportIntent.Parcel;
                 terrain.SetTerrainCollider(teleportIntent.Parcel, true);

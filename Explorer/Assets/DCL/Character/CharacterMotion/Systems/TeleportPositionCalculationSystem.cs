@@ -37,7 +37,7 @@ namespace DCL.Character.CharacterMotion.Systems
         [Query]
         private void CalculateTeleportPosition(in Entity playerEntity, ref PlayerTeleportIntent teleportIntent)
         {
-            if (teleportIntent.IsForcedPosition) return;
+            if (teleportIntent.IsPositionSet) return;
 
             if (teleportIntent.SceneDef == null)
             {
@@ -59,6 +59,8 @@ namespace DCL.Character.CharacterMotion.Systems
                     World?.AddOrGet(playerEntity, new PlayerLookAtIntent(cameraTarget.Value, targetWorldPosition));
                 }
             }
+
+            teleportIntent.IsPositionSet = true;
         }
 
         private static (Vector3 targetWorldPosition, Vector3? cameraTarget) PickTargetWithOffset(SceneEntityDefinition? sceneDef, Vector2Int parcel)

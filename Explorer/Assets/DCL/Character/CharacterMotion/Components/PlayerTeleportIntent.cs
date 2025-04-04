@@ -26,7 +26,7 @@ namespace DCL.CharacterMotion.Components
         public readonly Vector2Int Parcel;
         public readonly CancellationToken CancellationToken;
         public readonly SceneEntityDefinition? SceneDef;
-        public readonly bool IsForcedPosition;
+        public bool IsPositionSet;
         public Vector3 Position;
 
         /// <summary>
@@ -38,14 +38,14 @@ namespace DCL.CharacterMotion.Components
 
         public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isForcedPosition = false)
+        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false)
         {
             Parcel = parcel;
             CancellationToken = cancellationToken;
             AssetsResolution = assetsResolution;
             creationTime = Time.realtimeSinceStartup;
             SceneDef = sceneDef;
-            IsForcedPosition = isForcedPosition;
+            IsPositionSet = isPositionSet;
             Position = position;
         }
     }
