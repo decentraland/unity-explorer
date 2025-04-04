@@ -1,14 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.PlacesAPIService;
 using DCL.TeleportPrompt;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
-using DCL.Chat.MessageBus;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -21,7 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICursor cursor;
-        private TeleportPromptController teleportPromptController;
+        private TeleportPromptController? teleportPromptController;
         private readonly IChatMessagesBus chatMessagesBus;
 
         public TeleportPromptPlugin(
@@ -56,7 +55,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            teleportPromptController.Dispose();
+            teleportPromptController?.Dispose();
         }
 
         public class TeleportPromptSettings : IDCLPluginSettings

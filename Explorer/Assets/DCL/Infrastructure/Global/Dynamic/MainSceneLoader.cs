@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -10,6 +11,7 @@ using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -21,6 +23,7 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
@@ -41,6 +44,7 @@ using System.Threading;
 using Global.Dynamic.LaunchModes;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -75,6 +79,7 @@ namespace Global.Dynamic
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
+        [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -239,6 +244,24 @@ namespace Global.Dynamic
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
+
+                if (!await IsTrustedRealm(decentralandUrlsSource, ct))
+                {
+                    splashScreen.Hide();
+
+                    if (!await ShowUntrustedRealmConfirmation(ct))
+                    {
+#if UNITY_EDITOR
+                        UnityEditor.EditorApplication.isPlaying = false;
+#else
+                        Application.Quit();
+#endif
+
+                        return;
+                    }
+
+                    splashScreen.Show();
+                }
 
                 DisableInputs();
 
@@ -409,6 +432,46 @@ namespace Global.Dynamic
             );
 
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
+        }
+
+        private async UniTask<bool> IsTrustedRealm(DecentralandUrlsSource dclUrls, CancellationToken ct)
+        {
+            if (launchSettings.initialRealm != InitialRealm.Custom) return true;
+            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment) return true;
+
+            IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
+
+            // If we want to save one http request, we could have a hardcoded list of trusted realms instead
+            var url = URLAddress.FromString(dclUrls.Url(DecentralandUrl.Servers));
+            var adapter = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            TrustedRealmApiResponse[] realms = await adapter.CreateFromJson<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft);
+
+            foreach (TrustedRealmApiResponse trustedRealm in realms)
+                if (string.Equals(trustedRealm.baseUrl, launchSettings.customRealm, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+            return false;
+        }
+
+        private async UniTask<bool> ShowUntrustedRealmConfirmation(CancellationToken ct)
+        {
+            var prefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(untrustedRealmConfirmationPrefab, ct);
+
+            UntrustedRealmConfirmationController controller = new UntrustedRealmConfirmationController(
+                UntrustedRealmConfirmationController.CreateLazily(prefab.Value.GetComponent<UntrustedRealmConfirmationView>(), null));
+
+            dynamicWorldContainer!.MvcManager.RegisterController(controller);
+
+            var args = new UntrustedRealmConfirmationController.Args { realm = launchSettings.customRealm };
+            await dynamicWorldContainer!.MvcManager.ShowAsync(UntrustedRealmConfirmationController.IssueCommand(args), ct);
+
+            return controller.SelectedOption;
+        }
+
+        [Serializable]
+        public struct TrustedRealmApiResponse
+        {
+            public string baseUrl;
         }
 
         private readonly struct CheckingScope : IDisposable
