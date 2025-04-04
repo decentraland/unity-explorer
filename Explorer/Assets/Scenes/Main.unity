@@ -355,7 +355,7 @@ Animator:
   m_GameObject: {fileID: 214014215}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 11e3e096626ac0548912411d33ae8192, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -529,7 +529,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 7
     targetScene: {x: 0, y: 0}
     predefinedScenes:
       enabled: 0
@@ -653,6 +653,11 @@ MonoBehaviour:
   logoAnimation: {fileID: 214014219}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
   worldInfoTool: {fileID: 1929393545}
+  untrustedRealmConfirmationPrefab:
+    m_AssetGUID: b5efcea1481b64193ae5b5029f0c673f
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
 --- !u!1 &614279043
 GameObject:
   m_ObjectHideFlags: 0
@@ -915,6 +920,7 @@ MonoBehaviour:
   m_DeselectOnBackgroundClick: 1
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
 --- !u!1 &1800558272
 GameObject:
   m_ObjectHideFlags: 0

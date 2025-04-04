@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
-        private ExternalUrlPromptController externalUrlPromptController;
+        private ExternalUrlPromptController? externalUrlPromptController;
 
         public ExternalUrlPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            externalUrlPromptController.Dispose();
+            externalUrlPromptController?.Dispose();
         }
 
         public class ExternalUrlPromptSettings : IDCLPluginSettings
