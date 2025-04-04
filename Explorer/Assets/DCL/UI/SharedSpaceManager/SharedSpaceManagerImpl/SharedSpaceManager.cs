@@ -101,7 +101,7 @@ namespace DCL.UI.SharedSpaceManager
 
             try
             {
-                if (panel == PanelsSharingSpace.Chat)
+                if (panel != PanelsSharingSpace.Friends)
                     await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
                 else
                     await HideAllAsync();
