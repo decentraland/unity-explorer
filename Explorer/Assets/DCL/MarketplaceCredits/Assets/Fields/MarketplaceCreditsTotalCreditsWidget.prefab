@@ -1554,6 +1554,7 @@ MonoBehaviour:
   <GoShoppingMainBackground>k__BackingField: {fileID: 4175614552291619685}
   <GoShoppingProgramEndBackground>k__BackingField: {fileID: 1772127252557842770}
   <TotalCreditsAnimator>k__BackingField: {fileID: 5599152914247695427}
+  <ClaimedSound>k__BackingField: {fileID: 11400000, guid: 626848dfd7e0dc549a4057b9b3c7236b, type: 2}
 --- !u!1 &8601798664485317870
 GameObject:
   m_ObjectHideFlags: 0

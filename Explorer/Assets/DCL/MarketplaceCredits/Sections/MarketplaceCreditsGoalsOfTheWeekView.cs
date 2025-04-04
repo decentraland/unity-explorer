@@ -1,7 +1,6 @@
 using DCL.MarketplaceCredits.Fields;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Sections

@@ -1,3 +1,4 @@
+using DCL.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,6 +30,9 @@ namespace DCL.MarketplaceCredits.Fields
         [field: SerializeField]
         public Animator TotalCreditsAnimator { get; private set; }
 
+        [field: SerializeField]
+        public AudioClipConfig ClaimedSound { get; private set; }
+
         public void SetCredits(string creditsText) =>
             TotalCreditsText.text = creditsText;
 
@@ -44,7 +48,10 @@ namespace DCL.MarketplaceCredits.Fields
             GoShoppingProgramEndBackground.gameObject.SetActive(isProgramEndVersion);
         }
 
-        public void PlayClaimCreditsAnimation() =>
+        public void PlayClaimCreditsAnimation()
+        {
             TotalCreditsAnimator.SetTrigger(CREDITS_CLAIMED_TRIGGER);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ClaimedSound);
+        }
     }
 }
