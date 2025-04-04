@@ -126,16 +126,15 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, string url, IDirtyMarker sdkComponent)
         {
-            if (!sdkComponent.IsDirty) return false;
-
-            if (component.URL != url && (!sceneData.TryGetMediaUrl(url, out var localMediaUrl) || component.URL != localMediaUrl))
+            if (sdkComponent.IsDirty && component.URL != url && (!sceneData.TryGetMediaUrl(url, out var localMediaUrl) || component.URL != localMediaUrl))
             {
                 MediaPlayerUtils.CleanUpMediaPlayer(ref component, mediaPlayerPool);
+                sdkComponent.IsDirty = false;
                 World.Remove<MediaPlayerComponent>(entity);
+                return true;
             }
 
-            sdkComponent.IsDirty = false;
-            return true;
+            return false;
         }
 
         [Query]
