@@ -147,8 +147,11 @@ namespace DCL.InWorldCamera.PhotoDetail
             HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
-            GameObject.Destroy(viewInstance!.mainImage.texture);
-            viewInstance!.mainImage.texture = null;
+            
+            if (viewInstance.mainImage.texture != null)
+                GameObject.Destroy(viewInstance.mainImage.texture);
+
+            viewInstance.mainImage.texture = null;
             PhotoDetailInfoController.Release();
         }
 
