@@ -181,7 +181,8 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 viewDependencies,
                 includeUserBlocking,
-                isConnectivityStatusEnabled
+                isConnectivityStatusEnabled,
+                sharedSpaceManager
                 );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

@@ -103,6 +103,12 @@ namespace DCL.Passport
         [field: SerializeField]
         public MutualFriendsConfig MutualFriends { get; private set; }
 
+        [field: SerializeField]
+        public Button JumpInButton { get; private set; }
+
+        [field: SerializeField]
+        public Button ChatButton { get; private set; }
+
         [field: Header("Context menu")]
         [field: SerializeField]
         public Button ContextMenuButton { get; private set; }

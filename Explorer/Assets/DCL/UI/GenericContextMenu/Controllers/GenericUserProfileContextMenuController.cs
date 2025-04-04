@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Chat.EventBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
@@ -6,6 +7,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -36,6 +38,8 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly RequestsSectionController requestsSectionController;
         private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
+        private readonly IChatEventBus chatEventBus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -63,11 +67,14 @@ namespace DCL.Friends.UI.FriendPanel
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             bool includeUserBlocking,
-            bool isConnectivityStatusEnabled) : base(viewFactory)
+            bool isConnectivityStatusEnabled,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
+            this.chatEventBus = chatEventBus;
             this.includeUserBlocking = includeUserBlocking;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             if (isConnectivityStatusEnabled)
             {
@@ -80,11 +87,10 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking,
-                    chatEventBus);
+                    includeUserBlocking);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
-                friendSectionControllerConnectivity.OpenConversationClicked += CloseFriendsPanel;
+                friendSectionControllerConnectivity.OpenConversationClicked += OnOpenConversationClicked;
             }
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
@@ -124,7 +130,7 @@ namespace DCL.Friends.UI.FriendPanel
             {
                 friendSectionControllerConnectivity.OnlineFriendClicked -= OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked -= JumpToFriendClick;
-                friendSectionControllerConnectivity.OpenConversationClicked -= CloseFriendsPanel;
+                friendSectionControllerConnectivity.OpenConversationClicked -= OnOpenConversationClicked;
             }
 
             blockedSectionController.Dispose();
@@ -137,7 +143,6 @@ namespace DCL.Friends.UI.FriendPanel
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             closeTaskCompletionSource.TrySetResult();
-
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
@@ -168,11 +173,19 @@ namespace DCL.Friends.UI.FriendPanel
             dclInput.UI.Close.performed -= CloseFriendsPanel;
         }
 
-        private void CloseFriendsPanel() =>
-            closeTaskCompletionSource.TrySetResult();
+        private void OnOpenConversationClicked(Web3Address web3Address)
+        {
+            OpenChatConversationAsync(web3Address).Forget();
+        }
+
+        private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
+            chatEventBus.OpenConversationUsingUserId(web3Address);
+        }
 
         private void CloseFriendsPanel(InputAction.CallbackContext obj) =>
-            CloseFriendsPanel();
+            closeTaskCompletionSource.TrySetResult();
 
         protected override void OnViewShow()
         {
