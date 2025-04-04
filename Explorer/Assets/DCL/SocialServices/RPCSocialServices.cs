@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
-using Nethereum.JsonRpc.Client;
 using Newtonsoft.Json;
 using rpc_csharp;
 using System;
@@ -16,8 +15,8 @@ namespace DCL.SocialService
     public interface ISocialServiceRPC : IDisposable
     {
         public RpcClientModule Module();
-        public UniTask EnsureRpcConnectionAsync(CancellationToken ct);
 
+        public UniTask EnsureRpcConnectionAsync(CancellationToken ct);
     }
 
     public class SocialServiceRPC : ISocialServiceRPC
@@ -25,7 +24,9 @@ namespace DCL.SocialService
         private const string RPC_PORT_NAME = "social_Services";
         private const string RPC_SERVICE_NAME = "SocialService";
         private const int CONNECTION_TIMEOUT_SECS = 10;
-        private const int CONNECTION_RETRIES = 3;
+        private const int CONNECTION_RETRIES = 10;
+        private const int AUTH_CHAIN_TIMEOUT_SECS = 30;
+        private const double RETRY_BACKOFF_MULTIPLIER = 1.5;
 
         private readonly SemaphoreSlim handshakeMutex = new (1, 1);
         private readonly URLAddress apiUrl;
@@ -55,31 +56,19 @@ namespace DCL.SocialService
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (isDisposed) return;
-
-            if (disposing)
+            if (transport != null)
             {
-                if (transport != null)
-                {
-                    transport.OnCloseEvent -= OnTransportClosed;
-                    transport.Dispose();
-                }
-                client?.Dispose();
-                handshakeMutex.Dispose();
-                authChainBuffer.Clear();
-                authChainBuilder.Clear();
+                transport.OnCloseEvent -= OnTransportClosed;
+                transport.Dispose();
             }
 
-            isDisposed = true;
+            client?.Dispose();
+            handshakeMutex.Dispose();
+            authChainBuffer.Clear();
         }
 
-        public RpcClientModule Module() => module;
+        public RpcClientModule Module() =>
+            module;
 
         public async UniTask DisconnectAsync(CancellationToken ct)
         {
@@ -109,21 +98,20 @@ namespace DCL.SocialService
         {
             var handshakeFinished = false;
             int retries = CONNECTION_RETRIES;
-            double backoffDelay = 1.0;
+            var backoffDelay = 1.0;
 
             while (!handshakeFinished && retries > 0)
-            {
                 try
                 {
                     retries--;
-                    await StartHandshakeAsync();
+                    await StartHandshakeAsync(ct);
                     handshakeFinished = true;
                 }
                 catch (WebSocketException wsEx)
                 {
                     if (retries == 0)
                         throw new WebSocketException($"Failed to connect after {CONNECTION_RETRIES} attempts", wsEx);
-                    
+
                     await UniTask.Delay(TimeSpan.FromSeconds(backoffDelay), cancellationToken: ct);
                     backoffDelay *= RETRY_BACKOFF_MULTIPLIER;
                 }
@@ -131,51 +119,47 @@ namespace DCL.SocialService
                 {
                     if (retries == 0)
                         throw;
-                    
+
                     await UniTask.Delay(TimeSpan.FromSeconds(backoffDelay), cancellationToken: ct);
                     backoffDelay *= RETRY_BACKOFF_MULTIPLIER;
                 }
-            }
         }
 
-        private async UniTask StartHandshakeAsync()
+        private async UniTask StartHandshakeAsync(CancellationToken ct)
         {
             try
             {
-                await handshakeMutex.WaitAsync();
+                await handshakeMutex.WaitAsync(ct);
 
                 if (!isConnectionReady)
-                {
-                    await InitializeConnectionAsync();
-                }
+                    await InitializeConnectionAsync(ct);
             }
             finally { handshakeMutex.Release(); }
         }
 
-        private async UniTask InitializeConnectionAsync()
+        private async UniTask InitializeConnectionAsync(CancellationToken ct)
         {
             client?.Dispose();
             transport?.Dispose();
-            
+
             transport = new WebSocketRpcTransport(new Uri(apiUrl));
             transport.OnCloseEvent += OnTransportClosed;
             client = new RpcClient(transport);
 
-            await transport.ConnectAsync().Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
+            await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
 
             string authChain = BuildAuthChain();
-            await transport.SendMessageAsync(authChain).Timeout(TimeSpan.FromSeconds(AUTH_CHAIN_TIMEOUT_SECS));
+            await transport.SendMessageAsync(authChain, ct).Timeout(TimeSpan.FromSeconds(AUTH_CHAIN_TIMEOUT_SECS));
 
             transport.ListenForIncomingData();
 
-            port = await client.CreatePort("friends");
-            module = await port.LoadModule(RPC_SERVICE_NAME);
+            port = await client.CreatePort(RPC_PORT_NAME);
+            module = await port!.LoadModule(RPC_SERVICE_NAME);
         }
 
         private string BuildAuthChain()
         {
             authChainBuffer.Clear();
-            authChainBuilder.Clear();
 
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"get:/:{timestamp}:{{}}");
@@ -193,6 +177,7 @@ namespace DCL.SocialService
             return JsonConvert.SerializeObject(authChainBuffer);
         }
 
-        private void OnTransportClosed() => socialServiceEventBus.OnTransportClosed();
+        private void OnTransportClosed() =>
+            socialServiceEventBus.OnTransportClosed();
     }
 }
