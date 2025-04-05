@@ -60,6 +60,7 @@ namespace DCL.LOD.Systems
                                 continue;
                             }
 
+                            ((Texture2D)TEMP_MATERIALS[j].mainTexture).Apply(false, true);
                             newSlots.AddRange(lodTextureArrayContainer.SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], pooledList.Value[i].materials[j]));
                             TEMP_MATERIALS[j].mainTexture = null;
                         }
