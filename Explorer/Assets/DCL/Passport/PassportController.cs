@@ -279,7 +279,7 @@ namespace DCL.Passport
 
         private async UniTaskVoid OnOpenConversationAsync()
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             chatEventBus.OpenConversationUsingUserId(inputData.UserId);
         }
 

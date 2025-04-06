@@ -7,6 +7,8 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Friends;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -18,6 +20,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
+using DCL.Utilities;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -46,6 +49,8 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
 
         private ChatController chatController;
 
@@ -68,7 +73,7 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<FriendsCache> friendsCacheProxy)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -90,6 +95,8 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.friendsCacheProxy = friendsCacheProxy;
         }
 
         public void Dispose() { }
@@ -122,7 +129,9 @@ namespace DCL.PluginSystem.Global
                 profileCache,
                 chatEventBus,
                 web3IdentityCache,
-                loadingStatus
+                loadingStatus,
+                userBlockingCacheProxy,
+                friendsCacheProxy
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

@@ -573,6 +573,7 @@ namespace Global.Dynamic
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
+            var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
 
@@ -689,7 +690,9 @@ namespace Global.Dynamic
                     chatEventBus,
                     identityCache,
                     staticContainer.LoadingStatus,
-                    sharedSpaceManager),
+                    sharedSpaceManager,
+                    userBlockingCacheProxy,
+                    friendsCacheProxy),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -899,7 +902,10 @@ namespace Global.Dynamic
                     viewDependencies,
                     sharedSpaceManager,
                     socialServiceEventBus,
-                    socialServicesRPCProxy));
+                    socialServicesRPCProxy,
+                    friendsCacheProxy
+                    )
+                );
             }
 
             if (dynamicWorldParams.EnableAnalytics)

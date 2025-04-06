@@ -47,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ObjectProxy<FriendsCache> friendCacheProxy;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
@@ -93,7 +94,9 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
-            ISocialServiceEventBus socialServiceEventBus, ObjectProxy<ISocialServiceRPC> socialServicesRPCProxy)
+            ISocialServiceEventBus socialServiceEventBus,
+            ObjectProxy<ISocialServiceRPC> socialServicesRPCProxy,
+            ObjectProxy<FriendsCache> friendCacheProxy)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -121,6 +124,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.socialServiceEventBus = socialServiceEventBus;
             this.socialServicesRPCProxy = socialServicesRPCProxy;
+            this.friendCacheProxy = friendCacheProxy;
         }
 
         public void Dispose()
@@ -138,6 +142,7 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
 
             var friendsCache = new FriendsCache();
+            friendCacheProxy.SetObject(friendsCache);
 
             friendsService = new RPCFriendsService(friendEventBus, friendsCache, selfProfile, socialServicesRPCProxy, socialServiceEventBus);
 
