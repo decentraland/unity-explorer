@@ -78,7 +78,7 @@ namespace DCL.Profiles
         /// <summary>
         /// The Display Name with @ before it. Cached here to avoid further allocations.
         /// </summary>
-        public string MentionName => string.IsNullOrEmpty(mentionName) ? mentionName = "@" + DisplayName : mentionName;
+        public string MentionName => mentionName;
 
         public bool HasClaimedName
         {
@@ -212,7 +212,6 @@ namespace DCL.Profiles
 
             ValidatedName = result;
             DisplayName = result;
-
             if (HasClaimedName) return;
 
             if (!string.IsNullOrEmpty(UserId) && UserId.Length > 4)
@@ -220,6 +219,8 @@ namespace DCL.Profiles
                 WalletId = $"#{UserId[^4..]}";
                 DisplayName = $"{result}{WalletId}";
             }
+
+            mentionName = "@" + DisplayName;
         }
 
         public void ClearLinks()

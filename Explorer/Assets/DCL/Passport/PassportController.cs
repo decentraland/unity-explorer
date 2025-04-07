@@ -321,8 +321,11 @@ namespace DCL.Passport
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            //We disable the buttons, they will be enabled further down if they meet the requisites
+            viewInstance!.JumpInButton.gameObject.SetActive(false);
+            viewInstance.ChatButton.gameObject.SetActive(false);
 
-            viewInstance!.ErrorNotification.Hide(true);
+            viewInstance.ErrorNotification.Hide(true);
 
             if (enableFriendshipInteractions)
             {
