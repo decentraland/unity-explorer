@@ -82,6 +82,8 @@ namespace DCL.PluginSystem.Global
                 this.settings.Value.UseCompression = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN);
             else if (os.Contains("Mac"))
                 this.settings.Value.UseCompression = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC);
+            else
+                this.settings.Value.UseCompression = false;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
