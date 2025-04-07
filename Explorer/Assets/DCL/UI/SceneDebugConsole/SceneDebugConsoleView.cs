@@ -238,7 +238,7 @@ namespace DCL.UI.SceneDebugConsole
             if (entryView != null)
             {
                 string timestampPrefix = consoleSettings.ShowTimestamps ? $"[{logMessage.Timestamp:HH:mm:ss}] " : "";
-                entryView.SetMessage($"{timestampPrefix}{logMessage.Message}");
+                /*entryView.SetMessage($"{timestampPrefix}{logMessage.Message}");
 
                 // Set color based on message type
                 switch (logMessage.Type)
@@ -258,7 +258,7 @@ namespace DCL.UI.SceneDebugConsole
                     case LogMessageType.CommandResponse:
                         entryView.SetTextColor(consoleSettings.CommandResponseColor);
                         break;
-                }
+                }*/
 
                 logEntryViews.Add(entryView);
             }
@@ -334,22 +334,6 @@ namespace DCL.UI.SceneDebugConsole
         private void OnCloseConsoleButtonClicked()
         {
             IsUnfolded = false;
-        }
-    }
-
-    // Simple component for log entry views
-    public class LogEntryView : MonoBehaviour
-    {
-        [SerializeField] private TMP_Text messageText;
-
-        public void SetMessage(string message)
-        {
-            messageText.text = message;
-        }
-
-        public void SetTextColor(Color color)
-        {
-            messageText.color = color;
         }
     }
 }

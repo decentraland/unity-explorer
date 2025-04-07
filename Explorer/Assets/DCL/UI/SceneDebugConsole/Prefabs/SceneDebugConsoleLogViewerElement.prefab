@@ -49,7 +49,7 @@ GameObject:
   - component: {fileID: 8646576932515811346}
   - component: {fileID: 5266907368250149817}
   - component: {fileID: 4226233381184064841}
-  - component: {fileID: 8018815386684435696}
+  - component: {fileID: 8392482462353514571}
   m_Layer: 5
   m_Name: SceneDebugConsoleLogViewerElement
   m_TagString: Untagged
@@ -188,7 +188,7 @@ MonoBehaviour:
   mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
   mItemSnapPivot: {x: 0, y: 0}
---- !u!114 &8018815386684435696
+--- !u!114 &8392482462353514571
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -197,11 +197,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 936064796666357246}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fcca689a66044b5b872965c591794ef, type: 3}
+  m_Script: {fileID: 11500000, guid: 4668935e1d0d47dc86f3493687310d1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chatEntriesFadeTime: 3
-  chatEntriesWaitBeforeFading: 10000
+  logEntriesFadeTime: 3
+  logEntriesWaitBeforeFading: 10000
   scrollbarCanvasGroup: {fileID: 5299699939936977056}
   chatEntriesCanvasGroup: {fileID: 6636967551683476283}
   loopList: {fileID: 4226233381184064841}

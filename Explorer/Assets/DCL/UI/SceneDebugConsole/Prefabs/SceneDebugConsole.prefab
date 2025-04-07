@@ -498,6 +498,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SceneDebugConsoleInput
       objectReference: {fileID: 0}
+    - target: {fileID: 5981388524283337986, guid: 32adea057761f4d97ad70bacb9b44939, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
