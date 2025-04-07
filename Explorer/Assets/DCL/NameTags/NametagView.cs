@@ -84,6 +84,9 @@ namespace DCL.Nametags
         private Vector2 verifiedIconFinalPosition;
         private Vector2 verifiedIconInitialPosition;
         private Vector2 backgroundFinalSize;
+        private Vector2 privateMessageFinalPosition;
+        private Vector2 privateMessageTextFinalPosition;
+        private Vector2 tempSizeDelta;
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
         private Color currentSpritesColor = new (1, 1, 1,1 );
@@ -291,14 +294,7 @@ namespace DCL.Nametags
                 showPrivateMessageRecipient = isOwnMessage;
                 privateMessageText.gameObject.SetActive(showPrivateMessageRecipient);
                 if (showPrivateMessageRecipient)
-                {
-                    string recipientName = BuildRecipientName(recipientValidatedName, recipientWalletId, string.IsNullOrEmpty(recipientWalletId));
-                    this.currentRecipientNameColor = recipientNameColor;
-                    privateMessageText.SetText(recipientName);
-                    recipientNameColor.a = 0;
-                    privateMessageText.color = recipientNameColor;
-                    privateMessageText.rectTransform.sizeDelta = new Vector2(privateMessageText.preferredWidth, NametagViewConstants.DEFAULT_HEIGHT);
-                }
+                    SetPrivateMessageText(recipientValidatedName, recipientWalletId, recipientNameColor);
             }
 
             StartChatBubbleFlowAsync(chatMessage, cts.Token).Forget();
@@ -385,7 +381,7 @@ namespace DCL.Nametags
             SetHeightAndTextStyle(messageText);
             messageContent.ForceMeshUpdate();
 
-            preferredSize = CalculatePreferredSize();
+            preferredSize = CalculatePreferredSize(out float availableWidthForPrivateMessage);
             messageContentRectTransform.sizeDelta = preferredSize;
 
             textContentInitialPosition = CalculateMessageContentPosition(preferredSize.x, preferredSize.y);
@@ -412,7 +408,7 @@ namespace DCL.Nametags
             if (isPrivateMessage)
             {
                 privateMessageIcon.gameObject.SetActive(true);
-                Vector2 privateMessageFinalPosition = CalculatePrivateMessageIconPosition(
+                privateMessageFinalPosition = CalculatePrivateMessageIconPosition(
                     usernameFinalPosition.x,
                     cachedUsernameWidth,
                     verifiedIconWidth,
@@ -426,7 +422,20 @@ namespace DCL.Nametags
                 if (showPrivateMessageRecipient)
                 {
                     privateMessageText.gameObject.SetActive(true);
-                    Vector2 privateMessageTextFinalPosition = CalculatePrivateMessageTextPosition(
+                    privateMessageText.ForceMeshUpdate();
+
+                    if (privateMessageText.preferredWidth > availableWidthForPrivateMessage)
+                    {
+                        tempSizeDelta.x = availableWidthForPrivateMessage;
+                    }
+                    else
+                    {
+                        tempSizeDelta.x = privateMessageText.preferredWidth;
+                    }
+                    tempSizeDelta.y = NametagViewConstants.DEFAULT_HEIGHT;
+                    privateMessageText.rectTransform.sizeDelta = tempSizeDelta;
+
+                    privateMessageTextFinalPosition = CalculatePrivateMessageTextPosition(
                         privateMessageFinalPosition.x,
                         privateMessageIconWidth
                     );
@@ -519,21 +528,37 @@ namespace DCL.Nametags
             mentionBackgroundSprite.gameObject.SetActive(false);
         }
 
-        private Vector2 CalculatePreferredSize() =>
+        private Vector2 CalculatePreferredSize(out float availableWidthForPrivateMessage) =>
             CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
                 additionalHeight, messageContent.preferredHeight, isClaimedName, isPrivateMessage,
-                privateMessageText.preferredWidth, privateMessageIconWidth);
+                privateMessageText.preferredWidth, privateMessageIconWidth, out availableWidthForPrivateMessage);
 
         [BurstCompile]
         private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float messageWidth, float maxWidth,
-            float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth)
+            float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth, out float availableWidthForPrivateMessage)
         {
-            float baseWidth = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageTextWidth + privateMessageIconWidth : 0);
-            float width = math.min(math.max(baseWidth, messageWidth), maxWidth);
+            float baseWidth = usernameWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageIconWidth : 0);
+
+            availableWidthForPrivateMessage = maxWidth - baseWidth;
+            float adjustedPrivateMessageWidth = hasPrivateMessageIcon ? Mathf.Min(privateMessageTextWidth, availableWidthForPrivateMessage) : 0;
+
+            float totalWidth = baseWidth + adjustedPrivateMessageWidth;
+
+            float width = Mathf.Min(Mathf.Max(totalWidth, messageWidth), maxWidth);
             float height = preferredHeight + additionalHeight;
+
             preferredSize.x = width;
             preferredSize.y = height;
             return preferredSize;
+        }
+
+        private void SetPrivateMessageText(string recipientValidatedName, string recipientWalletId, Color recipientNameColor)
+        {
+            string recipientName = BuildRecipientName(recipientValidatedName, recipientWalletId, string.IsNullOrEmpty(recipientWalletId));
+            this.currentRecipientNameColor = recipientNameColor;
+            privateMessageText.SetText(recipientName);
+            recipientNameColor.a = 0;
+            privateMessageText.color = recipientNameColor;
         }
 
         private void UpdateMaterialState(bool transparent)
@@ -542,7 +567,7 @@ namespace DCL.Nametags
                 return;
 
             isTransparent = transparent;
-            sharedMaterial = transparent ? transparentMaterial : opaqueMaterial;
+            sharedMaterial = transparent ? transparentMaterial! : opaqueMaterial!;
         }
 
         [BurstCompile]
