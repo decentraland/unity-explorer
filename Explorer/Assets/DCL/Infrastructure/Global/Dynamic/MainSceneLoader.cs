@@ -445,6 +445,7 @@ namespace Global.Dynamic
 
             var uri = new Uri(realm);
             if (uri.Host == "127.0.0.1") return true;
+            if (uri.Host == "localhost") return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
