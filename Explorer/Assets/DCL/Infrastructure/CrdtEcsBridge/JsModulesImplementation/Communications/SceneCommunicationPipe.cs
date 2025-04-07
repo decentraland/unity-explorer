@@ -66,10 +66,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             SubscriberKey key = new (sceneId, msgType);
 
             lock (sceneMessageHandlers)
-            {
-                Debug.Log($"AddSceneMessageHandler, sceneId: {sceneId}, msgType: {msgType}, threadName: {Thread.CurrentThread.Name}, threadId: {Thread.CurrentThread.ManagedThreadId}");
                 sceneMessageHandlers.Add(key, onSceneMessage);
-            }
         }
 
         public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
@@ -77,10 +74,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             SubscriberKey key = new (sceneId, msgType);
 
             lock (sceneMessageHandlers)
-            {
-                Debug.Log($"RemoveSceneMessageHandler, sceneId: {sceneId}, msgType: {msgType}, threadName: {Thread.CurrentThread.Name}, threadId: {Thread.CurrentThread.ManagedThreadId}");
                 sceneMessageHandlers.Remove(key);
-            }
         }
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
