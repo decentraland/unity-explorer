@@ -36,6 +36,7 @@ namespace DCL.Chat
         public delegate void UnreadMessagesSeparatorViewedDelegate();
         public delegate void CurrentChannelChangedDelegate();
         public delegate void ChannelRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
+        public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -171,6 +172,8 @@ namespace DCL.Chat
         /// Raised when the user requests the removal of a channel. Data has not been modified yet and UI has not reacted either.
         /// </summary>
         public event ChannelRemovalRequestedDelegate ChannelRemovalRequested;
+
+        public event ConversationSelectedDelegate ConversationSelected;
 
         private ViewDependencies viewDependencies;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
@@ -834,8 +837,11 @@ namespace DCL.Chat
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
         {
-            if(currentChannel == null || !CurrentChannelId.Equals(channelId))
-                CurrentChannelId = channelId;
+            if (currentChannel == null || !CurrentChannelId.Equals(channelId))
+                if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+                    ConversationSelected?.Invoke(channelId);
+                else
+                    CurrentChannelId = channelId;
         }
 
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)

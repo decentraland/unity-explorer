@@ -276,6 +276,7 @@ namespace DCL.Chat
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
+            viewInstance.ConversationSelected += OnSelectConversation;
 
             OnFocus();
 
@@ -321,6 +322,15 @@ namespace DCL.Chat
             chatUserStateUpdater.AddConversation(userId);
             var userState = chatUserStateUpdater.GetChatUserState(userId);
             viewInstance!.CurrentChannelId = channel.Id;
+            viewInstance.SetInputWithUserState(userState);
+            viewInstance.FocusInputBox();
+        }
+
+        private void OnSelectConversation(ChatChannel.ChannelId channelId)
+        {
+            chatUserStateUpdater.AddConversation(channelId.Id);
+            var userState = chatUserStateUpdater.GetChatUserState(channelId.Id);
+            viewInstance!.CurrentChannelId = channelId;
             viewInstance.SetInputWithUserState(userState);
             viewInstance.FocusInputBox();
         }

@@ -26,7 +26,7 @@ namespace DCL.Chat
         /// </summary>
         private readonly HashSet<string> openConversations = new ();
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource cts = new ();
 
 
         public ChatUserStateUpdater(
