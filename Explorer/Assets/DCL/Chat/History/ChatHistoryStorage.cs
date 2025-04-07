@@ -224,8 +224,13 @@ namespace DCL.Chat.History
         /// <param name="newLocalUserWalletAddress">The new wallet address. If it is null or empty, it will be ignored.</param>
         public void SetNewLocalUserWalletAddress(string newLocalUserWalletAddress)
         {
-            if(string.IsNullOrEmpty(newLocalUserWalletAddress))
+            ReportHub.Log(reportData, "Setting new local user wallet address: " + (newLocalUserWalletAddress ?? string.Empty));
+
+            if (string.IsNullOrEmpty(newLocalUserWalletAddress))
+            {
+                ReportHub.LogWarning(reportData, "No new wallet address was provided, operation aborted.");
                 return;
+            }
 
             lock (channelsLocker)
             {
@@ -239,6 +244,8 @@ namespace DCL.Chat.History
 
             userFilesFolder = channelFilesFolder + chatEncryptor.StringToFileName(localUserWalletAddress) + "/";
             userConversationSettingsFile = userFilesFolder + chatEncryptor.StringToFileName("UserConversationSettings");
+
+            ReportHub.Log(reportData, "Local user wallet address set: " + newLocalUserWalletAddress);
         }
 
         /// <summary>

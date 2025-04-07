@@ -148,8 +148,18 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(chatController);
 
             // Log out / log in
-            web3IdentityCache.OnIdentityCleared += () => chatController.HideViewAsync(CancellationToken.None).Forget();
-            web3IdentityCache.OnIdentityChanged += () => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+        }
+
+        private void OnIdentityCleared()
+        {
+            chatController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void OnIdentityChanged()
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
         }
     }
 
