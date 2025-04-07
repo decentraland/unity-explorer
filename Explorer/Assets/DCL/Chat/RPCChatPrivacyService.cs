@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Friends.UserBlocking;
+using DCL.Settings.Settings;
 using DCL.SocialService;
 using DCL.Utilities;
 using DCL.Web3;
@@ -15,20 +15,22 @@ namespace DCL.Chat
     public class RPCChatPrivacyService
     {
         private readonly ObjectProxy<ISocialServiceRPC> socialServiceRPCProxy;
-        private readonly IChatUserEventBus chatUserEventBus;
+        private readonly ChatSettingsAsset settingsAsset;
+
+        private readonly HashSet<string>[] participants;
 
         public RPCChatPrivacyService(
             ObjectProxy<ISocialServiceRPC> socialServiceRPCProxy,
-            IChatUserEventBus chatUserEventBus)
+            ChatSettingsAsset settingsAsset)
         {
             this.socialServiceRPCProxy = socialServiceRPCProxy;
-            this.chatUserEventBus = chatUserEventBus;
+            this.settingsAsset = settingsAsset;
+            this.participants = new HashSet<string>[2];
         }
 
         private const int TIMEOUT_SECONDS = 30;
 
-
-        public async UniTask UpsertSocialSettingsAsync(bool receiveAllMessages, CancellationToken ct)
+        public async UniTaskVoid UpsertSocialSettingsAsync(bool receiveAllMessages, CancellationToken ct)
         {
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
 
@@ -42,12 +44,7 @@ namespace DCL.Chat
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-            if (response.ResponseCase == UpsertSocialSettingsResponse.ResponseOneofCase.Ok)
-            {
-                //if (!receiveAllMessages)
-                //Send broadcast to all non-friends non-blocked that we wont accept their messages anymore
-            }
-            else
+            if (response.ResponseCase != UpsertSocialSettingsResponse.ResponseOneofCase.Ok)
                 throw new Exception($"Cannot upsert social settings: {response.ResponseCase}");
         }
 
@@ -61,17 +58,18 @@ namespace DCL.Chat
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-            //IF response OK Update setting in settings panel and in a cache I guess? so we know to block non-friends messages as well and send them a response
-
+            settingsAsset.OnPrivacyRead(response.Ok?.Settings.PrivateMessagesPrivacy == PrivateMessagePrivacySetting.OnlyFriends ? ChatPrivacySettings.ONLY_FRIENDS : ChatPrivacySettings.ALL);
         }
 
-        public async UniTask GetPrivacySettingForUsersAsync(IReadOnlyList<Web3Address> walletIds, CancellationToken ct)
+        public async UniTask<HashSet<string>[]> GetPrivacySettingForUsersAsync(HashSet<string> walletIds, CancellationToken ct)
         {
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
 
             var users = new RepeatedField<User>();
+            participants[0].Clear();
+            participants[1].Clear();
 
-            foreach (var wallet in walletIds)
+            foreach (string wallet in walletIds)
                 users.Add(new User { Address = wallet});
 
             var payload = new GetPrivateMessagesSettingsPayload
@@ -88,12 +86,16 @@ namespace DCL.Chat
             {
                 foreach (var setting in response.Ok.Settings)
                 {
-                    //Return IEnumerable with users that block non-friends connection
+                    if (setting.PrivateMessagesPrivacy == PrivateMessagePrivacySetting.OnlyFriends)
+                        participants[0].Add(setting.User.Address);
+                    else
+                        participants[1].Add(setting.User.Address);
                 }
             }
             else
                 throw new Exception($"Cannot get privacy settings: {response.ResponseCase}");
-        }
 
+            return participants;
+        }
     }
 }

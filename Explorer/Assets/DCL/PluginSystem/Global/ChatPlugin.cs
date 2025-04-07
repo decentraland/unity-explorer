@@ -105,7 +105,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
+            ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             chatController = new ChatController(
                 () =>
@@ -142,6 +142,6 @@ namespace DCL.PluginSystem.Global
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceT<ChatAudioSettingsAsset> ChatSettingsAsset { get; private set; }
+        [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
     }
 }

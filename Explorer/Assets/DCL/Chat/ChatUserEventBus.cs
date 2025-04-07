@@ -1,8 +1,6 @@
-using DCL.Web3;
-
 namespace DCL.Chat
 {
-    public interface IChatUserEventBus
+    public interface IChatUserStateEventBus
     {
         public delegate void UserDelegate(string userAddress);
 
@@ -21,14 +19,14 @@ namespace DCL.Chat
         void OnUserUnavailableToChat(string userAddress);
     }
 
-    public class ChatUserEventBus : IChatUserEventBus
+    public class ChatUserStateEventBus : IChatUserStateEventBus
     {
-        public event IChatUserEventBus.UserDelegate? FriendConnected;
-        public event IChatUserEventBus.UserDelegate? FriendDisconnected;
-        public event IChatUserEventBus.UserDelegate? NonFriendConnected;
-        public event IChatUserEventBus.UserDelegate? NonFriendDisconnected;
-        public event IChatUserEventBus.UserDelegate? UserUnavailableToChat;
-        public event IChatUserEventBus.UserDelegate? UserAvailableToChat;
+        public event IChatUserStateEventBus.UserDelegate? FriendConnected;
+        public event IChatUserStateEventBus.UserDelegate? FriendDisconnected;
+        public event IChatUserStateEventBus.UserDelegate? NonFriendConnected;
+        public event IChatUserStateEventBus.UserDelegate? NonFriendDisconnected;
+        public event IChatUserStateEventBus.UserDelegate? UserUnavailableToChat;
+        public event IChatUserStateEventBus.UserDelegate? UserAvailableToChat;
 
         public virtual void OnFriendConnected(string userAddress)
         {

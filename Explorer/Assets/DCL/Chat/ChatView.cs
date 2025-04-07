@@ -398,7 +398,7 @@ namespace DCL.Chat
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             bool areChatBubblesVisible,
-            ChatAudioSettingsAsset chatAudioSettings,
+            ChatSettingsAsset chatSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate,
             ILoadingStatus loadingStatus)
         {
@@ -421,7 +421,7 @@ namespace DCL.Chat
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
             memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
-            chatInputBox.Initialize(chatAudioSettings, getParticipantProfilesDelegate);
+            chatInputBox.Initialize(chatSettings, getParticipantProfilesDelegate);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;

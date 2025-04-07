@@ -54,12 +54,16 @@ namespace DCL.Chat
         private readonly IRoom currentRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
-        private readonly ChatAudioSettingsAsset chatAudioSettings;
+        private readonly ChatSettingsAsset chatSettings;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
+        private readonly ChatUserStateUpdater chatUserStateUpdater;
+        private readonly ChatUsersStateCache chatUsersStateCache;
+        private readonly ChatUserStateEventBus chatUserStateEventBus;
+        private readonly ObjectProxy<RPCChatPrivacyService> chatPrivacyServiceProxy;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -71,7 +75,6 @@ namespace DCL.Chat
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
         private Web3Address currentUserAddress;
-        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
         private readonly IRoomHub roomHub;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -112,12 +115,14 @@ namespace DCL.Chat
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
-            ChatAudioSettingsAsset chatAudioSettings,
+            ChatSettingsAsset chatSettings,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            ILoadingStatus loadingStatus, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<FriendsCache> friendsCacheProxy) : base(viewFactory)
+            ILoadingStatus loadingStatus,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ObjectProxy<FriendsCache> friendsCacheProxy, ObjectProxy<RPCChatPrivacyService> chatPrivacyServiceProxy) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -130,7 +135,7 @@ namespace DCL.Chat
             this.chatCommandsBus = chatCommandsBus;
             this.islandRoom = roomHub.IslandRoom();
             this.roomHub = roomHub;
-            this.chatAudioSettings = chatAudioSettings;
+            this.chatSettings = chatSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
@@ -138,6 +143,18 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
+            this.chatPrivacyServiceProxy = chatPrivacyServiceProxy;
+
+            chatUsersStateCache = new ChatUsersStateCache();
+            chatUserStateEventBus = new ChatUserStateEventBus();
+            chatUserStateUpdater = new ChatUserStateUpdater(
+                userBlockingCacheProxy,
+                friendsCacheProxy,
+                roomHub.SharedPrivateConversationsRoom().Participants,
+                chatSettings,
+                chatPrivacyServiceProxy,
+                chatUserStateEventBus,
+                chatUsersStateCache);
         }
 
         public void Clear() // Called by a command
@@ -243,7 +260,7 @@ namespace DCL.Chat
             chatEventBus.OpenConversation += OnOpenConversation;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants, loadingStatus);
+            viewInstance!.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatSettings, GetProfilesFromParticipants, loadingStatus);
 
             viewInstance.PointerEnter += OnViewPointerEnter;
             viewInstance.PointerExit += OnViewPointerExit;
@@ -268,6 +285,11 @@ namespace DCL.Chat
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
 
             memberListCts = new CancellationTokenSource();
+
+            //TODO FRAN: When we merge chat history, we can properly load the opened conversations here.
+            chatUserStateUpdater.Initialize(new List<string>());
+            //Subscribe to all relevant events on the bus to update the UI
+
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
             ShowWelcomeMessage();
         }
@@ -293,6 +315,7 @@ namespace DCL.Chat
         private void OnOpenConversation(string userId)
         {
             var channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
+            //TODO FRAN: here we need to request updated privacy settings for the user to know what message to show if any.
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.FocusInputBox();
         }
@@ -441,8 +464,10 @@ namespace DCL.Chat
                 Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR);
 
-                switch (chatAudioSettings.chatAudioSettings)
+                switch (chatSettings.chatAudioSettings)
                 {
+                    // TODO FRAN: check if we should add sound in other place, as if chat bubbles are disabled, it wont play audio, also
+                    // we need to play audio when sending messages depending on settings and depending on channel.
                     case ChatAudioSettings.NONE:
                         return;
                     case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
