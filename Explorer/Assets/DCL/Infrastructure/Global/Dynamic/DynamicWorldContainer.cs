@@ -619,8 +619,6 @@ namespace Global.Dynamic
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    remoteEntities,
-                    staticContainer.CharacterContainer.Transform,
                     userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
