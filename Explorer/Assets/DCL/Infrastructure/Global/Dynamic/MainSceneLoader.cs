@@ -25,6 +25,7 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -446,6 +447,11 @@ namespace Global.Dynamic
             var uri = new Uri(realm);
             if (uri.Host == "127.0.0.1") return true;
             if (uri.Host == "localhost") return true;
+            if (uri.Host == "sdk-team-cdn.decentraland.org") return true;
+            if (uri.Host == "sdk-test-scenes.decentraland.zone") return true;
+            if (uri.Host == "realm-provider-ea.decentraland.org") return true;
+            if (uri.Host == "realm-provider-ea.decentraland.zone") return true;
+            if (uri.Host == "worlds-content-server.decentraland.org") return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
