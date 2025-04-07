@@ -61,6 +61,7 @@ namespace DCL.UI.ProfileElements
         public void SetDefaultThumbnail()
         {
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            currentUserId = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
