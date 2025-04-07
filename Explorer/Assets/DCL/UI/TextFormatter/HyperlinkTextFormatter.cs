@@ -215,7 +215,7 @@ namespace DCL.UI.InputFieldFormatting
 
             if (displayName.Length != username.Length) return false;
 
-            return displayName == username;
+            return displayName.SequenceEqual(username);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
