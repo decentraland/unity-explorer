@@ -246,18 +246,18 @@ namespace Global.Dynamic
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
 
-                if (!await IsTrustedRealm(decentralandUrlsSource, ct))
+                if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Hide();
 
-                    if (!await ShowUntrustedRealmConfirmation(ct))
+                    if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
 #if UNITY_EDITOR
                         EditorApplication.isPlaying = false;
-#else
-                        Application.Quit();
+                        return;
 #endif
 
+                        Application.Quit();
                         return;
                     }
 
@@ -435,7 +435,7 @@ namespace Global.Dynamic
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
         }
 
-        private async UniTask<bool> IsTrustedRealm(DecentralandUrlsSource dclUrls, CancellationToken ct)
+        private async UniTask<bool> IsTrustedRealmAsync(DecentralandUrlsSource dclUrls, CancellationToken ct)
         {
             if (launchSettings.initialRealm != InitialRealm.Custom) return true;
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment) return true;
@@ -467,7 +467,7 @@ namespace Global.Dynamic
             return false;
         }
 
-        private async UniTask<bool> ShowUntrustedRealmConfirmation(CancellationToken ct)
+        private async UniTask<bool> ShowUntrustedRealmConfirmationAsync(CancellationToken ct)
         {
             var prefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(untrustedRealmConfirmationPrefab, ct);
 
