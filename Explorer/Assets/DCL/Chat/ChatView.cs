@@ -59,6 +59,9 @@ namespace DCL.Chat
         private ChatInputBoxElement chatInputBox;
 
         [SerializeField]
+        private ChatInputBoxMaskElement inputBoxMask;
+
+        [SerializeField]
         private Image unfoldedPanelInteractableArea;
 
         [Header("Messages")]
@@ -662,6 +665,19 @@ namespace DCL.Chat
         public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
         {
             conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+        }
+
+        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        {
+            bool isConnected = userState == ChatUserStateUpdater.ChatUserState.Connected;
+            chatInputBox.gameObject.SetActive(isConnected);
+            inputBoxMask.gameObject.SetActive(!isConnected);
+            if (isConnected)
+            {
+                FocusInputBox();
+                return;
+            }
+            inputBoxMask.SetUpWithUserState(userState);
         }
 
         private void OnChatContextMenuVisibilityChanged(bool isVisible)

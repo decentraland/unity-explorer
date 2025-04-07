@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Friends;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SocialService;
 using DCL.Utilities;
@@ -15,17 +14,17 @@ namespace DCL.PluginSystem.Global
 {
     public class SocialServicesPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly ObjectProxy<ISocialServiceRPC> socialServicesRPCProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
 
-        private SocialServiceRPC? socialServicesRPC;
+        private RPCSocialServices? socialServicesRPC;
         private CancellationTokenSource cts = new ();
 
         public SocialServicesPlugin(
-            ObjectProxy<ISocialServiceRPC> socialServicesRPCProxy,
+            ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
             IDecentralandUrlsSource dclUrlSource,
             IWeb3IdentityCache web3IdentityCache,
             ISocialServiceEventBus socialServiceEventBus,
@@ -47,7 +46,7 @@ namespace DCL.PluginSystem.Global
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
 
-            socialServicesRPC = new SocialServiceRPC(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
+            socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
             socialServicesRPCProxy.SetObject(socialServicesRPC);
         }
 

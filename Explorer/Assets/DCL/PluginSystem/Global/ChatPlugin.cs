@@ -16,6 +16,7 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
+using DCL.SocialService;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
@@ -51,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
 
         private ChatController chatController;
 
@@ -73,7 +75,10 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ISharedSpaceManager sharedSpaceManager, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<FriendsCache> friendsCacheProxy)
+            ISharedSpaceManager sharedSpaceManager,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ObjectProxy<FriendsCache> friendsCacheProxy,
+            ObjectProxy<IRPCSocialServices> socialServiceProxy)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -97,6 +102,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
+            this.socialServiceProxy = socialServiceProxy;
         }
 
         public void Dispose() { }
@@ -106,6 +112,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
 
             chatController = new ChatController(
                 () =>
@@ -131,7 +138,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 loadingStatus,
                 userBlockingCacheProxy,
-                friendsCacheProxy
+                friendsCacheProxy,
+                privacySettings
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

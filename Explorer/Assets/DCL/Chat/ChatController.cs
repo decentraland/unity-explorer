@@ -26,6 +26,7 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -63,7 +64,7 @@ namespace DCL.Chat
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly ChatUsersStateCache chatUsersStateCache;
         private readonly ChatUserStateEventBus chatUserStateEventBus;
-        private readonly ObjectProxy<RPCChatPrivacyService> chatPrivacyServiceProxy;
+        private readonly RPCChatPrivacyService chatPrivacyService;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -122,7 +123,8 @@ namespace DCL.Chat
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ObjectProxy<FriendsCache> friendsCacheProxy, ObjectProxy<RPCChatPrivacyService> chatPrivacyServiceProxy) : base(viewFactory)
+            ObjectProxy<FriendsCache> friendsCacheProxy,
+            RPCChatPrivacyService chatPrivacyService) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -143,7 +145,7 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
-            this.chatPrivacyServiceProxy = chatPrivacyServiceProxy;
+            this.chatPrivacyService = chatPrivacyService;
 
             chatUsersStateCache = new ChatUsersStateCache();
             chatUserStateEventBus = new ChatUserStateEventBus();
@@ -152,7 +154,7 @@ namespace DCL.Chat
                 friendsCacheProxy,
                 roomHub.SharedPrivateConversationsRoom().Participants,
                 chatSettings,
-                chatPrivacyServiceProxy,
+                chatPrivacyService,
                 chatUserStateEventBus,
                 chatUsersStateCache);
         }
@@ -288,15 +290,16 @@ namespace DCL.Chat
 
             //TODO FRAN: When we merge chat history, we can properly load the opened conversations here.
             chatUserStateUpdater.Initialize(new List<string>());
+            chatUserStateEventBus.FriendConnected += OnFriendConnected;
+            chatUserStateEventBus.FriendDisconnected += OnFriendDisconnected;
+            chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
+            chatUserStateEventBus.NonFriendDisconnected += OnNonFriendDisconnected;
+            chatUserStateEventBus.UserAvailableToChat += OnUserAvailableToChat;
+            chatUserStateEventBus.UserUnavailableToChat += OnUserUnavailableToChat;
             //Subscribe to all relevant events on the bus to update the UI
 
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
             ShowWelcomeMessage();
-        }
-
-        private void OnChatHistoryOnAllChannelsRemoved()
-        {
-            viewInstance!.RemoveAllConversations();
         }
 
         private void ShowWelcomeMessage()
@@ -315,8 +318,10 @@ namespace DCL.Chat
         private void OnOpenConversation(string userId)
         {
             var channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
-            //TODO FRAN: here we need to request updated privacy settings for the user to know what message to show if any.
+            chatUserStateUpdater.AddConversation(userId);
+            var userState = chatUserStateUpdater.GetChatUserState(userId);
             viewInstance!.CurrentChannelId = channel.Id;
+            viewInstance.SetInputWithUserState(userState);
             viewInstance.FocusInputBox();
         }
 
@@ -658,12 +663,50 @@ namespace DCL.Chat
 
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
+            chatUserStateUpdater.RemoveConversation(removedChannel.Id);
             viewInstance!.RemoveConversation(removedChannel);
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
         {
+            chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
             viewInstance!.AddConversation(addedChannel);
+        }
+
+        private void OnChatHistoryOnAllChannelsRemoved()
+        {
+            viewInstance!.RemoveAllConversations();
+        }
+
+        private void OnUserUnavailableToChat(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnUserAvailableToChat(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnNonFriendDisconnected(string userId)
+        {
+            //If conversation is open, update visual appeareance
+            throw new NotImplementedException();
+        }
+
+        private void OnNonFriendConnected(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnFriendDisconnected(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnFriendConnected(string userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

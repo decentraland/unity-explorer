@@ -2,7 +2,7 @@ namespace DCL.Chat
 {
     public interface IChatUserStateEventBus
     {
-        public delegate void UserDelegate(string userAddress);
+        public delegate void UserDelegate(string userId);
 
         event UserDelegate? FriendConnected;
         event UserDelegate? FriendDisconnected;
@@ -11,12 +11,12 @@ namespace DCL.Chat
         event UserDelegate? UserUnavailableToChat;
         event UserDelegate? UserAvailableToChat;
 
-        void OnFriendConnected(string userAddress);
-        void OnFriendDisconnected(string userAddress);
-        void OnNonFriendConnected(string userAddress);
-        void OnNonFriendDisconnected(string userAddress);
-        void OnUserAvailableToChat(string userAddress);
-        void OnUserUnavailableToChat(string userAddress);
+        void OnFriendConnected(string userId);
+        void OnFriendDisconnected(string userId);
+        void OnNonFriendConnected(string userId);
+        void OnNonFriendDisconnected(string userId);
+        void OnUserAvailableToChat(string userId);
+        void OnUserUnavailableToChat(string userId);
     }
 
     public class ChatUserStateEventBus : IChatUserStateEventBus
@@ -28,34 +28,34 @@ namespace DCL.Chat
         public event IChatUserStateEventBus.UserDelegate? UserUnavailableToChat;
         public event IChatUserStateEventBus.UserDelegate? UserAvailableToChat;
 
-        public virtual void OnFriendConnected(string userAddress)
+        public virtual void OnFriendConnected(string userId)
         {
-            FriendConnected?.Invoke(userAddress);
+            FriendConnected?.Invoke(userId);
         }
 
-        public virtual void OnFriendDisconnected(string userAddress)
+        public virtual void OnFriendDisconnected(string userId)
         {
-            FriendDisconnected?.Invoke(userAddress);
+            FriendDisconnected?.Invoke(userId);
         }
 
-        public virtual void OnNonFriendConnected(string userAddress)
+        public virtual void OnNonFriendConnected(string userId)
         {
-            NonFriendConnected?.Invoke(userAddress);
+            NonFriendConnected?.Invoke(userId);
         }
 
-        public virtual void OnNonFriendDisconnected(string userAddress)
+        public virtual void OnNonFriendDisconnected(string userId)
         {
-            NonFriendDisconnected?.Invoke(userAddress);
+            NonFriendDisconnected?.Invoke(userId);
         }
 
-        public virtual void OnUserAvailableToChat(string userAddress)
+        public virtual void OnUserAvailableToChat(string userId)
         {
-            UserAvailableToChat?.Invoke(userAddress);
+            UserAvailableToChat?.Invoke(userId);
         }
 
-        public virtual void OnUserUnavailableToChat(string userAddress)
+        public virtual void OnUserUnavailableToChat(string userId)
         {
-            UserUnavailableToChat?.Invoke(userAddress);
+            UserUnavailableToChat?.Invoke(userId);
         }
     }
 }

@@ -4,7 +4,6 @@ using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using LiveKit.Rooms.Participants;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -18,7 +17,7 @@ namespace DCL.Chat
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly IParticipantsHub participantsHub;
         private readonly ChatSettingsAsset settingsAsset;
-        private readonly ObjectProxy<RPCChatPrivacyService> rpcChatPrivacyService;
+        private readonly RPCChatPrivacyService rpcChatPrivacyService;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
 
 
@@ -35,7 +34,7 @@ namespace DCL.Chat
             ObjectProxy<FriendsCache> friendsCacheProxy,
             IParticipantsHub participantsHub,
             ChatSettingsAsset settingsAsset,
-            ObjectProxy<RPCChatPrivacyService> rpcChatPrivacyService,
+            RPCChatPrivacyService rpcChatPrivacyService,
             IChatUserStateEventBus chatUserStateEventBus,
             IChatUsersStateCache chatUsersStateCache)
         {
@@ -50,6 +49,7 @@ namespace DCL.Chat
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
             settingsAsset.PrivacySettingsRead += OnPrivacySettingsRead;
             participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
+            //TODO FRAN: We need to subscribe to block and friends events, to update our caches properly, at least blocked, as it affects connection status.
         }
 
 
@@ -62,9 +62,8 @@ namespace DCL.Chat
 
             var connectedParticipants = new List<string>();
 
-            if (!rpcChatPrivacyService.Configured) return connectedParticipants;
 
-            rpcChatPrivacyService.StrictObject.GetOwnSocialSettingsAsync(cts.Token).Forget();
+            rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token).Forget();
 
             if (!friendsCacheProxy.Configured) return connectedParticipants; //We should return full list
             if (!userBlockingCacheProxy.Configured) return connectedParticipants; //We should return full list or similar
@@ -101,19 +100,55 @@ namespace DCL.Chat
             return connectedParticipants;
         }
 
-        public void OnOpenConversation(string conversationId)
+        public ChatUserState GetChatUserState(string userId)
+        {
+            //If it's a friend we just return its status
+            if (friendsCacheProxy.StrictObject.Contains(userId))
+                return chatUsersStateCache.IsFriendConnected(userId) ? ChatUserState.Connected : ChatUserState.Disconnected;
+
+            //If it's not a friend, we check if its connected and depending on that, we check if we can actually write to them or not.
+            if (chatUsersStateCache.IsNonFriendConnected(userId))
+            {
+                if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
+                    return ChatUserState.PrivateMessagesBlockedByOwnUser;
+
+                //TODO FRAN: here we should do a request to BE checking if the user accepts messages from non-friends
+
+                if (chatUsersStateCache.IsUserUnavailableToChat(userId))
+                    return ChatUserState.PrivateMessagesBlocked;
+
+                return ChatUserState.Connected;
+            }
+
+            //If user isn't connected, it means it's either offline (or its blocking us) or we are blocking them, in which case we show different text.
+            if (userBlockingCacheProxy.StrictObject.BlockedByUsers.Contains(userId))
+                return ChatUserState.BlockedByOwnUser;
+
+            return ChatUserState.Disconnected;
+        }
+
+        public enum ChatUserState
+        {
+            Connected, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
+            BlockedByOwnUser, //Own user blocked the other user
+            PrivateMessagesBlockedByOwnUser, //Own user has privacy settings set to ONLY FRIENDS
+            PrivateMessagesBlocked, //The other user has its privacy settings set to ONLY FRIENDS
+            Disconnected //The other user is either offline or has blocked the own user.
+        }
+
+        public void AddConversation(string conversationId)
         {
             openConversations.Add(conversationId);
         }
 
-        public void OnCloseConversation(string conversationId)
+        public void RemoveConversation(string conversationId)
         {
             openConversations.Remove(conversationId);
         }
 
         private async UniTaskVoid RequestParticipantsPrivacySettings(HashSet<string> participants, CancellationToken ct)
         {
-            var onlyFriendsParticipants = await rpcChatPrivacyService.StrictObject.GetPrivacySettingForUsersAsync(participants, ct);
+            var onlyFriendsParticipants = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(participants, ct);
 
             chatUsersStateCache.AddUsersUnavailableToChat(onlyFriendsParticipants[0]);
             chatUsersStateCache.RemoveUsersUnavailableToChat(onlyFriendsParticipants[1]);
@@ -140,7 +175,7 @@ namespace DCL.Chat
         private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
         {
             cts = cts.SafeRestart();
-            rpcChatPrivacyService.StrictObject.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.ALL, cts.Token).Forget();
+            rpcChatPrivacyService.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.ALL, cts.Token).Forget();
             UpdateOwnMetadata(privacySettings);
 
             if (privacySettings == ChatPrivacySettings.ALL)

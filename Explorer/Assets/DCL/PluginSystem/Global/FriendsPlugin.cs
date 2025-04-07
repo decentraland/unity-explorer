@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool useAnalytics;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly ObjectProxy<ISocialServiceRPC> socialServicesRPCProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
         private readonly ISocialServiceEventBus socialServiceEventBus;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
-            ObjectProxy<ISocialServiceRPC> socialServicesRPCProxy,
+            ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
             ObjectProxy<FriendsCache> friendCacheProxy)
         {
             this.mainUIView = mainUIView;

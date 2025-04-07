@@ -12,14 +12,14 @@ using RpcClient = rpc_csharp.RpcClient;
 
 namespace DCL.SocialService
 {
-    public interface ISocialServiceRPC : IDisposable
+    public interface IRPCSocialServices : IDisposable
     {
         public RpcClientModule Module();
 
         public UniTask EnsureRpcConnectionAsync(CancellationToken ct);
     }
 
-    public class SocialServiceRPC : ISocialServiceRPC
+    public class RPCSocialServices : IRPCSocialServices
     {
         private const string RPC_PORT_NAME = "social_Services";
         private const string RPC_SERVICE_NAME = "SocialService";
@@ -39,7 +39,7 @@ namespace DCL.SocialService
         private WebSocketRpcTransport? transport;
         private RpcClient? client;
 
-        public SocialServiceRPC(
+        public RPCSocialServices(
             URLAddress apiUrl,
             IWeb3IdentityCache identityCache,
             ISocialServiceEventBus socialServiceEventBus)

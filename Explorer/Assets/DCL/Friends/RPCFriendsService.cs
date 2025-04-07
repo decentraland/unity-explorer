@@ -40,7 +40,7 @@ namespace DCL.Friends
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
         private readonly ISelfProfile selfProfile;
-        private readonly ObjectProxy<ISocialServiceRPC> socialServiceRPCProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServiceRPCProxy;
 
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
@@ -54,7 +54,7 @@ namespace DCL.Friends
             IFriendsEventBus eventBus,
             FriendsCache friendsCache,
             ISelfProfile selfProfile,
-            ObjectProxy<ISocialServiceRPC> socialServiceRPCProxy,
+            ObjectProxy<IRPCSocialServices> socialServiceRPCProxy,
             ISocialServiceEventBus socialServiceEventBus)
         {
             this.eventBus = eventBus;

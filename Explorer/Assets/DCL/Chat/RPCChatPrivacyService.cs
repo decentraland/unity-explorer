@@ -14,13 +14,13 @@ namespace DCL.Chat
 {
     public class RPCChatPrivacyService
     {
-        private readonly ObjectProxy<ISocialServiceRPC> socialServiceRPCProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServiceRPCProxy;
         private readonly ChatSettingsAsset settingsAsset;
 
         private readonly HashSet<string>[] participants;
 
         public RPCChatPrivacyService(
-            ObjectProxy<ISocialServiceRPC> socialServiceRPCProxy,
+            ObjectProxy<IRPCSocialServices> socialServiceRPCProxy,
             ChatSettingsAsset settingsAsset)
         {
             this.socialServiceRPCProxy = socialServiceRPCProxy;

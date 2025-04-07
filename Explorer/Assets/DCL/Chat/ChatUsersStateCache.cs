@@ -15,6 +15,9 @@ namespace DCL.Chat
         void AddUsersUnavailableToChat(IEnumerable<string> addresses);
         void RemoveUsersUnavailableToChat(IEnumerable<string> addresses);
 
+        bool IsFriendConnected(string userAddress);
+        bool IsNonFriendConnected(string userAddress);
+
         bool IsUserConnected(string userAddress);
         bool IsUserUnavailableToChat(string userAddress);
     }
@@ -80,6 +83,11 @@ namespace DCL.Chat
                 usersUnavailableToChat.Remove(address);
         }
 
+        public bool IsFriendConnected(string userAddress) =>
+            connectedFriends.Contains(userAddress);
+
+        public bool IsNonFriendConnected(string userAddress) =>
+            ConnectedNonFriends.Contains(userAddress);
 
         public void ClearAll()
         {

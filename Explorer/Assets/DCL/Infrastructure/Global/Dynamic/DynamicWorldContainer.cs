@@ -531,7 +531,7 @@ namespace Global.Dynamic
             var coreBackpackEventBus = new BackpackEventBus();
 
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
-            var socialServicesRPCProxy = new ObjectProxy<ISocialServiceRPC>();
+            var socialServicesRPCProxy = new ObjectProxy<IRPCSocialServices>();
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -692,7 +692,8 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     sharedSpaceManager,
                     userBlockingCacheProxy,
-                    friendsCacheProxy),
+                    friendsCacheProxy,
+                    socialServicesRPCProxy),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
