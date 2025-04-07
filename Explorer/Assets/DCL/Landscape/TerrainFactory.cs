@@ -10,7 +10,7 @@ namespace DCL.Landscape
 {
     public class TerrainFactory
     {
-        private const string TERRAIN_LAYER = "Floor";
+        private const string TERRAIN_LAYER = "Default";
         private const string BORDERS_LAYER = "InvisibleColliders";
 
         private readonly TerrainGenerationData terrainGenData;
