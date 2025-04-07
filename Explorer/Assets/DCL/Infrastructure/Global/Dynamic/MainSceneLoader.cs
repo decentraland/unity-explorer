@@ -25,13 +25,13 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
@@ -42,8 +42,8 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
-using Global.Dynamic.LaunchModes;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -253,7 +253,7 @@ namespace Global.Dynamic
                     if (!await ShowUntrustedRealmConfirmation(ct))
                     {
 #if UNITY_EDITOR
-                        UnityEditor.EditorApplication.isPlaying = false;
+                        EditorApplication.isPlaying = false;
 #else
                         Application.Quit();
 #endif
