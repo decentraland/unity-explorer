@@ -109,8 +109,11 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            if(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
-                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, web3IdentityCache.Identity!.Address);
+            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            {
+                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+            }
 
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
@@ -143,6 +146,10 @@ namespace DCL.PluginSystem.Global
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 
             mvcManager.RegisterController(chatController);
+
+            // Log out / log in
+            web3IdentityCache.OnIdentityCleared += () => chatController.HideViewAsync(CancellationToken.None).Forget();
+            web3IdentityCache.OnIdentityChanged += () => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
         }
     }
 

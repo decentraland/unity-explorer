@@ -79,6 +79,7 @@ namespace DCL.Chat
         private ViewDependencies viewDependencies;
         private CancellationTokenSource popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
+        private bool isInitialized;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -124,9 +125,13 @@ namespace DCL.Chat
         /// </summary>
         public void Initialize()
         {
+            if(isInitialized)
+                return;
+
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+            isInitialized = true;
         }
 
         /// <summary>

@@ -221,16 +221,50 @@ namespace DCL.Chat.History
         /// <remarks>
         /// If a user is going to use the chat with a different account, this method must be called.
         /// </remarks>
-        /// <param name="newLocalUserWalletAddress">The new wallet address.</param>
+        /// <param name="newLocalUserWalletAddress">The new wallet address. If it is null or empty, it will be ignored.</param>
         public void SetNewLocalUserWalletAddress(string newLocalUserWalletAddress)
         {
-            UnloadAllFiles();
+            if(string.IsNullOrEmpty(newLocalUserWalletAddress))
+                return;
+
+            lock (channelsLocker)
+            {
+                if(channelFiles.Count > 0)
+                    UnloadAllFiles();
+            }
+
             localUserWalletAddress = newLocalUserWalletAddress;
 
             chatEncryptor.SetNewEncryptionKey(localUserWalletAddress);
 
             userFilesFolder = channelFilesFolder + chatEncryptor.StringToFileName(localUserWalletAddress) + "/";
             userConversationSettingsFile = userFilesFolder + chatEncryptor.StringToFileName("UserConversationSettings");
+        }
+
+        /// <summary>
+        /// Closes all files and removes their metadata from memory.
+        /// </summary>
+        public void UnloadAllFiles()
+        {
+            lock (queueLocker)
+            {
+                messagesToProcess.Clear();
+            }
+
+            lock (channelsLocker)
+            {
+                foreach (KeyValuePair<ChatChannel.ChannelId, ChannelFile> channelFilePair in channelFiles)
+                {
+                    ChannelFile channelFile = channelFiles[channelFilePair.Key];
+
+                    if (channelFile.Content != null)
+                        CloseChannelFile(channelFilePair.Key);
+                }
+
+                channelFiles.Clear();
+            }
+
+            conversationSettings = null;
         }
 
         public void Dispose()
@@ -584,29 +618,6 @@ namespace DCL.Chat.History
         private void OnChatHistoryAllChannelsRemoved()
         {
             UnloadAllFiles();
-        }
-
-        private void UnloadAllFiles()
-        {
-            lock (queueLocker)
-            {
-                messagesToProcess.Clear();
-            }
-
-            lock (channelsLocker)
-            {
-                foreach (KeyValuePair<ChatChannel.ChannelId, ChannelFile> channelFilePair in channelFiles)
-                {
-                    ChannelFile channelFile = channelFiles[channelFilePair.Key];
-
-                    if (channelFile.Content != null)
-                        CloseChannelFile(channelFilePair.Key);
-                }
-
-                channelFiles.Clear();
-            }
-
-            conversationSettings = null;
         }
     }
 }
