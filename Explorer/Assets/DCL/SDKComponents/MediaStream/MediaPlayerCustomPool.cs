@@ -3,6 +3,7 @@ using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream
@@ -81,6 +82,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public void ReleaseMediaPlayer(string url, MediaPlayer mediaPlayer)
         {
+            //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
+            if (UnityObjectUtils.IsQuitting) return;
+            
             mediaPlayer.Stop();
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);

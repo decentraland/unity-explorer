@@ -407,6 +407,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb536b0cdd6084c87a55b1ff25637eae
+    m_Address: Assets/DCL/SceneLoadingScreens/Textures/CreditsImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d20747763091b4fc5a2d5b6d1ba0ea7d
     m_Address: HideCategory
     m_ReadOnly: 0
