@@ -39,13 +39,13 @@ namespace DCL.CharacterMotion
                 if (characterPhysics.GravityVelocity.y > 0)
                     gravity *= settings.JumpGravityFactor;
 
-                characterPhysics.GravityVelocity += gravityDirection * gravity * deltaTime;
-                characterPhysics.SlopeGravity += gravityDirection * gravity * deltaTime;
+                characterPhysics.GravityVelocity += gravityDirection * (gravity * deltaTime);
+                characterPhysics.SlopeGravity += gravityDirection * (gravity * deltaTime);
             }
             else
             {
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
-                characterPhysics.GravityVelocity = gravityDirection * Math.Abs(settings.Gravity) * deltaTime;
+                characterPhysics.GravityVelocity = gravityDirection * (Math.Abs(settings.Gravity) * deltaTime);
                 characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
         }

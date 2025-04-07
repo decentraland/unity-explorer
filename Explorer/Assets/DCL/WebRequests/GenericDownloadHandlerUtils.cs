@@ -1,16 +1,15 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.GenericDelete;
-using DCL.WebRequests.RequestsHub;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.IO;
+using System.Text;
 using System.Threading;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility;
-using static DCL.WebRequests.WebRequestControllerExtensions;
 
 namespace DCL.WebRequests
 {
@@ -73,19 +72,6 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
             new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null);
-
-        private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
-        {
-            if (EnumUtils.HasFlag(flags, WRThreadFlags.SwitchBackToMainThread))
-                await UniTask.SwitchToMainThread();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static async UniTask SwitchToThreadAsync(WRThreadFlags deserializationThreadFlags)
-        {
-            if (EnumUtils.HasFlag(deserializationThreadFlags, WRThreadFlags.SwitchToThreadPool))
-                await UniTask.SwitchToThreadPool();
-        }
 
         /// <summary>
         ///     Adapts existing calls to the required-op flow
@@ -216,36 +202,58 @@ namespace DCL.WebRequests
 
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
-                UnityWebRequest webRequest = request.UnityWebRequest;
-                string text = webRequest.downloadHandler.text;
-
-                await SwitchToThreadAsync(threadFlags);
+                DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
+                string text = null;
 
                 try
                 {
-                    switch (jsonParser)
+                    if (jsonParser == WRJsonParser.Unity
+#if !UNITY_EDITOR
+                        || jsonParser == WRJsonParser.NewtonsoftInEditor
+#endif
+                        )
                     {
-                        case WRJsonParser.Unity:
-                            return JsonUtility.FromJson<T>(text);
-                        case WRJsonParser.Newtonsoft:
-                            return JsonConvert.DeserializeObject<T>(text, newtonsoftSettings);
-                        case WRJsonParser.NewtonsoftInEditor:
-                            if (Application.isEditor)
-                                goto case WRJsonParser.Newtonsoft;
+                        text = downloadHandler.text;
 
-                            goto case WRJsonParser.Unity;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
+                        return JsonUtility.FromJson<T>(text);
+                    }
+                    else
+                    {
+                        var nativeData = downloadHandler.nativeData;
+
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
+                        var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
+
+                        unsafe
+                        {
+                            var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
+
+                            using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
+                                nativeData.Length, FileAccess.Read);
+
+                            using var textReader = new StreamReader(stream, Encoding.UTF8);
+                            using var jsonReader = new JsonTextReader(textReader);
+                            return serializer.Deserialize<T>(jsonReader);
+                        }
                     }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    if (createCustomExceptionOnFailure != null)
-                        throw createCustomExceptionOnFailure(e, text);
+                    if (createCustomExceptionOnFailure != null && text != null)
+                        throw createCustomExceptionOnFailure(ex, text);
                     else
                         throw;
                 }
-                finally { await SwitchToMainThreadAsync(threadFlags); }
+                finally
+                {
+                    if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
+                        await UniTask.SwitchToMainThread();
+                }
             }
         }
 
@@ -267,38 +275,60 @@ namespace DCL.WebRequests
 
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
-                UnityWebRequest webRequest = request.UnityWebRequest;
-
-                string text = webRequest.downloadHandler.text;
-
-                await SwitchToThreadAsync(threadFlags);
+                DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
+                string text = null;
 
                 try
                 {
-                    switch (jsonParser)
+                    if (jsonParser == WRJsonParser.Unity
+#if !UNITY_EDITOR
+                        || jsonParser == WRJsonParser.NewtonsoftInEditor
+#endif
+                        )
                     {
-                        case WRJsonParser.Unity:
-                            JsonUtility.FromJsonOverwrite(text, Target);
-                            return Target;
-                        case WRJsonParser.Newtonsoft:
-                            JsonConvert.PopulateObject(text, Target!);
-                            return Target;
-                        case WRJsonParser.NewtonsoftInEditor:
-                            if (Application.isEditor)
-                                goto case WRJsonParser.Newtonsoft;
+                        text = downloadHandler.text;
 
-                            goto case WRJsonParser.Unity;
-                        default: throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
+                        JsonUtility.FromJsonOverwrite(text, Target);
+                    }
+                    else
+                    {
+                        var nativeData = downloadHandler.nativeData;
+
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
+                        var serializer = JsonSerializer.CreateDefault();
+
+                        unsafe
+                        {
+                            var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
+
+                            using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
+                                nativeData.Length, FileAccess.Read);
+
+                            using var textReader = new StreamReader(stream, Encoding.UTF8);
+                            using var jsonReader = new JsonTextReader(textReader);
+                            serializer.Populate(jsonReader, Target);
+                        }
                     }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    if (createCustomExceptionOnFailure != null)
-                        throw createCustomExceptionOnFailure(e, text);
+                    if (createCustomExceptionOnFailure != null && text != null)
+                        throw createCustomExceptionOnFailure(ex, text);
                     else
                         throw;
                 }
-                finally { await SwitchToMainThreadAsync(threadFlags); }
+                finally
+                {
+                    if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
+                        await UniTask.SwitchToMainThread();
+                }
+
+                return Target;
             }
         }
 
