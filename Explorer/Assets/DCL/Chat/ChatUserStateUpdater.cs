@@ -31,6 +31,7 @@ namespace DCL.Chat
         private readonly HashSet<string> openConversations = new ();
 
         private CancellationTokenSource cts = new ();
+        private readonly HashSet<string> chatUsers = new ();
 
 
         public ChatUserStateUpdater(
@@ -99,11 +100,9 @@ namespace DCL.Chat
 
                     if (this.openConversations.Contains(participant))
                     {
-                        //When this finishes, we have a proper list of all connected users, so we can setup the conversations sidebar UI
+                        //When this finishes, we will have a proper list of all connected users, so we can setup the conversations sidebar UI
                         connectedParticipants.Add(participant);
                     }
-
-                    Debug.LogWarning($"CHAT - INIT - user is ONLINE {participant}");
 
                     participants.Add(participant);
                 }
@@ -150,6 +149,26 @@ namespace DCL.Chat
 
             return ChatUserState.DISCONNECTED;
         }
+
+        public async UniTask<ChatUserState> GetConnectedNonFriendUserStateAsync(string userId)
+        {
+            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
+                return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
+
+            chatUsers.Clear();
+            chatUsers.Add(userId);
+            var response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
+
+            if (response[0].Count > 0)
+            {
+                chatUsersStateCache.AddUserUnavailableToChat(userId);
+                return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+            }
+
+            chatUsersStateCache.RemoveUserUnavailableToChat(userId);
+            return ChatUserState.CONNECTED;
+        }
+
 
         public enum ChatUserState
         {
@@ -223,32 +242,46 @@ namespace DCL.Chat
                         chatUsersStateCache.AddConnectedFriend(participant.Identity);
 
                         if (openConversations.Contains(participant.Identity))
-                        {
                             chatUserStateEventBus.OnFriendConnected(participant.Identity);
-                        }
                     }
                     else if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity))
                     {
                         chatUsersStateCache.AddConnectedNonFriend(participant.Identity);
+
                         if (openConversations.Contains(participant.Identity))
-                        {
                             chatUserStateEventBus.OnNonFriendConnected(participant.Identity);
-                        }
+                    }
+                    else
+                    {
+                        chatUsersStateCache.AddConnectedBlockedUser(participant.Identity);
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
+                    if (!openConversations.Contains(participant.Identity)) return;
+                    if (friendsCacheProxy.StrictObject.Contains(participant.Identity)) return;
+                    if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
+                    if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
+
+                    //We only about their data if it's an open conversation, it's not a friend, we allow messages from ALL and the user it's not blocked.
                     //TODO FRAN: Parse metadata and if it's not a friend and it's not blocked and its set as not allowing, add to the list
+                    //PARSE -> participant.Metadata -> into a single field with a value of either 1 or 0?
+                    //If the user
                     break;
                 case UpdateFromParticipant.Disconnected:
                     if (friendsCacheProxy.StrictObject.Contains(participant.Identity))
                     {
+                        // TODO FRAN: Check if we really need the info about connected or disconnected users?
+                        // maybe to setup new conversations only?
                         chatUsersStateCache.RemoveConnectedFriend(participant.Identity);
+
                         if (openConversations.Contains(participant.Identity))
                             chatUserStateEventBus.OnFriendDisconnected(participant.Identity);
                     }
                     else
                     {
                         chatUsersStateCache.RemoveConnectedNonFriend(participant.Identity);
+                        chatUsersStateCache.RemovedConnectedBlockedUser(participant.Identity);
+
                         if (openConversations.Contains(participant.Identity))
                             chatUserStateEventBus.OnNonFriendDisconnected(participant.Identity);
                     }

@@ -63,6 +63,7 @@ namespace DCL.Chat
             settingsAsset.OnPrivacyRead(response.Ok?.Settings.PrivateMessagesPrivacy == PrivateMessagePrivacySetting.OnlyFriends ? ChatPrivacySettings.ONLY_FRIENDS : ChatPrivacySettings.ALL);
         }
 
+        //TODO FRAN: Replace this HashSet<string>[] with a custom struct so its less prone to error
         public async UniTask<HashSet<string>[]> GetPrivacySettingForUsersAsync(HashSet<string> walletIds, CancellationToken ct)
         {
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);

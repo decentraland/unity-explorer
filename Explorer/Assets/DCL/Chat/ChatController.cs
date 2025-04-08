@@ -418,9 +418,9 @@ namespace DCL.Chat
             chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
             chatUserStateEventBus.FriendConnected += OnFriendConnected;
-            chatUserStateEventBus.FriendDisconnected += OnFriendDisconnected;
+            chatUserStateEventBus.FriendDisconnected += OnUserDisconnected;
             chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
-            chatUserStateEventBus.NonFriendDisconnected += OnNonFriendDisconnected;
+            chatUserStateEventBus.NonFriendDisconnected += OnUserDisconnected;
             chatUserStateEventBus.UserAvailableToChat += OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat += OnUserUnavailableToChat;
             chatUserStateEventBus.UserBlocked += OnUserBlocked;
@@ -475,9 +475,9 @@ namespace DCL.Chat
             chatHistory.AllChannelsRemoved -= OnChatHistoryAllChannelsRemoved;
 
             chatUserStateEventBus.FriendConnected -= OnFriendConnected;
-            chatUserStateEventBus.FriendDisconnected -= OnFriendDisconnected;
+            chatUserStateEventBus.FriendDisconnected -= OnUserDisconnected;
             chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
-            chatUserStateEventBus.NonFriendDisconnected -= OnNonFriendDisconnected;
+            chatUserStateEventBus.NonFriendDisconnected -= OnUserDisconnected;
             chatUserStateEventBus.UserAvailableToChat -= OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat -= OnUserUnavailableToChat;
             chatUserStateEventBus.UserBlocked -= OnUserBlocked;
@@ -723,6 +723,49 @@ namespace DCL.Chat
             viewInstance!.AddConversation(addedChannel);
         }
 
+        private void OnUserDisconnected(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = ChatUserStateUpdater.ChatUserState.DISCONNECTED;
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
+        private void OnNonFriendConnected(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
+            if (viewInstance.CurrentChannelId.Id == userId)
+                GetAndSetupNonFriendUserStateAsync(userId).Forget();
+        }
+
+        private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
+        {
+            var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
+            viewInstance!.SetInputWithUserState(state);
+        }
+
+        private void OnFriendConnected(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
+        private void OnUserBlocked(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
         private void OnUserUnavailableToChat(string userId)
         {
             if (viewInstance!.CurrentChannelId.Id == userId)
@@ -734,56 +777,6 @@ namespace DCL.Chat
 
         private void OnUserAvailableToChat(string userId)
         {
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = chatUserStateUpdater.GetChatUserState(userId);
-                viewInstance.SetInputWithUserState(state);
-            }
-        }
-
-        private void OnNonFriendDisconnected(string userId)
-        {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = chatUserStateUpdater.GetChatUserState(userId);
-                viewInstance.SetInputWithUserState(state);
-            }
-        }
-
-        private void OnNonFriendConnected(string userId)
-        {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = chatUserStateUpdater.GetChatUserState(userId);
-                viewInstance.SetInputWithUserState(state);
-            }
-        }
-
-        private void OnFriendDisconnected(string userId)
-        {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = chatUserStateUpdater.GetChatUserState(userId);
-                viewInstance.SetInputWithUserState(state);
-            }
-        }
-
-        private void OnFriendConnected(string userId)
-        {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = chatUserStateUpdater.GetChatUserState(userId);
-                viewInstance.SetInputWithUserState(state);
-            }
-        }
-
-        private void OnUserBlocked(string userId)
-        {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
