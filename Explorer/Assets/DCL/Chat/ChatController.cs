@@ -66,7 +66,7 @@ namespace DCL.Chat
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly ChatUsersStateCache chatUsersStateCache;
-        private readonly ChatUserStateEventBus chatUserStateEventBus;
+        private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly RPCChatPrivacyService chatPrivacyService;
 
         private SingleInstanceEntity cameraEntity;

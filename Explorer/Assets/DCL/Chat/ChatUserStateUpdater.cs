@@ -233,8 +233,9 @@ namespace DCL.Chat
 
         private void UpdateOwnMetadata(ChatPrivacySettings privacySettings)
         {
-            var metadata = new ParticipantPrivacyMetadata(privacySettings == ChatPrivacySettings.ALL);
-            chatRoom.UpdateLocalMetadata(metadata.ToJson());
+            var metadata = new ParticipantPrivacyMetadata(privacySettings == ChatPrivacySettings.ALL).ToJson();
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"You are about to update the own metadata to {metadata}");
+            chatRoom.UpdateLocalMetadata(metadata);
         }
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
@@ -271,6 +272,7 @@ namespace DCL.Chat
                     try
                     {
                         var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
+                        ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"Read metadata from user {participant.Metadata}");
                         if (message.AcceptAll)
                         {
                             chatUsersStateCache.RemoveUserUnavailableToChat(participant.Identity);
