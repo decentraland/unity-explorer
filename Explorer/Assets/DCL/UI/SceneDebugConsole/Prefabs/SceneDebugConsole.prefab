@@ -35,8 +35,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 57.776733, y: -505.51743}
-  m_SizeDelta: {x: -57.7767, y: 505.5175}
+  m_AnchoredPosition: {x: 308.91357, y: -505.51743}
+  m_SizeDelta: {x: -356.0017, y: 505.5175}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &2521266897604623477
 CanvasRenderer:
@@ -323,14 +323,14 @@ RectTransform:
   m_GameObject: {fileID: 9152785347356188261}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6252910912605816960}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
@@ -559,6 +559,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 81955961218408590, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 936064796666357246, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Name
       value: SceneDebugConsoleLogViewerElement
@@ -651,9 +655,17 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: -2.5
       objectReference: {fileID: 0}
+    - target: {fileID: 3592518164887718450, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.000061035156
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301239302916120637, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_Size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7301239302916120637, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8646576932515811346, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Enabled
