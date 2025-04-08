@@ -129,36 +129,39 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
         {
+            if (sdkComponent.IsNotDirty())
+                return false;
+
             var kind = component.MediaAddress.MediaKind;
+
+            if (kind != address.MediaKind)
+                return PerformRemove(World, ref component, sdkComponent, entity);
 
             switch (kind)
             {
                 case MediaAddress.Kind.URL:
-                    if (sdkComponent.IsDirty
-                        && component.MediaAddress != address
+                    if (component.MediaAddress != address
                         && (!sceneData.TryGetMediaUrl(address.Url, out var localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
-                    {
-                        component.Dispose();
-                        sdkComponent.IsDirty = false;
-                        World.Remove<MediaPlayerComponent>(entity);
-                        return true;
-                    }
+                        return PerformRemove(World, ref component, sdkComponent, entity);
 
                     break;
                 case MediaAddress.Kind.LIVEKIT:
-                    if (sdkComponent.IsDirty && component.MediaAddress != address)
-                    {
-                        component.Dispose();
-                        sdkComponent.IsDirty = false;
-                        World.Remove<MediaPlayerComponent>(entity);
-                        return true;
-                    }
+                    if (component.MediaAddress != address)
+                        return PerformRemove(World, ref component, sdkComponent, entity);
 
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
 
             return false;
+
+            static bool PerformRemove(World world, ref MediaPlayerComponent component, IDirtyMarker sdkComponent, Entity entity)
+            {
+                component.Dispose();
+                sdkComponent.IsDirty = false;
+                world.Remove<MediaPlayerComponent>(entity);
+                return true;
+            }
         }
 
         [Query]
