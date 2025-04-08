@@ -165,7 +165,8 @@ namespace DCL.Chat
                 chatPrivacyService,
                 chatUserStateEventBus,
                 chatUsersStateCache,
-                friendsEventBus);
+                friendsEventBus,
+                roomHub.SharedPrivateConversationsRoom());
         }
 
         public void Clear() // Called by a command
