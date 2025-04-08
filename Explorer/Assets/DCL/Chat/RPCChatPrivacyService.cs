@@ -25,7 +25,9 @@ namespace DCL.Chat
         {
             this.socialServiceRPCProxy = socialServiceRPCProxy;
             this.settingsAsset = settingsAsset;
-            this.participants = new HashSet<string>[2];
+            participants = new HashSet<string>[2];
+            participants[0] = new HashSet<string>();
+            participants[1] = new HashSet<string>();
         }
 
         private const int TIMEOUT_SECONDS = 30;
