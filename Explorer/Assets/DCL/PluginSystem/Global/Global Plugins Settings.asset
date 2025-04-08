@@ -50,6 +50,7 @@ MonoBehaviour:
   - rid: 2168772563850493955
   - rid: 7621844642437005314
   - rid: 7621844642437005315
+  - rid: 8317716602154123266
   references:
     version: 2
     RefIds:
@@ -604,6 +605,8 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        startFadeDistanceDithering: 2
+        endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
@@ -795,3 +798,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 8317716602154123266
+      type: {class: SceneDebugConsolePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ConsoleSettings>k__BackingField: {fileID: 11400000, guid: 5df92492d483946498f93a4a425c060b, type: 2}

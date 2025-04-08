@@ -1,10 +1,9 @@
-using System;
 using UnityEngine;
 
 namespace DCL.UI.SceneDebugConsole
 {
-    [Serializable]
-    public class SceneDebugConsoleSettings
+    [CreateAssetMenu(fileName = "SceneDebugConsoleSettings", menuName = "DCL/SceneDebugConsole/Plugin Settings")]
+    public class SceneDebugConsoleSettings : ScriptableObject
     {
         [field: Header("Appearance")]
         [field: SerializeField] public Color LogColor { get; private set; } = Color.white;
