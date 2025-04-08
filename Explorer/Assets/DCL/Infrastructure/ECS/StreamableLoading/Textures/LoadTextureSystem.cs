@@ -1,10 +1,10 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
@@ -21,18 +21,33 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IProfileTextureUrlProvider profileTextureUrlProvider;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache,
+            IProfileTextureUrlProvider profileTextureUrlProvider)
             : base(
                 world, cache, new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
             this.webRequestController = webRequestController;
+            this.profileTextureUrlProvider = profileTextureUrlProvider;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
+
+            if (intention.IsAvatarTexture)
+            {
+                URLAddress? url = await profileTextureUrlProvider.GetAsync(intention.CommonArguments.URL.Value, ct);
+
+                if (url == null)
+                    throw new Exception($"No profile found for {intention.CommonArguments.URL}");
+
+                CommonLoadingArguments newArgs = intention.CommonArguments;
+                newArgs.URL = url.Value;
+                intention.CommonArguments = newArgs;
+            }
 
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
