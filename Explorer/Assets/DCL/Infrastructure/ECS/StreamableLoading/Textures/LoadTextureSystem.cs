@@ -24,6 +24,7 @@ namespace ECS.StreamableLoading.Textures
         private readonly IProfileTextureUrlProvider profileTextureUrlProvider;
 
         internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache,
+            // A replacement of IProfileRepository to avoid cyclic dependencies
             IProfileTextureUrlProvider profileTextureUrlProvider)
             : base(
                 world, cache, new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
