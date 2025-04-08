@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
         private readonly ISocialServiceEventBus socialServiceEventBus;
+        private readonly IFriendsEventBus friendsEventBus;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -96,7 +97,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
-            ObjectProxy<FriendsCache> friendCacheProxy)
+            ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -125,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.socialServiceEventBus = socialServiceEventBus;
             this.socialServicesRPCProxy = socialServicesRPCProxy;
             this.friendCacheProxy = friendCacheProxy;
+            this.friendsEventBus = friendsEventBus;
         }
 
         public void Dispose()
@@ -139,12 +141,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(FriendsPluginSettings settings, CancellationToken ct)
         {
-            IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
-
             var friendsCache = new FriendsCache();
             friendCacheProxy.SetObject(friendsCache);
 
-            friendsService = new RPCFriendsService(friendEventBus, friendsCache, selfProfile, socialServicesRPCProxy, socialServiceEventBus);
+            friendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, socialServicesRPCProxy, socialServiceEventBus);
 
             IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
 
@@ -152,12 +152,12 @@ namespace DCL.PluginSystem.Global
 
             bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
 
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendEventBus, isConnectivityStatusEnabled);
+            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
             friendOnlineStatusCacheProxy.SetObject(friendsConnectivityStatusTracker);
 
             if (includeUserBlocking)
             {
-                userBlockingCache = new UserBlockingCache(friendEventBus);
+                userBlockingCache = new UserBlockingCache(friendsEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
             }
 
@@ -170,7 +170,7 @@ namespace DCL.PluginSystem.Global
                 mainUIView.FriendsPanelViewView,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 injectableFriendService,
-                friendEventBus,
+                friendsEventBus,
                 mvcManager,
                 profileRepository,
                 dclInput,

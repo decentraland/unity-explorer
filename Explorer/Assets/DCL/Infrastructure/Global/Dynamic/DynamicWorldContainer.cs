@@ -578,6 +578,8 @@ namespace Global.Dynamic
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
 
             IChatEventBus chatEventBus = new ChatEventBus();
+            IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
+
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -693,7 +695,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     userBlockingCacheProxy,
                     friendsCacheProxy,
-                    socialServicesRPCProxy),
+                    socialServicesRPCProxy,
+                    friendsEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -904,7 +907,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     socialServiceEventBus,
                     socialServicesRPCProxy,
-                    friendsCacheProxy
+                    friendsCacheProxy,
+                    friendsEventBus
                     )
                 );
             }

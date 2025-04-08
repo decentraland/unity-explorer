@@ -124,7 +124,8 @@ namespace DCL.Chat
             ILoadingStatus loadingStatus,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
-            RPCChatPrivacyService chatPrivacyService) : base(viewFactory)
+            RPCChatPrivacyService chatPrivacyService,
+            IFriendsEventBus friendsEventBus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -156,7 +157,8 @@ namespace DCL.Chat
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
-                chatUsersStateCache);
+                chatUsersStateCache,
+                friendsEventBus);
         }
 
         public void Clear() // Called by a command

@@ -1,3 +1,5 @@
+using System;
+
 namespace DCL.Chat
 {
     public interface IChatUserStateEventBus
@@ -10,6 +12,7 @@ namespace DCL.Chat
         event UserDelegate? NonFriendDisconnected;
         event UserDelegate? UserUnavailableToChat;
         event UserDelegate? UserAvailableToChat;
+        event UserDelegate? UserBlocked;
 
         void OnFriendConnected(string userId);
         void OnFriendDisconnected(string userId);
@@ -17,6 +20,7 @@ namespace DCL.Chat
         void OnNonFriendDisconnected(string userId);
         void OnUserAvailableToChat(string userId);
         void OnUserUnavailableToChat(string userId);
+        void OnUserBlocked(string userId);
     }
 
     public class ChatUserStateEventBus : IChatUserStateEventBus
@@ -27,35 +31,42 @@ namespace DCL.Chat
         public event IChatUserStateEventBus.UserDelegate? NonFriendDisconnected;
         public event IChatUserStateEventBus.UserDelegate? UserUnavailableToChat;
         public event IChatUserStateEventBus.UserDelegate? UserAvailableToChat;
+        public event IChatUserStateEventBus.UserDelegate? UserBlocked;
 
-        public virtual void OnFriendConnected(string userId)
+        public void OnFriendConnected(string userId)
         {
             FriendConnected?.Invoke(userId);
         }
 
-        public virtual void OnFriendDisconnected(string userId)
+        public void OnFriendDisconnected(string userId)
         {
             FriendDisconnected?.Invoke(userId);
         }
 
-        public virtual void OnNonFriendConnected(string userId)
+        public void OnNonFriendConnected(string userId)
         {
             NonFriendConnected?.Invoke(userId);
         }
 
-        public virtual void OnNonFriendDisconnected(string userId)
+        public void OnNonFriendDisconnected(string userId)
         {
             NonFriendDisconnected?.Invoke(userId);
         }
 
-        public virtual void OnUserAvailableToChat(string userId)
+        public void OnUserAvailableToChat(string userId)
         {
             UserAvailableToChat?.Invoke(userId);
         }
 
-        public virtual void OnUserUnavailableToChat(string userId)
+        public void OnUserUnavailableToChat(string userId)
         {
             UserUnavailableToChat?.Invoke(userId);
         }
+
+        public void OnUserBlocked(string userId)
+        {
+            UserBlocked?.Invoke(userId);
+        }
+
     }
 }

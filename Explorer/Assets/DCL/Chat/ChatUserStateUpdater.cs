@@ -4,6 +4,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using LiveKit.Rooms.Participants;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -19,6 +20,7 @@ namespace DCL.Chat
         private readonly ChatSettingsAsset settingsAsset;
         private readonly RPCChatPrivacyService rpcChatPrivacyService;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
+        private readonly IFriendsEventBus friendsEventBus;
 
 
         /// <summary>
@@ -36,7 +38,7 @@ namespace DCL.Chat
             ChatSettingsAsset settingsAsset,
             RPCChatPrivacyService rpcChatPrivacyService,
             IChatUserStateEventBus chatUserStateEventBus,
-            IChatUsersStateCache chatUsersStateCache)
+            IChatUsersStateCache chatUsersStateCache, IFriendsEventBus friendsEventBus)
         {
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
@@ -45,13 +47,95 @@ namespace DCL.Chat
             this.rpcChatPrivacyService = rpcChatPrivacyService;
             this.chatUserStateEventBus = chatUserStateEventBus;
             this.chatUsersStateCache = chatUsersStateCache;
+            this.friendsEventBus = friendsEventBus;
 
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
             settingsAsset.PrivacySettingsRead += OnPrivacySettingsRead;
             participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
-            //TODO FRAN: We need to subscribe to block and friends events, to update our caches properly, at least blocked, as it affects connection status.
+
+            //Other user Blocked actions
+            friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
+            friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
+            //Own user blocked actions
+            friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
+            friendsEventBus.OnYouUnblockedProfile += OnYouUnblockedProfile;
+
+            //Other user friendship actions
+            friendsEventBus.OnOtherUserAcceptedYourRequest += OnNewFriendAdded;
+            friendsEventBus.OnOtherUserRemovedTheFriendship += OnFriendRemoved;
+            //Own user friendship actions
+            friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += OnNewFriendAdded;
+            friendsEventBus.OnYouRemovedFriend += OnFriendRemoved;
+
+        }
+        
+        private void OnFriendRemoved(string userid)
+        {
+            if (!chatUsersStateCache.IsFriendConnected(userid)) return;
+
+            chatUsersStateCache.AddConnectedNonFriend(userid);
+            chatUsersStateCache.RemoveConnectedFriend(userid);
+
+            if (openConversations.Contains(userid))
+                chatUserStateEventBus.OnNonFriendConnected(userid);
         }
 
+        private void OnNewFriendAdded(string userid)
+        {
+            if (!chatUsersStateCache.IsNonFriendConnected(userid)) return;
+
+            chatUsersStateCache.AddConnectedFriend(userid);
+            chatUsersStateCache.RemoveConnectedNonFriend(userid);
+
+            if (openConversations.Contains(userid))
+                chatUserStateEventBus.OnFriendConnected(userid);
+        }
+
+        private void OnUserUnblocked(string userid)
+        {
+            if (!chatUsersStateCache.IsBlockedUserConnected(userid)) return;
+
+            chatUsersStateCache.AddConnectedNonFriend(userid);
+            chatUsersStateCache.RemovedConnectedBlockedUser(userid);
+
+            if (openConversations.Contains(userid))
+                chatUserStateEventBus.OnNonFriendConnected(userid);
+        }
+
+        private void OnYouUnblockedProfile(BlockedProfile profile)
+        {
+            OnUserUnblocked(profile.Address);
+        }
+
+        private void OnYouBlockedProfile(BlockedProfile profile)
+        {
+            var userId = profile.Address;
+            if (!chatUsersStateCache.IsUserConnected(userId)) return;
+
+            chatUsersStateCache.RemoveConnectedNonFriend(userId);
+            chatUsersStateCache.RemoveConnectedFriend(userId);
+            chatUsersStateCache.AddConnectedBlockedUser(userId);
+
+            if (openConversations.Contains(userId))
+                chatUserStateEventBus.OnUserBlocked(userId);
+        }
+
+        private void OnYouBlockedByUser(string userId)
+        {
+            if (!chatUsersStateCache.IsUserConnected(userId)) return;
+
+            bool wasFriend = chatUsersStateCache.IsFriendConnected(userId);
+            chatUsersStateCache.RemoveConnectedNonFriend(userId);
+            chatUsersStateCache.RemoveConnectedFriend(userId);
+            chatUsersStateCache.AddConnectedBlockedUser(userId);
+
+            if (!openConversations.Contains(userId)) return;
+
+            if (wasFriend)
+                chatUserStateEventBus.OnFriendDisconnected(userId);
+            else
+                chatUserStateEventBus.OnNonFriendDisconnected(userId);
+        }
 
         public IEnumerable<string> Initialize(IEnumerable<string> openConversations)
         {
@@ -106,15 +190,15 @@ namespace DCL.Chat
             if (friendsCacheProxy.StrictObject.Contains(userId))
                 return chatUsersStateCache.IsFriendConnected(userId) ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED;
 
-            //If it's not a friend, we check if its connected and depending on that, we check if we can actually write to them or not.
+            //If we reach here it's because the user is not a friend
+
+            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
+                return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
+
             if (chatUsersStateCache.IsNonFriendConnected(userId))
             {
-                if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
-                    return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
-
-                //TODO FRAN: here we should do a request to BE checking if the user accepts messages from non-friends
-
                 if (chatUsersStateCache.IsUserUnavailableToChat(userId))
+                    //TODO FRAN: here we should do a request to BE checking if the user accepts messages from non-friends
                     return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
 
                 return ChatUserState.CONNECTED;
@@ -178,7 +262,7 @@ namespace DCL.Chat
             UpdateOwnMetadata(privacySettings);
 
             if (privacySettings == ChatPrivacySettings.ALL)
-                RequestParticipantsPrivacySettings(chatUsersStateCache.ConnectedNonFriends, cts.Token).Forget();
+                RequestParticipantsPrivacySettings(chatUsersStateCache.ConnectedNonFriend, cts.Token).Forget();
 
         }
 

@@ -53,6 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
+        private readonly IFriendsEventBus friendsEventBus;
 
         private ChatController chatController;
 
@@ -78,7 +79,8 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
-            ObjectProxy<IRPCSocialServices> socialServiceProxy)
+            ObjectProxy<IRPCSocialServices> socialServiceProxy,
+            IFriendsEventBus friendsEventBus)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -103,6 +105,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
         }
 
         public void Dispose() { }
@@ -139,7 +142,8 @@ namespace DCL.PluginSystem.Global
                 loadingStatus,
                 userBlockingCacheProxy,
                 friendsCacheProxy,
-                privacySettings
+                privacySettings,
+                friendsEventBus
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
