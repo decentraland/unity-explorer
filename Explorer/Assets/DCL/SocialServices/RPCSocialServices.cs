@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Threading;
+using UnityEngine;
 using RpcClient = rpc_csharp.RpcClient;
 
 namespace DCL.SocialService
@@ -21,11 +22,10 @@ namespace DCL.SocialService
 
     public class RPCSocialServices : IRPCSocialServices
     {
-        private const string RPC_PORT_NAME = "social_Services";
+        private const string RPC_PORT_NAME = "social_service";
         private const string RPC_SERVICE_NAME = "SocialService";
         private const int CONNECTION_TIMEOUT_SECS = 10;
         private const int CONNECTION_RETRIES = 10;
-        private const int AUTH_CHAIN_TIMEOUT_SECS = 30;
         private const double RETRY_BACKOFF_MULTIPLIER = 1.5;
 
         private readonly SemaphoreSlim handshakeMutex = new (1, 1);
@@ -56,12 +56,7 @@ namespace DCL.SocialService
 
         public void Dispose()
         {
-            if (transport != null)
-            {
-                transport.OnCloseEvent -= OnTransportClosed;
-                transport.Dispose();
-            }
-
+            transport?.Dispose();
             client?.Dispose();
             handshakeMutex.Dispose();
             authChainBuffer.Clear();
@@ -125,7 +120,8 @@ namespace DCL.SocialService
                 }
         }
 
-        private async UniTask StartHandshakeAsync(CancellationToken ct)
+
+        private async UniTask StartHandshakeAsync(CancellationToken ct, bool test = false)
         {
             try
             {
@@ -134,7 +130,10 @@ namespace DCL.SocialService
                 if (!isConnectionReady)
                     await InitializeConnectionAsync(ct);
             }
-            finally { handshakeMutex.Release(); }
+            finally
+            {
+                handshakeMutex.Release();
+            }
         }
 
         private async UniTask InitializeConnectionAsync(CancellationToken ct)
@@ -149,7 +148,9 @@ namespace DCL.SocialService
             await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
 
             string authChain = BuildAuthChain();
-            await transport.SendMessageAsync(authChain, ct).Timeout(TimeSpan.FromSeconds(AUTH_CHAIN_TIMEOUT_SECS));
+
+            // The service expects the auth-chain in json format within a 30 seconds threshold after connection
+            await transport.SendMessageAsync(authChain, ct);
 
             transport.ListenForIncomingData();
 

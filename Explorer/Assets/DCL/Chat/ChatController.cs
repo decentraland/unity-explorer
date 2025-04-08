@@ -255,7 +255,6 @@ namespace DCL.Chat
                             userState == ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER ||
                             userState == ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
             viewInstance.UpdateConversationToolbarStatusIconForUser(userId, connected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
-            viewInstance.FocusInputBox();
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
@@ -264,7 +263,6 @@ namespace DCL.Chat
             var userState = chatUserStateUpdater.GetChatUserState(channelId.Id);
             viewInstance!.CurrentChannelId = channelId;
             viewInstance.SetInputWithUserState(userState);
-            viewInstance.FocusInputBox();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -770,7 +768,8 @@ namespace DCL.Chat
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
                 viewInstance.SetInputWithUserState(state);
-            }        }
+            }
+        }
 
         private void OnFriendConnected(string userId)
         {

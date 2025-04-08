@@ -8,6 +8,7 @@ using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Chat
@@ -79,7 +80,7 @@ namespace DCL.Chat
 
             var connectedParticipants = new HashSet<string>();
 
-
+            cts = cts.SafeRestart();
             rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token).Forget();
 
             if (!friendsCacheProxy.Configured) return connectedParticipants; //We should return full list
@@ -102,16 +103,21 @@ namespace DCL.Chat
                         connectedParticipants.Add(participant);
                     }
 
+                    Debug.LogWarning($"CHAT - INIT - user is ONLINE {participant}");
+
                     participants.Add(participant);
                 }
-
-                // We only care about other users privacy settings if we can actually talk to them,
-                // If we dont allow chatting to ALL users, we wont make any request.
-                if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ALL)
+                else
                 {
-                    cts = cts.SafeRestart();
-                    RequestParticipantsPrivacySettings(participants, cts.Token).Forget();
+                    chatUsersStateCache.AddConnectedBlockedUser(participant);
                 }
+            }
+
+            // We only care about other users privacy settings if we can actually talk to them,
+            // If we dont allow chatting to ALL users, we wont make any request.
+            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ALL)
+            {
+                RequestParticipantsPrivacySettings(participants, cts.Token).Forget();
             }
 
             return connectedParticipants;

@@ -38,8 +38,8 @@ namespace DCL.Settings.Settings
 
     public enum ChatPrivacySettings
     {
-        ALL = 0,
-        ONLY_FRIENDS = 1
+        ONLY_FRIENDS = 0,
+        ALL = 1,
     }
 
 }

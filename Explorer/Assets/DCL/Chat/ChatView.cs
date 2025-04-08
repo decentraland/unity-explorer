@@ -269,7 +269,6 @@ namespace DCL.Chat
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.User:
-                            //TODO FRAN: Should we get the updated state here?? otherwise we risk not updating the chat correctly when switching channels??
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
                             break;
                         default:
@@ -719,6 +718,8 @@ namespace DCL.Chat
                 return;
             }
 
+            //TODO FRAN: We should be able to focus the chat and close everything else without focusing the input box.
+            memberListView.IsVisible = false;
             inputBoxMask.SetUpWithUserState(userState);
         }
 
