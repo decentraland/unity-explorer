@@ -229,7 +229,7 @@ namespace DCL.Chat
         /// <returns>True if the panel is visible; False otherwise.</returns>
         public bool GetViewVisibility()
         {
-            return viewInstance!.gameObject.activeInHierarchy;
+            return viewInstance?.gameObject.activeInHierarchy;
         }
 
         private void OnChatHistoryAllChannelsRemoved()
