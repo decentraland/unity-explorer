@@ -24,10 +24,7 @@ namespace DCL.WebRequests.WebContentSizes
             string? header = await webRequestController.HeadAsync(url, ReportCategory.GENERIC_WEB_REQUEST)
                                                        .GetResponseHeaderAsync(WebRequestHeaders.CONTENT_LENGTH_HEADER, cancellationToken);
 
-            if (header != null && ulong.TryParse(header, out ulong length))
-                return length != 0 && length < maxSize.MaxSizeInBytes();
-
-            return false;
+            return WebRequestHeaders.TryParseUnsigned(header, out ulong length) && length != 0 && length < maxSize.MaxSizeInBytes();
         }
     }
 }

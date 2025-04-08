@@ -1,5 +1,6 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Caching;
+using Best.HTTP.Response;
 using Best.HTTP.Shared;
 using Best.HTTP.Shared.Extensions;
 using Best.HTTP.Shared.Logger;
@@ -11,7 +12,9 @@ using DCL.WebRequests.CustomDownloadHandlers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 using static DCL.WebRequests.WebRequestHeaders;
 
 namespace DCL.WebRequests.HTTP2
@@ -62,22 +65,27 @@ namespace DCL.WebRequests.HTTP2
 
         private static readonly string[] CACHE_CONTROL_HEADERS =
         {
+            CONTENT_LENGTH_HEADER,
             "cache-control",
             "etag",
             "expires",
             "last-modified",
+            "age",
+            "date",
         };
-        internal static readonly DictionaryObjectPool<string, List<string>> HEADERS_POOL
-            = new (dictionaryInstanceDefaultCapacity: CACHE_CONTROL_HEADERS.Length + 3, defaultCapacity: 10);
+
+        //internal static readonly DictionaryObjectPool<string, List<string>> HEADERS_POOL
+        //    = new (dictionaryInstanceDefaultCapacity: CACHE_CONTROL_HEADERS.Length + 3, defaultCapacity: 10, equalityComparer: StringComparer.OrdinalIgnoreCase);
 
         internal readonly int fullFileSize;
 
-        private Mode opMode;
         private CachedPartialData cachedPartialData;
         private MemoryStreamPartialData memoryStreamPartialData;
         private FileStreamData fileStreamData;
 
         public override bool IsFullyDownloaded => opMode is Mode.COMPLETE_DATA_CACHED or Mode.COMPLETE_SEGMENTED_STREAM;
+
+        internal Mode opMode { get; private set; }
 
         internal long partialContentLength => opMode switch
                                               {
@@ -90,6 +98,15 @@ namespace DCL.WebRequests.HTTP2
         {
             this.fullFileSize = fullFileSize;
         }
+
+        internal ref readonly CachedPartialData GetCachedPartialData() =>
+            ref cachedPartialData;
+
+        internal ref readonly MemoryStreamPartialData GetMemoryStreamPartialData() =>
+            ref memoryStreamPartialData;
+
+        internal ref readonly FileStreamData GetFileStreamData() =>
+            ref fileStreamData;
 
         internal static bool TryInitializeFromCache(HTTPCache cache, Hash128 requestHash, out Http2PartialDownloadDataStream? partialStream)
         {
@@ -107,13 +124,13 @@ namespace DCL.WebRequests.HTTP2
             if (stream == null)
                 return false;
 
-            if (!TryReadHeaders(cache, requestHash, out PoolExtensions.Scope<Dictionary<string, List<string>>> headers))
+            if (!TryReadHeaders(cache, requestHash, out Dictionary<string, List<string>> headers))
             {
                 cache.EndReadContent(requestHash, null);
                 return false;
             }
 
-            if (!TryParseCachedContentSize(headers.Value, out int cachedSize, out int fullFileSize))
+            if (!TryParseCachedContentSize(headers, out int cachedSize, out int fullFileSize))
             {
                 cache.EndReadContent(requestHash, null);
                 return false;
@@ -143,19 +160,19 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
-        private static bool TryReadHeaders(HTTPCache cache, Hash128 hash, out PoolExtensions.Scope<Dictionary<string, List<string>>> pooledHeaders)
+        private static bool TryReadHeaders(HTTPCache cache, Hash128 hash, out Dictionary<string, List<string>> headers)
         {
             try
             {
                 using Stream? headersStream = HTTPManager.IOService.CreateFileStream(cache.GetHeaderPathFromHash(hash), FileStreamModes.OpenRead);
 
-                pooledHeaders = HEADERS_POOL.AutoScope();
-                Http2Utils.LoadHeaders(headersStream, pooledHeaders.Value);
+                headers = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                Http2Utils.LoadHeaders(headersStream, headers);
                 return true;
             }
             catch (Exception e)
             {
-                pooledHeaders = default(PoolExtensions.Scope<Dictionary<string, List<string>>>);
+                headers = null!;
                 ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"Failed to read headers from cache: {e}");
                 return false;
             }
@@ -164,44 +181,51 @@ namespace DCL.WebRequests.HTTP2
         /// <summary>
         ///     Called when the downloading of the next chunk has started
         /// </summary>
-        /// <returns>"Range" headers are supported by the server</returns>
-        public static bool TryInitializeFromHeaders(HTTPCache cache, HTTPRequest request, HTTPResponse response, ref Http2PartialDownloadDataStream? partialStream)
+        /// <returns>False if content length could not be resolved</returns>
+        public static bool TryInitializeFromHeaders(HTTPCache cache, HTTPRequest request, Dictionary<string, List<string>> headers, ref Http2PartialDownloadDataStream? partialStream, out int expectedChunkLength)
         {
-            if (!TryPrepareHeaders(out PoolExtensions.Scope<Dictionary<string, List<string>>> headersResult, out int fullFileSize))
+            if (!TryPrepareHeaders(headers, out int fullFileSize, out expectedChunkLength))
             {
                 // if headers are invalid we can't proceed
                 return false;
             }
 
+            // Convert 206 to 200 (Cache does not support partial requests)
+            int statusCode = request.Response.StatusCode;
+
+            if (statusCode == HTTPStatusCodes.PartialContent)
+                statusCode = HTTPStatusCodes.OK;
+
             partialStream ??= new Http2PartialDownloadDataStream(fullFileSize);
-            partialStream.InitializeFromHeaders(cache, request, response, headersResult);
+            partialStream.InitializeFromHeaders(cache, request, statusCode, headers);
             return true;
 
-            bool TryPrepareHeaders(out PoolExtensions.Scope<Dictionary<string, List<string>>> pooledHeaders, out int fullSize)
+            static bool TryPrepareHeaders(Dictionary<string, List<string>> headers, out int fullSize, out int expectedLength)
             {
-                pooledHeaders = default(PoolExtensions.Scope<Dictionary<string, List<string>>>);
                 fullSize = 0;
 
-                // if there is no "Content-Range" header, the server does not support partial requests
-                // to function uniformly it's possible to fall back to the full file download
-                if (!TryParseFullContentSizeFromRangeHeader(response.Headers, out fullSize)
-                    || !TryParseContentSize(response.Headers, out fullSize))
-                    return false;
+                if (!TryParseFromRangeHeader(headers, out fullSize, out expectedLength))
+                {
+                    // if there is no "Content-Range" header, the server does not support partial requests
+                    // to function uniformly it's possible to fall back to the full file download
+                    if (TryParseContentSize(headers, out fullSize))
+                        expectedLength = fullSize;
+                    else return false;
+                }
 
-                pooledHeaders = HEADERS_POOL.AutoScope();
-
-                PreparePartialHeaders(pooledHeaders.Value, response.Headers, fullSize);
+                PreparePartialHeaders(headers, fullSize);
                 return true;
             }
 
             static bool TryParseContentSize(Dictionary<string, List<string>> headers, out int contentSize) =>
                 Http2Utils.TryParseHeader(headers, CONTENT_LENGTH_HEADER, ReportCategory.PARTIAL_LOADING, out contentSize);
 
-            static bool TryParseFullContentSizeFromRangeHeader(Dictionary<string, List<string>> headers, out int fullSize)
+            static bool TryParseFromRangeHeader(Dictionary<string, List<string>> headers, out int fullSize, out int chunkSize)
             {
                 string? fullSizeHeaderValueRaw = headers.GetFirstHeaderValue(CONTENT_RANGE_HEADER);
 
                 fullSize = 0;
+                chunkSize = 0;
 
                 if (fullSizeHeaderValueRaw == null)
                 {
@@ -209,9 +233,9 @@ namespace DCL.WebRequests.HTTP2
                     return false;
                 }
 
-                if (!DownloadHandlersUtils.TryGetFullSize(fullSizeHeaderValueRaw, out fullSize))
+                if (!DownloadHandlersUtils.TryParseContentRange(fullSizeHeaderValueRaw, out fullSize, out chunkSize))
                 {
-                    ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"{CONTENT_RANGE_HEADER} can't be parsed to \"int\"");
+                    ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"{CONTENT_RANGE_HEADER} is not in the expected format: \"int/int\"");
                     return false;
                 }
 
@@ -222,7 +246,7 @@ namespace DCL.WebRequests.HTTP2
         /// <summary>
         ///     Initializes the stream with serving from memory with no assumptions about the content size
         /// </summary>
-        public static Http2PartialDownloadDataStream InitializeFromUnknownSource(HTTPRequest request, HTTPResponse response)
+        public static Http2PartialDownloadDataStream InitializeFromUnknownSource()
         {
             var stream = new Http2PartialDownloadDataStream(int.MaxValue);
 
@@ -233,14 +257,14 @@ namespace DCL.WebRequests.HTTP2
             return stream;
         }
 
-        private void InitializeFromHeaders(HTTPCache cache, HTTPRequest request, HTTPResponse response, PoolExtensions.Scope<Dictionary<string, List<string>>> headersResult)
+        private void InitializeFromHeaders(HTTPCache cache, HTTPRequest request, int statusCode, Dictionary<string, List<string>> headersResult)
         {
             switch (opMode)
             {
                 // No cached data
                 case Mode.UNITIALIZED:
 
-                    if (TryReserveCacheSpace(cache, request, response, headersResult.Value, out CacheWriteHandler writeHandler))
+                    if (TryReserveCacheSpace(cache, request, statusCode, headersResult, out CacheWriteHandler writeHandler))
                     {
                         cachedPartialData = new CachedPartialData(headersResult, cache, HTTPCache.CalculateHash(request.MethodType, request.Uri));
 
@@ -271,13 +295,11 @@ namespace DCL.WebRequests.HTTP2
 
                     using (AutoReleaseBuffer _ = buffer.AsAutoRelease())
                     {
+                        cachedPartialData.MarkInvalid();
                         cachedPartialData.readHandler!.Value.stream.Read(buffer);
                         cachedPartialData.EndCacheRead(request.Context);
 
-                        // Delete Cache Entry
-                        cachedPartialData.DeleteCacheEntry(request.Context);
-
-                        if (TryReserveCacheSpace(cache, request, response, cachedPartialData.pooledHeaders.Value, out writeHandler))
+                        if (TryReserveCacheSpace(cache, request, statusCode, cachedPartialData.headers, out writeHandler))
                         {
                             // When the cache is reserved, the stream is open for write
                             cachedPartialData.writeHandler = writeHandler;
@@ -306,39 +328,14 @@ namespace DCL.WebRequests.HTTP2
 
                 default:
                     // Otherwise the stream was already initialized
-                    LogImproperState(nameof(TryInitializeFromHeaders));
                     return;
             }
-        }
-
-        internal bool TryFinalizeDownloading()
-        {
-            switch (opMode)
-            {
-                case Mode.UNITIALIZED:
-                case Mode.WRITING_TO_DISK_CACHE:
-                case Mode.INCOMPLETE_DATA_CACHED:
-                    LogImproperState(nameof(TryFinalizeDownloading));
-                    return false;
-                case Mode.WRITING_TO_SEGMENTED_STREAM:
-                    if (fullFileSize == int.MaxValue) // Content size is not determined
-                        opMode = Mode.COMPLETE_SEGMENTED_STREAM;
-                    else
-                    {
-                        LogImproperState(nameof(TryFinalizeDownloading));
-                        return false;
-                    }
-
-                    break;
-            }
-
-            return true;
         }
 
         /// <summary>
         ///     Append the next chunk of partial data
         /// </summary>
-        internal bool TryAppend(HTTPResponse response)
+        internal bool TryAppend(BufferSegment segment, LoggingContext loggingContext)
         {
             // Read all available data from the response
 
@@ -355,17 +352,15 @@ namespace DCL.WebRequests.HTTP2
 
                     HTTPCacheContentWriter cacheWriter = cachedPartialData.writeHandler.Value.contentWriter;
 
-                    while (response.DownStream.TryTake(out BufferSegment segment))
-                        cacheWriter.Write(segment);
+                    cacheWriter.Write(segment);
 
                     var processedLength = (int)cacheWriter.ProcessedLength;
 
                     if (processedLength > fullFileSize)
                     {
-                        cachedPartialData.EndCacheWrite(response.Context);
-
                         // delete cache entry if the size has overflown the expectancy
-                        cachedPartialData.DeleteCacheEntry(response.Context);
+                        cachedPartialData.MarkInvalid();
+                        cachedPartialData.EndCacheWrite(loggingContext);
 
                         ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"Processed length {processedLength} is greater than the full file size {fullFileSize}");
                         return false;
@@ -378,13 +373,13 @@ namespace DCL.WebRequests.HTTP2
                     if (processedLength == fullFileSize)
                     {
                         // Flush headers as the response has finished
-                        cachedPartialData.UpdateCacheHeaders(response.Context);
+                        cachedPartialData.UpdateCacheHeaders(loggingContext);
 
                         // Finish the cache write
-                        cachedPartialData.EndCacheWrite(response.Context);
+                        cachedPartialData.EndCacheWrite(loggingContext);
 
                         // Open for reading immediately
-                        cachedPartialData.BeginCacheRead(response.Context);
+                        cachedPartialData.BeginCacheRead(loggingContext);
 
                         opMode = Mode.COMPLETE_DATA_CACHED;
                     }
@@ -396,18 +391,15 @@ namespace DCL.WebRequests.HTTP2
 
                     long streamLength = memoryStreamPartialData.stream.Length;
 
-                    while (response.DownStream.TryTake(out BufferSegment segment))
+                    int segmentLength = segment.Count;
+
+                    if ((streamLength += segmentLength) > fullFileSize)
                     {
-                        int segmentLength = segment.Count;
-
-                        if ((streamLength += segmentLength) > fullFileSize)
-                        {
-                            ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{response.Request.Uri}, Processed length {streamLength} is greater than the full file size {fullFileSize}");
-                            return false;
-                        }
-
-                        memoryStreamPartialData.stream.Write(segment);
+                        ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"Processed length {streamLength} is greater than the full file size {fullFileSize}");
+                        return false;
                     }
+
+                    memoryStreamPartialData.stream.Write(segment);
 
                     if (streamLength == fullFileSize)
                         opMode = Mode.COMPLETE_SEGMENTED_STREAM;
@@ -419,14 +411,24 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
-        private void LogImproperState(string funcName)
+        private void LogImproperState(string funcName, string? context = null)
         {
-            ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{funcName} can't be invoked in the current state: {opMode}");
+            ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{funcName} can't be invoked in the current state: {opMode}\n{context}");
         }
 
-        internal void DisposeAndDiscard()
+        /// <summary>
+        ///     Discards cached results and disposes the stream
+        /// </summary>
+        internal void DiscardAndDispose()
         {
-            cachedPartialData.DeleteCacheEntry();
+            // If the cache is complete don't discard the data
+            switch (opMode)
+            {
+                case Mode.INCOMPLETE_DATA_CACHED:
+                    cachedPartialData.MarkInvalid();
+                    break;
+            }
+
             Dispose();
         }
 
@@ -439,10 +441,8 @@ namespace DCL.WebRequests.HTTP2
                 case Mode.COMPLETE_DATA_CACHED:
                 case Mode.INCOMPLETE_DATA_CACHED:
                     cachedPartialData.EndCacheRead(null);
-                    cachedPartialData.pooledHeaders.Dispose();
                     break;
                 case Mode.WRITING_TO_DISK_CACHE:
-                    cachedPartialData.pooledHeaders.Dispose();
                     cachedPartialData.EndCacheWrite(null);
                     break;
                 case Mode.WRITING_TO_SEGMENTED_STREAM:
@@ -453,35 +453,37 @@ namespace DCL.WebRequests.HTTP2
 
             cachedPartialData = default(CachedPartialData);
             memoryStreamPartialData = default(MemoryStreamPartialData);
+            fileStreamData = default(FileStreamData);
             opMode = Mode.UNITIALIZED;
         }
 
         /// <summary>
         ///     Prepares headers as <see cref="HTTPCache" /> expects
         /// </summary>
-        private static void PreparePartialHeaders(Dictionary<string, List<string>> requestHeaders, Dictionary<string, List<string>> newHeaders, int fullFileSize)
+        private static void PreparePartialHeaders(Dictionary<string, List<string>> requestHeaders, int fullFileSize)
         {
-            // Copy the headers related to caching
-            for (var i = 0; i < CACHE_CONTROL_HEADERS.Length; i++)
+            // Remove all headers that are not in CACHE_CONTROL_HEADERS list
+            using PooledObject<List<string>> pooledList = ListPool<string>.Get(out List<string>? toDelete);
+
+            foreach (string header in requestHeaders.Keys)
             {
-                string header = CACHE_CONTROL_HEADERS[i];
-
-                if (newHeaders.HasHeader(header)) continue;
-
-                List<string>? headerFromResponse = requestHeaders.GetHeaderValues(header);
-                newHeaders.Add(header, headerFromResponse);
+                if (!CACHE_CONTROL_HEADERS.Contains(header, StringComparer.OrdinalIgnoreCase))
+                    toDelete.Add(header);
             }
 
+            foreach (string header in toDelete)
+                requestHeaders.Remove(header);
+
             // Add custom headers
-            newHeaders.AddHeader(CONTENT_LENGTH_HEADER, fullFileSize.ToString()); // Reserve enough memory for the whole file
+            requestHeaders.AddHeader(CONTENT_LENGTH_HEADER, fullFileSize.ToString()); // Reserve enough memory for the whole file
         }
 
         /// <summary>
         ///     Tries to reserve the space for the whole file in the cache and keeps the file open for write expecting the next chunks
         /// </summary>
-        private bool TryReserveCacheSpace(HTTPCache cache, HTTPRequest request, HTTPResponse response, Dictionary<string, List<string>> cacheHeaders, out CacheWriteHandler writeHandler)
+        private bool TryReserveCacheSpace(HTTPCache cache, HTTPRequest request, int statusCode, Dictionary<string, List<string>> cacheHeaders, out CacheWriteHandler writeHandler)
         {
-            HTTPCacheContentWriter? writer = cache.BeginCache(request.MethodType, request.Uri, response.StatusCode, cacheHeaders, request.Context);
+            HTTPCacheContentWriter? writer = cache.BeginCache(request.MethodType, request.Uri, statusCode, cacheHeaders, request.Context, true);
 
             // Writer will be null if an error occurred, the file is served from "file://" or there is not enough space on disk
             writeHandler = default(CacheWriteHandler);
@@ -516,7 +518,7 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
-        private readonly struct CacheWriteHandler
+        internal readonly struct CacheWriteHandler
         {
             internal readonly HTTPCacheContentWriter contentWriter;
 
@@ -526,7 +528,7 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
-        private readonly struct CacheReadHandler
+        internal readonly struct CacheReadHandler
         {
             internal readonly Stream stream;
 
@@ -536,9 +538,9 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
-        private struct CachedPartialData
+        internal struct CachedPartialData
         {
-            internal readonly PoolExtensions.Scope<Dictionary<string, List<string>>> pooledHeaders;
+            internal readonly Dictionary<string, List<string>> headers;
 
             private readonly HTTPCache cache;
             private readonly Hash128 requestHash;
@@ -550,14 +552,21 @@ namespace DCL.WebRequests.HTTP2
             internal CacheWriteHandler? writeHandler;
             internal CacheReadHandler? readHandler;
 
-            public CachedPartialData(PoolExtensions.Scope<Dictionary<string, List<string>>> pooledHeaders, HTTPCache cache, Hash128 requestHash) : this()
+            internal bool invalid;
+
+            public CachedPartialData(Dictionary<string, List<string>> headers, HTTPCache cache, Hash128 requestHash) : this()
             {
-                this.pooledHeaders = pooledHeaders;
+                this.headers = headers;
                 this.cache = cache;
                 this.requestHash = requestHash;
             }
 
-            internal void DeleteCacheEntry(LoggingContext? context = null)
+            internal void MarkInvalid()
+            {
+                invalid = true;
+            }
+
+            private void DeleteCacheEntry(LoggingContext? context = null)
             {
                 cache.Delete(requestHash, context);
             }
@@ -572,12 +581,18 @@ namespace DCL.WebRequests.HTTP2
                 readHandler!.Value.stream.Dispose();
                 cache.EndReadContent(requestHash, loggingContext);
                 readHandler = null;
+
+                if (invalid)
+                    DeleteCacheEntry(loggingContext);
             }
 
             internal void EndCacheWrite(LoggingContext? loggingContext)
             {
                 cache.EndCache(writeHandler!.Value.contentWriter, true, loggingContext);
                 writeHandler = null;
+
+                if (invalid)
+                    DeleteCacheEntry(loggingContext);
             }
 
             /// <summary>
@@ -586,7 +601,6 @@ namespace DCL.WebRequests.HTTP2
             /// </summary>
             internal void UpdateCacheHeaders(LoggingContext? loggingContext)
             {
-                Dictionary<string, List<string>> headers = pooledHeaders.Value;
                 headers.SetHeader(PARTIAL_CONTENT_LENGTH_CUSTOM_HEADER, partialContentLength.ToString());
                 cache.RefreshHeaders(requestHash, headers, loggingContext);
             }

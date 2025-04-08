@@ -39,7 +39,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.WebLoading
             display.EnsureNotNull();
 
             fuse = new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative);
-            webRequests = IWebRequestController.DEFAULT;
+            webRequests = IWebRequestController.UNITY;
 
             Next();
         }

@@ -1,12 +1,17 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Caching;
+using Best.HTTP.Response;
+using Best.HTTP.Shared.Logger;
+using Best.HTTP.Shared.PlatformSupport.Memory;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -51,8 +56,11 @@ namespace DCL.WebRequests.HTTP2
 
             headersInfo = (headersInfo ?? new WebRequestHeadersInfo()).WithRange(chunkStart, chunkEnd);
 
+            var partialFlowCompletionSource = new UniTaskCompletionSource();
+            var partialFlowCts = new CancellationTokenSource();
+
             // Create a get web request
-            PartialDownloadRequest request = this.Create<PartialDownloadRequest, PartialDownloadArguments>(partialArgs, commonArguments, ReportCategory.PARTIAL_LOADING, headersInfo,
+            using PartialDownloadRequest request = this.Create<PartialDownloadRequest, PartialDownloadArguments>(partialArgs, commonArguments, ReportCategory.PARTIAL_LOADING, headersInfo,
                 onRequestCreated: request =>
                 {
                     var nativeRequest = (HTTPRequest)request.nativeRequest;
@@ -60,28 +68,95 @@ namespace DCL.WebRequests.HTTP2
                     // Default Cache should be disabled as Http2PartialDownloadDataStream both partial and non-partial requests
                     nativeRequest.DownloadSettings.DisableCache = true;
 
-                    nativeRequest.DownloadSettings.OnHeadersReceived += (req, resp, headers) =>
-                    {
-                        // If at any stage headers are not correct discard the partial stream and the cached result, as the server does not support any headers
-                        if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, req, resp, ref partialStream))
-                        {
-                            partialStream?.DisposeAndDiscard();
-                            partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource(req, resp);
-                        }
-                    };
+                    // Warning: events are delayed, a data copy is passed to events (such as headers, may allocate heavily)
+                    // But response.Headers are not threadsafe =-( so we have to use a copy to avoid random `null` errors
 
-                    nativeRequest.DownloadSettings.OnDownloadProgress += (req, _, _) => { partialStream!.TryAppend(req.Response); };
+                    nativeRequest.DownloadSettings.OnHeadersReceived += (_, _, headers) => { PartialFlowAsync(nativeRequest, headers, partialFlowCts.Token).Forget(); };
+
+                    async UniTask PartialFlowAsync(HTTPRequest request, Dictionary<string, List<string>> headers, CancellationToken ct)
+                    {
+                        try
+                        {
+                            await UniTask.SwitchToThreadPool();
+
+                            if (ct.IsCancellationRequested)
+                                return;
+
+                            // Check headers
+                            // If at any stage headers are not correct discard the partial stream and the cached result, as the server does not support any headers
+                            if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, request, headers, ref partialStream, out int expectedChunkLength))
+                            {
+                                partialStream?.DiscardAndDispose();
+                                partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource();
+                            }
+
+                            long startPartialLength = partialStream!.partialContentLength;
+
+                            // Wait for incoming data
+                            DownloadContentStream downStream;
+
+                            while ((downStream = request.Response.DownStream) == null)
+                            {
+                                if (ct.IsCancellationRequested)
+                                    return;
+
+                                await UniTask.Yield();
+                            }
+
+                            LoggingContext? loggingContext = request.Context;
+
+                            // Keep non-blocking reading from the download stream
+
+                            while (!downStream.IsCompleted)
+                            {
+                                if (ct.IsCancellationRequested)
+                                    return;
+
+                                if (downStream.TryTake(out BufferSegment segment))
+                                    if (!partialStream!.TryAppend(segment, loggingContext))
+                                    {
+                                        downStream.Dispose();
+                                        throw CreateException($"{nameof(Http2PartialDownloadDataStream.TryAppend)} failed");
+                                    }
+
+                                await UniTask.Yield();
+                            }
+
+                            // Check that enough data was downloaded
+                            if (expectedChunkLength != 0)
+                            {
+                                var downloadLength = (int)(partialStream.partialContentLength - startPartialLength);
+
+                                if (downloadLength != expectedChunkLength)
+                                    throw CreateException($"Expected to load {expectedChunkLength} bytes, but loaded {downloadLength} bytes");
+                            }
+
+                            partialFlowCompletionSource.TrySetResult();
+                        }
+                        catch (Exception e)
+                        {
+                            partialStream?.DiscardAndDispose();
+                            partialFlowCompletionSource.TrySetException(e);
+                        }
+
+                        Exception CreateException(string message) =>
+                            new ($"Exception occured in {nameof(PartialFlowAsync)} {request.Uri}: {message}");
+                    }
                 });
 
             try
             {
-                await request.SendAsync(ct);
+                static async UniTask WaitForRequest(PartialDownloadRequest request, CancellationToken ct)
+                {
+                    using IWebRequest? createdRequest = await request.SendAsync(ct);
+                }
 
-                if (!partialStream!.TryFinalizeDownloading())
-                    throw new Exception("Could not finalize the download of the partial stream");
+                await UniTask.WhenAll(WaitForRequest(request, ct), partialFlowCompletionSource.Task);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                partialFlowCts.Cancel();
+                partialFlowCts.Dispose();
                 partialStream?.Dispose();
                 throw;
             }
@@ -138,9 +213,12 @@ namespace DCL.WebRequests.HTTP2
                 UniTask<HTTPResponse> coreTask = nativeRequest.GetHTTPResponseAsync(ct);
                 var checkBufferCt = coreTask.ToCancellationToken();
 
-                UniTask.WhenAny(
-                    coreTask,
-                    CheckBufferIsFull(nativeRequest, request, reportData, checkBufferCt));
+                if (request.StreamingSupported)
+                    await coreTask;
+                else
+                    await UniTask.WhenAny(
+                        coreTask,
+                        CheckBufferIsFull(nativeRequest, request, reportData, checkBufferCt));
             }
             finally { analyticsContainer.OnRequestFinished(request, adapter); }
 

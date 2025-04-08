@@ -60,14 +60,14 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 w => new LoadNFTShapeSystem(
                     w,
                     new NftShapeCache(),
-                    IWebRequestController.DEFAULT,
+                    IWebRequestController.UNITY,
                     IDiskCache<Texture2DData>.Null.INSTANCE,
                     new IWebContentSizes.Default(
                         new MaxSize
                         {
                             maxSizeInBytes = 300 * 1024 * 1024
                         },
-                        IWebRequestController.DEFAULT
+                        IWebRequestController.UNITY
                     )
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),

@@ -33,27 +33,22 @@ namespace DCL.WebRequests.RequestsHub
 
         private readonly IReadOnlyDictionary<Key, object> map;
 
-        public RequestHub(ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
+        public RequestHub(ITexturesFuse texturesFuse, bool isTextureCompressionEnabled, WebRequestsMode webRequestsMode)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, texturesFuse, isTextureCompressionEnabled));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericGetArguments args) => new GenericGetRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericHeadArguments args) => new GenericHeadRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPostRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPutRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericDeleteRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPatchRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAudioClipArguments args) => new GetAudioClipWebRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller, webRequestsMode == WebRequestsMode.HTTP2));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(envelope, args, controller));
         }
-
-        //     Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
-        //     Add<GenericUploadArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
-        //     Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
-        //     Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
-        //     Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
-        //     Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
-        //     Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-        //     Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
-        //     Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
-        //     Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
-        // }
 
         private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)
             where TArgs: struct

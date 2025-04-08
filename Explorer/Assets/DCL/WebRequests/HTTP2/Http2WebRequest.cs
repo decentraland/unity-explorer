@@ -75,7 +75,9 @@ namespace DCL.WebRequests.HTTP2
 
         public void SetTimeout(int timeout)
         {
-            httpRequest.TimeoutSettings.Timeout = TimeSpan.FromSeconds(timeout);
+            // If zero is passed don't override timeout (it will be 20 seconds for establishing a connection, and no timeout for completing)
+            if (timeout > 0)
+                httpRequest.TimeoutSettings.Timeout = TimeSpan.FromSeconds(timeout);
         }
 
         internal class Http2Response : IWebRequestResponse

@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using ECS.TestSuite;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS;
 using NSubstitute;
 using NUnit.Framework;
@@ -17,25 +18,35 @@ using UnityEngine.TestTools;
 
 namespace SceneRuntime.Factory.Tests
 {
+    [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.HTTP2)]
     public class SceneRuntimeFactoryShould
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
+        private readonly WebRequestsMode webRequestsMode;
+
+        public SceneRuntimeFactoryShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
 
         private V8EngineFactory engineFactory;
         private V8ActiveEngines activeEngines;
         private IWebJsSources webJsSources;
+        private IWebRequestController webRequestController;
 
         [SetUp]
         public void SetUp()
         {
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
-            webJsSources = new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE));
+            webJsSources = new WebJsSources(new JsCodeResolver(webRequestController = TestWebRequestController.Create(webRequestsMode)));
         }
 
         [TearDown]
         public void TearDown()
         {
+            TestWebRequestController.RestoreCache();
             activeEngines.Clear();
         }
 
@@ -44,7 +55,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                var factory = new SceneRuntimeFactory(webRequestController,
                     new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
 
                 var sourceCode = @"
@@ -78,7 +89,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                var factory = new SceneRuntimeFactory(webRequestController,
                     new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
@@ -102,7 +113,7 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+            var factory = new SceneRuntimeFactory(webRequestController,
                 new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
             var sourceCode = "console.log('Hello, world!');";
 

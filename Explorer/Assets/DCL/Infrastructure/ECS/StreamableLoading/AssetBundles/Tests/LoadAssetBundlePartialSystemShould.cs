@@ -1,51 +1,65 @@
 ﻿using AssetManagement;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
-using DCL.WebRequests.RequestsHub;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Cache.Disk;
-using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Utility.Types;
 using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
-    [Ignore("Currently ignored as partial flow has been disabled")]
-    public class LoadAssetBundlePartialSystemShould :  UnitySystemTestBase<LoadAssetBundleSystem>
+    public class LoadAssetBundlePartialSystemShould : UnitySystemTestBase<PartialLoadAssetBundleSystem>
     {
         //size 64800
-        private string assetPath => $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
-        private const int REQUESTS_COUNT = 5;
-        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Shared;
+        private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
 
+        private const string REAL_ASSET_HASH = "bafybeigyvd42xyc3uh4n2dbol26jigyynbpewvhpnq6tc355y3kqc5hfra";
+
+        // 1.7 MB
+        private static readonly string REAL_ASSET_URL =
+#if UNITY_STANDALONE_WIN
+            $"https://ab-cdn.decentraland.org/v36/bafkreia5mfpavvkbqm7qw6by7uzjodqq5nfuf5t2b5b46cquq54cunihxu/{REAL_ASSET_HASH}_windows";
+#endif
+
+#if UNITY_STANDALONE_OSX
+            $"https://ab-cdn.decentraland.org/v36/bafkreia5mfpavvkbqm7qw6by7uzjodqq5nfuf5t2b5b46cquq54cunihxu/{REAL_ASSET_HASH}_mac";
+#endif
+
+        private static readonly string NOT_EXISTENT_EMBEDDED_URL =
+            $"file://{Application.dataPath + $"/../TestResources/AssetBundles/{REAL_ASSET_HASH}"}";
+
+        // 512KB
+        private const long CHUNK_SIZE = 512 * 1024;
+
+        private IWebRequestController webRequestController;
         private List<ABPromise> promises;
 
         [SetUp]
         public void Setup()
         {
-            promises = new List<ABPromise>(REQUESTS_COUNT);
+            promises = new List<ABPromise>();
+
+            webRequestController = TestWebRequestController.Create(WebRequestsMode.HTTP2,
+                TestWebRequestController.InitializeCache(), CHUNK_SIZE);
+
+            system = CreateSystem(webRequestController);
+            system.Initialize();
+        }
+
+        [TearDown]
+        public void RestoreCache()
+        {
+            TestWebRequestController.RestoreCache();
         }
 
         [TearDown]
@@ -57,31 +71,39 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             AssetBundle.UnloadAllAssetBundles(false);
         }
 
-        // TODO re-write
-        /*[Test]
-        public async Task ParallelABLoadsWithCacheShould()
+        /// <summary>
+        ///     The first set of ABs is loaded from Embedded (not available)
+        ///     The second set is loaded from Web (available)
+        /// </summary>
+        [Test]
+        [TestCase(1, 1)]
+        [TestCase(2, 2)]
+        [TestCase(10, 5)]
+        [TestCase(5, 10)]
+        public async Task LoadParallelABsFromDifferentSources(int embeddedCount, int webCount)
         {
-            IDiskCache<PartialLoadingState> diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = Substitute.For<IWebRequestController>();
-            system = CreateSystem(webRequestController, diskCachePartials);
-            system.Initialize();
-            byte[] fileBytes = File.ReadAllBytes(assetPath);
-            var partialLoadingStateInCache = new PartialLoadingState(fileBytes.Length);
-            partialLoadingStateInCache.AppendData(fileBytes);
+            // Create embedded and web ABs promises
+            // Wait for all of them
+            // There should be no exception
 
-            diskCachePartials.ContentAsync(Arg.Any<HashKey>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                             .Returns(new UniTask<EnumResult<Option<PartialLoadingState>, TaskError>>(EnumResult<Option<PartialLoadingState>, TaskError>.SuccessResult(Option<PartialLoadingState>.Some(partialLoadingStateInCache))));
+            promises = new List<ABPromise>(embeddedCount + webCount);
 
-            for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewABPromise());
+            for (var i = 0; i < embeddedCount; i++)
+                promises.Add(NewABPromise(NOT_EXISTENT_EMBEDDED_URL, AssetSource.EMBEDDED));
 
-            system.Update(0);
+            for (var i = 0; i < webCount; i++)
+                promises.Add(NewABPromise(REAL_ASSET_URL, AssetSource.WEB));
 
-            List<AssetPromise<AssetBundleData, GetAssetBundleIntention>> resolvedPromises = new List<ABPromise>();
-            foreach (ABPromise assetPromise in promises)
+            system!.Update(0);
+
+            var resolvedPromises = new ABPromise[promises.Count];
+
+            async UniTask WaitForPromise(int index)
             {
-                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskWithoutDestroyAsync(world);
-                resolvedPromises.Add(prom);
+                resolvedPromises[index] = await promises[index].ToUniTaskWithoutDestroyAsync(world);
             }
+
+            await UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i)));
 
             foreach (var assetPromise in resolvedPromises)
             {
@@ -91,47 +113,42 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public async Task ParallelABLoadsWithoutCacheShould()
+        [TestCase(2)]
+        [TestCase(10)]
+        [TestCase(30)]
+        public async Task SharePartialStream(int promisesCount)
         {
-            var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new DefaultWebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(ITexturesFuse.NewDefault(), true));
-            system = CreateSystem(webRequestController, diskCachePartials);
-            system.Initialize();
+            // No matter how many promises to the same sources are created there should be only one (the last one) to own the stream
+            for (var i = 0; i < promisesCount; i++) promises.Add(NewABPromise());
 
-            //Mocking an empty result from the cache to force the webrequest controller flow
-            diskCachePartials.ContentAsync(Arg.Any<HashKey>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                             .Returns(new UniTask<EnumResult<Option<PartialLoadingState>, TaskError>>(new EnumResult<Option<PartialLoadingState>, TaskError>()));
+            system!.Update(0);
 
-            for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewABPromiseRemoteAsset(i));
+            var resolvedPromises = new ABPromise[promises.Count];
 
-            system.Update(0);
-
-            List<AssetPromise<AssetBundleData, GetAssetBundleIntention>> resolvedPromises = new List<ABPromise>();
-            foreach (ABPromise assetPromise in promises)
+            async UniTask WaitForPromise(int index)
             {
-                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskWithoutDestroyAsync(world);
-                resolvedPromises.Add(prom);
+                resolvedPromises[index] = await promises[index].ToUniTaskWithoutDestroyAsync(world);
             }
 
+            await UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i)));
+
+            PartialDownloadStream? stream = world.Get<StreamableLoadingState>(promises[0].Entity).PartialDownloadingData.Value.PartialDownloadStream;
+
+            // All streams should be the same
             foreach (var assetPromise in resolvedPromises)
             {
                 Assert.That(assetPromise.Result.HasValue, Is.True);
                 Assert.That(assetPromise.Result.Value.Succeeded, Is.True);
+                Assert.That(world.Get<StreamableLoadingState>(assetPromise.Entity).PartialDownloadingData.Value.PartialDownloadStream, Is.EqualTo(stream));
             }
-        }*/
+        }
 
-        private ABPromise NewABPromiseRemoteAsset(int index)
+        private ABPromise NewABPromise(string url, AssetSource source)
         {
-            string assetUrl;
-            #if UNITY_STANDALONE_WIN
-            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_windows";
-            #endif
-            #if UNITY_STANDALONE_OSX
-            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
-            #endif
-            var intention = new GetAssetBundleIntention(new CommonLoadingArguments(assetUrl));
-            intention.Hash = $"req{index}";
-            var partition = PartitionComponent.TOP_PRIORITY;
+            var intention = GetAssetBundleIntention.FromHash(typeof(GameObject), REAL_ASSET_HASH, source);
+            intention.SetSources(source, source);
+            intention.SetURL(URLAddress.FromString(url));
+            PartitionComponent partition = PartitionComponent.TOP_PRIORITY;
             var assetPromise = ABPromise.Create(world, intention, partition);
             world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
             return assetPromise;
@@ -140,20 +157,13 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private ABPromise NewABPromise()
         {
             var intention = GetAssetBundleIntention.FromHash(typeof(GameObject), "bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda", permittedSources: AssetSource.WEB);
-            var partition = PartitionComponent.TOP_PRIORITY;
+            PartitionComponent? partition = PartitionComponent.TOP_PRIORITY;
             var assetPromise = ABPromise.Create(world, intention, partition);
             world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
             return assetPromise;
         }
 
-        private LoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController) =>
+        private PartialLoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController) =>
             new (world, new NoCache<AssetBundleData, GetAssetBundleIntention>(true, false), webRequestController, new AssetBundleLoadingMutex());
-
-        [TearDown]
-        public void Cleanup()
-        {
-            foreach (ABPromise assetPromise in promises)
-                assetPromise.ForgetLoading(world);
-        }
     }
 }

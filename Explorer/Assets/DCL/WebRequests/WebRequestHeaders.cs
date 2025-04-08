@@ -8,5 +8,11 @@
         internal const string ACCEPT_RANGES_HEADER = "Accept-Ranges";
         internal const string BYTES_RANGE_HEADER = "bytes";
         internal const string RANGE_HEADER = "Range";
+
+        public static bool TryParseUnsigned(string? header, out ulong value)
+        {
+            value = 0;
+            return header != null && ulong.TryParse(header, out value);
+        }
     }
 }

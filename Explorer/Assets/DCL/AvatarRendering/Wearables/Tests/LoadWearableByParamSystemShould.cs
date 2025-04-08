@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
@@ -17,10 +18,14 @@ using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.Lo
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.HTTP2)]
     public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
     {
+        public LoadWearableByParamSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
         private WearableStorage wearableStorage;
+
         private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
 
         private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
@@ -29,14 +34,14 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
         private int totalAmount => 0;
 
-        protected override LoadWearablesByParamSystem CreateSystem()
+        protected override LoadWearablesByParamSystem CreateSystem(IWebRequestController webRequestController)
         {
             wearableStorage = new WearableStorage();
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
+            return new LoadWearablesByParamSystem(world, webRequestController, cache, realmData,
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableStorage);
         }
 

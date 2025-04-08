@@ -3,7 +3,6 @@ using Best.HTTP.Hosts.Connections.HTTP1;
 using Best.HTTP.Shared.Extensions;
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using DCL.Diagnostics;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;

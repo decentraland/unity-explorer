@@ -34,10 +34,13 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
         private readonly IWebRequestController webRequestController;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController)
+        private readonly bool partialDownloadSupported;
+
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, bool partialDownloadSupported)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
+            this.partialDownloadSupported = partialDownloadSupported;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 
@@ -49,8 +52,10 @@ namespace DCL.PluginSystem.World
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
 
-            // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
+            if (partialDownloadSupported)
+                PartialLoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
+            else
+                LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -58,8 +63,10 @@ namespace DCL.PluginSystem.World
             // Asset Bundles
             PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
 
-            // TODO create a runtime ref-counting cache
-            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
+            if (partialDownloadSupported)
+                PartialLoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
+            else
+                LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>

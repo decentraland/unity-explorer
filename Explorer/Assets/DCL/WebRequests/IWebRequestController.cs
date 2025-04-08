@@ -9,12 +9,13 @@ namespace DCL.WebRequests
 {
     public interface IWebRequestController
     {
-        static readonly IWebRequestController DEFAULT = new DefaultWebRequestController(
+        static readonly IWebRequestController UNITY = new DefaultWebRequestController(
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
                 ITexturesFuse.NewDefault(),
-                false
+                false,
+                WebRequestsMode.UNITY
             )
         );
 

@@ -1,5 +1,7 @@
 ﻿using AssetManagement;
+using Best.HTTP.Caching;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -12,6 +14,7 @@ using SceneRunner.Scene.Tests;
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.Tests
 {
@@ -19,9 +22,19 @@ namespace ECS.StreamableLoading.Tests
         where TSystem: LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
+        private readonly WebRequestsMode webRequestsMode;
+
+        protected LoadSystemBaseShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
+
         protected IStreamableCache<TAsset, TIntention> cache;
+        protected IWebRequestController webRequestController;
+        protected HTTPCache httpCache;
 
         private MockedReportScope mockedReportScope;
+
         private IAcquiredBudget budget;
 
         protected AssetPromise<TAsset, TIntention> promise { get; private set; }
@@ -32,7 +45,7 @@ namespace ECS.StreamableLoading.Tests
 
         protected abstract TIntention CreateWrongTypeIntention();
 
-        protected abstract TSystem CreateSystem();
+        protected abstract TSystem CreateSystem(IWebRequestController webRequestController);
 
         [SetUp]
         public void BaseSetUp()
@@ -41,13 +54,16 @@ namespace ECS.StreamableLoading.Tests
 
             cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
             budget = Substitute.For<IAcquiredBudget>();
-            system = CreateSystem();
+            httpCache = TestWebRequestController.InitializeCache();
+            webRequestController = TestWebRequestController.Create(webRequestsMode, httpCache, 1 * 1024 * 1024 * 1024);
+            system = CreateSystem(webRequestController);
             system.Initialize();
         }
 
         [TearDown]
         public void TearDown()
         {
+            TestWebRequestController.RestoreCache();
             mockedReportScope.Dispose();
             promise.LoadingIntention.CommonArguments.CancellationTokenSource?.Cancel();
         }

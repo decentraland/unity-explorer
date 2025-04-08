@@ -32,12 +32,12 @@ namespace DCL.Profiles.Self.Playground
             SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
-                        IWebRequestController.DEFAULT,
+                        IWebRequestController.UNITY,
                         new RealmData(
                             new LogIpfsRealm(
                                 new IpfsRealm(
                                     web3IdentityCache,
-                                    IWebRequestController.DEFAULT,
+                                    IWebRequestController.UNITY,
                                     URLDomain.FromString(url),
                                     URLDomain.EMPTY,
                                     new ServerAbout(

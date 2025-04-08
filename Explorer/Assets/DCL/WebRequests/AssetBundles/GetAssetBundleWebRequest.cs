@@ -8,11 +8,8 @@ namespace DCL.WebRequests
 {
     public class GetAssetBundleWebRequest : TypedWebRequestBase<GetAssetBundleArguments>
     {
-        private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
-
-        internal GetAssetBundleWebRequest(AssetBundleLoadingMutex assetBundleLoadingMutex, RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller, bool partialDownloadEnabled) : base(envelope, args, controller)
+        internal GetAssetBundleWebRequest(RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller, bool partialDownloadEnabled) : base(envelope, args, controller)
         {
-            this.assetBundleLoadingMutex = assetBundleLoadingMutex;
             Http2Supported = partialDownloadEnabled;
         }
 
@@ -39,7 +36,7 @@ namespace DCL.WebRequests
 
             AssetBundle assetBundle;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await assetBundleLoadingMutex.AcquireAsync(ct))
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await Args.LoadingMutex.AcquireAsync(ct))
                 assetBundle = DownloadHandlerAssetBundle.GetContent(unityWebRequest);
 
             string? error = assetBundle == null ? unityWebRequest.downloadHandler.error : null;

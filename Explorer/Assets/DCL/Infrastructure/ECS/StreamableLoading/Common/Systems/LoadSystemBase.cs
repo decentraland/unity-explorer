@@ -157,7 +157,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out StreamableLoadingResult<TAsset> failure))
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
                 {
                     result = failure;
                     return;
@@ -205,7 +205,7 @@ namespace ECS.StreamableLoading.Common.Systems
             state.DisposeBudgetIfExists();
 
             // Special path for partial downloading
-            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: true } } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
+            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: true } } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();
@@ -363,7 +363,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            bool result = cache.IrrecoverableFailures.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), failure);
+            bool result = cache.IrrecoverableFailures.SyncTryAdd(intention.CommonArguments.URL, failure);
             if (result == false) ReportHub.LogError(GetReportData(), $"Irrecoverable failure for {intention} is already added");
             return failure;
         }

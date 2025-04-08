@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using ECS.TestSuite;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS;
 using JetBrains.Annotations;
 using NSubstitute;
@@ -21,10 +22,19 @@ using UnityEngine.TestTools;
 
 namespace SceneRuntime.Tests
 {
+    [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.HTTP2)]
     public class SceneRuntimeShould
     {
+        private readonly WebRequestsMode webRequestsMode;
+
         private IInstancePoolsProvider poolsProvider;
         private ISceneExceptionsHandler sceneExceptionsHandler;
+
+        public SceneRuntimeShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
 
         [SetUp]
         public void SetUp()
@@ -34,12 +44,21 @@ namespace SceneRuntime.Tests
             poolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
         }
 
-        private static SceneRuntimeFactory NewSceneRuntimeFactory()
+        [TearDown]
+        public void RestoreCache()
         {
+            TestWebRequestController.RestoreCache();
+        }
+
+        private SceneRuntimeFactory NewSceneRuntimeFactory()
+        {
+            IWebRequestController webRequestController = TestWebRequestController.Create(webRequestsMode);
+
             var activeEngines = new V8ActiveEngines();
-            return new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(),
+
+            return new SceneRuntimeFactory(webRequestController, new IRealmData.Fake(),
                 new V8EngineFactory(activeEngines), activeEngines,
-                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
+                new WebJsSources(new JsCodeResolver(webRequestController)));
         }
 
         [UnityTest]

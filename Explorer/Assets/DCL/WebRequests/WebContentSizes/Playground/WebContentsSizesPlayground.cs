@@ -31,6 +31,6 @@ namespace DCL.WebRequests.WebContentSizes.Playground
         }
 
         private IWebContentSizes AvailableWebContentSizes() =>
-            webContentSizes ?? new IWebContentSizes.Default(maxSize, IWebRequestController.DEFAULT);
+            webContentSizes ?? new IWebContentSizes.Default(maxSize, IWebRequestController.UNITY);
     }
 }

@@ -10,9 +10,11 @@ using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
     public class LoadAssetBundleSystemShould : LoadSystemBaseShould<LoadAssetBundleSystem, AssetBundleData, GetAssetBundleIntention>
     {
+        public LoadAssetBundleSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
         [TearDown]
         public void UnloadBundle()
         {
@@ -36,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         protected override GetAssetBundleIntention CreateWrongTypeIntention() =>
             new (new CommonLoadingArguments(wrongTypePath));
 
-        protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, IWebRequestController.DEFAULT, new AssetBundleLoadingMutex());
+        protected override LoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController) =>
+            new (world, cache, webRequestController, new AssetBundleLoadingMutex());
     }
 }

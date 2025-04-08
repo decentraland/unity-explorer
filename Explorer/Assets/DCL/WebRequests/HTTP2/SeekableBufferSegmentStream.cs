@@ -1,4 +1,5 @@
-﻿using Best.HTTP.Shared.PlatformSupport.Memory;
+﻿using Best.HTTP;
+using Best.HTTP.Shared.PlatformSupport.Memory;
 using Best.HTTP.Shared.Streams;
 using System;
 using System.IO;
@@ -8,6 +9,13 @@ namespace DCL.WebRequests.HTTP2
     /// <summary>
     ///     A thread-safe, non-destructive, seekable stream built on top of BufferSegmentStream
     ///     that complies with Unity AssetBundle loading requirements.
+    ///     <remarks>
+    ///         <list type="bullet">
+    ///             <item>Consists of the original <see cref="BufferSegment" /> that were allocated by <see cref="HTTPResponse.DownStream" /></item>
+    ///             <item>The ownership of the segments is transferred to this stream from the original <see cref="HTTPResponse.DownStream" /> when they are being read</item>
+    ///             <item>The segments are disposed upon Dispose of this stream: they will return to the original pool of the BestHTTP</item>
+    ///         </list>
+    ///     </remarks>
     /// </summary>
     public class SeekableBufferSegmentStream : BufferSegmentStream
     {

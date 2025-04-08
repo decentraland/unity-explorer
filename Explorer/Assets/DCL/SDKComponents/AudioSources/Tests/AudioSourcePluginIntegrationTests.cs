@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.AudioClips.Tests;
@@ -34,7 +35,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             // Create systems
             startLoadingSystem = StartAudioClipLoadingSystemShould.CreateSystem(world);
-            loadAudioClipSystem = LoadAudioClipSystemShould.CreateSystem(world);
+            loadAudioClipSystem = LoadAudioClipSystemShould.CreateSystem(world, TestWebRequestController.Create(WebRequestsMode.UNITY, TestWebRequestController.InitializeCache()));
             updateAudioSourceSystem = UpdateAudioSourceSystemShould.CreateSystem(world);
 
             startLoadingSystem.Initialize();
@@ -52,6 +53,8 @@ namespace DCL.SDKComponents.AudioSources.Tests
         [TearDown]
         public void TearDown()
         {
+            TestWebRequestController.RestoreCache();
+
             startLoadingSystem?.Dispose();
             loadAudioClipSystem?.Dispose();
             updateAudioSourceSystem?.Dispose();

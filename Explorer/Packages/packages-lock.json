@@ -96,6 +96,15 @@
       },
       "url": "https://package.openupm.com"
     },
+    "com.tivadar.best.http": {
+      "version": "file:D:/Decentraland/unity-explorer-packages/BestHTTP",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.burst": "1.8.19",
+        "com.unity.profiling.core": "1.0.0"
+      }
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,

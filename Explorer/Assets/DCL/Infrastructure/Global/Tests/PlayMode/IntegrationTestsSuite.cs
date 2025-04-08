@@ -53,7 +53,7 @@ namespace Global.Tests.PlayMode
 
             IWebJsSources webJsSources = new WebJsSources(
                 new JsCodeResolver(
-                    IWebRequestController.DEFAULT
+                    IWebRequestController.UNITY
                 )
             );
 

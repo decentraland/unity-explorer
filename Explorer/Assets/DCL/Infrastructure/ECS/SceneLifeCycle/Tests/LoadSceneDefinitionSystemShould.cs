@@ -11,9 +11,12 @@ using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.HTTP2)]
+    [TestFixture(WebRequestsMode.UNITY)]
     public class LoadSceneDefinitionSystemShould : LoadSystemBaseShould<LoadSceneDefinitionSystem, SceneEntityDefinition, GetSceneDefinition>
     {
+        public LoadSceneDefinitionSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Content/bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Content/non_existing"}";
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
@@ -27,8 +30,8 @@ namespace ECS.SceneLifeCycle.Tests
         protected override GetSceneDefinition CreateWrongTypeIntention() =>
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
-        protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestSuite.TestWebRequestController.INSTANCE, cache);
+        protected override LoadSceneDefinitionSystem CreateSystem(IWebRequestController webRequestController) =>
+            new (world, webRequestController, cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {

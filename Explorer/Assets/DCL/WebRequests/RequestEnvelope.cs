@@ -63,15 +63,15 @@ namespace DCL.WebRequests
             HeadersInfo.Dispose();
         }
 
-        private void AssignHeaders(IWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)
+        private void AssignHeaders(IWebRequest webRequest, IWeb3IdentityCache web3IdentityCache)
         {
-            SignRequest(unityWebRequest, web3IdentityCache);
-            SetHeaders(unityWebRequest);
+            SignRequest(webRequest, web3IdentityCache);
+            SetHeaders(webRequest);
         }
 
-        private void AssignTimeout(IWebRequest unityWebRequest)
+        private void AssignTimeout(IWebRequest webRequest)
         {
-            unityWebRequest.SetTimeout(CommonArguments.Timeout);
+            webRequest.SetTimeout(CommonArguments.Timeout);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
