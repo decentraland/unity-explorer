@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 
@@ -20,6 +18,8 @@ namespace DCL.Chat.History
 
         private const string LOCAL_USER_TRUE_VALUE = "T";
         private const string LOCAL_USER_FALSE_VALUE = "F";
+        private const char FIELD_SEPARATOR = '\u0002';
+        private const char ROW_SEPARATOR = '\n';
         private readonly StringBuilder builder = new StringBuilder(256); // Enough not to be resized
         private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
@@ -131,17 +131,17 @@ namespace DCL.Chat.History
                 builder.Append(values[i]);
 
                 if(i < values.Length - 1)
-                    builder.Append(",");
+                    builder.Append(FIELD_SEPARATOR);
             }
 
-            builder.Append("\n");
+            builder.Append(ROW_SEPARATOR);
 
             return Encoding.UTF8.GetBytes(builder.ToString());
         }
 
         private static void ParseEntryValues(string entry, string[] values)
         {
-            string[] entryParts = entry.Split(',');
+            string[] entryParts = entry.Split(FIELD_SEPARATOR);
             values[ENTRY_SENT_BY_LOCAL_USER] = (entryParts.Length > ENTRY_SENT_BY_LOCAL_USER) ? entryParts[ENTRY_SENT_BY_LOCAL_USER] : LOCAL_USER_FALSE_VALUE;
             values[ENTRY_MESSAGE] =            (entryParts.Length > ENTRY_MESSAGE)            ? entryParts[ENTRY_MESSAGE] : string.Empty;
             values[ENTRY_USERNAME] =           (entryParts.Length > ENTRY_USERNAME)           ? entryParts[ENTRY_USERNAME] : string.Empty;
