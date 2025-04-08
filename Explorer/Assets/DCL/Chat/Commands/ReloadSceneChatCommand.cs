@@ -2,6 +2,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using ECS.SceneLifeCycle;
+using System;
 
 namespace DCL.Chat.Commands
 {
@@ -20,23 +21,29 @@ namespace DCL.Chat.Commands
         private readonly World globalWorld;
         private readonly Entity playerEntity;
 
-        public ReloadSceneChatCommand(ECSReloadScene reloadScene, World globalWorld, Entity playerEntity)
+        private readonly Func<bool> sceneReadyCondition;
+
+        public ReloadSceneChatCommand(ECSReloadScene reloadScene, World globalWorld, Entity playerEntity, IScenesCache scenesCache)
         {
             this.reloadScene = reloadScene;
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
+
+            this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
         }
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             globalWorld.Add<SceneReloadComponent>(playerEntity);
 
-            if (await reloadScene.TryReloadSceneAsync(ct))
-                return "🟢 Current scene has been reloaded";
+            bool isSuccess = await reloadScene.TryReloadSceneAsync(ct);
+            await UniTask.WaitUntil(sceneReadyCondition, cancellationToken: ct);
 
             globalWorld.Remove<SceneReloadComponent>(playerEntity);
 
-            return "🔴 You need to be in a SDK7 scene to reload it.";
+            return isSuccess
+                ? "🟢 Current scene has been reloaded"
+                : "🔴 You need to be in a SDK7 scene to reload it.";
         }
 
         public struct SceneReloadComponent {}
