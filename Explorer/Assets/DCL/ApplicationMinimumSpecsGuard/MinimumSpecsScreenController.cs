@@ -11,10 +11,12 @@ namespace DCL.ApplicationMinimumSpecsGuard
     {
         private readonly IWebBrowser webBrowser;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public readonly UniTaskCompletionSource HoldingTask;
 
         public MinimumSpecsScreenController(ViewFactoryMethod viewFactory, IWebBrowser webBrowser) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
+            HoldingTask = new UniTaskCompletionSource();
         }
 
         protected override void OnViewInstantiated()
@@ -32,11 +34,12 @@ namespace DCL.ApplicationMinimumSpecsGuard
             viewInstance.ExitButton.onClick.RemoveListener(OnExitClicked);
             viewInstance.ContinueButton.onClick.RemoveListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.RemoveListener(OnReadMoreClicked);
+            HoldingTask?.TrySetResult();
         }
 
         private void OnContinueClicked()
         {
-
+            HoldingTask?.TrySetResult();
         }
 
         private static void OnExitClicked()
@@ -52,6 +55,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
             webBrowser.OpenUrl(DecentralandUrl.MinimumSpecs);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+            HoldingTask.Task;
     }
 }

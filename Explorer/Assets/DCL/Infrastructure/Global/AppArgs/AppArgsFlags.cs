@@ -7,6 +7,7 @@
 
         public const string ENABLE_VERSION_CONTROL = "versionControl";
         public const string SIMULATE_VERSION = "simulateVersion";
+        public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
 
         public const string SCENE_CONSOLE = "scene-console";
 
