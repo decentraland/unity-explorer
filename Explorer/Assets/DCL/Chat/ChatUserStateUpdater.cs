@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
 using DCL.Utilities;
+using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
@@ -23,6 +25,7 @@ namespace DCL.Chat
         private readonly RPCChatPrivacyService rpcChatPrivacyService;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly IFriendsEventBus friendsEventBus;
+        private readonly IRoom chatRoom;
 
 
         /// <summary>
@@ -41,7 +44,7 @@ namespace DCL.Chat
             ChatSettingsAsset settingsAsset,
             RPCChatPrivacyService rpcChatPrivacyService,
             IChatUserStateEventBus chatUserStateEventBus,
-            IChatUsersStateCache chatUsersStateCache, IFriendsEventBus friendsEventBus)
+            IChatUsersStateCache chatUsersStateCache, IFriendsEventBus friendsEventBus, IRoom chatRoom)
         {
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
@@ -51,6 +54,7 @@ namespace DCL.Chat
             this.chatUserStateEventBus = chatUserStateEventBus;
             this.chatUsersStateCache = chatUsersStateCache;
             this.friendsEventBus = friendsEventBus;
+            this.chatRoom = chatRoom;
 
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
             settingsAsset.PrivacySettingsRead += OnPrivacySettingsRead;
@@ -196,6 +200,8 @@ namespace DCL.Chat
             chatUsersStateCache.AddUsersUnavailableToChat(onlyFriendsParticipants[0]);
             chatUsersStateCache.RemoveUsersUnavailableToChat(onlyFriendsParticipants[1]);
 
+
+            //TODO FRAN: I Dont think we need this, as this is done on login and we wont have any visible conversation, just nearby when we log.
             foreach (string participant in onlyFriendsParticipants[0])
             {
                 if (openConversations.Contains(participant))
@@ -227,15 +233,15 @@ namespace DCL.Chat
 
         private void UpdateOwnMetadata(ChatPrivacySettings privacySettings)
         {
-            // TODO FRAN: To update our metadata we can use Room.UpdateLocalMetadata -> we probably need to do this when switching our settings and when first reading them.
-            //Then the other clients receive a notification of metadata updated and update the cache accordingly.
+            var metadata = new ParticipantPrivacyMetadata(privacySettings == ChatPrivacySettings.ALL);
+            chatRoom.UpdateLocalMetadata(metadata.ToJson());
         }
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             switch (update)
             {
-                //If the user is a friend, we add it to the connected friends hashset, if it's not, we need to check if it's blocked.
+                //If the user is a friend, we add it to the connected friends, if it's not, we need to check if it's blocked.
                 case UpdateFromParticipant.Connected:
                     if (friendsCacheProxy.StrictObject.Contains(participant.Identity))
                     {
@@ -261,30 +267,32 @@ namespace DCL.Chat
                     if (friendsCacheProxy.StrictObject.Contains(participant.Identity)) return;
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
-
-                    //We only about their data if it's an open conversation, it's not a friend, we allow messages from ALL and the user it's not blocked.
-                    //TODO FRAN: Parse metadata and if it's not a friend and it's not blocked and its set as not allowing, add to the list
-                    //PARSE -> participant.Metadata -> into a single field with a value of either 1 or 0?
-                    //If the user
+                    //We only care about their data if it's an open conversation, it's not a friend, we allow messages from ALL and the user it's not blocked.
+                    try
+                    {
+                        var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
+                        if (message.AcceptAll)
+                        {
+                            chatUsersStateCache.RemoveUserUnavailableToChat(participant.Identity);
+                            chatUserStateEventBus.OnUserUnavailableToChat(participant.Identity);
+                        }
+                        else
+                        {
+                            chatUsersStateCache.AddUserUnavailableToChat(participant.Identity);
+                            chatUserStateEventBus.OnUserAvailableToChat(participant.Identity);
+                        }
+                    }
+                    catch (Exception) { }
                     break;
                 case UpdateFromParticipant.Disconnected:
-                    if (friendsCacheProxy.StrictObject.Contains(participant.Identity))
-                    {
-                        // TODO FRAN: Check if we really need the info about connected or disconnected users?
-                        // maybe to setup new conversations only?
-                        chatUsersStateCache.RemoveConnectedFriend(participant.Identity);
+                    // TODO FRAN: Check if we really need the info about connected or disconnected users? // maybe to setup new conversations only?
+                    chatUsersStateCache.RemoveConnectedFriend(participant.Identity);
+                    chatUsersStateCache.RemoveConnectedNonFriend(participant.Identity);
+                    chatUsersStateCache.RemovedConnectedBlockedUser(participant.Identity);
 
-                        if (openConversations.Contains(participant.Identity))
-                            chatUserStateEventBus.OnFriendDisconnected(participant.Identity);
-                    }
-                    else
-                    {
-                        chatUsersStateCache.RemoveConnectedNonFriend(participant.Identity);
-                        chatUsersStateCache.RemovedConnectedBlockedUser(participant.Identity);
-
-                        if (openConversations.Contains(participant.Identity))
-                            chatUserStateEventBus.OnNonFriendDisconnected(participant.Identity);
-                    }
+                    //We might need to check if the user was blocked? in that case we might need a new state to show its not connected, but also its blocked.
+                    if (openConversations.Contains(participant.Identity))
+                        chatUserStateEventBus.OnUserDisconnected(participant.Identity);
                     break;
             }
 
@@ -314,7 +322,12 @@ namespace DCL.Chat
 
         private void OnUserUnblocked(string userid)
         {
-            if (!chatUsersStateCache.IsBlockedUserConnected(userid)) return;
+            if (!chatUsersStateCache.IsBlockedUserConnected(userid))
+            {
+                if (openConversations.Contains(userid))
+                    chatUserStateEventBus.OnUserDisconnected(userid);
+                return;
+            }
 
             chatUsersStateCache.AddConnectedNonFriend(userid);
             chatUsersStateCache.RemovedConnectedBlockedUser(userid);
@@ -331,11 +344,12 @@ namespace DCL.Chat
         private void OnYouBlockedProfile(BlockedProfile profile)
         {
             var userId = profile.Address;
-            if (!chatUsersStateCache.IsUserConnected(userId)) return;
-
-            chatUsersStateCache.RemoveConnectedNonFriend(userId);
-            chatUsersStateCache.RemoveConnectedFriend(userId);
-            chatUsersStateCache.AddConnectedBlockedUser(userId);
+            if (chatUsersStateCache.IsUserConnected(userId))
+            {
+                chatUsersStateCache.RemoveConnectedNonFriend(userId);
+                chatUsersStateCache.RemoveConnectedFriend(userId);
+                chatUsersStateCache.AddConnectedBlockedUser(userId);
+            }
 
             if (openConversations.Contains(userId))
                 chatUserStateEventBus.OnUserBlocked(userId);
@@ -345,17 +359,28 @@ namespace DCL.Chat
         {
             if (!chatUsersStateCache.IsUserConnected(userId)) return;
 
-            bool wasFriend = chatUsersStateCache.IsFriendConnected(userId);
             chatUsersStateCache.RemoveConnectedNonFriend(userId);
             chatUsersStateCache.RemoveConnectedFriend(userId);
             chatUsersStateCache.AddConnectedBlockedUser(userId);
 
-            if (!openConversations.Contains(userId)) return;
+            if (openConversations.Contains(userId))
+                chatUserStateEventBus.OnUserDisconnected(userId);
+        }
 
-            if (wasFriend)
-                chatUserStateEventBus.OnFriendDisconnected(userId);
-            else
-                chatUserStateEventBus.OnNonFriendDisconnected(userId);
+        readonly struct ParticipantPrivacyMetadata
+        {
+            public readonly bool AcceptAll;
+            public ParticipantPrivacyMetadata(bool acceptAll)
+            {
+                AcceptAll = acceptAll;
+            }
+
+            public override string ToString() =>
+                $"(AcceptAll: {AcceptAll}";
+
+            public string ToJson() =>
+                JsonUtility.ToJson(this)!;
+
         }
 
     }

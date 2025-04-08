@@ -5,6 +5,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -418,9 +419,8 @@ namespace DCL.Chat
             chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
             chatUserStateEventBus.FriendConnected += OnFriendConnected;
-            chatUserStateEventBus.FriendDisconnected += OnUserDisconnected;
+            chatUserStateEventBus.UserDisconnected += OnUserDisconnected;
             chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
-            chatUserStateEventBus.NonFriendDisconnected += OnUserDisconnected;
             chatUserStateEventBus.UserAvailableToChat += OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat += OnUserUnavailableToChat;
             chatUserStateEventBus.UserBlocked += OnUserBlocked;
@@ -475,9 +475,8 @@ namespace DCL.Chat
             chatHistory.AllChannelsRemoved -= OnChatHistoryAllChannelsRemoved;
 
             chatUserStateEventBus.FriendConnected -= OnFriendConnected;
-            chatUserStateEventBus.FriendDisconnected -= OnUserDisconnected;
+            chatUserStateEventBus.UserDisconnected -= OnUserDisconnected;
             chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
-            chatUserStateEventBus.NonFriendDisconnected -= OnUserDisconnected;
             chatUserStateEventBus.UserAvailableToChat -= OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat -= OnUserUnavailableToChat;
             chatUserStateEventBus.UserBlocked -= OnUserBlocked;
@@ -725,16 +724,23 @@ namespace DCL.Chat
 
         private void OnUserDisconnected(string userId)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserDisconnected {userId}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = ChatUserStateUpdater.ChatUserState.DISCONNECTED;
+
+                //TODO FRAN: we might wanna move this to the Updater, so it has the logic all in one place.
+                if (userBlockingCacheProxy.StrictObject.BlockedUsers.Contains(userId))
+                    state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+
                 viewInstance.SetInputWithUserState(state);
             }
         }
 
         private void OnNonFriendConnected(string userId)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected {userId}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance.CurrentChannelId.Id == userId)
                 GetAndSetupNonFriendUserStateAsync(userId).Forget();
@@ -748,6 +754,7 @@ namespace DCL.Chat
 
         private void OnFriendConnected(string userId)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnFriendConnected {userId}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
@@ -758,6 +765,7 @@ namespace DCL.Chat
 
         private void OnUserBlocked(string userId)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserBlocked {userId}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
@@ -768,6 +776,8 @@ namespace DCL.Chat
 
         private void OnUserUnavailableToChat(string userId)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat {userId}");
+
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
@@ -777,6 +787,8 @@ namespace DCL.Chat
 
         private void OnUserAvailableToChat(string userId)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat {userId}");
+
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);

@@ -1,4 +1,4 @@
-using System;
+using UnityEngine;
 
 namespace DCL.Chat
 {
@@ -7,17 +7,15 @@ namespace DCL.Chat
         public delegate void UserDelegate(string userId);
 
         event UserDelegate? FriendConnected;
-        event UserDelegate? FriendDisconnected;
+        event UserDelegate? UserDisconnected;
         event UserDelegate? NonFriendConnected;
-        event UserDelegate? NonFriendDisconnected;
         event UserDelegate? UserUnavailableToChat;
         event UserDelegate? UserAvailableToChat;
         event UserDelegate? UserBlocked;
 
         void OnFriendConnected(string userId);
-        void OnFriendDisconnected(string userId);
+        void OnUserDisconnected(string userId);
         void OnNonFriendConnected(string userId);
-        void OnNonFriendDisconnected(string userId);
         void OnUserAvailableToChat(string userId);
         void OnUserUnavailableToChat(string userId);
         void OnUserBlocked(string userId);
@@ -26,9 +24,8 @@ namespace DCL.Chat
     public class ChatUserStateEventBus : IChatUserStateEventBus
     {
         public event IChatUserStateEventBus.UserDelegate? FriendConnected;
-        public event IChatUserStateEventBus.UserDelegate? FriendDisconnected;
+        public event IChatUserStateEventBus.UserDelegate? UserDisconnected;
         public event IChatUserStateEventBus.UserDelegate? NonFriendConnected;
-        public event IChatUserStateEventBus.UserDelegate? NonFriendDisconnected;
         public event IChatUserStateEventBus.UserDelegate? UserUnavailableToChat;
         public event IChatUserStateEventBus.UserDelegate? UserAvailableToChat;
         public event IChatUserStateEventBus.UserDelegate? UserBlocked;
@@ -38,19 +35,14 @@ namespace DCL.Chat
             FriendConnected?.Invoke(userId);
         }
 
-        public void OnFriendDisconnected(string userId)
+        public void OnUserDisconnected(string userId)
         {
-            FriendDisconnected?.Invoke(userId);
+            UserDisconnected?.Invoke(userId);
         }
 
         public void OnNonFriendConnected(string userId)
         {
             NonFriendConnected?.Invoke(userId);
-        }
-
-        public void OnNonFriendDisconnected(string userId)
-        {
-            NonFriendDisconnected?.Invoke(userId);
         }
 
         public void OnUserAvailableToChat(string userId)
@@ -67,6 +59,5 @@ namespace DCL.Chat
         {
             UserBlocked?.Invoke(userId);
         }
-
     }
 }
