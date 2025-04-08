@@ -369,16 +369,17 @@ namespace DCL.Chat
                 chatUserStateEventBus.OnUserDisconnected(userId);
         }
 
-        readonly struct ParticipantPrivacyMetadata
+        [Serializable]
+        public struct ParticipantPrivacyMetadata
         {
-            public readonly bool AcceptAll;
+            public bool AcceptAll;
             public ParticipantPrivacyMetadata(bool acceptAll)
             {
                 AcceptAll = acceptAll;
             }
 
             public override string ToString() =>
-                $"(AcceptAll: {AcceptAll}";
+                $"(AcceptAll:{AcceptAll}";
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;
