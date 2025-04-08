@@ -48,6 +48,7 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             int tick = physicsTickEntity.Tick;
             if (tick == lastFixedFrameChecked) return;
+
             lastFixedFrameChecked = tick;
 
             CheckPrimitives();
@@ -93,18 +94,14 @@ namespace ECS.Unity.SceneBoundsChecker
 
             // Process all colliders
 
-            // Updates on the PBGltfContainer may reconfigure its colliders and they will need to be
-            // processed again here even when the Transform didn't change
+            // Visible meshes colliders are created on demand
             if (asset.DecodedVisibleSDKColliders != null)
-                ProcessColliders(asset.DecodedVisibleSDKColliders, force: component.NeedsColliderBoundsCheck);
+                ProcessColliders(asset.DecodedVisibleSDKColliders);
 
-            ProcessColliders(asset.InvisibleColliders, force: component.NeedsColliderBoundsCheck);
-
-            component.NeedsColliderBoundsCheck = false;
-
+            ProcessColliders(asset.InvisibleColliders);
             return;
 
-            void ProcessColliders(List<SDKCollider> colliders, bool force = false)
+            void ProcessColliders(List<SDKCollider> colliders)
             {
                 for (var i = 0; i < colliders.Count; i++)
                 {
@@ -115,7 +112,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
-                    if (!sdkCollider.HasMoved() && !force)
+                    if (!sdkCollider.HasMoved())
                         continue;
 
                     // We use an auxiliary bounds object as Unity physics may take at least an extra frame to
@@ -126,7 +123,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
                     sdkCollider.ForceActiveBySceneBounds(auxiliaryBounds.extents == Vector3.zero
-                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(auxiliaryBounds)));
+                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(sdkCollider.Collider.bounds)));
 
                     // write the structure back
                     colliders[i] = sdkCollider;
