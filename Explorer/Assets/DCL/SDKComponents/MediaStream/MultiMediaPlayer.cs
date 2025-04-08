@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using RenderHeads.Media.AVProVideo;
 using System;
 using UnityEngine;
@@ -14,14 +13,14 @@ namespace DCL.SDKComponents.MediaStream
         STOPPED,
     }
 
-    public readonly struct MultiMediaPlayer : IDisposable
+    public readonly struct MultiMediaPlayer
     {
         public static readonly MultiMediaPlayer EMPTY = new (MediaAddress.Kind.URL, null, null, null);
 
         private readonly MediaAddress.Kind mediaKind;
 
         private readonly MediaPlayer? avProMediaPlayer;
-        private readonly IComponentPool<MediaPlayer>? mediaPlayerComponentPool;
+        private readonly MediaPlayerCustomPool? mediaPlayerCustomPool;
 
         private readonly LivekitPlayer? livekitMediaPlayer;
 
@@ -71,26 +70,26 @@ namespace DCL.SDKComponents.MediaStream
                                      _ => throw new ArgumentOutOfRangeException()
                                  };
 
-        private MultiMediaPlayer(MediaAddress.Kind mediaKind, MediaPlayer? avProMediaPlayer, IComponentPool<MediaPlayer>? mediaPlayerComponentPool, LivekitPlayer? livekitMediaPlayer)
+        private MultiMediaPlayer(MediaAddress.Kind mediaKind, MediaPlayer? avProMediaPlayer, MediaPlayerCustomPool? mediaPlayerCustomPool, LivekitPlayer? livekitMediaPlayer)
         {
             this.mediaKind = mediaKind;
             this.avProMediaPlayer = avProMediaPlayer;
-            this.mediaPlayerComponentPool = mediaPlayerComponentPool;
+            this.mediaPlayerCustomPool = mediaPlayerCustomPool;
             this.livekitMediaPlayer = livekitMediaPlayer;
         }
 
-        public static MultiMediaPlayer NewAvProMediaPlayer(IComponentPool<MediaPlayer> objectPool) =>
-            new (MediaAddress.Kind.URL, objectPool.Get(), objectPool, null);
+        public static MultiMediaPlayer NewAvProMediaPlayer(string url, MediaPlayerCustomPool objectPool) =>
+            new (MediaAddress.Kind.URL, objectPool.GetOrCreateReusableMediaPlayer(url), objectPool, null);
 
         public static MultiMediaPlayer NewLiveKitMediaPlayer(LivekitPlayer videoStream) =>
             new (MediaAddress.Kind.LIVEKIT, null, null, videoStream);
 
-        public void Dispose()
+        public void Dispose(MediaAddress address)
         {
             switch (mediaKind)
             {
                 case MediaAddress.Kind.URL:
-                    mediaPlayerComponentPool!.Release(avProMediaPlayer!);
+                    mediaPlayerCustomPool!.ReleaseMediaPlayer(address.Url, avProMediaPlayer!);
                     break;
                 case MediaAddress.Kind.LIVEKIT:
                     livekitMediaPlayer!.Dispose();
@@ -206,6 +205,11 @@ namespace DCL.SDKComponents.MediaStream
                     //The problem is that video files coming from our content server are flagged as application/octet-stream,
                     //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
                     //This adds a query param for video files from content server to force the correct content type
+
+                    //VideoPlayer may be reused
+                    if (avProMediaPlayer!.MediaOpened)
+                        return;
+
                     string url = mediaAddress.Url;
                     avProMediaPlayer!.OpenMedia(MediaPathType.AbsolutePathOrURL, isFromContentServer ? string.Format("{0}?includeMimeType", url) : url, autoPlay);
                     break;

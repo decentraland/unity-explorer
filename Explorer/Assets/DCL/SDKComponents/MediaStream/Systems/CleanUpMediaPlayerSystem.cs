@@ -58,8 +58,6 @@ namespace DCL.SDKComponents.MediaStream
 
         private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
         {
-            //TODO integrate cleanup
-            //MediaPlayerUtils.CleanUpMediaPlayer(ref mediaPlayerComponent, mediaPlayerPool);
             mediaPlayerComponent.Dispose();
         }
 

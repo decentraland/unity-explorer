@@ -28,7 +28,6 @@ namespace DCL.PluginSystem.World
     {
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IWebRequestController webRequestController;
-        private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
@@ -40,7 +39,6 @@ namespace DCL.PluginSystem.World
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper;
 
         public MediaPlayerPlugin(
-            ECSWorldSingletonSharedDependencies sharedDependencies,
             IExtendedObjectPool<Texture2D> videoTexturePool,
             IPerformanceBudget frameTimeBudget,
             IAssetsProvisioner assetsProvisioner,
@@ -52,7 +50,6 @@ namespace DCL.PluginSystem.World
             FeatureFlagsCache featureFlagsCache)
         {
             this.frameTimeBudget = frameTimeBudget;
-            this.sharedDependencies = sharedDependencies;
             this.videoTexturePool = videoTexturePool;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
@@ -74,7 +71,19 @@ namespace DCL.PluginSystem.World
         {
             VideoPrioritizationSettings videoPrioritizationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct: ct)).Value;
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
-            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData, videoPrioritizationSettings, roomHub, featureFlagsCache);
+
+            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
+                webRequestController,
+                cacheCleaner,
+                videoTexturePool,
+                frameTimeBudget,
+                mediaPlayerPrefab,
+                worldVolumeMacBus,
+                exposedCameraData,
+                videoPrioritizationSettings,
+                roomHub,
+                featureFlagsCache
+            );
         }
 
         [Serializable]

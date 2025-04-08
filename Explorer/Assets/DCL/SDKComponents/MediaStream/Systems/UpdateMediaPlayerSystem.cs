@@ -102,9 +102,9 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
-            if (RequiresURLChange(entity,  ref component, sdkComponent.Url, sdkComponent)) return;
-
             var address = MediaAddress.New(sdkComponent.Url!);
+            if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
+
             HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
         }
@@ -120,21 +120,42 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
-            if (RequiresURLChange(entity,  ref component, sdkComponent.Src, sdkComponent)) return;
-
             var address = MediaAddress.New(sdkComponent.Src!);
+            if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
+
             HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
-        private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, string url, IDirtyMarker sdkComponent)
+        private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
         {
-            if (sdkComponent.IsDirty && component.URL != url && (!sceneData.TryGetMediaUrl(url, out var localMediaUrl) || component.URL != localMediaUrl))
+            var kind = component.MediaAddress.MediaKind;
+
+            switch (kind)
             {
-                MediaPlayerUtils.CleanUpMediaPlayer(ref component, mediaPlayerPool);
-                sdkComponent.IsDirty = false;
-                World.Remove<MediaPlayerComponent>(entity);
-                return true;
+                case MediaAddress.Kind.URL:
+                    if (sdkComponent.IsDirty
+                        && component.MediaAddress != address
+                        && (!sceneData.TryGetMediaUrl(address.Url, out var localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
+                    {
+                        component.Dispose();
+                        sdkComponent.IsDirty = false;
+                        World.Remove<MediaPlayerComponent>(entity);
+                        return true;
+                    }
+
+                    break;
+                case MediaAddress.Kind.LIVEKIT:
+                    if (sdkComponent.IsDirty && component.MediaAddress != address)
+                    {
+                        component.Dispose();
+                        sdkComponent.IsDirty = false;
+                        World.Remove<MediaPlayerComponent>(entity);
+                        return true;
+                    }
+
+                    break;
+                default: throw new ArgumentOutOfRangeException();
             }
 
             return false;
@@ -212,14 +233,6 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
-                //The problem is that video files coming from our content server are flagged as application/octet-stream,
-                //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
-                //This adds a query param for video files from content server to force the correct content type
-
-                //VideoPlayer may be reused
-                //TODO migrate to mediplayer
-                //if (!component.MediaPlayer.MediaOpened)
-
                 component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay);
 
                 if (sdkVideoComponent != null)

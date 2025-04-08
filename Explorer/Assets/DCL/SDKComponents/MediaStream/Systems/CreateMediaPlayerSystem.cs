@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.MediaStream
             IWebRequestController webRequestController,
             ObjectProxy<IRoomHub> roomHub,
             ISceneData sceneData,
-            IComponentPool<MediaPlayer> mediaPlayerPool,
+            MediaPlayerCustomPool mediaPlayerPool,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget
         ) : base(world)
@@ -127,13 +127,11 @@ namespace DCL.SDKComponents.MediaStream
 
             MultiMediaPlayer player = address.MediaKind switch
                                       {
-                                          MediaAddress.Kind.URL => MultiMediaPlayer.NewAvProMediaPlayer(mediaPlayerPool),
+                                          MediaAddress.Kind.URL => MultiMediaPlayer.NewAvProMediaPlayer(url, mediaPlayerPool),
                                           MediaAddress.Kind.LIVEKIT => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(roomHub.StrictObject)),
                                           _ => throw new ArgumentOutOfRangeException()
                                       };
 
-            //TODO integrate mediapool
-            //MediaPlayer mediaPlayer = mediaPlayerPool.GetOrCreateReusableMediaPlayer(url);
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = player,
