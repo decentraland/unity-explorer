@@ -104,36 +104,36 @@ namespace DCL.Chat
         {
             //If it's a friend we just return its status
             if (friendsCacheProxy.StrictObject.Contains(userId))
-                return chatUsersStateCache.IsFriendConnected(userId) ? ChatUserState.Connected : ChatUserState.Disconnected;
+                return chatUsersStateCache.IsFriendConnected(userId) ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED;
 
             //If it's not a friend, we check if its connected and depending on that, we check if we can actually write to them or not.
             if (chatUsersStateCache.IsNonFriendConnected(userId))
             {
                 if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
-                    return ChatUserState.PrivateMessagesBlockedByOwnUser;
+                    return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
 
                 //TODO FRAN: here we should do a request to BE checking if the user accepts messages from non-friends
 
                 if (chatUsersStateCache.IsUserUnavailableToChat(userId))
-                    return ChatUserState.PrivateMessagesBlocked;
+                    return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
 
-                return ChatUserState.Connected;
+                return ChatUserState.CONNECTED;
             }
 
             //If user isn't connected, it means it's either offline (or its blocking us) or we are blocking them, in which case we show different text.
             if (userBlockingCacheProxy.StrictObject.BlockedByUsers.Contains(userId))
-                return ChatUserState.BlockedByOwnUser;
+                return ChatUserState.BLOCKED_BY_OWN_USER;
 
-            return ChatUserState.Disconnected;
+            return ChatUserState.DISCONNECTED;
         }
 
         public enum ChatUserState
         {
-            Connected, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
-            BlockedByOwnUser, //Own user blocked the other user
-            PrivateMessagesBlockedByOwnUser, //Own user has privacy settings set to ONLY FRIENDS
-            PrivateMessagesBlocked, //The other user has its privacy settings set to ONLY FRIENDS
-            Disconnected //The other user is either offline or has blocked the own user.
+            CONNECTED, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
+            BLOCKED_BY_OWN_USER, //Own user blocked the other user
+            PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
+            PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
+            DISCONNECTED //The other user is either offline or has blocked the own user.
         }
 
         public void AddConversation(string conversationId)
@@ -163,7 +163,6 @@ namespace DCL.Chat
             {
                 if (openConversations.Contains(participant))
                     chatUserStateEventBus.OnUserAvailableToChat(participant);
-
             }
         }
 
@@ -185,7 +184,7 @@ namespace DCL.Chat
 
         private void UpdateOwnMetadata(ChatPrivacySettings privacySettings)
         {
-            //To update our metadata we can use Room.UpdateLocalMetadata -> we probably need to do this when switching our settings and when first reading them.
+            // TODO FRAN: To update our metadata we can use Room.UpdateLocalMetadata -> we probably need to do this when switching our settings and when first reading them.
             //Then the other clients receive a notification of metadata updated and update the cache accordingly.
         }
 
@@ -193,7 +192,7 @@ namespace DCL.Chat
         {
             switch (update)
             {
-                //If the user is a friend, we add it to the connected friends hashset, if its not, we need to check if its blocked.
+                //If the user is a friend, we add it to the connected friends hashset, if it's not, we need to check if it's blocked.
                 case UpdateFromParticipant.Connected:
                     if (friendsCacheProxy.StrictObject.Contains(participant.Identity))
                     {
@@ -214,7 +213,7 @@ namespace DCL.Chat
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
-                    //Parse metadata and if its not a friend and its not blocked and its set as not allowing, add to the list
+                    //TODO FRAN: Parse metadata and if it's not a friend and it's not blocked and its set as not allowing, add to the list
                     break;
                 case UpdateFromParticipant.Disconnected:
                     if (friendsCacheProxy.StrictObject.Contains(participant.Identity))

@@ -49,11 +49,9 @@ MonoBehaviour:
     - <GroupTitle>k__BackingField: Notifications
       <Modules>k__BackingField:
       - rid: 4494877371389181952
-      - rid: 4494877371389181953
     - <GroupTitle>k__BackingField: Messages
       <Modules>k__BackingField:
       - rid: 4494877371389181954
-      - rid: 4494877371389181955
   references:
     version: 2
     RefIds:
@@ -100,18 +98,6 @@ MonoBehaviour:
           - None
           defaultOptionIndex: 1
         <Feature>k__BackingField: 7
-    - rid: 4494877371389181953
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Private Chats
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 0
-          isMultiselect: 0
-          options: []
-          defaultOptionIndex: 0
-        <Feature>k__BackingField: 8
     - rid: 4494877371389181954
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -126,21 +112,6 @@ MonoBehaviour:
           - Everybody
           defaultOptionIndex: 1
         <Feature>k__BackingField: 9
-    - rid: 4494877371389181955
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: In-World Chat Bubbles
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 0
-          isMultiselect: 0
-          options:
-          - All
-          - Only Nearby
-          - None
-          defaultOptionIndex: 0
-        <Feature>k__BackingField: 10
     - rid: 4916151837425664002
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

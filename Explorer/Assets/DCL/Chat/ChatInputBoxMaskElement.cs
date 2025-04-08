@@ -17,16 +17,16 @@ namespace DCL.Chat
             //depending on state we change the text.
             switch (userState)
             {
-                case ChatUserStateUpdater.ChatUserState.BlockedByOwnUser:
+                case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
                     this.maskText.SetText(BLOCKED_BY_OWN_MASK);
                     break;
-                case ChatUserStateUpdater.ChatUserState.PrivateMessagesBlockedByOwnUser:
+                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
                     this.maskText.SetText(ONLY_FRIENDS_OWN_MASK);
                     break;
-                case ChatUserStateUpdater.ChatUserState.PrivateMessagesBlocked:
+                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
                     this.maskText.SetText(ONLY_FRIENDS_MASK);
                     break;
-                case ChatUserStateUpdater.ChatUserState.Disconnected:
+                case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
                     this.maskText.SetText(OFFLINE_MASK);
                     break;
             }
