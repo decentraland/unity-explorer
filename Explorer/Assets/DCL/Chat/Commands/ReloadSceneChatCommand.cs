@@ -36,14 +36,18 @@ namespace DCL.Chat.Commands
         {
             globalWorld.Add<SceneReloadComponent>(playerEntity);
 
-            bool isSuccess = await reloadScene.TryReloadSceneAsync(ct);
-            await UniTask.WaitUntil(sceneReadyCondition, cancellationToken: ct);
-
-            globalWorld.Remove<SceneReloadComponent>(playerEntity);
-
-            return isSuccess
-                ? "🟢 Current scene has been reloaded"
-                : "🔴 You need to be in a SDK7 scene to reload it.";
+            try
+            {
+                bool isSuccess = await reloadScene.TryReloadSceneAsync(ct);
+                await UniTask.WaitUntil(sceneReadyCondition, cancellationToken: ct);
+                return isSuccess
+                    ? "🟢 Current scene has been reloaded"
+                    : "🔴 You need to be in a SDK7 scene to reload it.";
+            }
+            finally
+            {
+                globalWorld.Remove<SceneReloadComponent>(playerEntity);
+            }
         }
 
         public struct SceneReloadComponent {}
