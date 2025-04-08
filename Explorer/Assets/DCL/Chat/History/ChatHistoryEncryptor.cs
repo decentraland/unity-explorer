@@ -109,7 +109,7 @@ namespace DCL.Chat.History
         public void SetNewEncryptionKey(string newEncryptionKey)
         {
             byte[] hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory; // SHA256
-
+ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
             cryptoProvider.Clear();
             cryptoProvider.Key = hashedEncryptionKey;
             cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
