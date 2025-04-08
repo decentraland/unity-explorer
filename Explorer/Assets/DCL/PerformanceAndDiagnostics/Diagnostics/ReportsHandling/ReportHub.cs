@@ -75,7 +75,7 @@ namespace DCL.Diagnostics
         /// <param name="message">Message</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
         [HideInCallstack]
-        [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
+ //       [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
@@ -166,21 +166,21 @@ namespace DCL.Diagnostics
             }
 
             [HideInCallstack]
-            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
+  //          [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
             public void Log(object message, ReportHandler reportToHandlers = ReportHandler.All)
             {
                 ReportHub.Log(reportData, message, reportToHandlers);
             }
 
             [HideInCallstack]
-            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
+ //           [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
             public void Log(object message)
             {
                 ReportHub.Log(reportData, message);
             }
 
             [HideInCallstack]
-            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
+//            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
             public void LogError(object message)
             {
                 ReportHub.LogError(reportData, message);
