@@ -133,8 +133,6 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
-            ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
-
             chatController = new ChatController(
                 () =>
                 {
@@ -162,7 +160,6 @@ namespace DCL.PluginSystem.Global
                 friendsCacheProxy,
                 privacySettings,
                 friendsEventBus,
-                loadingStatus,
                 chatStorage
             );
 
@@ -182,7 +179,7 @@ namespace DCL.PluginSystem.Global
 
         private void OnIdentityChanged()
         {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
 

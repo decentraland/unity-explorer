@@ -326,6 +326,17 @@ namespace DCL.Chat
             }
         }
 
+        public void SetupInitialConversationToolbarStatusIconForUsers(HashSet<string> userIds)
+        {
+            foreach (var channelId in channels!.Keys)
+            {
+                conversationsToolbar.UpdateConnectionStatusIcon(channelId,
+                    userIds.Contains(channelId.Id) ?
+                    OnlineStatus.ONLINE :
+                    OnlineStatus.OFFLINE);
+            }
+        }
+
         private void Start()
         {
             IsUnfolded = true;

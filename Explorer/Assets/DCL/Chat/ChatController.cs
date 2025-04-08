@@ -385,7 +385,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants, loadingStatus);
+            viewInstance.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             //We start processing messages once the view is ready
@@ -410,6 +410,7 @@ namespace DCL.Chat
             viewInstance.FoldingChanged += OnViewFoldingChanged;
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
             viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
+            viewInstance.ConversationSelected += OnSelectConversation;
 
             OnFocus();
 
@@ -418,8 +419,6 @@ namespace DCL.Chat
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
-            //TODO FRAN: When we merge chat history, we can properly load the opened conversations here.
-            chatUserStateUpdater.Initialize(new List<string>());
             chatUserStateEventBus.FriendConnected += OnFriendConnected;
             chatUserStateEventBus.FriendDisconnected += OnFriendDisconnected;
             chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
@@ -427,13 +426,16 @@ namespace DCL.Chat
             chatUserStateEventBus.UserAvailableToChat += OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat += OnUserUnavailableToChat;
             chatUserStateEventBus.UserBlocked += OnUserBlocked;
-            //Subscribe to all relevant events on the bus to update the UI
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
             ShowWelcomeMessage();
 
             chatStorage?.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
+            // NOTE: if the chat storage loading is made async, the next lines also need to be tied to that,
+            // as they require the history to have all chat channels already loaded
+            var connectedUsers = chatUserStateUpdater.Initialize(chatHistory.Channels.Keys);
+            viewInstance.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
 
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
@@ -464,6 +466,7 @@ namespace DCL.Chat
                 viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
+                viewInstance.ConversationSelected -= OnSelectConversation;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }
@@ -473,8 +476,6 @@ namespace DCL.Chat
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatHistory.AllChannelsRemoved -= OnChatHistoryAllChannelsRemoved;
 
-            //TODO FRAN: When we merge chat history, we can properly load the opened conversations here.
-            chatUserStateUpdater.Initialize(new List<string>());
             chatUserStateEventBus.FriendConnected -= OnFriendConnected;
             chatUserStateEventBus.FriendDisconnected -= OnFriendDisconnected;
             chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
@@ -482,8 +483,6 @@ namespace DCL.Chat
             chatUserStateEventBus.UserAvailableToChat -= OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat -= OnUserUnavailableToChat;
             chatUserStateEventBus.UserBlocked -= OnUserBlocked;
-            //Subscribe to all relevant events on the bus to update the UI
-
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -726,11 +725,6 @@ namespace DCL.Chat
             viewInstance!.AddConversation(addedChannel);
         }
 
-        private void OnChatHistoryOnAllChannelsRemoved()
-        {
-            viewInstance!.RemoveAllConversations();
-        }
-
         private void OnUserUnavailableToChat(string userId)
         {
             if (viewInstance!.CurrentChannelId.Id == userId)
@@ -766,7 +760,8 @@ namespace DCL.Chat
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
                 viewInstance.SetInputWithUserState(state);
-            }        }
+            }
+        }
 
         private void OnFriendDisconnected(string userId)
         {

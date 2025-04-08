@@ -5,13 +5,11 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -176,7 +174,8 @@ namespace DCL.Passport
             bool enableFriendshipInteractions,
             bool includeUserBlocking,
             bool isNameEditorEnabled,
-            IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;

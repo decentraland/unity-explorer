@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
@@ -69,82 +70,14 @@ namespace DCL.Chat
 
         }
 
-        private void OnFriendRemoved(string userid)
-        {
-            if (!chatUsersStateCache.IsFriendConnected(userid)) return;
-
-            chatUsersStateCache.AddConnectedNonFriend(userid);
-            chatUsersStateCache.RemoveConnectedFriend(userid);
-
-            if (openConversations.Contains(userid))
-                chatUserStateEventBus.OnNonFriendConnected(userid);
-        }
-
-        private void OnNewFriendAdded(string userid)
-        {
-            if (!chatUsersStateCache.IsNonFriendConnected(userid)) return;
-
-            chatUsersStateCache.AddConnectedFriend(userid);
-            chatUsersStateCache.RemoveConnectedNonFriend(userid);
-
-            if (openConversations.Contains(userid))
-                chatUserStateEventBus.OnFriendConnected(userid);
-        }
-
-        private void OnUserUnblocked(string userid)
-        {
-            if (!chatUsersStateCache.IsBlockedUserConnected(userid)) return;
-
-            chatUsersStateCache.AddConnectedNonFriend(userid);
-            chatUsersStateCache.RemovedConnectedBlockedUser(userid);
-
-            if (openConversations.Contains(userid))
-                chatUserStateEventBus.OnNonFriendConnected(userid);
-        }
-
-        private void OnYouUnblockedProfile(BlockedProfile profile)
-        {
-            OnUserUnblocked(profile.Address);
-        }
-
-        private void OnYouBlockedProfile(BlockedProfile profile)
-        {
-            var userId = profile.Address;
-            if (!chatUsersStateCache.IsUserConnected(userId)) return;
-
-            chatUsersStateCache.RemoveConnectedNonFriend(userId);
-            chatUsersStateCache.RemoveConnectedFriend(userId);
-            chatUsersStateCache.AddConnectedBlockedUser(userId);
-
-            if (openConversations.Contains(userId))
-                chatUserStateEventBus.OnUserBlocked(userId);
-        }
-
-        private void OnYouBlockedByUser(string userId)
-        {
-            if (!chatUsersStateCache.IsUserConnected(userId)) return;
-
-            bool wasFriend = chatUsersStateCache.IsFriendConnected(userId);
-            chatUsersStateCache.RemoveConnectedNonFriend(userId);
-            chatUsersStateCache.RemoveConnectedFriend(userId);
-            chatUsersStateCache.AddConnectedBlockedUser(userId);
-
-            if (!openConversations.Contains(userId)) return;
-
-            if (wasFriend)
-                chatUserStateEventBus.OnFriendDisconnected(userId);
-            else
-                chatUserStateEventBus.OnNonFriendDisconnected(userId);
-        }
-
-        public IEnumerable<string> Initialize(IEnumerable<string> openConversations)
+        public HashSet<string> Initialize(IEnumerable<ChatChannel.ChannelId> openConversations)
         {
             this.openConversations.Clear();
 
-            foreach (string conversation in openConversations)
-                this.openConversations.Add(conversation);
+            foreach (ChatChannel.ChannelId conversation in openConversations)
+                this.openConversations.Add(conversation.Id);
 
-            var connectedParticipants = new List<string>();
+            var connectedParticipants = new HashSet<string>();
 
 
             rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token).Forget();
@@ -316,6 +249,74 @@ namespace DCL.Chat
                     break;
             }
 
+        }
+
+         private void OnFriendRemoved(string userid)
+        {
+            if (!chatUsersStateCache.IsFriendConnected(userid)) return;
+
+            chatUsersStateCache.AddConnectedNonFriend(userid);
+            chatUsersStateCache.RemoveConnectedFriend(userid);
+
+            if (openConversations.Contains(userid))
+                chatUserStateEventBus.OnNonFriendConnected(userid);
+        }
+
+        private void OnNewFriendAdded(string userid)
+        {
+            if (!chatUsersStateCache.IsNonFriendConnected(userid)) return;
+
+            chatUsersStateCache.AddConnectedFriend(userid);
+            chatUsersStateCache.RemoveConnectedNonFriend(userid);
+
+            if (openConversations.Contains(userid))
+                chatUserStateEventBus.OnFriendConnected(userid);
+        }
+
+        private void OnUserUnblocked(string userid)
+        {
+            if (!chatUsersStateCache.IsBlockedUserConnected(userid)) return;
+
+            chatUsersStateCache.AddConnectedNonFriend(userid);
+            chatUsersStateCache.RemovedConnectedBlockedUser(userid);
+
+            if (openConversations.Contains(userid))
+                chatUserStateEventBus.OnNonFriendConnected(userid);
+        }
+
+        private void OnYouUnblockedProfile(BlockedProfile profile)
+        {
+            OnUserUnblocked(profile.Address);
+        }
+
+        private void OnYouBlockedProfile(BlockedProfile profile)
+        {
+            var userId = profile.Address;
+            if (!chatUsersStateCache.IsUserConnected(userId)) return;
+
+            chatUsersStateCache.RemoveConnectedNonFriend(userId);
+            chatUsersStateCache.RemoveConnectedFriend(userId);
+            chatUsersStateCache.AddConnectedBlockedUser(userId);
+
+            if (openConversations.Contains(userId))
+                chatUserStateEventBus.OnUserBlocked(userId);
+        }
+
+        private void OnYouBlockedByUser(string userId)
+        {
+            if (!chatUsersStateCache.IsUserConnected(userId)) return;
+
+            bool wasFriend = chatUsersStateCache.IsFriendConnected(userId);
+            chatUsersStateCache.RemoveConnectedNonFriend(userId);
+            chatUsersStateCache.RemoveConnectedFriend(userId);
+            chatUsersStateCache.AddConnectedBlockedUser(userId);
+
+            if (!openConversations.Contains(userId)) return;
+
+            if (wasFriend)
+                chatUserStateEventBus.OnFriendDisconnected(userId);
+            else
+                chatUserStateEventBus.OnNonFriendDisconnected(userId);
         }
 
     }
