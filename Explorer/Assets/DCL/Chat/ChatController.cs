@@ -252,11 +252,9 @@ namespace DCL.Chat
             var userState = chatUserStateUpdater.GetChatUserState(userId);
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.SetInputWithUserState(userState);
-            //TODO FRAN: This is not entirely right, but its good enough for now. (PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER) is returning as connected, but the user could be offline as well
-            var connected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED ||
-                            userState == ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER ||
-                            userState == ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
-            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, connected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                           || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
