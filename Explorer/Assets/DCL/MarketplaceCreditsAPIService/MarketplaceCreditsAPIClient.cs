@@ -29,8 +29,6 @@ namespace DCL.MarketplaceCreditsAPIService
             CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                                                       .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
-            //CreditsProgramProgressResponse creditsProgramProgressResponse = await MarketplaceCreditsMockedData.MockCreditsProgramProgressAsync(ct);
-
             // TODO (Santi): Remove this! This check should be done directly by the progress endpoint
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
             creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
@@ -86,7 +84,7 @@ namespace DCL.MarketplaceCreditsAPIService
             var url = $"{emailSubscriptionsBaseUrl}/subscription";
 
             EmailSubscriptionResponse emailSubscriptionResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                    .CreateFromJson<EmailSubscriptionResponse>(WRJsonParser.Unity);
+                                                                                            .CreateFromJson<EmailSubscriptionResponse>(WRJsonParser.Unity);
 
             return emailSubscriptionResponse;
         }

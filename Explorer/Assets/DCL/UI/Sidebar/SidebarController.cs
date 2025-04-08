@@ -220,7 +220,7 @@ namespace DCL.UI.Sidebar
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
 
-            // TODO (Santi): Remove this!!
+            // TODO (Santi): This will be removed before merging
             TestMarketplaceCreditsNotificationAsync(CancellationToken.None).Forget();
         }
 
@@ -228,7 +228,7 @@ namespace DCL.UI.Sidebar
         {
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
 
-            // TODO (Santi): Remove this!!
+            // TODO (Santi): This will be removed before merging
             marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, CancellationToken.None).Forget();
         }
 
@@ -276,6 +276,7 @@ namespace DCL.UI.Sidebar
 
         #endregion
 
+        // TODO (Santi): This will be removed before merging
         private async UniTaskVoid TestMarketplaceCreditsNotificationAsync(CancellationToken ct)
         {
             await UniTask.Delay(5000, cancellationToken: ct);

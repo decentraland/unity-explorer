@@ -113,8 +113,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
-                DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.zone", // TODO (Santi): This should be dynamic with {ENV}
-                DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.zone", // TODO (Santi): This should be dynamic with {ENV}
+                DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.zone", // TODO (Santi): This will be changed to {ENV} before merging
+                DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.zone", // TODO (Santi): This will be changed to {ENV} before merging
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
