@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.Optimization.Hashing;
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -12,6 +11,7 @@ namespace DCL.Chat.History
     /// </summary>
     internal class ChatHistoryEncryptor
     {
+        private readonly SHA256 shaEncryptor = SHA256.Create();
         private readonly AesCryptoServiceProvider cryptoProvider = new AesCryptoServiceProvider ();
         private readonly byte[] channelIdEncryptionBuffer = new byte[256]; // Enough to not need resizing
 
@@ -108,11 +108,11 @@ namespace DCL.Chat.History
         /// <param name="newEncryptionKey">The encryption key to use in new streams.</param>
         public void SetNewEncryptionKey(string newEncryptionKey)
         {
-            byte[] hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory; // SHA256
+            byte[] hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
 ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
-hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory; // SHA256
+hashedEncryptionKey = hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
 ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
-hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory; // SHA256
+hashedEncryptionKey = hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
 ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
             cryptoProvider.Clear();
             cryptoProvider.Key = hashedEncryptionKey;
