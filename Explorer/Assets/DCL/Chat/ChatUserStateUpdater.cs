@@ -200,8 +200,6 @@ namespace DCL.Chat
             chatUsersStateCache.AddUsersUnavailableToChat(onlyFriendsParticipants[0]);
             chatUsersStateCache.RemoveUsersUnavailableToChat(onlyFriendsParticipants[1]);
 
-
-            //TODO FRAN: I Dont think we need this, as this is done on login and we wont have any visible conversation, just nearby when we log.
             foreach (string participant in onlyFriendsParticipants[0])
             {
                 if (openConversations.Contains(participant))
@@ -217,24 +215,25 @@ namespace DCL.Chat
 
         private void OnPrivacySettingsRead(ChatPrivacySettings privacySettings)
         {
-            UpdateOwnMetadata(privacySettings);
+            UpdateOwnMetadata(privacySettings).Forget();
         }
 
         private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
         {
             cts = cts.SafeRestart();
             rpcChatPrivacyService.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.ALL, cts.Token).Forget();
-            UpdateOwnMetadata(privacySettings);
+            UpdateOwnMetadata(privacySettings).Forget();
 
             if (privacySettings == ChatPrivacySettings.ALL)
                 RequestParticipantsPrivacySettings(chatUsersStateCache.ConnectedNonFriend, cts.Token).Forget();
 
         }
 
-        private void UpdateOwnMetadata(ChatPrivacySettings privacySettings)
+        private async UniTaskVoid UpdateOwnMetadata(ChatPrivacySettings privacySettings)
         {
             var metadata = new ParticipantPrivacyMetadata(privacySettings == ChatPrivacySettings.ALL).ToJson();
             ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"You are about to update the own metadata to {metadata}");
+            await UniTask.SwitchToThreadPool();
             chatRoom.UpdateLocalMetadata(metadata);
         }
 
@@ -264,10 +263,10 @@ namespace DCL.Chat
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
-                    if (!openConversations.Contains(participant.Identity)) return;
-                    if (friendsCacheProxy.StrictObject.Contains(participant.Identity)) return;
-                    if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
-                    if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
+                    //if (!openConversations.Contains(participant.Identity)) return;
+                    //if (friendsCacheProxy.StrictObject.Contains(participant.Identity)) return;
+                    //if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
+                    //if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
                     //We only care about their data if it's an open conversation, it's not a friend, we allow messages from ALL and the user it's not blocked.
                     try
                     {
