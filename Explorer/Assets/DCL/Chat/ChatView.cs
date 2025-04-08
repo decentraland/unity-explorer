@@ -358,15 +358,6 @@ namespace DCL.Chat
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
-
-            loadingStatus.CurrentStage.OnUpdate -= SetInputFieldInteractable;
-            memberListView.VisibilityChanged -= OnMemberListViewVisibilityChanged;
-            chatInputBox.InputBoxSelectionChanged -= OnInputBoxSelectionChanged;
-            chatInputBox.EmojiSelectionVisibilityChanged -= OnEmojiSelectionVisibilityChanged;
-            chatInputBox.InputChanged -= OnInputChanged;
-            chatInputBox.InputSubmitted -= OnInputSubmitted;
-
-            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -400,6 +391,30 @@ namespace DCL.Chat
         {
             closePopupTask.TrySetResult();
             chatInputBox.ClosePopups();
+
+            chatTitleBar.CloseChatButtonClicked -= OnCloseChatButtonClicked;
+            chatTitleBar.CloseMemberListButtonClicked -= OnCloseChatButtonClicked;
+            chatTitleBar.ShowMemberListButtonClicked -= OnMemberListOpeningButtonClicked;
+            chatTitleBar.HideMemberListButtonClicked -= OnMemberListClosingButtonClicked;
+            chatTitleBar.ChatBubblesVisibilityChanged -= OnToggleChatBubblesValueChanged;
+            chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
+
+            chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClicked;
+            chatMessageViewer.ChatMessageViewerScrollPositionChanged -= OnChatMessageViewerScrollPositionChanged;
+            scrollToBottomButton.onClick.RemoveListener(OnScrollToEndButtonClicked);
+
+            conversationsToolbar.ConversationSelected -= OnConversationsToolbarConversationSelected;
+            conversationsToolbar.ConversationRemovalRequested -= OnConversationsToolbarConversationRemovalRequested;
+
+            loadingStatus.CurrentStage.OnUpdate -= SetInputFieldInteractable;
+            memberListView.VisibilityChanged -= OnMemberListViewVisibilityChanged;
+            chatInputBox.InputBoxSelectionChanged -= OnInputBoxSelectionChanged;
+            chatInputBox.EmojiSelectionVisibilityChanged -= OnEmojiSelectionVisibilityChanged;
+            chatInputBox.InputChanged -= OnInputChanged;
+            chatInputBox.InputSubmitted -= OnInputSubmitted;
+
+            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
+
             return base.HideAsync(ct, isInstant);
         }
 
@@ -670,6 +685,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             conversationsToolbar.RemoveAllConversations();
+            currentChannel = null;
         }
 
         /// <summary>

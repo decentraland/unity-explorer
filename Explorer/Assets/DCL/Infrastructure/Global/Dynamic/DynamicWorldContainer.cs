@@ -516,10 +516,11 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
+            ChatMessageFactory chatMessageFactory = new ChatMessageFactory(selfProfile, profileRepository);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>(), userBlockingCacheProxy)
-                                                 .WithSelfResend(identityCache, profileRepository)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy)
+                                                 .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
                                                  .WithDebugPanel(debugBuilder);
@@ -693,6 +694,8 @@ namespace Global.Dynamic
                     identityCache,
                     staticContainer.LoadingStatus,
                     sharedSpaceManager,
+                    chatMessageFactory,
+                    staticContainer.FeatureFlagsCache,
                     userBlockingCacheProxy,
                     friendsCacheProxy,
                     socialServicesRPCProxy,

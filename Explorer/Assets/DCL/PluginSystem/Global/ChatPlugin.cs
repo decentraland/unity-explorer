@@ -9,6 +9,7 @@ using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -50,6 +51,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ChatMessageFactory chatMessageFactory;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
@@ -80,7 +84,9 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IRPCSocialServices> socialServiceProxy,
-            IFriendsEventBus friendsEventBus)
+            IFriendsEventBus friendsEventBus,
+            ChatMessageFactory chatMessageFactory,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -102,13 +108,18 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.chatMessageFactory = chatMessageFactory;
+            this.featureFlagsCache = featureFlagsCache;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            chatStorage?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
@@ -116,6 +127,13 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
+            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            {
+                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+            }
+
+            ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             chatController = new ChatController(
                 () =>
@@ -143,12 +161,28 @@ namespace DCL.PluginSystem.Global
                 userBlockingCacheProxy,
                 friendsCacheProxy,
                 privacySettings,
-                friendsEventBus
+                friendsEventBus,
+                loadingStatus,
+                chatStorage
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 
             mvcManager.RegisterController(chatController);
+
+            // Log out / log in
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+        }
+
+        private void OnIdentityCleared()
+        {
+            chatController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void OnIdentityChanged()
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
         }
     }
 
