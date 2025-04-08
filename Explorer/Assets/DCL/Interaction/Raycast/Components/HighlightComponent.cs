@@ -85,6 +85,6 @@ namespace DCL.Interaction.Raycast.Components
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasToResetLastEntity(World world) =>
-            currentEntity != nextEntity && currentEntity != EntityReference.Null && isEnabled && nextEntity.IsAlive(world);
+            isEnabled && currentEntity != nextEntity && currentEntity != EntityReference.Null && currentEntity.IsAlive(world);
     }
 }
