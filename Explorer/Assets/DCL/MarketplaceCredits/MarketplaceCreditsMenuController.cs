@@ -96,8 +96,8 @@ namespace DCL.MarketplaceCredits
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
 
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.MARKETPLACE_CREDITS, OnMarketplaceCreditsNotificationClicked);
+            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS, OnMarketplaceCreditsNotificationReceived);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS, OnMarketplaceCreditsNotificationClicked);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 viewInstance.GoalsOfTheWeekView,

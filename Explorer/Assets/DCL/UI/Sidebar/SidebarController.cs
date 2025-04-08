@@ -282,7 +282,7 @@ namespace DCL.UI.Sidebar
             await UniTask.Delay(5000, cancellationToken: ct);
             notificationsBusController.AddNotification(new MarketplaceCreditsNotification
             {
-                Type = NotificationType.MARKETPLACE_CREDITS,
+                Type = NotificationType.CREDITS,
                 Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
                 Id = $"SantiTest{DateTime.Now.Ticks}",
                 Read = false,
