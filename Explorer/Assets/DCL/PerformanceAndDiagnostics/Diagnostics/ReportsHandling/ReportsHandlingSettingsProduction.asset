@@ -339,15 +339,9 @@ MonoBehaviour:
     - Category: WEARABLE
       Severity: 1
     - Category: CHAT_HISTORY
-      Severity: 3
-    - Category: CHAT_HISTORY
-      Severity: 2
-    - Category: CHAT_HISTORY
-      Severity: 0
-    - Category: CHAT_HISTORY
       Severity: 4
     - Category: CHAT_HISTORY
-      Severity: 1
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

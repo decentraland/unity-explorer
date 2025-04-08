@@ -109,19 +109,12 @@ namespace DCL.Chat.History
         public void SetNewEncryptionKey(string newEncryptionKey)
         {
             byte[] hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
-ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
-hashedEncryptionKey = hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
-ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
-hashedEncryptionKey = hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
-ReportHub.Log("CHAT_HISTORY", "DEBUG hash: " + Encoding.UTF8.GetString(hashedEncryptionKey, 0, hashedEncryptionKey.Length) + " FOR " + newEncryptionKey);
+
             cryptoProvider.Clear();
             cryptoProvider.Key = hashedEncryptionKey;
             cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
             cryptoProvider.Mode = CipherMode.ECB; // TODO: USE CBC
             cryptoProvider.Padding = PaddingMode.Zeros; // TODO: USE PKCS7
-
-ReportHub.Log("CHAT_HISTORY", "DEBUG key: " + Encoding.UTF8.GetString(cryptoProvider.Key, 0, cryptoProvider.Key.Length));
-ReportHub.Log("CHAT_HISTORY", "DEBUG iv: " + Encoding.UTF8.GetString(cryptoProvider.IV, 0, cryptoProvider.IV.Length));
         }
     }
 }
