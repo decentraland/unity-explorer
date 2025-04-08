@@ -68,7 +68,7 @@ namespace DCL.Chat
             friendsEventBus.OnYouRemovedFriend += OnFriendRemoved;
 
         }
-        
+
         private void OnFriendRemoved(string userid)
         {
             if (!chatUsersStateCache.IsFriendConnected(userid)) return;
@@ -184,6 +184,7 @@ namespace DCL.Chat
             return connectedParticipants;
         }
 
+        //TODO FRAN: we can optimize it by returning the STATE directly when we call the events on the bus
         public ChatUserState GetChatUserState(string userId)
         {
             //If it's a friend we just return its status

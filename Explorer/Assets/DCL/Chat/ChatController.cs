@@ -299,6 +299,7 @@ namespace DCL.Chat
             chatUserStateEventBus.NonFriendDisconnected += OnNonFriendDisconnected;
             chatUserStateEventBus.UserAvailableToChat += OnUserAvailableToChat;
             chatUserStateEventBus.UserUnavailableToChat += OnUserUnavailableToChat;
+            chatUserStateEventBus.UserBlocked += OnUserBlocked;
             //Subscribe to all relevant events on the bus to update the UI
 
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
@@ -692,33 +693,68 @@ namespace DCL.Chat
 
         private void OnUserUnavailableToChat(string userId)
         {
-            throw new NotImplementedException();
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }
         }
 
         private void OnUserAvailableToChat(string userId)
         {
-            throw new NotImplementedException();
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }
         }
 
         private void OnNonFriendDisconnected(string userId)
         {
-            //If conversation is open, update visual appeareance
-            throw new NotImplementedException();
+            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }
         }
 
         private void OnNonFriendConnected(string userId)
         {
-            throw new NotImplementedException();
-        }
+            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }        }
 
         private void OnFriendDisconnected(string userId)
         {
-            throw new NotImplementedException();
-        }
+            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }        }
 
         private void OnFriendConnected(string userId)
         {
-            throw new NotImplementedException();
+            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
+        private void OnUserBlocked(string userId)
+        {
+            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetChatUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }
         }
     }
 }
