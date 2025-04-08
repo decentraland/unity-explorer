@@ -211,7 +211,7 @@ namespace DCL.Chat
         /// </summary>
         public void FocusInputBox()
         {
-            viewInstance.FocusInputBox();
+            viewInstance?.FocusInputBox();
         }
 
         /// <summary>
@@ -220,17 +220,15 @@ namespace DCL.Chat
         /// <param name="visibility">Whether to make the panel visible.</param>
         public void SetViewVisibility(bool visibility)
         {
-            viewInstance.gameObject.SetActive(visibility);
+            viewInstance?.gameObject.SetActive(visibility);
         }
 
         /// <summary>
         /// Indicates whether the panel is invisible or not (the view is never hidden as it is a Persistent panel).
         /// </summary>
         /// <returns>True if the panel is visible; False otherwise.</returns>
-        public bool GetViewVisibility()
-        {
-            return viewInstance != null? viewInstance.gameObject.activeInHierarchy : false;
-        }
+        public bool GetViewVisibility() =>
+            viewInstance != null && viewInstance.gameObject.activeInHierarchy;
 
         private void OnChatHistoryAllChannelsRemoved()
         {
@@ -735,13 +733,14 @@ namespace DCL.Chat
                 if (userBlockingCacheProxy.StrictObject.BlockedUsers.Contains(userId))
                     state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
 
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserDisconnected SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
 
         private void OnNonFriendConnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected {userId} {viewInstance!.CurrentChannelId.Id}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected {userId}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance.CurrentChannelId.Id == userId)
                 GetAndSetupNonFriendUserStateAsync(userId).Forget();
@@ -751,6 +750,7 @@ namespace DCL.Chat
         {
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
             viewInstance!.SetInputWithUserState(state);
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected SetInputWithUserState {state}");
         }
 
         private void OnFriendConnected(string userId)
@@ -760,6 +760,7 @@ namespace DCL.Chat
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnFriendConnected SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
@@ -771,6 +772,7 @@ namespace DCL.Chat
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserBlocked SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
@@ -781,7 +783,9 @@ namespace DCL.Chat
 
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
+                //TODO FRAN: These are wrong, they should only check if they can be contacted, not connection state
                 var state = chatUserStateUpdater.GetChatUserState(userId);
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
@@ -793,6 +797,7 @@ namespace DCL.Chat
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
