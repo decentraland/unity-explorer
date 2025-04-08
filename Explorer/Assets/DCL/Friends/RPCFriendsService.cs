@@ -280,7 +280,10 @@ namespace DCL.Friends
                                                        .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             if (response.ResponseCase == BlockUserResponse.ResponseOneofCase.Ok)
+            {
                 eventBus.BroadcastYouBlockedProfile(ToClientBlockedProfile(response.Ok.Profile));
+                friendsCache.Remove(userId);
+            }
             else
                 throw new Exception($"Cannot block user {userId}: {response.ResponseCase}");
         }
