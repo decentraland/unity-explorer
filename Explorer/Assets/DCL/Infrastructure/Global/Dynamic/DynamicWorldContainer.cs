@@ -816,7 +816,9 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     includeFriends,
                     includeUserBlocking,
-                    isNameEditorEnabled
+                    isNameEditorEnabled,
+                    chatEventBus,
+                    sharedSpaceManager
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),

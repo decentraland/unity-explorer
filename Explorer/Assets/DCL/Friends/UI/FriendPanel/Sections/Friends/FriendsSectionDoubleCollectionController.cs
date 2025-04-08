@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
@@ -26,7 +25,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly GenericContextMenu contextMenu;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
-        private readonly IChatEventBus chatEventBus;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private FriendProfile contextMenuFriendProfile;
@@ -35,7 +33,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         internal event Action<string>? OnlineFriendClicked;
         internal event Action<string, Vector2Int>? JumpInClicked;
-        internal event Action OpenConversationClicked;
+        internal event Action<Web3Address> OpenConversationClicked;
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
@@ -46,14 +44,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            bool includeUserBlocking, IChatEventBus chatEventBus)
+            bool includeUserBlocking)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
-            this.chatEventBus = chatEventBus;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
@@ -112,9 +109,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             if (elementClicked)
             {
-                OpenConversationClicked?.Invoke();
+                OpenConversationClicked?.Invoke(profile.Address);
                 openPassportCts.Cancel();
-                chatEventBus.OpenConversationUsingUserId(profile.Address);
                 elementClicked = false;
             }
             else

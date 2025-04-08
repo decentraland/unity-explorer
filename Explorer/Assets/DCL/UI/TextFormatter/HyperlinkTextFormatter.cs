@@ -18,15 +18,23 @@ namespace DCL.UI.InputFieldFormatting
         private const int ESTIMATED_LINK_TAG_LENGTH = 32; // Average length of a link tag including opening and closing styles
         private const int INITIAL_STRING_BUILDER_CAPACITY = 256;
         private const int TEMP_STRING_BUILDER_CAPACITY = 128;
+        private const int ESTIMATED_CAPACITY_PER_CHAR = 3;
 
-        // Regex patterns for each type of link
-        private const string URL_PATTERN = @"(?<url>(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$))";
-        private const string SCENE_PATTERN = @"(?<scene>(?<=^|\s)(?<x>-?\d{1,3}),(?<y>-?\d{1,3})(?=\s|!|\?|\.|,|$))";
-        private const string WORLD_PATTERN = @"(?<world>(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
-        private const string USERNAME_PATTERN = @"(?<username>(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$))";
-        private const string RICH_TEXT_PATTERN = @"(?<richtext><(?!\/?(b|i)(>|\s))[^>]+>)";
+        private const string URL_GROUP_NAME = "url";
+        private const string SCENE_GROUP_NAME = "scene";
+        private const string WORLD_GROUP_NAME = "world";
+        private const string USERNAME_FULL_GROUP_NAME = "username";
+        private const string USERNAME_NAME_GROUP_NAME = "name";
+        private const string RICHTEXT_GROUP_NAME = "richtext";
+        private const string X_COORD_GROUP_NAME = "x";
+        private const string Y_COORD_GROUP_NAME = "y";
 
-        // Combined regex for better performance - matches all link types in one pass
+        private static readonly string URL_PATTERN = $@"(?<{URL_GROUP_NAME}>(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{{2,}}(\/[^\s]*)?(?=\s|$))";
+        private static readonly string SCENE_PATTERN = $@"(?<{SCENE_GROUP_NAME}>(?<=^|\s)(?<{X_COORD_GROUP_NAME}>-?\d{{1,3}}),(?<{Y_COORD_GROUP_NAME}>-?\d{{1,3}})(?=\s|!|\?|\.|,|$))";
+        private static readonly string WORLD_PATTERN = $@"(?<{WORLD_GROUP_NAME}>(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
+        private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{3,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
+        private static readonly string RICH_TEXT_PATTERN = $@"(?<{RICHTEXT_GROUP_NAME}><(?!\/?(b|i)(>|\s))[^>]+>)";
+
         private static readonly Regex COMBINED_LINK_REGEX = new (
             $"{URL_PATTERN}|{SCENE_PATTERN}|{WORLD_PATTERN}|{USERNAME_PATTERN}|{RICH_TEXT_PATTERN}",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture);
@@ -35,15 +43,16 @@ namespace DCL.UI.InputFieldFormatting
         private readonly StringBuilder tempStringBuilder;
         private readonly IProfileCache profileCache;
         private readonly SelfProfile selfProfile;
+        private readonly Match match;
 
         public HyperlinkTextFormatter(IProfileCache profileCache, SelfProfile selfProfile)
         {
             this.profileCache = profileCache;
             this.selfProfile = selfProfile;
 
-            // Pre-allocate with reasonable capacity to reduce reallocations
             mainStringBuilder = new StringBuilder(INITIAL_STRING_BUILDER_CAPACITY);
             tempStringBuilder = new StringBuilder(TEMP_STRING_BUILDER_CAPACITY);
+            match = COMBINED_LINK_REGEX.Match(string.Empty);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -67,41 +76,35 @@ namespace DCL.UI.InputFieldFormatting
         private void ProcessMainStringBuilder()
         {
             var text = mainStringBuilder.ToString();
-            var matches = COMBINED_LINK_REGEX.Matches(text);
-
-            if (matches.Count == 0)
-                return;
-
-            var estimatedCapacity = text.Length + (matches.Count * ESTIMATED_LINK_TAG_LENGTH);
+            int estimatedCapacity = text.Length + (text.Length * ESTIMATED_CAPACITY_PER_CHAR);
             mainStringBuilder.Clear();
             mainStringBuilder.EnsureCapacity(estimatedCapacity);
 
             int lastIndex = 0;
+            var currentMatch = COMBINED_LINK_REGEX.Match(text);
 
-            foreach (Match match in matches)
+            while (currentMatch.Success)
             {
-                // Append text before the match
-                if (match.Index > lastIndex)
+                if (currentMatch.Index > lastIndex)
                 {
-                    mainStringBuilder.Append(text.AsSpan(lastIndex, match.Index - lastIndex));
+                    mainStringBuilder.Append(text.AsSpan(lastIndex, currentMatch.Index - lastIndex));
                 }
 
-                // Process the match based on its group
-                if (match.Groups["url"].Success)
-                    ProcessUrlMatch(match);
-                else if (match.Groups["scene"].Success)
-                    ProcessSceneMatch(match);
-                else if (match.Groups["world"].Success)
-                    ProcessWorldMatch(match);
-                else if (match.Groups["username"].Success)
-                    ProcessUsernameMatch(match);
-                else if (match.Groups["richtext"].Success)
-                    ProcessRichTextMatch(match);
+                if (currentMatch.Groups[URL_GROUP_NAME].Success)
+                    ProcessUrlMatch(currentMatch);
+                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success)
+                    ProcessSceneMatch(currentMatch);
+                else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
+                    ProcessWorldMatch(currentMatch);
+                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success)
+                    ProcessUsernameMatch(currentMatch);
+                else if (currentMatch.Groups[RICHTEXT_GROUP_NAME].Success)
+                    ProcessRichTextMatch(currentMatch);
 
-                lastIndex = match.Index + match.Length;
+                lastIndex = currentMatch.Index + currentMatch.Length;
+                currentMatch = currentMatch.NextMatch();
             }
 
-            // Append remaining text
             if (lastIndex < text.Length)
             {
                 mainStringBuilder.Append(text.AsSpan(lastIndex));
@@ -116,7 +119,7 @@ namespace DCL.UI.InputFieldFormatting
             tempStringBuilder.Append(LINK_OPENING_STYLE)
                            .Append(HyperlinkConstants.URL)
                            .Append(">")
-                           .Append(match)
+                           .Append(match.Value)
                            .Append(LINK_CLOSING_STYLE);
             mainStringBuilder.Append(tempStringBuilder);
         }
@@ -125,10 +128,10 @@ namespace DCL.UI.InputFieldFormatting
         private void ProcessSceneMatch(Match match)
         {
             if (!AreCoordsValid(
-                int.Parse(match.Groups["x"].Value),
-                int.Parse(match.Groups["y"].Value)))
+                int.Parse(match.Groups[X_COORD_GROUP_NAME].Value),
+                int.Parse(match.Groups[Y_COORD_GROUP_NAME].Value)))
             {
-                mainStringBuilder.Append(match);
+                mainStringBuilder.Append(match.Value);
                 return;
             }
 
@@ -137,7 +140,7 @@ namespace DCL.UI.InputFieldFormatting
             tempStringBuilder.Append(LINK_OPENING_STYLE)
                            .Append(HyperlinkConstants.SCENE)
                            .Append(">")
-                           .Append(match)
+                           .Append(match.Value)
                            .Append(LINK_CLOSING_STYLE);
             mainStringBuilder.Append(tempStringBuilder);
         }
@@ -150,7 +153,7 @@ namespace DCL.UI.InputFieldFormatting
             tempStringBuilder.Append(LINK_OPENING_STYLE)
                            .Append(HyperlinkConstants.WORLD)
                            .Append(">")
-                           .Append(match)
+                           .Append(match.Value)
                            .Append(LINK_CLOSING_STYLE);
             mainStringBuilder.Append(tempStringBuilder);
         }
@@ -158,13 +161,13 @@ namespace DCL.UI.InputFieldFormatting
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ProcessUsernameMatch(Match match)
         {
-            string username = match.Groups[1].Value;
+            string username = match.Groups[USERNAME_NAME_GROUP_NAME].Value;
             if (IsOwnUsername(username))
             {
                 tempStringBuilder.Clear();
                 tempStringBuilder.EnsureCapacity(match.Length + ESTIMATED_LINK_TAG_LENGTH);
                 tempStringBuilder.Append(OWN_PROFILE_OPENING_STYLE)
-                               .Append(match)
+                               .Append(match.Value)
                                .Append(OWN_PROFILE_CLOSING_STYLE);
                 mainStringBuilder.Append(tempStringBuilder);
                 return;
@@ -172,7 +175,7 @@ namespace DCL.UI.InputFieldFormatting
 
             if (!IsUserNameValid(username))
             {
-                mainStringBuilder.Append(match);
+                mainStringBuilder.Append(match.Value);
                 return;
             }
 
@@ -181,7 +184,7 @@ namespace DCL.UI.InputFieldFormatting
             tempStringBuilder.Append(LINK_OPENING_STYLE)
                            .Append(HyperlinkConstants.PROFILE)
                            .Append(">")
-                           .Append(match)
+                           .Append(match.Value)
                            .Append(LINK_CLOSING_STYLE);
             mainStringBuilder.Append(tempStringBuilder);
         }
@@ -206,8 +209,14 @@ namespace DCL.UI.InputFieldFormatting
             GenesisCityData.IsInsideBounds(x, y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsOwnUsername(string username) =>
-            selfProfile.OwnProfile?.DisplayName == username;
+        private bool IsOwnUsername(ReadOnlySpan<char> username)
+        {
+            ReadOnlySpan<char> displayName = selfProfile.OwnProfile!.DisplayName;
+
+            if (displayName.Length != username.Length) return false;
+
+            return displayName.SequenceEqual(username);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsUserNameValid(string username) =>
