@@ -1,7 +1,9 @@
+using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace DCL.Chat.History
 {
@@ -108,10 +110,14 @@ namespace DCL.Chat.History
         {
             byte[] hashedEncryptionKey = HashKey.FromString(newEncryptionKey).Hash.Memory; // SHA256
 
+            cryptoProvider.Clear();
             cryptoProvider.Key = hashedEncryptionKey;
             cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
             cryptoProvider.Mode = CipherMode.ECB; // TODO: USE CBC
             cryptoProvider.Padding = PaddingMode.Zeros; // TODO: USE PKCS7
+
+ReportHub.Log("CHAT_HISTORY", "DEBUG key: " + Encoding.UTF8.GetString(cryptoProvider.Key, 0, cryptoProvider.Key.Length));
+ReportHub.Log("CHAT_HISTORY", "DEBUG iv: " + Encoding.UTF8.GetString(cryptoProvider.IV, 0, cryptoProvider.IV.Length));
         }
     }
 }
