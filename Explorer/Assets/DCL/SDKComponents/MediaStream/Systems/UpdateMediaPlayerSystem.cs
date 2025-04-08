@@ -31,6 +31,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
+
         private float worldVolumePercentage = 1f;
         private float masterVolumePercentage = 1f;
 
@@ -40,13 +42,16 @@ namespace DCL.SDKComponents.MediaStream
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
-            WorldVolumeMacBus worldVolumeMacBus) : base(world)
+            WorldVolumeMacBus worldVolumeMacBus,
+            MediaPlayerCustomPool mediaPlayerPool
+        ) : base(world)
         {
             this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.mediaPlayerPool = mediaPlayerPool;
 
             //This following part is a workaround applied for the MacOS platform, the reason
             //is related to the video and audio streams, the MacOS environment does not support
@@ -87,7 +92,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent)
+        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -96,6 +101,8 @@ namespace DCL.SDKComponents.MediaStream
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
+
+            if (RequiresURLChange(entity,  ref component, sdkComponent.Url, sdkComponent)) return;
 
             var address = MediaAddress.New(sdkComponent.Url!);
             HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing);
@@ -103,7 +110,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
+        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -113,9 +120,24 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
+            if (RequiresURLChange(entity,  ref component, sdkComponent.Src, sdkComponent)) return;
+
             var address = MediaAddress.New(sdkComponent.Src!);
             HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+        }
+
+        private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, string url, IDirtyMarker sdkComponent)
+        {
+            if (sdkComponent.IsDirty && component.URL != url && (!sceneData.TryGetMediaUrl(url, out var localMediaUrl) || component.URL != localMediaUrl))
+            {
+                MediaPlayerUtils.CleanUpMediaPlayer(ref component, mediaPlayerPool);
+                sdkComponent.IsDirty = false;
+                World.Remove<MediaPlayerComponent>(entity);
+                return true;
+            }
+
+            return false;
         }
 
         [Query]
@@ -190,6 +212,14 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
+                //The problem is that video files coming from our content server are flagged as application/octet-stream,
+                //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
+                //This adds a query param for video files from content server to force the correct content type
+
+                //VideoPlayer may be reused
+                //TODO migrate to mediplayer
+                //if (!component.MediaPlayer.MediaOpened)
+
                 component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay);
 
                 if (sdkVideoComponent != null)

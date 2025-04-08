@@ -16,6 +16,12 @@ namespace DCL.SDKComponents.MediaStream
     public partial class CleanUpMediaPlayerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         internal CleanUpMediaPlayerSystem(World world) : base(world) { }
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
+
+        internal CleanUpMediaPlayerSystem(World world, MediaPlayerCustomPool mediaPlayerPool) : base(world)
+        {
+            this.mediaPlayerPool = mediaPlayerPool;
+        }
 
         protected override void Update(float t)
         {
@@ -52,6 +58,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
         {
+            //TODO integrate cleanup
+            //MediaPlayerUtils.CleanUpMediaPlayer(ref mediaPlayerComponent, mediaPlayerPool);
             mediaPlayerComponent.Dispose();
         }
 

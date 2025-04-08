@@ -21,17 +21,15 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 {
     public class MediaPlayerPluginWrapper
     {
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly IExposedCameraData exposedCameraData;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly ObjectProxy<IRoomHub> roomHub;
+        private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
 
         public MediaPlayerPluginWrapper(
-            IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IExtendedObjectPool<Texture2D> videoTexturePool,
@@ -48,34 +46,13 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.roomHub = roomHub;
 
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
 
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
             cacheCleaner.Register(videoTexturePool);
 
-            mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
-                creationHandler: () =>
-                {
-                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab, mediaPlayerPool!.PoolContainerTransform);
-                    mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
-                    mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
-                    //Add other options if we release on other platforms :D
-                    return mediaPlayer;
-                },
-                onGet: mediaPlayer =>
-                {
-                    mediaPlayer.AutoOpen = false;
-                    mediaPlayer.enabled = true;
-                },
-                onRelease: mediaPlayer =>
-                {
-                    mediaPlayer.CloseCurrentStream();
-                    mediaPlayer.enabled = false;
-                });
-
-            cacheCleaner.Register(mediaPlayerPool);
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
 #endif
         }
 

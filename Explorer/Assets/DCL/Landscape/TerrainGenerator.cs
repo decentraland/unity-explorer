@@ -27,7 +27,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 11;
+        private const int CACHE_VERSION = 12;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -40,6 +40,7 @@ namespace DCL.Landscape
         private readonly IMemoryProfiler profilingProvider;
         private readonly bool forceCacheRegen;
         private readonly List<Terrain> terrains;
+        private readonly List<Collider> terrainChunkColliders;
 
         private int parcelSize;
         private TerrainGenerationData terrainGenData;
@@ -63,6 +64,7 @@ namespace DCL.Landscape
         private Transform rootGo;
         private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
+        private int activeChunk = -1;
 
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
@@ -87,6 +89,31 @@ namespace DCL.Landscape
 
             // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
+            terrainChunkColliders = new List<Collider>();
+        }
+
+        // TODO : pre-calculate once and re-use
+        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
+        {
+            if(terrainModel == null) return;
+
+            int offsetX = parcel.x - terrainModel.MinParcel.x;
+            int offsetY = parcel.y - terrainModel.MinParcel.y;
+
+            int chunkX = offsetX / terrainModel.ChunkSizeInParcels;
+            int chunkY = offsetY / terrainModel.ChunkSizeInParcels;
+
+            int chunkIndex = chunkX + (chunkY * terrainModel.SizeInChunks);
+
+            if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
+                return;
+
+            if (chunkIndex != activeChunk && activeChunk >= 0)
+                terrainChunkColliders[activeChunk].enabled = false;
+
+            terrainChunkColliders[chunkIndex].enabled = isEnabled;
+            activeChunk = chunkIndex;
+
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
@@ -153,6 +180,10 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
+
+                foreach (var collider in terrainChunkColliders)
+                    if (collider.enabled) collider.enabled = false;
+
                 IsTerrainShown = false;
             }
         }
@@ -322,8 +353,10 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                terrains.Add(
-                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
+                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial);
+
+                terrains.Add(terrain);
+                terrainChunkColliders.Add(terrainCollider);
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;

@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly IWebRequestController webRequestController;
         private readonly ObjectProxy<IRoomHub> roomHub;
         private readonly ISceneData sceneData;
@@ -132,6 +132,8 @@ namespace DCL.SDKComponents.MediaStream
                                           _ => throw new ArgumentOutOfRangeException()
                                       };
 
+            //TODO integrate mediapool
+            //MediaPlayer mediaPlayer = mediaPlayerPool.GetOrCreateReusableMediaPlayer(url);
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = player,
