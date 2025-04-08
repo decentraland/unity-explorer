@@ -16,6 +16,7 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
@@ -326,6 +327,11 @@ namespace DCL.Chat
             var userState = chatUserStateUpdater.GetChatUserState(userId);
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.SetInputWithUserState(userState);
+            //TODO FRAN: This is not entirely right, but its good enough for now. (PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER) is returning as connected, but the user could be offline as well
+            var connected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED ||
+                            userState == ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER ||
+                            userState == ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, connected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
             viewInstance.FocusInputBox();
         }
 
@@ -711,7 +717,7 @@ namespace DCL.Chat
 
         private void OnNonFriendDisconnected(string userId)
         {
-            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
@@ -721,7 +727,7 @@ namespace DCL.Chat
 
         private void OnNonFriendConnected(string userId)
         {
-            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
@@ -730,7 +736,7 @@ namespace DCL.Chat
 
         private void OnFriendDisconnected(string userId)
         {
-            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
@@ -739,7 +745,7 @@ namespace DCL.Chat
 
         private void OnFriendConnected(string userId)
         {
-            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);
@@ -749,7 +755,7 @@ namespace DCL.Chat
 
         private void OnUserBlocked(string userId)
         {
-            //Also change here the indicator bubble on the profile pic on the conversation sidebar
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = chatUserStateUpdater.GetChatUserState(userId);

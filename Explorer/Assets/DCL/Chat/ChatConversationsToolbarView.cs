@@ -197,6 +197,11 @@ namespace DCL.Chat
             HideScrollButtons(false);
         }
 
+        public void UpdateConnectionStatusIcon(ChatChannel.ChannelId channelId, OnlineStatus connectionStatus)
+        {
+            items[channelId].SetConnectionStatus(connectionStatus);
+        }
+
         private void Start()
         {
             scrollUpButton.onClick.AddListener(OnScrollUpButtonClicked);

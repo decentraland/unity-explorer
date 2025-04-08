@@ -317,6 +317,15 @@ namespace DCL.Chat
 
         public bool IsFocused { get; private set; }
 
+        public void UpdateConversationToolbarStatusIconForUser(string userId, OnlineStatus status)
+        {
+            foreach (var channelId in channels!.Keys)
+            {
+                if (channelId.Id.Equals(userId))
+                    conversationsToolbar.UpdateConnectionStatusIcon(channelId, status);
+            }
+        }
+
         private void Start()
         {
             IsUnfolded = true;
