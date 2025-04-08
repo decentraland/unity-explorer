@@ -229,7 +229,7 @@ namespace DCL.Chat
         /// <returns>True if the panel is visible; False otherwise.</returns>
         public bool GetViewVisibility()
         {
-            return viewInstance?.gameObject.activeInHierarchy;
+            return viewInstance != null? viewInstance.gameObject.activeInHierarchy : false;
         }
 
         private void OnChatHistoryAllChannelsRemoved()
@@ -725,7 +725,7 @@ namespace DCL.Chat
 
         private void OnUserDisconnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserDisconnected {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserDisconnected {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
@@ -741,7 +741,7 @@ namespace DCL.Chat
 
         private void OnNonFriendConnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance.CurrentChannelId.Id == userId)
                 GetAndSetupNonFriendUserStateAsync(userId).Forget();
@@ -755,7 +755,7 @@ namespace DCL.Chat
 
         private void OnFriendConnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnFriendConnected {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnFriendConnected {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
@@ -766,7 +766,7 @@ namespace DCL.Chat
 
         private void OnUserBlocked(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserBlocked {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserBlocked {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
@@ -777,7 +777,7 @@ namespace DCL.Chat
 
         private void OnUserUnavailableToChat(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat {userId} {viewInstance!.CurrentChannelId.Id}");
 
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
@@ -788,7 +788,7 @@ namespace DCL.Chat
 
         private void OnUserAvailableToChat(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat {userId} {viewInstance!.CurrentChannelId.Id}");
 
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
