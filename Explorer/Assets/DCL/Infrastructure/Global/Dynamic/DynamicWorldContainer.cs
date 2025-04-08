@@ -320,7 +320,6 @@ namespace Global.Dynamic
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             bool builderWearablesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
-            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
             var realmContainer = RealmContainer.Create(
                 staticContainer,
                 identityCache,
@@ -332,10 +331,9 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 staticContainer.FeatureFlagsCache,
                 appArgs,
-                teleportController);
+                new TeleportController(staticContainer.SceneReadinessReportQueue));
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
-            teleportController.SetTerrain(terrainContainer.GenesisTerrain);
 
             var playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
             var localDevelopmentMetaDataSource = ConstSceneRoomMetaDataSource.FromMachineUUID().WithLog();
@@ -625,8 +623,6 @@ namespace Global.Dynamic
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    remoteEntities,
-                    staticContainer.CharacterContainer.Transform,
                     userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
