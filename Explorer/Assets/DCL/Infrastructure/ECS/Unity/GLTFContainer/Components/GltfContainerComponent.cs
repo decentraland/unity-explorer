@@ -14,9 +14,10 @@ namespace ECS.Unity.GLTFContainer.Components
 
         public ColliderLayer VisibleMeshesCollisionMask;
         public ColliderLayer InvisibleMeshesCollisionMask;
+
         public AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> Promise;
+
         public LoadingState State;
-        public bool NeedsColliderBoundsCheck;
 
         public GltfContainerComponent(ColliderLayer visibleMeshesCollisionMask, ColliderLayer invisibleMeshesCollisionMask, AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> promise)
         {
@@ -24,7 +25,6 @@ namespace ECS.Unity.GLTFContainer.Components
             InvisibleMeshesCollisionMask = invisibleMeshesCollisionMask;
             Promise = promise;
             State = LoadingState.Unknown;
-            NeedsColliderBoundsCheck = true;
         }
 
         public static GltfContainerComponent CreateFaulty(ReportData reportData, Exception exception)
