@@ -869,6 +869,7 @@ namespace Global.Dynamic
                         bootstrapContainer.Analytics!,
                         staticContainer.Profiler,
                         staticContainer.RealmData,
+                        staticContainer.LoadingStatus,
                         staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,

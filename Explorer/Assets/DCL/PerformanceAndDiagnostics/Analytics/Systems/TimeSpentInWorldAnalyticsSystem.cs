@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiling;
 using ECS;
 using ECS.Abstract;
 using Segment.Serialization;

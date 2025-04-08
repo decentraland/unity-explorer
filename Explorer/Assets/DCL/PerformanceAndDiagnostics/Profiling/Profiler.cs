@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 
@@ -44,6 +45,10 @@ namespace DCL.Profiling
         public ulong CurrentSceneTotalHeapSizeExecutable { get; set; }
         public ulong CurrentSceneUsedHeapSize { get; set; }
         public bool CurrentSceneHasStats { get; set; }
+
+        public float SpikeFrameTime { get; set; } = 40;
+
+        public static int PhysTick;
 
         public void Dispose()
         {

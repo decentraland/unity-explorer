@@ -29,5 +29,7 @@
         public ulong CurrentSceneUsedHeapSize { get; set; }
 
         public bool CurrentSceneHasStats { get; set; }
+
+        public float SpikeFrameTime { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.Profiling;
 using ECS.Abstract;
 
 namespace DCL.CharacterMotion.Systems
@@ -17,6 +18,7 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
+            Profiler.PhysTick++;
             UpdateAnimationQuery(World, t);
         }
 
