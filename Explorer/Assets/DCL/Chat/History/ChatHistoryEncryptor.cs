@@ -110,7 +110,6 @@ namespace DCL.Chat.History
         {
             byte[] hashedEncryptionKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
 
-            cryptoProvider.Clear();
             cryptoProvider.Key = hashedEncryptionKey;
             cryptoProvider.IV = hashedEncryptionKey.AsSpan(0, 16).ToArray();
             cryptoProvider.Mode = CipherMode.ECB; // TODO: USE CBC

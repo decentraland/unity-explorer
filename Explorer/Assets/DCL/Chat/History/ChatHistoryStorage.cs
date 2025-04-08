@@ -118,60 +118,69 @@ namespace DCL.Chat.History
 
             areAllChannelsLoaded = false;
 
-            if (Directory.Exists(userFilesFolder))
+            try
             {
-                LoadConversationSettings();
+                CreateUserFolderIfDoesNotExist();
 
-                bool isConversationSettingsPresent = conversationSettings != null;
-
-                List<string> filePaths = conversationSettings?.ConversationFilePaths;
-
-                // If there is no settings file, all stored conversations will be visible
-                if (!isConversationSettingsPresent)
+                if (Directory.Exists(userFilesFolder))
                 {
-                    filePaths = new List<string>(Directory.GetFiles(userFilesFolder));
-                    conversationSettings = new UserConversationsSettings(){ ConversationFilePaths = new List<string>(filePaths.Count) };
-                }
+                    LoadConversationSettings();
 
-                for (int i = 0; i < filePaths.Count; ++i)
-                {
-                    // Ignores the user conversation settings file
-                    if (filePaths[i] == userConversationSettingsFile)
-                        continue;
+                    bool isConversationSettingsPresent = conversationSettings != null;
 
-                    string currentFileName = Path.GetFileName(filePaths[i]);
-                    ChatChannel.ChannelId fileChannelId = chatEncryptor.FileNameToChannelId(currentFileName);
+                    List<string> filePaths = conversationSettings?.ConversationFilePaths;
 
-                    ChannelFile newFile = new ChannelFile
-                        {
-                            Path = filePaths[i],
-                        };
-
-                    ReportHub.Log(reportData, $"Creating channel for file " + filePaths[i] + " for channel with Id: " + fileChannelId.Id);
-
-                    lock (channelsLocker)
+                    // If there is no settings file, all stored conversations will be visible
+                    if (!isConversationSettingsPresent)
                     {
-                        channelFiles.Add(fileChannelId, newFile);
+                        filePaths = new List<string>(Directory.GetFiles(userFilesFolder));
+                        conversationSettings = new UserConversationsSettings(){ ConversationFilePaths = new List<string>(filePaths.Count) };
                     }
 
-                    chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.User);
+                    for (int i = 0; i < filePaths.Count; ++i)
+                    {
+                        // Ignores the user conversation settings file
+                        if (filePaths[i] == userConversationSettingsFile)
+                            continue;
 
-                    // All stored conversations will be added to the settings file, when it is not present
-                    if(!isConversationSettingsPresent)
-                        conversationSettings.ConversationFilePaths.Add(filePaths[i]);
+                        string currentFileName = Path.GetFileName(filePaths[i]);
+                        ChatChannel.ChannelId fileChannelId = chatEncryptor.FileNameToChannelId(currentFileName);
 
-                    ReportHub.Log(reportData, $"Channel with Id " + fileChannelId.Id + " created.");
+                        ChannelFile newFile = new ChannelFile
+                            {
+                                Path = filePaths[i],
+                            };
+
+                        ReportHub.Log(reportData, $"Creating channel for file " + filePaths[i] + " for channel with Id: " + fileChannelId.Id);
+
+                        lock (channelsLocker)
+                        {
+                            channelFiles.Add(fileChannelId, newFile);
+                        }
+
+                        chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.User);
+
+                        // All stored conversations will be added to the settings file, when it is not present
+                        if(!isConversationSettingsPresent)
+                            conversationSettings.ConversationFilePaths.Add(filePaths[i]);
+
+                        ReportHub.Log(reportData, $"Channel with Id " + fileChannelId.Id + " created.");
+                    }
+
+                    if (!isConversationSettingsPresent)
+                        StoreConversationSettings();
+
+                    ReportHub.Log(reportData, $"All conversations loaded.");
                 }
-
-                if (!isConversationSettingsPresent)
-                    StoreConversationSettings();
+                else
+                    ReportHub.Log(reportData, $"Nothing to load.");
 
                 areAllChannelsLoaded = true;
-
-                ReportHub.Log(reportData, $"All conversations loaded.");
             }
-            else
-                ReportHub.Log(reportData, $"Nothing to load.");
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportData, "An error occurred while loading all open conversations. " + e.Message + e.StackTrace);
+            }
         }
 
         /// <summary>
@@ -539,23 +548,7 @@ namespace DCL.Chat.History
 
             try
             {
-                // Makes sure the channels folder exists
-                if (!Directory.Exists(channelFilesFolder))
-                {
-                    ReportHub.Log(reportData, "Creating channels directory at " + channelFilesFolder);
-                    Directory.CreateDirectory(channelFilesFolder);
-                    ReportHub.Log(reportData, "Channels directory created at " + channelFilesFolder);
-                }
-
-                // Makes sure the user folder and the conversation settings file exist
-                if (!Directory.Exists(userFilesFolder))
-                {
-                    ReportHub.Log(reportData, "Creating user directory at " + userFilesFolder);
-                    Directory.CreateDirectory(userFilesFolder);
-                    ReportHub.Log(reportData, "User directory created at " + userFilesFolder);
-
-                    StoreConversationSettings();
-                }
+                CreateUserFolderIfDoesNotExist();
 
                 if (!channelFiles.TryGetValue(channelId, out channelFile))
                 {
@@ -585,6 +578,32 @@ namespace DCL.Chat.History
             }
 
             return channelFile;
+        }
+
+        private void CreateUserFolderIfDoesNotExist()
+        {
+            try
+            {
+                // Makes sure the channels folder exists
+                if (!Directory.Exists(channelFilesFolder))
+                {
+                    ReportHub.Log(reportData, "Creating channels directory at " + channelFilesFolder);
+                    Directory.CreateDirectory(channelFilesFolder);
+                    ReportHub.Log(reportData, "Channels directory created at " + channelFilesFolder);
+                }
+
+                // Makes sure the user folder and the conversation settings file exist
+                if (!Directory.Exists(userFilesFolder))
+                {
+                    ReportHub.Log(reportData, "Creating user directory at " + userFilesFolder);
+                    Directory.CreateDirectory(userFilesFolder);
+                    ReportHub.Log(reportData, "User directory created at " + userFilesFolder);
+                }
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportData, $"An error occurred while creating the user directories. " + e.Message + e.StackTrace);
+            }
         }
 
         private void OnChatHistoryChannelCleared(ChatChannel clearedChannel)
