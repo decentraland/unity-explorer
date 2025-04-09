@@ -137,13 +137,14 @@ namespace DCL.Chat
             if (userBlockingCacheProxy.StrictObject.BlockedByUsers.Contains(userId))
                 return ChatUserState.BLOCKED_BY_OWN_USER;
 
-            //If we reach here it's because the user is not a friend and its not blocked, so we check our settings
-            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
-                return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
 
             //If we allow ALL DMs, we then check the settings from the other user.
             if (chatUsersStateCache.IsNonFriendConnected(userId))
             {
+                //If we reach here it's because the user is not a friend and its not blocked, so we check our settings
+                if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
+                    return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
+
                 chatUsers.Clear();
                 chatUsers.Add(userId);
                 var response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
