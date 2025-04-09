@@ -149,11 +149,11 @@ namespace DCL.UI.SceneDebugConsole
         {
             fadeoutCts.SafeCancelAndDispose();
 
-            inputField.onSelect.RemoveListener(OnInputFieldSelected);
-            inputField.onDeselect.RemoveListener(OnInputFieldDeselected);
-            inputField.onSubmit.RemoveListener(OnInputFieldSubmit);
-            clearButton.onClick.RemoveListener(OnClearButtonClicked);
-            closeConsoleButton.onClick.RemoveListener(OnCloseConsoleButtonClicked);
+            // inputField.onSelect.RemoveListener(OnInputFieldSelected);
+            // inputField.onDeselect.RemoveListener(OnInputFieldDeselected);
+            // inputField.onSubmit.RemoveListener(OnInputFieldSubmit);
+            // clearButton.onClick.RemoveListener(OnClearButtonClicked);
+            // closeConsoleButton.onClick.RemoveListener(OnCloseConsoleButtonClicked);
 
             viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
@@ -163,12 +163,12 @@ namespace DCL.UI.SceneDebugConsole
             this.logMessages = logMessages;
             this.consoleSettings = settings;
 
-            closeConsoleButton.onClick.AddListener(OnCloseConsoleButtonClicked);
-            clearButton.onClick.AddListener(OnClearButtonClicked);
-
-            inputField.onSelect.AddListener(OnInputFieldSelected);
-            inputField.onDeselect.AddListener(OnInputFieldDeselected);
-            inputField.onSubmit.AddListener(OnInputFieldSubmit);
+            // closeConsoleButton.onClick.AddListener(OnCloseConsoleButtonClicked);
+            // clearButton.onClick.AddListener(OnClearButtonClicked);
+            //
+            // inputField.onSelect.AddListener(OnInputFieldSelected);
+            // inputField.onDeselect.AddListener(OnInputFieldDeselected);
+            // inputField.onSubmit.AddListener(OnInputFieldSubmit);
 
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
 
@@ -223,6 +223,8 @@ namespace DCL.UI.SceneDebugConsole
             }
             logEntryViews.Clear();
 
+            Debug.Log($"PRAVS - RefreshLogs()... messages: {logMessages.Count}");
+
             // Create new entries for all log messages
             foreach (var logMessage in logMessages)
             {
@@ -235,31 +237,11 @@ namespace DCL.UI.SceneDebugConsole
             GameObject entryGO = Instantiate(logEntryPrefab, logContentTransform);
             LogEntryView entryView = entryGO.GetComponent<LogEntryView>();
 
+            Debug.Log($"PRAVS - AddLogEntryView()...", entryGO);
+
             if (entryView != null)
             {
-                string timestampPrefix = consoleSettings.ShowTimestamps ? $"[{logMessage.Timestamp:HH:mm:ss}] " : "";
-                /*entryView.SetMessage($"{timestampPrefix}{logMessage.Message}");
-
-                // Set color based on message type
-                switch (logMessage.Type)
-                {
-                    case LogMessageType.Log:
-                        entryView.SetTextColor(consoleSettings.LogColor);
-                        break;
-                    case LogMessageType.Warning:
-                        entryView.SetTextColor(consoleSettings.WarningColor);
-                        break;
-                    case LogMessageType.Error:
-                        entryView.SetTextColor(consoleSettings.ErrorColor);
-                        break;
-                    case LogMessageType.Command:
-                        entryView.SetTextColor(consoleSettings.CommandColor);
-                        break;
-                    case LogMessageType.CommandResponse:
-                        entryView.SetTextColor(consoleSettings.CommandResponseColor);
-                        break;
-                }*/
-
+                entryView.SetItemData(logMessage);
                 logEntryViews.Add(entryView);
             }
         }

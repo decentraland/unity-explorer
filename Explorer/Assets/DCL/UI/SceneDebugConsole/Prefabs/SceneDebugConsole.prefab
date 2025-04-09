@@ -101,7 +101,7 @@ MonoBehaviour:
     m_Right: 5
     m_Top: 46
     m_Bottom: 0
-  m_ChildAlignment: 8
+  m_ChildAlignment: 0
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
@@ -391,12 +391,12 @@ MonoBehaviour:
   backgroundFadeTime: 0.2
   scrollToBottomButtonTimeBeforeHiding: 1
   scrollToBottomButtonFadeOutDuration: 0.5
-  inputField: {fileID: 0}
+  inputField: {fileID: 3303684574617829340}
   panelBackgroundCanvasGroup: {fileID: 1851953206125699832}
   closeConsoleButton: {fileID: 0}
   logScrollRect: {fileID: 3397229834474510796}
   logContentTransform: {fileID: 6334738306198345799}
-  logEntryPrefab: {fileID: 0}
+  logEntryPrefab: {fileID: 7324587687337436852, guid: 32d1a44a8af8d4251b59127dc5d4ef29, type: 3}
   clearButton: {fileID: 0}
   consolePanel: {fileID: 3553545222316724595}
   scrollToBottomButton: {fileID: 905818817793794684}
@@ -543,6 +543,17 @@ CanvasGroup:
   m_CorrespondingSourceObject: {fileID: 219064267116823855, guid: 32adea057761f4d97ad70bacb9b44939, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3303684574617829340 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4027726288261729287, guid: 32adea057761f4d97ad70bacb9b44939, type: 3}
+  m_PrefabInstance: {fileID: 1890474067062928347}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 540d6cb25a7124d428c68ac42b3e7de4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &7364144954060722805
 PrefabInstance:
   m_ObjectHideFlags: 0

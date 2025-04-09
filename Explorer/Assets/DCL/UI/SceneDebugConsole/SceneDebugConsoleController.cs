@@ -24,6 +24,7 @@ namespace DCL.UI.SceneDebugConsole
         private bool isInputSelected;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        // public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public bool IsUnfolded
         {
@@ -62,6 +63,8 @@ namespace DCL.UI.SceneDebugConsole
             this.viewDependencies = viewDependencies;
             this.consoleCommandsBus = consoleCommandsBus;
             this.consoleSettings = consoleSettings;
+
+            UnityEngine.Debug.Log($"PRAVS - SceneDebugConsoleController()...");
         }
 
         public void Clear() // Called by a command
@@ -93,6 +96,8 @@ namespace DCL.UI.SceneDebugConsole
 
         protected override void OnViewInstantiated()
         {
+            UnityEngine.Debug.Log($"PRAVS - OnViewInstantiated()...");
+
             logMessagesBus.MessageAdded += OnMessageBusMessageAdded;
             logHistory.LogMessageAdded += OnLogHistoryMessageAdded;
             consoleCommandsBus.OnClearConsole += Clear;
@@ -109,11 +114,15 @@ namespace DCL.UI.SceneDebugConsole
             OnFocus();
 
             // Intro message
-            logHistory.AddLogMessage(SceneDebugConsoleLogMessage.CommandResponse("Type 'help' for available commands."));
+            logHistory.AddLogMessage(SceneDebugConsoleLogMessage.CommandResponse("Type '/help' for available commands."));
+            logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Log, "TEST LOG!!!"));
+            logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Error, "TEST ERROR LOG!!!"));
         }
 
         private void OnLogHistoryMessageAdded(SceneDebugConsoleLogMessage logMessage)
         {
+            UnityEngine.Debug.Log($"PRAVS - OnLogHistoryMessageAdded()... {logMessage.Message}");
+
             viewInstance?.RefreshLogs();
 
             if (consoleSettings.AutoScrollToBottom)
@@ -143,7 +152,7 @@ namespace DCL.UI.SceneDebugConsole
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
-            IsUnfolded = false; // Start hidden by default
+            // IsUnfolded = false; // Start hidden by default
         }
 
         protected override void OnViewClose()

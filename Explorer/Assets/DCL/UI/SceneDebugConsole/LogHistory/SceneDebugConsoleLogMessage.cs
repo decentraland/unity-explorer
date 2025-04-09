@@ -37,9 +37,30 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         public SceneDebugConsoleLogMessage(LogMessageType type, string message, string stackTrace = "")
         {
             Type = type;
-            Message = message;
             StackTrace = stackTrace;
             Timestamp = DateTime.Now;
+
+            // Set color based on message type
+            /*switch (logMessage.Type)
+            {
+                case LogMessageType.Log:
+                    entryView.SetTextColor(consoleSettings.LogColor);
+                    break;
+                case LogMessageType.Warning:
+                    entryView.SetTextColor(consoleSettings.WarningColor);
+                    break;
+                case LogMessageType.Error:
+                    entryView.SetTextColor(consoleSettings.ErrorColor);
+                    break;
+                case LogMessageType.Command:
+                    entryView.SetTextColor(consoleSettings.CommandColor);
+                    break;
+                case LogMessageType.CommandResponse:
+                    entryView.SetTextColor(consoleSettings.CommandResponseColor);
+                    break;
+            }*/
+
+            Message = $"[{Timestamp:HH:mm:ss}] [{type}] {message}";
         }
 
         /// <summary>

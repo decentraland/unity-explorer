@@ -171,7 +171,7 @@ MonoBehaviour:
     mPadding: 8
     mInitCreateCount: 1
     mStartPosOffset: 0
-  mArrangeType: 1
+  mArrangeType: 0
   mSupportScrollBar: 1
   mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
@@ -376,7 +376,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &556871901165861207
 RectTransform:
   m_ObjectHideFlags: 0
@@ -444,6 +444,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3592518164887718450}
   - component: {fileID: 6636967551683476283}
+  - component: {fileID: 5625258704130904958}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -466,10 +467,10 @@ RectTransform:
   - {fileID: 556871901165861207}
   m_Father: {fileID: 3367823779974791586}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 340, y: 152}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 345, y: -600}
+  m_SizeDelta: {x: 345, y: 600}
   m_Pivot: {x: 1, y: 0}
 --- !u!225 &6636967551683476283
 CanvasGroup:
@@ -483,6 +484,32 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &5625258704130904958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6404002290101848605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 5
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &8066486546512070104
 GameObject:
   m_ObjectHideFlags: 0
