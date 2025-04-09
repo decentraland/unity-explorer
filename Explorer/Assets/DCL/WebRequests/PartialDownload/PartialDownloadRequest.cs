@@ -64,6 +64,8 @@ namespace DCL.WebRequests
 
             partialFlowCts = new CancellationTokenSource();
 
+            PartialDownloadStream result;
+
             async UniTask WaitForRequest()
             {
                 try { createdRequest = await this.SendAsync(ct); }
@@ -81,9 +83,14 @@ namespace DCL.WebRequests
                     WaitForRequest(),
                     ProcessPartialDownloadStream(partialFlowCts.Token));
             }
-            finally { createdRequest?.Dispose(); }
+            finally
+            {
+                // Assign the stream before disposal
+                result = partialStream!;
+                createdRequest?.Dispose();
+            }
 
-            return partialStream!;
+            return result;
         }
 
         private async UniTask ProcessPartialDownloadStream(CancellationToken ct)

@@ -43,6 +43,7 @@ namespace DCL.WebRequests
                 try
                 {
                     await ExecuteWithAnalytics(requestWrap, adapter, ct);
+                    return adapter;
                 }
                 catch (UnityWebRequestException exception)
                 {

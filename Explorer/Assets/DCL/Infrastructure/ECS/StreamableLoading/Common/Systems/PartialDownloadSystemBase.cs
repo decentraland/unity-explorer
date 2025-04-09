@@ -30,8 +30,13 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             try
             {
-                state.SetChunkData(new PartialLoadingState(await webRequestController.GetPartialAsync(intention.CommonArguments, new PartialDownloadArguments(state.PartialDownloadingData?.PartialDownloadStream), ct)));
-                return await ProcessCompletedDataAsync(state, intention, partition, ct);
+                PartialDownloadStream? partialDownloadStream = await webRequestController.GetPartialAsync(intention.CommonArguments, new PartialDownloadArguments(state.PartialDownloadingData?.PartialDownloadStream), ct);
+                state.SetChunkData(new PartialLoadingState(partialDownloadStream));
+
+                if (partialDownloadStream.IsFullyDownloaded)
+                    return await ProcessCompletedDataAsync(state, intention, partition, ct);
+
+                return default(StreamableLoadingResult<TData>);
             }
 
             //This catch is a workaround for the loading breaking bug caused by multiple scenes having same asset hash

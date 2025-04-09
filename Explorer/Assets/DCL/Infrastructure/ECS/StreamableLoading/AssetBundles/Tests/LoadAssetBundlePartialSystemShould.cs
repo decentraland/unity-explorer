@@ -11,6 +11,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -57,18 +58,14 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [TearDown]
-        public void RestoreCache()
-        {
-            TestWebRequestController.RestoreCache();
-        }
-
-        [TearDown]
         public void UnloadAllBundles()
         {
             foreach (ABPromise assetPromise in promises)
                 assetPromise.Consume(world);
 
             AssetBundle.UnloadAllAssetBundles(false);
+
+            TestWebRequestController.RestoreCache();
         }
 
         /// <summary>
@@ -94,7 +91,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             for (var i = 0; i < webCount; i++)
                 promises.Add(NewABPromise(REAL_ASSET_URL, AssetSource.WEB));
 
-            system!.Update(0);
 
             var resolvedPromises = new ABPromise[promises.Count];
 
@@ -103,7 +99,21 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 resolvedPromises[index] = await promises[index].ToUniTaskWithoutDestroyAsync(world);
             }
 
-            await UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i)));
+            // it will take several frames to download all chunks
+            var cts = new CancellationTokenSource();
+
+            async UniTask KeepUpdating(CancellationToken ct)
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    system!.Update(0);
+                    await UniTask.Yield();
+                }
+            }
+
+            await UniTask.WhenAny(
+                UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i))).ContinueWith(() => cts.Cancel()),
+                KeepUpdating(cts.Token));
 
             foreach (var assetPromise in resolvedPromises)
             {
