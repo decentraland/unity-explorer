@@ -6,6 +6,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Profiling;
+using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
@@ -18,6 +19,7 @@ namespace DCL.PluginSystem.Global
     public class AnalyticsPlugin : IDCLGlobalPlugin
     {
         private readonly IProfiler profiler;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
         private readonly IWeb3IdentityCache identityCache;
@@ -30,6 +32,7 @@ namespace DCL.PluginSystem.Global
         public AnalyticsPlugin(
             IAnalyticsController analytics,
             IProfiler profiler,
+            ILoadingStatus loadingStatus,
             IRealmData realmData,
             IScenesCache scenesCache,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
@@ -41,6 +44,7 @@ namespace DCL.PluginSystem.Global
             this.analytics = analytics;
 
             this.profiler = profiler;
+            this.loadingStatus = loadingStatus;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.identityCache = identityCache;
@@ -55,7 +59,7 @@ namespace DCL.PluginSystem.Global
             walkedDistanceAnalytics.Initialize();
 
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler, new JsonObjectBuilder());
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);

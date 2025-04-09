@@ -4,6 +4,7 @@ using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Profiling.ECS;
+using DCL.RealmNavigation;
 using ECS;
 using ECS.Abstract;
 using UnityEngine;
@@ -22,13 +23,11 @@ namespace DCL.Analytics.Systems
 
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IJsonObjectBuilder jsonObjectBuilder;
 
         private readonly IRealmData realmData;
-
         private readonly IProfiler profiler;
-
-        // private readonly IScenesCache scenesCache;
 
         private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
         private readonly FrameTimesRecorder gpuFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
@@ -38,6 +37,7 @@ namespace DCL.Analytics.Systems
         public PerformanceAnalyticsSystem(
             World world,
             IAnalyticsController analytics,
+            ILoadingStatus loadingStatus,
             IRealmData realmData,
             IProfiler profiler,
             IJsonObjectBuilder jsonObjectBuilder
@@ -46,15 +46,15 @@ namespace DCL.Analytics.Systems
             this.realmData = realmData;
             this.profiler = profiler;
 
-            // this.scenesCache = scenesCache;
             this.analytics = analytics;
+            this.loadingStatus = loadingStatus;
             this.jsonObjectBuilder = jsonObjectBuilder;
             config = analytics.Configuration;
         }
 
         protected override void Update(float t)
         {
-            if (!realmData.Configured) return;
+            if (!realmData.Configured || loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed) return;
 
             mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
             gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
