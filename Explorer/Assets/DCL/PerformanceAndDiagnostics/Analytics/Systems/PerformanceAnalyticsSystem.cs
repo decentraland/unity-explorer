@@ -54,7 +54,17 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
-            if (!realmData.Configured || loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed) return;
+            if (!realmData.Configured || loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+            {
+                if (profiler.IsCollectingFrameData) profiler.StopFrameTimeDataCollection();
+                return;
+            }
+
+            if (!profiler.IsCollectingFrameData)
+            {
+                profiler.StartFrameTimeDataCollection();
+                return; // skip one frame so at least one frame is collected
+            }
 
             mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
             gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
