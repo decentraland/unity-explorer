@@ -35,7 +35,8 @@
         "NSubstitute.dll",
         "Arch.dll",
         "Arch.System.dll",
-        "CommunityToolkit.HighPerformance.dll"
+        "CommunityToolkit.HighPerformance.dll",
+        "System.Runtime.CompilerServices.Unsafe.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

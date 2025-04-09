@@ -55,7 +55,10 @@ namespace ECS.StreamableLoading.AssetBundles
             state.AcquiredBudget!.Release();
 
             if (assetBundle == null)
+            {
+                stream.Dispose();
                 throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
+            }
 
             try
             {

@@ -1,4 +1,5 @@
-﻿using AssetManagement;
+﻿using Arch.System;
+using AssetManagement;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
@@ -19,28 +20,28 @@ using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoadin
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
-    public class LoadAssetBundlePartialSystemShould : UnitySystemTestBase<PartialLoadAssetBundleSystem>
+    public partial class LoadAssetBundlePartialSystemShould : UnitySystemTestBase<PartialLoadAssetBundleSystem>
     {
         //size 64800
-        private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
+        // private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
 
-        private const string REAL_ASSET_HASH = "bafybeigyvd42xyc3uh4n2dbol26jigyynbpewvhpnq6tc355y3kqc5hfra";
+        private const string REAL_ASSET_HASH = "bafybeidlrouln4f77ryns4wffz4pyapvfvbudno4pc2hirrhb5b554ixky";
 
-        // 1.7 MB
+        // 210 KB, Texture
         private static readonly string REAL_ASSET_URL =
 #if UNITY_STANDALONE_WIN
-            $"https://ab-cdn.decentraland.org/v36/bafkreia5mfpavvkbqm7qw6by7uzjodqq5nfuf5t2b5b46cquq54cunihxu/{REAL_ASSET_HASH}_windows";
+            $"https://ab-cdn.decentraland.org/v38/bafkreiel5muw2s2l73uyosgizb3ko7c3zrriecxpsvc4zssk4ti454lrh4/{REAL_ASSET_HASH}_windows";
 #endif
 
 #if UNITY_STANDALONE_OSX
-            $"https://ab-cdn.decentraland.org/v36/bafkreia5mfpavvkbqm7qw6by7uzjodqq5nfuf5t2b5b46cquq54cunihxu/{REAL_ASSET_HASH}_mac";
+            $"https://ab-cdn.decentraland.org/v38/bafkreiel5muw2s2l73uyosgizb3ko7c3zrriecxpsvc4zssk4ti454lrh4/{REAL_ASSET_HASH}_mac";
 #endif
 
         private static readonly string NOT_EXISTENT_EMBEDDED_URL =
             $"file://{Application.dataPath + $"/../TestResources/AssetBundles/{REAL_ASSET_HASH}"}";
 
-        // 512KB
-        private const long CHUNK_SIZE = 512 * 1024;
+        // 50KB
+        private const long CHUNK_SIZE = 50 * 1024;
 
         private IWebRequestController webRequestController;
         private List<ABPromise> promises;
@@ -102,15 +103,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             // it will take several frames to download all chunks
             var cts = new CancellationTokenSource();
 
-            async UniTask KeepUpdating(CancellationToken ct)
-            {
-                while (!ct.IsCancellationRequested)
-                {
-                    system!.Update(0);
-                    await UniTask.Yield();
-                }
-            }
-
             await UniTask.WhenAny(
                 UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i))).ContinueWith(() => cts.Cancel()),
                 KeepUpdating(cts.Token));
@@ -122,6 +114,24 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             }
         }
 
+        private async UniTask KeepUpdating(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                AllowAllPromisesQuery(world);
+
+                system!.Update(0);
+                await UniTask.Yield();
+            }
+        }
+
+        [Query]
+        private void AllowAllPromises(StreamableLoadingState loadingState)
+        {
+            if (loadingState.Value == StreamableLoadingState.Status.NotStarted)
+                loadingState.SetAllowed(Substitute.For<IAcquiredBudget>());
+        }
+
         [Test]
         [TestCase(2)]
         [TestCase(10)]
@@ -129,9 +139,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public async Task SharePartialStream(int promisesCount)
         {
             // No matter how many promises to the same sources are created there should be only one (the last one) to own the stream
-            for (var i = 0; i < promisesCount; i++) promises.Add(NewABPromise());
-
-            system!.Update(0);
+            for (var i = 0; i < promisesCount; i++) promises.Add(NewABPromise(REAL_ASSET_URL, AssetSource.WEB));
 
             var resolvedPromises = new ABPromise[promises.Count];
 
@@ -140,7 +148,12 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 resolvedPromises[index] = await promises[index].ToUniTaskWithoutDestroyAsync(world);
             }
 
-            await UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i)));
+            // it will take several frames to download all chunks
+            var cts = new CancellationTokenSource();
+
+            await UniTask.WhenAny(
+                UniTask.WhenAll(promises.Select((_, i) => WaitForPromise(i))).ContinueWith(() => cts.Cancel()),
+                KeepUpdating(cts.Token));
 
             PartialDownloadStream? stream = world.Get<StreamableLoadingState>(promises[0].Entity).PartialDownloadingData.Value.PartialDownloadStream;
 
@@ -155,19 +168,10 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
         private ABPromise NewABPromise(string url, AssetSource source)
         {
-            var intention = GetAssetBundleIntention.FromHash(typeof(GameObject), REAL_ASSET_HASH, source);
+            var intention = GetAssetBundleIntention.FromHash(typeof(Texture), REAL_ASSET_HASH, source);
             intention.SetSources(source, source);
             intention.SetURL(URLAddress.FromString(url));
             PartitionComponent partition = PartitionComponent.TOP_PRIORITY;
-            var assetPromise = ABPromise.Create(world, intention, partition);
-            world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
-            return assetPromise;
-        }
-
-        private ABPromise NewABPromise()
-        {
-            var intention = GetAssetBundleIntention.FromHash(typeof(GameObject), "bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda", permittedSources: AssetSource.WEB);
-            PartitionComponent? partition = PartitionComponent.TOP_PRIORITY;
             var assetPromise = ABPromise.Create(world, intention, partition);
             world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
             return assetPromise;
