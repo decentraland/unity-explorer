@@ -17,7 +17,7 @@ namespace DCL.Optimization.Hashing
         public static HashKey FromString(string key)
         {
             using var keyMemory = OwnedMemory.FromString(key);
-            var computedHash = SHA256Hashing.ComputeHash(keyMemory.Memory.Span);
+            var computedHash = SHA256Hashing.ComputeHash(keyMemory.Memory);
             return new HashKey(computedHash);
         }
 
@@ -40,7 +40,7 @@ namespace DCL.Optimization.Hashing
         private readonly byte[] memory;
         private readonly int length;
 
-        public Memory<byte> Memory => memory.AsMemory().Slice(0, length);
+        public Span<byte> Memory => memory.AsMemory().Slice(0, length).Span;
 
         private OwnedMemory(byte[] memory, int length)
         {

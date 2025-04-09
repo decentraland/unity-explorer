@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             using var key = HashKey.FromString(uuid);
 
             //hashed due privacy purposes to don't expose user's unique machine uuid
-            string hashed = HashUtility.ByteString(key.Hash.Memory.Span);
+            string hashed = HashUtility.ByteString(key.Hash.Memory);
             return new ConstSceneRoomMetaDataSource(hashed);
         }
 
