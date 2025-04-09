@@ -127,29 +127,36 @@ namespace DCL.Chat
         }
 
         //TODO FRAN: we can optimize it by returning the STATE directly when we call the events on the bus
-        public ChatUserState GetChatUserState(string userId)
+        public async UniTask<ChatUserState> GetChatUserStateAsync(string userId)
         {
-            //If it's a friend we just return its status
+            //If it's a friend we just return its connection status
             if (friendsCacheProxy.StrictObject.Contains(userId))
                 return chatUsersStateCache.IsFriendConnected(userId) ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED;
 
-            //If we reach here it's because the user is not a friend
+            //If the user is blocked by us, we show that first
+            if (userBlockingCacheProxy.StrictObject.BlockedByUsers.Contains(userId))
+                return ChatUserState.BLOCKED_BY_OWN_USER;
 
+            //If we reach here it's because the user is not a friend and its not blocked, so we check our settings
             if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
 
+            //If we allow ALL DMs, we then check the settings from the other user.
             if (chatUsersStateCache.IsNonFriendConnected(userId))
             {
-                if (chatUsersStateCache.IsUserUnavailableToChat(userId))
-                    //TODO FRAN: here we should do a request to BE checking if the user accepts messages from non-friends
-                    return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+                chatUsers.Clear();
+                chatUsers.Add(userId);
+                var response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
 
+                if (response[0].Count > 0)
+                {
+                    chatUsersStateCache.AddUserUnavailableToChat(userId);
+                    return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+                }
+
+                chatUsersStateCache.RemoveUserUnavailableToChat(userId);
                 return ChatUserState.CONNECTED;
             }
-
-            //If user isn't connected, it means it's either offline (or its blocking us) or we are blocking them, in which case we show different text.
-            if (userBlockingCacheProxy.StrictObject.BlockedByUsers.Contains(userId))
-                return ChatUserState.BLOCKED_BY_OWN_USER;
 
             return ChatUserState.DISCONNECTED;
         }
@@ -263,10 +270,10 @@ namespace DCL.Chat
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
-                    //if (!openConversations.Contains(participant.Identity)) return;
-                    //if (friendsCacheProxy.StrictObject.Contains(participant.Identity)) return;
-                    //if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
-                    //if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
+                    if (!openConversations.Contains(participant.Identity)) return;
+                    if (friendsCacheProxy.StrictObject.Contains(participant.Identity)) return;
+                    if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
+                    if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
                     //We only care about their data if it's an open conversation, it's not a friend, we allow messages from ALL and the user it's not blocked.
                     try
                     {

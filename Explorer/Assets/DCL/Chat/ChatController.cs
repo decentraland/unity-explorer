@@ -247,20 +247,26 @@ namespace DCL.Chat
         {
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
             chatUserStateUpdater.AddConversation(userId);
-            var userState = chatUserStateUpdater.GetChatUserState(userId);
             viewInstance!.CurrentChannelId = channel.Id;
-            viewInstance.SetInputWithUserState(userState);
-            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
-                           || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+            UpdateChatUserStateAsync(userId, true).Forget();
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             chatUserStateUpdater.AddConversation(channelId.Id);
-            var userState = chatUserStateUpdater.GetChatUserState(channelId.Id);
+            UpdateChatUserStateAsync(channelId.Id).Forget();
             viewInstance!.CurrentChannelId = channelId;
-            viewInstance.SetInputWithUserState(userState);
+        }
+
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar = false)
+        {
+            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId);
+            viewInstance!.SetInputWithUserState(userState);
+            if (!updateToolbar) return;
+
+            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                           || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -781,8 +787,7 @@ namespace DCL.Chat
 
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
-                //TODO FRAN: These are wrong, they should only check if they can be contacted, not connection state
-                var state = chatUserStateUpdater.GetChatUserState(userId);
+                var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
@@ -794,7 +799,7 @@ namespace DCL.Chat
 
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
-                var state = chatUserStateUpdater.GetChatUserState(userId);
+                var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
