@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -18,14 +16,6 @@ namespace DCL.WebRequests
         public const int NOT_FOUND = 404;
 
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
-            new (coreOp, fallbackValue, behaviour, reportContext);
-
-        public static SuppressExceptionWithFallback<GetTextureWebRequest.CreateTextureOp, GetTextureWebRequest, IOwnedTexture2D> SuppressExceptionsWithFallback(
-            this GetTextureWebRequest.CreateTextureOp coreOp,
-            OwnedTexture2D fallbackValue,
-            SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default,
-            ReportData? reportContext = null
-        ) =>
             new (coreOp, fallbackValue, behaviour, reportContext);
 
         public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod)

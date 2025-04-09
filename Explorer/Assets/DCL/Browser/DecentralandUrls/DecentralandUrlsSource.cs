@@ -113,7 +113,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
-                DecentralandUrl.MediaConverter => $"https://media-opticonverter.decentraland.{ENV}/convert?ktx2={{0}}&fileUrl={{1}}",
+                DecentralandUrl.MediaConverter => $"https://media-opticonverter.decentraland.{ENV}/convert?ktx2=true&fileUrl={{0}}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

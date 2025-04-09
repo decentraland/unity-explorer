@@ -11,7 +11,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;

@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
 using KtxUnity;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -39,12 +37,13 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            // var baseUrl = $"http://localhost:8000/convert?ktx2={{0}}&fileUrl={{1}}";
-            string baseUrl = urlsSource.Url(DecentralandUrl.MediaConverter);
-            var requestUrl = string.Format(baseUrl, ktxEnabled ? "true" : "false", Uri.EscapeDataString(commonArguments.URL));
+            bool useKtx = textureArguments.UseKtx && ktxEnabled;
+
+            // $"http://localhost:8000/convert?ktx2=true&fileUrl={{1}}";
+            var requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(commonArguments.URL)) : commonArguments.URL;
 
             UnityWebRequest wr = UnityWebRequest.Get(requestUrl);
-            return new GetTextureWebRequest(wr, requestUrl, textureArguments.TextureType, ktxEnabled);
+            return new GetTextureWebRequest(wr, requestUrl, textureArguments.TextureType, textureArguments.UseKtx && ktxEnabled);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>

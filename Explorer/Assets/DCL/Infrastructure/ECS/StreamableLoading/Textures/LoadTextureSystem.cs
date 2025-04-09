@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;

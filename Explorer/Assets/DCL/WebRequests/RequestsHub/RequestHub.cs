@@ -1,6 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests.GenericDelete;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 

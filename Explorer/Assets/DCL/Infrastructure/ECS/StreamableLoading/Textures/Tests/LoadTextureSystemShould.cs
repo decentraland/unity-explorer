@@ -1,9 +1,9 @@
-﻿using ECS.StreamableLoading.Cache.Disk;
+﻿using DCL.WebRequests;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures.Tests

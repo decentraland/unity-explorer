@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.RequestsHub;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using Utility.Multithreading;
 using Utility.Storage;
 

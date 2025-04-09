@@ -24,7 +24,6 @@ using Global.Dynamic.DebugSettings;
 using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
-using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Segment.Analytics;
 using Sentry;
 using System;

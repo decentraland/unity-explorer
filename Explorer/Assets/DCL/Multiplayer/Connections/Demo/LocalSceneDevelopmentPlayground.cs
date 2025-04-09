@@ -15,7 +15,6 @@ using DCL.WebRequests.RequestsHub;
 using ECS.SceneLifeCycle;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
