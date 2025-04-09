@@ -22,9 +22,16 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
             this.loadingStatus = loadingStatus;
         }
 
+        private int severalUpdatesFrames = 0;
+        private int frameCounter = 0;
+
         protected override void Update(float t)
         {
             if(loadingStatus.CurrentStage != LoadingStatus.LoadingStage.Completed || profiler.LastFrameTimeValueNs >= profiler.SpikeFrameTime) return;
+
+            frameCounter++;
+            if (frameCounter > 10)
+                frameCounter = 0;
 
             smoothedCalls = (settings.alpha * Profiler.PhysTick) + ((1f - settings.alpha) * smoothedCalls);
 

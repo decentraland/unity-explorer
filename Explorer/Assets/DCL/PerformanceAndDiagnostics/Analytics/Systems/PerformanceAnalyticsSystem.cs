@@ -55,6 +55,7 @@ namespace DCL.Analytics.Systems
         protected override void Update(float t)
         {
             if (!realmData.Configured) return;
+            Debug.Log($"VVV ANALYTICS: {UnityEngine.Time.frameCount}");
 
             mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
             gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
