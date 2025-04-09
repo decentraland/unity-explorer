@@ -330,13 +330,6 @@ namespace DCL.Chat
 
         private void OnUserUnblocked(string userid)
         {
-            if (!chatUsersStateCache.IsBlockedUserConnected(userid))
-            {
-                if (openConversations.Contains(userid))
-                    chatUserStateEventBus.OnUserDisconnected(userid);
-                return;
-            }
-
             chatUsersStateCache.AddConnectedNonFriend(userid);
             chatUsersStateCache.RemovedConnectedBlockedUser(userid);
 
@@ -346,6 +339,13 @@ namespace DCL.Chat
 
         private void OnYouUnblockedProfile(BlockedProfile profile)
         {
+            if (!chatUsersStateCache.IsBlockedUserConnected(profile.Address))
+            {
+                if (openConversations.Contains(profile.Address))
+                    chatUserStateEventBus.OnUserDisconnected(profile.Address);
+                return;
+            }
+
             OnUserUnblocked(profile.Address);
         }
 
