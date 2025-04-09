@@ -280,5 +280,19 @@ namespace DCL.SDKComponents.MediaStream
                 MediaAddress.Kind.LIVEKIT => ErrorCode.None,
                 _ => throw new ArgumentOutOfRangeException()
             };
+
+        public void EnsurePlaying()
+        {
+            switch (mediaKind)
+            {
+                case MediaAddress.Kind.URL:
+                    //ignore
+                    break;
+                case MediaAddress.Kind.LIVEKIT:
+                    livekitMediaPlayer!.EnsurePlaying();
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
     }
 }

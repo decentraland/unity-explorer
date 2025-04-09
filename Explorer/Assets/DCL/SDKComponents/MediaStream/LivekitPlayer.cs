@@ -13,6 +13,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IRoom room;
         private WeakReference<IVideoStream>? currentStream;
         private PlayerState playerState;
+        private LivekitAddress? playingAddress;
 
         public bool MediaOpened => currentStream != null;
 
@@ -21,6 +22,12 @@ namespace DCL.SDKComponents.MediaStream
         public LivekitPlayer(IRoomHub roomHub)
         {
             room = roomHub.StreamingRoom();
+        }
+
+        public void EnsurePlaying()
+        {
+            if (this is { MediaOpened: false, State: PlayerState.PLAYING, playingAddress: { } address })
+                OpenMedia(address);
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -44,6 +51,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             playerState = PlayerState.PLAYING;
+            playingAddress = livekitAddress;
         }
 
         private (string identity, string sid)? FirstAvailableTrack()

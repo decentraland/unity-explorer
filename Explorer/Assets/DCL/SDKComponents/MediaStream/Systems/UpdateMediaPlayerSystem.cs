@@ -168,6 +168,8 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(PBVideoPlayer))]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
+            playerComponent.MediaPlayer.EnsurePlaying();
+
             if (!playerComponent.IsPlaying
                 || playerComponent.State == VideoState.VsError
                 || !playerComponent.MediaPlayer.MediaOpened
