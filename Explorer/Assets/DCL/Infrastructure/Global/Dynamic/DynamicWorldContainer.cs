@@ -614,6 +614,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
+                    privateConversationsRoom,
                     roomHub,
                     roomsStatus,
                     profileRepository,

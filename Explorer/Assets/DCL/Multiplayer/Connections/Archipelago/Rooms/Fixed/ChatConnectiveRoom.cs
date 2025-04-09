@@ -11,7 +11,7 @@ using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class ChatConnectiveRoom : ConnectiveRoom
+    public class ChatConnectiveRoom : ConnectiveRoom, IActivatableConnectiveRoom
     {
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
@@ -62,6 +62,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private struct AdapterResponse
         {
             public string adapter;
+        }
+
+        public bool Activated => true; // TODO
+
+        public UniTask ActivateAsync()
+        {
+            // TODO
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask DeactivateAsync()
+        {
+            // TODO
+            return UniTask.CompletedTask;
         }
     }
 }
