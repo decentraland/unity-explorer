@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
+using DCL.Character.CharacterMotion.Systems;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
+            TeleportPositionCalculationSystem.InjectToWorld(ref builder);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);

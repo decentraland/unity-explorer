@@ -651,6 +651,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ProfileCard
       objectReference: {fileID: 0}
+    - target: {fileID: 1886905237088769880, guid: 9a2033d34fc1748a7ae18ca05ce0b7ad, type: 3}
+      propertyPath: m_Maskable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1896983162516398156, guid: 9a2033d34fc1748a7ae18ca05ce0b7ad, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
