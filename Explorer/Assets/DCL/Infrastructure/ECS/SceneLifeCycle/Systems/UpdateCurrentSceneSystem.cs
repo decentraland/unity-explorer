@@ -27,10 +27,12 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneNameBinding;
         private readonly ElementBinding<string> sceneParcelsBinding;
         private readonly ElementBinding<string> sceneHeightBinding;
+        private readonly ElementBinding<string> sdk6Binding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
+        private Vector2Int previousParcelPosition;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
             Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
@@ -41,12 +43,14 @@ namespace ECS.SceneLifeCycle.Systems
             this.playerEntity = playerEntity;
 
             debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
+            sdk6Binding = new ElementBinding<string>(string.Empty);
             sceneNameBinding = new ElementBinding<string>(string.Empty);
             sceneParcelsBinding = new ElementBinding<string>(string.Empty);
             sceneHeightBinding = new ElementBinding<string>(string.Empty);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
                          .SetVisibilityBinding(debugInfoVisibilityBinding)
+                         .AddCustomMarker("SDK 6:", sdk6Binding)
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
@@ -103,6 +107,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void RefreshSceneDebugInfo()
         {
+            sdk6Binding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
+
             if (currentActiveScene != null)
             {
                 sceneBoundsCube?.SetActive(showDebugCube);

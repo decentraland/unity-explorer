@@ -44,9 +44,6 @@ namespace DCL.Minimap
         internal TMP_Text placeCoordinatesText { get; private set; }
 
         [field: SerializeField]
-        internal RectTransform sdk6Label { get; private set; }
-
-        [field: SerializeField]
         internal RectTransform minimapContainer { get; private set; }
 
         [field: SerializeField]
