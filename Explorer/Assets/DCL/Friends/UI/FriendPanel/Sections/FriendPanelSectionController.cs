@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
 using System.Threading;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
@@ -27,6 +29,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             requestManager.ElementClicked += ElementClicked;
+            this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         public virtual void Dispose()
