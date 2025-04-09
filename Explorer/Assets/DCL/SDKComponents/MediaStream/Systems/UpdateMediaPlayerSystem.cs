@@ -34,6 +34,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private float worldVolumePercentage = 1f;
         private float masterVolumePercentage = 1f;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -41,13 +42,14 @@ namespace DCL.SDKComponents.MediaStream
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
-            WorldVolumeMacBus worldVolumeMacBus) : base(world)
+            WorldVolumeMacBus worldVolumeMacBus, MediaPlayerCustomPool mediaPlayerPool) : base(world)
         {
             this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.mediaPlayerPool = mediaPlayerPool;
 
             //This following part is a workaround applied for the MacOS platform, the reason
             //is related to the video and audio streams, the MacOS environment does not support
@@ -89,7 +91,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent)
+        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -98,13 +100,15 @@ namespace DCL.SDKComponents.MediaStream
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
+
+            if (RequiresURLChange(entity,  ref component, sdkComponent.Url, sdkComponent)) return;
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
         }
 
         [Query]
-        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
+        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -114,8 +118,23 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
+            if (RequiresURLChange(entity,  ref component, sdkComponent.Src, sdkComponent)) return;
+
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+        }
+
+        private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, string url, IDirtyMarker sdkComponent)
+        {
+            if (sdkComponent.IsDirty && component.URL != url && (!sceneData.TryGetMediaUrl(url, out var localMediaUrl) || component.URL != localMediaUrl))
+            {
+                MediaPlayerUtils.CleanUpMediaPlayer(ref component, mediaPlayerPool);
+                sdkComponent.IsDirty = false;
+                World.Remove<MediaPlayerComponent>(entity);
+                return true;
+            }
+
+            return false;
         }
 
         [Query]
@@ -143,19 +162,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (component.URL != url && (!sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl) || component.URL != localMediaUrl))
-            {
-                component.MediaPlayer.CloseCurrentStream();
-
-                UpdateStreamUrl(ref component, url);
-
-                if (component.State != VideoState.VsError)
-                {
-                    component.Cts = component.Cts.SafeRestart();
-                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).Forget();
-                }
-            }
-            else if (component.State != VideoState.VsError)
+            if (component.State != VideoState.VsError)
             {
                 component.MediaPlayer.UpdatePlayback(hasPlaying, isPlaying);
 
@@ -188,21 +195,6 @@ namespace DCL.SDKComponents.MediaStream
                 component.SetState(string.IsNullOrEmpty(component.URL) ? VideoState.VsNone : VideoState.VsError);
                 component.MediaPlayer.CloseCurrentStream();
             }
-        }
-
-        private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
-        {
-            bool isValidStreamUrl = url.IsValidUrl();
-            bool isValidLocalPath = false;
-            if (!isValidStreamUrl)
-            {
-                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
-                if(isValidLocalPath)
-                    url = mediaUrl;
-            }
-
-            component.URL = url;
-            component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
         }
 
         protected override void OnDispose()
