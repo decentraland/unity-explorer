@@ -7,7 +7,7 @@ namespace DCL.WebRequests
     /// <summary>
     ///     The name "UnityWebRequest" is not used ot avoid confusion with <see cref="UnityWebRequest" />
     /// </summary>
-    public class DefaultWebRequest : IWebRequest
+    public class DefaultWebRequest : WebRequestBase, IWebRequest
     {
         internal readonly UnityWebRequest unityWebRequest;
 
@@ -30,7 +30,7 @@ namespace DCL.WebRequests
 
         public event Action<IWebRequest>? OnDownloadStarted;
 
-        public DefaultWebRequest(UnityWebRequest unityWebRequest)
+        public DefaultWebRequest(UnityWebRequest unityWebRequest, ITypedWebRequest createdFrom) : base(createdFrom)
         {
             this.unityWebRequest = unityWebRequest;
             Response = new DefaultWebRequestResponse(unityWebRequest);

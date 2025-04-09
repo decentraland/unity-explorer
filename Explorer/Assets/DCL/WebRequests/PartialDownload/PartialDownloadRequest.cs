@@ -27,8 +27,6 @@ namespace DCL.WebRequests
         private volatile Http2PartialDownloadDataStream? partialStream;
         private CancellationTokenSource partialFlowCts;
 
-        //private Result? contentLoopResult;
-
         public override bool Http2Supported => true;
         public override bool StreamingSupported => true;
 
@@ -60,7 +58,7 @@ namespace DCL.WebRequests
         {
             await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
 
-            using PartialDownloadRequest _ = this;
+            IWebRequest? createdRequest = null;
 
             ct.ThrowIfCancellationRequested();
 
@@ -68,10 +66,7 @@ namespace DCL.WebRequests
 
             async UniTask WaitForRequest()
             {
-                try
-                {
-                    using IWebRequest? createdRequest = await this.SendAsync(ct);
-                }
+                try { createdRequest = await this.SendAsync(ct); }
                 catch (Exception)
                 {
                     // If an exception in the core flow occurs cancel the partial flow
@@ -80,9 +75,13 @@ namespace DCL.WebRequests
                 }
             }
 
-            await UniTask.WhenAll(
-                WaitForRequest(),
-                ProcessPartialDownloadStream(partialFlowCts.Token));
+            try
+            {
+                await UniTask.WhenAll(
+                    WaitForRequest(),
+                    ProcessPartialDownloadStream(partialFlowCts.Token));
+            }
+            finally { createdRequest?.Dispose(); }
 
             return partialStream!;
         }

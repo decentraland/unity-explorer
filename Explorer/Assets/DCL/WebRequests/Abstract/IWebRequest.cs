@@ -16,6 +16,14 @@ namespace DCL.WebRequests
     {
         string Url { get; }
 
+        /// <summary>
+        ///     The envelope this request was created from
+        ///     <remarks>
+        ///         It disposes along with the request itself
+        ///     </remarks>
+        /// </summary>
+        ITypedWebRequest CreatedFrom { get; }
+
         IWebRequestResponse Response { get; }
 
         bool Redirected { get; }

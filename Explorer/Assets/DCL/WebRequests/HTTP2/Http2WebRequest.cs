@@ -8,7 +8,7 @@ using System.Text;
 
 namespace DCL.WebRequests.HTTP2
 {
-    public class Http2WebRequest : IWebRequest
+    public class Http2WebRequest : WebRequestBase, IWebRequest
     {
         internal readonly HTTPRequest httpRequest;
 
@@ -32,7 +32,7 @@ namespace DCL.WebRequests.HTTP2
 
         public event Action<IWebRequest>? OnDownloadStarted;
 
-        public Http2WebRequest(HTTPRequest httpRequest)
+        public Http2WebRequest(HTTPRequest httpRequest, ITypedWebRequest createdFrom) : base(createdFrom)
         {
             this.httpRequest = httpRequest;
             Response = new Http2Response(httpRequest);

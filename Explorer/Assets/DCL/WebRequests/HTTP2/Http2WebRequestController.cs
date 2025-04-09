@@ -64,10 +64,9 @@ namespace DCL.WebRequests.HTTP2
             RequestEnvelope envelope = requestWrap.Envelope;
 
             // Don't Dispose the wrap here as it can outlive the original request to process the response
-            // using ITypedWebRequest _ = requestWrap;
             HTTPRequest nativeRequest = requestWrap.CreateHttp2Request();
 
-            var requestAdapter = new Http2WebRequest(nativeRequest);
+            var requestAdapter = new Http2WebRequest(nativeRequest, requestWrap);
 
             envelope.InitializedWebRequest(identityCache, requestAdapter);
             nativeRequest.RetrySettings.MaxRetries = envelope.CommonArguments.TotalAttempts();

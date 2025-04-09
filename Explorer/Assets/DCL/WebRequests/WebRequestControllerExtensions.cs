@@ -24,7 +24,6 @@ namespace DCL.WebRequests
         /// <param name="ct"></param>
         public static async UniTask SendAndForget(this ITypedWebRequest request, CancellationToken ct)
         {
-            using ITypedWebRequest _ = request;
             using (await request.SendAsync(ct)) ;
         }
 
@@ -140,7 +139,7 @@ namespace DCL.WebRequests
 
             // We are not interested in exception
             GenericGetRequest getRequest = controller.GetAsync(url, reportData, suppressErrors: true, onRequestCreated: OnCreated);
-            await getRequest.SendAsync(ct).SuppressToResultAsync();
+            await getRequest.SendAndForget(ct).SuppressToResultAsync();
 
             return downloadStarted;
         }

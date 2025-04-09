@@ -31,13 +31,10 @@ namespace DCL.WebRequests
 
             int attemptsLeft = envelope.CommonArguments.AttemptsCount;
 
-            // ensure disposal of headersInfo
-            using ITypedWebRequest _ = requestWrap;
-
             while (attemptsLeft > 0)
             {
                 UnityWebRequest nativeRequest = requestWrap.CreateUnityWebRequest();
-                var adapter = new DefaultWebRequest(nativeRequest);
+                var adapter = new DefaultWebRequest(nativeRequest, requestWrap);
 
                 envelope.OnCreated?.Invoke(adapter);
 
