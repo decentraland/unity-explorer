@@ -1,5 +1,4 @@
 ﻿using DCL.ECSComponents;
-using RenderHeads.Media.AVProVideo;
 using System.Threading;
 using Utility;
 
@@ -11,9 +10,9 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
 
-        public MediaPlayer MediaPlayer;
+        public MultiMediaPlayer MediaPlayer;
 
-        public string URL;
+        public MediaAddress MediaAddress;
         public bool IsFromContentServer;
         public VideoState State { get; private set; }
         public VideoState LastPropagatedState;
@@ -24,9 +23,9 @@ namespace DCL.SDKComponents.MediaStream
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
 
-        public bool IsPlaying => MediaPlayer.Control.IsPlaying();
-        public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
-        public float Duration => (float)MediaPlayer.Info.GetDuration();
+        public readonly bool IsPlaying => MediaPlayer.IsPlaying;
+        public readonly float CurrentTime => MediaPlayer.CurrentTime;
+        public readonly float Duration => MediaPlayer.Duration;
 
         public void SetState(VideoState newState)
         {
@@ -37,7 +36,8 @@ namespace DCL.SDKComponents.MediaStream
 
         public void Dispose()
         {
-            MediaPlayer = null;
+            MediaPlayer.Dispose(MediaAddress);
+            MediaPlayer = MultiMediaPlayer.EMPTY;
             Cts.SafeCancelAndDispose();
         }
     }
