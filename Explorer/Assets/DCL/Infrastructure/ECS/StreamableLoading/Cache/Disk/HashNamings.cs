@@ -29,7 +29,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         {
             using var __ = STRING_BUILDER_POOL.Get(out var sb);
 
-            HashUtility.ExecutePerByte(key.Hash.Memory, sb, static tuple => tuple.context.Append(tuple.stringifiedByte));
+            HashUtility.ExecutePerByte(key.Hash.Memory.Span, sb, static tuple => tuple.context.Append(tuple.stringifiedByte));
 
             if (extension.StartsWith('.') == false)
                 sb.Append('.');

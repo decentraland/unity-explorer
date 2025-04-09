@@ -44,14 +44,14 @@ namespace ECS.StreamableLoading.Cache.Disk.Cacheables
         public void Put(int value)
         {
             var memory = OwnedMemory.FromPool(sizeof(int));
-            BinaryPrimitives.WriteInt32LittleEndian(memory.Memory, value);
+            BinaryPrimitives.WriteInt32LittleEndian(memory.Memory.Span, value);
             memoryList.Add(memory);
         }
 
         public void Put(bool value)
         {
             var memory = OwnedMemory.FromPool(sizeof(int));
-            BinaryPrimitives.WriteInt32LittleEndian(memory.Memory, value ? 1 : 0);
+            BinaryPrimitives.WriteInt32LittleEndian(memory.Memory.Span, value ? 1 : 0);
             memoryList.Add(memory);
         }
     }

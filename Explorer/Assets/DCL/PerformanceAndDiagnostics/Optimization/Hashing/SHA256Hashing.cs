@@ -13,7 +13,7 @@ namespace DCL.Optimization.Hashing
         {
             var hashMemory = OwnedMemory.FromPool(SHA256_HASH_LENGTH);
 
-            if (SHA256.TryComputeHash(source, hashMemory.Memory.AsSpan(), out _) == false)
+            if (SHA256.TryComputeHash(source, hashMemory.Memory.Span, out _) == false)
                 throw new Exception("Something went wrong during hash computation");
 
             return hashMemory;
@@ -24,11 +24,11 @@ namespace DCL.Optimization.Hashing
             using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256)!;
 
             foreach (OwnedMemory ownedMemory in list)
-                hasher.AppendData(ownedMemory.Memory);
+                hasher.AppendData(ownedMemory.Memory.Span);
 
             var hashMemory = OwnedMemory.FromPool(SHA256_HASH_LENGTH);
 
-            if (hasher.TryGetHashAndReset(hashMemory.Memory.AsSpan(), out _) == false)
+            if (hasher.TryGetHashAndReset(hashMemory.Memory.Span, out _) == false)
                 throw new Exception("Something went wrong during hash computation");
 
             return hashMemory;
