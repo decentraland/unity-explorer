@@ -1,3 +1,4 @@
+using Best.HTTP.Caching;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
@@ -33,7 +34,7 @@ namespace DCL.WebRequests.RequestsHub
 
         private readonly IReadOnlyDictionary<Key, object> map;
 
-        public RequestHub(ITexturesFuse texturesFuse, bool isTextureCompressionEnabled, WebRequestsMode webRequestsMode)
+        public RequestHub(ITexturesFuse texturesFuse, HTTPCache cache, bool isTextureCompressionEnabled, WebRequestsMode webRequestsMode)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
@@ -47,7 +48,7 @@ namespace DCL.WebRequests.RequestsHub
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPatchRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAudioClipArguments args) => new GetAudioClipWebRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller, webRequestsMode == WebRequestsMode.HTTP2));
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller));
         }
 
         private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)

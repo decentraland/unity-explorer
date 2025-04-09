@@ -43,7 +43,7 @@ namespace ECS.TestSuite
         {
             cache ??= InitializeCache();
 
-            var hub = new RequestHub(ITexturesFuse.NewTestInstance(), false, WebRequestsMode.HTTP2);
+            var hub = new RequestHub(ITexturesFuse.NewTestInstance(), cache, false, WebRequestsMode.HTTP2);
             IWebRequestsAnalyticsContainer? analyticsContainer = Substitute.For<IWebRequestsAnalyticsContainer>();
             IWeb3IdentityCache? identityCache = Substitute.For<IWeb3IdentityCache>();
 

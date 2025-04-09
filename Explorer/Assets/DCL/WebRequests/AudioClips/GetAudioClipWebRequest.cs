@@ -22,6 +22,7 @@ namespace DCL.WebRequests
 
         public async UniTask<AudioClip?> CreateAudioClipAsync(CancellationToken ct)
         {
+            using GetAudioClipWebRequest _ = this;
             using IWebRequest? wr = await this.SendAsync(ct);
 
             if (wr.nativeRequest is not UnityWebRequest unityWebRequest)

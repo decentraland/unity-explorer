@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 namespace DCL.WebRequests
 {
     /// <summary>
+    ///     Represents an instance of the executed web request. <br />
     ///     This abstraction allows to switch easily between <see cref="UnityWebRequest" /> and <see cref="HTTPRequest" />
     ///     <remarks>
     ///         The APIs of <see cref="HTTPRequest" /> and <see cref="UnityWebRequest" /> have very little in common, this abstraction aims to provide very basics.
@@ -13,13 +14,6 @@ namespace DCL.WebRequests
     /// </summary>
     public partial interface IWebRequest : IDisposable
     {
-        /// <summary>
-        ///     In case the request is executed outside <see cref="IWebRequestController" /> it can be aborted manually
-        /// </summary>
-        void Abort();
-
-        event Action<IWebRequest> OnDownloadStarted;
-
         string Url { get; }
 
         IWebRequestResponse Response { get; }
@@ -34,5 +28,12 @@ namespace DCL.WebRequests
         ///     Either <see cref="UnityWebRequest" /> or <see cref="HTTPRequest" />
         /// </summary>
         internal object nativeRequest { get; }
+
+        event Action<IWebRequest> OnDownloadStarted;
+
+        /// <summary>
+        ///     In case the request is executed outside <see cref="IWebRequestController" /> it can be aborted manually
+        /// </summary>
+        void Abort();
     }
 }

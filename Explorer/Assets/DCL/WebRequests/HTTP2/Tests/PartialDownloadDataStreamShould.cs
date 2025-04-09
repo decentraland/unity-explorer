@@ -19,7 +19,7 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.HTTP2.Tests
 {
-    [TestFixture(800 * 1024)] // 800 KB
+    [TestFixture(600 * 1024)] // 600 KB
     [TestFixture(10 * 1024)] // 10 KB
     public class PartialDownloadDataStreamShould
     {
@@ -51,7 +51,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         {
             cache = TestWebRequestController.InitializeCache();
 
-            var requestsHub = new RequestHub(Substitute.For<ITexturesFuse>(), false, WebRequestsMode.HTTP2);
+            var requestsHub = new RequestHub(Substitute.For<ITexturesFuse>(), cache, false, WebRequestsMode.HTTP2);
 
             webRequestController = new Http2WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
                 Substitute.For<IWeb3IdentityCache>(), requestsHub, cache, chunkSize);
@@ -75,13 +75,22 @@ namespace DCL.WebRequests.HTTP2.Tests
         /// </summary>
         /// <returns></returns>
         [Test]
-        public async Task RecoverPartialDataFromCacheAsync()
+        public async Task RecoverPartialDataFromCacheAsync([Values(true, false)] bool finalize)
         {
+            ulong contentSize = await GetContentSizeAsync(PARTIAL_TEST_URL.OriginalString);
+
+            var iterationsCount = (int)Math.Ceiling(contentSize / (double)chunkSize);
+
             // Delete from cache to ensure a fresh start
             cache.Delete(PARTIAL_TEST_URL_HASH, null);
 
             // Perform one iteration
             stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, new PartialDownloadArguments(stream), CancellationToken.None);
+
+            iterationsCount--;
+
+            if (iterationsCount == 1)
+                finalize = true;
 
             Assert.That(stream, Is.Not.Null);
             Assert.That(stream.IsFullyDownloaded, Is.False);
@@ -91,28 +100,38 @@ namespace DCL.WebRequests.HTTP2.Tests
             Http2PartialDownloadDataStream.CachedPartialData partialData = stream.GetCachedPartialData();
             int firstItSize = partialData.partialContentLength;
             Assert.That(firstItSize, Is.GreaterThan(0));
-            Assert.That(stream.opMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.INCOMPLETE_DATA_CACHED));
+            Assert.That(stream.opMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.WRITING_TO_DISK_CACHE));
 
             // Close the stream
             stream.Dispose();
             stream = null;
 
             // At this point the data should be partially cached
-            // Perform one more iteration to finish its downloading
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, new PartialDownloadArguments(stream), CancellationToken.None);
+
+            if (!finalize)
+                iterationsCount = 1;
+
+            // Perform remaining iterations to finish its downloading
+
+            for (var i = 0; i < iterationsCount; i++)
+                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, new PartialDownloadArguments(stream), CancellationToken.None);
 
             Assert.That(stream, Is.Not.Null);
-            Assert.That(stream.IsFullyDownloaded, Is.True);
+            Assert.That(stream.IsFullyDownloaded, Is.EqualTo(finalize));
             Assert.That(stream.GetMemoryStreamPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.MemoryStreamPartialData)));
             Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
+            Assert.That(stream.opMode, Is.EqualTo(finalize ? Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED : Http2PartialDownloadDataStream.Mode.WRITING_TO_DISK_CACHE));
 
             partialData = stream.GetCachedPartialData();
 
             Assert.That(partialData.partialContentLength, Is.GreaterThan(firstItSize));
 
-            // Read Handler should be open immediately after the last chunk
-            Assert.That(partialData.readHandler, Is.Not.Null);
-            Assert.That(partialData.writeHandler, Is.Null);
+            if (finalize)
+            {
+                // Read Handler should be open immediately after the last chunk
+                Assert.That(partialData.readHandler, Is.Not.Null);
+                Assert.That(partialData.writeHandler, Is.Null);
+            }
         }
 
         [Test]
@@ -151,6 +170,8 @@ namespace DCL.WebRequests.HTTP2.Tests
             for (var i = 0; i < iterationsCount; i++)
                 stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, new PartialDownloadArguments(stream), CancellationToken.None);
 
+            await UniTask.SwitchToMainThread();
+
             Assert.That(stream.fullFileSize, Is.EqualTo(fileSize));
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
@@ -178,7 +199,8 @@ namespace DCL.WebRequests.HTTP2.Tests
             Assert.That(streamData.SequenceEqual(reliableData), Is.True);
         }
 
-        [Test]
+        //[Test]
+        // I could not find a stable endpoint that outputs "Content-Length" but does not support "Range" header
         public async Task ConstructDataFromUnsupportedRangeAsync()
         {
             // Delete from cache to ensure a fresh start

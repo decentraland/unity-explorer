@@ -12,6 +12,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
     {
         public static async UniTask<ISimpleFetchApi.Response> ToSimpleFetchResponseAsync(this ITypedWebRequest request, CancellationToken ct)
         {
+            using ITypedWebRequest _ = request;
             using IWebRequest? nativeRequest = await request.SendAsync(ct);
 
             string responseData = nativeRequest.Response.Text;

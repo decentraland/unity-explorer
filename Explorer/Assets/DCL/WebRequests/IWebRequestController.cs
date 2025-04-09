@@ -1,3 +1,4 @@
+using Best.HTTP.Shared;
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -14,6 +15,7 @@ namespace DCL.WebRequests
             new IWeb3IdentityCache.Default(),
             new RequestHub(
                 ITexturesFuse.NewDefault(),
+                HTTPManager.LocalCache,
                 false,
                 WebRequestsMode.UNITY
             )

@@ -29,7 +29,7 @@ namespace DCL.WebRequests.HTTP2
 
             if (headerValue != null && int.TryParse(headerValue, out value)) return true;
 
-            ReportHub.LogError(reportData, $"{header} can't be parsed to \"int\"");
+            ReportHub.LogWarning(reportData, $"{header} can't be parsed to \"int\"");
             value = 0;
             return false;
         }

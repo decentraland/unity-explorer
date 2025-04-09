@@ -66,7 +66,7 @@ namespace DCL.WebRequests
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
-            var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled, container.WebRequestsMode);
+            var textureFuseRequestHub = new RequestHub(texturesFuse, httpCache, isTextureCompressionEnabled, container.WebRequestsMode);
 
             int partialChunkSize = container.settings.PartialChunkSizeMB * 1024 * 1024;
 

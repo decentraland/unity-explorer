@@ -26,6 +26,7 @@ namespace DCL.WebRequests
 
         public static async UniTask<TResult> ProcessAndDispose<TResult>(this ITypedWebRequest request, Func<IWebRequest, TResult> getResult, CancellationToken ct)
         {
+            using ITypedWebRequest _ = request;
             using IWebRequest? req = await request.SendAsync(ct);
             return getResult(req);
         }
@@ -38,6 +39,7 @@ namespace DCL.WebRequests
 
         public static async UniTask<string?> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
         {
+            using ITypedWebRequest _ = request;
             using IWebRequest req = await request.SendAsync(ct);
             return req.Response.GetHeader(headerName);
         }
@@ -51,6 +53,7 @@ namespace DCL.WebRequests
             CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
             JsonSerializerSettings? serializerSettings = null)
         {
+            using ITypedWebRequest _ = request;
             using IWebRequest? rqs = await request.SendAsync(ct);
 
             string text = rqs.Response.Text;
@@ -100,6 +103,7 @@ namespace DCL.WebRequests
             JsonSerializerSettings? newtonsoftSettings = null,
             CreateExceptionOnParseFail? createCustomExceptionOnFailure = null)
         {
+            using ITypedWebRequest _ = request;
             string text = (await request.SendAsync(ct)).Response.Text;
 
             await SwitchToThreadAsync(threadFlags);
@@ -142,6 +146,7 @@ namespace DCL.WebRequests
         /// </summary>
         public static async UniTask<T> TransformDataAsync<T>(this ITypedWebRequest request, PrepareContext<T> prepareContext, TransformChunk<T> transformChunk, CancellationToken ct, WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread)
         {
+            using ITypedWebRequest _ = request;
             using IWebRequest? sentRequest = await request.SendAsync(ct);
 
             await SwitchToThreadAsync(threadFlags);
@@ -212,6 +217,7 @@ namespace DCL.WebRequests
         {
             try
             {
+                using ITypedWebRequest __ = webRequest;
                 using IWebRequest? _ = await webRequest.SendAsync(ct);
             }
             catch (WebRequestException e) { throw newExceptionFactoryMethod(e); }

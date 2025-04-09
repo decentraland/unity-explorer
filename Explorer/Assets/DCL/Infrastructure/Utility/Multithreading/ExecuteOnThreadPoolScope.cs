@@ -18,6 +18,16 @@ namespace Utility.Multithreading
             return new ExecuteOnThreadPoolScope(false);
         }
 
+        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnOriginalThreadAsync()
+        {
+            bool isMainThread = PlayerLoopHelper.IsMainThread;
+
+            if (isMainThread)
+                await UniTask.SwitchToThreadPool();
+
+            return new ExecuteOnThreadPoolScope(isMainThread);
+        }
+
         public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnMainThreadAsync()
         {
             await UniTask.SwitchToThreadPool();
