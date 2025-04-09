@@ -46,7 +46,7 @@ namespace DCL.UI.SceneDebugConsole
             LogEntryClicked?.Invoke();
         }
 
-        public void AnimateChatEntry()
+        public void AnimateLogEntry()
         {
             logEntryCanvasGroup.alpha = 0;
             logEntryCanvasGroup.DOFade(1, 0.5f);

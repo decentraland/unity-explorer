@@ -10,13 +10,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
 namespace DCL.UI.SceneDebugConsole
 {
     /// <summary>
-    /// A UI element that displays a list of chat messages.
+    /// A UI element that displays a list of log messages.
     /// </summary>
     public class SceneDebugConsoleLogViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
     {
@@ -27,30 +28,27 @@ namespace DCL.UI.SceneDebugConsole
         /// <summary>
         /// The prefab to use when instantiating a new item.
         /// </summary>
-        private enum ChatItemPrefabIndex // It must match the list in the LoopListView.
+        private enum LogItemPrefabIndex // It must match the list in the LoopListView.
         {
-            ChatEntry,
-            ChatEntryOwn,
+            LogEntry,
             Padding,
-            SystemChatEntry,
             Separator,
-            BlockedUser,
         }
 
         /// <summary>
-        /// Raised when the options button of a chat message is clicked.
+        /// Raised when the options button of a log message is clicked.
         /// </summary>
-        public LogMessageOptionsButtonClickedDelegate? ChatMessageOptionsButtonClicked;
+        public LogMessageOptionsButtonClickedDelegate? LogMessageOptionsButtonClicked;
 
         /// <summary>
         /// Raised every time the scroll position of the messages viewer changes.
         /// </summary>
-        public LogMessageViewerScrollPositionChangedDelegate? ChatMessageViewerScrollPositionChanged;
+        public LogMessageViewerScrollPositionChangedDelegate? LogMessageViewerScrollPositionChanged;
 
         [SerializeField]
         private float logEntriesFadeTime = 3f;
 
-        [Tooltip("The time it takes, in milliseconds, without focus before the entire chat window starts fading out.")]
+        [Tooltip("The time it takes, in milliseconds, without focus before the entire log window starts fading out.")]
         [SerializeField]
         private int logEntriesWaitBeforeFading = 10000;
 
@@ -58,7 +56,7 @@ namespace DCL.UI.SceneDebugConsole
         private CanvasGroup scrollbarCanvasGroup;
 
         [SerializeField]
-        private CanvasGroup chatEntriesCanvasGroup;
+        private CanvasGroup logEntriesCanvasGroup;
 
         [SerializeField]
         private LoopListView2 loopList;
@@ -66,7 +64,7 @@ namespace DCL.UI.SceneDebugConsole
         [SerializeField]
         private ScrollRect scrollRect;
 
-        // The latest amount of messages added to the chat that must be animated yet
+        // The latest amount of messages added to the log that must be animated yet
         private int entriesPendingToAnimate;
 
         private IReadOnlyList<SceneDebugConsoleLogMessage>? logMessages;
@@ -109,7 +107,7 @@ namespace DCL.UI.SceneDebugConsole
             {
                 loopList.gameObject.SetActive(value);
 
-                if (!value) // Note: This is necessary to avoid items animating when re-opening the chat window
+                if (!value) // Note: This is necessary to avoid items animating when re-opening the log window
                     entriesPendingToAnimate = 0;
             }
         }
@@ -127,7 +125,7 @@ namespace DCL.UI.SceneDebugConsole
         /// <summary>
         /// Replaces the data to be represented by the UI element.
         /// </summary>
-        /// <param name="messages">The chat messages to display.</param>
+        /// <param name="messages">The log messages to display.</param>
         public void SetData(IReadOnlyList<SceneDebugConsoleLogMessage> messages)
         {
             logMessages = messages;
@@ -135,7 +133,7 @@ namespace DCL.UI.SceneDebugConsole
             IsSeparatorVisible = false;
             messageCountWhenSeparatorWasSet = 0;
 
-            // Replaces the chat items (it uses pools to store item instances so they will be reused)
+            // Replaces the log items (it uses pools to store item instances so they will be reused)
             loopList.SetListItemCount(0);
             loopList.SetListItemCount(logMessages.Count);
         }
@@ -154,7 +152,7 @@ namespace DCL.UI.SceneDebugConsole
         }
 
         /// <summary>
-        /// Moves the chat so it shows the last created message.
+        /// Moves the log so it shows the last created message.
         /// </summary>
         /// <param name="useSmoothScroll">Whether to smoothly scroll to the end or not.</param>
         public void ShowLastMessage(bool useSmoothScroll = false)
@@ -179,16 +177,16 @@ namespace DCL.UI.SceneDebugConsole
         /// </summary>
         public void RefreshMessages()
         {
-            ResetChatEntriesFadeout();
+            ResetLogEntriesFadeout();
 
-            int chatMessagesCount = logMessages!.Count + (IsSeparatorVisible ? 1 : 0);
-            int newEntries = chatMessagesCount - loopList.ItemTotalCount;
+            int logMessagesCount = logMessages!.Count + (IsSeparatorVisible ? 1 : 0);
+            int newEntries = logMessagesCount - loopList.ItemTotalCount;
 
             if (newEntries < 0)
                 newEntries = 0;
 
             entriesPendingToAnimate = newEntries;
-            loopList.SetListItemCount(chatMessagesCount, false);
+            loopList.SetListItemCount(logMessagesCount, false);
 
             // Scroll view adjustment
             if (IsScrollAtBottom)
@@ -199,7 +197,7 @@ namespace DCL.UI.SceneDebugConsole
 
                 if (loopList.ItemList.Count >= newEntries + 1)
                 {
-                    // When the scroll view is not at the bottom, chat messages should not move if a new message is added
+                    // When the scroll view is not at the bottom, log messages should not move if a new message is added
                     // An offset has to be applied to the scroll view in order to prevent messages from moving
                     var offsetToPreventScrollViewMovement = 0.0f;
 
@@ -216,34 +214,34 @@ namespace DCL.UI.SceneDebugConsole
         }
 
         /// <summary>
-        /// Plays an animation that makes all chat entries opaque.
+        /// Plays an animation that makes all log entries opaque.
         /// </summary>
-        public void StopChatEntriesFadeout()
+        public void StopLogEntriesFadeout()
         {
             fadeoutCts.SafeCancelAndDispose();
-            chatEntriesCanvasGroup.alpha = 1;
+            logEntriesCanvasGroup.alpha = 1;
         }
 
         /// <summary>
-        /// Plays an animation that makes all chat entries transparent.
+        /// Plays an animation that makes all log entries transparent.
         /// </summary>
-        public void StartChatEntriesFadeout()
+        public void StartLogEntriesFadeout()
         {
             fadeoutCts.SafeCancelAndDispose();
             fadeoutCts = new CancellationTokenSource();
 
-            AwaitAndFadeChatEntriesAsync(fadeoutCts.Token).Forget();
+            AwaitAndFadeLogEntriesAsync(fadeoutCts.Token).Forget();
         }
 
         /// <summary>
         /// Makes the separator item visible at a given position in the list.
         /// If new items are added to the list afterward the separator will remain visually at the same position.
         /// </summary>
-        /// <param name="chatMessageIndex">The index of the position where the separator has to be displayed.</param>
-        public void ShowSeparator(int chatMessageIndex)
+        /// <param name="logMessageIndex">The index of the position where the separator has to be displayed.</param>
+        public void ShowSeparator(int logMessageIndex)
         {
             IsSeparatorVisible = true;
-            separatorPositionIndex = chatMessageIndex;
+            separatorPositionIndex = logMessageIndex;
 
             messageCountWhenSeparatorWasSet = logMessages!.Count;
         }
@@ -290,8 +288,8 @@ namespace DCL.UI.SceneDebugConsole
             scrollbarCanvasGroup.alpha = 0;
         }
 
-        // Called by the LoopListView when the number of items change, it uses out data (chatMessages)
-        // to customize a new instance of the ChatEntryView (it uses pools internally).
+        // Called by the LoopListView when the number of items change, it uses out data (logMessages)
+        // to customize a new instance of the LogEntryView (it uses pools internally).
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
             if (index < 0 || index >= logMessages!.Count)
@@ -303,9 +301,9 @@ namespace DCL.UI.SceneDebugConsole
 
             if (isSeparatorIndex)
 
-                // Note: The separator is not part of the data, it is a view thing, so it is not a type of chat message, it is inserted by adding an extra item to the count and
+                // Note: The separator is not part of the data, it is a view thing, so it is not a type of log message, it is inserted by adding an extra item to the count and
                 //       faking it in this method, when it tries to create a new item
-                item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Separator].mItemPrefab.name);
+                item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.Separator].mItemPrefab.name);
             else
             {
                 bool isIndexAfterSeparator = IsSeparatorVisible && index > CurrentSeparatorIndex;
@@ -313,21 +311,21 @@ namespace DCL.UI.SceneDebugConsole
 
                 if (messageIndex < 0)
                 {
-                    ReportHub.LogWarning(ReportCategory.UI, $"Chat message index is out of range: {messageIndex}, index: {index}, current separator index: {CurrentSeparatorIndex}");
+                    ReportHub.LogWarning(ReportCategory.UI, $"Log message index is out of range: {messageIndex}, index: {index}, current separator index: {CurrentSeparatorIndex}");
                     return null;
                 }
 
                 SceneDebugConsoleLogMessage itemData = logMessages[messageIndex]; // Ignores the index used for the separator
 
                 // if (itemData.IsPaddingElement)
-                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
+                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.Padding].mItemPrefab.name);
                 // else if (IsUserBlocked(itemData.WalletAddress))
-                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
+                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 // else
                 {
-                    /*item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);*/
-                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name);
+                    /*item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)LogItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
+                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)LogItemPrefabIndex.ChatEntry].mItemPrefab.name);*/
+                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
 
                     LogEntryView itemScript = item!.GetComponent<LogEntryView>()!;
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
@@ -338,10 +336,10 @@ namespace DCL.UI.SceneDebugConsole
                     itemScript.LogEntryClicked -= OnLogEntryClicked;
 
                     /*if (itemData is { SentByOwnUser: false, SystemMessage: false })
-                        itemScript.ChatEntryClicked += OnChatEntryClicked;*/
+                        itemScript.LogEntryClicked += OnLogEntryClicked;*/
 
                     messageOptionsButton?.onClick.AddListener(() =>
-                        OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
+                        OnLogMessageOptionsButtonClicked(itemData.Message, itemScript));
                 }
             }
 
@@ -357,9 +355,9 @@ namespace DCL.UI.SceneDebugConsole
             // viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, popupCts.Token).Forget();
         }
 
-        private void OnChatMessageOptionsButtonClicked(string itemDataMessage, LogEntryView itemScript)
+        private void OnLogMessageOptionsButtonClicked(string itemDataMessage, LogEntryView itemScript)
         {
-            ChatMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
+            LogMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
         }
 
         private async UniTaskVoid SetItemDataAsync(int index, SceneDebugConsoleLogMessage itemData, LogEntryView itemView)
@@ -380,26 +378,26 @@ namespace DCL.UI.SceneDebugConsole
 
             // Views that correspond to new added items have to be animated
             if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added
-                itemView.AnimateChatEntry();
+                itemView.AnimateLogEntry();
         }
 
-        private void ResetChatEntriesFadeout()
+        private void ResetLogEntriesFadeout()
         {
-            StopChatEntriesFadeout();
-            StartChatEntriesFadeout();
+            StopLogEntriesFadeout();
+            StartLogEntriesFadeout();
         }
 
-        private async UniTaskVoid AwaitAndFadeChatEntriesAsync(CancellationToken ct)
+        private async UniTaskVoid AwaitAndFadeLogEntriesAsync(CancellationToken ct)
         {
             fadeoutCts!.Token.ThrowIfCancellationRequested();
-            chatEntriesCanvasGroup.alpha = 1;
+            logEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(logEntriesWaitBeforeFading, cancellationToken: ct);
-            await chatEntriesCanvasGroup.DOFade(0.4f, logEntriesFadeTime).ToUniTask(cancellationToken: ct);
+            await logEntriesCanvasGroup.DOFade(0.4f, logEntriesFadeTime).ToUniTask(cancellationToken: ct);
         }
 
         private void OnScrollRectValueChanged(Vector2 scrollPosition)
         {
-            ChatMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
+            LogMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
         }
 
         private void OnEnable()

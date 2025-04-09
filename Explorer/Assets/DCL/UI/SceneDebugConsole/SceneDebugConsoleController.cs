@@ -197,7 +197,7 @@ namespace DCL.UI.SceneDebugConsole
 
         private void OnViewInputSubmitted(string commandText)
         {
-            if (string.IsNullOrWhiteSpace(commandText))
+            /*if (string.IsNullOrWhiteSpace(commandText))
                 return;
 
             // Log the command
@@ -210,7 +210,7 @@ namespace DCL.UI.SceneDebugConsole
             {
                 // Log the response
                 logMessagesBus.SendCommandResponse(response);
-            }
+            }*/
         }
 
         private void OnMessageBusMessageAdded(SceneDebugConsoleLogMessage message)

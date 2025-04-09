@@ -159,11 +159,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mItemPrefabDataList:
-  - mItemPrefab: {fileID: 315238571471859014, guid: d845292f5e8993041befc3df2e68e96e, type: 3}
-    mPadding: 4
-    mInitCreateCount: 3
-    mStartPosOffset: 0
-  - mItemPrefab: {fileID: 315238571471859014, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
+  - mItemPrefab: {fileID: 7324587687337436852, guid: 32d1a44a8af8d4251b59127dc5d4ef29, type: 3}
     mPadding: 4
     mInitCreateCount: 3
     mStartPosOffset: 0
@@ -171,17 +167,9 @@ MonoBehaviour:
     mPadding: 4
     mInitCreateCount: 2
     mStartPosOffset: 0
-  - mItemPrefab: {fileID: 315238571471859014, guid: efdc5e8175a88de4eaaf5800a0e3bea8, type: 3}
-    mPadding: 4
-    mInitCreateCount: 2
-    mStartPosOffset: 0
   - mItemPrefab: {fileID: 1823520394044014357, guid: 1b4c7601aebf5ee4a93458e183292915, type: 3}
     mPadding: 8
     mInitCreateCount: 1
-    mStartPosOffset: 0
-  - mItemPrefab: {fileID: 315238571471859014, guid: d784ecebf4a994aefa6c965f3712f3d5, type: 3}
-    mPadding: 4
-    mInitCreateCount: 3
     mStartPosOffset: 0
   mArrangeType: 1
   mSupportScrollBar: 1
@@ -203,7 +191,7 @@ MonoBehaviour:
   logEntriesFadeTime: 3
   logEntriesWaitBeforeFading: 10000
   scrollbarCanvasGroup: {fileID: 5299699939936977056}
-  chatEntriesCanvasGroup: {fileID: 6636967551683476283}
+  logEntriesCanvasGroup: {fileID: 6636967551683476283}
   loopList: {fileID: 4226233381184064841}
   scrollRect: {fileID: 5266907368250149817}
 --- !u!1 &1464650193662970722
