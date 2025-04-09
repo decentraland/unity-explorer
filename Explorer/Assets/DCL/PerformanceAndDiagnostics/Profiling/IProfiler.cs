@@ -4,10 +4,6 @@
     {
         FrameTimeStats? CalculateMainThreadFrameTimesNs();
 
-        (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateMainThreadHiccups();
-
-        (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateGpuHiccups();
-
         public ulong AllScenesTotalHeapSize { get; set; }
 
         public ulong AllScenesTotalHeapSizeExecutable { get; set; }

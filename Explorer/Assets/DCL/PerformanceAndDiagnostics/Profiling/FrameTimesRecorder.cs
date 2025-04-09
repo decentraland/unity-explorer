@@ -17,7 +17,11 @@ namespace DCL.Profiling
 
         private ulong totalRecordedTime;
 
+        private HiccupSamples hiccups;
+        public HiccupSamples Hiccups => hiccups;
+
         public int SamplesAmount { get; private set; }
+
         public float Avg => SamplesAmount == 0 ? 0 : totalRecordedTime / (float)SamplesAmount;
         public ulong Min => samples[0];
         public ulong Max => SamplesAmount == 0 ? samples[0] : samples[SamplesAmount - 1];
@@ -33,6 +37,28 @@ namespace DCL.Profiling
         {
             totalRecordedTime += frameTime;
             InsertSampleSorted(frameTime);
+
+            if (frameTime > Profiler.HICCUP_THRESHOLD_IN_NS)
+                AddHiccupSample(frameTime);
+        }
+
+        private void AddHiccupSample(ulong frameTime)
+        {
+            if (hiccups.Count == 0)
+            {
+                hiccups.Min = frameTime;
+                hiccups.Max = frameTime;
+            }
+            else
+            {
+                if (frameTime > hiccups.Max)
+                    hiccups.Max = frameTime;
+                else if (frameTime < hiccups.Min)
+                    hiccups.Min = frameTime;
+            }
+
+            hiccups.Count++;
+            hiccups.SumTime += frameTime;
         }
 
         private void InsertSampleSorted(ulong frameTime)
@@ -115,6 +141,17 @@ namespace DCL.Profiling
         {
             SamplesAmount = 0;
             totalRecordedTime = 0;
+            hiccups = new HiccupSamples();
+        }
+
+        public struct HiccupSamples
+        {
+            public long Count;
+            public ulong SumTime;
+
+            public ulong Min;
+            public ulong Max;
+            public float Avg => Count == 0 ? 0 : SumTime / (float)Count;
         }
     }
 }
