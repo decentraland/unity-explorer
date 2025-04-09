@@ -46,11 +46,6 @@ namespace DCL.WebRequests
             }
         }
 
-        public void Dispose()
-        {
-            unityWebRequest.Dispose();
-        }
-
         public void Abort()
         {
             unityWebRequest.Abort();

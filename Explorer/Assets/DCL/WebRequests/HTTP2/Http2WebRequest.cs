@@ -58,11 +58,6 @@ namespace DCL.WebRequests.HTTP2
             OnDownloadStarted?.Invoke(this);
         }
 
-        public void Dispose()
-        {
-            // Disposal is done automatically by the framework
-        }
-
         public void Abort()
         {
             httpRequest.Abort();
