@@ -81,7 +81,7 @@ namespace DCL.WebRequests
             {
                 await UniTask.WhenAll(
                     WaitForRequest(),
-                    ProcessPartialDownloadStream(partialFlowCts.Token));
+                    ProcessPartialDownloadStreamAsync(partialFlowCts.Token));
             }
             finally
             {
@@ -93,7 +93,7 @@ namespace DCL.WebRequests
             return result;
         }
 
-        private async UniTask ProcessPartialDownloadStream(CancellationToken ct)
+        private async UniTask ProcessPartialDownloadStreamAsync(CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();
 

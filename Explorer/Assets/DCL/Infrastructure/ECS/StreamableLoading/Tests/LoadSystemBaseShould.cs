@@ -12,9 +12,10 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.Tests;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
-using Utility;
+using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.Tests
 {
@@ -22,12 +23,8 @@ namespace ECS.StreamableLoading.Tests
         where TSystem: LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
+        private static readonly Regex FILE_NOT_FOUND_MESSAGE = new ("^FileNotFoundException: .*", RegexOptions.Compiled);
         private readonly WebRequestsMode webRequestsMode;
-
-        protected LoadSystemBaseShould(WebRequestsMode webRequestsMode)
-        {
-            this.webRequestsMode = webRequestsMode;
-        }
 
         protected IStreamableCache<TAsset, TIntention> cache;
         protected IWebRequestController webRequestController;
@@ -38,6 +35,11 @@ namespace ECS.StreamableLoading.Tests
         private IAcquiredBudget budget;
 
         protected AssetPromise<TAsset, TIntention> promise { get; private set; }
+
+        protected LoadSystemBaseShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
 
         protected abstract TIntention CreateSuccessIntention();
 
@@ -112,6 +114,8 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task ConcludeFailIfNotFound()
         {
+            if (webRequestsMode == WebRequestsMode.HTTP2) { LogAssert.Expect(LogType.Exception, FILE_NOT_FOUND_MESSAGE); }
+
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);

@@ -33,8 +33,6 @@ namespace DCL.WebRequests
 
             AudioClip clip = DownloadHandlerAudioClip.GetContent(unityWebRequest);
 
-            unityWebRequest.Dispose();
-
             clip.SetDebugName(wr.Url);
             ProfilingCounters.AudioClipsAmount.Value++;
 

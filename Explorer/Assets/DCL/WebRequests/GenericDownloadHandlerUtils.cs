@@ -24,17 +24,17 @@ namespace DCL.WebRequests
         public delegate void TransformChunk<in T>(T context, NativeArray<byte>.ReadOnly chunk, ulong chunkIndex);
         public delegate T PrepareContext<out T>(ulong dataLength);
 
-        public static async UniTask<TResult> ProcessAndDispose<TResult>(this ITypedWebRequest request, Func<IWebRequest, TResult> getResult, CancellationToken ct)
+        public static async UniTask<TResult> ProcessAndDisposeAsync<TResult>(this ITypedWebRequest request, Func<IWebRequest, TResult> getResult, CancellationToken ct)
         {
             using IWebRequest? req = await request.SendAsync(ct);
             return getResult(req);
         }
 
         public static UniTask<string> StoreTextAsync(this ITypedWebRequest request, CancellationToken ct) =>
-            request.ProcessAndDispose(static r => r.Response.Text, ct);
+            request.ProcessAndDisposeAsync(static r => r.Response.Text, ct);
 
         public static UniTask<byte[]> GetDataCopyAsync(this ITypedWebRequest request, CancellationToken ct) =>
-            request.ProcessAndDispose(static r => r.Response.Data, ct);
+            request.ProcessAndDisposeAsync(static r => r.Response.Data, ct);
 
         public static async UniTask<string?> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
         {
@@ -100,7 +100,9 @@ namespace DCL.WebRequests
             JsonSerializerSettings? newtonsoftSettings = null,
             CreateExceptionOnParseFail? createCustomExceptionOnFailure = null)
         {
-            string text = (await request.SendAsync(ct)).Response.Text;
+            using IWebRequest? createdRequest = await request.SendAsync(ct);
+
+            string text = createdRequest.Response.Text;
 
             await SwitchToThreadAsync(threadFlags);
 
@@ -212,7 +214,7 @@ namespace DCL.WebRequests
         {
             try
             {
-                await webRequest.SendAndForget(ct);
+                await webRequest.SendAndForgetAsync(ct);
             }
             catch (WebRequestException e) { throw newExceptionFactoryMethod(e); }
         }

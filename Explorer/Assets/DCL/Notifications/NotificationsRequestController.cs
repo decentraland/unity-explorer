@@ -143,7 +143,7 @@ namespace DCL.Notifications
                                            ReportCategory.UI,
                                            signInfo: WebRequestSignInfo.NewFromUrl(commonArgumentsForSetRead.URL, unixTimestamp, "put"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                      .SendAndForget(ct);
+                                      .SendAndForgetAsync(ct);
         }
     }
 }

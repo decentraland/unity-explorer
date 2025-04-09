@@ -133,7 +133,7 @@ namespace DCL.Ipfs
                 GenericUploadArguments.CreateWWWForm(form),
                 ReportCategory.REALM
                                         )
-                                       .SendAndForget(ct);
+                                       .SendAndForgetAsync(ct);
         }
 
         private URLAddress GetEntitiesUrl()

@@ -22,7 +22,7 @@ namespace DCL.WebRequests
         /// </summary>
         /// <param name="request"></param>
         /// <param name="ct"></param>
-        public static async UniTask SendAndForget(this ITypedWebRequest request, CancellationToken ct)
+        public static async UniTask SendAndForgetAsync(this ITypedWebRequest request, CancellationToken ct)
         {
             using (await request.SendAsync(ct)) ;
         }
@@ -100,7 +100,7 @@ namespace DCL.WebRequests
         {
             try
             {
-                await controller.HeadAsync(url, reportData).SendAndForget(ct);
+                await controller.HeadAsync(url, reportData).SendAndForgetAsync(ct);
                 return Result.SuccessResult();
             }
             catch (WebRequestException e)
@@ -139,7 +139,7 @@ namespace DCL.WebRequests
 
             // We are not interested in exception
             GenericGetRequest getRequest = controller.GetAsync(url, reportData, suppressErrors: true, onRequestCreated: OnCreated);
-            await getRequest.SendAndForget(ct).SuppressToResultAsync();
+            await getRequest.SendAndForgetAsync(ct).SuppressToResultAsync();
 
             return downloadStarted;
         }

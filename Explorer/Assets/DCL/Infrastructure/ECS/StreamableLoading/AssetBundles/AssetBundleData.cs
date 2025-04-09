@@ -15,14 +15,11 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        private readonly Object? mainAsset;
-        private readonly Type? assetType;
-
-        internal AssetBundle AssetBundle => Asset;
-
         public readonly AssetBundleData[] Dependencies;
 
         public readonly AssetBundleMetrics? Metrics;
+        private readonly Object? mainAsset;
+        private readonly Type? assetType;
 
         private readonly string description;
 
@@ -32,7 +29,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
+
+        protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
+
+        internal AssetBundle AssetBundle => Asset;
+
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
+            string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
@@ -50,15 +54,13 @@ namespace ECS.StreamableLoading.AssetBundles
             //Dependencies cant be unloaded, since we dont know who will need them =(
             Metrics = metrics;
 
-            this.mainAsset = null;
-            this.assetType = null;
+            mainAsset = null;
+            assetType = null;
             Dependencies = dependencies;
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
-        : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies)
-        {
-        }
+            : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies) { }
 
         /// <summary>
         ///     Constructor for dependencies (with the unknown asset type) used for partial flow
@@ -74,10 +76,6 @@ namespace ECS.StreamableLoading.AssetBundles
             underlyingStream = stream;
         }
 
-        protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
-
-        protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
-
         //We immediately unload the asset bundle, as we don't need it anymore.
         //Very hacky, because the asset will remain in cache as AssetBundle == null
         //When DestroyObject is invoked, it will do nothing.
@@ -86,6 +84,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             if (unloaded)
                 return;
+
             unloaded = true;
             AssetBundle?.UnloadAsync(false);
             ownedStream.Dispose();
@@ -96,25 +95,26 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
-            if(mainAsset!=null)
+            if (mainAsset != null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            if (AssetBundle)
+            if (AssetBundle && !unloaded)
                 AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
 
             underlyingStream.Dispose();
         }
 
-        public T GetMainAsset<T>() where T : Object
+        public T GetMainAsset<T>() where T: Object
         {
             Assert.IsNotNull(assetType, "GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified");
 
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
+
             return (T)mainAsset!;
         }
 
-        public string GetInstanceName() => description;
-
+        public string GetInstanceName() =>
+            description;
     }
 }

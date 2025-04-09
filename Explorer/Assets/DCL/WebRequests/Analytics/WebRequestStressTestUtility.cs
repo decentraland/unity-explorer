@@ -70,7 +70,7 @@ namespace DCL.WebRequests.Analytics
                                                    new CommonArguments(SUCCESS, attemptsCount: retriesCount),
                                                    reportData: ReportCategory.DEBUG
                                                )
-                                              .SendAndForget(CancellationToken.None);
+                                              .SendAndForgetAsync(CancellationToken.None);
 
                 ReportHub.Log(ReportCategory.DEBUG, $"Request #{requestNumber} successfully completed");
             }

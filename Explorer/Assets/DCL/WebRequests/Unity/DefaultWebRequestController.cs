@@ -16,6 +16,8 @@ namespace DCL.WebRequests
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
 
+        IRequestHub IWebRequestController.requestHub => requestHub;
+
         public DefaultWebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache, IRequestHub requestHub)
         {
             this.analyticsContainer = analyticsContainer;
@@ -31,18 +33,20 @@ namespace DCL.WebRequests
 
             int attemptsLeft = envelope.CommonArguments.AttemptsCount;
 
+            DefaultWebRequest? adapter = null;
+
             while (attemptsLeft > 0)
             {
-                UnityWebRequest nativeRequest = requestWrap.CreateUnityWebRequest();
-                var adapter = new DefaultWebRequest(nativeRequest, requestWrap);
-
-                envelope.OnCreated?.Invoke(adapter);
-
-                envelope.InitializedWebRequest(web3IdentityCache, adapter);
-
                 try
                 {
-                    await ExecuteWithAnalytics(requestWrap, adapter, ct);
+                    UnityWebRequest nativeRequest = requestWrap.CreateUnityWebRequest();
+                    adapter = new DefaultWebRequest(nativeRequest, requestWrap);
+
+                    envelope.OnCreated?.Invoke(adapter);
+
+                    envelope.InitializedWebRequest(web3IdentityCache, adapter);
+
+                    await ExecuteWithAnalyticsAsync(requestWrap, adapter, ct);
                     return adapter;
                 }
                 catch (UnityWebRequestException exception)
@@ -78,6 +82,17 @@ namespace DCL.WebRequests
                         // Dispose the previous request before making a new attempt
                         adapter.Dispose();
                 }
+                catch (Exception) // any other exception
+                {
+                    // Dispose adapter if it was created or the wrap on exception as it won't be returned to the caller
+
+                    if (adapter != null)
+                        adapter.Dispose();
+                    else
+                        requestWrap.Dispose();
+
+                    throw;
+                }
             }
 
             throw new Exception($"{nameof(DefaultWebRequestController)}: Unexpected code path!");
@@ -86,7 +101,7 @@ namespace DCL.WebRequests
         public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
             throw new NotSupportedException($"{nameof(GetPartialAsync)}");
 
-        private async UniTask ExecuteWithAnalytics(ITypedWebRequest request, DefaultWebRequest adapter, CancellationToken ct)
+        private async UniTask ExecuteWithAnalyticsAsync(ITypedWebRequest request, DefaultWebRequest adapter, CancellationToken ct)
         {
             var requestFinished = false;
 
@@ -112,7 +127,5 @@ namespace DCL.WebRequests
             }
             finally { analyticsContainer.OnRequestFinished(request, adapter); }
         }
-
-        IRequestHub IWebRequestController.requestHub => requestHub;
     }
 }

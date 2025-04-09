@@ -165,7 +165,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
             await webRequestController
                  .SignedFetchPatchAsync(url, GenericUploadArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ReportCategory.CAMERA_REEL)
-                 .SendAndForget(ct);
+                 .SendAndForgetAsync(ct);
         }
 
         public async UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)

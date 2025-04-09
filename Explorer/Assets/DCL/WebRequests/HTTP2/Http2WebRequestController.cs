@@ -61,20 +61,25 @@ namespace DCL.WebRequests.HTTP2
         {
             await using ExecuteOnThreadPoolScope scope = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
 
+            // Don't Dispose the wrap here as it can outlive the original request to process the response
             RequestEnvelope envelope = requestWrap.Envelope;
 
-            // Don't Dispose the wrap here as it can outlive the original request to process the response
-            HTTPRequest nativeRequest = requestWrap.CreateHttp2Request();
+            Http2WebRequest? requestAdapter = null;
 
-            var requestAdapter = new Http2WebRequest(nativeRequest, requestWrap);
+            try
+            {
+                HTTPRequest nativeRequest = requestWrap.CreateHttp2Request();
 
-            envelope.InitializedWebRequest(identityCache, requestAdapter);
-            nativeRequest.RetrySettings.MaxRetries = envelope.CommonArguments.TotalAttempts();
-            nativeRequest.DownloadSettings.ContentStreamMaxBuffered = requestWrap.DownloadBufferMaxSize;
+                requestAdapter = new Http2WebRequest(nativeRequest, requestWrap);
 
-            envelope.OnCreated?.Invoke(requestAdapter);
+                envelope.InitializedWebRequest(identityCache, requestAdapter);
+                nativeRequest.RetrySettings.MaxRetries = envelope.CommonArguments.TotalAttempts();
+                nativeRequest.DownloadSettings.ContentStreamMaxBuffered = requestWrap.DownloadBufferMaxSize;
 
-            try { await ExecuteWithAnalytics(requestWrap, requestAdapter, envelope.ReportData, ct); }
+                envelope.OnCreated?.Invoke(requestAdapter);
+
+                await ExecuteWithAnalyticsAsync(requestWrap, requestAdapter, envelope.ReportData, ct);
+            }
             catch (AsyncHTTPException exception)
             {
                 if (!envelope.SuppressErrors)
@@ -86,16 +91,27 @@ namespace DCL.WebRequests.HTTP2
                     );
 
                 // Dispose adapter on exception as it won't be returned to the caller
-                requestAdapter.Dispose();
+                requestAdapter!.Dispose();
 
                 // convert into a common exception
                 throw new Http2WebRequestException(requestAdapter, exception);
+            }
+            catch (Exception) // any other exception
+            {
+                // Dispose adapter if it was created or the wrap on exception as it won't be returned to the caller
+
+                if (requestAdapter != null)
+                    requestAdapter.Dispose();
+                else
+                    requestWrap.Dispose();
+
+                throw;
             }
 
             return requestAdapter;
         }
 
-        private async UniTask ExecuteWithAnalytics(ITypedWebRequest request, Http2WebRequest adapter, ReportData reportData, CancellationToken ct)
+        private async UniTask ExecuteWithAnalyticsAsync(ITypedWebRequest request, Http2WebRequest adapter, ReportData reportData, CancellationToken ct)
         {
             analyticsContainer.OnRequestStarted(request, adapter);
 

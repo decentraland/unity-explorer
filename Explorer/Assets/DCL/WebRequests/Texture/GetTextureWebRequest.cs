@@ -30,6 +30,9 @@ namespace DCL.WebRequests
 
         public override bool Http2Supported => false;
 
+        public override UnityWebRequest CreateUnityWebRequest() =>
+            isTextureCompressionEnabled ? UnityWebRequest.Get(Envelope.CommonArguments.URL) : UnityWebRequestTexture.GetTexture(Envelope.CommonArguments.URL, false);
+
         /// <summary>
         ///     Creates the texture
         /// </summary>
