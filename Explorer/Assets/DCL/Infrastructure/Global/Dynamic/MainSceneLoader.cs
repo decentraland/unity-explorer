@@ -290,8 +290,8 @@ namespace Global.Dynamic
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
-            if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
-                runVersionControl = applicationParametersParser.TryGetValue(AppArgsFlags.ENABLE_VERSION_CONTROL, out string? enforceDebugMode) && enforceDebugMode == "true";
+            if (!Application.isEditor)
+                runVersionControl = !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK);
 
             if (!runVersionControl)
                 return false;
