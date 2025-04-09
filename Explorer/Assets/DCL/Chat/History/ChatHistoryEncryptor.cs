@@ -39,16 +39,8 @@ namespace DCL.Chat.History
                 }
             }
 
-            // Note: This is the only way I know to get the actual length of the written bytes
-            int length = 0;
-
-            for (int i = 0; i < channelIdEncryptionBuffer.Length; ++i)
-            {
-                if(channelIdEncryptionBuffer[i] == 0)
-                    break;
-
-                length++;
-            }
+            // When using a cyphertext with blocks the resulting length will be the next multiple of the block size after the length of the original string
+            int length = str.Length + cryptoProvider.BlockSize / 8 - (str.Length % (cryptoProvider.BlockSize / 8));
 
             // Converted to Base64 to avoid characters forbidden by the file system
             result = Convert.ToBase64String(channelIdEncryptionBuffer, 0, length);

@@ -512,6 +512,10 @@ MonoBehaviour:
       Severity: 4
     - Category: CHAT_HISTORY
       Severity: 1
+    - Category: CHAT_HISTORY
+      Severity: 3
+    - Category: CHAT_HISTORY
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
