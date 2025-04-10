@@ -66,7 +66,7 @@ namespace DCL.WebRequests
 
             PartialDownloadStream result;
 
-            async UniTask WaitForRequest()
+            async UniTask WaitForRequestAsync()
             {
                 try { createdRequest = await this.SendAsync(ct); }
                 catch (Exception)
@@ -80,7 +80,7 @@ namespace DCL.WebRequests
             try
             {
                 await UniTask.WhenAll(
-                    WaitForRequest(),
+                    WaitForRequestAsync(),
                     ProcessPartialDownloadStreamAsync(partialFlowCts.Token));
             }
             finally

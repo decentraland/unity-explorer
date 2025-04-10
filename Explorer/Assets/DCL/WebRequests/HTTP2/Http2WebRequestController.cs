@@ -90,11 +90,13 @@ namespace DCL.WebRequests.HTTP2
                         $"Exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with args {requestWrap.ArgsToString()},\n with {envelope}\n"
                     );
 
+                var adaptedException = new Http2WebRequestException(requestAdapter!, exception);
+
                 // Dispose adapter on exception as it won't be returned to the caller
                 requestAdapter!.Dispose();
 
                 // convert into a common exception
-                throw new Http2WebRequestException(requestAdapter, exception);
+                throw adaptedException;
             }
             catch (Exception) // any other exception
             {
@@ -120,18 +122,26 @@ namespace DCL.WebRequests.HTTP2
             try
             {
                 UniTask<HTTPResponse> coreTask = nativeRequest.GetHTTPResponseAsync(ct);
-                var checkBufferCt = coreTask.ToCancellationToken();
 
                 if (request.StreamingSupported)
                     await coreTask;
                 else
-                    await UniTask.WhenAny(
-                        coreTask,
-                        CheckBufferIsFull(nativeRequest, request, reportData, checkBufferCt));
+                {
+                    var checkBufferCts = new CancellationTokenSource();
+                    CheckBufferIsFullAsync(nativeRequest, request, reportData, checkBufferCts.Token).Forget();
+
+                    try { await coreTask; }
+                    finally
+                    {
+                        checkBufferCts.Cancel();
+                        checkBufferCts.Dispose();
+                    }
+                }
+
             }
             finally { analyticsContainer.OnRequestFinished(request, adapter); }
 
-            static async UniTask CheckBufferIsFull(HTTPRequest nativeRequest, ITypedWebRequest request, ReportData reportData, CancellationToken ct)
+            static async UniTask CheckBufferIsFullAsync(HTTPRequest nativeRequest, ITypedWebRequest request, ReportData reportData, CancellationToken ct)
             {
                 // ReSharper disable once AccessToModifiedClosure
                 while (!ct.IsCancellationRequested)

@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             int index
         )
         {
-            FinalizeAssetLoading<GLTFData, GetGLTFIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
 
         [Query]
@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (wearable.Type != WearableType.FacialFeature) return;
 
-            FinalizeAssetLoading<Texture2DData, GetTextureIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
     }
 }

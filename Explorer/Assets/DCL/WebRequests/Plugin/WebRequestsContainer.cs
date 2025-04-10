@@ -35,7 +35,7 @@ namespace DCL.WebRequests
 
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; } = null!;
 
-        public static async UniTask<WebRequestsContainer> Create(
+        public static async UniTask<WebRequestsContainer> CreateAsync(
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             ITexturesFuse texturesFuse,

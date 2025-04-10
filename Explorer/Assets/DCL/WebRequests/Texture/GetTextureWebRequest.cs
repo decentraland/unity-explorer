@@ -56,7 +56,8 @@ namespace DCL.WebRequests
         {
             Texture2D? texture;
 
-            if (webRequest.downloadHandler is DownloadHandlerTexture) { texture = DownloadHandlerTexture.GetContent(webRequest); }
+            if (webRequest.downloadHandler is DownloadHandlerTexture)
+                texture = DownloadHandlerTexture.GetContent(webRequest);
             else
             {
                 // If there's no DownloadHandlerTexture the texture needs to be created from scratch with the

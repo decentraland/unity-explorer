@@ -5,6 +5,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using System;
 using System.Threading;
+using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -51,6 +52,8 @@ namespace DCL.WebRequests
                 }
                 catch (UnityWebRequestException exception)
                 {
+                    Assert.IsNotNull(adapter);
+
                     attemptsLeft--;
 
                     if (!envelope.SuppressErrors)
@@ -71,16 +74,17 @@ namespace DCL.WebRequests
                     if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
                         await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
 
-                    if (exception.IsIrrecoverableError(adapter, attemptsLeft))
+                    if (exception.IsIrrecoverableError(adapter!, attemptsLeft))
                     {
-                        adapter.Dispose();
-                        throw;
+                        var adaptedException = new DefaultWebRequestException(adapter!, exception);
+                        adapter!.Dispose();
+                        throw adaptedException;
                     }
 
                     if (attemptsLeft > 0)
 
                         // Dispose the previous request before making a new attempt
-                        adapter.Dispose();
+                        adapter!.Dispose();
                 }
                 catch (Exception) // any other exception
                 {
@@ -103,29 +107,33 @@ namespace DCL.WebRequests
 
         private async UniTask ExecuteWithAnalyticsAsync(ITypedWebRequest request, DefaultWebRequest adapter, CancellationToken ct)
         {
-            var requestFinished = false;
-
             UnityWebRequest uwr = adapter.unityWebRequest;
+            var parallelFlowCts = new CancellationTokenSource();
 
             try
             {
                 analyticsContainer.OnRequestStarted(request, adapter);
 
-                await UniTask.WhenAny(uwr.SendWebRequest().WithCancellation(ct), UpdateAdapter());
+                UpdateAdapterAsync(adapter, parallelFlowCts.Token).Forget();
 
-                requestFinished = true;
+                await uwr.SendWebRequest().WithCancellation(ct);
 
                 // Updating every frame is necessary to converge the API
-                async UniTask UpdateAdapter()
+                static async UniTaskVoid UpdateAdapterAsync(DefaultWebRequest adapter, CancellationToken ct)
                 {
-                    while (!ct.IsCancellationRequested && !requestFinished)
+                    while (!ct.IsCancellationRequested)
                     {
                         adapter.Update();
                         await UniTask.Yield();
                     }
                 }
             }
-            finally { analyticsContainer.OnRequestFinished(request, adapter); }
+            finally
+            {
+                parallelFlowCts.Cancel();
+                parallelFlowCts.Dispose();
+                analyticsContainer.OnRequestFinished(request, adapter);
+            }
         }
     }
 }

@@ -67,7 +67,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                await WebRequestsContainer.Create(globalSettingsContainer, new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), false, ct),
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), false, ct),
                 ITexturesFuse.NewTestInstance(),
                 globalSettingsContainer,
                 diagnosticsContainer,
