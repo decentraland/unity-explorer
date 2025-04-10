@@ -5,7 +5,7 @@ using UnityEngine.Rendering.Universal;
 using DCL.Diagnostics;
 using System.Collections.Generic;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.AvatarOutline
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline
 {
     public class RenderPass_OutlineDraw : ScriptableRenderPass
     {
@@ -18,12 +18,18 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.AvatarOutline
 
         private FilteringSettings m_FilteringSettings;
         private List<Renderer> m_OutlineRenderers;
+
+        private class RenderObjectsPassData
+        {
+            internal Renderer[] outlineRenderers;
+        }
+
         public RenderPass_OutlineDraw(List<Renderer> _OutlineRenderers)
         {
             m_OutlineRenderers = _OutlineRenderers;
         }
 
-        public override void RecordRenderGraph(UnityEngine.Rendering.RenderGraphModule.RenderGraph renderGraph, ContextContainer frameData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             var resourceData = frameData.Get<UniversalResourceData>();
 
@@ -86,11 +92,6 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.AvatarOutline
         public override void OnCameraCleanup(CommandBuffer cmd)
         {
             m_OutlineRenderers.Clear();
-        }
-
-        class RenderObjectsPassData
-        {
-            internal Renderer[] outlineRenderers;
         }
     }
 }

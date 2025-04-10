@@ -2,13 +2,14 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule.Util;
 
 // ReSharper disable InconsistentNaming
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.ObjectHighlight
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
     public struct ObjectHighlightSettings
     {
@@ -18,6 +19,21 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.ObjectHighlight
 
     public partial class RenderFeature_ObjectHighlight : ScriptableRendererFeature
     {
+        // The ContextItem used to store the texture reference at.
+        public class TexRefData : ContextItem
+        {
+            // The texture reference variable.
+            public TextureHandle texture = TextureHandle.nullHandle;
+
+            // Reset function required by ContextItem. It should reset all variables not carried
+            // over to next frame.
+            public override void Reset()
+            {
+                // We should always reset texture handles since they are only vaild for the current frame.
+                texture = TextureHandle.nullHandle;
+            }
+        }
+
         private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
         private const string k_ShaderName_HighlightInputBlur = "DCL/HighlightInput_Blur";
         private const string k_ShaderName_HighlightOutput = "DCL/HighlightOutput";

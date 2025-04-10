@@ -4,17 +4,18 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
-// ReSharper disable InconsistentNaming
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.ObjectHighlight
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
     public class RenderPass_RenderResult : ScriptableRenderPass
     {
-        private const string PROFILER_TAG_OUTPUT = "Object Highlight Output";
+        private const string PROFILER_TAG_OUTPUT = "Object Highlight Render Result";
+        private string m_PassName;
+        private ProfilingSampler m_Sampler;
 
         //private RTHandle destinationHandle;
         private readonly ShaderTagId m_ShaderTagId = new ("Highlight");
-        private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_OutputPass", ReportHint.SessionStatic);
+        private ReportData m_ReportData = new ("DCL_RenderFeature_ObjectHighlight_RenderResult", ReportHint.SessionStatic);
 
 
         public Material m_highlightOutputMaterial;

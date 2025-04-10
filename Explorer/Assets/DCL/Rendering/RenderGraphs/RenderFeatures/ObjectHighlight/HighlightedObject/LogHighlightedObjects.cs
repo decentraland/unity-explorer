@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using DCL.Diagnostics;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.ObjectHighlight
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
     public class LogObjectHighlight : IObjectHighlight
     {

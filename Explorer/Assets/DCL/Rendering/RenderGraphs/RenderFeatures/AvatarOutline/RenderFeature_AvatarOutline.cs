@@ -3,7 +3,7 @@ using UnityEngine.Rendering.Universal;
 using System.Collections.Generic;
 using DCL.Diagnostics;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.AvatarOutline
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline
 {
     public class RendererFeature_AvatarOutline : ScriptableRendererFeature
     {

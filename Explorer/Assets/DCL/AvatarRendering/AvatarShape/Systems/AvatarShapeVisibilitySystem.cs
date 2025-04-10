@@ -8,7 +8,7 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
-using DCL.Rendering.RenderGraph.RenderFeatures.AvatarOutline;
+using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
