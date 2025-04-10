@@ -32,10 +32,10 @@ namespace DCL.Chat
         /// We will use this to track which conversations are open and decide if its necessary to notify the controller about changes
         /// </summary>
         private readonly HashSet<string> openConversations = new ();
-
-        private CancellationTokenSource cts = new ();
         private readonly HashSet<string> chatUsers = new ();
 
+        private CancellationTokenSource cts = new ();
+        private bool roomConnected;
 
         public ChatUserStateUpdater(
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
@@ -74,9 +74,10 @@ namespace DCL.Chat
             friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += OnNewFriendAdded;
             friendsEventBus.OnYouRemovedFriend += OnFriendRemoved;
 
+            chatRoom.ConnectionUpdated += OnChatRoomConnectionUpdated;
         }
 
-        public HashSet<string> Initialize(IEnumerable<ChatChannel.ChannelId> openConversations)
+        public async UniTask<HashSet<string>> Initialize(IEnumerable<ChatChannel.ChannelId> openConversations)
         {
             this.openConversations.Clear();
 
@@ -87,6 +88,11 @@ namespace DCL.Chat
 
             cts = cts.SafeRestart();
             rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token).Forget();
+
+            if (!roomConnected)
+            {
+                await UniTask.WaitUntil(() => roomConnected, cancellationToken: cts.Token);
+            }
 
             if (!friendsCacheProxy.Configured) return connectedParticipants; //We should return full list
             if (!userBlockingCacheProxy.Configured) return connectedParticipants; //We should return full list or similar
@@ -126,7 +132,6 @@ namespace DCL.Chat
             return connectedParticipants;
         }
 
-        //TODO FRAN: we can optimize it by returning the STATE directly when we call the events on the bus
         public async UniTask<ChatUserState> GetChatUserStateAsync(string userId)
         {
             //If it's a friend we just return its connection status
@@ -199,6 +204,16 @@ namespace DCL.Chat
         public void RemoveConversation(string conversationId)
         {
             openConversations.Remove(conversationId);
+        }
+
+        //TODO FRAN: check if we need to re-add this in case the connection is terminated when switching profiles.
+        private void OnChatRoomConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
+        {
+            if (connectionUpdate == ConnectionUpdate.Connected)
+            {
+                chatRoom.ConnectionUpdated -= OnChatRoomConnectionUpdated;
+                roomConnected = true;
+            }
         }
 
         private async UniTaskVoid RequestParticipantsPrivacySettings(HashSet<string> participants, CancellationToken ct)

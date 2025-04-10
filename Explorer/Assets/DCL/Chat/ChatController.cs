@@ -90,6 +90,8 @@ namespace DCL.Chat
 
             set
             {
+                if (viewInstance == null) return;
+
                 viewInstance.IsUnfolded = value;
 
                 // When opened from outside, it should show the unread messages
@@ -432,17 +434,22 @@ namespace DCL.Chat
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
             ShowWelcomeMessage();
 
-            chatStorage?.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
-            // NOTE: if the chat storage loading is made async, the next lines also need to be tied to that,
-            // as they require the history to have all chat channels already loaded
-            var connectedUsers = chatUserStateUpdater.Initialize(chatHistory.Channels.Keys);
-            viewInstance.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
+            InitializeChannelsAndConversationsAsync().Forget();
 
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
             IsUnfolded = inputData.ShowUnfolded;
+        }
+
+        private async UniTaskVoid InitializeChannelsAndConversationsAsync()
+        {
+            if (chatStorage != null)
+                await chatStorage.LoadAllChannelsWithoutMessagesAsync();
+
+            var connectedUsers = await chatUserStateUpdater.Initialize(chatHistory.Channels.Keys);
+            viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
         protected override void OnViewClose()
@@ -471,6 +478,8 @@ namespace DCL.Chat
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }
+
+            chatUsersStateCache.ClearAll();
 
             chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved -= OnChatHistoryChannelRemoved;
