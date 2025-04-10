@@ -700,7 +700,8 @@ namespace Global.Dynamic
                     socialServicesRPCProxy,
                     friendsEventBus,
                     chatMessageFactory,
-                    staticContainer.FeatureFlagsCache),
+                    staticContainer.FeatureFlagsCache,
+                    friendServiceProxy),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
