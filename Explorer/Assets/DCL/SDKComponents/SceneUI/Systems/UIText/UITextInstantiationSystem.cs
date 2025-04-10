@@ -40,6 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
             var label = labelsPool.Get();
             label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
+            label.selection.isSelectable = true;
             UiElementUtils.SetElementDefaultStyle(label.style);
             uiTransformComponent.Transform.Add(label);
             var uiTextComponent = new UITextComponent();
