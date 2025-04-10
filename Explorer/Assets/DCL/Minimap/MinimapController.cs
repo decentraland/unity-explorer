@@ -222,6 +222,10 @@ namespace DCL.Minimap
             placesApiCts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
 
+            bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
+            bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
+            viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+
             return;
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
