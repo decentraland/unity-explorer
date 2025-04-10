@@ -95,12 +95,9 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("jsheap_total_executable", profiler.AllScenesTotalHeapSizeExecutable.ByteToMB());
             jsonObjectBuilder.Set("jsheap_limit", profiler.AllScenesHeapSizeLimit.ByteToMB());
 
-            if (profiler.CurrentSceneHasStats)
-            {
-                jsonObjectBuilder.Set("jsheap_used_current_scene", profiler.CurrentSceneUsedHeapSize.ByteToMB());
-                jsonObjectBuilder.Set("jsheap_total_current_scene", profiler.CurrentSceneTotalHeapSize.ByteToMB());
-                jsonObjectBuilder.Set("jsheap_total_executable_current_scene", profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB());
-            }
+            jsonObjectBuilder.Set("jsheap_used_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneUsedHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneTotalHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_executable_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB());
 
             jsonObjectBuilder.Set("running_v8_engines", profiler.ActiveEngines);
 
@@ -135,11 +132,11 @@ namespace DCL.Analytics.Systems
 
             // GPU
             hiccups = profiler.CalculateGpuHiccups();
-            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", !hiccups.hasValue ? 0 : hiccups.count);
-            jsonObjectBuilder.Set("gpu_hiccups_time", !hiccups.hasValue ? 0 : hiccups.sumTime * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_min", !hiccups.hasValue ? 0 : hiccups.min * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_max", !hiccups.hasValue ? 0 : hiccups.max * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_avg", !hiccups.hasValue ? 0 : hiccups.avg * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", hiccups.count);
+            jsonObjectBuilder.Set("gpu_hiccups_time", hiccups.count == 0 ? 0 : hiccups.sumTime * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_min", hiccups.count == 0 ? 0 : hiccups.min * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_max", hiccups.count == 0 ? 0 : hiccups.max * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_avg", hiccups.count == 0 ? 0 : hiccups.avg * NS_TO_MS);
 
             jsonObjectBuilder.Set("gpu_min_frame_time", gpuFrameTimes.Min * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_max_frame_time", gpuFrameTimes.Max * NS_TO_MS);
@@ -152,6 +149,8 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("gpu_frame_time_percentile_80", gpuFrameTimes.Percentile(80) * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_frame_time_percentile_90", gpuFrameTimes.Percentile(90) * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimes.Percentile(95) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_samples", gpuFrameTimes.GetSamplesArrayAsString());
+            jsonObjectBuilder.Set("gpu_samples_amount", gpuFrameTimes.SamplesAmount);
 
             using PooledJsonObject pooled = jsonObjectBuilder.BuildPooled();
 
