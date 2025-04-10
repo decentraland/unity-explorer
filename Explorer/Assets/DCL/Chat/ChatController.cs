@@ -265,6 +265,8 @@ namespace DCL.Chat
             {
                 chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
                 chatUserStateUpdater.AddConversation(channelId.Id);
+                chatUserStateUpdater.CurrentConversation = channelId.Id;
+                viewInstance!.CurrentChannelId = channelId;
                 UpdateChatUserStateAsync(channelId.Id, chatUsersUpdateCts.Token).Forget();
                 return;
             }
