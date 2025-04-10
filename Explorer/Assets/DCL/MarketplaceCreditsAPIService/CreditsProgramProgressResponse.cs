@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 namespace DCL.MarketplaceCreditsAPIService
 {
@@ -33,13 +34,14 @@ namespace DCL.MarketplaceCreditsAPIService
     {
         public string email;
         public bool isEmailConfirmed;
+        public bool hasStartedProgram;
     }
 
     [Serializable]
     public class CreditsData
     {
         public float available;
-        public uint expireIn;
+        public uint expiresIn;
     }
 
     [Serializable]

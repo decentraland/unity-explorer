@@ -115,8 +115,6 @@ namespace DCL.MarketplaceCredits.Sections
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, ct);
                     marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WELCOME);
                 }
-
-                view.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -124,6 +122,10 @@ namespace DCL.MarketplaceCredits.Sections
                 const string ERROR_MESSAGE = "There was an error removing your registration. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+            finally
+            {
+                view.SetAsLoading(false);
             }
         }
 
@@ -143,8 +145,6 @@ namespace DCL.MarketplaceCredits.Sections
                 if (ownProfile != null)
                     // Reset the email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(currentEmail, ct);
-
-                view.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -152,6 +152,10 @@ namespace DCL.MarketplaceCredits.Sections
                 const string ERROR_MESSAGE = "There was an error sending the verification email. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+            finally
+            {
+                view.SetAsLoading(false);
             }
         }
     }

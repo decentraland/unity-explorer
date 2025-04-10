@@ -1,7 +1,6 @@
 using DCL.MarketplaceCreditsAPIService;
 using System;
 using System.Globalization;
-using UnityEngine;
 
 namespace DCL.MarketplaceCredits
 {
@@ -15,11 +14,10 @@ namespace DCL.MarketplaceCredits
         public const int CREDITS_UNLOCKED_DURATION = 5;
         public const int ERROR_NOTIFICATION_DURATION = 3;
         public const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
-        private const string PROGRAM_STARTED_MARK_LOCAL_STORAGE_KEY = "MarketplaceCredits_ProgramStarted";
 
-        public static string FormatEndOfTheWeekDate(uint timeLeftInMilliseconds)
+        public static string FormatEndOfTheWeekDate(uint timeLeftInSeconds)
         {
-            uint totalHours = timeLeftInMilliseconds / (1000 * 60 * 60);
+            uint totalHours = timeLeftInSeconds / (60 * 60);
             uint days = totalHours / 24;
             uint hours = totalHours % 24;
 
@@ -35,9 +33,9 @@ namespace DCL.MarketplaceCredits
         public static string FormatClaimedGoalReward(float claimedCredits) =>
             $"{FormatGoalReward(claimedCredits)} Marketplace Credit{(claimedCredits >= 2 ? "s" : "")}";
 
-        public static string FormatCreditsExpireIn(uint timeLeftInMilliseconds)
+        public static string FormatCreditsExpireIn(uint timeLeftInSeconds)
         {
-            uint days = timeLeftInMilliseconds / (1000 * 60 * 60 * 24);
+            uint days = timeLeftInSeconds / (60 * 60 * 24);
             return $"Expires in {days} days";
         }
 
@@ -48,20 +46,11 @@ namespace DCL.MarketplaceCredits
             return $"{startDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}";
         }
 
-        public static bool IsProgramMarkedAsStarted() =>
-            PlayerPrefs.GetInt(PROGRAM_STARTED_MARK_LOCAL_STORAGE_KEY, 0) == 1;
-
-        public static void MarkProgramAsStarted()
-        {
-            if (IsProgramMarkedAsStarted())
-                return;
-
-            PlayerPrefs.SetInt(PROGRAM_STARTED_MARK_LOCAL_STORAGE_KEY, 1);
-            PlayerPrefs.Save();
-        }
-
         public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
             goalProgress.completedSteps * 100 / goalProgress.totalSteps;
+
+        public static bool HasUserStartedProgram(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
+            creditsProgramProgressResponse.user is { hasStartedProgram: true };
 
         public static bool IsUserEmailRegistered(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             !string.IsNullOrEmpty(creditsProgramProgressResponse.user.email);

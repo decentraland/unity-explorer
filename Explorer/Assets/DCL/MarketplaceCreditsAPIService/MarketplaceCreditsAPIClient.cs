@@ -22,6 +22,15 @@ namespace DCL.MarketplaceCreditsAPIService
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
+        public async UniTask MarkUserAsStartedProgramAsync(CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users";
+
+            // TODO (Santi): Uncomment this when the endpoint is implemented in the back-end side!
+            // await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(string.Empty), string.Empty, ct)
+            //                           .WithNoOpAsync();
+        }
+
         public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
