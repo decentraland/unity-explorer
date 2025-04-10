@@ -21,17 +21,17 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IProfileTextureUrlProvider profileTextureUrlProvider;
+        private readonly IAvatarTextureUrlProvider avatarTextureUrlProvider;
 
         internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache,
             // A replacement of IProfileRepository to avoid cyclic dependencies
-            IProfileTextureUrlProvider profileTextureUrlProvider)
+            IAvatarTextureUrlProvider avatarTextureUrlProvider)
             : base(
                 world, cache, new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
             this.webRequestController = webRequestController;
-            this.profileTextureUrlProvider = profileTextureUrlProvider;
+            this.avatarTextureUrlProvider = avatarTextureUrlProvider;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -40,7 +40,7 @@ namespace ECS.StreamableLoading.Textures
 
             if (intention.IsAvatarTexture)
             {
-                URLAddress? url = await profileTextureUrlProvider.GetAsync(intention.CommonArguments.URL.Value, ct);
+                URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.CommonArguments.URL.Value, ct);
 
                 if (url == null)
                     throw new Exception($"No profile found for {intention.CommonArguments.URL}");
