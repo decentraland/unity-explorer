@@ -374,6 +374,8 @@ namespace DCL.Chat
         {
             PointerEnter?.Invoke();
 
+            pointerExit = false;
+
             if (IsUnfolded)
             {
                 SetBackgroundVisibility(true, true);
@@ -387,9 +389,11 @@ namespace DCL.Chat
             if(isChatContextMenuOpen)
                 return;
 
+            pointerExit = true;
+
             PointerExit?.Invoke();
 
-            if (IsUnfolded)
+            if (IsUnfolded && !isInputSelected)
             {
                 SetBackgroundVisibility(false, true);
                 chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
@@ -745,12 +749,20 @@ namespace DCL.Chat
 
                 isInputSelected = true;
                 chatMessageViewer.StopChatEntriesFadeout();
+                SetBackgroundVisibility(true, true);
+                chatMessageViewer.SetScrollbarVisibility(true, BackgroundFadeTime);
                 InputBoxFocusChanged?.Invoke(true);
             }
             else
             {
+                if (pointerExit)
+                {
+                    SetBackgroundVisibility(false, true);
+                    chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
+                    chatMessageViewer.StartChatEntriesFadeout();
+                }
+
                 isInputSelected = false;
-                chatMessageViewer.StartChatEntriesFadeout();
                 InputBoxFocusChanged?.Invoke(false);
             }
         }

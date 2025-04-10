@@ -16,10 +16,10 @@ namespace DCL.Chat
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
-        public Action CloseChatButtonClicked;
-        public Action CloseMemberListButtonClicked;
-        public Action HideMemberListButtonClicked;
-        public Action ShowMemberListButtonClicked;
+        public event Action? CloseChatButtonClicked;
+        public event Action? CloseMemberListButtonClicked;
+        public event Action? HideMemberListButtonClicked;
+        public event Action? ShowMemberListButtonClicked;
         public event VisibilityChangedDelegate? ChatBubblesVisibilityChanged;
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
 
