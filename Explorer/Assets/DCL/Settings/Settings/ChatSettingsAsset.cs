@@ -9,6 +9,7 @@ namespace DCL.Settings.Settings
     {
         [FormerlySerializedAs("chatSettings")] public ChatAudioSettings chatAudioSettings = ChatAudioSettings.ALL;
         public ChatPrivacySettings chatPrivacySettings = ChatPrivacySettings.ALL;
+        public ChatBubbleVisibilitySettings chatBubblesVisibilitySettings = ChatBubbleVisibilitySettings.ALL;
 
         public delegate void ChatPrivacyDelegate(ChatPrivacySettings privacySettings);
         public event ChatPrivacyDelegate? PrivacySettingsSet;
@@ -27,6 +28,11 @@ namespace DCL.Settings.Settings
             chatPrivacySettings = privacySettings;
             PrivacySettingsRead?.Invoke(privacySettings);
         }
+
+        public void SetBubblesVisibility(ChatBubbleVisibilitySettings bubblesSettings)
+        {
+            chatBubblesVisibilitySettings = bubblesSettings;
+        }
     }
 
     public enum ChatAudioSettings
@@ -42,4 +48,10 @@ namespace DCL.Settings.Settings
         ALL = 1,
     }
 
+    public enum ChatBubbleVisibilitySettings
+    {
+        ALL = 0,
+        NEARBY_ONLY = 1,
+        NONE
+    }
 }

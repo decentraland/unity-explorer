@@ -46,15 +46,43 @@ MonoBehaviour:
       - rid: 3126482891795070977
   <ChatSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
-    - <GroupTitle>k__BackingField: Notifications
+    - <GroupTitle>k__BackingField: 
       <Modules>k__BackingField:
       - rid: 4494877371389181952
-    - <GroupTitle>k__BackingField: Messages
-      <Modules>k__BackingField:
-      - rid: 4494877371389181954
+      - rid: 1708279571579404288
+      - rid: 1708279571579404289
   references:
     version: 2
     RefIds:
+    - rid: 1708279571579404288
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Send & Receive DMs From
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Only Friends
+          - Everybody
+          defaultOptionIndex: 1
+        <Feature>k__BackingField: 9
+    - rid: 1708279571579404289
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: In-World Chat Bubbles
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - None
+          - Nearby only
+          - All
+          defaultOptionIndex: 2
+        <Feature>k__BackingField: 10
     - rid: 3126482891795070976
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -88,7 +116,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Nearby Chat
+          <ModuleName>k__BackingField: Notification Ping
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
@@ -98,20 +126,6 @@ MonoBehaviour:
           - None
           defaultOptionIndex: 1
         <Feature>k__BackingField: 7
-    - rid: 4494877371389181954
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: DMs
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          isMultiselect: 0
-          options:
-          - Only Friends
-          - Everybody
-          defaultOptionIndex: 1
-        <Feature>k__BackingField: 9
     - rid: 4916151837425664002
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

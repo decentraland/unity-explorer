@@ -61,6 +61,7 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
                                                        DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatSettingsAsset),
                                                        DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
+                                                       DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };
