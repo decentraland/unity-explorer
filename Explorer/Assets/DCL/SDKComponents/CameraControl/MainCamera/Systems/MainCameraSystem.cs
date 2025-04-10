@@ -55,7 +55,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             HandleActiveVirtualCameraLookAtChangeQuery(World);
             HandleVirtualCameraChangeQuery(World);
-            // DisableVirtualCameraOnSceneLeaveQuery(World);
 
             HandleMainCameraRemovalQuery(World);
             HandleMainCameraEntityDestructionQuery(World);
