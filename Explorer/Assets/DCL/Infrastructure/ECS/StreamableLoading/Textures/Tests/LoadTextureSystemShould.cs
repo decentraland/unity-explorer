@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override LoadTextureSystem CreateSystem()
         {
             return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE,
-                Substitute.For<IAvatarPortraitUrlProvider>());
+                Substitute.For<IProfileTextureUrlProvider>());
         }
 
         protected override void AssertSuccess(Texture2DData data)

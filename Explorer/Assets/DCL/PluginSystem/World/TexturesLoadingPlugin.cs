@@ -23,14 +23,14 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IDiskCache<Texture2DData> diskCache;
         private readonly IStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
-        private readonly ProfileFacePictureUrlProvider avatarPortraitProvider;
+        private readonly ProfileTextureUrlProvider profileTextureProvider;
 
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<Texture2DData> diskCache, ILaunchMode launchMode,
             ObjectProxy<IProfileRepository> profileRepository)
         {
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
-            avatarPortraitProvider = new ProfileFacePictureUrlProvider(profileRepository);
+            profileTextureProvider = new ProfileTextureUrlProvider(profileRepository);
 
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 texturesCache = new NoCache<Texture2DData, GetTextureIntention>(true, true);
@@ -43,12 +43,12 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, avatarPortraitProvider);
+            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileTextureProvider);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, avatarPortraitProvider);
+            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileTextureProvider);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
@@ -56,11 +56,11 @@ namespace DCL.PluginSystem.World
 
         void IDisposable.Dispose() { }
 
-        private class ProfileFacePictureUrlProvider : IAvatarPortraitUrlProvider
+        private class ProfileTextureUrlProvider : IProfileTextureUrlProvider
         {
             private readonly ObjectProxy<IProfileRepository> profileRepository;
 
-            public ProfileFacePictureUrlProvider(ObjectProxy<IProfileRepository> profileRepository)
+            public ProfileTextureUrlProvider(ObjectProxy<IProfileRepository> profileRepository)
             {
                 this.profileRepository = profileRepository;
             }

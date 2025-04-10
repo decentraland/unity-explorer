@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace ECS.StreamableLoading.Textures
 {
-    public interface IAvatarPortraitUrlProvider
+    public interface IProfileTextureUrlProvider
     {
         UniTask<URLAddress?> GetAsync(string userId, CancellationToken ct);
     }

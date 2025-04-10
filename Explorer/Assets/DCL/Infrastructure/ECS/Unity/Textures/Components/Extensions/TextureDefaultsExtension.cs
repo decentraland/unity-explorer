@@ -28,7 +28,7 @@ namespace ECS.Unity.Textures.Components.Extensions
                 ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode(),
                     textureOffset: self.GetOffset(),
                     textureTiling: self.GetTiling(),
-                    isAvatarPortrait: self.TexCase == TextureUnion.TexOneofCase.AvatarTexture)
+                    isAvatarTexture: self.TexCase == TextureUnion.TexOneofCase.AvatarTexture)
                 : null;
         }
 
