@@ -92,6 +92,7 @@ namespace DCL.Landscape
             terrainChunkColliders = new List<Collider>();
         }
 
+        // TODO : pre-calculate once and re-use
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
             if(terrainModel == null) return;
@@ -179,7 +180,9 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
-                terrainChunkColliders[activeChunk].enabled = false;
+
+                foreach (var collider in terrainChunkColliders)
+                    if (collider.enabled) collider.enabled = false;
 
                 IsTerrainShown = false;
             }
