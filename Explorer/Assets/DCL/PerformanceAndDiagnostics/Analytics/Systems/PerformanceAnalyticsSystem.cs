@@ -50,6 +50,8 @@ namespace DCL.Analytics.Systems
             this.loadingStatus = loadingStatus;
             this.jsonObjectBuilder = jsonObjectBuilder;
             config = analytics.Configuration;
+
+            profiler.MainThreadRecorder = mainThreadFrameTimes;
         }
 
         protected override void Update(float t)

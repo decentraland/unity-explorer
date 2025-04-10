@@ -31,5 +31,6 @@
         public bool CurrentSceneHasStats { get; set; }
 
         public float SpikeFrameTime { get; set; }
+        FrameTimesRecorder MainThreadRecorder { get; set; }
     }
 }

@@ -50,6 +50,8 @@ namespace DCL.Profiling
 
         public static int PhysTick;
 
+        public FrameTimesRecorder MainThreadRecorder { get; set; }
+
         public void Dispose()
         {
             systemUsedMemoryRecorder.Dispose();

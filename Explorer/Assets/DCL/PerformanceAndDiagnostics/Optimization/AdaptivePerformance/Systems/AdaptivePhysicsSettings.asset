@@ -19,3 +19,6 @@ MonoBehaviour:
   maxFixedDelta: 0.05
   highThreshold: 1.5
   lowThreshold: 0.9
+  bufferSizeInFrames: 60
+  b_thresholdLow: 0.8
+  b_thresholdHigh: 1.4
