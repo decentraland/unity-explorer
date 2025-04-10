@@ -6,6 +6,7 @@ using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
+using DCL.UI.Utilities;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -17,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
@@ -77,6 +79,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
             CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Dispose()
