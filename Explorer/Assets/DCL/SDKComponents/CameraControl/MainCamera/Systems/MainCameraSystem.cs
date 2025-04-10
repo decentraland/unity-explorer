@@ -6,11 +6,9 @@ using Cinemachine;
 using CRDT;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
-using DCL.InWorldCamera;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
-using DCL.SDKComponents.CameraModeArea.Systems;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -207,8 +205,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
         {
-            if (mainCameraComponent.virtualCameraInstance != null && mainCameraComponent.virtualCameraInstance.enabled)
-                mainCameraComponent.virtualCameraInstance.enabled = false;
+            if (mainCameraComponent.virtualCameraInstance == null
+                || !mainCameraComponent.virtualCameraInstance.enabled
+                || !VirtualCameraUtils.VirtualCameraExistsInEntitiesMap(entitiesMap, mainCameraComponent.virtualCameraCRDTEntity))
+                return;
+
+            mainCameraComponent.virtualCameraInstance.enabled = false;
 
             UpdateGlobalWorldCameraMode(false);
         }
