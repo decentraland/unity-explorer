@@ -28,7 +28,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -67,8 +66,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, 1000, false),
-                ITexturesFuse.NewTestInstance(),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, 1000, 1000, false),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,

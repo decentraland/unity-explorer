@@ -43,14 +43,11 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
-using DCL.Roads.GPUInstancing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.Dynamic.LaunchModes;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
-using SceneRunner.Mapping;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -79,7 +76,6 @@ namespace Global
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
         private IAssetsProvisioner assetsProvisioner;
-        private ITexturesFuse texturesFuse;
         public Entity PlayerEntity { get; set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
@@ -123,7 +119,6 @@ namespace Global
             partitionSettings.Dispose();
             QualityContainer.Dispose();
             Profiler.Dispose();
-            texturesFuse.Dispose();
             SceneRestrictionBusController.Dispose();
         }
 
@@ -144,7 +139,6 @@ namespace Global
             IReportsHandlingSettings reportHandlingSettings,
             IDebugContainerBuilder debugContainerBuilder,
             WebRequestsContainer webRequestsContainer,
-            ITexturesFuse texturesFuse,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -179,7 +173,6 @@ namespace Global
             container.assetsProvisioner = assetsProvisioner;
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
-            container.texturesFuse = texturesFuse;
             container.LaunchMode = launchMode;
 
             var exposedPlayerTransform = new ExposedTransform();

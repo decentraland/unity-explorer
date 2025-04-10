@@ -3,13 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Atlas
@@ -63,7 +61,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
         public async UniTask LoadImageAsync(int chunkSize, int parcelSize, Vector2Int mapPosition, CancellationToken ct)
         {
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
-            
+
             var url = $"{CHUNKS_API}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),

@@ -8,7 +8,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
 using Global.AppArgs;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
@@ -27,7 +26,6 @@ namespace Global.Dynamic
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
-            ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
             CancellationToken ct

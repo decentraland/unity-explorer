@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using Utility;
 using System.Threading;
@@ -24,7 +23,7 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false)
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false)
         {
             if (removePrevious)
                 view.Image.sprite = null;
@@ -34,7 +33,7 @@ namespace DCL.UI
 
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            RequestImageAsync(uri, cts.Token).Forget();
+            RequestImageAsync(uri, useKtx, cts.Token).Forget();
         }
 
         public void SetVisible(bool isVisible)
@@ -42,7 +41,7 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, CancellationToken ct)
+        public async UniTask RequestImageAsync(string uri, bool useKtx, CancellationToken ct)
         {
             try
             {
@@ -51,7 +50,7 @@ namespace DCL.UI
                 //TODO potential memory leak, due no CacheCleaner
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(uri)),
-                    new GetTextureArguments(TextureType.Albedo),
+                    new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI

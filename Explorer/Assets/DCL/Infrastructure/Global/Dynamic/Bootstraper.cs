@@ -26,8 +26,6 @@ using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
-using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
@@ -46,7 +44,6 @@ namespace Global.Dynamic
         private readonly IRealmUrls realmUrls;
         private readonly IAppArgs appArgs;
         private readonly ISplashScreen splashScreen;
-        private readonly ICompressShaders compressShaders;
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
@@ -63,7 +60,6 @@ namespace Global.Dynamic
             IDebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
-            ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
@@ -75,7 +71,6 @@ namespace Global.Dynamic
             this.realmUrls = realmUrls;
             this.appArgs = appArgs;
             this.splashScreen = splashScreen;
-            this.compressShaders = compressShaders;
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
@@ -88,7 +83,6 @@ namespace Global.Dynamic
             CancellationToken token)
         {
             splashScreen.Show();
-            await compressShaders.WarmUpIfRequiredAsync(token);
 
             cursorRoot.EnsureNotNull();
 
@@ -108,7 +102,6 @@ namespace Global.Dynamic
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
-            ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
             CancellationToken ct
@@ -119,7 +112,6 @@ namespace Global.Dynamic
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
                 webRequestsContainer,
-                texturesFuse,
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,

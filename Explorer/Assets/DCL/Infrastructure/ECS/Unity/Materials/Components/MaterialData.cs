@@ -1,8 +1,8 @@
 ﻿using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.WebRequests;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using UnityEngine;
 

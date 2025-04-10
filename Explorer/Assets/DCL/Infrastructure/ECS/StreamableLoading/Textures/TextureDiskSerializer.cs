@@ -1,12 +1,10 @@
 using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.Textures
 {
