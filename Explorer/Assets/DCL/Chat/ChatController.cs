@@ -40,7 +40,6 @@ namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>, IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
-        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
         private static readonly Color DEFAULT_COLOR = Color.white;
 
@@ -108,7 +107,6 @@ namespace DCL.Chat
 
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
-        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
@@ -389,7 +387,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatSettings, GetProfilesFromParticipants, loadingStatus);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             //We start processing messages once the view is ready
@@ -406,7 +404,6 @@ namespace DCL.Chat
 
             viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
             viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
@@ -466,7 +463,6 @@ namespace DCL.Chat
                 viewInstance.PointerExit -= OnViewPointerExit;
                 viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
                 viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-                viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
                 viewInstance.InputSubmitted -= OnViewInputSubmitted;
                 viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
                 viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
@@ -570,7 +566,7 @@ namespace DCL.Chat
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
-            if (nametagsData is { showChatBubbles: true, showNameTags: true })
+            if (nametagsData is { showNameTags: true })
             {
                 world.AddOrSet(e, new ChatBubbleComponent(
                     chatMessage.Message,
@@ -596,13 +592,6 @@ namespace DCL.Chat
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void OnViewChatBubbleVisibilityChanged(bool isVisible)
-        {
-            nametagsData.showChatBubbles = isVisible;
-
-            ChatBubbleVisibilityChanged?.Invoke(isVisible);
         }
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
@@ -640,7 +629,6 @@ namespace DCL.Chat
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
             nametagsData.showNameTags = !nametagsData.showNameTags;
-            viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
