@@ -519,39 +519,48 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            if (!nametagsData.showNameTags || !nametagsData.showChatBubbles)
+            if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
                 return;
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
                 bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.User;
-                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
 
-                switch (chatSettings.chatAudioSettings)
+                // Chat bubbles appears if the channel is nearby or if settings allow them to appear for private conversations
+                if (!isPrivateMessage || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
                 {
-                    // TODO FRAN: check if we should add sound in other place, as if chat bubbles are disabled, it wont play audio, also
-                    // we need to play audio when sending messages depending on settings and depending on channel.
-                    case ChatAudioSettings.NONE:
-                        return;
-                    case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
-                    case ChatAudioSettings.ALL:
-                        viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
-                        break;
+                    GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
+
+                    switch (chatSettings.chatAudioSettings)
+                    {
+                        // TODO FRAN: check if we should add sound in other place, as if chat bubbles are disabled, it wont play audio, also
+                        // we need to play audio when sending messages depending on settings and depending on channel.
+                        case ChatAudioSettings.NONE:
+                            return;
+                        case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
+                        case ChatAudioSettings.ALL:
+                            viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
+                            break;
+                    }
                 }
             }
             else if (isSentByOwnUser)
             {
                 if (channel.ChannelType == ChatChannel.ChatChannelType.User)
                 {
-                    if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                    // Chat bubbles appears if the channel is nearby or if settings allow them to appear for private conversations
+                    if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
                     {
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
-                    }
-                    else
-                    {
-                        Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                        if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                        {
+                            GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
+                        }
+                        else
+                        {
+                            Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                            GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                        }
                     }
                 }
                 else

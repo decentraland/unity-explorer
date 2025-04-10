@@ -8,11 +8,15 @@ namespace DCL.Settings.ModuleControllers
     {
         private readonly SettingsDropdownModuleView view;
         private readonly ChatSettingsAsset chatSettingsAsset;
+        private const string CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY = "Settings_GraphicsQuality";
 
         public ChatBubblesVisibilityController(SettingsDropdownModuleView view, ChatSettingsAsset chatSettingsAsset)
         {
             this.view = view;
             this.chatSettingsAsset = chatSettingsAsset;
+
+            if(settingsDataStore.HasKey(CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY))
+                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetSettings);
         }
@@ -34,6 +38,8 @@ namespace DCL.Settings.ModuleControllers
                     ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatPrivacySettingsController: {index}");
                     return;
             }
+
+            settingsDataStore.SetDropdownValue(CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY, index, save: true);
         }
 
         public override void Dispose()

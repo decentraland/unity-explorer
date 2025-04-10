@@ -50,8 +50,8 @@ namespace DCL.Settings.Settings
 
     public enum ChatBubbleVisibilitySettings
     {
-        ALL = 0,
+        NONE = 0,
         NEARBY_ONLY = 1,
-        NONE
+        ALL
     }
 }
