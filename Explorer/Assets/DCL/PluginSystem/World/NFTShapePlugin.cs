@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -38,8 +39,10 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
+        private readonly IWebContentSizes webContentSizes;
         private readonly ILazyMaxSize lazyMaxSize;
         private readonly IDiskCache<Texture2DData> diskCache;
+        private readonly FeatureFlagsCache featureFlags;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
@@ -54,7 +57,8 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            FeatureFlagsCache featureFlags
         ) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
@@ -65,7 +69,8 @@ namespace DCL.PluginSystem.World
             cacheCleaner,
             new IWebContentSizes.Default(LazyMaxSize(out var lazyMaxSize)),
             lazyMaxSize,
-            diskCache
+            diskCache,
+            featureFlags
         ) { }
 
         public NFTShapePlugin(
@@ -78,7 +83,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IWebContentSizes webContentSizes,
             ILazyMaxSize lazyMaxSize,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            FeatureFlagsCache featureFlags
         ) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
@@ -87,8 +93,10 @@ namespace DCL.PluginSystem.World
             webRequestController,
             cacheCleaner,
             framePrefabs,
+            webContentSizes,
             lazyMaxSize,
-            diskCache
+            diskCache,
+            featureFlags
         ) { }
 
         public NFTShapePlugin(
@@ -99,8 +107,10 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
+            IWebContentSizes webContentSizes,
             ILazyMaxSize lazyMaxSize,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            FeatureFlagsCache featureFlags
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -109,8 +119,10 @@ namespace DCL.PluginSystem.World
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
             this.framePrefabs = framePrefabs;
+            this.webContentSizes = webContentSizes;
             this.lazyMaxSize = lazyMaxSize;
             this.diskCache = diskCache;
+            this.featureFlags = featureFlags;
             cacheCleaner.Register(cache);
         }
 
@@ -134,7 +146,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, webContentSizes, featureFlags);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

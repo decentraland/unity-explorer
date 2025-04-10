@@ -3,7 +3,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.WebRequests;
+using DCL.WebRequests.WebContentSizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
@@ -21,18 +23,33 @@ namespace ECS.StreamableLoading.NFTShapes
     public partial class LoadNFTShapeSystem : LoadSystemBase<Texture2DData, GetNFTShapeIntention>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IWebContentSizes webContentSizes;
+        private readonly FeatureFlagsCache featureFlags;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes,
+            FeatureFlagsCache featureFlags)
             : base(
                 world, cache, new DiskCacheOptions<Texture2DData, GetNFTShapeIntention>(diskCache, GetNFTShapeIntention.DiskHashCompute.INSTANCE, "nft")
             )
         {
             this.webRequestController = webRequestController;
+            this.webContentSizes = webContentSizes;
+            this.featureFlags = featureFlags;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
+
+            bool ktxEnabled = featureFlags.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
+
+            if (!ktxEnabled)
+            {
+                bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
+
+                if (isOkSize == false)
+                    return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
+            }
 
             // No need to check the size since we're using our converter so size will always be ok
             // texture request
