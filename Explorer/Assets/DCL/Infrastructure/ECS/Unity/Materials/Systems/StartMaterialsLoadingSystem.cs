@@ -210,7 +210,7 @@ namespace ECS.Unity.Materials.Systems
                         textureComponentValue.FilterMode,
                         textureComponentValue.TextureType,
                         attemptsCount: attemptsCount,
-                        isAvatarTexture: textureComponentValue.IsAvatarTexture
+                        isAvatarPortrait: textureComponentValue.IsAvatarPortrait
                     ),
                     partitionComponent
                 );

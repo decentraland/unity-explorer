@@ -11,7 +11,7 @@ namespace ECS.Unity.Textures.Components
         public readonly FilterMode FilterMode;
         public readonly TextureType TextureType;
         public readonly bool IsVideoTexture;
-        public readonly bool IsAvatarTexture;
+        public readonly bool IsAvatarPortrait;
         public readonly int VideoPlayerEntity;
         public readonly Vector2 TextureOffset;
         public readonly Vector2 TextureTiling;
@@ -29,7 +29,7 @@ namespace ECS.Unity.Textures.Components
             Vector2 textureTiling = default,
             bool isVideoTexture = false,
             int videoPlayerEntity = 0,
-            bool isAvatarTexture = false)
+            bool isAvatarPortrait = false)
         {
             Src = src;
             FileHash = fileHash;
@@ -40,7 +40,7 @@ namespace ECS.Unity.Textures.Components
             VideoPlayerEntity = videoPlayerEntity;
             TextureOffset = textureOffset;
             TextureTiling = textureTiling;
-            IsAvatarTexture = isAvatarTexture;
+            IsAvatarPortrait = isAvatarPortrait;
         }
 
         public bool Equals(TextureComponent other) =>
