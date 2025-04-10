@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Profiling.ECS;
@@ -31,6 +32,7 @@ namespace DCL.Analytics.Systems
 
         private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
         private readonly FrameTimesRecorder gpuFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
         private float lastReportTime;
 
@@ -40,8 +42,8 @@ namespace DCL.Analytics.Systems
             ILoadingStatus loadingStatus,
             IRealmData realmData,
             IProfiler profiler,
-            IJsonObjectBuilder jsonObjectBuilder
-        ) : base(world)
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            IJsonObjectBuilder jsonObjectBuilder) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
@@ -49,6 +51,7 @@ namespace DCL.Analytics.Systems
             this.analytics = analytics;
             this.loadingStatus = loadingStatus;
             this.jsonObjectBuilder = jsonObjectBuilder;
+            this.entityParticipantTable = entityParticipantTable;
             config = analytics.Configuration;
         }
 
@@ -87,7 +90,7 @@ namespace DCL.Analytics.Systems
 
             // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
             jsonObjectBuilder.Set("quality_level", QualitySettings.names[QualitySettings.GetQualityLevel()]);
-            jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
+            jsonObjectBuilder.Set("player_count", entityParticipantTable.Count);
 
             // JS runtime memory
             jsonObjectBuilder.Set("jsheap_used", profiler.AllScenesUsedHeapSize.ByteToMB());

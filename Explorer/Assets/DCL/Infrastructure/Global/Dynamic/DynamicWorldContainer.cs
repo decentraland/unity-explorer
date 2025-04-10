@@ -387,7 +387,6 @@ namespace Global.Dynamic
             );
 
             var remoteEntities = new RemoteEntities(
-                roomHub,
                 entityParticipantTable,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 queuePoolFullMovementMessage,
@@ -872,7 +871,8 @@ namespace Global.Dynamic
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,
                         debugBuilder,
-                        cameraReelStorageService
+                        cameraReelStorageService,
+                        entityParticipantTable
                     )
                 );
 

@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Analytics.Systems;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.Profiling;
 using DCL.RealmNavigation;
@@ -32,6 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                 new LoadingStatus(),
                 new RealmData(),
                 new Profiler(),
+                new EntityParticipantTable(),
                 new Utility.Json.JsonObjectBuilder()
             );
         }
