@@ -48,7 +48,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
@@ -65,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private FriendsPanelController? friendsPanelController;
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
         private CancellationTokenSource? prewarmFriendsCancellationToken;
+        private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
         private UserBlockingCache? userBlockingCache;
 
         public FriendsPlugin(
@@ -82,7 +82,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IProfileThumbnailCache profileThumbnailCache,
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
@@ -108,7 +107,6 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
@@ -127,6 +125,7 @@ namespace DCL.PluginSystem.Global
             friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
             friendsService?.Dispose();
             prewarmFriendsCancellationToken.SafeCancelAndDispose();
+            syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -139,6 +138,8 @@ namespace DCL.PluginSystem.Global
 
             friendsService = new RPCFriendsService(GetApiUrl(),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
+
+            friendsService.ConnectionEnstablished += SyncBlockingStatus;
 
             IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
 
@@ -256,13 +257,24 @@ namespace DCL.PluginSystem.Global
                 if (friendsPanelController != null)
                     await friendsPanelController.InitAsync(ct);
 
-                if (includeUserBlocking)
-                {
-                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                    userBlockingCache.Reset(blockingStatus);
-                }
+                await SyncBlockingStatusAsync(ct);
 
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
+            }
+        }
+
+        private void SyncBlockingStatus()
+        {
+            syncBlockingStatusOnRpcConnectionCts = syncBlockingStatusOnRpcConnectionCts.SafeRestart();
+            SyncBlockingStatusAsync(syncBlockingStatusOnRpcConnectionCts.Token).Forget();
+        }
+
+        private async UniTask SyncBlockingStatusAsync(CancellationToken ct)
+        {
+            if (includeUserBlocking && userBlockingCache != null && friendsService != null)
+            {
+                UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
+                userBlockingCache.Reset(blockingStatus);
             }
         }
 
