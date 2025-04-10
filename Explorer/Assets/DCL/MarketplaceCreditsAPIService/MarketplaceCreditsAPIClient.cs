@@ -26,9 +26,8 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users";
 
-            // TODO (Santi): Uncomment this when the endpoint is implemented in the back-end side!
-            // await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(string.Empty), string.Empty, ct)
-            //                           .WithNoOpAsync();
+            await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(string.Empty), string.Empty, ct)
+                                      .WithNoOpAsync();
         }
 
         public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)

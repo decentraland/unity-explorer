@@ -25,6 +25,8 @@ namespace DCL.MarketplaceCredits
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
+        public event Action<bool> MarketplaceCreditsOpened;
+
         [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
 
@@ -96,8 +98,8 @@ namespace DCL.MarketplaceCredits
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
 
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS, OnMarketplaceCreditsNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS, OnMarketplaceCreditsNotificationClicked);
+            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 viewInstance.GoalsOfTheWeekView,
@@ -266,8 +268,11 @@ namespace DCL.MarketplaceCredits
             SetSidebarButtonAsClaimIndicator(true);
         }
 
-        private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
+        private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
+        {
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits);
+            MarketplaceCreditsOpened?.Invoke(true);
+        }
 
         private void CheckForSidebarButtonState()
         {

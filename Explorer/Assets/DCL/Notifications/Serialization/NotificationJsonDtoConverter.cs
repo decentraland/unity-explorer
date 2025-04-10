@@ -60,9 +60,9 @@ namespace DCL.Notifications.Serialization
                     "reward_assignment" => new RewardAssignedNotification(),
                     "reward_in_progress" => new RewardInProgressNotification(),
                     "badge_granted" => new BadgeGrantedNotification(),
+                    "credits_goal_completed" => new MarketplaceCreditsNotification(),
                     FRIENDSHIP_RECEIVED_TYPE => new FriendRequestReceivedNotification(),
                     FRIENDSHIP_ACCEPTED_TYPE => new FriendRequestAcceptedNotification(),
-                    MARKETPLACE_CREDITS_TYPE => new MarketplaceCreditsNotification(),
                     _ => null
                 };
 

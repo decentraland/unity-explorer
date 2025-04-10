@@ -94,8 +94,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
-                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
+                DecentralandUrl.Notification => $"https://notifications.decentraland.zone/notifications", // TODO (Santi): This will be changed to {ENV} before merging
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.zone/notifications/read", // TODO (Santi): This will be changed to {ENV} before merging
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",

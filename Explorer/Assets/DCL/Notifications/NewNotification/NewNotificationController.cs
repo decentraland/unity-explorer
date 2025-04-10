@@ -106,7 +106,7 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
                         await ProcessFriendsNotificationAsync(notification);
                         break;
-                    case NotificationType.CREDITS:
+                    case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
                     default:

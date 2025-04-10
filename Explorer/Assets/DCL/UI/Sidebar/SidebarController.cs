@@ -210,27 +210,17 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
-        private async void OnMarketplaceCreditsButtonClickedAsync()
-        {
+        private async void OnMarketplaceCreditsButtonClickedAsync() =>
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits);
-        }
 
         private void OnHelpButtonClicked()
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
-
-            // TODO (Santi): This will be removed before merging
-            TestMarketplaceCreditsNotificationAsync(CancellationToken.None).Forget();
         }
 
-        private void OnControlsButtonClicked()
-        {
+        private void OnControlsButtonClicked() =>
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
-
-            // TODO (Santi): This will be removed before merging
-            marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, CancellationToken.None).Forget();
-        }
 
         private async void OpenSidebarSettingsAsync()
         {
@@ -275,25 +265,5 @@ namespace DCL.UI.Sidebar
         }
 
         #endregion
-
-        // TODO (Santi): This will be removed before merging
-        private async UniTaskVoid TestMarketplaceCreditsNotificationAsync(CancellationToken ct)
-        {
-            await UniTask.Delay(5000, cancellationToken: ct);
-            notificationsBusController.AddNotification(new MarketplaceCreditsNotification
-            {
-                Type = NotificationType.CREDITS,
-                Address = "0x1b8BA74cC34C2927aac0a8AF9C3B1BA2e61352F2",
-                Id = $"SantiTest{DateTime.Now.Ticks}",
-                Read = false,
-                Timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString(),
-                Metadata = new MarketplaceCreditsNotificationMetadata
-                {
-                    Title = "Weekly Goal Completed!",
-                    Description = "Claim your Credits to unlock them",
-                    Image = "https://i.ibb.co/4L0WD2j/Credits-Icn.png",
-                }
-            });
-        }
     }
 }
