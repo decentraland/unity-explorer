@@ -40,10 +40,10 @@ namespace DCL.WebRequests
             bool useKtx = textureArguments.UseKtx && ktxEnabled;
 
             // $"http://localhost:8000/convert?ktx2=true&fileUrl={{1}}";
-            var requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(commonArguments.URL)) : commonArguments.URL;
+            string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(commonArguments.URL)) : commonArguments.URL;
 
             UnityWebRequest wr = UnityWebRequest.Get(requestUrl);
-            return new GetTextureWebRequest(wr, requestUrl, textureArguments.TextureType, textureArguments.UseKtx && ktxEnabled);
+            return new GetTextureWebRequest(wr, requestUrl, textureArguments.TextureType, useKtx);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>

@@ -56,7 +56,7 @@ namespace DCL.WebRequests.Analytics
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
-            var textureFuseRequestHub = new RequestHub(urlsSource, ktxEnabled);
+            var textureFuseRequestHub = new RequestHub(urlsSource);
 
             IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
@@ -151,6 +151,13 @@ namespace DCL.WebRequests.Analytics
                                               }),
                                           new DebugHintDef("Sequential"));
             }
+        }
+
+        public void SetKTXEnabled(bool enabled)
+        {
+            // TODO: Temporary until we rewrite FF to be static
+            WebRequestController.requestHub.SetKTXEnabled(enabled);
+            SceneWebRequestController.requestHub.SetKTXEnabled(enabled);
         }
 
         public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions

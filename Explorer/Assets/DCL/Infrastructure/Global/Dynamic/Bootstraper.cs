@@ -276,6 +276,7 @@ namespace Global.Dynamic
         public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
         {
             realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
+            webRequestsContainer.SetKTXEnabled(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,

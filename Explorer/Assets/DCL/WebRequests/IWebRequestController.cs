@@ -15,8 +15,7 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
-                new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY),
-                true
+                new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             )
         );
 

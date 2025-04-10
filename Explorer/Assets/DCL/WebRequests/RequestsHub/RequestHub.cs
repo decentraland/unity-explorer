@@ -33,8 +33,9 @@ namespace DCL.WebRequests.RequestsHub
         }
 
         private readonly IReadOnlyDictionary<Key, object> map;
+        private bool ktxEnabled;
 
-        public RequestHub(IDecentralandUrlsSource urlsSource, bool ktxEnabled)
+        public RequestHub(IDecentralandUrlsSource urlsSource)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
@@ -66,6 +67,11 @@ namespace DCL.WebRequests.RequestsHub
                 return (InitializeRequest<T, TWebRequest>)requestDelegate!;
 
             throw new InvalidOperationException("Request type not supported.");
+        }
+
+        public void SetKTXEnabled(bool enabled)
+        {
+            ktxEnabled = enabled;
         }
     }
 }
