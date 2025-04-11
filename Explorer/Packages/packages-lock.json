@@ -97,13 +97,14 @@
       "url": "https://package.openupm.com"
     },
     "com.tivadar.best.http": {
-      "version": "file:D:/Decentraland/unity-explorer-packages/BestHTTP",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/BestHTTP",
       "depth": 0,
-      "source": "local",
+      "source": "git",
       "dependencies": {
         "com.unity.burst": "1.8.19",
         "com.unity.profiling.core": "1.0.0"
-      }
+      },
+      "hash": "becffa36776d972b605c18d3b566b81585e0ae17"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -244,6 +245,13 @@
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.1",
       "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.performance.profile-analyzer": {
+      "version": "1.2.3",
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
