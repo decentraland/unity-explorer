@@ -322,7 +322,8 @@ jobs:
             merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
             workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
             workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
-            *) echo "BUILD_PREFIX=gen" >> $GITHUB_ENV ;;
+            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
+            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
           esac
 
       - name: Upload artifact to S3
