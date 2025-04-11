@@ -26,7 +26,6 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
-        private readonly CurrentSceneInfo currentSceneInfo;
 
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
