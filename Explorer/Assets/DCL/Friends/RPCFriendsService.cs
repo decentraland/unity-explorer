@@ -66,7 +66,7 @@ namespace DCL.Friends
                                           && client != null
                                           && port != null;
 
-        public event Action? ConnectionEstablished;
+        public event Action? WebSocketConnectionEstablished;
 
         public RPCFriendsService(URLAddress apiUrl,
             IFriendsEventBus eventBus,
@@ -711,7 +711,7 @@ namespace DCL.Friends
                         port = await client.CreatePort("friends");
                         module = await port.LoadModule(RPC_SERVICE_NAME);
 
-                        ConnectionEstablished?.Invoke();
+                        WebSocketConnectionEstablished?.Invoke();
                     }
                 }
                 finally { handshakeMutex.Release(); }

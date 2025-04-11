@@ -66,7 +66,6 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource? prewarmFriendsCancellationToken;
         private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
         private UserBlockingCache? userBlockingCache;
-        private bool canSubscribeSyncBlockingStatus = true;
 
         public FriendsPlugin(
             MainUIView mainUIView,
@@ -153,6 +152,8 @@ namespace DCL.PluginSystem.Global
             {
                 userBlockingCache = new UserBlockingCache(friendEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
+
+                friendsService.WebSocketConnectionEstablished += SyncBlockingStatus;
             }
 
             // We need to restart the connection to the service as identity changes
@@ -256,8 +257,6 @@ namespace DCL.PluginSystem.Global
                 if (friendsPanelController != null)
                     await friendsPanelController.InitAsync(ct);
 
-                await SyncBlockingStatusAsync(ct);
-
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
             }
         }
@@ -270,17 +269,8 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask SyncBlockingStatusAsync(CancellationToken ct)
         {
-            if (includeUserBlocking && userBlockingCache != null && friendsService != null)
-            {
-                if (canSubscribeSyncBlockingStatus)
-                {
-                    friendsService.ConnectionEstablished += SyncBlockingStatus;
-                    canSubscribeSyncBlockingStatus = false;
-                }
-
-                UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                userBlockingCache.Reset(blockingStatus);
-            }
+            UserBlockingStatus blockingStatus = await friendsService!.GetUserBlockingStatusAsync(ct);
+            userBlockingCache!.Reset(blockingStatus);
         }
 
         private URLAddress GetApiUrl()
