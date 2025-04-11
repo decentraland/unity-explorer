@@ -211,6 +211,7 @@ namespace DCL.Chat
         /// </summary>
         public void FocusInputBox()
         {
+            //TODO FRAN: Check here if we should focus or not depending if mask is showing
             viewInstance?.FocusInputBox();
         }
 
@@ -285,21 +286,32 @@ namespace DCL.Chat
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
-            CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
+            if (nametagsData.showNameTags && nametagsData.showChatBubbles)
+                CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
             // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannelId) && viewInstance.IsScrollAtBottom)
+            if (!isSentByOwnUser && viewInstance!.IsMessageListVisible && viewInstance.IsScrollAtBottom && destinationChannel.Id.Equals(viewInstance.CurrentChannelId))
                 MarkCurrentChannelAsRead();
 
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();
-                viewInstance.RefreshMessages();
+                viewInstance!.RefreshMessages();
                 viewInstance.ShowLastMessage();
             }
             else
             {
-                if (destinationChannel.Id.Equals(viewInstance.CurrentChannelId))
+                switch (chatSettings.chatAudioSettings)
+                {
+                    case ChatAudioSettings.NONE:
+                        return;
+                    case ChatAudioSettings.MENTIONS_ONLY when addedMessage.IsMention:
+                    case ChatAudioSettings.ALL:
+                        viewInstance!.PlayMessageReceivedSfx(addedMessage.IsMention);
+                        break;
+                }
+
+                if (destinationChannel.Id.Equals(viewInstance!.CurrentChannelId))
                 {
                     // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
                     //       Once a new message arrives, the separator moves to the position of that new message and the count of
@@ -529,26 +541,11 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            if (!nametagsData.showNameTags || !nametagsData.showChatBubbles)
-                return;
-
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
                 bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.User;
                 GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
-
-                switch (chatSettings.chatAudioSettings)
-                {
-                    // TODO FRAN: check if we should add sound in other place, as if chat bubbles are disabled, it wont play audio, also
-                    // we need to play audio when sending messages depending on settings and depending on channel.
-                    case ChatAudioSettings.NONE:
-                        return;
-                    case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
-                    case ChatAudioSettings.ALL:
-                        viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
-                        break;
-                }
             }
             else if (isSentByOwnUser)
             {
@@ -635,6 +632,7 @@ namespace DCL.Chat
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
+            //TODO FRAN: This should take us to the nearby channel and send the command there
             viewInstance!.FocusInputBoxWithText("/");
         }
 
@@ -651,7 +649,15 @@ namespace DCL.Chat
 
         private void OnSubmitShortcutPerformed(InputAction.CallbackContext obj)
         {
-            viewInstance!.FocusInputBox();
+            if (viewInstance!.IsMaskShowing)
+            {
+                IsUnfolded = false;
+                viewInstance.SetChatVisibility(false);
+            }
+            else
+            {
+                viewInstance!.FocusInputBox();
+            }
         }
 
         private void OnEventTextInserted(string text)
