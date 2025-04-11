@@ -82,6 +82,7 @@ namespace DCL.MarketplaceCredits.Sections
                         if (!creditsProgramProgressResponse.IsUserEmailVerified())
                             continue;
 
+                        await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
                         marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WELCOME);
                         break;
                     }

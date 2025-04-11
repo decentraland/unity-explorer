@@ -131,7 +131,6 @@ namespace DCL.MarketplaceCredits.Sections
             try
             {
                 view.SetAsLoading(true);
-                await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
                 await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
                 currentCreditsProgramProgress.user.email = email;
                 currentCreditsProgramProgress.user.isEmailConfirmed = false;
