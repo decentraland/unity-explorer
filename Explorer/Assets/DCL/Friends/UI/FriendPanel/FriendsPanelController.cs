@@ -180,7 +180,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             chatEventBus.OpenConversationUsingUserId(web3Address);
         }
 

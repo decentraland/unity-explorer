@@ -332,8 +332,9 @@ namespace DCL.Chat
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
-                else if (IsUserBlocked(itemData.SenderWalletAddress))
-                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
+                //For now, we show blocked users messages that are stored in the cache normally, as messages received after blocking are not stored
+                //else if (IsUserBlocked(itemData.SenderWalletAddress))
+                  //  item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
                     item = listView.NewListViewItem(itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :

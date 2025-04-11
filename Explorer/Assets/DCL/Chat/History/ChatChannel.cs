@@ -13,9 +13,9 @@ namespace DCL.Chat.History
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
-        public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.Nearby.ToString());
+        public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.NEARBY.ToString());
         public static readonly ChannelId EMPTY_CHANNEL_ID = new ();
-        public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.Nearby, ChatChannelType.Nearby.ToString());
+        public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.NEARBY, ChatChannelType.NEARBY.ToString());
 
         /// <summary>
         /// The unique identifier of a chat channel.
@@ -168,19 +168,19 @@ namespace DCL.Chat.History
             /// <summary>
             /// The channel in which all users in an island can participate.
             /// </summary>
-            Nearby,
+            NEARBY,
 
             /// <summary>
             /// A channel in which a limited group of users can participate.
             /// </summary>
-            Community,
+            COMMUNITY,
 
             /// <summary>
             /// A private channel in which the current player chats with another user.
             /// </summary>
-            User,
+            USER,
 
-            Undefined,
+            UNDEFINED,
         }
     }
 }

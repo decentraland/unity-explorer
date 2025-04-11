@@ -185,7 +185,7 @@ namespace DCL.UI.Sidebar
 
         private void OnUnreadMessagesButtonClickedAsync()
         {
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true)).Forget();
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true)).Forget();
         }
 
         private async void OnEmotesWheelButtonClickedAsync()

@@ -16,10 +16,10 @@ namespace DCL.Chat
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
-        public Action CloseChatButtonClicked;
-        public Action CloseMemberListButtonClicked;
-        public Action HideMemberListButtonClicked;
-        public Action ShowMemberListButtonClicked;
+        public event Action? CloseChatButtonClicked;
+        public event Action? CloseMemberListButtonClicked;
+        public event Action? HideMemberListButtonClicked;
+        public event Action? ShowMemberListButtonClicked;
         public event VisibilityChangedDelegate? ChatBubblesVisibilityChanged;
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
 
@@ -46,7 +46,6 @@ namespace DCL.Chat
 
 
         private ViewDependencies viewDependencies;
-        private bool chatBubblesVisibility;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
@@ -57,7 +56,7 @@ namespace DCL.Chat
             profileView.InjectDependencies(dependencies);
         }
 
-        public void Initialize(bool chatBubblesVisibility)
+        public void Initialize()
         {
             if(isInitialized)
                 return;
@@ -69,7 +68,6 @@ namespace DCL.Chat
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
-            this.chatBubblesVisibility = chatBubblesVisibility;
             isInitialized = true;
         }
 
@@ -107,30 +105,15 @@ namespace DCL.Chat
             memberCountObject.SetActive(false);
         }
 
-        public void SetToggleChatBubblesValue(bool value)
-        {
-            chatBubblesVisibility = value;
-        }
-
         private void OnOpenContextMenuButtonClicked()
         {
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
-            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed, contextMenuTask.Task).Forget();
-        }
 
-        private void OnContextMenuClosed()
-        {
-            openContextMenuButton.OnDeselect(null);
-            ContextMenuVisibilityChanged?.Invoke(false);
-        }
-
-        private void OnToggleChatBubblesValueChanged(bool isToggled)
-        {
-            chatBubblesVisibility = isToggled;
-            ChatBubblesVisibilityChanged?.Invoke(isToggled);
+            // TODO: Will be resurrected soon
+            //viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed, contextMenuTask.Task).Forget();
         }
 
         private void OnCloseMemberListButtonClicked()

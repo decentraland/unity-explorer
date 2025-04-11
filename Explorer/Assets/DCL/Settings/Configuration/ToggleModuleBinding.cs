@@ -33,7 +33,7 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ChatAudioSettingsAsset chatAudioSettingsAsset,
+            ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             WorldVolumeMacBus worldVolumeMacBus = null)

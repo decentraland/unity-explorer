@@ -73,7 +73,7 @@ namespace DCL.Chat
         private bool isInputSelected;
         private Match lastMatch = Match.Empty;
         private int wordMatchIndex;
-        private ChatAudioSettingsAsset chatAudioSettings;
+        private ChatSettingsAsset chatSettings;
         private CancellationTokenSource popupCts;
 
         private GetParticipantProfilesDelegate GetParticipantProfiles;
@@ -112,10 +112,10 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate? InputChanged;
 
-        public void Initialize(ChatAudioSettingsAsset chatAudioSettings, GetParticipantProfilesDelegate getParticipantProfiles)
+        public void Initialize(ChatSettingsAsset chatSettings, GetParticipantProfilesDelegate getParticipantProfiles)
         {
             device = InputSystem.GetDevice<Mouse>();
-            this.chatAudioSettings = chatAudioSettings;
+            this.chatSettings = chatSettings;
             this.GetParticipantProfiles = getParticipantProfiles;
 
             InitializeEmojiPanelController();
@@ -378,7 +378,8 @@ namespace DCL.Chat
                 return;
             }
 
-            if (chatAudioSettings.chatAudioSettings == ChatAudioSettings.ALL)
+            //TODO FRAN: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
+            if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
 
             inputField.ResetInputField();

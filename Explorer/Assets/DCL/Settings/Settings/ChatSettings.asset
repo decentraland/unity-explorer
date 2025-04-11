@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: adcc1a6f666d445f9cfe043e29b859dc, type: 3}
-  m_Name: ChatAudioSettings
+  m_Name: ChatSettings
   m_EditorClassIdentifier: 
   chatSettings: 0

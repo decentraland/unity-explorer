@@ -5,6 +5,9 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
+using DCL.Friends;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -14,15 +17,18 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
+using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -32,33 +38,8 @@ using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView, ChatController.ShowParams>, IControllerInSharedSpace<ChatView, ChatController.ShowParams>
+    public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>, IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
-        public struct ShowParams
-        {
-            /// <summary>
-            /// Indicates whether the chat panel should be folded or unfolded when its view is shown.
-            /// </summary>
-            public readonly bool ShowUnfolded;
-
-            /// <summary>
-            /// Indicates whether the input box of the chat panel should gain the focus after showing.
-            /// </summary>
-            public readonly bool HasToFocusInputBox;
-
-            /// <summary>
-            /// Constructor with all fields.
-            /// </summary>
-            /// <param name="showUnfolded">Indicates whether the chat panel should be folded or unfolded when its view is shown.</param>
-            /// <param name="hasToFocusInputBox">Indicates whether the input box of the chat panel should gain the focus after showing</param>
-            public ShowParams(bool showUnfolded, bool hasToFocusInputBox = false)
-            {
-                ShowUnfolded = showUnfolded;
-                HasToFocusInputBox = hasToFocusInputBox;
-            }
-        }
-
-        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
         private static readonly Color DEFAULT_COLOR = Color.white;
 
@@ -75,17 +56,24 @@ namespace DCL.Chat
         private readonly IRoom currentRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
-        private readonly ChatAudioSettingsAsset chatAudioSettings;
+        private readonly ChatSettingsAsset chatSettings;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
+        private readonly ChatUserStateUpdater chatUserStateUpdater;
+        private readonly ChatUsersStateCache chatUsersStateCache;
+        private readonly IChatUserStateEventBus chatUserStateEventBus;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
+        private CancellationTokenSource chatUsersUpdateCts;
+
+        private bool isChatSelected;
+
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
@@ -96,12 +84,18 @@ namespace DCL.Chat
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
+        /// <summary>
+        /// The chat is considered folded when its hidden either through the sidebar button or through the close button on the chat title bar.
+        /// In this state it won't display any chat message, just the empty input box.
+        /// </summary>
         public bool IsUnfolded
         {
-            get => viewInstance.IsUnfolded;
+            get => viewInstance != null && viewInstance.IsUnfolded;
 
             set
             {
+                if (viewInstance == null) return;
+
                 viewInstance.IsUnfolded = value;
 
                 // When opened from outside, it should show the unread messages
@@ -118,7 +112,6 @@ namespace DCL.Chat
 
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
-        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
@@ -133,13 +126,17 @@ namespace DCL.Chat
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
-            ChatAudioSettingsAsset chatAudioSettings,
+            ChatSettingsAsset chatSettings,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ChatHistoryStorage chatStorage) : base(viewFactory)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            RPCChatPrivacyService chatPrivacyService,
+            IFriendsEventBus friendsEventBus,
+            ChatHistoryStorage chatStorage,
+            ObjectProxy<IFriendsService> friendsService) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -152,16 +149,29 @@ namespace DCL.Chat
             this.chatCommandsBus = chatCommandsBus;
             this.islandRoom = roomHub.IslandRoom();
             this.roomHub = roomHub;
-            this.chatAudioSettings = chatAudioSettings;
+            this.chatSettings = chatSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
+
+            chatUsersStateCache = new ChatUsersStateCache();
+            chatUserStateEventBus = new ChatUserStateEventBus();
+            chatUserStateUpdater = new ChatUserStateUpdater(
+                userBlockingCacheProxy,
+                roomHub.SharedPrivateConversationsRoom().Participants,
+                chatSettings,
+                chatPrivacyService,
+                chatUserStateEventBus,
+                chatUsersStateCache,
+                friendsEventBus,
+                roomHub.SharedPrivateConversationsRoom(),
+                friendsService);
         }
 
-        public void Clear() // Called by a command
+        private void Clear() // Called by a command
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
@@ -170,11 +180,13 @@ namespace DCL.Chat
         public override void Dispose()
         {
             chatStorage.UnloadAllFiles();
-
+            chatUsersStateCache.ClearAll();
+            chatHistory.DeleteAllChannels();
+            viewInstance!.RemoveAllConversations();
             memberListCts.SafeCancelAndDispose();
         }
 
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ShowParams showParams)
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
             if(State != ControllerState.ViewHidden)
             {
@@ -183,7 +195,7 @@ namespace DCL.Chat
 
                 IsUnfolded = showParams.ShowUnfolded;
 
-                if(showParams.HasToFocusInputBox)
+                if(showParams.HasToSelectChat)
                     FocusInputBox();
 
                 ViewShowingComplete?.Invoke(this);
@@ -203,7 +215,8 @@ namespace DCL.Chat
         /// </summary>
         public void FocusInputBox()
         {
-            viewInstance.FocusInputBox();
+            //TODO FRAN: Check here if we should focus or not depending if mask is showing
+            viewInstance?.FocusInputBox();
         }
 
         /// <summary>
@@ -212,36 +225,56 @@ namespace DCL.Chat
         /// <param name="visibility">Whether to make the panel visible.</param>
         public void SetViewVisibility(bool visibility)
         {
-            viewInstance.gameObject.SetActive(visibility);
+            viewInstance?.gameObject.SetActive(visibility);
         }
 
         /// <summary>
-        /// Indicates whether the panel is invisible or not (the view is never hidden as it is a Persistent panel).
+        /// Indicates whether the panel is invisible or not (the view is never really hidden as it is a Persistent panel).
         /// </summary>
         /// <returns>True if the panel is visible; False otherwise.</returns>
-        public bool GetViewVisibility()
-        {
-            return viewInstance.gameObject.activeInHierarchy;
-        }
-
-        private void OnChatHistoryAllChannelsRemoved()
-        {
-            viewInstance!.RemoveAllConversations();
-        }
+        public bool GetViewVisibility() =>
+            viewInstance != null && viewInstance.gameObject.activeInHierarchy;
 
         private void ShowWelcomeMessage()
         {
-            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.Nearby);
-            viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
-            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
 
         private void OnOpenConversation(string userId)
         {
-            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
+            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
+            chatUserStateUpdater.CurrentConversation = userId;
+            chatUserStateUpdater.AddConversation(userId);
             viewInstance!.CurrentChannelId = channel.Id;
-            viewInstance.FocusInputBox();
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(userId, chatUsersUpdateCts.Token, true).Forget();
+        }
+
+        private void OnSelectConversation(ChatChannel.ChannelId channelId)
+        {
+            if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+            {
+                chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                chatUserStateUpdater.AddConversation(channelId.Id);
+                chatUserStateUpdater.CurrentConversation = channelId.Id;
+                viewInstance!.CurrentChannelId = channelId;
+                UpdateChatUserStateAsync(channelId.Id, chatUsersUpdateCts.Token).Forget();
+                return;
+            }
+
+            chatUserStateUpdater.CurrentConversation = channelId.Id;
+            viewInstance!.CurrentChannelId = channelId;
+            viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+        }
+
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, CancellationToken ct, bool updateToolbar = false)
+        {
+            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
+            viewInstance!.SetInputWithUserState(userState);
+            if (!updateToolbar) return;
+
+            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                           || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -251,18 +284,28 @@ namespace DCL.Chat
             CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
             // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannelId) && viewInstance.IsScrollAtBottom)
+            if (!isSentByOwnUser && viewInstance!.IsMessageListVisible && viewInstance.IsScrollAtBottom && destinationChannel.Id.Equals(viewInstance.CurrentChannelId))
                 MarkCurrentChannelAsRead();
 
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();
-                viewInstance.RefreshMessages();
+                viewInstance!.RefreshMessages();
                 viewInstance.ShowLastMessage();
             }
             else
             {
-                if (destinationChannel.Id.Equals(viewInstance.CurrentChannelId))
+                switch (chatSettings.chatAudioSettings)
+                {
+                    case ChatAudioSettings.NONE:
+                        return;
+                    case ChatAudioSettings.MENTIONS_ONLY when addedMessage.IsMention:
+                    case ChatAudioSettings.ALL:
+                        viewInstance!.PlayMessageReceivedSfx(addedMessage.IsMention);
+                        break;
+                }
+
+                if (destinationChannel.Id.Equals(viewInstance!.CurrentChannelId))
                 {
                     // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
                     //       Once a new message arrives, the separator moves to the position of that new message and the count of
@@ -284,7 +327,7 @@ namespace DCL.Chat
 
         private async void OnViewCurrentChannelChangedAsync()
         {
-            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.User &&
+            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER &&
                 chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
             {
                 await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
@@ -339,7 +382,7 @@ namespace DCL.Chat
                 // Updates the amount of members
                 int participantsCount = roomHub.ParticipantsCount();
                 if(roomHub.HasAnyRoomConnected() && participantsCount != viewInstance!.MemberCount)
-                    viewInstance!.MemberCount = participantsCount;
+                    viewInstance.MemberCount = participantsCount;
 
                 await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
             }
@@ -362,7 +405,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants, loadingStatus);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             //We start processing messages once the view is ready
@@ -379,7 +422,6 @@ namespace DCL.Chat
 
             viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
             viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
@@ -387,25 +429,44 @@ namespace DCL.Chat
             viewInstance.FoldingChanged += OnViewFoldingChanged;
             viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
             viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
-
-            OnFocus();
+            viewInstance.ConversationSelected += OnSelectConversation;
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
-            memberListCts = new CancellationTokenSource();
-            UniTask.RunOnThreadPool(UpdateMembersDataAsync);
-            ShowWelcomeMessage();
-
-            chatStorage?.LoadAllChannelsWithoutMessages(); // TODO: Make it async?
+            chatUserStateEventBus.FriendConnected += OnFriendConnected;
+            chatUserStateEventBus.UserDisconnected += OnUserDisconnected;
+            chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
+            chatUserStateEventBus.CurrentConversationUserAvailable += OnCurrentConversationUserAvailable;
+            chatUserStateEventBus.CurrentConversationUserUnavailable += OnCurrentConversationUserUnavailable;
+            chatUserStateEventBus.UserBlocked += OnUserBlockedByOwnUser;
 
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
+            memberListCts = new CancellationTokenSource();
+            UniTask.RunOnThreadPool(UpdateMembersDataAsync).Forget();
+
+            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+            viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
+
+            InitializeChannelsAndConversationsAsync().Forget();
+
+            OnFocus();
             IsUnfolded = inputData.ShowUnfolded;
+        }
+
+        private async UniTaskVoid InitializeChannelsAndConversationsAsync()
+        {
+            if (chatStorage != null)
+                await chatStorage.LoadAllChannelsWithoutMessagesAsync();
+
+            var connectedUsers = await chatUserStateUpdater.Initialize(chatHistory.Channels.Keys);
+            viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
         protected override void OnViewClose()
@@ -422,7 +483,6 @@ namespace DCL.Chat
                 viewInstance.PointerExit -= OnViewPointerExit;
                 viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
                 viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-                viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
                 viewInstance.InputSubmitted -= OnViewInputSubmitted;
                 viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
                 viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
@@ -430,6 +490,7 @@ namespace DCL.Chat
                 viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
+                viewInstance.ConversationSelected -= OnSelectConversation;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }
@@ -437,7 +498,13 @@ namespace DCL.Chat
             chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved -= OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatHistory.AllChannelsRemoved -= OnChatHistoryAllChannelsRemoved;
+
+            chatUserStateEventBus.FriendConnected -= OnFriendConnected;
+            chatUserStateEventBus.UserDisconnected -= OnUserDisconnected;
+            chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
+            chatUserStateEventBus.CurrentConversationUserAvailable -= OnCurrentConversationUserAvailable;
+            chatUserStateEventBus.CurrentConversationUserUnavailable -= OnCurrentConversationUserUnavailable;
+            chatUserStateEventBus.UserBlocked -= OnUserBlockedByOwnUser;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -465,37 +532,33 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            if (!nametagsData.showNameTags || !nametagsData.showChatBubbles)
+            if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
                 return;
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                Entity entity = entry.Entity;
-                bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.User;
-                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
+                bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.USER;
 
-                switch (chatAudioSettings.chatAudioSettings)
-                {
-                    case ChatAudioSettings.NONE:
-                        return;
-                    case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
-                    case ChatAudioSettings.ALL:
-                        viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
-                        break;
-                }
+                // Chat bubbles appears if the channel is nearby or if settings allow them to appear for private conversations
+                if (!isPrivateMessage || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
+                    GenerateChatBubbleComponent(entry.Entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
             }
             else if (isSentByOwnUser)
             {
-                if (channel.ChannelType == ChatChannel.ChatChannelType.User)
+                if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 {
-                    if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                    // Chat bubbles appears if the channel is nearby or if settings allow them to appear for private conversations
+                    if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
                     {
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
-                    }
-                    else
-                    {
-                        Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                        if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                        {
+                            GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
+                        }
+                        else
+                        {
+                            Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                            GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                        }
                     }
                 }
                 else
@@ -505,7 +568,7 @@ namespace DCL.Chat
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
-            if (nametagsData is { showChatBubbles: true, showNameTags: true })
+            if (nametagsData is { showNameTags: true })
             {
                 world.AddOrSet(e, new ChatBubbleComponent(
                     chatMessage.Message,
@@ -531,13 +594,6 @@ namespace DCL.Chat
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void OnViewChatBubbleVisibilityChanged(bool isVisible)
-        {
-            nametagsData.showChatBubbles = isVisible;
-
-            ChatBubbleVisibilityChanged?.Invoke(isVisible);
         }
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
@@ -569,13 +625,13 @@ namespace DCL.Chat
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
+            //TODO FRAN: This should take us to the nearby channel and send the command there
             viewInstance!.FocusInputBoxWithText("/");
         }
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
             nametagsData.showNameTags = !nametagsData.showNameTags;
-            viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
@@ -585,7 +641,15 @@ namespace DCL.Chat
 
         private void OnSubmitShortcutPerformed(InputAction.CallbackContext obj)
         {
-            viewInstance!.FocusInputBox();
+            if (viewInstance!.IsMaskShowing)
+            {
+                IsUnfolded = false;
+                viewInstance.SetChatVisibility(false);
+            }
+            else
+            {
+                viewInstance!.FocusInputBox();
+            }
         }
 
         private void OnEventTextInserted(string text)
@@ -668,12 +732,69 @@ namespace DCL.Chat
 
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
+            chatUserStateUpdater.RemoveConversation(removedChannel.Id);
             viewInstance!.RemoveConversation(removedChannel);
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
         {
+            chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
             viewInstance!.AddConversation(addedChannel);
+        }
+
+        private void OnUserDisconnected(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
+            if (viewInstance.CurrentChannelId.Id == userId)
+            {
+                var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
+        private void OnNonFriendConnected(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
+            if (viewInstance.CurrentChannelId.Id == userId)
+                GetAndSetupNonFriendUserStateAsync(userId).Forget();
+        }
+
+        private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
+        {
+            var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
+            viewInstance!.SetInputWithUserState(state);
+        }
+
+        private void OnFriendConnected(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
+        private void OnUserBlockedByOwnUser(string userId)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
+            if (viewInstance!.CurrentChannelId.Id == userId)
+            {
+                var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+                viewInstance.SetInputWithUserState(state);
+            }
+        }
+
+        private void OnCurrentConversationUserUnavailable()
+        {
+            var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+            viewInstance!.SetInputWithUserState(state);
+        }
+
+        private void OnCurrentConversationUserAvailable()
+        {
+            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            viewInstance!.SetInputWithUserState(state);
         }
     }
 }

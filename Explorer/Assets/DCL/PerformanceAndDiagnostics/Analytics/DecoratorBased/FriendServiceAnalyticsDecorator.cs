@@ -15,10 +15,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.core = core;
             this.analytics = analytics;
         }
-        public void Dispose()
-        {
-            core.Dispose();
-        }
 
         public UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
             core.GetFriendsAsync(pageNum, pageSize, ct);
