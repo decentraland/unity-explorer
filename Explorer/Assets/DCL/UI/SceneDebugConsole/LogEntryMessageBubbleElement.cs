@@ -68,7 +68,7 @@ namespace DCL.UI.SceneDebugConsole
             // backgroundSize = backgroundRectTransform.sizeDelta;
             // backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
             // backgroundSize.x = CalculatePreferredWidth(data);
-            backgroundRectTransform.sizeDelta = backgroundSize;
+            // backgroundRectTransform.sizeDelta = backgroundSize;
             // mentionedOutline.SetActive(data.IsMention);
 
             // backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;

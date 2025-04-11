@@ -65,6 +65,7 @@ namespace DCL.UI.SceneDebugConsole
             this.consoleSettings = consoleSettings;
 
             UnityEngine.Debug.Log($"PRAVS - SceneDebugConsoleController()...");
+            IsUnfolded = true;
         }
 
         public void Clear() // Called by a command
@@ -115,8 +116,9 @@ namespace DCL.UI.SceneDebugConsole
 
             // Intro message
             logHistory.AddLogMessage(SceneDebugConsoleLogMessage.CommandResponse("Type '/help' for available commands."));
-            logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Log, "TEST LOG!!!"));
+            // logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Log, "TEST LOG!!!"));
             // logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Error, "TEST ERROR LOG!!!"));
+            // logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Error, "NullReferenceException: Object reference not set to an instance of an object\nDCL.ApplicationBlocklistGuard.BlockedScreenController.Dispose () (at Assets/DCL/ApplicationBlocklistGuard/BlockedScreenController.cs:27)\nMVC.MVCManager.Dispose () (at Assets/DCL/Infrastructure/MVC/Manager/MVCManager.cs:36)\nDCL.PerformanceAndDiagnostics.Analytics.MVCManagerAnalyticsDecorator.Dispose () (at Assets/DCL/PerformanceAndDiagnostics/Analytics/DecoratorBased/MVCManagerAnalyticsDecorator.cs:53)\nDCL.PluginSystem.Global.MainUIPlugin.Dispose () (at Assets/DCL/PluginSystem/Global/MainUIPlugin.cs:31)\nDCL.Utilities.DisposableUtils.SafeDispose[T] (T disposable, DCL.Diagnostics.ReportData reportData, System.Func`2[T,TResult] exceptionMessageFactory) (at Assets/DCL/Utilities/DisposableUtils.cs:14)\nRethrow as Exception: DCL.PluginSystem.Global.MainUIPlugin's thrown an exception on disposal.\nUnityEngine.DebugLogHandler:LogException(Exception, Object)\nDCL.Diagnostics.DebugLogReportHandler:LogExceptionInternal(Exception, ReportData, Object) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/Handlers/DebugLogReportHandler.cs:109)\nDCL.Diagnostics.ReportHandlerBase:LogException(Exception, ReportData, Object) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/Handlers/ReportHandlerBase.cs:49)\nDCL.Diagnostics.ReportHubLogger:LogException(Exception, ReportData, ReportHandler) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/ReportHubLogger.cs:126)\nDCL.Diagnostics.ReportHub:LogException(Exception, ReportData, ReportHandler) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/ReportHub.cs:153)\nDCL.Utilities.DisposableUtils:SafeDispose(IDCLGlobalPlugin, ReportData, Func`2) (at Assets/DCL/Utilities/DisposableUtils.cs:15)\nGlobal.Dynamic.MainSceneLoader:OnDestroy() (at Assets/DCL/Infrastructure/Global/Dynamic/MainSceneLoader.cs:94)\n"));
         }
 
         private void OnLogHistoryMessageAdded(SceneDebugConsoleLogMessage logMessage)
