@@ -1636,36 +1636,32 @@ MonoBehaviour:
     MyThumbnail: {fileID: 0}
     Label: {fileID: 2642183271746782513}
     CloseButton: {fileID: 4887403452139572906}
-    Rays: {fileID: 2382126502207102298}
-    CanvasGroup: {fileID: 6933734450562378899}
     Sound: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
+    BackgroundRaysAnimation: {fileID: 1558232715005981644}
   cancelledConfirmed:
     Root: {fileID: 4560243566217140962}
     FriendThumbnail: {fileID: 1877014158035778951}
     MyThumbnail: {fileID: 0}
     Label: {fileID: 3328468437679582622}
     CloseButton: {fileID: 5280602835078342149}
-    Rays: {fileID: 3140399451778512373}
-    CanvasGroup: {fileID: 7683811084329239612}
     Sound: {fileID: 0}
+    BackgroundRaysAnimation: {fileID: 4124082863704702203}
   rejectedConfirmed:
     Root: {fileID: 2210905845640013490}
     FriendThumbnail: {fileID: 4317813039678013911}
     MyThumbnail: {fileID: 0}
     Label: {fileID: 980193407927135678}
     CloseButton: {fileID: 7543514220455058005}
-    Rays: {fileID: 753080605406775717}
-    CanvasGroup: {fileID: 5423999728082778220}
     Sound: {fileID: 0}
+    BackgroundRaysAnimation: {fileID: 5274287109976772183}
   acceptedConfirmed:
     Root: {fileID: 3722759897053034441}
     FriendThumbnail: {fileID: 1309075489597829711}
     MyThumbnail: {fileID: 8238799135191515822}
     Label: {fileID: 599858875346239582}
     CloseButton: {fileID: 2179332876104412039}
-    Rays: {fileID: 6974635678753794622}
-    CanvasGroup: {fileID: 5448896002237279374}
     Sound: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
+    BackgroundRaysAnimation: {fileID: 4987079430493046056}
 --- !u!1 &1561383299674130822
 GameObject:
   m_ObjectHideFlags: 0
@@ -3286,6 +3282,7 @@ GameObject:
   m_Component:
   - component: {fileID: 752549806017610836}
   - component: {fileID: 5448896002237279374}
+  - component: {fileID: 4987079430493046056}
   m_Layer: 0
   m_Name: RequestAcceptedConfirmed
   m_TagString: Untagged
@@ -3330,6 +3327,21 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &4987079430493046056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3722759897053034441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 6387828872186050859}
+  <PanelContent>k__BackingField: {fileID: 3722759897053034441}
+  <PanelCanvasGroup>k__BackingField: {fileID: 5448896002237279374}
 --- !u!1 &4032394723876392234
 GameObject:
   m_ObjectHideFlags: 0
@@ -8298,13 +8310,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5274287109976772183}
   m_SourcePrefab: {fileID: 100100000, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
---- !u!224 &753080605406775717 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 570024640834757656, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
-  m_PrefabInstance: {fileID: 980193407927135677}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &980193407927135678 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 165730096589028467, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
@@ -8321,6 +8331,21 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
   m_PrefabInstance: {fileID: 980193407927135677}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5274287109976772183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2210905845640013490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 7756648062492049493}
+  <PanelContent>k__BackingField: {fileID: 2210905845640013490}
+  <PanelCanvasGroup>k__BackingField: {fileID: 5423999728082778220}
 --- !u!224 &3680864384952223814 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4507916386824873467, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
@@ -8353,6 +8378,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &7756648062492049493 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7367747045704248808, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+  m_PrefabInstance: {fileID: 980193407927135677}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1898658730470971013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8569,7 +8599,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1558232715005981644}
   m_SourcePrefab: {fileID: 100100000, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
 --- !u!114 &1195579986939352360 stripped
 MonoBehaviour:
@@ -8587,11 +8620,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4507916386824873467, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
   m_PrefabInstance: {fileID: 2802964148142864706}
   m_PrefabAsset: {fileID: 0}
---- !u!224 &2382126502207102298 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 570024640834757656, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
-  m_PrefabInstance: {fileID: 2802964148142864706}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &2642183271746782513 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 165730096589028467, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
@@ -8606,6 +8634,26 @@ MonoBehaviour:
 --- !u!1 &3878389397651845709 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+  m_PrefabInstance: {fileID: 2802964148142864706}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1558232715005981644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3878389397651845709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 4672871556363801770}
+  <PanelContent>k__BackingField: {fileID: 3878389397651845709}
+  <PanelCanvasGroup>k__BackingField: {fileID: 6933734450562378899}
+--- !u!1 &4672871556363801770 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7367747045704248808, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
   m_PrefabInstance: {fileID: 2802964148142864706}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &4887403452139572906 stripped
@@ -8731,7 +8779,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4124082863704702203}
   m_SourcePrefab: {fileID: 100100000, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
 --- !u!224 &1365299718948779030 stripped
 RectTransform:
@@ -8749,11 +8800,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!224 &3140399451778512373 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 570024640834757656, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
-  m_PrefabInstance: {fileID: 3205950290725048813}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3328468437679582622 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 165730096589028467, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
@@ -8770,6 +8816,21 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
   m_PrefabInstance: {fileID: 3205950290725048813}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4124082863704702203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4560243566217140962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 5351028609431157765}
+  <PanelContent>k__BackingField: {fileID: 4560243566217140962}
+  <PanelCanvasGroup>k__BackingField: {fileID: 7683811084329239612}
 --- !u!114 &5280602835078342149 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7292922643948894184, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
@@ -8781,6 +8842,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &5351028609431157765 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7367747045704248808, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+  m_PrefabInstance: {fileID: 3205950290725048813}
+  m_PrefabAsset: {fileID: 0}
 --- !u!225 &7683811084329239612 stripped
 CanvasGroup:
   m_CorrespondingSourceObject: {fileID: 5106998095864747473, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}

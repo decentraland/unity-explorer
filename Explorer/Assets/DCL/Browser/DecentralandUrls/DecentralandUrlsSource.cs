@@ -94,8 +94,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
-                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
+                DecentralandUrl.Notification => $"https://notifications.decentraland.zone/notifications", // TODO (Santi): This will be changed to {ENV} before merging
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.zone/notifications/read", // TODO (Santi): This will be changed to {ENV} before merging
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
@@ -115,6 +115,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
+                DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.zone", // TODO (Santi): This will be changed to {ENV} before merging
+                DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.zone", // TODO (Santi): This will be changed to {ENV} before merging
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

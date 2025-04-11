@@ -138,5 +138,27 @@ namespace DCL.WebRequests
                 null
             );
         }
+
+        public static GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPutArguments> SignedFetchPutAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GenericPutArguments putArguments,
+            string jsonMetaData,
+            CancellationToken ct
+        )
+        {
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            return new GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPutArguments>(
+                controller,
+                commonArguments,
+                putArguments,
+                ct,
+                ReportCategory.GENERIC_WEB_REQUEST,
+                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "put"),
+                null
+            );
+        }
     }
 }

@@ -32,5 +32,6 @@ namespace DCL.NotificationsBusController.NotificationTypes
         SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED,
         //Internal notification types
         INTERNAL_ARRIVED_TO_DESTINATION,
+        CREDITS_GOAL_COMPLETED,
     }
 }

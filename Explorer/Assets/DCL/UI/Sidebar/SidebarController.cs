@@ -4,6 +4,7 @@ using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -32,6 +33,7 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly bool includeMarketplaceCredits;
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -54,6 +56,7 @@ namespace DCL.UI.Sidebar
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
+            bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager)
@@ -71,6 +74,7 @@ namespace DCL.UI.Sidebar
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -120,6 +124,11 @@ namespace DCL.UI.Sidebar
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+
+            if(includeMarketplaceCredits)
+                viewInstance.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+
+            viewInstance.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
@@ -198,16 +207,17 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
+        private async void OnMarketplaceCreditsButtonClickedAsync() =>
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.ShowParams(isOpenedFromNotification: false));
+
         private void OnHelpButtonClicked()
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked()
-        {
+        private void OnControlsButtonClicked() =>
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
-        }
 
         private async void OpenSidebarSettingsAsync()
         {

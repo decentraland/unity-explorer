@@ -67,5 +67,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Blocklist,
 
         Servers,
+
+        MarketplaceCredits,
+        EmailSubscriptions,
     }
 }

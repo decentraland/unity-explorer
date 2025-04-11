@@ -32,5 +32,14 @@ namespace DCL.Notifications.NewNotification
 
         [field: SerializeField]
         public CanvasGroup FriendsNotificationViewCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public MarketplaceCreditsNotificationView MarketplaceCreditsNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public Animator MarketplaceCreditsNotificationAnimator { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup MarketplaceCreditsNotificationViewCanvasGroup { get; private set; }
     }
 }
