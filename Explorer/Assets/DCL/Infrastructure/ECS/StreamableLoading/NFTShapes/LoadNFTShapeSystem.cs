@@ -24,24 +24,22 @@ namespace ECS.StreamableLoading.NFTShapes
     {
         private readonly IWebRequestController webRequestController;
         private readonly IWebContentSizes webContentSizes;
-        private readonly FeatureFlagsCache featureFlags;
+        private readonly bool ktxEnabled;
 
         public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes,
-            FeatureFlagsCache featureFlags)
+            bool ktxEnabled)
             : base(
                 world, cache, new DiskCacheOptions<Texture2DData, GetNFTShapeIntention>(diskCache, GetNFTShapeIntention.DiskHashCompute.INSTANCE, "nft")
             )
         {
             this.webRequestController = webRequestController;
             this.webContentSizes = webContentSizes;
-            this.featureFlags = featureFlags;
+            this.ktxEnabled = ktxEnabled;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-
-            bool ktxEnabled = featureFlags.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
             if (!ktxEnabled)
             {

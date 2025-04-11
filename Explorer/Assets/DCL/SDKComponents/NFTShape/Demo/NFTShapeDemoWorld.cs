@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                             maxSizeInBytes = 300 * 1024 * 1024,
                         }
                     ),
-                    new FeatureFlagsCache()
+                    true
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
