@@ -387,6 +387,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5efcea1481b64193ae5b5029f0c673f
+    m_Address: UntrustedRealmConfirmationPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b785183905d534b788d41dbce8ef7b4e
     m_Address: MVFWImg
     m_ReadOnly: 0
@@ -404,6 +409,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: beceeda1295384ef4921493b30d5cf45
     m_Address: EditorImg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb536b0cdd6084c87a55b1ff25637eae
+    m_Address: Assets/DCL/SceneLoadingScreens/Textures/CreditsImg.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

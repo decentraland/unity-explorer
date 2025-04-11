@@ -1,51 +1,63 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character;
+using DCL.Character.CharacterMotion.Systems;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Landscape.Systems
 {
-    [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(UpdateCurrentSceneSystem))]
+    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateBefore(typeof(TeleportPositionCalculationSystem))]
     [LogCategory(ReportCategory.LANDSCAPE)]
     public partial class LandscapeCollidersCullingSystem : BaseUnityLoopSystem
     {
-        private readonly TerrainGenerator terrainGenerator;
+        private readonly TerrainGenerator terrain;
         private readonly IScenesCache sceneCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity playerEntity;
+        private readonly Transform playerTransform;
 
         private Vector2Int prevParcel = new (int.MaxValue, int.MaxValue);
 
-        public LandscapeCollidersCullingSystem(World world, TerrainGenerator terrainGenerator, IScenesCache sceneCache, ILoadingStatus loadingStatus) : base(world)
+        public LandscapeCollidersCullingSystem(World world, TerrainGenerator terrain, IScenesCache sceneCache, ILoadingStatus loadingStatus) : base(world)
         {
-            this.terrainGenerator = terrainGenerator;
+            this.terrain = terrain;
             this.sceneCache = sceneCache;
             this.loadingStatus = loadingStatus;
+
             playerEntity = world.CachePlayer();
+            playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
         }
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainShown || loadingStatus.CurrentStage != LoadingStatus.LoadingStage.Completed) return;
-
-            Vector2Int newParcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
-
-            if (prevParcel == newParcel)
+            // Enable terrain for proper raycasting on teleportation before final position is set
+            ref PlayerTeleportIntent teleportIntent = ref World.TryGetRef<PlayerTeleportIntent>(playerEntity, out bool hasTeleportIntent);
+            if (hasTeleportIntent && !teleportIntent.IsPositionSet && teleportIntent.SceneDef == null)
+            {
+                prevParcel = teleportIntent.Parcel;
+                terrain.SetTerrainCollider(teleportIntent.Parcel, true);
                 return;
+            }
 
-            prevParcel = newParcel;
+            if (terrain.IsTerrainShown && loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed)
+            {
+                Vector2Int newParcel = playerTransform.ParcelPosition();
 
-            bool enableTerrainCollider = sceneCache.CurrentScene == null || sceneCache.CurrentScene.Contains(newParcel);
-
-            terrainGenerator.SetTerrainCollider(newParcel, enableTerrainCollider);
+                if (prevParcel != newParcel)
+                {
+                    prevParcel = newParcel;
+                    terrain.SetTerrainCollider(newParcel, true);
+                }
+            }
         }
     }
 }
