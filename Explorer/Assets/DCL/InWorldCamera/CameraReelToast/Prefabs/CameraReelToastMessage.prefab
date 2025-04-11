@@ -1246,8 +1246,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e80246de51fca2f47a990cee912d0ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  notificationView: {fileID: 4463505624256991739}
+  button: {fileID: 5693538146578284993}
   fileLocationText: {fileID: 4755172762721352907}
+  notificationView: {fileID: 4463505624256991739}
 --- !u!114 &5693538146578284993
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1291,17 +1292,4 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7492445118827658684}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 3131754538136941156}
-        m_TargetAssemblyTypeName: DCL.InWorldCamera.CameraReelToast.CameraReelDownloadToastMessageController,
-          CameraReelToast
-        m_MethodName: OpenFileLocation
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []

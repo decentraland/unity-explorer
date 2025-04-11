@@ -65,7 +65,7 @@ namespace DCL.InWorldCamera.CameraReelToast
                     ShowNotificationAsync(message, FailureToastDefaultMessage, FailureToastView, FailureToastDuration, showFailureCts.Token).Forget();
                     break;
                 case CameraReelToastMessageType.DOWNLOAD:
-                    DownloadToastView.OnShow();
+                    DownloadToastView.PrepareToBeClicked();
 
                     ShowNotificationAsync(message, SuccessToastDefaultMessage,
                             DownloadToastView.NotificationView, FailureToastDuration,

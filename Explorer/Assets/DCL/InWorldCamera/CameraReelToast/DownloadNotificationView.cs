@@ -2,26 +2,31 @@
 using DCL.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.InWorldCamera.CameraReelToast
 {
     public sealed class DownloadNotificationView : MonoBehaviour
     {
-        [SerializeField] private WarningNotificationView notificationView;
+        [SerializeField] private Button button;
         [SerializeField] private TMP_Text fileLocationText;
+        [SerializeField] private WarningNotificationView notificationView;
 
         private bool wasClicked;
 
-        public WarningNotificationView NotificationView => notificationView;
-
-        internal void OnShow()
+        private void Start()
         {
+            button.onClick.AddListener(OpenFileLocation);
             fileLocationText.text = ReelCommonActions.ReelsPath;
-            wasClicked = false;
         }
 
-        public void OpenFileLocation()
+        public WarningNotificationView NotificationView => notificationView;
+
+        public void PrepareToBeClicked() =>
+            wasClicked = false;
+
+        private void OpenFileLocation()
         {
             if (wasClicked)
                 return;
