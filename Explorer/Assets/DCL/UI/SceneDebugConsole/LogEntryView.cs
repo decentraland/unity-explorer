@@ -57,7 +57,7 @@ namespace DCL.UI.SceneDebugConsole
             logMessage = data;
             // usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            // rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
         }
     }
 }

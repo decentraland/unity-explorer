@@ -574,6 +574,26 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 556871901165861207, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 556871901165861207, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 556871901165861207, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 556871901165861207, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 556871901165861207, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 936064796666357246, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Name
       value: SceneDebugConsoleLogViewerElement
@@ -667,16 +687,20 @@ PrefabInstance:
       value: -2.5
       objectReference: {fileID: 0}
     - target: {fileID: 3592518164887718450, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3592518164887718450, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.000061035156
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7301239302916120637, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Size
-      value: 1
+      value: 0.6808625
       objectReference: {fileID: 0}
     - target: {fileID: 7301239302916120637, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Value
-      value: 0
+      value: 0.97388804
       objectReference: {fileID: 0}
     - target: {fileID: 8646576932515811346, guid: 4a8ea295ea5fd4c1e9f43369d3659763, type: 3}
       propertyPath: m_Enabled
