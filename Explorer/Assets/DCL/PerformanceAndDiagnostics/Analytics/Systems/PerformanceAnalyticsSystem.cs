@@ -152,8 +152,6 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("gpu_frame_time_percentile_80", gpuFrameTimes.Percentile(80) * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_frame_time_percentile_90", gpuFrameTimes.Percentile(90) * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimes.Percentile(95) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_samples", gpuFrameTimes.GetSamplesArrayAsString());
-            jsonObjectBuilder.Set("gpu_samples_amount", gpuFrameTimes.SamplesAmount);
 
             using PooledJsonObject pooled = jsonObjectBuilder.BuildPooled();
 
