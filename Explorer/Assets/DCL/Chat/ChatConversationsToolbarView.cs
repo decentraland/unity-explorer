@@ -80,16 +80,16 @@ namespace DCL.Chat
 
             switch (channel.ChannelType)
             {
-                case ChatChannel.ChatChannelType.Nearby:
+                case ChatChannel.ChatChannelType.NEARBY:
                     newItem.SetConversationIcon(icon);
                     newItem.SetConversationName("Nearby"); // TODO: Localization
                     newItem.SetClaimedNameIconVisibility(false);
                     newItem.SetConversationType(false);
                     break;
-                case ChatChannel.ChatChannelType.User:
+                case ChatChannel.ChatChannelType.USER:
                     SetupUserConversationItemAsync(newItem).Forget();
                     break;
-                case ChatChannel.ChatChannelType.Community:
+                case ChatChannel.ChatChannelType.COMMUNITY:
                     // TODO in future shapes
                     newItem.SetConversationIcon(/*TODO*/icon);
                     newItem.SetConversationName("TODO");
@@ -98,7 +98,7 @@ namespace DCL.Chat
                     break;
             }
 
-            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.User);
+            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
 
             items.Add(channel.Id, newItem);
 

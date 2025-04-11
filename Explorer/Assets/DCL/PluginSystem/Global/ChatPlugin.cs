@@ -83,7 +83,6 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IRPCSocialServices> socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
@@ -114,7 +113,6 @@ namespace DCL.PluginSystem.Global
             this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.friendsCacheProxy = friendsCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
         }
@@ -160,7 +158,6 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 loadingStatus,
                 userBlockingCacheProxy,
-                friendsCacheProxy,
                 privacySettings,
                 friendsEventBus,
                 chatStorage,

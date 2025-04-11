@@ -80,11 +80,11 @@ namespace DCL.Chat.MessageBus
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             switch (channel.ChannelType)
             {
-                case ChatChannel.ChatChannelType.Nearby:
+                case ChatChannel.ChatChannelType.NEARBY:
                     SendTo(message, timestamp, messagePipesHub.IslandPipe());
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
-                case ChatChannel.ChatChannelType.User:
+                case ChatChannel.ChatChannelType.USER:
                     SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 default:

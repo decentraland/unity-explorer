@@ -696,7 +696,6 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     sharedSpaceManager,
                     userBlockingCacheProxy,
-                    friendsCacheProxy,
                     socialServicesRPCProxy,
                     friendsEventBus,
                     chatMessageFactory,

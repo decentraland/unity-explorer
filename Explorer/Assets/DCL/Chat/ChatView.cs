@@ -252,11 +252,11 @@ namespace DCL.Chat
 
                     switch (currentChannel.ChannelType)
                     {
-                        case ChatChannel.ChatChannelType.Nearby:
+                        case ChatChannel.ChatChannelType.NEARBY:
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
-                        case ChatChannel.ChatChannelType.User:
+                        case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
                             break;
                         default:

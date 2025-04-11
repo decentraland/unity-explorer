@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DCL.Chat
@@ -9,16 +10,16 @@ namespace DCL.Chat
         event UserDelegate? FriendConnected;
         event UserDelegate? UserDisconnected;
         event UserDelegate? NonFriendConnected;
-        event UserDelegate? UserUnavailableToChat;
-        event UserDelegate? UserAvailableToChat;
         event UserDelegate? UserBlocked;
+        event Action? CurrentConversationUserUnavailable;
+        event Action? CurrentConversationUserAvailable;
 
         void OnFriendConnected(string userId);
         void OnUserDisconnected(string userId);
         void OnNonFriendConnected(string userId);
-        void OnUserAvailableToChat(string userId);
-        void OnUserUnavailableToChat(string userId);
         void OnUserBlocked(string userId);
+        void OnCurrentConversationUserAvailable();
+        void OnCurrentConversationUserUnavailable();
     }
 
     public class ChatUserStateEventBus : IChatUserStateEventBus
@@ -26,9 +27,10 @@ namespace DCL.Chat
         public event IChatUserStateEventBus.UserDelegate? FriendConnected;
         public event IChatUserStateEventBus.UserDelegate? UserDisconnected;
         public event IChatUserStateEventBus.UserDelegate? NonFriendConnected;
-        public event IChatUserStateEventBus.UserDelegate? UserUnavailableToChat;
-        public event IChatUserStateEventBus.UserDelegate? UserAvailableToChat;
         public event IChatUserStateEventBus.UserDelegate? UserBlocked;
+
+        public event Action? CurrentConversationUserUnavailable;
+        public event Action? CurrentConversationUserAvailable;
 
         public void OnFriendConnected(string userId)
         {
@@ -45,19 +47,19 @@ namespace DCL.Chat
             NonFriendConnected?.Invoke(userId);
         }
 
-        public void OnUserAvailableToChat(string userId)
-        {
-            UserAvailableToChat?.Invoke(userId);
-        }
-
-        public void OnUserUnavailableToChat(string userId)
-        {
-            UserUnavailableToChat?.Invoke(userId);
-        }
-
         public void OnUserBlocked(string userId)
         {
             UserBlocked?.Invoke(userId);
+        }
+
+        public void OnCurrentConversationUserAvailable()
+        {
+            CurrentConversationUserAvailable?.Invoke();
+        }
+
+        public void OnCurrentConversationUserUnavailable()
+        {
+            CurrentConversationUserUnavailable?.Invoke();
         }
     }
 }

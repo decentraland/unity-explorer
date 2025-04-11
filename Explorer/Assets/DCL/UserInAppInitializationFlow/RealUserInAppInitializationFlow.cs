@@ -168,7 +168,6 @@ namespace DCL.UserInAppInitializationFlow
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
-            chatHistory.DeleteAllChannels();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 

@@ -40,11 +40,6 @@ namespace DCL.Chat.History
         event ReadMessagesChangedDelegate ReadMessagesChanged;
 
         /// <summary>
-        /// Raised when all channels are removed after calling DeleteAllChannels.
-        /// </summary>
-        event AllChannelsRemovedDelegate AllChannelsRemoved;
-
-        /// <summary>
         /// Gets all the channels stored in the history.
         /// </summary>
         IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels {  get; }
@@ -67,7 +62,7 @@ namespace DCL.Chat.History
         /// <returns>
         /// The id of the new channel.
         /// </returns>
-        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.Undefined);
+        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.UNDEFINED);
 
         /// <summary>
         /// Removes a channel along with its messages (which implies a change in the amount of read messages).
@@ -81,11 +76,6 @@ namespace DCL.Chat.History
         /// <param name="channelId">The id of the channel.</param>
         /// <param name="newMessage">The new message.</param>
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage);
-
-        /// <summary>
-        /// Deletes all the messages in all the channels.
-        /// </summary>
-        public void ClearAllChannels();
 
         /// <summary>
         /// Deletes all the messages in all the channels and then removes all the channels.
