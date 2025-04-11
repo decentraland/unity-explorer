@@ -10,17 +10,17 @@ namespace DCL.UI.SharedSpaceManager
         /// <summary>
         /// Indicates whether the input box of the chat panel should gain the focus after showing.
         /// </summary>
-        public readonly bool HasToFocusInputBox;
+        public readonly bool HasToSelectChat;
 
         /// <summary>
         /// Constructor with all fields.
         /// </summary>
         /// <param name="showUnfolded">Indicates whether the chat panel should be folded or unfolded when its view is shown.</param>
-        /// <param name="hasToFocusInputBox">Indicates whether the input box of the chat panel should gain the focus after showing</param>
-        public ChatControllerShowParams(bool showUnfolded, bool hasToFocusInputBox = false)
+        /// <param name="hasToSelectChat">Indicates whether the input box of the chat panel should gain the focus after showing</param>
+        public ChatControllerShowParams(bool showUnfolded, bool hasToSelectChat = false)
         {
             ShowUnfolded = showUnfolded;
-            HasToFocusInputBox = hasToFocusInputBox;
+            HasToSelectChat = hasToSelectChat;
         }
     }
 }

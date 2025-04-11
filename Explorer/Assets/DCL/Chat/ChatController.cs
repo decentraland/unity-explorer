@@ -73,6 +73,8 @@ namespace DCL.Chat
         private readonly List<Profile> participantProfileBuffer = new ();
         private CancellationTokenSource chatUsersUpdateCts;
 
+        private bool isChatSelected;
+
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
@@ -83,6 +85,10 @@ namespace DCL.Chat
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
+        /// <summary>
+        /// The chat is considered folded when its hidden either through the sidebar button or through the close button on the chat title bar.
+        /// In this state it won't display any chat message, just the empty input box.
+        /// </summary>
         public bool IsUnfolded
         {
             get => viewInstance != null && viewInstance.IsUnfolded;
@@ -191,7 +197,7 @@ namespace DCL.Chat
 
                 IsUnfolded = showParams.ShowUnfolded;
 
-                if(showParams.HasToFocusInputBox)
+                if(showParams.HasToSelectChat)
                     FocusInputBox();
 
                 ViewShowingComplete?.Invoke(this);
