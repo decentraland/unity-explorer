@@ -59,6 +59,8 @@ namespace DCL.Chat
         }
 
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+        public delegate void ConversationOpenedDelegate(bool wasAlreadyOpen);
+        public delegate void ConversationClosedDelegate();
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
         private static readonly Color DEFAULT_COLOR = Color.white;
 
@@ -117,6 +119,8 @@ namespace DCL.Chat
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
+        public event ConversationOpenedDelegate? ConversationOpened;
+        public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
@@ -309,7 +313,9 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
-            var channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
+            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
+
+            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
             viewInstance!.CurrentChannelId = channel.Id;
             viewInstance.FocusInputBox();
         }
@@ -354,6 +360,8 @@ namespace DCL.Chat
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
         {
+            ConversationClosed?.Invoke();
+
             chatHistory.RemoveChannel(channelId);
         }
 

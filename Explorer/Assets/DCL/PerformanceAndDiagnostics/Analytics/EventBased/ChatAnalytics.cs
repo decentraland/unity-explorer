@@ -17,6 +17,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.chatController = chatController;
 
             chatController.ChatBubbleVisibilityChanged += OnChatBubbleVisibilityChanged;
+            chatController.ConversationOpened += OnConversationOpened;
+            chatController.ConversationClosed += OnConversationClosed;
         }
 
         public void Dispose()
@@ -36,6 +38,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             analytics.Track(AnalyticsEvents.UI.BUBBLE_SWITCHED, new JsonObject
             {
                 { "is_visible", isVisible },
+            });
+        }
+
+        private void OnConversationClosed()
+        {
+            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_CLOSED);
+        }
+
+        private void OnConversationOpened(bool wasAlreadyOpen)
+        {
+            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JsonObject
+            {
+                { "was_already_open", wasAlreadyOpen },
             });
         }
     }
