@@ -28,7 +28,7 @@ namespace DCL.MarketplaceCredits
             totalCredits % 1 == 0 ? totalCredits.ToString("F0") : totalCredits.ToString("F2");
 
         public static string FormatGoalReward(float goalCredits) =>
-            $"{Math.Floor(goalCredits):+0}";
+            $"{(goalCredits % 1 == 0 ? $"{goalCredits:+0}" : $"{goalCredits:+0.0}")}";
 
         public static string FormatClaimedGoalReward(float claimedCredits) =>
             $"{FormatGoalReward(claimedCredits)} Marketplace Credit{(claimedCredits >= 2 ? "s" : "")}";
