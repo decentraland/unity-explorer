@@ -1,6 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -50,8 +50,13 @@ namespace DCL.Chat.Commands
                 realmAddress = realm;
             else if (!paramUrls.TryGetValue(realm, out realmAddress))
             {
-                if (!realm.EndsWith(WORLD_SUFFIX))
+                // Dont modify realms like your.world.eth
+                if (!realm.IsEns()
+                    // Convert realms like olavra => olavra.dcl.eth
+                    && !realm.EndsWith(WORLD_SUFFIX))
+                {
                     realm += WORLD_SUFFIX;
+                }
 
                 realmAddress = GetWorldAddress(realm);
             }
