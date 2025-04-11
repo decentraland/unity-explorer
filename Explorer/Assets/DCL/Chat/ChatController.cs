@@ -40,7 +40,6 @@ namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>, IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
-        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
         private static readonly Color DEFAULT_COLOR = Color.white;
 
@@ -113,7 +112,6 @@ namespace DCL.Chat
 
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
-        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
@@ -417,7 +415,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance.Initialize(chatHistory.Channels, nametagsData.showChatBubbles, chatSettings, GetProfilesFromParticipants, loadingStatus);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             //We start processing messages once the view is ready
@@ -434,7 +432,6 @@ namespace DCL.Chat
 
             viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
             viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
@@ -494,7 +491,6 @@ namespace DCL.Chat
                 viewInstance.PointerExit -= OnViewPointerExit;
                 viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
                 viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-                viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
                 viewInstance.InputSubmitted -= OnViewInputSubmitted;
                 viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
                 viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
@@ -547,24 +543,48 @@ namespace DCL.Chat
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
+            if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
+                return;
+
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 Entity entity = entry.Entity;
                 bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.User;
-                GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
+
+                // Chat bubbles appears if the channel is nearby or if settings allow them to appear for private conversations
+                if (!isPrivateMessage || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
+                {
+                    GenerateChatBubbleComponent(entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
+
+                    switch (chatSettings.chatAudioSettings)
+                    {
+                        // TODO FRAN: check if we should add sound in other place, as if chat bubbles are disabled, it wont play audio, also
+                        // we need to play audio when sending messages depending on settings and depending on channel.
+                        case ChatAudioSettings.NONE:
+                            return;
+                        case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
+                        case ChatAudioSettings.ALL:
+                            viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
+                            break;
+                    }
+                }
             }
             else if (isSentByOwnUser)
             {
                 if (channel.ChannelType == ChatChannel.ChatChannelType.User)
                 {
-                    if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                    // Chat bubbles appears if the channel is nearby or if settings allow them to appear for private conversations
+                    if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
                     {
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
-                    }
-                    else
-                    {
-                        Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                        GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                        if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                        {
+                            GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
+                        }
+                        else
+                        {
+                            Color nameColor = profile!.UserNameColor != DEFAULT_COLOR? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                            GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                        }
                     }
                 }
                 else
@@ -574,7 +594,7 @@ namespace DCL.Chat
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null)
         {
-            if (nametagsData is { showChatBubbles: true, showNameTags: true })
+            if (nametagsData is { showNameTags: true })
             {
                 world.AddOrSet(e, new ChatBubbleComponent(
                     chatMessage.Message,
@@ -600,13 +620,6 @@ namespace DCL.Chat
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void OnViewChatBubbleVisibilityChanged(bool isVisible)
-        {
-            nametagsData.showChatBubbles = isVisible;
-
-            ChatBubbleVisibilityChanged?.Invoke(isVisible);
         }
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
@@ -645,7 +658,6 @@ namespace DCL.Chat
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
             nametagsData.showNameTags = !nametagsData.showNameTags;
-            viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)

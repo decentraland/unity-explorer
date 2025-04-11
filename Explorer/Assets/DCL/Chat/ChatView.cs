@@ -25,7 +25,6 @@ namespace DCL.Chat
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
-        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
@@ -139,11 +138,6 @@ namespace DCL.Chat
         public event InputSubmittedDelegate InputSubmitted;
 
         /// <summary>
-        /// Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
-        /// </summary>
-        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
-
-        /// <summary>
         /// Raised when the user scrolls down the list to the bottom.
         /// </summary>
         public event ScrollBottomReachedDelegate ScrollBottomReached;
@@ -211,14 +205,6 @@ namespace DCL.Chat
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
         /// </summary>
         public bool IsScrollAtBottom => chatMessageViewer.IsScrollAtBottom;
-
-        /// <summary>
-        /// Gets or sets whether the field that allows changing the visibility of the chat bubbles is enabled or not.
-        /// </summary>
-        public bool EnableChatBubblesVisibilityField
-        {
-            set => chatTitleBar.SetToggleChatBubblesValue(value);
-        }
 
         /// <summary>
         /// Gets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
@@ -406,7 +392,6 @@ namespace DCL.Chat
             chatTitleBar.CloseMemberListButtonClicked -= OnCloseChatButtonClicked;
             chatTitleBar.ShowMemberListButtonClicked -= OnMemberListOpeningButtonClicked;
             chatTitleBar.HideMemberListButtonClicked -= OnMemberListClosingButtonClicked;
-            chatTitleBar.ChatBubblesVisibilityChanged -= OnToggleChatBubblesValueChanged;
             chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
 
             chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClicked;
@@ -446,19 +431,17 @@ namespace DCL.Chat
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
-            bool areChatBubblesVisible,
             ChatSettingsAsset chatSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate,
             ILoadingStatus loadingStatus)
         {
             channels = chatChannels;
 
-            chatTitleBar.Initialize(areChatBubblesVisible);
+            chatTitleBar.Initialize();
             chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
-            chatTitleBar.ChatBubblesVisibilityChanged += OnToggleChatBubblesValueChanged;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
 
             this.loadingStatus = loadingStatus;
@@ -825,11 +808,6 @@ namespace DCL.Chat
         private void OnInputSubmitted(string messageToSend, string origin)
         {
             InputSubmitted?.Invoke(currentChannel!, messageToSend, origin);
-        }
-
-        private void OnToggleChatBubblesValueChanged(bool isToggled)
-        {
-            ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
 
         private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
