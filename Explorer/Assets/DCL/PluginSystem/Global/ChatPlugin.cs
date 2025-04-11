@@ -87,7 +87,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IRPCSocialServices> socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
-            FeatureFlagsCache featureFlagsCache, ObjectProxy<IFriendsService> friendsServiceProxy)
+            FeatureFlagsCache featureFlagsCache,
+            ObjectProxy<IFriendsService> friendsServiceProxy)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
