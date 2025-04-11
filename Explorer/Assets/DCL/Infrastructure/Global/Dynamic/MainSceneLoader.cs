@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
@@ -47,6 +48,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
+using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
 {
@@ -242,6 +244,8 @@ namespace Global.Dynamic
 
                 await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
 
+                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
+
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
 
@@ -306,6 +310,23 @@ namespace Global.Dynamic
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+        }
+
+        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
+        {
+            MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
+            if (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN))
+                return;
+
+            var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+
+            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                MinimumSpecsScreenController.CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+
+            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser);
+            dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
+            dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
+            await minimumSpecsScreenController.HoldingTask.Task;
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)

@@ -623,6 +623,11 @@ MonoBehaviour:
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
+    <MinimumSpecsScreenPrefab>k__BackingField:
+      m_AssetGUID: db7da980fc6384f848eeeb3077442864
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
     <UserNameColors>k__BackingField:
     - {r: 0.67138505, g: 0.38714847, b: 0.9433962, a: 1}
     - {r: 0.8324557, g: 0.6273585, b: 1, a: 1}
@@ -1099,7 +1104,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 3000
+  m_SortingOrder: 100
   m_TargetDisplay: 0
 --- !u!1001 &4363253906714060728
 PrefabInstance:
