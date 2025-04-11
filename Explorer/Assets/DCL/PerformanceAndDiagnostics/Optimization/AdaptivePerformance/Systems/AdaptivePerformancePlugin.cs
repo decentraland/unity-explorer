@@ -31,6 +31,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
+            UpdatePhysicsProfilerSystem.InjectToWorld(ref builder, profiler, loadingStatus);
             AdaptPhysicsSystem.InjectToWorld(ref builder, profiler, physicsSettings.Value, loadingStatus);
         }
 

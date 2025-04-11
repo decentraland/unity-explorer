@@ -59,6 +59,7 @@ using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBusController.NotificationsBus;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -250,6 +251,7 @@ namespace Global.Dynamic
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
             ProvidedAsset<MultiplayerDebugSettings> multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
+            ProvidedAsset<AdaptivePhysicsSettings> physicsSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AdaptivePhysicsSettings, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
@@ -603,7 +605,7 @@ namespace Global.Dynamic
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderWearablesPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, sharedSpaceManager),
-                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion),
+                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, physicsSettings.Value),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,
@@ -867,7 +869,6 @@ namespace Global.Dynamic
                         staticContainer.Profiler,
                         staticContainer.LoadingStatus,
                         staticContainer.RealmData,
-                        staticContainer.LoadingStatus,
                         staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,

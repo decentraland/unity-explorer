@@ -3,16 +3,17 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
-using ECS.SceneLifeCycle.CurrentScene;
 using Global.Versioning;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
+using UnityEngine.UIElements;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -26,6 +27,7 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
+        private readonly AdaptivePhysicsSettings adpativePhysicsSettings;
 
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
@@ -39,6 +41,8 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> gpuFrameTime;
         private ElementBinding<string> cpuFrameTime;
+        private ElementBinding<string> physicsDeltaTime;
+        private ElementBinding<string> physicsSimulate;
         private ElementBinding<string> cpuMainThreadFrameTime;
         private ElementBinding<string> cpuMainThreadPresentWaitTime;
         private ElementBinding<string> cpuRenderThreadFrameTime;
@@ -60,15 +64,17 @@ namespace DCL.Profiling.ECS
         private int framesSinceMetricsUpdate;
 
         private bool frameTimingsEnabled;
+        private bool adaptivePhysicsEnabled;
         private bool sceneMetricsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
-            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion)
+            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adpativePhysicsSettings)
             : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
+            this.adpativePhysicsSettings = adpativePhysicsSettings;
 
             CreateView();
             return;
@@ -84,6 +90,11 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Max FPS last 1k frames:", maxfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty))
+
+                            .AddToggleField("Adaptive Physics is enabled", OnIsEnableToggled, adpativePhysicsSettings.isEnabled)
+                            .AddCustomMarker("Physics deltaTime:", physicsDeltaTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Physics Simulations in 10 frames", physicsSimulate = new ElementBinding<string>(string.Empty))
+
                             .AddToggleField("Enable Bottleneck detector", evt => frameTimingsEnabled = evt.newValue, frameTimingsEnabled)
                             .AddCustomMarker("GPU:", gpuFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU:", cpuFrameTime = new ElementBinding<string>(string.Empty))
@@ -134,6 +145,9 @@ namespace DCL.Profiling.ECS
             {
                 SetFPS(fps, (long)profiler.LastFrameTimeValueNs);
 
+                physicsDeltaTime.Value = (UnityEngine.Time.fixedDeltaTime / MILISEC_TO_SEC).ToString("F2", CultureInfo.InvariantCulture);
+                physicsSimulate.Value = profiler.PhysicsSimulationsAvgInTenFrames.ToString("F2", CultureInfo.InvariantCulture);
+
                 if (framesSinceMetricsUpdate > FRAME_STATS_COOLDOWN)
                 {
                     framesSinceMetricsUpdate = 0;
@@ -145,6 +159,12 @@ namespace DCL.Profiling.ECS
 
                 framesSinceMetricsUpdate++;
             }
+        }
+
+        private void OnIsEnableToggled(ChangeEvent<bool> evt)
+        {
+            UnityEngine.Time.fixedDeltaTime = 0.02f;
+            adpativePhysicsSettings.isEnabled = evt.newValue;
         }
 
         private void UpdateSceneMetrics()

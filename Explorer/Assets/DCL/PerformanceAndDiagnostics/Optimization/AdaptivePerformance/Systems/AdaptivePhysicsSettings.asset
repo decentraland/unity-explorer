@@ -12,13 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f426d0e417841f198ad9759652c48b7, type: 3}
   m_Name: AdaptivePhysicsSettings
   m_EditorClassIdentifier: 
-  alpha: 0.05
-  bigDelta: 0.01
-  smallDelta: 0.003
+  isEnabled: 1
   minFixedDelta: 0.01
   maxFixedDelta: 0.05
-  highThreshold: 1.5
-  lowThreshold: 0.9
-  bufferSizeInFrames: 60
-  b_thresholdLow: 0.8
-  b_thresholdHigh: 1.4
+  changeCooldown: 1
+  minFrameTimeAmount: 30
+  topOffset: 6.5
+  bottomOffset: 3

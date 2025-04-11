@@ -5,23 +5,18 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
     [CreateAssetMenu(fileName = "AdaptivePhysicsSettings", menuName = "DCL/AdaptivePhysicsSettings", order = 0)]
     public class AdaptivePhysicsSettings : ScriptableObject
     {
-        [field: SerializeField] internal float alpha = 0.05f;
-
-        [field: Space]
-        [field: SerializeField] internal float bigDelta = 0.005f;
-        [field: SerializeField] internal float smallDelta = 0.001f;
+        [field: SerializeField] internal bool isEnabled = true;
 
         [field: Space]
         [field: SerializeField] internal float minFixedDelta = 0.01f;
         [field: SerializeField] internal float maxFixedDelta = 0.05f;
 
         [field: Space]
-        [field: SerializeField] internal float highThreshold = 1.3f;
-        [field: SerializeField] internal float lowThreshold = 1f;
+        [field: SerializeField] internal float changeCooldown = 1;
+        [field: SerializeField] internal float minFrameTimeAmount = 30;
 
         [field: Space]
-        [field: SerializeField] internal int bufferSizeInFrames = 60;
-        [field: SerializeField] internal float b_thresholdLow = 60;
-        [field: SerializeField] internal float b_thresholdHigh = 60;
+        [field: SerializeField] internal float topOffset = 6.5f;
+        [field: SerializeField] internal float bottomOffset = 3f;
     }
 }

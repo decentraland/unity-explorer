@@ -34,7 +34,15 @@
 
         public bool CurrentSceneHasStats { get; set; }
 
-        public float SpikeFrameTime { get; set; }
-        FrameTimesRecorder MainThreadRecorder { get; set; }
+        FrameTimesRecorder GpuFrameTimes { get; }
+        FrameTimesRecorder MainThreadFrameTimes { get; }
+        int PhysicsSimulationInFrame { get; }
+        float PhysicsSimulationsAvgInTenFrames { get; }
+
+        void UpdateFrameTimings();
+
+        void ClearFrameTimings();
+
+        void UpdatePhysicsSimRingBuffer();
     }
 }

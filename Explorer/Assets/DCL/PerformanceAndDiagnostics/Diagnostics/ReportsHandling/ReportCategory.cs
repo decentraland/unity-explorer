@@ -311,5 +311,6 @@ namespace DCL.Diagnostics
 
         public const string ALWAYS = nameof(ALWAYS);
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
+        public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
     }
 }

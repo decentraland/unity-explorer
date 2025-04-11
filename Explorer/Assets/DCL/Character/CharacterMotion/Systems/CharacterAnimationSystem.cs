@@ -18,7 +18,6 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            Profiler.PhysTick++;
             UpdateAnimationQuery(World, t);
         }
 
