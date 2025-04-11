@@ -36,13 +36,10 @@
 
         FrameTimesRecorder GpuFrameTimes { get; }
         FrameTimesRecorder MainThreadFrameTimes { get; }
-        int PhysicsSimulationInFrame { get; }
         float PhysicsSimulationsAvgInTenFrames { get; }
 
         void UpdateFrameTimings();
 
         void ClearFrameTimings();
-
-        void UpdatePhysicsSimRingBuffer();
     }
 }
