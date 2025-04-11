@@ -20,8 +20,6 @@ namespace DCL.Analytics.Systems
     [UpdateAfter(typeof(DebugViewProfilingSystem))]
     public partial class PerformanceAnalyticsSystem : BaseUnityLoopSystem
     {
-        private const int FRAMES_SAMPLES_CAPACITY = 1024;
-
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
         private readonly ILoadingStatus loadingStatus;
@@ -30,8 +28,6 @@ namespace DCL.Analytics.Systems
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
 
-        private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
-        private readonly FrameTimesRecorder gpuFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
         private float lastReportTime;
@@ -69,8 +65,7 @@ namespace DCL.Analytics.Systems
                 return; // skip one frame so at least one frame is collected
             }
 
-            mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
-            gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
+            profiler.UpdateFrameTimings();
 
             lastReportTime += t;
 
@@ -79,8 +74,7 @@ namespace DCL.Analytics.Systems
                 ReportPerformanceMetrics(lastReportTime);
                 lastReportTime = 0;
 
-                mainThreadFrameTimes.Clear();
-                gpuFrameTimes.Clear();
+                profiler.ClearFrameTimings();
             }
         }
 
@@ -118,20 +112,20 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("hiccups_max", !hiccups.hasValue ? 0 : hiccups.max * NS_TO_MS);
             jsonObjectBuilder.Set("hiccups_avg", !hiccups.hasValue ? 0 : hiccups.avg * NS_TO_MS);
 
-            jsonObjectBuilder.Set("min_frame_time", mainThreadFrameTimes.Min * NS_TO_MS);
-            jsonObjectBuilder.Set("max_frame_time", mainThreadFrameTimes.Max * NS_TO_MS);
-            jsonObjectBuilder.Set("mean_frame_time", mainThreadFrameTimes.Avg * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_5", mainThreadFrameTimes.Percentile(5) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_10", mainThreadFrameTimes.Percentile(10) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_20", mainThreadFrameTimes.Percentile(20) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_50", mainThreadFrameTimes.Percentile(50) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_75", mainThreadFrameTimes.Percentile(75) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_80", mainThreadFrameTimes.Percentile(80) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_90", mainThreadFrameTimes.Percentile(90) * NS_TO_MS);
-            jsonObjectBuilder.Set("frame_time_percentile_95", mainThreadFrameTimes.Percentile(95) * NS_TO_MS);
+            jsonObjectBuilder.Set("min_frame_time", profiler.MainThreadFrameTimes.Min * NS_TO_MS);
+            jsonObjectBuilder.Set("max_frame_time", profiler.MainThreadFrameTimes.Max * NS_TO_MS);
+            jsonObjectBuilder.Set("mean_frame_time", profiler.MainThreadFrameTimes.Avg * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_5", profiler.MainThreadFrameTimes.Percentile(5) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_10", profiler.MainThreadFrameTimes.Percentile(10) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_20", profiler.MainThreadFrameTimes.Percentile(20) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_50", profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_75", profiler.MainThreadFrameTimes.Percentile(75) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_80", profiler.MainThreadFrameTimes.Percentile(80) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_90", profiler.MainThreadFrameTimes.Percentile(90) * NS_TO_MS);
+            jsonObjectBuilder.Set("frame_time_percentile_95", profiler.MainThreadFrameTimes.Percentile(95) * NS_TO_MS);
 
-            jsonObjectBuilder.Set("samples", mainThreadFrameTimes.GetSamplesArrayAsString());
-            jsonObjectBuilder.Set("samples_amount", mainThreadFrameTimes.SamplesAmount);
+            jsonObjectBuilder.Set("samples", profiler.MainThreadFrameTimes.GetSamplesArrayAsString());
+            jsonObjectBuilder.Set("samples_amount", profiler.MainThreadFrameTimes.SamplesAmount);
 
             // GPU
             hiccups = profiler.CalculateGpuHiccups();
@@ -141,17 +135,17 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("gpu_hiccups_max", hiccups.count == 0 ? 0 : hiccups.max * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_hiccups_avg", hiccups.count == 0 ? 0 : hiccups.avg * NS_TO_MS);
 
-            jsonObjectBuilder.Set("gpu_min_frame_time", gpuFrameTimes.Min * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_max_frame_time", gpuFrameTimes.Max * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_mean_frame_time", gpuFrameTimes.Avg * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_5", gpuFrameTimes.Percentile(5) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_10", gpuFrameTimes.Percentile(10) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_20", gpuFrameTimes.Percentile(20) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_50", gpuFrameTimes.Percentile(50) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_75", gpuFrameTimes.Percentile(75) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_80", gpuFrameTimes.Percentile(80) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_90", gpuFrameTimes.Percentile(90) * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_frame_time_percentile_95", gpuFrameTimes.Percentile(95) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_min_frame_time", profiler.GpuFrameTimes.Min * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_max_frame_time", profiler.GpuFrameTimes.Max * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_mean_frame_time", profiler.GpuFrameTimes.Avg * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_5", profiler.GpuFrameTimes.Percentile(5) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_10", profiler.GpuFrameTimes.Percentile(10) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_20", profiler.GpuFrameTimes.Percentile(20) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_50", profiler.GpuFrameTimes.Percentile(50) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_75", profiler.GpuFrameTimes.Percentile(75) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_80", profiler.GpuFrameTimes.Percentile(80) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_90", profiler.GpuFrameTimes.Percentile(90) * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_frame_time_percentile_95", profiler.GpuFrameTimes.Percentile(95) * NS_TO_MS);
 
             using PooledJsonObject pooled = jsonObjectBuilder.BuildPooled();
 

@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.DebugUtilities;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using DCL.Profiling.ECS;
@@ -17,14 +18,17 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
         private readonly DCLVersion dclVersion;
+        private readonly AdaptivePhysicsSettings adaptivePhysicsSettings;
 
-        public ProfilingPlugin(IProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache, DCLVersion dclVersion)
+        public ProfilingPlugin(IProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget, IDebugContainerBuilder debugContainerBuilder,
+            IScenesCache scenesCache, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings)
         {
             this.profiler = profiler;
             this.realmData = realmData;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
             this.dclVersion = dclVersion;
+            this.adaptivePhysicsSettings = adaptivePhysicsSettings;
             this.memoryBudget = memoryBudget;
         }
 
@@ -38,7 +42,7 @@ namespace DCL.PluginSystem.Global
             UpdateProfilerSystem.InjectToWorld(ref builder, profiler, scenesCache);
 
             DebugViewProfilingSystem.InjectToWorld(ref builder, realmData, profiler, memoryBudget,
-                debugContainerBuilder, dclVersion);
+                debugContainerBuilder, dclVersion, adaptivePhysicsSettings);
         }
     }
 }
