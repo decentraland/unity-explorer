@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource? prewarmFriendsCancellationToken;
         private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
         private UserBlockingCache? userBlockingCache;
+        private bool canSubscribeSyncBlockingStatus = true;
 
         public FriendsPlugin(
             MainUIView mainUIView,
@@ -138,8 +139,6 @@ namespace DCL.PluginSystem.Global
 
             friendsService = new RPCFriendsService(GetApiUrl(),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
-
-            friendsService.ConnectionEstablished += SyncBlockingStatus;
 
             IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
 
@@ -273,6 +272,12 @@ namespace DCL.PluginSystem.Global
         {
             if (includeUserBlocking && userBlockingCache != null && friendsService != null)
             {
+                if (canSubscribeSyncBlockingStatus)
+                {
+                    friendsService.ConnectionEstablished += SyncBlockingStatus;
+                    canSubscribeSyncBlockingStatus = false;
+                }
+
                 UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
                 userBlockingCache.Reset(blockingStatus);
             }
