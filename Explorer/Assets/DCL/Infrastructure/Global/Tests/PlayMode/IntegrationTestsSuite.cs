@@ -23,6 +23,7 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -84,6 +85,7 @@ namespace Global.Tests.PlayMode
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
+                new ObjectProxy<IProfileRepository>(),
                 ct,
                 enableGPUInstancing: false
             );
