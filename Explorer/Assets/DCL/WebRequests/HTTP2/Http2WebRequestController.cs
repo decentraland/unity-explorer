@@ -87,7 +87,7 @@ namespace DCL.WebRequests.HTTP2
                     // Print verbose
                     ReportHub.LogError(
                         envelope.ReportData,
-                        $"Exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with args {requestWrap.ArgsToString()},\n with {envelope}\n"
+                        $"Exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with args {requestWrap.ArgsToString()},\n with {envelope}\n{exception}"
                     );
 
                 var adaptedException = new Http2WebRequestException(requestAdapter!, exception);

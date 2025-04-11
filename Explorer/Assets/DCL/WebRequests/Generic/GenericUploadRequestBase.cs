@@ -1,6 +1,7 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Request.Upload.Forms;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine.Networking;
@@ -28,7 +29,12 @@ namespace DCL.WebRequests
                 request.UploadSettings.UploadStream = stream;
             }
             else if (Args.WWWForm != null)
+            {
                 request.UploadSettings.UploadStream = new MemoryStream(Args.WWWForm.data);
+
+                foreach (KeyValuePair<string, string> formHeader in Args.WWWForm.headers)
+                    request.SetHeader(formHeader.Key, formHeader.Value);
+            }
             else
             {
                 request.SetHeader(WebRequestHeaders.CONTENT_TYPE_HEADER, Args.ContentType);
