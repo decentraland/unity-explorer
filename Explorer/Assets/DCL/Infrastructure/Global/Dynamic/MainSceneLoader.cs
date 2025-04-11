@@ -244,7 +244,7 @@ namespace Global.Dynamic
 
                 await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
 
-                await VerifyMinimumHardwareRequirementMet(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
+                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -312,7 +312,7 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask VerifyMinimumHardwareRequirementMet(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
+        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
             MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
             if (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN))
