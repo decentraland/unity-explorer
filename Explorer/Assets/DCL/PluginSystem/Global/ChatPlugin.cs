@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
         private ChatController chatController;
 
@@ -86,7 +87,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IRPCSocialServices> socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache, ObjectProxy<IFriendsService> friendsServiceProxy)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -110,6 +111,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
             this.featureFlagsCache = featureFlagsCache;
+            this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsCacheProxy = friendsCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
@@ -160,7 +162,8 @@ namespace DCL.PluginSystem.Global
                 friendsCacheProxy,
                 privacySettings,
                 friendsEventBus,
-                chatStorage
+                chatStorage,
+                friendsServiceProxy
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

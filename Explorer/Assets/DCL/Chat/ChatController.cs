@@ -61,18 +61,17 @@ namespace DCL.Chat
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly ChatUsersStateCache chatUsersStateCache;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
-        private readonly RPCChatPrivacyService chatPrivacyService;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
+        private CancellationTokenSource chatUsersUpdateCts;
+
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
@@ -131,7 +130,8 @@ namespace DCL.Chat
             ObjectProxy<FriendsCache> friendsCacheProxy,
             RPCChatPrivacyService chatPrivacyService,
             IFriendsEventBus friendsEventBus,
-            ChatHistoryStorage chatStorage) : base(viewFactory)
+            ChatHistoryStorage chatStorage,
+            ObjectProxy<IFriendsService> friendsService) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -151,9 +151,6 @@ namespace DCL.Chat
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.friendsCacheProxy = friendsCacheProxy;
-            this.chatPrivacyService = chatPrivacyService;
 
             chatUsersStateCache = new ChatUsersStateCache();
             chatUserStateEventBus = new ChatUserStateEventBus();
@@ -166,10 +163,11 @@ namespace DCL.Chat
                 chatUserStateEventBus,
                 chatUsersStateCache,
                 friendsEventBus,
-                roomHub.SharedPrivateConversationsRoom());
+                roomHub.SharedPrivateConversationsRoom(),
+                friendsService);
         }
 
-        public void Clear() // Called by a command
+        private void Clear() // Called by a command
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
@@ -246,21 +244,33 @@ namespace DCL.Chat
         private void OnOpenConversation(string userId)
         {
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.User);
+            chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
             viewInstance!.CurrentChannelId = channel.Id;
-            UpdateChatUserStateAsync(userId, true).Forget();
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(userId, chatUsersUpdateCts.Token, true).Forget();
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
-            chatUserStateUpdater.AddConversation(channelId.Id);
-            UpdateChatUserStateAsync(channelId.Id).Forget();
+            if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+            {
+                chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                chatUserStateUpdater.AddConversation(channelId.Id);
+                chatUserStateUpdater.CurrentConversation = channelId.Id;
+                viewInstance!.CurrentChannelId = channelId;
+                UpdateChatUserStateAsync(channelId.Id, chatUsersUpdateCts.Token).Forget();
+                return;
+            }
+
+            chatUserStateUpdater.CurrentConversation = channelId.Id;
             viewInstance!.CurrentChannelId = channelId;
+            viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
         }
 
-        private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar = false)
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, CancellationToken ct, bool updateToolbar = false)
         {
-            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId);
+            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
             viewInstance!.SetInputWithUserState(userState);
             if (!updateToolbar) return;
 
@@ -423,9 +433,9 @@ namespace DCL.Chat
             chatUserStateEventBus.FriendConnected += OnFriendConnected;
             chatUserStateEventBus.UserDisconnected += OnUserDisconnected;
             chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
-            chatUserStateEventBus.UserAvailableToChat += OnUserAvailableToChat;
-            chatUserStateEventBus.UserUnavailableToChat += OnUserUnavailableToChat;
-            chatUserStateEventBus.UserBlocked += OnUserBlocked;
+            chatUserStateEventBus.UserAvailableToChat += OnCurrentConversationUserAvailableToChat;
+            chatUserStateEventBus.UserUnavailableToChat += OnCurrentConversationUserUnavailableToChat;
+            chatUserStateEventBus.UserBlocked += OnUserBlockedByOwnUser;
 
             memberListCts = new CancellationTokenSource();
             UniTask.RunOnThreadPool(UpdateMembersDataAsync);
@@ -485,9 +495,9 @@ namespace DCL.Chat
             chatUserStateEventBus.FriendConnected -= OnFriendConnected;
             chatUserStateEventBus.UserDisconnected -= OnUserDisconnected;
             chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
-            chatUserStateEventBus.UserAvailableToChat -= OnUserAvailableToChat;
-            chatUserStateEventBus.UserUnavailableToChat -= OnUserUnavailableToChat;
-            chatUserStateEventBus.UserBlocked -= OnUserBlocked;
+            chatUserStateEventBus.UserAvailableToChat -= OnCurrentConversationUserAvailableToChat;
+            chatUserStateEventBus.UserUnavailableToChat -= OnCurrentConversationUserUnavailableToChat;
+            chatUserStateEventBus.UserBlocked -= OnUserBlockedByOwnUser;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -733,24 +743,19 @@ namespace DCL.Chat
 
         private void OnUserDisconnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserDisconnected {userId} {viewInstance!.CurrentChannelId.Id}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnUserDisconnected {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
+            if (viewInstance.CurrentChannelId.Id == userId)
             {
-                var state = ChatUserStateUpdater.ChatUserState.DISCONNECTED;
-
-                //TODO FRAN: we might wanna move this to the Updater, so it has the logic all in one place.
-                if (userBlockingCacheProxy.StrictObject.BlockedUsers.Contains(userId))
-                    state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserDisconnected SetInputWithUserState {state}");
+                var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
                 viewInstance.SetInputWithUserState(state);
+                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnUserDisconnected SetInputWithUserState {state}");
             }
         }
 
         private void OnNonFriendConnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected {userId}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnNonFriendConnected {userId}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance.CurrentChannelId.Id == userId)
                 GetAndSetupNonFriendUserStateAsync(userId).Forget();
@@ -760,55 +765,43 @@ namespace DCL.Chat
         {
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
             viewInstance!.SetInputWithUserState(state);
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnNonFriendConnected SetInputWithUserState {state}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnNonFriendConnected SetInputWithUserState {state}");
         }
 
         private void OnFriendConnected(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnFriendConnected {userId} {viewInstance!.CurrentChannelId.Id}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnFriendConnected {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnFriendConnected SetInputWithUserState {state}");
+                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnFriendConnected SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
 
-        private void OnUserBlocked(string userId)
+        private void OnUserBlockedByOwnUser(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserBlocked {userId} {viewInstance!.CurrentChannelId.Id}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnUserBlocked {userId} {viewInstance!.CurrentChannelId.Id}");
             viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
             if (viewInstance!.CurrentChannelId.Id == userId)
             {
                 var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserBlocked SetInputWithUserState {state}");
+                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS,$"CHAT - OnUserBlocked SetInputWithUserState {state}");
                 viewInstance.SetInputWithUserState(state);
             }
         }
 
-        private void OnUserUnavailableToChat(string userId)
+        private void OnCurrentConversationUserUnavailableToChat(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat {userId} {viewInstance!.CurrentChannelId.Id}");
-
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserUnavailableToChat SetInputWithUserState {state}");
-                viewInstance.SetInputWithUserState(state);
-            }
+            var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+            viewInstance!.SetInputWithUserState(state);
         }
 
-        private void OnUserAvailableToChat(string userId)
+        private void OnCurrentConversationUserAvailableToChat(string userId)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat {userId} {viewInstance!.CurrentChannelId.Id}");
-
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,$"CHAT - OnUserAvailableToChat SetInputWithUserState {state}");
-                viewInstance.SetInputWithUserState(state);
-            }
+            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            viewInstance!.SetInputWithUserState(state);
         }
     }
 }
