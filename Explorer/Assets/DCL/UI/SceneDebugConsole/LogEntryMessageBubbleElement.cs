@@ -57,17 +57,17 @@ namespace DCL.UI.SceneDebugConsole
         }
 
         /// <summary>
-        ///  Sets the chat message data into the chat bubble, adapting the background size accordingly and changing the color & outline if it's a mention
+        ///  Sets the log message data into the log bubble, adapting the background size accordingly and changing the color & outline if it's a mention
         /// </summary>
-        /// <param name="data"> a ChatMessage </param>
+        /// <param name="data"> a SceneDebugConsoleLogMessage </param>
         public void SetMessageData(SceneDebugConsoleLogMessage data)
         {
             // usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageContentElement.SetMessageContent(data.Message);
 
-            backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
-            backgroundSize.x = CalculatePreferredWidth(data);
+            // backgroundSize = backgroundRectTransform.sizeDelta;
+            // backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
+            // backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
             // mentionedOutline.SetActive(data.IsMention);
 

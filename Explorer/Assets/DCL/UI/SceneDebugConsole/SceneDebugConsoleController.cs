@@ -116,7 +116,7 @@ namespace DCL.UI.SceneDebugConsole
             // Intro message
             logHistory.AddLogMessage(SceneDebugConsoleLogMessage.CommandResponse("Type '/help' for available commands."));
             logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Log, "TEST LOG!!!"));
-            logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Error, "TEST ERROR LOG!!!"));
+            // logHistory.AddLogMessage(new SceneDebugConsoleLogMessage(LogMessageType.Error, "TEST ERROR LOG!!!"));
         }
 
         private void OnLogHistoryMessageAdded(SceneDebugConsoleLogMessage logMessage)
