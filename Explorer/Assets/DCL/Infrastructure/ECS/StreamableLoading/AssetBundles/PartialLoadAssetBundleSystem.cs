@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             PartialDownloadStream stream = state.ClaimOwnershipOverFullyDownloadedData();
 
             await UniTask.SwitchToMainThread();
-            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(stream);
+            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(stream).WithCancellation(ct);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
