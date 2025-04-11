@@ -728,7 +728,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
           right now and join me!
-        <PhotoSuccessfullyDownloadedMessage>k__BackingField: 'Photo saved to '
+        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
         <LinkCopiedMessage>k__BackingField: Link copied!
         <CategoryIconsMapping>k__BackingField:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
