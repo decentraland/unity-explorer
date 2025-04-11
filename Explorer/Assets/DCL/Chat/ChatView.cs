@@ -188,8 +188,9 @@ namespace DCL.Chat
         private bool isChatContextMenuOpen;
         private CancellationTokenSource popupCts;
         private bool pointerExit;
-        private bool isMaskShowing;
         private ILoadingStatus loadingStatus;
+
+        public bool IsMaskShowing { get; private set; }
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -287,6 +288,7 @@ namespace DCL.Chat
                 isUnfolded = value;
                 unfoldedPanelInteractableArea.enabled = value;
                 memberListView.IsVisible = false;
+                SetChatVisibility(value);
                 SetBackgroundVisibility(value, false);
 
                 chatMessageViewer.IsVisible = value;
@@ -376,7 +378,7 @@ namespace DCL.Chat
 
             PointerExit?.Invoke();
 
-            if (IsUnfolded && !isInputSelected)
+            if (IsUnfolded && (!isInputSelected || IsMaskShowing))
                 SetChatVisibility(false);
 
         }
@@ -413,8 +415,9 @@ namespace DCL.Chat
 
         private void OnSubmitPerformed(InputAction.CallbackContext obj)
         {
-            if (isMaskShowing)
-                IsUnfolded = false;
+            if (IsMaskShowing && IsUnfolded)
+            {
+            }
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
@@ -500,11 +503,14 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the input box gain the focus. It does not modify its content.
+        /// Makes the input box gain the focus. It does not modify its content. It wont focus if the mask is showing.
         /// </summary>
         public void FocusInputBox()
         {
             memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
+
+            if (IsMaskShowing) return;
+
             chatInputBox.FocusInputBox();
         }
 
@@ -697,22 +703,20 @@ namespace DCL.Chat
 
         public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
-            bool isConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
-            chatInputBox.gameObject.SetActive(isConnected);
-            inputBoxMask.gameObject.SetActive(!isConnected);
-            isMaskShowing = !isConnected;
-            if (isConnected)
+            bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
+            chatInputBox.gameObject.SetActive(isOtherUserConnected);
+            inputBoxMask.gameObject.SetActive(!isOtherUserConnected);
+            IsMaskShowing = !isOtherUserConnected;
+            if (isOtherUserConnected)
             {
                 FocusInputBox();
                 return;
             }
-
-            //TODO FRAN: We should be able to focus the chat and close everything else without focusing the input box.
             memberListView.IsVisible = false;
             inputBoxMask.SetUpWithUserState(userState);
         }
 
-        private void SetChatVisibility(bool isVisible)
+        public void SetChatVisibility(bool isVisible)
         {
             SetBackgroundVisibility(isVisible, true);
             chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
@@ -720,7 +724,8 @@ namespace DCL.Chat
             if (isVisible)
             {
                 chatMessageViewer.StopChatEntriesFadeout();
-                if (!isMaskShowing) return;
+
+                if (!IsMaskShowing) return;
 
                 chatInputBox.gameObject.SetActive(false);
                 inputBoxMask.gameObject.SetActive(true);
