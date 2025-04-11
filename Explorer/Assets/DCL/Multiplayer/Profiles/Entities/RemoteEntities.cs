@@ -26,7 +26,6 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public class RemoteEntities : IRemoteEntities
     {
-        private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -38,13 +37,11 @@ namespace DCL.Multiplayer.Profiles.Entities
         private IComponentPool<Transform> transformPool = null!;
 
         public RemoteEntities(
-            IRoomHub roomHub,
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
             IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
             IEntityCollidersGlobalCache collidersGlobalCache)
         {
-            this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.queuePool = queuePool;

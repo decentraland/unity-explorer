@@ -17,7 +17,7 @@ namespace DCL.Optimization.Hashing
         public static HashKey FromString(string key)
         {
             using var keyMemory = OwnedMemory.FromString(key);
-            var computedHash = SHA256Hashing.ComputeHash(keyMemory.Memory.AsSpan());
+            var computedHash = SHA256Hashing.ComputeHash(keyMemory.Memory);
             return new HashKey(computedHash);
         }
 
@@ -37,34 +37,38 @@ namespace DCL.Optimization.Hashing
     {
         private static readonly ArrayPool<byte> MEMORY_POOL = ArrayPool<byte>.Shared!;
 
-        public readonly byte[] Memory;
+        private readonly byte[] memory;
+        private readonly int length;
 
-        private OwnedMemory(byte[] memory)
+        public Span<byte> Memory => memory.AsMemory().Slice(0, length).Span;
+
+        private OwnedMemory(byte[] memory, int length)
         {
-            this.Memory = memory;
+            this.memory = memory;
+            this.length = length;
         }
 
         public static OwnedMemory FromPool(int length)
         {
             byte[] memory = MEMORY_POOL.Rent(length).EnsureNotNull("Cannot rent memory");
-            return new OwnedMemory(memory);
+            return new OwnedMemory(memory, length);
         }
 
         public static OwnedMemory FromString(string value)
         {
             int maxByteCount = Encoding.UTF8.GetMaxByteCount(value.Length);
             using var ownedMemory = FromPool(maxByteCount);
-            int byteCount = Encoding.UTF8.GetBytes(value, 0, value.Length, ownedMemory.Memory, 0);
+            int byteCount = Encoding.UTF8.GetBytes(value, 0, value.Length, ownedMemory.memory, 0);
 
             var output = FromPool(byteCount);
-            Buffer.BlockCopy(ownedMemory.Memory, 0, output.Memory, 0, byteCount);
+            Buffer.BlockCopy(ownedMemory.memory, 0, output.memory, 0, byteCount);
 
             return output;
         }
 
         public void Dispose()
         {
-            MEMORY_POOL.Return(Memory);
+            MEMORY_POOL.Return(memory);
         }
     }
 }
