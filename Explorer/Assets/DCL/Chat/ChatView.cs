@@ -194,6 +194,7 @@ namespace DCL.Chat
         private bool isChatContextMenuOpen;
         private CancellationTokenSource popupCts;
         private bool pointerExit;
+        private bool isMaskShowing;
         private ILoadingStatus loadingStatus;
 
         /// <summary>
@@ -377,11 +378,7 @@ namespace DCL.Chat
             pointerExit = false;
 
             if (IsUnfolded)
-            {
-                SetBackgroundVisibility(true, true);
-                chatMessageViewer.SetScrollbarVisibility(true, BackgroundFadeTime);
-                chatMessageViewer.StopChatEntriesFadeout();
-            }
+                SetChatVisibility(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -394,11 +391,8 @@ namespace DCL.Chat
             PointerExit?.Invoke();
 
             if (IsUnfolded && !isInputSelected)
-            {
-                SetBackgroundVisibility(false, true);
-                chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
-                chatMessageViewer.StartChatEntriesFadeout();
-            }
+                SetChatVisibility(false);
+
         }
 
         public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
@@ -428,8 +422,14 @@ namespace DCL.Chat
             chatInputBox.InputSubmitted -= OnInputSubmitted;
 
             viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
-
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitPerformed;
             return base.HideAsync(ct, isInstant);
+        }
+
+        private void OnSubmitPerformed(InputAction.CallbackContext obj)
+        {
+            if (isMaskShowing)
+                IsUnfolded = false;
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
@@ -473,6 +473,7 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitPerformed;
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
             closePopupTask = new UniTaskCompletionSource();
 
@@ -716,6 +717,7 @@ namespace DCL.Chat
             bool isConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             chatInputBox.gameObject.SetActive(isConnected);
             inputBoxMask.gameObject.SetActive(!isConnected);
+            isMaskShowing = !isConnected;
             if (isConnected)
             {
                 FocusInputBox();
@@ -725,6 +727,28 @@ namespace DCL.Chat
             //TODO FRAN: We should be able to focus the chat and close everything else without focusing the input box.
             memberListView.IsVisible = false;
             inputBoxMask.SetUpWithUserState(userState);
+        }
+
+        private void SetChatVisibility(bool isVisible)
+        {
+            SetBackgroundVisibility(isVisible, true);
+            chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
+
+            if (isVisible)
+            {
+                chatMessageViewer.StopChatEntriesFadeout();
+                if (!isMaskShowing) return;
+
+                chatInputBox.gameObject.SetActive(false);
+                inputBoxMask.gameObject.SetActive(true);
+            }
+            else
+            {
+                chatMessageViewer.StartChatEntriesFadeout();
+
+                chatInputBox.gameObject.SetActive(true);
+                inputBoxMask.gameObject.SetActive(false);
+            }
         }
 
         private void OnChatContextMenuVisibilityChanged(bool isVisible)
@@ -747,20 +771,14 @@ namespace DCL.Chat
 
                 if (isInputSelected) return;
 
+                SetChatVisibility(true);
                 isInputSelected = true;
-                chatMessageViewer.StopChatEntriesFadeout();
-                SetBackgroundVisibility(true, true);
-                chatMessageViewer.SetScrollbarVisibility(true, BackgroundFadeTime);
                 InputBoxFocusChanged?.Invoke(true);
             }
             else
             {
                 if (pointerExit)
-                {
-                    SetBackgroundVisibility(false, true);
-                    chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
-                    chatMessageViewer.StartChatEntriesFadeout();
-                }
+                    SetChatVisibility(false);
 
                 isInputSelected = false;
                 InputBoxFocusChanged?.Invoke(false);

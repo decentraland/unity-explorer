@@ -62,12 +62,9 @@ namespace DCL.Chat
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly ChatUsersStateCache chatUsersStateCache;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
-        private readonly RPCChatPrivacyService chatPrivacyService;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
@@ -156,9 +153,6 @@ namespace DCL.Chat
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.friendsCacheProxy = friendsCacheProxy;
-            this.chatPrivacyService = chatPrivacyService;
 
             chatUsersStateCache = new ChatUsersStateCache();
             chatUserStateEventBus = new ChatUserStateEventBus();
@@ -175,7 +169,7 @@ namespace DCL.Chat
                 friendsService);
         }
 
-        public void Clear() // Called by a command
+        private void Clear() // Called by a command
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
