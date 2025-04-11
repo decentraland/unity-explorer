@@ -220,8 +220,13 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked() =>
+        private void OnControlsButtonClicked()
+        {
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
+
+            // TODO (Santi): This will be removed before merging
+            marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, CancellationToken.None).Forget();
+        }
 
         private async void OpenSidebarSettingsAsync()
         {

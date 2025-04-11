@@ -37,6 +37,10 @@ namespace DCL.MarketplaceCreditsAPIService
             CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                                                       .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
+            EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
+            creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
+            creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
+
             return creditsProgramProgressResponse;
         }
 
@@ -79,6 +83,16 @@ namespace DCL.MarketplaceCreditsAPIService
 
             await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
                                       .WithNoOpAsync();
+        }
+
+        private async UniTask<EmailSubscriptionResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)
+        {
+            var url = $"{emailSubscriptionsBaseUrl}/subscription";
+
+            EmailSubscriptionResponse emailSubscriptionResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                            .CreateFromJson<EmailSubscriptionResponse>(WRJsonParser.Unity);
+
+            return emailSubscriptionResponse;
         }
     }
 }

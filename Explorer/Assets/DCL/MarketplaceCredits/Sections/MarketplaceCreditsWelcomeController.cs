@@ -161,7 +161,10 @@ namespace DCL.MarketplaceCredits.Sections
             try
             {
                 view.SetAsLoading(true);
-                await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
+
+                if (currentCreditsProgramProgress.IsUserEmailVerified())
+                    await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
+
                 RedirectToSection(ignoreHasUserStartedProgramFlag: true);
             }
             catch (OperationCanceledException) { }

@@ -306,8 +306,8 @@ namespace DCL.MarketplaceCredits
                     }
 
                     bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-                    SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
-                    SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
+                    SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
+                    SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
                 }
             }
             catch (OperationCanceledException) { }
