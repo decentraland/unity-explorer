@@ -7,6 +7,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -46,6 +47,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ChatMessageFactory chatMessageFactory;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private ChatHistoryStorage? chatStorage;
 
         private ChatController chatController;
 
@@ -68,7 +72,9 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            ChatMessageFactory chatMessageFactory,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -90,14 +96,25 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.chatMessageFactory = chatMessageFactory;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            chatStorage?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
+            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            {
+                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+            }
+
             ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             chatController = new ChatController(
@@ -122,12 +139,27 @@ namespace DCL.PluginSystem.Global
                 profileCache,
                 chatEventBus,
                 web3IdentityCache,
-                loadingStatus
+                loadingStatus,
+                chatStorage
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 
             mvcManager.RegisterController(chatController);
+
+            // Log out / log in
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+        }
+
+        private void OnIdentityCleared()
+        {
+            chatController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void OnIdentityChanged()
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
         }
     }
 

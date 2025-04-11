@@ -79,6 +79,7 @@ namespace DCL.Chat
         private ViewDependencies viewDependencies;
         private CancellationTokenSource popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
+        private bool isInitialized;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -124,9 +125,13 @@ namespace DCL.Chat
         /// </summary>
         public void Initialize()
         {
+            if(isInitialized)
+                return;
+
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+            isInitialized = true;
         }
 
         /// <summary>
@@ -327,7 +332,7 @@ namespace DCL.Chat
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
-                else if (IsUserBlocked(itemData.WalletAddress))
+                else if (IsUserBlocked(itemData.SenderWalletAddress))
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
@@ -375,7 +380,7 @@ namespace DCL.Chat
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {
-                Profile? profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
+                Profile? profile = await viewDependencies.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {

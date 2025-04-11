@@ -49,6 +49,7 @@ namespace DCL.Chat
         private bool chatBubblesVisibility;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
+        private bool isInitialized;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -58,6 +59,9 @@ namespace DCL.Chat
 
         public void Initialize(bool chatBubblesVisibility)
         {
+            if(isInitialized)
+                return;
+
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
             closeMemberListButton.onClick.AddListener(OnCloseMemberListButtonClicked);
             showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
@@ -66,6 +70,7 @@ namespace DCL.Chat
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
             this.chatBubblesVisibility = chatBubblesVisibility;
+            isInitialized = true;
         }
 
         public void ChangeTitleBarVisibility(bool isMemberListVisible)

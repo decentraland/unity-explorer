@@ -9,34 +9,28 @@ namespace DCL.Chat.History
         public readonly string Message;
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
-        public readonly string WalletAddress;
-        public readonly ChatChannel.ChannelId ChannelId;
+        public readonly string SenderWalletAddress;
         public readonly bool IsPaddingElement;
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
-        public readonly bool IsPrivateMessage;
 
         public ChatMessage(
             string message,
             string senderValidatedName,
-            string walletAddress,
+            string senderWalletAddress,
             bool isSentByOwnUser,
             string senderWalletId,
-            ChatChannel.ChannelId channelId,
-            bool isPrivateMessage = false,
             bool isMention = false,
             bool isSystemMessage = false,
             bool isPaddingElement = false)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
-            WalletAddress = walletAddress;
+            SenderWalletAddress = senderWalletAddress;
             IsSentByOwnUser = isSentByOwnUser;
             IsPaddingElement = isPaddingElement;
             SenderWalletId = senderWalletId;
-            ChannelId = channelId;
-            IsPrivateMessage = isPrivateMessage;
             IsMention = isMention;
             IsSystemMessage = isSystemMessage;
         }
@@ -47,8 +41,6 @@ namespace DCL.Chat.History
                 string.Empty,
                 false,
                 string.Empty,
-                ChatChannel.EMPTY_CHANNEL_ID,
-                false,
                 false,
                 false,
                 true);
@@ -56,18 +48,16 @@ namespace DCL.Chat.History
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
             new (newMessage,
                 chatMessage.SenderValidatedName,
-                chatMessage.WalletAddress,
+                chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
-                chatMessage.ChannelId,
-                chatMessage.IsPrivateMessage,
                 chatMessage.IsMention,
                 chatMessage.IsSystemMessage,
                 chatMessage.IsPaddingElement);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, ChatChannel.NEARBY_CHANNEL_ID,false, false, true, false);
+                null, false, true, false);
 
         public bool Equals(ChatMessage other)
         {
@@ -84,7 +74,7 @@ namespace DCL.Chat.History
             return Message == other.Message &&
                    SenderValidatedName == other.SenderValidatedName &&
                    SenderWalletId == other.SenderWalletId &&
-                   WalletAddress == other.WalletAddress &&
+                   SenderWalletAddress == other.SenderWalletAddress &&
                    IsSentByOwnUser == other.IsSentByOwnUser &&
                    IsMention == other.IsMention;
         }
@@ -101,7 +91,7 @@ namespace DCL.Chat.History
                 return HashCode.Combine(Message, true);
 
             return HashCode.Combine(Message, SenderValidatedName, SenderWalletId,
-                WalletAddress, IsSentByOwnUser, IsMention);
+                SenderWalletAddress, IsSentByOwnUser, IsMention);
         }
 
         public override string ToString() =>
