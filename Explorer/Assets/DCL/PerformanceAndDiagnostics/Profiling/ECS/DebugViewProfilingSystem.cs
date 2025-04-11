@@ -233,7 +233,7 @@ namespace DCL.Profiling.ECS
                                   _ => "green",
                               };
 
-            elementBinding.Value = $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
+            elementBinding.Value = frameTimeInMS == 0 ? "collecting.." : $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
         }
     }
 }

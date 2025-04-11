@@ -387,7 +387,6 @@ namespace Global.Dynamic
             );
 
             var remoteEntities = new RemoteEntities(
-                roomHub,
                 entityParticipantTable,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 queuePoolFullMovementMessage,
@@ -866,12 +865,14 @@ namespace Global.Dynamic
                 globalPlugins.Add(new AnalyticsPlugin(
                         bootstrapContainer.Analytics!,
                         staticContainer.Profiler,
+                        staticContainer.LoadingStatus,
                         staticContainer.RealmData,
                         staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,
                         debugBuilder,
-                        cameraReelStorageService
+                        cameraReelStorageService,
+                        entityParticipantTable
                     )
                 );
 
