@@ -24,6 +24,7 @@ namespace DCL.WebRequests
             [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
             [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
             [field: SerializeField] public ushort CacheSizeGB { get; private set; } = 2; // 2 GB by default
+            [field: SerializeField] public ushort CacheLifetimeDays { get; private set; } = 2; // 2 days by default
             [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
         }
 
@@ -50,7 +51,7 @@ namespace DCL.WebRequests
             ulong cacheSize = container.settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
 
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
-            var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.MaxValue, cacheSize));
+            var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.CacheLifetimeDays), cacheSize));
             HTTPManager.LocalCache = httpCache;
 
             var options = new ArtificialDelayOptions.ElementBindingOptions();
