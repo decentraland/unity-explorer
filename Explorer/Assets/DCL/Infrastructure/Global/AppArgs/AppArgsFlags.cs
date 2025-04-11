@@ -7,6 +7,7 @@
 
         public const string SKIP_VERSION_CHECK = "skip-version-check";
         public const string SIMULATE_VERSION = "simulateVersion";
+        public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
 
         public const string SCENE_CONSOLE = "scene-console";
 
