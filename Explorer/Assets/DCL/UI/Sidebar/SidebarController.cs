@@ -4,6 +4,7 @@ using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
+using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
@@ -211,7 +212,7 @@ namespace DCL.UI.Sidebar
         }
 
         private async void OnMarketplaceCreditsButtonClickedAsync() =>
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits);
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.ShowParams(isOpenedFromNotification: false));
 
         private void OnHelpButtonClicked()
         {

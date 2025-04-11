@@ -21,8 +21,18 @@ using Utility;
 
 namespace DCL.MarketplaceCredits
 {
-    public class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView>, IControllerInSharedSpace<MarketplaceCreditsMenuView>
+    public class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.ShowParams>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.ShowParams>
     {
+        public readonly struct ShowParams
+        {
+            public readonly bool IsOpenedFromNotification;
+
+            public ShowParams(bool isOpenedFromNotification)
+            {
+                IsOpenedFromNotification = isOpenedFromNotification;
+            }
+        }
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<bool> MarketplaceCreditsOpened;
@@ -142,6 +152,7 @@ namespace DCL.MarketplaceCredits
             closeTaskCompletionSource = new UniTaskCompletionSource();
             OpenSection(MarketplaceCreditsSection.WELCOME);
             SetSidebarButtonAnimationAsPaused(true);
+            MarketplaceCreditsOpened?.Invoke(inputData.IsOpenedFromNotification);
         }
 
         protected override void OnViewClose()
@@ -268,11 +279,8 @@ namespace DCL.MarketplaceCredits
             SetSidebarButtonAsClaimIndicator(true);
         }
 
-        private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
-        {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits);
-            MarketplaceCreditsOpened?.Invoke(true);
-        }
+        private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new ShowParams(isOpenedFromNotification: true));
 
         private void CheckForSidebarButtonState()
         {
