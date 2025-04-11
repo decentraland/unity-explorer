@@ -139,7 +139,7 @@ namespace DCL.PluginSystem.Global
             friendsService = new RPCFriendsService(GetApiUrl(),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
 
-            friendsService.ConnectionEnstablished += SyncBlockingStatus;
+            friendsService.ConnectionEstablished += SyncBlockingStatus;
 
             IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
 
