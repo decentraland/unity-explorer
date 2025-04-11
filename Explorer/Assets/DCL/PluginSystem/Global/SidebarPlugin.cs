@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
-using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -128,7 +127,6 @@ namespace DCL.PluginSystem.Global
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
-                marketplaceCreditsAPIClient,
                 webBrowser,
                 includeCameraReel,
                 includeFriends,

@@ -5,7 +5,6 @@ using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -31,7 +30,6 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
-        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
@@ -55,7 +53,6 @@ namespace DCL.UI.Sidebar
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
@@ -72,7 +69,6 @@ namespace DCL.UI.Sidebar
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
-            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
             this.chatView = chatView;
@@ -220,13 +216,8 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked()
-        {
+        private void OnControlsButtonClicked() =>
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
-
-            // TODO (Santi): This will be removed before merging
-            marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, CancellationToken.None).Forget();
-        }
 
         private async void OpenSidebarSettingsAsync()
         {
