@@ -65,7 +65,6 @@ namespace DCL.Chat
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly ChatUsersStateCache chatUsersStateCache;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
-        private readonly ChatHistoryStorage? chatStorage;
 
         private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
