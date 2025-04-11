@@ -1,13 +1,10 @@
-﻿using CRDT.Memory;
-using CrdtEcsBridge.JsModulesImplementation.Communications;
+﻿using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using Decentraland.Kernel.Comms.Rfc4;
 using ECS;
-using Google.Protobuf;
-using LiveKit.Internal.FFIClients.Pools;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -26,7 +23,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         private TestSceneCommunicationPipe sceneCommunicationPipe;
         private IMessagePipe messagePipe;
         private IJsOperations jsOperations;
-        private ICRDTMemoryAllocator crdtMemoryAllocator;
+        private V8ScriptEngine engine;
 
         [SetUp]
         public void SetUp()
@@ -36,14 +33,24 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE" });
 
-            crdtMemoryAllocator = CRDTOriginalMemorySlicer.Create();
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.ScenesAreFixed.Returns(false);
 
-            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator);
+            engine = new V8ScriptEngine();
+            var arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
+            var uint8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
+
+            jsOperations = Substitute.For<IJsOperations>();
+            jsOperations.NewArray().Returns(_ => arrayCtor.Invoke(true));
+
+            jsOperations.GetTempUint8Array().Returns(
+                _ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
+
+            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
+                jsOperations);
         }
 
         [Test]
@@ -65,7 +72,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);
 
             // Assert JSOperations called
-            jsOperations.Received().ConvertToScriptTypedArrays(api.EventsToProcess);
+            jsOperations.Received(1).NewArray();
         }
 
         [Test]
@@ -85,7 +92,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             // Check events to process
             Assert.AreEqual(1, api.EventsToProcess.Count);
-            CollectionAssert.AreEqual(expectedMessage, api.EventsToProcess[0].Memory.ToArray());
+
+            var eventBytes = new byte[walletBytes.Length + data.Length];
+            api.EventsToProcess[0].ReadBytes(0ul, (ulong)eventBytes.Length, eventBytes, 0ul);
+
+            CollectionAssert.AreEqual(expectedMessage, eventBytes);
         }
 
         private static byte[] GetRandomBytes(int size)
@@ -100,6 +111,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         public void TearDown()
         {
             api.Dispose();
+            engine.Dispose();
         }
 
         // This class exists because we can't mock ReadOnlySpan (ref structs)
