@@ -315,12 +315,11 @@ namespace DCL.PluginSystem.Global
                 if (IsConnectivityStatusEnabled())
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
-                if (includeUserBlocking)
+                if (includeUserBlocking && userBlockingCache != null)
                 {
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
 
-                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                    userBlockingCache.Reset(blockingStatus);
+                    await SyncBlockingStatusAsync(ct);
                 }
 
                 friendsPanelController?.Reset();
