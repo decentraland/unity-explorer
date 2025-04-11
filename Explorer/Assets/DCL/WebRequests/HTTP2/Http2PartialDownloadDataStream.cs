@@ -7,7 +7,7 @@ using Best.HTTP.Shared.Logger;
 using Best.HTTP.Shared.PlatformSupport.FileSystem;
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests.CustomDownloadHandlers;
 using System;
 using System.Collections.Generic;
@@ -57,7 +57,8 @@ namespace DCL.WebRequests.HTTP2
             COMPLETE_SEGMENTED_STREAM = 5,
 
             /// <summary>
-            /// File is provided directly from the file system and thus it's never partial
+            /// File is provided directly from the file system and thus it's never partial,
+            /// BESTHttp does not provide a file stream directly so it loads it into the memory chunks
             /// </summary>
             // EMBEDDED_FILE_STREAM = 6 TODO special fast path for files
         }
@@ -75,6 +76,9 @@ namespace DCL.WebRequests.HTTP2
             "age",
             "date",
         };
+
+        private static readonly ThreadSafeListPool<string> REDUNDANT_HEADERS_POOL =
+            new (15, 50);
 
         //internal static readonly DictionaryObjectPool<string, List<string>> HEADERS_POOL
         //    = new (dictionaryInstanceDefaultCapacity: CACHE_CONTROL_HEADERS.Length + 3, defaultCapacity: 10, equalityComparer: StringComparer.OrdinalIgnoreCase);
@@ -96,7 +100,7 @@ namespace DCL.WebRequests.HTTP2
                                                   _ => 0,
                                               };
 
-        public Http2PartialDownloadDataStream(int fullFileSize)
+        private Http2PartialDownloadDataStream(int fullFileSize)
         {
             this.fullFileSize = fullFileSize;
         }
@@ -478,7 +482,7 @@ namespace DCL.WebRequests.HTTP2
         private static void PreparePartialHeaders(Dictionary<string, List<string>> requestHeaders, int fullFileSize)
         {
             // Remove all headers that are not in CACHE_CONTROL_HEADERS list
-            using PooledObject<List<string>> pooledList = ListPool<string>.Get(out List<string>? toDelete);
+            using PooledObject<List<string>> pooledList = REDUNDANT_HEADERS_POOL.Get(out List<string>? toDelete);
 
             foreach (string header in requestHeaders.Keys)
             {

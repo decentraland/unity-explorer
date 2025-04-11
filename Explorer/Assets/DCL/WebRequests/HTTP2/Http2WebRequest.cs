@@ -4,6 +4,7 @@ using Best.HTTP.Shared.PlatformSupport.Memory;
 using Best.HTTP.Shared.PlatformSupport.Text;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace DCL.WebRequests.HTTP2
@@ -138,7 +139,19 @@ namespace DCL.WebRequests.HTTP2
 
             public byte[] Data => request.Response?.Data ?? Array.Empty<byte>();
 
-            public int StatusCode => request.Response.StatusCode;
+            public int StatusCode
+            {
+                get
+                {
+                    // If File Not Found it's not reported as 404
+                    // Adapt it
+
+                    if (request.Exception is FileNotFoundException or DirectoryNotFoundException)
+                        return HTTPStatusCodes.NotFound;
+
+                    return request.Response?.StatusCode ?? 0;
+                }
+            }
 
             public bool IsSuccess => request.State == HTTPRequestStates.Finished;
 

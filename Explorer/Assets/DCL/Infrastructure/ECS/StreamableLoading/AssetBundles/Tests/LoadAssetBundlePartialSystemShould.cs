@@ -22,9 +22,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
     [TestFixture]
     public partial class LoadAssetBundlePartialSystemShould : UnitySystemTestBase<PartialLoadAssetBundleSystem>
     {
-        //size 64800
-        // private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
-
         private const string REAL_ASSET_HASH = "bafybeidlrouln4f77ryns4wffz4pyapvfvbudno4pc2hirrhb5b554ixky";
 
         // 210 KB, Texture

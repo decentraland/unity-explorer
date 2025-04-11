@@ -47,7 +47,7 @@ namespace DCL.Time
             if (timeDifference.TotalMilliseconds > TIME_BETWEEN_UPDATES)
             {
                 var intent = new SubIntention(new CommonLoadingArguments(TIME_SERVER_URL));
-                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, null, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
                 cachedServerTime = ObtainDateTimeFromServerTime(serverDate);
                 currentTime = cachedServerTime;
                 cachedSystemTime = DateTime.Now;

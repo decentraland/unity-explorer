@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Common.Components
         public Exception? Exception => exceptionData?.exception;
         public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T? asset, AssetSource source = AssetSource.NONE) : this()
+        public StreamableLoadingResult(T? asset) : this()
         {
             Asset = asset;
             Succeeded = true;

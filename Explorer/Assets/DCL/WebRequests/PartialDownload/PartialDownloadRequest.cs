@@ -69,7 +69,7 @@ namespace DCL.WebRequests
             async UniTask WaitForRequestAsync()
             {
                 try { createdRequest = await this.SendAsync(ct); }
-                catch (Exception)
+                catch (Exception e)
                 {
                     // If an exception in the core flow occurs cancel the partial flow
                     partialFlowCts.SafeCancelAndDispose();
@@ -81,7 +81,7 @@ namespace DCL.WebRequests
             {
                 await UniTask.WhenAll(
                     WaitForRequestAsync(),
-                    ProcessPartialDownloadStreamAsync(partialFlowCts.Token));
+                    ProcessPartialDownloadStreamAsync(partialFlowCts.Token)); // Throws Task Cancellated Exception
             }
             finally
             {
@@ -151,7 +151,12 @@ namespace DCL.WebRequests
                     partialStream.ForceFinalize();
                 }
             }
-            catch (Exception)
+            catch (TaskCanceledException)
+            {
+                // If it is a cancellation it is the result of the parent task so it should not be propagated further
+                request?.Response?.DownStream?.Dispose();
+            }
+            catch (Exception e)
             {
                 // Dispose it here as well to break ContentReceiveLoop if needed
                 partialFlowCts.SafeCancelAndDispose();

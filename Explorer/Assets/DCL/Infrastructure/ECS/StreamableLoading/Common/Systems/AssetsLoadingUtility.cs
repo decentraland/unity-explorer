@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -27,7 +28,10 @@ namespace ECS.StreamableLoading.Common.Systems
         public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TState, TAsset>(this TIntention intention,
             TState state,
             IPartitionComponent partition,
-            InternalFlowDelegate<TAsset, TState, TIntention> flow, ReportData reportData, CancellationToken ct)
+            InternalFlowDelegate<TAsset, TState, TIntention> flow,
+            IDictionary<string, StreamableLoadingResult<TAsset>?>? irrecoverableFailures,
+            ReportData reportData,
+            CancellationToken ct)
             where TIntention: struct, ILoadingIntention where TState: class
         {
             int attemptCount = intention.CommonArguments.Attempts;
@@ -37,14 +41,13 @@ namespace ECS.StreamableLoading.Common.Systems
                 ReportHub.Log(reportData, $"Starting loading {intention}\nfrom source {intention.CommonArguments.CurrentSource}\n{partition}, attempts left: {attemptCount}");
 
                 try { return await flow(intention, state, partition, ct); }
-                catch (WebRequestException unityWebRequestException)
+                catch (WebRequestException webRequestException)
                 {
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    if (unityWebRequestException.IsIrrecoverableError(attemptCount))
+                    if (webRequestException.IsIrrecoverableError(attemptCount))
                     {
-                        // no more sources left
                         ReportHub.Log(
                             reportData,
                             $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} from source {intention.CommonArguments.CurrentSource}.\n"
@@ -54,15 +57,18 @@ namespace ECS.StreamableLoading.Common.Systems
                         // Removal from Permitted Sources is done after this method
                         if (intention.CommonArguments.PermittedSources.HasExactlyOneFlag())
 
-                            // conclude now
+                            // conclude now - no sources left
                             return new StreamableLoadingResult<TAsset>(
                                 reportData,
                                 new Exception(
                                     $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
                                     + "No more sources left.",
-                                    unityWebRequestException
+                                    webRequestException
                                 )
                             );
+
+                        // For this URL it's an irrecoverable failure
+                        SetIrrecoverableFailure(null); // null means it can be continued - it's not the final result
 
                         // Leave other systems to decide on other sources
                         return null;
@@ -70,10 +76,27 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
                 catch (Exception e) when (e is not OperationCanceledException && e.InnerException is not OperationCanceledException)
                 {
+                    ReportHub.Log(
+                        reportData,
+                        $"Non-Web Exception occured on loading {typeof(TAsset)} from {intention.ToString()} from source {intention.CommonArguments.CurrentSource}"
+                    );
+
                     // General exception
                     // conclude now, we can't do anything
-                    return new StreamableLoadingResult<TAsset>(reportData.WithSessionStatic(), e);
+                    var failure = new StreamableLoadingResult<TAsset>(reportData.WithSessionStatic(), e);
+                    SetIrrecoverableFailure(failure);
+
+                    return failure;
                 }
+            }
+
+            void SetIrrecoverableFailure(StreamableLoadingResult<TAsset>? failure)
+            {
+                if (irrecoverableFailures == null)
+                    return;
+
+                bool result = irrecoverableFailures.SyncTryAdd(intention.CommonArguments.URL, failure);
+                if (result == false) ReportHub.LogError(reportData, $"Irrecoverable failure for {intention} is already added");
             }
         }
 

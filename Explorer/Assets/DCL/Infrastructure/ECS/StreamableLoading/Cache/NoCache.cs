@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.Cache
         private readonly bool useIrrecoverableFailureCache;
 
         public IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>> OngoingRequests { get; }
-        public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; }
+        public IDictionary<string, StreamableLoadingResult<TAsset>?> IrrecoverableFailures { get; }
 
         private bool disposed { get; set; }
 
@@ -50,9 +50,9 @@ namespace ECS.StreamableLoading.Cache
                 OngoingRequests = FakeDictionaryCache<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>.INSTANCE;
 
             if (useIrrecoverableFailureCache)
-                IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
+                IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>?>.Get();
             else
-                IrrecoverableFailures = FakeDictionaryCache<string, StreamableLoadingResult<TAsset>>.INSTANCE;
+                IrrecoverableFailures = FakeDictionaryCache<string, StreamableLoadingResult<TAsset>?>.INSTANCE;
         }
 
         public void Dispose()

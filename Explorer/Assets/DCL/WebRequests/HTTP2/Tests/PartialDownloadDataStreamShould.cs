@@ -36,6 +36,9 @@ namespace DCL.WebRequests.HTTP2.Tests
 
         private static readonly Uri NO_SIZE_HEADERS_URL = new ("https://bunny.net");
 
+        //size 64800
+        private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
+
         private HTTPCache cache;
         private Http2WebRequestController webRequestController;
 
@@ -235,6 +238,24 @@ namespace DCL.WebRequests.HTTP2.Tests
         public async Task ConstructUnknownDataInMemoryAsync()
         {
             stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(NO_SIZE_HEADERS_URL.OriginalString, new PartialDownloadArguments(stream), CancellationToken.None);
+
+            Assert.IsTrue(stream is { IsFullyDownloaded: true });
+            Assert.That(stream.GetCachedPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.CachedPartialData)));
+            Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
+
+            Http2PartialDownloadDataStream.MemoryStreamPartialData partialData = stream.GetMemoryStreamPartialData();
+
+            Assert.That(partialData.stream, Is.Not.Null);
+
+            Assert.That(stream.CanRead, Is.True);
+            Assert.That(stream.CanSeek, Is.True);
+        }
+
+        [Test]
+        public async Task ConstructLocalDataInMemoryAsync()
+        {
+            // It should be constructed for one iteration
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(LOCAL_ASSET_PATH, new PartialDownloadArguments(stream), CancellationToken.None);
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
             Assert.That(stream.GetCachedPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.CachedPartialData)));

@@ -157,11 +157,9 @@ namespace ECS.StreamableLoading.Common.Components
             DisposeBudgetIfExists();
 
             if (entity == PartialDownloadingData?.PartialDownloadStream.Entity)
-            {
                 PartialDownloadingData.Value.Dispose();
-                PartialDownloadingData = null;
-            }
 
+            PartialDownloadingData = null;
             POOL.Release(this);
         }
     }

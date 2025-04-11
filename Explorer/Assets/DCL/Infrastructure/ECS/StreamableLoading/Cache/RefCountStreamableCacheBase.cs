@@ -23,8 +23,8 @@ namespace ECS.StreamableLoading.Cache
 
         public IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
 
-        public IDictionary<string, StreamableLoadingResult<TAssetData>> IrrecoverableFailures { get; }
-            = new Dictionary<string, StreamableLoadingResult<TAssetData>>();
+        public IDictionary<string, StreamableLoadingResult<TAssetData>?> IrrecoverableFailures { get; }
+            = new Dictionary<string, StreamableLoadingResult<TAssetData>?>();
 
         protected abstract ref ProfilerCounterValue<int> inCacheCount { get; }
 

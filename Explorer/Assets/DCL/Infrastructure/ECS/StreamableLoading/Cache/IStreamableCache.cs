@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.Cache
     public interface IStreamableCache<TAsset, TLoadingIntention> : IEqualityComparer<TLoadingIntention>, IDisposable
     {
         IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>> OngoingRequests { get; }
-        IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; }
+        IDictionary<string, StreamableLoadingResult<TAsset>?> IrrecoverableFailures { get; }
 
         /// <summary>
         ///     Get the asset for referencing, it should be called one time and saved in the component,

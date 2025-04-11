@@ -4,8 +4,6 @@ using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Cache.Disk;
-using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
@@ -44,7 +42,7 @@ namespace ECS.StreamableLoading.Common.Systems
             catch (WebRequestException e) when (e.ResponseCode == 416) { return new StreamableLoadingResult<TData>(new ReportData(), e); }
             catch (Exception)
             {
-                state.SetChunkData(default(PartialLoadingState));
+                state.PartialDownloadingData = null;
                 throw;
             }
         }

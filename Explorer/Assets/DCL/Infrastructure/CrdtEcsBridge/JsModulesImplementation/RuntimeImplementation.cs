@@ -67,7 +67,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, null, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {
