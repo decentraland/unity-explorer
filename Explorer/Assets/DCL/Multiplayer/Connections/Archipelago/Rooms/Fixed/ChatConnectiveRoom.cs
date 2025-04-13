@@ -66,16 +66,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public bool Activated => true; // TODO
 
-        public UniTask ActivateAsync()
+        public async UniTask ActivateAsync()
         {
-            // TODO
-            return UniTask.CompletedTask;
+            await CycleStepAsync(CancellationToken.None);
         }
 
-        public UniTask DeactivateAsync()
+        public async UniTask DeactivateAsync()
         {
-            // TODO
-            return UniTask.CompletedTask;
+            await StopAsync();
         }
     }
 }
