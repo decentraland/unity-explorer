@@ -129,7 +129,7 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
-            if (false)//featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
@@ -178,11 +178,15 @@ namespace DCL.PluginSystem.Global
 
         private void OnIdentityCleared()
         {
-            chatController.HideViewAsync(CancellationToken.None).Forget();
+            if (chatController.IsVisibleInSharedSpace)
+                chatController.HideViewAsync(CancellationToken.None).Forget();
         }
 
         private void OnIdentityChanged()
         {
+            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
+            //Once from here and once from the MainUIController. We need to account for this.
+
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
