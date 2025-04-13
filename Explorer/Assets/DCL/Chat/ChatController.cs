@@ -165,14 +165,12 @@ namespace DCL.Chat
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "ON SHOWN CHAT from Shared Space!!");
-
                 //TODO FRAN: here we must restore the state of the chat when returning to it from anywhere, unless overwritten for some reason.
                 //This should be the only way to open the chat, params should adjust to these possibilities.
 
                 IsUnfolded = showParams.ShowUnfolded;
 
-                if(showParams.HasToSelectChat)
+                if(showParams.HasToFocusInputBox)
                     viewInstance!.FocusInputBox();
 
                 if (showParams.ShowLastState)
@@ -188,9 +186,8 @@ namespace DCL.Chat
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "ON HIDDEN CHAT from shared space!!");
-            // We only need to minimize the chat when the sidebar chat button is pressed or the enter key is pressed,
-            // in the other cases, we want to preserve their last state
+            // TODO FRAN: We only need to minimize the chat when the sidebar chat button is pressed or the enter key is pressed,
+            // in the other cases, we want to preserve their last state, how to do it??
             IsUnfolded = false;
             await UniTask.CompletedTask;
         }
@@ -281,8 +278,9 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
-            //TODO FRAN: Check what is this doing
-            viewInstance!.DisableInputBoxSubmissions();
+            //TODO FRAN: Check what is this doing if its doing anything
+            viewInstance!.IsChatSelected = false;
+            //viewInstance!.DisableInputBoxSubmissions();
         }
 
         protected override void OnFocus()
@@ -290,7 +288,8 @@ namespace DCL.Chat
             //TODO FRAN: Check what is this doing
             if (viewInstance!.IsFocused) return;
 
-            viewInstance.EnableInputBoxSubmissions();
+            viewInstance!.IsChatSelected = true;
+            //viewInstance.EnableInputBoxSubmissions();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

@@ -319,7 +319,7 @@ namespace DCL.Passport
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
             //We disable the buttons, they will be enabled further down if they meet the requisites
             viewInstance!.JumpInButton.gameObject.SetActive(false);
             viewInstance.ChatButton.gameObject.SetActive(false);
@@ -339,7 +339,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
             characterPreviewController!.OnHide();
 
