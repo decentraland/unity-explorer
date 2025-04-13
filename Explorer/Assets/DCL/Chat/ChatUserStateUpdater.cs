@@ -9,15 +9,17 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatUserStateUpdater
+    public class ChatUserStateUpdater : IDisposable
     {
+        private const int CONNECTION_CHECK_INTERVAL_MS = 30000;
+        private const string PRIVACY_SETTING_ALL = "all";
+
         private readonly IChatUsersStateCache chatUsersStateCache;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IParticipantsHub participantsHub;
@@ -28,7 +30,6 @@ namespace DCL.Chat
         private readonly ObjectProxy<IFriendsService> friendsService;
         private readonly IRoom chatRoom;
 
-
         /// <summary>
         /// We will use this to track which conversations are open and decide if its necessary to notify the controller about changes
         /// </summary>
@@ -38,6 +39,8 @@ namespace DCL.Chat
         private CancellationTokenSource cts = new ();
         private bool roomConnected;
         private string currentConversation = string.Empty;
+        private bool checkedUsers;
+        private bool isDisposed;
 
         public ChatUserStateUpdater(
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
@@ -60,23 +63,7 @@ namespace DCL.Chat
             this.chatRoom = chatRoom;
             this.friendsService = friendsService;
 
-            settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
-            participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
-
-            //Other user Blocked actions
-            friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
-            friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
-            //Own user blocked actions
-            friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
-            friendsEventBus.OnYouUnblockedProfile += OnYouUnblockedProfile;
-            //Other user friendship actions
-            friendsEventBus.OnOtherUserAcceptedYourRequest += OnNewFriendAdded;
-            friendsEventBus.OnOtherUserRemovedTheFriendship += OnFriendRemoved;
-            //Own user friendship actions
-            friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += OnNewFriendAdded;
-            friendsEventBus.OnYouRemovedFriend += OnFriendRemoved;
-
-            chatRoom.ConnectionUpdated += OnChatRoomConnectionUpdated;
+            SubscribeToEvents();
         }
 
         public string CurrentConversation
@@ -93,12 +80,27 @@ namespace DCL.Chat
 
             var conversationParticipants = new HashSet<string>();
 
-            cts = cts.SafeRestart();
-            await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
+            try
+            {
+                await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
+                await UniTask.WaitUntil(() => roomConnected && userBlockingCacheProxy.Configured, cancellationToken: cts.Token);
 
-            await UniTask.WaitUntil(() => roomConnected && userBlockingCacheProxy.Configured, cancellationToken: cts.Token);
+                await ProcessInitialParticipants(conversationParticipants);
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle cancellation gracefully
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Error during initialization: {e.Message}");
+            }
 
-            //When this finishes, we will have a proper list of all connected users, so we can setup the conversations sidebar UI
+            return conversationParticipants;
+        }
+
+        private async UniTask ProcessInitialParticipants(HashSet<string> conversationParticipants)
+        {
             foreach (string participant in participantsHub.RemoteParticipantIdentities())
             {
                 if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant))
@@ -107,16 +109,58 @@ namespace DCL.Chat
                 {
                     chatUsersStateCache.AddConnectedUser(participant);
 
-                    if (this.openConversations.Contains(participant))
+                    if (openConversations.Contains(participant))
                         conversationParticipants.Add(participant);
                 }
             }
+        }
 
-            return conversationParticipants;
+        public async UniTask GetConversationUsersConnectedStatus()
+        {
+            if (!checkedUsers) return;
+
+            checkedUsers = false;
+            try
+            {
+                ProcessConnectedUsers();
+                await UniTask.Delay(CONNECTION_CHECK_INTERVAL_MS, cancellationToken: cts.Token);
+                checkedUsers = true;
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle cancellation gracefully
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Error checking user status: {e.Message}");
+            }
+        }
+
+        private void ProcessConnectedUsers()
+        {
+            var connectedParticipants = new HashSet<string>(participantsHub.RemoteParticipantIdentities());
+
+            foreach (string participant in openConversations)
+            {
+                if (connectedParticipants.Contains(participant))
+                {
+                    if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant))
+                        chatUsersStateCache.AddConnectedBlockedUser(participant);
+                    else
+                        chatUsersStateCache.AddConnectedUser(participant);
+
+                }
+                else
+                {
+                    chatUsersStateCache.RemoveConnectedUser(participant);
+                    chatUsersStateCache.RemovedConnectedBlockedUser(participant);
+                }
+            }
         }
 
         public async UniTask<ChatUserState> GetChatUserStateAsync(string userId, CancellationToken ct)
         {
+            await GetConversationUsersConnectedStatus();
             var friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, ct);
 
             //If it's a friend we just return its connection status
@@ -144,7 +188,6 @@ namespace DCL.Chat
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
 
             return ChatUserState.CONNECTED;
-
         }
 
         public async UniTask<ChatUserState> GetConnectedNonFriendUserStateAsync(string userId)
@@ -169,7 +212,6 @@ namespace DCL.Chat
 
             return ChatUserState.DISCONNECTED;
         }
-
 
         public void AddConversation(string conversationId)
         {
@@ -233,7 +275,6 @@ namespace DCL.Chat
                 chatUsers.Add(currentConversation);
                 RequestParticipantsPrivacySettings(chatUsers, cts.Token).Forget();
             }
-
         }
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
@@ -295,7 +336,6 @@ namespace DCL.Chat
                 chatUserStateEventBus.OnNonFriendConnected(userId);
         }
 
-
         private async UniTaskVoid CheckUserMetadata(Participant participant)
         {
             var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
@@ -304,12 +344,11 @@ namespace DCL.Chat
 
             //If they accept all conversations, we dont need to check if they are friends or not
             //TODO FRAN: Convert this into a CONST
-            if (message.private_messages_privacy == "all")
+            if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
             {
                 chatUserStateEventBus.OnCurrentConversationUserAvailable();
                 return;
             }
-
 
             var status = await friendsService.StrictObject.GetFriendshipStatusAsync(participant.Identity, cts.Token);
             if (status == FriendshipStatus.FRIEND) return;
@@ -317,7 +356,7 @@ namespace DCL.Chat
             chatUserStateEventBus.OnCurrentConversationUserUnavailable();
         }
 
-         private void OnFriendRemoved(string userid)
+        private void OnFriendRemoved(string userid)
         {
             if (!chatUsersStateCache.IsUserConnected(userid)) return;
 
@@ -392,8 +431,46 @@ namespace DCL.Chat
 
             public override string ToString() =>
                 $"(Private Messages Privacy: {private_messages_privacy}";
-
         }
 
+        private void SubscribeToEvents()
+        {
+            settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
+            participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
+            friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
+            friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
+            friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
+            friendsEventBus.OnYouUnblockedProfile += OnYouUnblockedProfile;
+            friendsEventBus.OnOtherUserAcceptedYourRequest += OnNewFriendAdded;
+            friendsEventBus.OnOtherUserRemovedTheFriendship += OnFriendRemoved;
+            friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += OnNewFriendAdded;
+            friendsEventBus.OnYouRemovedFriend += OnFriendRemoved;
+            chatRoom.ConnectionUpdated += OnChatRoomConnectionUpdated;
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            settingsAsset.PrivacySettingsSet -= OnPrivacySettingsSet;
+            participantsHub.UpdatesFromParticipant -= OnUpdatesFromParticipant;
+            friendsEventBus.OnYouBlockedByUser -= OnYouBlockedByUser;
+            friendsEventBus.OnYouUnblockedByUser -= OnUserUnblocked;
+            friendsEventBus.OnYouBlockedProfile -= OnYouBlockedProfile;
+            friendsEventBus.OnYouUnblockedProfile -= OnYouUnblockedProfile;
+            friendsEventBus.OnOtherUserAcceptedYourRequest -= OnNewFriendAdded;
+            friendsEventBus.OnOtherUserRemovedTheFriendship -= OnFriendRemoved;
+            friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= OnNewFriendAdded;
+            friendsEventBus.OnYouRemovedFriend -= OnFriendRemoved;
+            chatRoom.ConnectionUpdated -= OnChatRoomConnectionUpdated;
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed) return;
+
+            isDisposed = true;
+            cts.Cancel();
+            cts.Dispose();
+            UnsubscribeFromEvents();
+        }
     }
 }
