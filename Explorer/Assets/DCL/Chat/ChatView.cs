@@ -187,6 +187,8 @@ namespace DCL.Chat
         private CancellationTokenSource popupCts;
         private bool pointerExit;
         private ILoadingStatus loadingStatus;
+        private GameObject chatInputBoxGameObject;
+        private GameObject inputMaskGameObject;
 
         // Folded, Selected, PointerExit
         [NonSerialized] public ChatState LastChatState;
@@ -282,7 +284,6 @@ namespace DCL.Chat
                 : LastChatState & ~ChatState.IS_VISIBLE;
         }
 
-
         private bool isSelected
         {
             get => LastChatState.HasFlag(ChatState.SELECTED);
@@ -372,6 +373,12 @@ namespace DCL.Chat
         {
             IsUnfolded = true;
             SetBackgroundVisibility(false, false);
+        }
+
+        private void Awake()
+        {
+            inputMaskGameObject = inputBoxMask.gameObject;
+            chatInputBoxGameObject = chatInputBox.gameObject;
         }
 
         private void Update()
@@ -733,8 +740,8 @@ namespace DCL.Chat
         public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
-            chatInputBox.gameObject.SetActive(isOtherUserConnected);
-            inputBoxMask.gameObject.SetActive(!isOtherUserConnected);
+            chatInputBoxGameObject.SetActive(isOtherUserConnected);
+            inputMaskGameObject.SetActive(!isOtherUserConnected);
             isMaskActive = !isOtherUserConnected;
             if (isOtherUserConnected)
             {
