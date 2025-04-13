@@ -39,7 +39,7 @@ namespace DCL.Chat
         private CancellationTokenSource cts = new ();
         private bool roomConnected;
         private string currentConversation = string.Empty;
-        private bool updatedUsers;
+        private bool updatedUsers = true;
         private bool isDisposed;
 
         public ChatUserStateUpdater(
