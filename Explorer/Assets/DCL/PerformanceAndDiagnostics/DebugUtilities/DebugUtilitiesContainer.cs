@@ -1,7 +1,6 @@
 ﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities
