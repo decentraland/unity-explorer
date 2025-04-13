@@ -64,15 +64,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             public string adapter;
         }
 
-        public bool Activated => true; // TODO
+        public bool Activated { get; private set; }
 
         public async UniTask ActivateAsync()
         {
-            await CycleStepAsync(CancellationToken.None);
+            Activated = true;
+            await StartAsync();
         }
 
         public async UniTask DeactivateAsync()
         {
+            Activated = false;
             await StopAsync();
         }
     }
