@@ -159,6 +159,8 @@ namespace DCL.Chat
         {
             if (State != ControllerState.ViewHidden)
             {
+                if (!viewInstanceCreated) return;
+
                 //If the view is disabled, we re-enable it
                 if(!GetViewVisibility())
                     SetViewVisibility(true);

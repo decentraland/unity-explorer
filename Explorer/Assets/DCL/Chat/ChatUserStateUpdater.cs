@@ -238,10 +238,12 @@ namespace DCL.Chat
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {participant.Metadata}");
+
             switch (update)
             {
-                //If the user is a friend, we add it to the connected friends, if it's not, we need to check if it's blocked.
                 case UpdateFromParticipant.Connected:
+                    //If the user is not blocked, we add it as a connected user, then check if its a friend, otherwise, we add it as a blocked user
                     if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity))
                     {
                         chatUsersStateCache.AddConnectedUser(participant.Identity);
@@ -256,9 +258,13 @@ namespace DCL.Chat
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
+                    ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed!!! {participant.Metadata}");
+
                     if (currentConversation != participant.Identity) return;
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
+
+                    ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed - Passed all checks!!! {participant.Metadata}");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
                     CheckUserMetadata(participant).Forget();
