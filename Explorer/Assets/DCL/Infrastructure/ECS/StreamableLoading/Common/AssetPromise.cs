@@ -142,15 +142,13 @@ namespace ECS.StreamableLoading.Common
             Entity = EntityReference.Null;
         }
 
-        public bool TryForgetWithEntityIfCancelled(Entity selfEntity, World world)
+        public bool IsCancellationRequested(World world)
         {
             if (LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 ForgetLoading(world);
-                world.Destroy(selfEntity);
                 return true;
             }
-
             return false;
         }
 

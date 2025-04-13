@@ -19,6 +19,7 @@ namespace ECS.StreamableLoading.Textures
 
         // OR
         public readonly bool IsVideoTexture;
+        public readonly bool IsAvatarTexture;
         public readonly CRDTEntity VideoPlayerEntity;
         public readonly string FileHash;
         public readonly string Src => CommonArguments.URL.Value;
@@ -29,7 +30,8 @@ namespace ECS.StreamableLoading.Textures
         private readonly string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
 
         public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
-            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT,
+            bool isAvatarTexture = false)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
@@ -38,6 +40,7 @@ namespace ECS.StreamableLoading.Textures
             IsVideoTexture = false;
             VideoPlayerEntity = -1;
             FileHash = fileHash;
+            IsAvatarTexture = isAvatarTexture;
         }
 
         public GetTextureIntention(CRDTEntity videoPlayerEntity)
@@ -49,6 +52,7 @@ namespace ECS.StreamableLoading.Textures
             IsVideoTexture = true;
             VideoPlayerEntity = videoPlayerEntity;
             TextureType = TextureType.Albedo; //Ignored
+            IsAvatarTexture = false;
         }
 
         public bool Equals(GetTextureIntention other) =>

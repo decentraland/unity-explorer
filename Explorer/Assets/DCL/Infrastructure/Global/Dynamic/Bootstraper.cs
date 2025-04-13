@@ -11,9 +11,11 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -49,6 +51,7 @@ namespace Global.Dynamic
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
+        private readonly ObjectProxy<IProfileRepository> profileRepositoryProxy = new ();
 
         private URLDomain? startingRealm;
         private Vector2Int startingParcel;
@@ -127,6 +130,7 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 sceneUIRoot,
+                profileRepositoryProxy,
                 ct
             );
 
@@ -166,7 +170,7 @@ namespace Global.Dynamic
             string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
-            return await DynamicWorldContainer.CreateAsync(
+            (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
                 new DynamicWorldParams
@@ -190,6 +194,11 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 ct);
+
+            if (tuple.container != null)
+                profileRepositoryProxy.SetObject(tuple.container.ProfileRepository);
+
+            return tuple;
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
