@@ -245,6 +245,7 @@ namespace DCL.Chat
                     ShowNewMessages();
                     conversationsToolbar.SelectConversation(value);
                     chatInputBox.InputBoxText = string.Empty;
+                    memberListView.IsVisible = false;
 
                     switch (currentChannel.ChannelType)
                     {

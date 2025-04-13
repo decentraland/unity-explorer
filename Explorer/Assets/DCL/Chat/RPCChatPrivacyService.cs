@@ -63,7 +63,6 @@ namespace DCL.Chat
             settingsAsset.OnPrivacyRead(response.Ok?.Settings.PrivateMessagesPrivacy == PrivateMessagePrivacySetting.OnlyFriends ? ChatPrivacySettings.ONLY_FRIENDS : ChatPrivacySettings.ALL);
         }
 
-        //TODO FRAN: Replace this HashSet<string>[] with a custom struct so its less prone to error
         public async UniTask<PrivacySettingsForUsersPayload> GetPrivacySettingForUsersAsync(HashSet<string> walletIds, CancellationToken ct)
         {
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
@@ -83,7 +82,7 @@ namespace DCL.Chat
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-            var privacySettings = new PrivacySettingsForUsersPayload();
+            var privacySettings = new PrivacySettingsForUsersPayload(true);
 
             if (response.ResponseCase == GetPrivateMessagesSettingsResponse.ResponseOneofCase.Ok)
             {
@@ -107,7 +106,7 @@ namespace DCL.Chat
             public readonly HashSet<string> OnlyFriends;
             public readonly HashSet<string> All;
 
-            public PrivacySettingsForUsersPayload(HashSet<string> onlyFriends, HashSet<string> all)
+            public PrivacySettingsForUsersPayload(bool _)
             {
                 OnlyFriends = new HashSet<string>();
                 All = new HashSet<string>();
