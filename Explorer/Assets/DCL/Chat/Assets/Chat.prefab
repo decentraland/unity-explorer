@@ -1170,8 +1170,8 @@ MonoBehaviour:
   scrollToBottomCanvasGroup: {fileID: 1816663618216097524}
   conversationsToolbar: {fileID: 5507091777745029389}
   conversationsToolbarCanvasGroup: {fileID: 3898375867954426524}
-  chatReceiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
-  chatReceiveMentionMessageAudio: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
+  <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
+  <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
 --- !u!1001 &1890474067062928347
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -7,6 +7,7 @@ using DCL.UI;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -28,7 +29,7 @@ namespace DCL.Chat
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputBoxSelectionChangedDelegate(bool isSelected);
         public delegate void InputChangedDelegate(string input);
-        public delegate void InputSubmittedDelegate(string message, string origin);
+        public delegate void InputSubmittedDelegate(string messageToSend, string origin);
 
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
@@ -146,7 +147,7 @@ namespace DCL.Chat
 
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
-            inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
+            //inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
             inputField.DeactivateInputField();
         }
 
@@ -155,7 +156,7 @@ namespace DCL.Chat
             if(isInputSubmissionEnabled) return;
             isInputSubmissionEnabled = true;
 
-            inputField.onSubmit.AddListener(OnInputFieldSubmitted);
+            //inputField.onSubmit.AddListener(OnInputFieldSubmitted);
             viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
         }
@@ -355,13 +356,13 @@ namespace DCL.Chat
             inputField.OnDeselect(null);
         }
 
-        private void OnInputFieldSubmitted(string submittedText)
+        public bool TrySubmitInputField()
         {
             if (suggestionPanel.IsActive)
             {
-                suggestionPanelController!.SetPanelVisibility(false);
-                lastMatch = Match.Empty;
-                return;
+                //suggestionPanelController!.SetPanelVisibility(false);
+                //lastMatch = Match.Empty;
+                return true;
             }
 
             if (emojiPanel.gameObject.activeInHierarchy)
@@ -371,11 +372,13 @@ namespace DCL.Chat
                 EmojiSelectionVisibilityChanged?.Invoke(false);
             }
 
+            string submittedText = inputField.text;
+
             if (string.IsNullOrWhiteSpace(submittedText))
             {
                 inputField.DeactivateInputField();
                 inputField.OnDeselect(null);
-                return;
+                return false;
             }
 
             //TODO FRAN: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
@@ -385,6 +388,7 @@ namespace DCL.Chat
             inputField.ResetInputField();
 
             InputSubmitted?.Invoke(submittedText, ORIGIN);
+            return true;
         }
 
         public void Dispose()

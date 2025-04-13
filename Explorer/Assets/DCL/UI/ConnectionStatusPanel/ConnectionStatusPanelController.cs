@@ -64,7 +64,7 @@ namespace DCL.UI.ConnectionStatusPanel
         {
             currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
             currentSceneInfo.SceneAssetBundleStatus.OnUpdate += AssetBundleSceneStatusOnUpdate;
-            chatCommandsBus.OnSetConnectionStatusPanelVisibility += SetVisibility;
+            chatCommandsBus.SetConnectionStatusPanelVisibility += SetVisibility;
 
             SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
             AssetBundleSceneStatusOnUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
@@ -161,7 +161,7 @@ namespace DCL.UI.ConnectionStatusPanel
             subscriptions.Clear();
 
             currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
-            chatCommandsBus.OnSetConnectionStatusPanelVisibility -= SetVisibility;
+            chatCommandsBus.SetConnectionStatusPanelVisibility -= SetVisibility;
             base.Dispose();
 
             cancellationTokenSource.SafeCancelAndDispose();

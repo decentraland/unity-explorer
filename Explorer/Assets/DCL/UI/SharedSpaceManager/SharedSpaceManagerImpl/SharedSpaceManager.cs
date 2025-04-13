@@ -146,7 +146,7 @@ namespace DCL.UI.SharedSpaceManager
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false));
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false, true));
                         }
                         else
                             isTransitioning = false;
@@ -255,7 +255,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
             if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false, true));
         }
 
 #region Registration

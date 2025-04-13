@@ -27,8 +27,8 @@ namespace DCL.Chat
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
-        public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
-        public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
+        public delegate void ChatSelectStateChangedDelegate(bool isSelected);
+        public delegate void InputSubmittedDelegate(ChatChannel channel, string s, string origin);
         public delegate void MemberListVisibilityChangedDelegate(bool isVisible);
         public delegate void PointerEventDelegate();
         public delegate void ScrollBottomReachedDelegate();
@@ -108,9 +108,9 @@ namespace DCL.Chat
         [SerializeField]
         private CanvasGroup conversationsToolbarCanvasGroup;
 
-        [Header("Audio")]
-        [SerializeField] private AudioClipConfig chatReceiveMessageAudio;
-        [SerializeField] private AudioClipConfig chatReceiveMentionMessageAudio;
+        [field: Header("Audio")]
+        [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
+        [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio {get; private set;}
 
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
@@ -125,7 +125,7 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when either the input box gains the focus or loses it.
         /// </summary>
-        public event InputBoxFocusChangedDelegate InputBoxFocusChanged;
+        public event ChatSelectStateChangedDelegate ChatSelectStateChanged;
 
         /// <summary>
         /// Raised when either the emoji selection panel opens or closes.
@@ -180,18 +180,16 @@ namespace DCL.Chat
         private int entriesPendingToAnimate;
         private CancellationTokenSource fadeoutCts;
 
-        private bool isInputSelected;
         private bool isMemberListCountDirty;
         private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private int memberListCount;
-        private bool isUnfolded;
         private bool isChatContextMenuOpen;
         private CancellationTokenSource popupCts;
         private bool pointerExit;
         private ILoadingStatus loadingStatus;
 
-        public bool IsMaskShowing { get; private set; }
-
+        // Folded, Selected, PointerExit
+        [NonSerialized] public ChatState LastChatState;
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -203,13 +201,8 @@ namespace DCL.Chat
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
-        /// </summary>
+        /// </ summary>
         public bool IsScrollAtBottom => chatMessageViewer.IsScrollAtBottom;
-
-        /// <summary>
-        /// Gets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
-        /// </summary>
-        public bool IsScrollToBottomButtonVisible => scrollToBottomButton.gameObject.activeInHierarchy;
 
         /// <summary>
         /// Gets or sets the amount of participants in the current channel.
@@ -273,8 +266,52 @@ namespace DCL.Chat
         /// </summary>
         public bool IsMemberListVisible => memberListView.IsVisible && IsUnfolded;
 
+        private bool isUnfolded
+        {
+            get => LastChatState.HasFlag(ChatState.UNFOLDED);
+            set => LastChatState = value
+                ? LastChatState | ChatState.UNFOLDED
+                : LastChatState & ~ChatState.UNFOLDED;
+        }
+
+        private bool isVisible
+        {
+            get => LastChatState.HasFlag(ChatState.IS_VISIBLE);
+            set => LastChatState = value
+                ? LastChatState | ChatState.IS_VISIBLE
+                : LastChatState & ~ChatState.IS_VISIBLE;
+        }
+
+
+        private bool isSelected
+        {
+            get => LastChatState.HasFlag(ChatState.SELECTED);
+            set => LastChatState = value
+                ? LastChatState | ChatState.SELECTED
+                : LastChatState & ~ChatState.SELECTED;
+        }
+
+        private bool isMaskActive
+        {
+            get => LastChatState.HasFlag(ChatState.WITH_MASK);
+
+            set => LastChatState = value
+                ? LastChatState | ChatState.WITH_MASK
+                : LastChatState & ~ChatState.WITH_MASK;
+        }
+
+        private bool isPointerOverChat
+        {
+            get => LastChatState.HasFlag(ChatState.WITH_POINTER);
+
+            set => LastChatState = value
+                ? LastChatState | ChatState.WITH_POINTER
+                : LastChatState & ~ChatState.WITH_POINTER;
+        }
+
         /// <summary>
         /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
+        /// But the chat messages will be hidden when folded
         /// </summary>
         public bool IsUnfolded
         {
@@ -282,18 +319,24 @@ namespace DCL.Chat
 
             set
             {
-                if(value == isUnfolded)
+                if (value == isUnfolded)
                     return;
 
-                isUnfolded = value;
-                unfoldedPanelInteractableArea.enabled = value;
                 memberListView.IsVisible = false;
+
+                unfoldedPanelInteractableArea.enabled = value;
+                chatMessageViewer.IsVisible = value;
+                isSelected = value;
                 SetChatVisibility(value);
                 SetBackgroundVisibility(value, false);
 
-                chatMessageViewer.IsVisible = value;
+                isUnfolded = value;
 
-                if (!value)
+                if (value)
+                {
+                    ShowNewMessages();
+                }
+                else
                 {
                     chatMessageViewer.HideSeparator();
                     SetScrollToBottomVisibility(false);
@@ -363,7 +406,7 @@ namespace DCL.Chat
         {
             PointerEnter?.Invoke();
 
-            pointerExit = false;
+            isPointerOverChat = true;
 
             if (IsUnfolded)
                 SetChatVisibility(true);
@@ -374,11 +417,11 @@ namespace DCL.Chat
             if(isChatContextMenuOpen)
                 return;
 
-            pointerExit = true;
+            isPointerOverChat = false;
 
             PointerExit?.Invoke();
 
-            if (IsUnfolded && (!isInputSelected || IsMaskShowing))
+            if (IsUnfolded && !isSelected)
                 SetChatVisibility(false);
 
         }
@@ -408,16 +451,10 @@ namespace DCL.Chat
             chatInputBox.InputChanged -= OnInputChanged;
             chatInputBox.InputSubmitted -= OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitPerformed;
+            viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
+            viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
             return base.HideAsync(ct, isInstant);
-        }
-
-        private void OnSubmitPerformed(InputAction.CallbackContext obj)
-        {
-            if (IsMaskShowing && IsUnfolded)
-            {
-            }
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
@@ -459,8 +496,10 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitPerformed;
-            viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
+            viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
+
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -503,13 +542,13 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the input box gain the focus. It does not modify its content. It wont focus if the mask is showing.
+        /// Marks the Chat as selected, if there is no mask in the input box, it gives it focus. It does not modify its content.
         /// </summary>
-        public void FocusInputBox()
+        public void SelectChat()
         {
             memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
 
-            if (IsMaskShowing) return;
+            if (isMaskActive) return;
 
             chatInputBox.FocusInputBox();
         }
@@ -541,6 +580,8 @@ namespace DCL.Chat
             chatInputBox.InsertTextAtCaretPosition(text);
         }
 
+#region Messages
+
         /// <summary>
         /// Makes sure the chat window is showing all the messages stored in the data for the current channel.
         /// </summary>
@@ -561,39 +602,10 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Performs a click event on the chat window.
-        /// </summary>
-        public void Click()
-        {
-            chatInputBox.Click();
-        }
-
-        /// <summary>
-        /// Plays the sound FX of the chat receiving a new message.
-        /// </summary>
-        public void PlayMessageReceivedSfx(bool isMention)
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(isMention ? chatReceiveMentionMessageAudio : chatReceiveMessageAudio);
-        }
-
-        /// <summary>
         /// Moves the chat so it shows the last created message.
         /// </summary>
         public void ShowLastMessage() =>
             chatMessageViewer.ShowLastMessage();
-
-        /// <summary>
-        /// Replaces the data of the participants in the current channel.
-        /// The list will be refreshed during the next Update.
-        /// </summary>
-        /// <param name="memberData">The data of the members to be displayed in the member list.</param>
-        public void SetMemberData(List<ChatMemberListView.MemberData> memberData)
-        {
-            sortedMemberData.Clear();
-            sortedMemberData.AddRange(memberData);
-
-            isMemberListDirty = true;
-        }
 
         /// <summary>
         /// Refreshes the list of messages (adds the unread messages elements if needed) and scrolls the list so the first of
@@ -601,8 +613,9 @@ namespace DCL.Chat
         /// </summary>
         public void ShowNewMessages()
         {
-            if (currentChannel!.Messages.Count == 0)
-                return;
+            if (currentChannel == null) return;
+
+            if (currentChannel!.Messages.Count == 0) return;
 
             // If there are unread messages...
             if (currentChannel.ReadMessages < currentChannel.Messages.Count)
@@ -628,6 +641,29 @@ namespace DCL.Chat
             }
             else
                 RefreshMessages();
+        }
+
+        /// <summary>
+        /// Replaces the number of unread messages in an item of the conversations toolbar.
+        /// </summary>
+        /// <param name="destinationChannel">The Id of the conversation.</param>
+        public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
+        {
+            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+        }
+#endregion
+
+        /// <summary>
+        /// Replaces the data of the participants in the current channel.
+        /// The list will be refreshed during the next Update.
+        /// </summary>
+        /// <param name="memberData">The data of the members to be displayed in the member list.</param>
+        public void SetMemberData(List<ChatMemberListView.MemberData> memberData)
+        {
+            sortedMemberData.Clear();
+            sortedMemberData.AddRange(memberData);
+
+            isMemberListDirty = true;
         }
 
         /// <summary>
@@ -657,6 +693,7 @@ namespace DCL.Chat
             }
         }
 
+#region Conversations
         /// <summary>
         /// Creates a new item in the conversation toolbar.
         /// </summary>
@@ -691,33 +728,26 @@ namespace DCL.Chat
             conversationsToolbar.RemoveAllConversations();
             currentChannel = null;
         }
-
-        /// <summary>
-        /// Replaces the number of unread messages in an item of the conversations toolbar.
-        /// </summary>
-        /// <param name="destinationChannel">The Id of the conversation.</param>
-        public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
-        {
-            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
-        }
+#endregion
 
         public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             chatInputBox.gameObject.SetActive(isOtherUserConnected);
             inputBoxMask.gameObject.SetActive(!isOtherUserConnected);
-            IsMaskShowing = !isOtherUserConnected;
+            isMaskActive = !isOtherUserConnected;
             if (isOtherUserConnected)
             {
-                FocusInputBox();
+                SelectChat();
                 return;
             }
             memberListView.IsVisible = false;
             inputBoxMask.SetUpWithUserState(userState);
         }
 
-        public void SetChatVisibility(bool isVisible)
+        private void SetChatVisibility(bool isVisible)
         {
+            this.isVisible = isVisible;
             SetBackgroundVisibility(isVisible, true);
             chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
 
@@ -725,7 +755,7 @@ namespace DCL.Chat
             {
                 chatMessageViewer.StopChatEntriesFadeout();
 
-                if (!IsMaskShowing) return;
+                if (!isMaskActive) return;
 
                 chatInputBox.gameObject.SetActive(false);
                 inputBoxMask.gameObject.SetActive(true);
@@ -739,6 +769,47 @@ namespace DCL.Chat
             }
         }
 
+        private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
+        {
+            //When the submit key is pressed, we toggle the selection status and select the chat if it corresponds or hide it
+            if (!IsUnfolded) return;
+
+            if (isSelected)
+            {
+                bool inputTextSubmitted = chatInputBox.TrySubmitInputField();
+                if (inputTextSubmitted)
+                    return;
+            }
+
+            isSelected = !isSelected;
+            ChatSelectStateChanged?.Invoke(isSelected);
+
+            if (isSelected)
+            {
+                if (!isVisible)
+                    SetChatVisibility(true);
+                SelectChat();
+            }
+            else if (!isPointerOverChat)
+                SetChatVisibility(false);
+        }
+
+        private void OnClickUIInputPerformed(InputAction.CallbackContext callbackContext)
+        {
+            if (!isPointerOverChat)
+            {
+                SetChatVisibility(false);
+                isSelected = false;
+                ChatSelectStateChanged?.Invoke(false);
+            }
+            else
+            {
+                chatInputBox.Click();
+                isSelected = true;
+                ChatSelectStateChanged?.Invoke(true);
+            }
+        }
+
         private void OnChatContextMenuVisibilityChanged(bool isVisible)
         {
             isChatContextMenuOpen = isVisible;
@@ -749,6 +820,10 @@ namespace DCL.Chat
 
         private void OnInputBoxSelectionChanged(bool isSelected)
         {
+            //When the input box is selected, the chat must unfold and if there is no mask, the input should be selected
+            //the chat itself will be considered selected as well until a click outside the chat is registered
+            //If the chat was already unfolded, it will just select the input box if possible
+            //While the chat is in selected state, all unwanted inputs will be blocked
             if (isSelected)
             {
                 if (!IsUnfolded)
@@ -757,19 +832,11 @@ namespace DCL.Chat
                     chatMessageViewer.ShowLastMessage();
                 }
 
-                if (isInputSelected) return;
+                if (this.isSelected) return;
 
+                this.isSelected = true;
                 SetChatVisibility(true);
-                isInputSelected = true;
-                InputBoxFocusChanged?.Invoke(true);
-            }
-            else
-            {
-                if (pointerExit)
-                    SetChatVisibility(false);
-
-                isInputSelected = false;
-                InputBoxFocusChanged?.Invoke(false);
+                ChatSelectStateChanged?.Invoke(true);
             }
         }
 
@@ -814,7 +881,7 @@ namespace DCL.Chat
         {
             if (chatMessageViewer.IsScrollAtBottom && currentChannel!.Messages.Count != 0)
             {
-                if (IsScrollToBottomButtonVisible)
+                if (scrollToBottomButton.gameObject.activeInHierarchy)
                     SetScrollToBottomVisibility(false, true);
 
                 ScrollBottomReached?.Invoke();
@@ -882,7 +949,7 @@ namespace DCL.Chat
             }
         }
 
-        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
+        private void OnCloseUIInputPerformed(InputAction.CallbackContext callbackContext)
         {
             if (memberListView.IsVisible)
                 OnMemberListClosingButtonClicked();
@@ -900,6 +967,16 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
+        }
+
+        [Flags]
+        public enum ChatState
+        {
+            UNFOLDED = 1,
+            SELECTED = 1 << 1,
+            WITH_POINTER = 1 << 2,
+            WITH_MASK = 1 << 3,
+            IS_VISIBLE = 1 << 4,
         }
     }
 }
