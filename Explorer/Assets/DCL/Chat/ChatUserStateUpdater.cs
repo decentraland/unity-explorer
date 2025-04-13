@@ -39,7 +39,7 @@ namespace DCL.Chat
         private CancellationTokenSource cts = new ();
         private bool roomConnected;
         private string currentConversation = string.Empty;
-        private bool checkedUsers;
+        private bool updatedUsers;
         private bool isDisposed;
 
         public ChatUserStateUpdater(
@@ -115,16 +115,17 @@ namespace DCL.Chat
             }
         }
 
-        public async UniTask GetConversationUsersConnectedStatus()
+        public async UniTask UpdateConversationUsersConnectedStatus()
         {
-            if (!checkedUsers) return;
+            if (!updatedUsers) return;
 
-            checkedUsers = false;
+            updatedUsers = false;
             try
             {
                 ProcessConnectedUsers();
                 await UniTask.Delay(CONNECTION_CHECK_INTERVAL_MS, cancellationToken: cts.Token);
-                checkedUsers = true;
+                updatedUsers = true;
+
             }
             catch (OperationCanceledException)
             {
@@ -140,15 +141,20 @@ namespace DCL.Chat
         {
             var connectedParticipants = new HashSet<string>(participantsHub.RemoteParticipantIdentities());
 
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"connectedParticipants {connectedParticipants.Count}");
+
             foreach (string participant in openConversations)
             {
                 if (connectedParticipants.Contains(participant))
                 {
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant))
+                    {
                         chatUsersStateCache.AddConnectedBlockedUser(participant);
+                    }
                     else
+                    {
                         chatUsersStateCache.AddConnectedUser(participant);
-
+                    }
                 }
                 else
                 {
@@ -160,7 +166,7 @@ namespace DCL.Chat
 
         public async UniTask<ChatUserState> GetChatUserStateAsync(string userId, CancellationToken ct)
         {
-            await GetConversationUsersConnectedStatus();
+            await UpdateConversationUsersConnectedStatus();
             var friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, ct);
 
             //If it's a friend we just return its connection status
@@ -279,7 +285,7 @@ namespace DCL.Chat
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {participant.Metadata}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {update.ToString()}");
 
             switch (update)
             {
@@ -290,7 +296,7 @@ namespace DCL.Chat
                         chatUsersStateCache.AddConnectedUser(participant.Identity);
 
                         if (openConversations.Contains(participant.Identity))
-                            CheckFriendStatus(participant.Identity).Forget();
+                            CheckFriendStatusAsync(participant.Identity).Forget();
                     }
                     else
                     {
@@ -308,7 +314,7 @@ namespace DCL.Chat
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed - Passed all checks!!! {participant.Metadata}");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
-                    CheckUserMetadata(participant).Forget();
+                    CheckUserMetadataAsync(participant).Forget();
                     break;
                 case UpdateFromParticipant.Disconnected:
                     chatUsersStateCache.RemoveConnectedUser(participant.Identity);
@@ -321,13 +327,12 @@ namespace DCL.Chat
                         chatUserStateEventBus.OnUserBlocked(participant.Identity);
                         return;
                     }
-
                     chatUserStateEventBus.OnUserDisconnected(participant.Identity);
                     break;
             }
         }
 
-        private async UniTaskVoid CheckFriendStatus(string userId)
+        private async UniTaskVoid CheckFriendStatusAsync(string userId)
         {
             var friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token);
             if (friendshipStatus == FriendshipStatus.FRIEND)
@@ -336,14 +341,13 @@ namespace DCL.Chat
                 chatUserStateEventBus.OnNonFriendConnected(userId);
         }
 
-        private async UniTaskVoid CheckUserMetadata(Participant participant)
+        private async UniTaskVoid CheckUserMetadataAsync(Participant participant)
         {
             var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
 
             ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Read metadata from user {participant.Metadata}");
 
             //If they accept all conversations, we dont need to check if they are friends or not
-            //TODO FRAN: Convert this into a CONST
             if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
             {
                 chatUserStateEventBus.OnCurrentConversationUserAvailable();
