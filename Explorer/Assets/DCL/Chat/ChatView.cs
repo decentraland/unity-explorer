@@ -15,6 +15,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -190,13 +191,12 @@ namespace DCL.Chat
         private GameObject chatInputBoxGameObject;
         private GameObject inputMaskGameObject;
 
-        // Folded, Selected, PointerExit
-        [NonSerialized] public ChatState LastChatState;
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
         public string InputBoxText
         {
+            //TODO FRAN: This should not exist at all ever
             get => chatInputBox.InputBoxText;
             set => chatInputBox.InputBoxText = value;
         }
@@ -244,6 +244,7 @@ namespace DCL.Chat
                     chatMessageViewer.SetData(currentChannel.Messages);
                     ShowNewMessages();
                     conversationsToolbar.SelectConversation(value);
+                    chatInputBox.InputBoxText = string.Empty;
 
                     switch (currentChannel.ChannelType)
                     {
@@ -253,8 +254,6 @@ namespace DCL.Chat
                             break;
                         case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
-                            break;
-                        default:
                             break;
                     }
 
@@ -268,47 +267,27 @@ namespace DCL.Chat
         /// </summary>
         public bool IsMemberListVisible => memberListView.IsVisible && IsUnfolded;
 
-        private bool isUnfolded
+        private bool isChatUnfolded;
+        private bool isChatVisible;
+        [FormerlySerializedAs("isMaskActive")] public bool IsMaskActive;
+        private bool isPointerOverChat;
+        public bool IsFocused { get; private set; }
+
+        private bool isChatSelected;
+
+        public bool IsChatSelected
         {
-            get => LastChatState.HasFlag(ChatState.UNFOLDED);
-            set => LastChatState = value
-                ? LastChatState | ChatState.UNFOLDED
-                : LastChatState & ~ChatState.UNFOLDED;
+            get => isChatSelected;
+            set
+            {
+                if (isChatSelected == value)
+                    return;
+
+                isChatSelected = value;
+                ChatSelectStateChanged?.Invoke(value);
+            }
         }
 
-        private bool isVisible
-        {
-            get => LastChatState.HasFlag(ChatState.IS_VISIBLE);
-            set => LastChatState = value
-                ? LastChatState | ChatState.IS_VISIBLE
-                : LastChatState & ~ChatState.IS_VISIBLE;
-        }
-
-        private bool isSelected
-        {
-            get => LastChatState.HasFlag(ChatState.SELECTED);
-            set => LastChatState = value
-                ? LastChatState | ChatState.SELECTED
-                : LastChatState & ~ChatState.SELECTED;
-        }
-
-        private bool isMaskActive
-        {
-            get => LastChatState.HasFlag(ChatState.WITH_MASK);
-
-            set => LastChatState = value
-                ? LastChatState | ChatState.WITH_MASK
-                : LastChatState & ~ChatState.WITH_MASK;
-        }
-
-        private bool isPointerOverChat
-        {
-            get => LastChatState.HasFlag(ChatState.WITH_POINTER);
-
-            set => LastChatState = value
-                ? LastChatState | ChatState.WITH_POINTER
-                : LastChatState & ~ChatState.WITH_POINTER;
-        }
 
         /// <summary>
         /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
@@ -316,22 +295,22 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => isUnfolded;
+            get => isChatUnfolded;
 
             set
             {
-                if (value == isUnfolded)
+                if (value == isChatUnfolded)
                     return;
 
                 memberListView.IsVisible = false;
 
                 unfoldedPanelInteractableArea.enabled = value;
                 chatMessageViewer.IsVisible = value;
-                isSelected = value;
+                IsChatSelected = value;
                 SetChatVisibility(value);
                 SetBackgroundVisibility(value, false);
 
-                isUnfolded = value;
+                isChatUnfolded = value;
 
                 if (value)
                 {
@@ -346,8 +325,6 @@ namespace DCL.Chat
                 FoldingChanged?.Invoke(value);
             }
         }
-
-        public bool IsFocused { get; private set; }
 
         public void UpdateConversationToolbarStatusIconForUser(string userId, OnlineStatus status)
         {
@@ -428,7 +405,7 @@ namespace DCL.Chat
 
             PointerExit?.Invoke();
 
-            if (IsUnfolded && !isSelected)
+            if (IsUnfolded && !IsChatSelected)
                 SetChatVisibility(false);
 
         }
@@ -551,11 +528,11 @@ namespace DCL.Chat
         /// <summary>
         /// Marks the Chat as selected, if there is no mask in the input box, it gives it focus. It does not modify its content.
         /// </summary>
-        public void SelectChat()
+        public void FocusInputBox()
         {
             memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
 
-            if (isMaskActive) return;
+            if (IsMaskActive) return;
 
             chatInputBox.FocusInputBox();
         }
@@ -741,20 +718,22 @@ namespace DCL.Chat
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
+
+            IsMaskActive = !isOtherUserConnected;
             inputMaskGameObject.SetActive(!isOtherUserConnected);
-            isMaskActive = !isOtherUserConnected;
+
             if (isOtherUserConnected)
+                chatInputBox.FocusInputBox();
+            else
             {
-                SelectChat();
-                return;
+                memberListView.IsVisible = false;
+                inputBoxMask.SetUpWithUserState(userState);
             }
-            memberListView.IsVisible = false;
-            inputBoxMask.SetUpWithUserState(userState);
         }
 
         private void SetChatVisibility(bool isVisible)
         {
-            this.isVisible = isVisible;
+            this.isChatVisible = isVisible;
             SetBackgroundVisibility(isVisible, true);
             chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
 
@@ -762,7 +741,7 @@ namespace DCL.Chat
             {
                 chatMessageViewer.StopChatEntriesFadeout();
 
-                if (!isMaskActive) return;
+                if (!IsMaskActive) return;
 
                 chatInputBox.gameObject.SetActive(false);
                 inputBoxMask.gameObject.SetActive(true);
@@ -781,21 +760,23 @@ namespace DCL.Chat
             //When the submit key is pressed, we toggle the selection status and select the chat if it corresponds or hide it
             if (!IsUnfolded) return;
 
-            if (isSelected)
+            if (IsChatSelected)
             {
                 bool inputTextSubmitted = chatInputBox.TrySubmitInputField();
                 if (inputTextSubmitted)
                     return;
             }
 
-            isSelected = !isSelected;
-            ChatSelectStateChanged?.Invoke(isSelected);
+            IsChatSelected = !IsChatSelected;
 
-            if (isSelected)
+            if (IsChatSelected)
             {
-                if (!isVisible)
+                if (!isChatVisible)
                     SetChatVisibility(true);
-                SelectChat();
+                else if (memberListView.IsVisible)
+                    memberListView.IsVisible = false;
+
+                chatInputBox.FocusInputBox();
             }
             else if (!isPointerOverChat)
                 SetChatVisibility(false);
@@ -806,14 +787,12 @@ namespace DCL.Chat
             if (!isPointerOverChat)
             {
                 SetChatVisibility(false);
-                isSelected = false;
-                ChatSelectStateChanged?.Invoke(false);
+                IsChatSelected = false;
             }
             else
             {
                 chatInputBox.Click();
-                isSelected = true;
-                ChatSelectStateChanged?.Invoke(true);
+                IsChatSelected = true;
             }
         }
 
@@ -825,13 +804,13 @@ namespace DCL.Chat
                 OnPointerExit(null);
         }
 
-        private void OnInputBoxSelectionChanged(bool isSelected)
+        private void OnInputBoxSelectionChanged(bool inputBoxSelected)
         {
             //When the input box is selected, the chat must unfold and if there is no mask, the input should be selected
             //the chat itself will be considered selected as well until a click outside the chat is registered
             //If the chat was already unfolded, it will just select the input box if possible
             //While the chat is in selected state, all unwanted inputs will be blocked
-            if (isSelected)
+            if (inputBoxSelected)
             {
                 if (!IsUnfolded)
                 {
@@ -839,11 +818,10 @@ namespace DCL.Chat
                     chatMessageViewer.ShowLastMessage();
                 }
 
-                if (this.isSelected) return;
+                if (IsChatSelected) return;
 
-                this.isSelected = true;
+                IsChatSelected = true;
                 SetChatVisibility(true);
-                ChatSelectStateChanged?.Invoke(true);
             }
         }
 
@@ -974,16 +952,6 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
-        }
-
-        [Flags]
-        public enum ChatState
-        {
-            UNFOLDED = 1,
-            SELECTED = 1 << 1,
-            WITH_POINTER = 1 << 2,
-            WITH_MASK = 1 << 3,
-            IS_VISIBLE = 1 << 4,
         }
     }
 }

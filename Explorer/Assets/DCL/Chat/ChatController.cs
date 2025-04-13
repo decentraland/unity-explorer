@@ -165,7 +165,7 @@ namespace DCL.Chat
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-                ReportHub.LogError(ReportData.UNSPECIFIED, "ON SHOWN CHAT!!");
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "ON SHOWN CHAT from Shared Space!!");
 
                 //TODO FRAN: here we must restore the state of the chat when returning to it from anywhere, unless overwritten for some reason.
                 //This should be the only way to open the chat, params should adjust to these possibilities.
@@ -173,7 +173,7 @@ namespace DCL.Chat
                 IsUnfolded = showParams.ShowUnfolded;
 
                 if(showParams.HasToSelectChat)
-                    viewInstance!.SelectChat();
+                    viewInstance!.FocusInputBox();
 
                 if (showParams.ShowLastState)
                 {
@@ -188,7 +188,7 @@ namespace DCL.Chat
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            ReportHub.LogError(ReportData.UNSPECIFIED, "ON HIDDEN CHAT!!");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "ON HIDDEN CHAT from shared space!!");
             // We only need to minimize the chat when the sidebar chat button is pressed or the enter key is pressed,
             // in the other cases, we want to preserve their last state
             IsUnfolded = false;
@@ -225,7 +225,6 @@ namespace DCL.Chat
 #region View Show and Close
         protected override void OnViewShow()
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow() called");
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -243,7 +242,6 @@ namespace DCL.Chat
 
             OnFocus();
             IsUnfolded = inputData.ShowUnfolded;
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow() finished");
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
@@ -477,9 +475,9 @@ namespace DCL.Chat
                 EnableUnwantedInputs();
         }
 
-        private void OnViewChatSelectStateChanged(bool hasFocus)
+        private void OnViewChatSelectStateChanged(bool isChatSelected)
         {
-            if (hasFocus)
+            if (isChatSelected)
                 DisableUnwantedInputs();
             else
                 EnableUnwantedInputs();
@@ -497,10 +495,12 @@ namespace DCL.Chat
             viewInstance!.FocusInputBoxWithText("/");
         }
 
+        //This comes from the paste option or mention, we check if it's possible to do it as if there is a mask we cannot
         private void OnTextInserted(string text)
         {
-            //TODO FRAN: Check what this is doing
-            viewInstance!.SelectChat();
+            if (viewInstance!.IsMaskActive) return;
+
+            viewInstance.FocusInputBox();
             viewInstance.InsertTextInInputBox(text);
         }
 

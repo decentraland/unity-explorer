@@ -64,13 +64,11 @@ namespace DCL.Chat
         }
 
         //TODO FRAN: Replace this HashSet<string>[] with a custom struct so its less prone to error
-        public async UniTask<HashSet<string>[]> GetPrivacySettingForUsersAsync(HashSet<string> walletIds, CancellationToken ct)
+        public async UniTask<PrivacySettingsForUsersPayload> GetPrivacySettingForUsersAsync(HashSet<string> walletIds, CancellationToken ct)
         {
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
 
             var users = new RepeatedField<User>();
-            participants[0].Clear();
-            participants[1].Clear();
 
             foreach (string wallet in walletIds)
                 users.Add(new User { Address = wallet});
@@ -85,20 +83,35 @@ namespace DCL.Chat
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
+            var privacySettings = new PrivacySettingsForUsersPayload();
+
             if (response.ResponseCase == GetPrivateMessagesSettingsResponse.ResponseOneofCase.Ok)
             {
+
                 foreach (var setting in response.Ok.Settings)
                 {
                     if (setting.PrivateMessagesPrivacy == PrivateMessagePrivacySetting.OnlyFriends)
-                        participants[0].Add(setting.User.Address);
+                        privacySettings.OnlyFriends?.Add(setting.User.Address);
                     else
-                        participants[1].Add(setting.User.Address);
+                        privacySettings.All?.Add(setting.User.Address);
                 }
             }
             else
                 throw new Exception($"Cannot get privacy settings: {response.ResponseCase}");
 
-            return participants;
+            return privacySettings;
+        }
+
+        public readonly struct PrivacySettingsForUsersPayload
+        {
+            public readonly HashSet<string> OnlyFriends;
+            public readonly HashSet<string> All;
+
+            public PrivacySettingsForUsersPayload(HashSet<string> onlyFriends, HashSet<string> all)
+            {
+                OnlyFriends = new HashSet<string>();
+                All = new HashSet<string>();
+            }
         }
     }
 }

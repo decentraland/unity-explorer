@@ -34,11 +34,11 @@ namespace DCL.Chat
         /// We will use this to track which conversations are open and decide if its necessary to notify the controller about changes
         /// </summary>
         private readonly HashSet<string> openConversations = new ();
-        private readonly HashSet<string> chatUsers = new ();
+        private readonly HashSet<string> chatUsers = new (1);
 
         private CancellationTokenSource cts = new ();
         private bool roomConnected;
-        private string currentConversation = string.Empty;
+        private string currentConversationUserId = string.Empty;
         private bool updatedUsers = true;
         private bool isDisposed;
 
@@ -68,7 +68,7 @@ namespace DCL.Chat
 
         public string CurrentConversation
         {
-            set => currentConversation = value;
+            set => currentConversationUserId = value;
         }
 
         public async UniTask<HashSet<string>> Initialize(IEnumerable<ChatChannel.ChannelId> openConversations)
@@ -190,7 +190,7 @@ namespace DCL.Chat
             chatUsers.Add(userId);
             var response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
 
-            if (response[0].Count > 0)
+            if (response.OnlyFriends.Count > 0)
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
 
             return ChatUserState.CONNECTED;
@@ -205,7 +205,7 @@ namespace DCL.Chat
             chatUsers.Add(userId);
             var response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
 
-            if (response[0].Count > 0)
+            if (response.OnlyFriends.Count > 0)
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
 
             return ChatUserState.CONNECTED;
@@ -250,24 +250,12 @@ namespace DCL.Chat
 
         private async UniTaskVoid RequestParticipantsPrivacySettings(HashSet<string> participants, CancellationToken ct)
         {
-            var onlyFriendsParticipants = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(participants, ct);
-            foreach (string participant in onlyFriendsParticipants[0])
-            {
-                if (currentConversation == participant)
-                {
-                    chatUserStateEventBus.OnCurrentConversationUserUnavailable();
-                    return;
-                }
-            }
+            var allParticipants = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(participants, ct);
 
-            foreach (string participant in onlyFriendsParticipants[1])
-            {
-                if (currentConversation == participant)
-                {
-                    chatUserStateEventBus.OnCurrentConversationUserAvailable();
-                    return;
-                }
-            }
+            if (allParticipants.OnlyFriends.Contains(currentConversationUserId))
+                chatUserStateEventBus.OnCurrentConversationUserUnavailable();
+            else if (allParticipants.All.Contains(currentConversationUserId))
+                chatUserStateEventBus.OnCurrentConversationUserAvailable();
         }
 
         private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
@@ -278,7 +266,7 @@ namespace DCL.Chat
             if (privacySettings == ChatPrivacySettings.ALL)
             {
                 chatUsers.Clear();
-                chatUsers.Add(currentConversation);
+                chatUsers.Add(currentConversationUserId);
                 RequestParticipantsPrivacySettings(chatUsers, cts.Token).Forget();
             }
         }
@@ -307,7 +295,7 @@ namespace DCL.Chat
                 case UpdateFromParticipant.MetadataChanged:
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed!!! {participant.Metadata}");
 
-                    if (currentConversation != participant.Identity) return;
+                    if (currentConversationUserId != participant.Identity) return;
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
 
