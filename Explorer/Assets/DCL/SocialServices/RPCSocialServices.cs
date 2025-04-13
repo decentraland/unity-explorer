@@ -123,16 +123,34 @@ namespace DCL.SocialService
 
         private async UniTask StartHandshakeAsync(CancellationToken ct, bool test = false)
         {
+            bool acquired = false;
             try
             {
                 await handshakeMutex.WaitAsync(ct);
+                acquired = true;
 
                 if (!isConnectionReady)
                     await InitializeConnectionAsync(ct);
             }
+            catch (Exception)
+            {
+                // If we get here, the connection isn't ready and we should clean up
+                if (acquired)
+                {
+                    port?.Close();
+                    port = null;
+                    module = null;
+                    transport?.Dispose();
+                    transport = null;
+                    client?.Dispose();
+                    client = null;
+                }
+                throw;
+            }
             finally
             {
-                handshakeMutex.Release();
+                if (acquired)
+                    handshakeMutex.Release();
             }
         }
 
