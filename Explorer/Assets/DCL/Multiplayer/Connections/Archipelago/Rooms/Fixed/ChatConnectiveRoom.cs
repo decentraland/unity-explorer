@@ -68,14 +68,26 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public async UniTask ActivateAsync()
         {
+            if (Activated)
+            {
+                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} is already activated");
+                return;
+            }
+
             Activated = true;
-            await StartAsync();
+            await this.StartIfNotAsync();
         }
 
         public async UniTask DeactivateAsync()
         {
+            if (!Activated)
+            {
+                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} is already deactivated");
+                return;
+            }
+
             Activated = false;
-            await StopAsync();
+            await this.StopIfNotAsync();
         }
     }
 }
