@@ -225,62 +225,33 @@ namespace DCL.Chat
 #region View Show and Close
         protected override void OnViewShow()
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow() called");
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
-            //We start processing messages once the view is ready
-            chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatCommandsBus.ClearChat += OnClearChatCommandReceived;
+            SubscribeToEvents();
 
-            chatEventBus.InsertTextInChat += OnTextInserted;
-            chatEventBus.OpenConversation += OnOpenConversation;
-
-            viewInstance.PointerEnter += OnViewPointerEnter;
-            viewInstance.PointerExit += OnViewPointerExit;
-
-            viewInstance.ChatSelectStateChanged += OnViewChatSelectStateChanged;
-            viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.InputSubmitted += OnViewInputSubmitted;
-            viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
-            viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
-            viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
-            viewInstance.FoldingChanged += OnViewFoldingChanged;
-            viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
-            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
-            viewInstance.ConversationSelected += OnSelectConversation;
-
-            chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
-            chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-
-            chatUserStateEventBus.FriendConnected += OnFriendConnected;
-            chatUserStateEventBus.UserDisconnected += OnUserDisconnected;
-            chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
-            chatUserStateEventBus.CurrentConversationUserAvailable += OnCurrentConversationUserAvailable;
-            chatUserStateEventBus.CurrentConversationUserUnavailable += OnCurrentConversationUserUnavailable;
-            chatUserStateEventBus.UserBlocked += OnUserBlockedByOwnUser;
-
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            AddNearbyChannelAndSendWelcomeMessage();
 
             memberListCts = new CancellationTokenSource();
-
             UniTask.RunOnThreadPool(UpdateMembersDataAsync).Forget();
-
-            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
-            viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
-            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
 
             InitializeChannelsAndConversationsAsync().Forget();
 
             OnFocus();
             IsUnfolded = inputData.ShowUnfolded;
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow() finished");
+        }
+
+        private void AddNearbyChannelAndSendWelcomeMessage()
+        {
+            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+            viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
 
         private async UniTaskVoid InitializeChannelsAndConversationsAsync()
@@ -292,52 +263,12 @@ namespace DCL.Chat
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
-
         protected override void OnViewClose()
         {
-            chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
-            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
-            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatCommandsBus.ClearChat -= OnClearChatCommandReceived;
-            chatEventBus.InsertTextInChat -= OnTextInserted;
-
-            if (viewInstance != null)
-            {
-                viewInstance.PointerEnter -= OnViewPointerEnter;
-                viewInstance.PointerExit -= OnViewPointerExit;
-                viewInstance.ChatSelectStateChanged -= OnViewChatSelectStateChanged;
-                viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-                viewInstance.InputSubmitted -= OnViewInputSubmitted;
-                viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
-                viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
-                viewInstance.FoldingChanged -= OnViewFoldingChanged;
-                viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
-                viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
-                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
-                viewInstance.ConversationSelected -= OnSelectConversation;
-                viewInstance.RemoveAllConversations();
-                viewInstance.Dispose();
-            }
-
-            chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
-            chatHistory.ChannelRemoved -= OnChatHistoryChannelRemoved;
-            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-
-            chatUserStateEventBus.FriendConnected -= OnFriendConnected;
-            chatUserStateEventBus.UserDisconnected -= OnUserDisconnected;
-            chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
-            chatUserStateEventBus.CurrentConversationUserAvailable -= OnCurrentConversationUserAvailable;
-            chatUserStateEventBus.CurrentConversationUserUnavailable -= OnCurrentConversationUserUnavailable;
-            chatUserStateEventBus.UserBlocked -= OnUserBlockedByOwnUser;
-
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-
+            UnsubscribeFromEvents();
             Dispose();
         }
+
 #endregion
 
 #region Other Controller Methods
@@ -799,5 +730,91 @@ namespace DCL.Chat
             viewInstance!.SetInputWithUserState(state);
         }
         #endregion
-    }
+
+        private void SubscribeToEvents()
+        {
+            //We start processing messages once the view is ready
+            chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
+            chatCommandsBus.ClearChat += OnClearChatCommandReceived;
+
+            chatEventBus.InsertTextInChat += OnTextInserted;
+            chatEventBus.OpenConversation += OnOpenConversation;
+
+            viewInstance.PointerEnter += OnViewPointerEnter;
+            viewInstance.PointerExit += OnViewPointerExit;
+
+            viewInstance.ChatSelectStateChanged += OnViewChatSelectStateChanged;
+            viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
+            viewInstance.InputSubmitted += OnViewInputSubmitted;
+            viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
+            viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
+            viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
+            viewInstance.FoldingChanged += OnViewFoldingChanged;
+            viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
+            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
+            viewInstance.ConversationSelected += OnSelectConversation;
+
+            chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
+            chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+
+            chatUserStateEventBus.FriendConnected += OnFriendConnected;
+            chatUserStateEventBus.UserDisconnected += OnUserDisconnected;
+            chatUserStateEventBus.NonFriendConnected += OnNonFriendConnected;
+            chatUserStateEventBus.CurrentConversationUserAvailable += OnCurrentConversationUserAvailable;
+            chatUserStateEventBus.CurrentConversationUserUnavailable += OnCurrentConversationUserUnavailable;
+            chatUserStateEventBus.UserBlocked += OnUserBlockedByOwnUser;
+
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
+            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
+            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
+            chatCommandsBus.ClearChat -= OnClearChatCommandReceived;
+            chatEventBus.InsertTextInChat -= OnTextInserted;
+
+            if (viewInstance != null)
+            {
+                viewInstance.PointerEnter -= OnViewPointerEnter;
+                viewInstance.PointerExit -= OnViewPointerExit;
+                viewInstance.ChatSelectStateChanged -= OnViewChatSelectStateChanged;
+                viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
+                viewInstance.InputSubmitted -= OnViewInputSubmitted;
+                viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
+                viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
+                viewInstance.FoldingChanged -= OnViewFoldingChanged;
+                viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
+                viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
+                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
+                viewInstance.ConversationSelected -= OnSelectConversation;
+                viewInstance.RemoveAllConversations();
+                viewInstance.Dispose();
+            }
+
+            chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
+            chatHistory.ChannelRemoved -= OnChatHistoryChannelRemoved;
+            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
+
+            chatUserStateEventBus.FriendConnected -= OnFriendConnected;
+            chatUserStateEventBus.UserDisconnected -= OnUserDisconnected;
+            chatUserStateEventBus.NonFriendConnected -= OnNonFriendConnected;
+            chatUserStateEventBus.CurrentConversationUserAvailable -= OnCurrentConversationUserAvailable;
+            chatUserStateEventBus.CurrentConversationUserUnavailable -= OnCurrentConversationUserUnavailable;
+            chatUserStateEventBus.UserBlocked -= OnUserBlockedByOwnUser;
+
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+        }
+
+
+}
 }

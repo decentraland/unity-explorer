@@ -7,6 +7,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
@@ -137,6 +138,8 @@ namespace DCL.PluginSystem.Global
             chatController = new ChatController(
                 () =>
                 {
+                    ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, "Chat Controller created View");
+
                     ChatView? view = mainUIView.ChatView;
                     view.gameObject.SetActive(true);
                     return view;
