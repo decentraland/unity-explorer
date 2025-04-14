@@ -31,7 +31,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             HandleEntityDestructionQuery(World);
             HandleUIDropdownRemovalQuery(World);
-            World.Remove<UIDropdownComponent>(in HandleUIDropdownRemoval_QueryDescription);
         }
 
         [Query]

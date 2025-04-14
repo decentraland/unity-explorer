@@ -31,7 +31,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         {
             HandleEntityDestructionQuery(World);
             HandleUIInputRemovalQuery(World);
-            World.Remove<UIInputComponent>(in HandleUIInputRemoval_QueryDescription);
         }
 
         [Query]
