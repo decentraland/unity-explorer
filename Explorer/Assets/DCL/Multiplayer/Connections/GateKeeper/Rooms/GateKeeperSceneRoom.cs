@@ -155,7 +155,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                                                              url,
                                                              meta.ToJson(),
                                                              ReportCategory.LIVEKIT)
-                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity, token);
+                                                        .CreateFromJsonAsync<AdapterResponse>(WRJsonParser.Unity, token);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");

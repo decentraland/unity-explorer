@@ -1,5 +1,7 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Caching;
+using Best.HTTP.Request.Settings;
+using Best.HTTP.Response;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -20,6 +22,8 @@ namespace DCL.WebRequests.HTTP2
         private readonly HTTPCache cache;
         private readonly long chunkSize;
 
+        private readonly OnDownloadStartedDelegate detachDownloadStream;
+
         IRequestHub IWebRequestController.requestHub => requestHub;
 
         public Http2WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache identityCache, IRequestHub requestHub, HTTPCache cache, long chunkSize)
@@ -29,6 +33,10 @@ namespace DCL.WebRequests.HTTP2
             this.requestHub = requestHub;
             this.cache = cache;
             this.chunkSize = chunkSize;
+
+            // We can't await for DownloadStream straight-away as there is a chance that the request will be finished and disposed before we actually hit the valid stream
+            // so it will be disposed and stay `null`
+            detachDownloadStream = (_, _, stream) => stream.IsDetached = true;
         }
 
         public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
@@ -57,7 +65,7 @@ namespace DCL.WebRequests.HTTP2
                     .PartialFlowAsync(ct);
         }
 
-        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct)
+        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             await using ExecuteOnThreadPoolScope scope = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
 
@@ -75,6 +83,9 @@ namespace DCL.WebRequests.HTTP2
                 envelope.InitializedWebRequest(identityCache, requestAdapter);
                 nativeRequest.RetrySettings.MaxRetries = envelope.CommonArguments.TotalAttempts();
                 nativeRequest.DownloadSettings.ContentStreamMaxBuffered = requestWrap.DownloadBufferMaxSize;
+
+                if (detachDownloadHandler)
+                    nativeRequest.DownloadSettings.OnDownloadStarted = detachDownloadStream;
 
                 envelope.OnCreated?.Invoke(requestAdapter);
 
@@ -98,8 +109,12 @@ namespace DCL.WebRequests.HTTP2
                 // convert into a common exception
                 throw adaptedException;
             }
-            catch (Exception e) // any other exception
+            catch // any other exception
             {
+                // Dispose the download stream that was detached
+                if (detachDownloadHandler)
+                    requestAdapter?.httpRequest.Response?.DownStream?.Dispose();
+
                 // Dispose adapter if it was created or the wrap on exception as it won't be returned to the caller
 
                 if (requestAdapter != null)

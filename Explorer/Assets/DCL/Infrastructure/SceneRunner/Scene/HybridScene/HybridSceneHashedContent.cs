@@ -86,7 +86,7 @@ namespace SceneRunner.Scene
             try
             {
                 SceneEntityDefinition? sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), reportCategory)
-                                                                                         .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                                         .CreateFromJsonAsync<SceneEntityDefinition>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {

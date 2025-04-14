@@ -91,9 +91,9 @@ namespace DCL.WebRequests
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
             CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
             JsonSerializerSettings? serializerSettings = null) =>
-            request.CreateFromJson<T>(WRJsonParser.Newtonsoft, ct, threadFlags, serializerSettings, createCustomExceptionOnFailure);
+            request.CreateFromJsonAsync<T>(WRJsonParser.Newtonsoft, ct, threadFlags, serializerSettings, createCustomExceptionOnFailure);
 
-        public static async UniTask<T> CreateFromJson<T>(this ITypedWebRequest request,
+        public static async UniTask<T> CreateFromJsonAsync<T>(this ITypedWebRequest request,
             WRJsonParser jsonParser,
             CancellationToken ct,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,

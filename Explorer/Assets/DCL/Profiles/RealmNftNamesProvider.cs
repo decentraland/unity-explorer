@@ -32,7 +32,7 @@ namespace DCL.Profiles
 
             GenericGetRequest adapter = webRequestController.GetAsync(new CommonArguments(urlBuilder.Build()), ReportCategory.REALM);
 
-            RealmNamesResponse jsonResponse = await adapter.CreateFromJson<RealmNamesResponse>(WRJsonParser.Unity, ct).SuppressExceptionWithFallbackAsync(default(RealmNamesResponse), ignoreTheseErrorCodesOnly: WebRequestUtils.IGNORE_NOT_FOUND);
+            RealmNamesResponse jsonResponse = await adapter.CreateFromJsonAsync<RealmNamesResponse>(WRJsonParser.Unity, ct).SuppressExceptionWithFallbackAsync(default(RealmNamesResponse), ignoreTheseErrorCodesOnly: WebRequestUtils.IGNORE_NOT_FOUND);
 
             var response = new INftNamesProvider.PaginatedNamesResponse(jsonResponse.totalAmount, jsonResponse.elements.Select(element => element.name));
 

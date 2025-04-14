@@ -15,6 +15,7 @@ namespace DCL.WebRequests
         ///         <list type="bullet">
         ///             <item>This method can allocate heavily and must be used only if there are no other alternatives left</item>
         ///             <item>Will return an empty string if the response is not available or the stream is not a valid stream of characters</item>
+        ///             <item>Disposes of the underlying handler</item>
         ///         </list>
         ///     </remarks>
         /// </summary>

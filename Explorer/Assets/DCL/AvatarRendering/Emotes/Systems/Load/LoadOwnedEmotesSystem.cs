@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         ) : base(world, cache, emoteStorage, webRequestController, realmData, builderContentURL) { }
 
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
-            await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, ct);
+            await adapter.CreateFromJsonAsync<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, ct);
 
         protected override UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
             throw new NotImplementedException();

@@ -87,7 +87,7 @@ namespace ECS.SceneLifeCycle.Systems
             try
             {
                 SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), reportCategory)
-                                                                  .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                  .CreateFromJsonAsync<SceneAbDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 if (AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, sceneId))
                     return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);

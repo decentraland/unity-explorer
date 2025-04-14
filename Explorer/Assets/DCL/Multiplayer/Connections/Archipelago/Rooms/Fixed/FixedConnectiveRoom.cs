@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             string adapterUrl = currentAdapterAddress.AdapterUrl();
             string metadata = FixedMetadata.Default.ToJson();
             GenericPostRequest? result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, ReportCategory.LIVEKIT);
-            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity, token);
+            AdapterResponse response = await result.CreateFromJsonAsync<AdapterResponse>(WRJsonParser.Unity, token);
             string connectionString = response.fixedAdapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;

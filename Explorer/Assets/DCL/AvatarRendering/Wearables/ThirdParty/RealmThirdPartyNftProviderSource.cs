@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Wearables.ThirdParty
                                        .Build();
 
             GenericGetRequest request = webRequestController.GetAsync(new CommonArguments(url), reportData);
-            ThirdPartyProviderListJsonDto providersDto = await request.CreateFromJson<ThirdPartyProviderListJsonDto>(WRJsonParser.Unity, ct);
+            ThirdPartyProviderListJsonDto providersDto = await request.CreateFromJsonAsync<ThirdPartyProviderListJsonDto>(WRJsonParser.Unity, ct);
             providers = providersDto.data;
             return providers;
         }

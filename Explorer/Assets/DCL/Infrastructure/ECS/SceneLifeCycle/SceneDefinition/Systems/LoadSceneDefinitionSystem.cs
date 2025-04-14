@@ -33,7 +33,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         {
             SceneEntityDefinition sceneEntityDefinition = await
                 webRequestController.GetAsync(intention.CommonArguments, GetReportData())
-                                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
+                                    .CreateFromJsonAsync<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
 
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 

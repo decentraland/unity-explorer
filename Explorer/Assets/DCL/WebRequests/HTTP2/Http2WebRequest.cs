@@ -137,7 +137,19 @@ namespace DCL.WebRequests.HTTP2
 
             public string Error => IsSuccess ? string.Empty : request.Response?.Message ?? string.Empty;
 
-            public byte[] Data => request.Response?.Data ?? Array.Empty<byte>();
+            public byte[] Data
+            {
+                get
+                {
+                    // The following will not work as it checks the reponse itself is disposed of (but should rely on the stream instead)
+                    // request.Response?.Data ?? Array.Empty<byte>();
+                    DownloadContentStream? downStream = request.Response.DownStream;
+
+                    var data = new byte[downStream.Length];
+                    downStream.Read(data, 0, data.Length);
+                    return data;
+                }
+            }
 
             public int StatusCode
             {

@@ -17,14 +17,14 @@ namespace DCL.WebRequests
 
         IRequestHub IWebRequestController.requestHub => origin.requestHub;
 
-        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct)
+        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             RequestEnvelope envelope = requestWrap.Envelope;
 
             try
             {
                 ReportHub.Log(envelope.ReportData, $"WebRequestController send start: {envelope}");
-                IWebRequest? result = await origin.SendAsync(requestWrap, ct);
+                IWebRequest? result = await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
                 ReportHub.Log(envelope.ReportData, $"WebRequestController send finish: {envelope}");
                 return result;
             }

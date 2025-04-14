@@ -22,7 +22,7 @@ namespace DCL.WebRequests
 
         IRequestHub IWebRequestController.requestHub => origin.requestHub;
 
-        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct)
+        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             IAcquiredBudget totalBudgetAcquired;
 
@@ -34,7 +34,7 @@ namespace DCL.WebRequests
             {
                 lock (debugBudget) { debugBudget.Value--; }
 
-                return await origin.SendAsync(requestWrap, ct);
+                return await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
             }
             finally
             {

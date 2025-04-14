@@ -45,7 +45,7 @@ namespace DCL.ApplicationVersionGuard
                 IDecentralandUrlsSource.EXPLORER_LATEST_RELEASE_URL,
                 ReportCategory.VERSION_CONTROL,
                 new WebRequestHeadersInfo())
-                                                     .CreateFromJson<GitHubRelease>(WRJsonParser.Unity, ct);
+                                                     .CreateFromJsonAsync<GitHubRelease>(WRJsonParser.Unity, ct);
 
             string latestVersion = response.tag_name.TrimStart('v');
 
@@ -107,7 +107,7 @@ namespace DCL.ApplicationVersionGuard
                     IDecentralandUrlsSource.LAUNCHER_LATEST_RELEASE_URL,
                     ReportCategory.VERSION_CONTROL,
                     new WebRequestHeadersInfo())
-                                                         .CreateFromJson<GitHubRelease>(WRJsonParser.Unity, cancellationToken);
+                                                         .CreateFromJsonAsync<GitHubRelease>(WRJsonParser.Unity, cancellationToken);
 
                 string version = response.tag_name.TrimStart('v');
 

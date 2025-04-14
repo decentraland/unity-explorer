@@ -80,7 +80,7 @@ namespace DCL.EventsApi
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
+            var response = await result.CreateFromJsonAsync<AttendResponse>(WRJsonParser.Unity,
                 ct,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error on trying to create attend intention: {text}", e));
 
@@ -101,7 +101,7 @@ namespace DCL.EventsApi
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "delete"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
+            var response = await result.CreateFromJsonAsync<AttendResponse>(WRJsonParser.Unity,
                 ct,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error on trying to create attend intention: {text}", e));
 
@@ -118,7 +118,7 @@ namespace DCL.EventsApi
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            var response = await result.CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity,
+            var response = await result.CreateFromJsonAsync<EventDTOListResponse>(WRJsonParser.Unity,
                 ct,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error fetching events: {text}", e));
 

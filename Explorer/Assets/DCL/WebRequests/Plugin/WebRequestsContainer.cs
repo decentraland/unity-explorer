@@ -49,7 +49,7 @@ namespace DCL.WebRequests
             var container = new WebRequestsContainer();
             await settingsContainer.InitializePluginAsync(container, ct);
 
-            //HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
+            HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
 
             HTTPManager.Logger.Level = Loglevels.Warning;
 

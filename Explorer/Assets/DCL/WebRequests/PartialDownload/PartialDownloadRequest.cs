@@ -47,10 +47,6 @@ namespace DCL.WebRequests
             // But response.Headers are not threadsafe =-( so we have to use a copy to avoid random `null` errors
             request.DownloadSettings.OnHeadersReceived += OnHeadersReceived;
 
-            // We can't await for DownloadStream straight-away as there is a chance that the request will be finished and disposed before we actually hit the valid stream
-            // so it will be disposed and stay `null`
-            request.DownloadSettings.OnDownloadStarted += OnDownloadStarted;
-
             return request;
         }
 
@@ -120,7 +116,7 @@ namespace DCL.WebRequests
                 while (request.Response is not { DownStream: not null })
                     await PollDelayAsync(ct);
 
-                DownloadContentStream? downStream = request.Response.DownStream;
+                using DownloadContentStream? downStream = request.Response.DownStream;
                 LoggingContext? loggingContext = request.Response.Context;
 
                 // Keep non-blocking reading from the download stream
@@ -168,11 +164,6 @@ namespace DCL.WebRequests
         // Can't use UniTask.Delay as it will switch to the main thread
         private static Task PollDelayAsync(CancellationToken ct) =>
             Task.Delay(10, ct);
-
-        private void OnDownloadStarted(HTTPRequest req, HTTPResponse resp, DownloadContentStream stream)
-        {
-            stream.IsDetached = true; // Detach straight-away to avoid preliminary Disposal
-        }
 
         private void OnHeadersReceived(HTTPRequest req, HTTPResponse resp, Dictionary<string, List<string>> headers)
         {

@@ -30,12 +30,12 @@ namespace DCL.WebRequests
             this.requestHub = requestHub;
         }
 
-        public UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct)
+        public UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             if (mode == WebRequestsMode.HTTP2 && requestWrap.Http2Supported)
-                return http2WebRequestController.SendAsync(requestWrap, ct);
+                return http2WebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);
 
-            return unityWebRequestController.SendAsync(requestWrap, ct);
+            return unityWebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);
         }
 
         public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)

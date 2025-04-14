@@ -19,10 +19,10 @@ namespace DCL.WebRequests
 
         IRequestHub IWebRequestController.requestHub => origin.requestHub;
 
-        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct)
+        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             await DelayAsync();
-            return await origin.SendAsync(requestWrap, ct);
+            return await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
         }
 
         public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)

@@ -22,14 +22,14 @@ namespace SceneRunner.Scene
             try
             {
                 ServerAbout? getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest/about")), reportCategory)
-                                                                  .CreateFromJson<ServerAbout>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                  .CreateFromJsonAsync<ServerAbout>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (string? contentDefinition in getAbout.configurations.scenesUrn)
                 {
                     var url = contentDomain.Append(URLPath.FromString(IpfsHelper.ParseUrn(contentDefinition).EntityId));
 
                     SceneEntityDefinition? getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(url), reportCategory)
-                                                                                          .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                                          .CreateFromJsonAsync<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
 
                     if (!getSceneDefinition.metadata.scene.DecodedParcels.Contains(coordinate)) continue;
                     string sceneHash = IpfsHelper.ParseUrn(contentDefinition).EntityId;
@@ -59,14 +59,14 @@ namespace SceneRunner.Scene
             try
             {
                 ServerAbout? getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString($"https://worlds-content-server.decentraland.org/world/{world}/about")), reportCategory)
-                                                                  .CreateFromJson<ServerAbout>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                  .CreateFromJsonAsync<ServerAbout>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (string? contentDefinition in getAbout.configurations.scenesUrn)
                 {
                     var sceneDefinitionURL = contentDomain.Append(URLPath.FromString(IpfsHelper.ParseUrn(contentDefinition).EntityId));
 
                     SceneEntityDefinition? getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(sceneDefinitionURL), reportCategory)
-                                                                                          .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                                          .CreateFromJsonAsync<SceneEntityDefinition>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
 
                     if (!getSceneDefinition.metadata.scene.DecodedParcels.Contains(coordinate)) continue;
                     string sceneHash = IpfsHelper.ParseUrn(contentDefinition).EntityId;
@@ -89,7 +89,7 @@ namespace SceneRunner.Scene
             try
             {
                 SceneEntityDefinition[]? getSceneDefinition = await webRequestController.PostAsync(new CommonArguments(URLAddress.FromString("https://peer.decentraland.org/content/entities/active/")), GenericUploadArguments.CreateJson($"{{\"pointers\": [\"{coordinate.x},{coordinate.y}\" ]}}"), reportCategory)
-                                                                                        .CreateFromJson<SceneEntityDefinition[]>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
+                                                                                        .CreateFromJsonAsync<SceneEntityDefinition[]>(WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
                 return (true, getSceneDefinition[0].id!);
             }
             catch (Exception _)

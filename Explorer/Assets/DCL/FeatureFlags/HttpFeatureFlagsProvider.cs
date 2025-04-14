@@ -40,7 +40,7 @@ namespace DCL.FeatureFlags
             var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ReportCategory.FEATURE_FLAGS,
                 new WebRequestHeadersInfo(headers));
 
-            FeatureFlagsResultDto response = await result.CreateFromJson<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft, ct);
+            FeatureFlagsResultDto response = await result.CreateFromJsonAsync<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft, ct);
 
             response = StripAppNameFromKeys(options.AppName, response);
 

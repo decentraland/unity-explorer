@@ -42,7 +42,7 @@ namespace Global.Dynamic.RealmUrl.Names
 
                 cachedNodes = await webRequestController
                                    .GetAsync(arguments, ReportCategory.GENERIC_WEB_REQUEST)
-                                   .CreateFromJson<List<NodeDTO>>(WRJsonParser.Newtonsoft, token);
+                                   .CreateFromJsonAsync<List<NodeDTO>>(WRJsonParser.Newtonsoft, token);
             }
 
             return cachedNodes;
@@ -56,7 +56,7 @@ namespace Global.Dynamic.RealmUrl.Names
 
                 var about = await webRequestController
                                  .GetAsync(arguments, ReportCategory.GENERIC_WEB_REQUEST)
-                                 .CreateFromJson<NodeAboutDTO>(WRJsonParser.Newtonsoft, ct);
+                                 .CreateFromJsonAsync<NodeAboutDTO>(WRJsonParser.Newtonsoft, ct);
 
                 cachedUrlToNameDictionary[nodeDTO.BaseUrl] = name = about.RealmName();
             }

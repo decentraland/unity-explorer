@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                       .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), reportCategory)
-                                                              .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchBackToMainThread);
+                                                              .CreateFromJsonAsync<SceneAbDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchBackToMainThread);
 
             AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
 

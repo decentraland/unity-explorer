@@ -34,7 +34,8 @@ namespace DCL.WebRequests
         ///         </list>
         ///     </remarks>
         /// </summary>
-        UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, CancellationToken ct);
+        /// <param name="detachDownloadHandler">Detached Download Handler will outlive the response, and thus must be disposed by the caller</param>
+        UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct);
 
         /// <summary>
         ///     Receives a chunk of the response. if <see cref="PartialDownloadArguments.Stream" /> is provided it will be used to continue the partial request

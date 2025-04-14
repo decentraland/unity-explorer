@@ -112,7 +112,7 @@ namespace DCL.PlacesAPIService
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJson<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity, ct,
+            PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJsonAsync<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity, ct,
                                                                               createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text))
                                                                          .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
 
@@ -171,7 +171,7 @@ namespace DCL.PlacesAPIService
         {
             GenericPostRequest result = webRequestController.PostAsync(poiURL, GenericUploadArguments.Empty, ReportCategory.UI);
 
-            PointsOfInterestCoordsAPIResponse response = await result.CreateFromJson<PointsOfInterestCoordsAPIResponse>(WRJsonParser.Unity,
+            PointsOfInterestCoordsAPIResponse response = await result.CreateFromJsonAsync<PointsOfInterestCoordsAPIResponse>(WRJsonParser.Unity,
                 ct, createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing get POIs response:", text));
 
             if (response.data == null)

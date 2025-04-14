@@ -15,7 +15,7 @@ namespace DCL.WebRequests
         ///     Sends the web request and awaits its execution, it's up to the consumer to dispose the resulting request
         /// </summary>
         public static UniTask<IWebRequest> SendAsync(this ITypedWebRequest request, CancellationToken ct) =>
-            request.Controller.SendAsync(request, ct);
+            request.Controller.SendAsync(request, true, ct);
 
         /// <summary>
         ///     Send the web request, awaits its execution, and disposes of its internals. Does not provide any output that can be used
@@ -24,7 +24,7 @@ namespace DCL.WebRequests
         /// <param name="ct"></param>
         public static async UniTask SendAndForgetAsync(this ITypedWebRequest request, CancellationToken ct)
         {
-            using (await request.SendAsync(ct)) ;
+            using (await request.Controller.SendAsync(request, false, ct)) ;
         }
 
         public static TRequest Create<TRequest, TArgs>(this IWebRequestController controller,
