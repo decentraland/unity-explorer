@@ -21,14 +21,16 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
         public class TexRefData : ContextItem
         {
             // The texture reference variable.
-            public TextureHandle texture = TextureHandle.nullHandle;
+            public TextureHandle textureColour = TextureHandle.nullHandle;
+            public TextureHandle textureDepth = TextureHandle.nullHandle;
 
             // Reset function required by ContextItem. It should reset all variables not carried
             // over to next frame.
             public override void Reset()
             {
                 // We should always reset texture handles since they are only vaild for the current frame.
-                texture = TextureHandle.nullHandle;
+                textureColour = TextureHandle.nullHandle;
+                textureDepth = TextureHandle.nullHandle;
             }
         }
 
@@ -43,10 +45,10 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
         private RenderPass_DrawObjects renderPass_DrawObjects = null!;
         public Material highlightInputMaterial;
         public Material highlightInputBlurMaterial;
+        public Material highlightOutputMaterial;
 
         // Output Pass Data
-        private RenderPass_RenderResult renderPass_RenderResult;
-        public Material highlightOutputMaterial;
+        //private RenderPass_RenderResult renderPass_RenderResult;
 
         public RenderFeature_ObjectHighlight()
         {
@@ -55,29 +57,32 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
         public override void Create()
         {
-            if (highlightInputBlurMaterial != null && highlightInputMaterial != null)
+            if (highlightInputMaterial != null && highlightInputBlurMaterial != null && highlightOutputMaterial  != null)
             {
                 renderPass_DrawObjects = new RenderPass_DrawObjects(m_HighLightRenderers)
                 {
-                    renderPassEvent = RenderPassEvent.AfterRenderingPrePasses,
+                    renderPassEvent = RenderPassEvent.AfterRenderingTransparents,
+                    m_highLightInputMaterial = highlightInputMaterial,
+                    m_highlightInputBlurMaterial = highlightInputBlurMaterial,
+                    m_highlightOutputMaterial = highlightOutputMaterial,
                 };
             }
 
-            if (highlightOutputMaterial != null)
-            {
-                renderPass_RenderResult = new RenderPass_RenderResult(m_HighLightRenderers)
-                {
-                    renderPassEvent = RenderPassEvent.AfterRenderingTransparents,
-                };
-            }
+            // if (highlightOutputMaterial != null)
+            // {
+            //     renderPass_RenderResult = new RenderPass_RenderResult(m_HighLightRenderers)
+            //     {
+            //         renderPassEvent = RenderPassEvent.AfterRenderingTransparents,
+            //     };
+            // }
         }
 
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
         {
-            if (renderPass_RenderResult != null && renderPass_RenderResult != null)
+            if (renderPass_DrawObjects != null)
             {
                 _renderer.EnqueuePass(renderPass_DrawObjects);
-                _renderer.EnqueuePass(renderPass_RenderResult);
+                //_renderer.EnqueuePass(renderPass_RenderResult);
             }
         }
 
