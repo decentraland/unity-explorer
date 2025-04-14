@@ -67,5 +67,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Blocklist,
 
         Servers,
+        MediaConverter,
     }
 }

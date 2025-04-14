@@ -45,14 +45,11 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
-using DCL.Roads.GPUInstancing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.Dynamic.LaunchModes;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
-using SceneRunner.Mapping;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -81,7 +78,6 @@ namespace Global
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
         private IAssetsProvisioner assetsProvisioner;
-        private ITexturesFuse texturesFuse;
         public Entity PlayerEntity { get; set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
@@ -125,7 +121,6 @@ namespace Global
             partitionSettings.Dispose();
             QualityContainer.Dispose();
             Profiler.Dispose();
-            texturesFuse.Dispose();
             SceneRestrictionBusController.Dispose();
         }
 
@@ -146,7 +141,6 @@ namespace Global
             IReportsHandlingSettings reportHandlingSettings,
             IDebugContainerBuilder debugContainerBuilder,
             WebRequestsContainer webRequestsContainer,
-            ITexturesFuse texturesFuse,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -182,7 +176,6 @@ namespace Global
             container.assetsProvisioner = assetsProvisioner;
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
-            container.texturesFuse = texturesFuse;
             container.LaunchMode = launchMode;
 
             var exposedPlayerTransform = new ExposedTransform();
@@ -256,7 +249,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.FeatureFlagsCache),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,

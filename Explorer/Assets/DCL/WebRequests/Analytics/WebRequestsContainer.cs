@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.RequestsHub;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using Utility.Multithreading;
 using Utility.Storage;
 
@@ -30,11 +30,11 @@ namespace DCL.WebRequests.Analytics
 
         public static WebRequestsContainer Create(
             IWeb3IdentityCache web3IdentityProvider,
-            ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
+            IDecentralandUrlsSource urlsSource,
             int coreBudget,
             int sceneBudget,
-            bool isTextureCompressionEnabled
+            bool ktxEnabled
         )
         {
             var options = new ElementBindingOptions();
@@ -56,7 +56,7 @@ namespace DCL.WebRequests.Analytics
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
-            var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
+            var textureFuseRequestHub = new RequestHub(urlsSource);
 
             IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
@@ -151,6 +151,13 @@ namespace DCL.WebRequests.Analytics
                                               }),
                                           new DebugHintDef("Sequential"));
             }
+        }
+
+        public void SetKTXEnabled(bool enabled)
+        {
+            // TODO: Temporary until we rewrite FF to be static
+            WebRequestController.requestHub.SetKTXEnabled(enabled);
+            SceneWebRequestController.requestHub.SetKTXEnabled(enabled);
         }
 
         public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions

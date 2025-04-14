@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.CustomDownloadHandlers;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.Networking;
