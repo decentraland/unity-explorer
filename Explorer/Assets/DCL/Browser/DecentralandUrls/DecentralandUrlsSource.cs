@@ -115,6 +115,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
+                DecentralandUrl.MediaConverter => $"https://media-opticonverter.decentraland.{ENV}/convert?ktx2=true&fileUrl={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.zone", // TODO (Santi): This will be changed to {ENV} before merging
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.zone", // TODO (Santi): This will be changed to {ENV} before merging
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)

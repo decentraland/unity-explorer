@@ -68,6 +68,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         Servers,
 
+        MediaConverter,
+
         MarketplaceCredits,
         EmailSubscriptions,
     }
