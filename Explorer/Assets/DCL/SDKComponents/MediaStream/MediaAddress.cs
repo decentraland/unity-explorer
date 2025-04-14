@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.MediaStream
             get
             {
                 if (MediaKind is not Kind.URL)
-                    throw new Exception("This MediaAddress is not a URL");
+                    throw new InvalidOperationException("This MediaAddress is not a URL");
 
                 return url;
             }
@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.MediaStream
             get
             {
                 if (MediaKind is not Kind.LIVEKIT)
-                    throw new Exception("This MediaAddress is not a LIVEKIT");
+                    throw new InvalidOperationException("This MediaAddress is not a LIVEKIT");
 
                 return livekitAddress;
             }
@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.MediaStream
                                {
                                    Kind.URL => string.IsNullOrEmpty(url),
                                    Kind.LIVEKIT => livekitAddress.IsEmpty,
-                                   _ => throw new ArgumentOutOfRangeException()
+                                   _ => throw new InvalidOperationException()
                                };
 
         private MediaAddress(Kind mediaKind, string url, LivekitAddress livekitAddress)
