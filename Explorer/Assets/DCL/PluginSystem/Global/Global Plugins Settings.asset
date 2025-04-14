@@ -421,6 +421,7 @@ MonoBehaviour:
         <CoreWebRequestsBudget>k__BackingField: 15
         <SceneWebRequestsBudget>k__BackingField: 5
         <CacheSizeGB>k__BackingField: 2
+        <CacheLifetimeDays>k__BackingField: 2
         <PartialChunkSizeMB>k__BackingField: 2
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
