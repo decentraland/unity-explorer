@@ -6,6 +6,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Optimization.AdaptivePerformance.Systems
 {
@@ -27,11 +28,13 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         public async UniTask InitializeAsync(AdaptivePerformanceSettings settings, CancellationToken ct)
         {
             physicsSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.phyiscsSettings, ct);
+
+            Physics.simulationMode = physicsSettings.Value.Mode == PhysSimulationMode.MANUAL ? SimulationMode.Script : SimulationMode.FixedUpdate;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            UpdatePhysicsProfilerSystem.InjectToWorld(ref builder, profiler, loadingStatus);
+            UpdatePhysicsSimulationSystem.InjectToWorld(ref builder, profiler, physicsSettings.Value, loadingStatus);
             AdaptPhysicsSystem.InjectToWorld(ref builder, profiler, physicsSettings.Value, loadingStatus);
         }
 

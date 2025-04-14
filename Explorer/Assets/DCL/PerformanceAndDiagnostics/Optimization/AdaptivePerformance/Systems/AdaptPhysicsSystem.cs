@@ -30,17 +30,25 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         {
             ReportHub.Log(ReportCategory.ADAPTIVE_PERFORMANCE, $"Physics simulations in frame: {profiler.PhysicsSimulationInFrame} | FrameTime median: {profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_SEC} | fixedDeltaTime: {UnityEngine.Time.fixedDeltaTime}");
 
-            if (!settings.isEnabled || loadingStatus.CurrentStage != LoadingStatus.LoadingStage.Completed
-                                    || UnityEngine.Time.unscaledTime - lastTimeChanged < settings.changeCooldown
-                                    || profiler.MainThreadFrameTimes.SamplesAmount < settings.minFrameTimeAmount
-               )
-            {
-                profiler.PhysicsSimulationInFrame = 0;
-                return;
-            }
+            UpdatePhysicsProfiling();
 
-            float medianFrameTime = profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_SEC;
+            if (CanBeUpdated())
+                AdaptFixedDeltaTimeIfNeeded(medianFrameTime: profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_SEC);
 
+            bool CanBeUpdated() =>
+                settings.Mode == PhysSimulationMode.ADAPTIVE && loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed
+                                                             && UnityEngine.Time.unscaledTime - lastTimeChanged > settings.changeCooldown
+                                                             && profiler.MainThreadFrameTimes.SamplesAmount > settings.minFrameTimeAmount;
+        }
+
+        private void UpdatePhysicsProfiling()
+        {
+            profiler.UpdatePhysicsSimRingBuffer();
+            profiler.PhysicsSimulationInFrame = 0;
+        }
+
+        private void AdaptFixedDeltaTimeIfNeeded(float medianFrameTime)
+        {
             if (medianFrameTime < UnityEngine.Time.fixedDeltaTime ||
                 medianFrameTime > UnityEngine.Time.fixedDeltaTime + (settings.topOffset * MILISEC_TO_SEC))
             {
@@ -48,9 +56,6 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
                 UnityEngine.Time.fixedDeltaTime = Mathf.Clamp(bufferedDeltaTime, settings.minFixedDelta, settings.maxFixedDelta);
                 lastTimeChanged = UnityEngine.Time.unscaledTime;
             }
-
-            profiler.UpdatePhysicsSimRingBuffer();
-            profiler.PhysicsSimulationInFrame = 0;
         }
     }
 }

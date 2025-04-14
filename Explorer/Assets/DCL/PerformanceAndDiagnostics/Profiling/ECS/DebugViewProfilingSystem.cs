@@ -9,11 +9,14 @@ using ECS;
 using ECS.Abstract;
 using Global.Versioning;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
 using UnityEngine.UIElements;
+using Utility.Types;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -27,8 +30,6 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
-        private readonly AdaptivePhysicsSettings adpativePhysicsSettings;
-
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
         private DebugWidgetVisibilityBinding performanceVisibilityBinding;
@@ -68,13 +69,12 @@ namespace DCL.Profiling.ECS
         private bool sceneMetricsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
-            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adpativePhysicsSettings)
+            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings)
             : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
-            this.adpativePhysicsSettings = adpativePhysicsSettings;
 
             CreateView();
             return;
@@ -91,7 +91,7 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Max FPS last 1k frames:", maxfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty))
 
-                            .AddToggleField("Adaptive Physics is enabled", OnIsEnableToggled, adpativePhysicsSettings.isEnabled)
+                            .AddControl(new DebugDropdownDef(CreatePhysicsModeBinding(adaptivePhysicsSettings), "Physics Mode"), null)
                             .AddCustomMarker("Physics deltaTime:", physicsDeltaTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Physics Simulations in 10 frames", physicsSimulate = new ElementBinding<string>(string.Empty))
 
@@ -102,6 +102,7 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
+
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -127,6 +128,32 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("AccessViolation", () => { Utils.ForceCrash(ForcedCrashCategory.AccessViolation); })
                             .AddSingleButton("PureVirtualFunction", () => { Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction); });
             }
+        }
+
+        private static IndexedElementBinding CreatePhysicsModeBinding(AdaptivePhysicsSettings adpativePhysicsSettings)
+        {
+            return new IndexedElementBinding(
+                Enum.GetNames(typeof(PhysSimulationMode)).ToList(),
+                adpativePhysicsSettings.Mode.ToString(),
+                evt =>
+                {
+                    if (Enum.TryParse(evt.value, out PhysSimulationMode mode))
+                        switch (mode)
+                        {
+                            case PhysSimulationMode.DEFAULT:
+                            case PhysSimulationMode.ADAPTIVE:
+                                adpativePhysicsSettings.Mode = mode;
+                                Physics.simulationMode = SimulationMode.FixedUpdate;
+                                UnityEngine.Time.fixedDeltaTime = 0.02f;
+                                break;
+                            case PhysSimulationMode.MANUAL:
+                                adpativePhysicsSettings.Mode = mode;
+                                Physics.simulationMode = SimulationMode.Script;
+                                break;
+                            default: throw new ArgumentOutOfRangeException();
+                        }
+                }
+            );
         }
 
         protected override void Update(float t)
@@ -159,12 +186,6 @@ namespace DCL.Profiling.ECS
 
                 framesSinceMetricsUpdate++;
             }
-        }
-
-        private void OnIsEnableToggled(ChangeEvent<bool> evt)
-        {
-            UnityEngine.Time.fixedDeltaTime = 0.02f;
-            adpativePhysicsSettings.isEnabled = evt.newValue;
         }
 
         private void UpdateSceneMetrics()
