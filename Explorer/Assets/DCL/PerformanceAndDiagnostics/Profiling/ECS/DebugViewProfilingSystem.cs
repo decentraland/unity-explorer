@@ -65,7 +65,6 @@ namespace DCL.Profiling.ECS
         private int framesSinceMetricsUpdate;
 
         private bool frameTimingsEnabled;
-        private bool adaptivePhysicsEnabled;
         private bool sceneMetricsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,

@@ -28,17 +28,14 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
 
         protected override void Update(float t)
         {
-            ReportHub.Log(ReportCategory.ADAPTIVE_PERFORMANCE, $"Physics simulations in frame: {profiler.PhysicsSimulationInFrame} | FrameTime median: {profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_SEC} | fixedDeltaTime: {UnityEngine.Time.fixedDeltaTime}");
-
             UpdatePhysicsProfiling();
 
-            if (CanBeUpdated())
-                AdaptFixedDeltaTimeIfNeeded(medianFrameTime: profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_SEC);
-
-            bool CanBeUpdated() =>
-                settings.Mode == PhysSimulationMode.ADAPTIVE && loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed
+            if (settings.Mode == PhysSimulationMode.ADAPTIVE && loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed
                                                              && UnityEngine.Time.unscaledTime - lastTimeChanged > settings.changeCooldown
-                                                             && profiler.MainThreadFrameTimes.SamplesAmount > settings.minFrameTimeAmount;
+                                                             && profiler.MainThreadFrameTimes.SamplesAmount > settings.minFrameTimeAmount)
+            {
+                AdaptFixedDeltaTimeIfNeeded(medianFrameTime: profiler.MainThreadFrameTimes.Percentile(50) * NS_TO_SEC);
+            }
         }
 
         private void UpdatePhysicsProfiling()
