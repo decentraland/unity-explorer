@@ -234,7 +234,7 @@ namespace DCL.MarketplaceCredits.Sections
         private void OnEmailInputValueChanged(string email)
         {
             CheckStartWithEmailButtonState();
-            view.ShowEmailError(!string.IsNullOrEmpty(email) & !IsValidEmail(email));
+            view.ShowEmailError(!string.IsNullOrEmpty(email) && !IsValidEmail(email));
         }
 
         private void CheckStartWithEmailButtonState() =>
