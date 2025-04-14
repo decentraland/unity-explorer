@@ -292,7 +292,7 @@ namespace Global.Dynamic
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
             MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
-            if (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN))
+            if (PlayerPrefs.GetInt(MinimumSpecsScreenController.PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
