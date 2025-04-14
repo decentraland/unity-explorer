@@ -1,7 +1,9 @@
 using Arch.Core;
 using DCL.Analytics.Systems;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.Profiling;
+using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
 using ECS;
 using Global.AppArgs;
@@ -28,8 +30,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     new BuildData(),
                     DCLVersion.Mock()
                 ),
+                new LoadingStatus(),
                 new RealmData(),
                 new Profiler(),
+                new EntityParticipantTable(),
                 new Utility.Json.JsonObjectBuilder()
             );
         }

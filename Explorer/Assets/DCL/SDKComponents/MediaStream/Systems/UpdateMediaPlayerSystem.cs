@@ -2,8 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -14,10 +12,11 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
-using Utility;
+using UnityEngine.Profiling;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -238,7 +237,12 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
-                component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay);
+                Profiler.BeginSample(component.MediaPlayer.Control != null
+                    ? "MediaPlayer.OpenMedia"
+                    : "MediaPlayer.InitialiseAndOpenMedia");
+
+                try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
+                finally { Profiler.EndSample(); }
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
@@ -246,7 +250,10 @@ namespace DCL.SDKComponents.MediaStream
             else
             {
                 component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
-                component.MediaPlayer.CloseCurrentStream();
+                Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
+
+                try { component.MediaPlayer.CloseCurrentStream(); }
+                finally { Profiler.EndSample(); }
             }
         }
 

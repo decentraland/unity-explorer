@@ -16,6 +16,7 @@ namespace ECS.StreamableLoading.Tests
         public void SetUp()
         {
             profiler = new Profiler();
+            profiler.StartFrameTimeDataCollection();
         }
 
         public struct DummyComponent
@@ -24,7 +25,7 @@ namespace ECS.StreamableLoading.Tests
         }
 
         private FrameTimeCapBudget budget;
-        private IBudgetProfiler profiler;
+        private Profiler profiler;
 
         [Test]
         public async Task SpendBudget()
