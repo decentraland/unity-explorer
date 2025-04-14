@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -10,6 +11,8 @@ namespace DCL.MarketplaceCreditsAPIService
 {
     public class MarketplaceCreditsAPIClient
     {
+        public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
+
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -41,6 +44,7 @@ namespace DCL.MarketplaceCreditsAPIService
             creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
             creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
 
+            OnProgramProgressUpdated?.Invoke(creditsProgramProgressResponse);
             return creditsProgramProgressResponse;
         }
 

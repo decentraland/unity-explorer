@@ -98,6 +98,7 @@ namespace DCL.MarketplaceCredits
             this.sharedSpaceManager = sharedSpaceManager;
             this.featureFlagsCache = featureFlagsCache;
 
+            marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
@@ -226,6 +227,7 @@ namespace DCL.MarketplaceCredits
             showErrorNotificationCts.SafeCancelAndDispose();
             sidebarButtonStateCts.SafeCancelAndDispose();
 
+            marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
             mvcManager.OnViewClosed -= OnCreditsUnlockedPanelClosed;
             viewInstance!.OnAnyPlaceClick -= OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
@@ -304,17 +306,7 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile != null)
                 {
                     var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
-
-                    if (creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds)
-                    {
-                        SetSidebarButtonAnimationAsAlert(false);
-                        SetSidebarButtonAsClaimIndicator(false);
-                        return;
-                    }
-
-                    bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-                    SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
-                    SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
+                    SetSidebarButtonState(creditsProgramProgressResponse);
                 }
             }
             catch (OperationCanceledException) { }
@@ -333,5 +325,19 @@ namespace DCL.MarketplaceCredits
 
         private void SetSidebarButtonAnimationAsPaused(bool isOn) =>
             sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_PAUSED_ID, isOn);
+
+        private void SetSidebarButtonState(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        {
+            if (creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds)
+            {
+                SetSidebarButtonAnimationAsAlert(false);
+                SetSidebarButtonAsClaimIndicator(false);
+                return;
+            }
+
+            bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
+            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
+            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
+        }
     }
 }
