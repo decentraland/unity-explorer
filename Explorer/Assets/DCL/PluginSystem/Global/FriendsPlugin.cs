@@ -265,12 +265,13 @@ namespace DCL.PluginSystem.Global
         {
             syncBlockingStatusOnRpcConnectionCts = syncBlockingStatusOnRpcConnectionCts.SafeRestart();
             SyncBlockingStatusAsync(syncBlockingStatusOnRpcConnectionCts.Token).Forget();
-        }
+            return;
 
-        private async UniTask SyncBlockingStatusAsync(CancellationToken ct)
-        {
-            UserBlockingStatus blockingStatus = await friendsService!.GetUserBlockingStatusAsync(ct);
-            userBlockingCache!.Reset(blockingStatus);
+            async UniTask SyncBlockingStatusAsync(CancellationToken ct)
+            {
+                UserBlockingStatus blockingStatus = await friendsService!.GetUserBlockingStatusAsync(ct);
+                userBlockingCache!.Reset(blockingStatus);
+            }
         }
 
         private URLAddress GetApiUrl()
@@ -306,11 +307,7 @@ namespace DCL.PluginSystem.Global
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
                 if (includeUserBlocking && userBlockingCache != null)
-                {
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
-
-                    await SyncBlockingStatusAsync(ct);
-                }
 
                 friendsPanelController?.Reset();
             }
