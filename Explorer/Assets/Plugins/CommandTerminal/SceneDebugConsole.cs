@@ -191,7 +191,7 @@ namespace CommandTerminal
             labelStyle.font = consoleFont;
             labelStyle.normal.textColor = foregroundColor;
             labelStyle.wordWrap = true;
-            labelStyle.alignment = TextAnchor.LowerRight;
+            labelStyle.alignment = TextAnchor.LowerLeft;
             labelStyle.fontSize = fontSize;
         }
 
