@@ -234,7 +234,7 @@ namespace DCL.UI.Sidebar
         }
 
         private async void OnMarketplaceCreditsButtonClickedAsync() =>
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.ShowParams(isOpenedFromNotification: false));
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false));
 
         private void OnHelpButtonClicked()
         {

@@ -6,21 +6,16 @@ using ECS;
 using System;
 using System.Globalization;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.MarketplaceCredits
 {
     public static class MarketplaceCreditsUtils
     {
-        public const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org";
-        public const string LEARN_MORE_LINK = "https://docs.decentraland.org";
-        public const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
-        public const string SUBSCRIBE_LINK = "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend";
-        public const string X_LINK = "https://x.com/decentraland";
-        public const int CREDITS_UNLOCKED_DURATION = 5;
-        public const int ERROR_NOTIFICATION_DURATION = 3;
-        public const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
-
+        /// <summary>
+        /// Formats the time left until the end of the week in a human-readable format.
+        /// </summary>
+        /// <param name="timeLeftInSeconds">The time left in seconds.</param>
+        /// <returns>A string representing the time left in a human-readable format.</returns>
         public static string FormatEndOfTheWeekDate(uint timeLeftInSeconds)
         {
             uint totalHours = timeLeftInSeconds / (60 * 60);
@@ -30,21 +25,47 @@ namespace DCL.MarketplaceCredits
             return $"{days} Days, {hours} Hours";
         }
 
+        /// <summary>
+        /// Formats the total credits in a human-readable format.
+        /// </summary>
+        /// <param name="totalCredits">The total amount of credits.</param>
+        /// <returns>>A string representing the total amount credits in a human-readable format.</returns>
         public static string FormatTotalCredits(float totalCredits) =>
             totalCredits % 1 == 0 ? totalCredits.ToString("F0") : totalCredits.ToString("F2");
 
+        /// <summary>
+        /// Formats the goal reward in a human-readable format.
+        /// </summary>
+        /// <param name="goalCredits">The amount of credits that will be won with the goal.</param>
+        /// <returns>>A string representing the goal reward in a human-readable format.</returns>
         public static string FormatGoalReward(float goalCredits) =>
             $"{(goalCredits % 1 == 0 ? $"{goalCredits:+0}" : $"{goalCredits:+0.0}")}";
 
+        /// <summary>
+        /// Formats the claimed goal reward in a human-readable format.
+        /// </summary>
+        /// <param name="claimedCredits">The amount of credits that have been claimed.</param>
+        /// <returns>>A string representing the claimed goal reward in a human-readable format.</returns>
         public static string FormatClaimedGoalReward(float claimedCredits) =>
             $"{FormatGoalReward(claimedCredits)} Marketplace Credit{(claimedCredits >= 2 ? "s" : "")}";
 
+        /// <summary>
+        /// Formats the credits expiration time in a human-readable format.
+        /// </summary>
+        /// <param name="timeLeftInSeconds">The time left in seconds until the credits expire.</param>
+        /// <returns>>A string representing the credits expiration time in a human-readable format.</returns>
         public static string FormatCreditsExpireIn(uint timeLeftInSeconds)
         {
             uint days = timeLeftInSeconds / (60 * 60 * 24);
             return $"Expires in {days} days";
         }
 
+        /// <summary>
+        /// Formats the season date range in a human-readable format.
+        /// </summary>
+        /// <param name="startDate">The start date of the season in ISO 8601 format.</param>
+        /// <param name="endDate">The end date of the season in ISO 8601 format.</param>
+        /// <returns>>A string representing the season date range in a human-readable format.</returns>
         public static string FormatSeasonDateRange(string startDate, string endDate)
         {
             DateTime startDateDT = DateTime.ParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
@@ -52,21 +73,46 @@ namespace DCL.MarketplaceCredits
             return $"{startDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}";
         }
 
+        /// <summary>
+        /// Calculates the progress percentage of a goal based on the completed and total steps.
+        /// </summary>
+        /// <param name="goalProgress">The goal progress data containing the completed and total steps.</param>
+        /// <returns>>The progress percentage of the goal.</returns>
         public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
             goalProgress.completedSteps * 100 / goalProgress.totalSteps;
 
+        /// <summary>
+        /// Checks if the user has started the program.
+        /// </summary>
+        /// <returns>True if the user has started the program, false otherwise.</returns>
         public static bool HasUserStartedProgram(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             creditsProgramProgressResponse.user is { hasStartedProgram: true };
 
+        /// <summary>
+        /// Checks if the user has an email registered in the program.
+        /// </summary>
+        /// <returns>True if the user has an email registered, false otherwise.</returns>
         public static bool IsUserEmailRegistered(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             !string.IsNullOrEmpty(creditsProgramProgressResponse.user.email);
 
+        /// <summary>
+        /// Checks if the user has verified their email in the program.
+        /// </summary>
+        /// <returns>True if the user has verified their email, false otherwise.</returns>
         public static bool IsUserEmailVerified(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             creditsProgramProgressResponse.IsUserEmailRegistered() && creditsProgramProgressResponse.user.isEmailConfirmed;
 
+        /// <summary>
+        /// Checks if the program has ended.
+        /// </summary>
+        /// <returns>True if the program has ended, false otherwise.</returns>
         public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
             creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds;
 
+        /// <summary>
+        /// Checks if the user has completed all the weekly goals.
+        /// </summary>
+        /// <returns>True if all weekly goals are completed, false otherwise.</returns>
         public static bool AreWeekGoalsCompleted(this CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             foreach (var goal in creditsProgramProgressResponse.goals)
@@ -78,6 +124,10 @@ namespace DCL.MarketplaceCredits
             return true;
         }
 
+        /// <summary>
+        /// Checks if there are any rewards available to claim.
+        /// </summary>
+        /// <returns>True if there are rewards to claim, false otherwise.</returns>
         public static bool SomethingToClaim(this CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             foreach (var goal in creditsProgramProgressResponse.goals)
@@ -89,6 +139,10 @@ namespace DCL.MarketplaceCredits
             return false;
         }
 
+        /// <summary>
+        /// Checks if the user is allowed to use the feature based on the white list from the feature flag.
+        /// </summary>
+        /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
         public static async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, IRealmData realmData, ISelfProfile selfProfile, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
         {
             if (!includeMarketplaceCredits)

@@ -22,17 +22,11 @@ using Utility;
 
 namespace DCL.MarketplaceCredits
 {
-    public class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.ShowParams>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.ShowParams>
+    public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
-        public readonly struct ShowParams
-        {
-            public readonly bool IsOpenedFromNotification;
-
-            public ShowParams(bool isOpenedFromNotification)
-            {
-                IsOpenedFromNotification = isOpenedFromNotification;
-            }
-        }
+        private const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org";
+        private const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
+        private const int ERROR_NOTIFICATION_DURATION = 3;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -257,16 +251,16 @@ namespace DCL.MarketplaceCredits
             OnAnyPlaceClick?.Invoke();
 
         private void OpenInfoLink() =>
-            webBrowser.OpenUrl(MarketplaceCreditsUtils.WEEKLY_REWARDS_INFO_LINK);
+            webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(MarketplaceCreditsUtils.GO_SHOPPING_LINK);
+            webBrowser.OpenUrl(GO_SHOPPING_LINK);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
             viewInstance!.ErrorNotification.SetText(message);
             viewInstance.ErrorNotification.Show(ct);
-            await UniTask.Delay(MarketplaceCreditsUtils.ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
+            await UniTask.Delay(ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
             viewInstance.ErrorNotification.Hide(false, ct);
         }
 
@@ -290,7 +284,7 @@ namespace DCL.MarketplaceCredits
             if (!isFeatureActivated)
                 return;
 
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new ShowParams(isOpenedFromNotification: true));
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: true));
         }
 
         private void CheckForSidebarButtonState()
