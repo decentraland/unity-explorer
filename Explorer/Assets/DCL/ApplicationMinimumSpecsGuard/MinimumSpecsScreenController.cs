@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -9,6 +10,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsScreenController : ControllerBase<MinimumSpecsScreenView>
     {
+        public const string PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY = "dontShowMinSpecsScreen";
+
         private readonly IWebBrowser webBrowser;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         public readonly UniTaskCompletionSource HoldingTask;
@@ -24,6 +27,13 @@ namespace DCL.ApplicationMinimumSpecsGuard
             viewInstance.ExitButton.onClick.AddListener(OnExitClicked);
             viewInstance.ContinueButton.onClick.AddListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.AddListener(OnReadMoreClicked);
+            viewInstance.DontShowAgainToggle.onValueChanged.AddListener(OnToggleChanged);
+        }
+
+        private void OnToggleChanged(bool dontShowAgain)
+        {
+            PlayerPrefs.SetInt(PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY, dontShowAgain ? 1 : 0);
+            PlayerPrefs.Save();
         }
 
         public override void Dispose()
@@ -34,6 +44,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             viewInstance.ExitButton.onClick.RemoveListener(OnExitClicked);
             viewInstance.ContinueButton.onClick.RemoveListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.RemoveListener(OnReadMoreClicked);
+            viewInstance.DontShowAgainToggle.onValueChanged.RemoveListener(OnToggleChanged);
             HoldingTask?.TrySetResult();
         }
 
