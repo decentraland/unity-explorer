@@ -5,7 +5,7 @@ namespace DCL.SDKComponents.MediaStream
 {
     public readonly struct LivekitAddress
     {
-        public static readonly LivekitAddress EMPTY = new (Kind.CURRENT_STREAM, string.Empty, string.Empty);
+        public static readonly LivekitAddress EMPTY = new (Kind.CURRENT_STREAM, string.Empty, string.Empty, string.Empty);
 
         public enum Kind
         {
@@ -17,6 +17,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly string identity;
         private readonly string sid;
+        private readonly string rawAddress;
 
         public string CurrentStream
         {
@@ -47,11 +48,12 @@ namespace DCL.SDKComponents.MediaStream
                                    _ => throw new ArgumentOutOfRangeException()
                                };
 
-        private LivekitAddress(Kind streamKind, string identity, string sid)
+        private LivekitAddress(Kind streamKind, string identity, string sid, string rawAddress)
         {
             StreamKind = streamKind;
             this.identity = identity;
             this.sid = sid;
+            this.rawAddress = rawAddress;
         }
 
         public static LivekitAddress New(string rawAddress)
@@ -60,14 +62,14 @@ namespace DCL.SDKComponents.MediaStream
                 throw new InvalidOperationException();
 
             if (rawAddress == ParticipantExtensions.LIVEKIT_CURRENT_STREAM)
-                return new LivekitAddress(Kind.CURRENT_STREAM, string.Empty, string.Empty);
+                return new LivekitAddress(Kind.CURRENT_STREAM, string.Empty, string.Empty, string.Empty);
 
             (string identity, string sid) = rawAddress.DeconstructLivekitAddress();
-            return new LivekitAddress(Kind.USER_STREAM, identity, sid);
+            return new LivekitAddress(Kind.USER_STREAM, identity, sid, rawAddress);
         }
 
         public override string ToString() =>
-            StreamKind is Kind.CURRENT_STREAM ? ParticipantExtensions.LIVEKIT_CURRENT_STREAM : identity.ToLivekitAddress(sid);
+            StreamKind is Kind.CURRENT_STREAM ? ParticipantExtensions.LIVEKIT_CURRENT_STREAM : rawAddress;
 
         public bool Equals(LivekitAddress other) =>
             this == other;
