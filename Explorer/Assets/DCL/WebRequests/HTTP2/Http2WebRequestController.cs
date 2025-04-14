@@ -98,7 +98,7 @@ namespace DCL.WebRequests.HTTP2
                 // convert into a common exception
                 throw adaptedException;
             }
-            catch (Exception) // any other exception
+            catch (Exception e) // any other exception
             {
                 // Dispose adapter if it was created or the wrap on exception as it won't be returned to the caller
 
@@ -121,6 +121,9 @@ namespace DCL.WebRequests.HTTP2
 
             try
             {
+                ct.ThrowIfCancellationRequested();
+
+                // TODO there is somewhere a bug with cancellation on application exit that makes ITypedRequest leak
                 UniTask<HTTPResponse> coreTask = nativeRequest.GetHTTPResponseAsync(ct);
 
                 if (request.StreamingSupported)

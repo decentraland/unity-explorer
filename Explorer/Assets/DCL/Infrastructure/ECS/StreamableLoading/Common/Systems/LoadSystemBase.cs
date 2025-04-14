@@ -132,6 +132,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
+                disposalCt.ThrowIfCancellationRequested();
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
@@ -159,7 +160,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset>? failure))
+                if (cache.IrrecoverableFailures.SyncTryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset>? failure))
                 {
                     result = failure;
                     return;
@@ -213,7 +214,7 @@ namespace ECS.StreamableLoading.Common.Systems
             state.DisposeBudgetIfExists();
 
             // Special path for partial downloading
-            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: false } } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out _))
+            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: false } } && !cache.IrrecoverableFailures.SyncTryGetValue(intention.CommonArguments.URL, out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();

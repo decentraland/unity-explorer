@@ -80,7 +80,7 @@ namespace DCL.WebRequests
 
                 await UniTask.WhenAll(
                     WaitForRequestAsync(),
-                    ProcessPartialDownloadStreamAsync(partialFlowCts.Token)); // Throws Task Cancellated Exception
+                    ProcessPartialDownloadStreamAsync(partialFlowCts.Token)); // Throws Task Canceled Exception
             }
             finally
             {

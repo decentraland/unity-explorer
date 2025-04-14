@@ -31,6 +31,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 PartialDownloadStream? partialDownloadStream = await webRequestController.GetPartialAsync(intention.CommonArguments, new PartialDownloadArguments(state.PartialDownloadingData?.PartialDownloadStream), ct);
                 state.SetChunkData(new PartialLoadingState(partialDownloadStream));
 
+                ct.ThrowIfCancellationRequested();
+
                 if (partialDownloadStream.IsFullyDownloaded)
                     return await ProcessCompletedDataAsync(state, intention, partition, ct);
 

@@ -1,5 +1,6 @@
 using Best.HTTP.Caching;
 using Best.HTTP.Shared;
+using Best.HTTP.Shared.Logger;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
@@ -47,6 +48,10 @@ namespace DCL.WebRequests
         {
             var container = new WebRequestsContainer();
             await settingsContainer.InitializePluginAsync(container, ct);
+
+            //HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
+
+            HTTPManager.Logger.Level = Loglevels.Warning;
 
             ulong cacheSize = container.settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
 

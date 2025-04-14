@@ -47,9 +47,20 @@ namespace ECS.StreamableLoading.AssetBundles
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedDataAsync(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             PartialDownloadStream stream = state.ClaimOwnershipOverFullyDownloadedData();
+            AssetBundle? assetBundle;
 
             await UniTask.SwitchToMainThread();
-            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(stream).WithCancellation(ct);
+
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                assetBundle = await AssetBundle.LoadFromStreamAsync(stream).WithCancellation(ct);
+            }
+            catch
+            {
+                stream.Dispose();
+                throw;
+            }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();

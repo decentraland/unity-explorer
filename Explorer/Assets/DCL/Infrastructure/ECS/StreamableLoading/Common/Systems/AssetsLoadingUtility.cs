@@ -56,9 +56,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
                         // Removal from Permitted Sources is done after this method
                         if (intention.CommonArguments.PermittedSources.HasExactlyOneFlag())
-
-                            // conclude now - no sources left
-                            return new StreamableLoadingResult<TAsset>(
+                        {
+                            var failure = new StreamableLoadingResult<TAsset>(
                                 reportData,
                                 new Exception(
                                     $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
@@ -66,6 +65,12 @@ namespace ECS.StreamableLoading.Common.Systems
                                     webRequestException
                                 )
                             );
+
+                            SetIrrecoverableFailure(failure);
+
+                            // conclude now - no sources left
+                            return failure;
+                        }
 
                         // For this URL it's an irrecoverable failure
                         SetIrrecoverableFailure(null); // null means it can be continued - it's not the final result
