@@ -29,5 +29,7 @@
         public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
 
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
+
+        public const string KTX2_CONVERSION = "ktx2-conversion";
     }
 }

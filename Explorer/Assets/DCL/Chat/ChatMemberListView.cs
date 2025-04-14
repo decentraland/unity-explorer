@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Utilities;
 using DCL.Web3;
 using MVC;
 using SuperScrollView;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Chat
@@ -56,6 +58,11 @@ namespace DCL.Chat
                     VisibilityChanged?.Invoke(value);
                 }
             }
+        }
+
+        private void Awake()
+        {
+            loopListView.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void InjectDependencies(ViewDependencies dependencies)

@@ -37,9 +37,9 @@ namespace DCL.Chat
         public struct ShowParams
         {
             /// <summary>
-            /// Indicates whether the chat panel should be folded or unfolded when its view is shown.
+            /// Indicates whether the chat panel should be unfolded. If it is False, no action will be performed.
             /// </summary>
-            public readonly bool ShowUnfolded;
+            public readonly bool Unfold;
 
             /// <summary>
             /// Indicates whether the input box of the chat panel should gain the focus after showing.
@@ -49,11 +49,11 @@ namespace DCL.Chat
             /// <summary>
             /// Constructor with all fields.
             /// </summary>
-            /// <param name="showUnfolded">Indicates whether the chat panel should be folded or unfolded when its view is shown.</param>
+            /// <param name="unfold">Indicates whether the chat panel should be unfolded. If it is False, no action will be performed.</param>
             /// <param name="hasToFocusInputBox">Indicates whether the input box of the chat panel should gain the focus after showing</param>
-            public ShowParams(bool showUnfolded, bool hasToFocusInputBox = false)
+            public ShowParams(bool unfold, bool hasToFocusInputBox = false)
             {
-                ShowUnfolded = showUnfolded;
+                Unfold = unfold;
                 HasToFocusInputBox = hasToFocusInputBox;
             }
         }
@@ -181,7 +181,8 @@ namespace DCL.Chat
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-                IsUnfolded = showParams.ShowUnfolded;
+                if(showParams.Unfold)
+                    IsUnfolded = true;
 
                 if(showParams.HasToFocusInputBox)
                     FocusInputBox();
@@ -405,7 +406,7 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
-            IsUnfolded = inputData.ShowUnfolded;
+            IsUnfolded = inputData.Unfold;
         }
 
         protected override void OnViewClose()
