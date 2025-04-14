@@ -73,9 +73,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void CloseCurrentStream()
         {
-            if (currentStream?.TryGetTarget(out var stream) ?? false)
-                stream.Dispose();
-
+            // doesn't need to dispose the stream, because it's responsibility of the owning room
             currentStream = null;
             playerState = PlayerState.STOPPED;
         }
