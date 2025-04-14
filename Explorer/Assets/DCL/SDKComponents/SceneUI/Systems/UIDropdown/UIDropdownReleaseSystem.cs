@@ -45,8 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         private void RemoveDropdownField(in Entity entity, UIDropdownComponent uiDropdownComponent)
         {
-            if (componentPool != null)
-                componentPool.Release(uiDropdownComponent);
+            componentPool.Release(uiDropdownComponent);
 
             //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
             World.Remove<UIDropdownComponent>(entity);

@@ -45,8 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         private void RemoveTextField(in Entity entity, UIInputComponent uiInputComponent)
         {
-            if (componentPool != null)
-                componentPool.Release(uiInputComponent);
+            componentPool.Release(uiInputComponent);
 
             //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
             World.Remove<UIInputComponent>(entity);
