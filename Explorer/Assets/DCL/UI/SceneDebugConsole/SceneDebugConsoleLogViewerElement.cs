@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.Utilities;
 using DG.Tweening;
@@ -10,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -21,9 +19,7 @@ namespace DCL.UI.SceneDebugConsole
     /// </summary>
     public class SceneDebugConsoleLogViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
     {
-        public delegate void LogMessageOptionsButtonClickedDelegate(string logMessage, LogEntryView logEntryView);
         public delegate void LogMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
-        // public delegate Color CalculateUsernameColorDelegate(SceneDebugConsoleLogMessage logMessage);
 
         /// <summary>
         /// The prefab to use when instantiating a new item.
@@ -34,11 +30,6 @@ namespace DCL.UI.SceneDebugConsole
             Padding,
             Separator,
         }
-
-        /// <summary>
-        /// Raised when the options button of a log message is clicked.
-        /// </summary>
-        // public LogMessageOptionsButtonClickedDelegate? LogMessageOptionsButtonClicked;
 
         /// <summary>
         /// Raised every time the scroll position of the messages viewer changes.
@@ -317,29 +308,12 @@ namespace DCL.UI.SceneDebugConsole
 
                 SceneDebugConsoleLogMessage itemData = logMessages[messageIndex]; // Ignores the index used for the separator
 
-                // if (itemData.IsPaddingElement)
-                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.Padding].mItemPrefab.name);
-                // else if (IsUserBlocked(itemData.WalletAddress))
-                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.BlockedUser].mItemPrefab.name);
-                // else
-                {
-                    /*item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)LogItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)LogItemPrefabIndex.ChatEntry].mItemPrefab.name);*/
-                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
+                item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
 
-                    LogEntryView itemScript = item!.GetComponent<LogEntryView>()!;
-                    // Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
-                    // messageOptionsButton?.onClick.RemoveAllListeners();
+                LogEntryView itemScript = item!.GetComponent<LogEntryView>()!;
 
-                    SetItemDataAsync(index, itemData, itemScript).Forget();
-                    itemScript.LogEntryClicked -= OnLogEntryClicked;
-
-                    /*if (itemData is { SentByOwnUser: false, SystemMessage: false })
-                        itemScript.LogEntryClicked += OnLogEntryClicked;*/
-
-                    // messageOptionsButton?.onClick.AddListener(() =>
-                    //     OnLogMessageOptionsButtonClicked(itemData.Message, itemScript));
-                }
+                SetItemDataAsync(index, itemData, itemScript).Forget();
+                itemScript.LogEntryClicked -= OnLogEntryClicked;
             }
 
             return item;

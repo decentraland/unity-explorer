@@ -1,5 +1,4 @@
 using DCL.UI.SceneDebugConsole.LogHistory;
-using MVC;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -23,13 +22,10 @@ namespace DCL.UI.SceneDebugConsole
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            // messageOptionsButton?.gameObject.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            // if (!popupOpen)
-                // messageOptionsButton?.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -39,9 +35,6 @@ namespace DCL.UI.SceneDebugConsole
         public void SetMessageData(SceneDebugConsoleLogMessage data)
         {
             messageContentElement.SetMessageContent(data.Message);
-
-            // backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-            // messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
         }
     }
 }

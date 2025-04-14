@@ -1,7 +1,5 @@
-using Cysharp.Threading.Tasks;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using MVC;
-using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
