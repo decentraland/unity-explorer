@@ -41,6 +41,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -144,7 +145,13 @@ namespace Global.Dynamic
 
             const bool KTX_ENABLED = true;
 
-            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+            // Memory limit
+            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
+            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
+            ISystemMemoryCap memoryCap = hasSimulatedMemory
+                ? new SystemMemoryCap(MemoryCapMode.SIMULATED_MEMORY, systemMemory)
+                : new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -233,7 +240,7 @@ namespace Global.Dynamic
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
 #if UNITY_EDITOR
-                        UnityEditor.EditorApplication.isPlaying = false;
+                        EditorApplication.isPlaying = false;
 #else
                         Application.Quit();
 #endif

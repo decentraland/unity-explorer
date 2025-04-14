@@ -196,8 +196,7 @@ namespace Global.Dynamic
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
-            var sceneLoadingLimit
-                = SceneLoadingLimit.CreateMax();
+            var sceneLoadingLimit = SceneLoadingLimit.Create((IMemoryUsageProvider)memoryBudget);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {

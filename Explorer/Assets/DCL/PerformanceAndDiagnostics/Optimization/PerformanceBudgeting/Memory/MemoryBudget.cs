@@ -35,7 +35,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         public MemoryUsageStatus GetMemoryUsageStatus()
         {
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
-            long totalSystemMemory = GetTotalSystemMemory();
+            long totalSystemMemory = GetTotalSystemMemoryInMB();
 
             return usedMemory switch
                    {
@@ -47,14 +47,14 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public (int warning, int full) GetMemoryRanges()
         {
-            long totalSizeInMB = GetTotalSystemMemory();
+            long totalSizeInMB = GetTotalSystemMemoryInMB();
             return ((int) (totalSizeInMB * memoryThreshold[WARNING]), (int)(totalSizeInMB * memoryThreshold[FULL]));
         }
 
         public bool TrySpendBudget() =>
             GetMemoryUsageStatus() != FULL;
 
-        private long GetTotalSystemMemory()
+        public long GetTotalSystemMemoryInMB()
         {
             return SimulatedMemoryUsage switch
                    {

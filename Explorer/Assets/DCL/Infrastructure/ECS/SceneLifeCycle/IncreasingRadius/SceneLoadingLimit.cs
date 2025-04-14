@@ -1,3 +1,4 @@
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using System;
 
@@ -67,6 +68,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
 
             return false;
+        }
+
+        public static SceneLoadingLimit Create(IMemoryUsageProvider memoryBudget)
+        {
+            UnityEngine.Debug.Log($"JUANII {memoryBudget.GetTotalSystemMemoryInMB()}");
+            return CreateMax();
         }
     }
 }
