@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
@@ -15,7 +16,6 @@ using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Platforms;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -36,8 +36,6 @@ using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
 using MVC;
-using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -47,6 +45,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
+using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
 {
@@ -143,22 +142,7 @@ namespace Global.Dynamic
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             SystemInfoUtils.Log(dclVersion.Version);
 
-            bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
-
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
-                compressionEnabled = false;
-
-            ITexturesFuse TextureFuseFactory() =>
-                ITexturesFuse.NewDefault();
-
-            ICompressShaders compressShaders = compressionEnabled ? ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT) : ICompressShaders.NewEmpty();
-
-            if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
-            {
-                await compressShaders.WarmUpIfRequiredAsync(ct);
-                IPlatform.DEFAULT.Quit();
-                return;
-            }
+            const bool KTX_ENABLED = true;
 
             ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
@@ -170,19 +154,17 @@ namespace Global.Dynamic
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
 
-            var texturesFuse = TextureFuseFactory();
-
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, compressionEnabled);
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainerBuilder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
-            bootstrapContainer = await BootstrapContainer.CreateAsync(
+             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
@@ -192,9 +174,6 @@ namespace Global.Dynamic
                 launchSettings,
                 applicationParametersParser,
                 splashScreen,
-                compressShaders
-                   .WithSplashScreen(splashScreen, hideOnFinish: false)
-                   .WithLog("Load Guard"),
                 realmUrls,
                 diskCache,
                 partialsDiskCache,
@@ -212,7 +191,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, scenesUIRoot, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
 
                 if (!isLoaded)
                 {
@@ -241,6 +220,8 @@ namespace Global.Dynamic
                 }
 
                 await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
+
+                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -306,6 +287,23 @@ namespace Global.Dynamic
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+        }
+
+        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
+        {
+            MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
+            if (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN))
+                return;
+
+            var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+
+            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                MinimumSpecsScreenController.CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+
+            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser);
+            dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
+            dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
+            await minimumSpecsScreenController.HoldingTask.Task;
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
