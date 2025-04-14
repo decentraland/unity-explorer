@@ -29,5 +29,6 @@
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
+        public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
     }
 }

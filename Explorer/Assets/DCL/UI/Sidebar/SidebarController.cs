@@ -3,17 +3,20 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles.Self;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
+using ECS;
 using MVC;
 using System;
 using System.Threading;
@@ -33,12 +36,16 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly bool includeMarketplaceCredits;
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISelfProfile selfProfile;
+        private readonly IRealmData realmData;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
+        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
 
         public event Action? HelpOpened;
 
@@ -59,7 +66,10 @@ namespace DCL.UI.Sidebar
             bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            ISelfProfile selfProfile,
+            IRealmData realmData,
+            FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -76,6 +86,9 @@ namespace DCL.UI.Sidebar
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.selfProfile = selfProfile;
+            this.realmData = realmData;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public override void Dispose()
@@ -83,6 +96,7 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
+            checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -125,11 +139,6 @@ namespace DCL.UI.Sidebar
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
 
-            if(includeMarketplaceCredits)
-                viewInstance.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
-
-            viewInstance.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
-
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
             chatView.FoldingChanged += OnChatViewFoldingChanged;
@@ -141,6 +150,9 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+
+            checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
+            CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -189,6 +201,20 @@ namespace DCL.UI.Sidebar
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
+
+        private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
+        {
+            includeMarketplaceCredits = await MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
+                includeMarketplaceCredits,
+                realmData,
+                selfProfile,
+                featureFlagsCache,
+                ct);
+
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
+            if (includeMarketplaceCredits)
+                viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
 
         #region Sidebar button handlers
 

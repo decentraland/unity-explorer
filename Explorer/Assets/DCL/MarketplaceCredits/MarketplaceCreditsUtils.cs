@@ -1,6 +1,12 @@
+using Cysharp.Threading.Tasks;
+using DCL.FeatureFlags;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.Profiles.Self;
+using ECS;
 using System;
 using System.Globalization;
+using System.Threading;
+using UnityEngine;
 
 namespace DCL.MarketplaceCredits
 {
@@ -81,6 +87,18 @@ namespace DCL.MarketplaceCredits
             }
 
             return false;
+        }
+
+        public static async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, IRealmData realmData, ISelfProfile selfProfile, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
+        {
+            if (!includeMarketplaceCredits)
+                return false;
+
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
+
+            return ownProfile != null && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(ownProfile.UserId, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

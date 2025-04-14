@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
@@ -37,6 +38,8 @@ namespace DCL.MarketplaceCredits
 
         public event Action<bool> MarketplaceCreditsOpened;
 
+        private bool isFeatureActivated = true;
+
         [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
 
@@ -55,6 +58,7 @@ namespace DCL.MarketplaceCredits
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
         private MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
@@ -83,7 +87,8 @@ namespace DCL.MarketplaceCredits
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            FeatureFlagsCache featureFlagsCache) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -97,6 +102,10 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.featureFlagsCache = featureFlagsCache;
+
+            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             CheckForSidebarButtonState();
         }
@@ -107,9 +116,6 @@ namespace DCL.MarketplaceCredits
             viewInstance!.OnAnyPlaceClick += OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
-
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
                 viewInstance.GoalsOfTheWeekView,
@@ -279,8 +285,13 @@ namespace DCL.MarketplaceCredits
             SetSidebarButtonAsClaimIndicator(true);
         }
 
-        private void OnMarketplaceCreditsNotificationClicked(object[] parameters) =>
+        private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
+        {
+            if (!isFeatureActivated)
+                return;
+
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new ShowParams(isOpenedFromNotification: true));
+        }
 
         private void CheckForSidebarButtonState()
         {
@@ -292,8 +303,10 @@ namespace DCL.MarketplaceCredits
         {
             try
             {
-                await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-                ownProfile = await selfProfile.ProfileAsync(ct);
+                isFeatureActivated = await MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, realmData, selfProfile, featureFlagsCache, ct);
+                if (!isFeatureActivated)
+                    return;
+
                 if (ownProfile != null)
                 {
                     var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);

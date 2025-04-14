@@ -5,11 +5,13 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
@@ -22,6 +24,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -53,6 +56,9 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ViewDependencies viewDependencies;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISelfProfile selfProfile;
+        private readonly IRealmData realmData;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -76,7 +82,10 @@ namespace DCL.PluginSystem.Global
             bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ViewDependencies viewDependencies,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            ISelfProfile selfProfile,
+            IRealmData realmData,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -100,6 +109,9 @@ namespace DCL.PluginSystem.Global
             this.chatHistory = chatHistory;
             this.viewDependencies = viewDependencies;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.selfProfile = selfProfile;
+            this.realmData = realmData;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
@@ -133,7 +145,10 @@ namespace DCL.PluginSystem.Global
                 includeMarketplaceCredits,
                 mainUIView.ChatView,
                 chatHistory,
-                sharedSpaceManager
+                sharedSpaceManager,
+                selfProfile,
+                realmData,
+                featureFlagsCache
             ));
         }
 

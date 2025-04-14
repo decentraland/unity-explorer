@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly INotificationsBusController notificationBusController;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
@@ -46,7 +48,8 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             INotificationsBusController notificationBusController,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -59,6 +62,7 @@ namespace DCL.PluginSystem.Global
             this.notificationBusController = notificationBusController;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -88,7 +92,8 @@ namespace DCL.PluginSystem.Global
                 mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
                 mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
                 realmData,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                featureFlagsCache);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
