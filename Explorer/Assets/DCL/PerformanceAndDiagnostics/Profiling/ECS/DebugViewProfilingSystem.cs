@@ -132,6 +132,8 @@ namespace DCL.Profiling.ECS
 
         private static IndexedElementBinding CreatePhysicsModeBinding(AdaptivePhysicsSettings adpativePhysicsSettings)
         {
+            const float UNITY_DEFAULT_FIXED_DELTA_TIME = 0.02f;
+
             return new IndexedElementBinding(
                 Enum.GetNames(typeof(PhysSimulationMode)).ToList(),
                 adpativePhysicsSettings.Mode.ToString(),
@@ -144,7 +146,7 @@ namespace DCL.Profiling.ECS
                             case PhysSimulationMode.ADAPTIVE:
                                 adpativePhysicsSettings.Mode = mode;
                                 Physics.simulationMode = SimulationMode.FixedUpdate;
-                                UnityEngine.Time.fixedDeltaTime = 0.02f;
+                                UnityEngine.Time.fixedDeltaTime = UNITY_DEFAULT_FIXED_DELTA_TIME;
                                 break;
                             case PhysSimulationMode.MANUAL:
                                 adpativePhysicsSettings.Mode = mode;
