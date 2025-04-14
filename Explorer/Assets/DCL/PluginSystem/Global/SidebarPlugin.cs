@@ -6,7 +6,6 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -42,7 +41,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
-        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
@@ -69,7 +67,6 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -95,7 +92,6 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
-            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;

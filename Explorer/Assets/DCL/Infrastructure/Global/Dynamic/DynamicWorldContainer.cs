@@ -28,7 +28,6 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -545,7 +544,6 @@ namespace Global.Dynamic
             var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
@@ -629,7 +627,7 @@ namespace Global.Dynamic
                     assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
                     notificationsRequestController, identityCache, profileRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    marketplaceCreditsAPIClient, webBrowser, dynamicWorldDependencies.Web3Authenticator,
+                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
@@ -872,9 +870,9 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     webBrowser,
                     staticContainer.InputBlock,
-                    marketplaceCreditsAPIClient,
                     selfProfile,
                     staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource,
                     mvcManager,
                     notificationsBusController,
                     staticContainer.RealmData,

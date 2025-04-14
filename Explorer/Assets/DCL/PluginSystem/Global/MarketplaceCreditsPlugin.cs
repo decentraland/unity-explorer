@@ -6,6 +6,7 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles.Self;
 using DCL.UI.MainUI;
@@ -42,9 +43,9 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             INotificationsBusController notificationBusController,
             IRealmData realmData,
@@ -55,7 +56,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
-            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
@@ -63,6 +63,8 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
             this.featureFlagsCache = featureFlagsCache;
+
+            marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
