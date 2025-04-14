@@ -70,6 +70,13 @@ namespace DCL.SDKComponents.MediaStream
                                      _ => throw new ArgumentOutOfRangeException()
                                  };
 
+        public bool HasControl => mediaKind switch
+                                  {
+                                      MediaAddress.Kind.URL => avProMediaPlayer!.Control != null,
+                                      MediaAddress.Kind.LIVEKIT => false,
+                                      _ => throw new ArgumentOutOfRangeException(),
+                                  };
+
         private MultiMediaPlayer(MediaAddress.Kind mediaKind, MediaPlayer? avProMediaPlayer, MediaPlayerCustomPool? mediaPlayerCustomPool, LivekitPlayer? livekitMediaPlayer)
         {
             this.mediaKind = mediaKind;

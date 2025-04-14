@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -12,11 +14,11 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
-using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -237,7 +239,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
-                Profiler.BeginSample(component.MediaPlayer.Control != null
+                Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"
                     : "MediaPlayer.InitialiseAndOpenMedia");
 
