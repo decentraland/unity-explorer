@@ -96,7 +96,13 @@ namespace DCL.Friends
 
         public void SendMessage(byte[] data)
         {
-            SendMessageAsync(data, lifeCycleCancellationToken.Token).Forget();
+            CancellationToken ct;
+
+            // The cancellation source could be disposed before the token is obtained.
+            try { ct = lifeCycleCancellationToken.Token; }
+            catch (ObjectDisposedException) { return; }
+
+            SendMessageAsync(data, ct).Forget();
         }
 
         public async UniTask SendMessageAsync(byte[] data, CancellationToken ct)
