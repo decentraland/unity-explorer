@@ -22,7 +22,7 @@ namespace DCL.MarketplaceCredits.Sections
         public GameObject MainLoadingSpinner { get; private set; }
 
         public void SetEmailToVerify(string email) =>
-            Subtitle.text = $"Almost there! We have sent you an email containing the instructions to verify your identity to <color=#FF2D55>{email}</color>";
+            Subtitle.text = $"Almost there! A confirmation email has been sent to <color=#FF2D55><b>{email}</b></color>. Click the confirmation button in the email to proceed.";
 
         public void SetAsLoading(bool isLoading)
         {
