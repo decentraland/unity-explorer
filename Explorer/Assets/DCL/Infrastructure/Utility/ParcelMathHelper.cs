@@ -26,20 +26,36 @@ namespace Utility
             new (int2.x, int2.y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 GetSceneRelativePosition(Vector3 position, Vector3 scenePosition) =>
-            position - scenePosition;
+        public static Vector3 FromGlobalToSceneRelativePosition(this Vector3 globalPosition, Vector3 sceneGlobalPosition) =>
+            globalPosition - sceneGlobalPosition;
 
-        public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition, bool adaptYPositionToTerrain = false)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 FromGlobalToSceneRelativePosition(this Vector3 globalPosition, Vector2Int sceneBaseParcelCoords) =>
+            globalPosition - sceneBaseParcelCoords.ParcelToPositionFlat();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 FromSceneRelativeToGlobalPosition(this Vector3 sceneRelativePosition, Vector2Int sceneBaseParcelCoords) =>
+            sceneBaseParcelCoords.ParcelToPositionFlat() + sceneRelativePosition;
+
+        public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
+            new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
+
+        public static Vector3 WithTerrainOffset(this Vector3 position)
         {
-            var position = new Vector3(parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
-
-            if (adaptYPositionToTerrain)
-            {
-                const float TERRAIN_HEIGHT_ADAPTATION_OFFSET = 2.0f;
-                position.y = GetNearestSurfaceHeight(position) + TERRAIN_HEIGHT_ADAPTATION_OFFSET;
-            }
+            const float TERRAIN_HEIGHT_ADAPTATION_OFFSET = 2.0f;
+            position.y = GetNearestSurfaceHeight(position) + TERRAIN_HEIGHT_ADAPTATION_OFFSET;
 
             return position;
+        }
+
+        /// <summary>
+        ///     Pulls position a little bit towards the center of the parcel to compensate a possible float error
+        ///     that shifts position outside the parcel
+        /// </summary>
+        public static Vector3 WithErrorCompensation(this Vector3 position)
+        {
+            const float EPSILON = 0.0001f;
+            return position + new Vector3(EPSILON, 0, EPSILON);
         }
 
         private static float GetNearestSurfaceHeight(Vector3 position) =>

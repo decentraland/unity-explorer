@@ -9,10 +9,10 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
-using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
+using Utility.Storage;
 
 namespace DCL.WebRequests
 {
@@ -40,9 +40,11 @@ namespace DCL.WebRequests
         public static async UniTask<WebRequestsContainer> CreateAsync(
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
-            ITexturesFuse texturesFuse,
+            IDecentralandUrlsSource urlsSource,
             IDebugContainerBuilder debugContainerBuilder,
-            bool isTextureCompressionEnabled,
+            int coreBudget,
+            int sceneBudget,
+            bool ktxEnabled,
             CancellationToken ct
         )
         {
@@ -72,7 +74,7 @@ namespace DCL.WebRequests
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
-            var textureFuseRequestHub = new RequestHub(texturesFuse, httpCache, isTextureCompressionEnabled, container.WebRequestsMode);
+            var textureFuseRequestHub = new RequestHub(httpCache, urlsSource, container.WebRequestsMode);
 
             int partialChunkSize = container.settings.PartialChunkSizeMB * 1024 * 1024;
 
@@ -170,6 +172,14 @@ namespace DCL.WebRequests
                                               }),
                                           new DebugHintDef("Sequential"));
             }
+
+        }
+
+        public void SetKTXEnabled(bool enabled)
+        {
+            // TODO: Temporary until we rewrite FF to be static
+            WebRequestController.requestHub.SetKTXEnabled(enabled);
+            SceneWebRequestController.requestHub.SetKTXEnabled(enabled);
         }
     }
 }

@@ -7,5 +7,6 @@ namespace DCL.Friends
         REQUEST_SENT,
         REQUEST_RECEIVED,
         BLOCKED,
+        BLOCKED_BY,
     }
 }

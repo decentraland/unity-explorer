@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using MVC;
 using System;
 using System.Threading;
@@ -15,25 +14,36 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
 
-        private ViewDependencies viewDependencies;
-        private CancellationTokenSource cts;
+        private ViewDependencies? viewDependencies;
+        private CancellationTokenSource? cts;
+        private string? currentUserId;
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+        }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+        }
 
         public void Setup(Color userColor, string faceSnapshotUrl, string userId)
         {
-            thumbnailBackground.color = userColor;
+            SetupOnlyColor(userColor);
             LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
         }
 
         public async UniTask SetupWithDependenciesAsync(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
         {
-            viewDependencies = dependencies;
-            thumbnailBackground.color = userColor;
+            InjectDependencies(dependencies);
+            SetupOnlyColor(userColor);
             await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
         }
 
         public void SetupWithDependencies(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId)
         {
-            viewDependencies = dependencies;
+            InjectDependencies(dependencies);
             Setup(userColor, faceSnapshotUrl, userId);
         }
 
@@ -51,37 +61,56 @@ namespace DCL.UI.ProfileElements
         public void SetDefaultThumbnail()
         {
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            currentUserId = null;
+        }
+
+        private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
+        {
+            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.ImageEnabled = true;
+            await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
         private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
         {
+            if (userId.Equals(currentUserId)) return;
+
+            cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+            currentUserId = userId;
+
             try
             {
-                cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
-                thumbnailImageView.IsLoading = true;
-                thumbnailImageView.ImageEnabled = false;
+                ct.ThrowIfCancellationRequested();
 
-                Sprite sprite = await viewDependencies.GetThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                Sprite? sprite = viewDependencies!.GetProfileThumbnail(userId);
 
-                thumbnailImageView.SetImage(sprite ? sprite : defaultEmptyThumbnail);
-                thumbnailImageView.ImageEnabled = true;
+                if (sprite != null)
+                {
+                    thumbnailImageView.SetImage(sprite);
+                    SetLoadingState(false);
+                    thumbnailImageView.Alpha = 1f;
+                    return;
+                }
+
+                SetLoadingState(true);
+                thumbnailImageView.Alpha = 0f;
+
+                sprite = await viewDependencies!.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+
+                if (sprite == null)
+                    currentUserId = null;
+
+                await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                currentUserId = null;
             }
             catch (Exception)
             {
-                thumbnailImageView.SetImage(defaultEmptyThumbnail);
-                thumbnailImageView.ImageEnabled = true;
+                currentUserId = null;
+                await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
-
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
         }
     }
 }

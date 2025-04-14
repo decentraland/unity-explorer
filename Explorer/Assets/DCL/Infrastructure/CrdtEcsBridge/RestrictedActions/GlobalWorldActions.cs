@@ -36,7 +36,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
         {
             // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
-            world.AddOrSet(playerEntity, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero, CancellationToken.None));
+            world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)
@@ -66,6 +66,8 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
+            if (!avatarShape.IsVisible) return;
+
             var promise = SceneEmotePromise.Create(world,
                 new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
                 PartitionComponent.TOP_PRIORITY);
@@ -82,6 +84,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn, bool isLooping)
         {
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
+
             world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
             messageBus.Send(urn, isLooping);
         }

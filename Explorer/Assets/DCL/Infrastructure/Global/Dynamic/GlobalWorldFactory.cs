@@ -33,10 +33,10 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using SceneRunner;
 using SceneRunner.Scene;
-using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
+using DCL.Roads.Systems;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -63,6 +63,7 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
+        private readonly IRoadAssetPool roadAssetPool;
         private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
@@ -70,6 +71,8 @@ namespace Global.Dynamic
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
         private readonly IProfileRepository profileRepository;
+        private readonly HashSet<Vector2Int> roadCoordinates;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -78,11 +81,14 @@ namespace Global.Dynamic
             IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
+            HashSet<Vector2Int> roadCoordinates,
+            ILODSettingsAsset lodSettingsAsset,
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            RoadAssetsPool roadAssetPool)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -107,12 +113,15 @@ namespace Global.Dynamic
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
             this.profileRepository = profileRepository;
+            this.roadCoordinates = roadCoordinates;
+            this.lodSettingsAsset = lodSettingsAsset;
+            this.roadAssetPool = roadAssetPool;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, V8ActiveEngines v8ActiveEngines, Entity playerEntity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity)
         {
             // not synced by mutex, for compatibility only
 
@@ -145,18 +154,18 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
 
-            LoadStaticPointersSystem.InjectToWorld(ref builder);
-            LoadFixedPointersSystem.InjectToWorld(ref builder);
-            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
+            LoadStaticPointersSystem.InjectToWorld(ref builder, roadCoordinates, realmData);
+            LoadFixedPointersSystem.InjectToWorld(ref builder, realmData);
+            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder, realmData);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings, sceneReadinessReportQueue, scenesCache);
+                partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData);
 
-            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
@@ -182,15 +191,21 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
+            var pluginArgs = new GlobalPluginArguments(playerEntity);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
+            var sceneLoadingLimit
+                = SceneLoadingLimit.CreateMax();
+
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
+                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

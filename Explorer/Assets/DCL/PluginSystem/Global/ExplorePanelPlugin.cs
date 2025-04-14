@@ -41,6 +41,7 @@ using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.EventsApi;
+using DCL.Friends.UserBlocking;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -49,6 +50,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using Global.AppArgs;
 using UnityEngine;
@@ -107,6 +109,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private readonly bool includeCameraReel;
 
@@ -166,7 +170,9 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            IAppArgs appArgs, ViewDependencies viewDependencies)
+            IAppArgs appArgs, ViewDependencies viewDependencies,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -214,6 +220,8 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
             this.viewDependencies = viewDependencies;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose()
@@ -318,7 +326,7 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, worldVolumeMacBus);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, worldVolumeMacBus);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,
@@ -337,7 +345,7 @@ namespace DCL.PluginSystem.Global
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager, includeCameraReel);
+            inputHandler = new ExplorePanelInputHandler(dclInput);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
@@ -353,11 +361,14 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 settings.StorageProgressBarText);
 
-            mvcManager.RegisterController(new
+            ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
-                    dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock, includeCameraReel));
+                    dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
+            mvcManager.RegisterController(explorePanelController);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)

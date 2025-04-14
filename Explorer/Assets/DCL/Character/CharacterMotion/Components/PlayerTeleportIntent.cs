@@ -1,28 +1,33 @@
-﻿using DCL.Utilities;
+﻿using DCL.Ipfs;
+using DCL.Utilities;
 using System;
 using System.Threading;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
-    public readonly struct PlayerTeleportIntent
+    public struct PlayerTeleportIntent
     {
         public readonly struct JustTeleported
         {
             public readonly int ExpireFrame;
+            public readonly Vector2Int Parcel;
 
-            public JustTeleported(int expireFrame)
+            public JustTeleported(int expireFrame, Vector2Int parcel)
             {
                 ExpireFrame = expireFrame;
+                Parcel = parcel;
             }
         }
 
-        public static readonly TimeSpan TIMEOUT = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromMinutes(2);
+        private readonly float creationTime;
 
         public readonly Vector2Int Parcel;
-        public readonly Vector3 Position;
-
         public readonly CancellationToken CancellationToken;
+        public readonly SceneEntityDefinition? SceneDef;
+        public bool IsPositionSet;
+        public Vector3 Position;
 
         /// <summary>
         ///     Strictly it's the same report added to "SceneReadinessReportQueue" <br />
@@ -31,17 +36,17 @@ namespace DCL.CharacterMotion.Components
         /// </summary>
         public readonly AsyncLoadProcessReport? AssetsResolution;
 
-        public readonly float CreationTime;
+        public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(Vector3 position, Vector2Int parcel, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null)
+        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false)
         {
-            Position = position;
             Parcel = parcel;
             CancellationToken = cancellationToken;
             AssetsResolution = assetsResolution;
-            CreationTime = Time.realtimeSinceStartup;
+            creationTime = Time.realtimeSinceStartup;
+            SceneDef = sceneDef;
+            IsPositionSet = isPositionSet;
+            Position = position;
         }
-
-        public bool TimedOut => Time.realtimeSinceStartup - CreationTime > TIMEOUT.TotalSeconds;
     }
 }

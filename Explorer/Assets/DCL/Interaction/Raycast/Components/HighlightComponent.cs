@@ -74,8 +74,8 @@ namespace DCL.Interaction.Raycast.Components
             currentEntity == nextEntity && isEnabled;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool ReadyForMaterial() =>
-            isEnabled && nextEntity != EntityReference.Null;
+        public readonly bool ReadyForMaterial(World world) =>
+            isEnabled && nextEntity != EntityReference.Null && nextEntity.IsAlive(world);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwitchEntity()
@@ -84,7 +84,7 @@ namespace DCL.Interaction.Raycast.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool HasToResetLastEntity() =>
-            currentEntity != nextEntity && currentEntity != EntityReference.Null && isEnabled;
+        public bool HasToResetLastEntity(World world) =>
+            isEnabled && currentEntity != nextEntity && currentEntity != EntityReference.Null && currentEntity.IsAlive(world);
     }
 }

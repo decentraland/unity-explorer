@@ -1,23 +1,26 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.Components;
 using DCL.Ipfs;
+using DCL.LOD;
 using DCL.LOD.Components;
 using DCL.Roads.Components;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.SceneFacade;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -26,33 +29,67 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     [UpdateAfter(typeof(LoadPointersByIncreasingRadiusSystem))]
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
-    public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem
+    public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly Comparer COMPARER_INSTANCE = new ();
+        private static readonly OrdenedDataNativeComparer COMPARER_INSTANCE = new ();
 
-        private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
-                                                                       .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo, EmptySceneComponent>();
-
+        private readonly Entity playerEntity;
+        private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IRealmData realmData;
 
+        //Array sorting helpers
+        private readonly List<OrderedDataManaged> orderedDataManaged;
+        private NativeList<OrderedDataNative> orderedDataNative;
         internal JobHandle? sortingJobHandle;
+        private bool arraysInSync;
+        private bool inTeleport;
 
-        private NativeList<OrderedData> orderedData;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
+        //Loading helpers
+        private int loadedScenes;
+        private int loadedLODs;
+        private int qualityReductedLOD;
+        private int promisesCreated;
+
+        private readonly SceneLoadingLimit sceneLoadingLimit;
+
+        private readonly VisualSceneStateResolver visualSceneStateResolver;
+
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity,
+            VisualSceneStateResolver visualSceneStateResolver, IRealmData realmData,
+            SceneLoadingLimit sceneLoadingLimit) : base(world)
         {
+            playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
+            this.playerEntity = playerEntity;
+            this.visualSceneStateResolver = visualSceneStateResolver;
+            this.realmData = realmData;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
-            orderedData = new NativeList<OrderedData>(
-                ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3,
-                Allocator.Persistent);
+            int initialCapacity = ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3;
+
+            orderedDataManaged = new List<OrderedDataManaged>(initialCapacity);
+            orderedDataNative = new NativeList<OrderedDataNative>(initialCapacity, Allocator.Persistent);
+
+            ResetUtilsArrays();
         }
 
-        protected override void OnDispose()
+        public void FinalizeComponents(in Query query)
         {
-            orderedData.Dispose();
+            //On realm change, reset the ordered data array
+            ResetUtilsArrays();
+        }
+
+        private void ResetUtilsArrays()
+        {
+            if (sortingJobHandle.HasValue)
+                sortingJobHandle.Value.Complete();
+
+            orderedDataManaged.Clear();
+            orderedDataNative.Clear();
+            arraysInSync = false;
         }
 
         protected override void Update(float t)
@@ -63,15 +100,37 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (!anyNonEmpty)
             {
-                float maxLoadingDistance = realmPartitionSettings.MaxLoadingDistanceInParcels * ParcelMathHelper.PARCEL_SIZE;
-                float maxLoadingSqrDistance = maxLoadingDistance * maxLoadingDistance;
-
-                ProcessVolatileRealmQuery(World, maxLoadingSqrDistance);
-                ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
+                AddNewSceneDefinitionToListQuery(World);
+                ProcessVolatileRealmQuery(World);
+                ProcessesFixedRealmQuery(World);
             }
 
             ProcessScenesUnloadingInRealmQuery(World);
         }
+
+
+        [Query]
+        [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
+        private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
+            in SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (sceneDefinitionComponent.IsPortableExperience)
+            {
+                //Portable experiences shouldnt be analyzed. Create straight away
+                World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
+            }
+            else
+            {
+                var sceneLoadingState = new SceneLoadingState();
+                //Sizes should always be the same
+                orderedDataManaged.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
+                orderedDataNative.Add(new OrderedDataNative());
+                arraysInSync = false;
+                World.Add(entity, sceneLoadingState);
+            }
+        }
+
 
         [Query]
         [All(typeof(PartitionComponent), typeof(SceneDefinitionComponent))]
@@ -83,9 +142,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
-        private void ProcessVolatileRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realm)
+        private void ProcessVolatileRealm(ref RealmComponent realmComponent)
         {
-            StartScenesLoading(ref realm, maxLoadingSqrDistance);
+            StartScenesLoading(realmComponent);
+        }
+
+        [Query]
+        [None(typeof(RoadInfo))]
+        private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, ref SceneLoadingState sceneLoadingState)
+        {
+            if (partitionComponent.OutOfRange)
+                TryUnload(entity, ref sceneLoadingState);
         }
 
         [Query]
@@ -96,117 +163,259 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             StartUnloadingQuery(World);
         }
 
+
         /// <summary>
         ///     Start loading scenes when all fixed pointers are loaded, otherwise we can't
         ///     weigh them against each other, and may start loading distant scenes first
         /// </summary>
         [Query]
         [None(typeof(StaticScenePointers), typeof(VolatileScenePointers))]
-        private void ProcessesFixedRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
+        private void ProcessesFixedRealm(in RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
-                StartScenesLoading(ref realmComponent, maxLoadingSqrDistance);
+                StartScenesLoading(realmComponent);
         }
 
-        private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
+        private void StartScenesLoading(in RealmComponent realmComponent)
         {
             if (sortingJobHandle is { IsCompleted: true })
             {
                 sortingJobHandle.Value.Complete();
-                CreatePromisesFromOrderedData(realmComponent.Ipfs);
+
+                // Since adding new values is throttled, arrays may be out of sync. They need to be synced to work
+                if (arraysInSync)
+                    CreatePromisesFromOrderedData(realmComponent.Ipfs);
             }
 
             if (sortingJobHandle is { IsCompleted: false }) return;
 
-            // Start new sorting
-            // Order the scenes definitions by the CURRENT partition and serve first N of them
+            TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
+            int xCoordinate;
+            int yCoordinate;
 
-            orderedData.Clear();
-
-            foreach (ref Chunk chunk in World.Query(in START_SCENES_LOADING))
+            if (teleportParcel.IsTeleporting)
             {
-                ref Entity entityFirstElement = ref chunk.Entity(0);
-                ref PartitionComponent partitionComponentFirst = ref chunk.GetFirst<PartitionComponent>();
+                xCoordinate = teleportParcel.Parcel.x;
+                yCoordinate = teleportParcel.Parcel.y;
+            }
+            else
+            {
+                Vector2Int currentParcel = playerTransform.position.ToParcel();
+                xCoordinate = currentParcel.x;
+                yCoordinate = currentParcel.y;
+            }
 
-                foreach (int entityIndex in chunk)
+            unsafe
+            {
+                OrderedDataNative* dataPtr = orderedDataNative.GetUnsafePtr();
+
+                for (var i = 0; i < orderedDataManaged.Count; i++)
                 {
-                    ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
-                    ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
-
-                    if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance) continue;
-
-                    orderedData.Add(new OrderedData
+                    OrderedDataManaged currentOrderedData = orderedDataManaged[i];
+                    dataPtr[i] = new OrderedDataNative
                     {
-                        Entity = entity,
-                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
-                    });
+                        ReferenceListIndex = i,
+                        RawSqrDistance = currentOrderedData.PartitionComponent.RawSqrDistance,
+                        IsBehind = currentOrderedData.PartitionComponent.IsBehind,
+                        IsPlayerInsideParcel = currentOrderedData.SceneDefinitionComponent.Contains(xCoordinate, yCoordinate),
+                        XCoordinate = currentOrderedData.XCoordinate,
+                        OutOfRange = currentOrderedData.PartitionComponent.OutOfRange,
+                    };
                 }
             }
 
-            // Raw Distance will give more stable results in terms of scenes loading order, especially in cases
-            // when a wide range falls into the same bucket
-            sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
+            arraysInSync = true;
+            inTeleport = teleportParcel.IsTeleporting;
+            sortingJobHandle = orderedDataNative.SortJob(COMPARER_INSTANCE).Schedule();
         }
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
-            var promisesCreated = 0;
+            loadedScenes = 0;
+            loadedLODs = 0;
+            qualityReductedLOD = 0;
+            promisesCreated = 0;
 
-            for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
+            unsafe
             {
-                OrderedData data = orderedData[i];
+                int orderedDataNativeLength = orderedDataNative.Length;
+                if (orderedDataNativeLength == 0) return;
 
-                // As sorting is throttled Entity might gone out of scope
-                if (!World.IsAlive(data.Entity))
-                    continue;
+                OrderedDataNative* dataPtr = orderedDataNative.GetUnsafePtr();
 
-                // We can't save component to data as sorting is throttled and components could change
-                var components
-                    = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
-
-                switch (components.t2.Value.CurrentVisualSceneState)
+                if (inTeleport)
                 {
-                    case VisualSceneStateEnum.SHOWING_LOD:
-                        World.Add(data.Entity, SceneLODInfo.Create());
-                        break;
-                    case VisualSceneStateEnum.ROAD:
-                        World.Add(data.Entity, RoadInfo.Create());
-                        break;
-                    default:
-                        CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
-                        break;
+                    //The parcel we are teleporting to should be the first one
+                    OrderedDataManaged data = orderedDataManaged[dataPtr[0].ReferenceListIndex];
+                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
+                    return;
                 }
 
-                promisesCreated++;
+                for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
+                {
+                    OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
+
+                    //Ignore unpartitioned and out of range
+                    //Optimization: remove out of range from list when adding DeleteEntityIntention
+                    if (dataPtr[i].RawSqrDistance < 0 || dataPtr[i].OutOfRange) continue;
+
+                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
+                }
+            }
+
+
+        }
+
+        private void TryUnload(in Entity entity, ref SceneLoadingState sceneState)
+        {
+            if (sceneState.PromiseCreated)
+                Unload(entity, ref sceneState);
+        }
+
+        private void Unload(in Entity entity, ref SceneLoadingState sceneState)
+        {
+            sceneState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+            sceneState.PromiseCreated = false;
+            sceneState.FullQuality = false;
+
+            //We mark it as Defer because, down the line, the entity wont be deleted.
+            //Either the LOD or the SceneFacade will be removed, but the Entity with the
+            //SceneDefinitionComponent should persist
+            World.Add(entity, new DeleteEntityIntention { DeferDeletion = true });
+        }
+
+        private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
+            SceneLoadingState sceneState)
+        {
+            VisualSceneState candidateBy
+                = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
+
+            //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
+            if (candidateBy == VisualSceneState.SHOWING_SCENE && loadedScenes < sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad)
+                loadedScenes++;
+            else
+            {
+                //Lets do a quality reduction analysis
+                candidateBy = VisualSceneState.SHOWING_LOD;
+            }
+
+            //Reduce quality
+            if (candidateBy == VisualSceneState.SHOWING_LOD)
+            {
+                if (loadedLODs < sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad)
+                {
+                    // This LOD is within the full-quality limit, so load it normally. Nothing to do here
+                    loadedLODs++;
+                    sceneState.FullQuality = true;
+                }
+                else if (qualityReductedLOD < sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad)
+                {
+                    qualityReductedLOD++;
+                    if (sceneState.FullQuality)
+                    {
+                        //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
+                        TryUnload(entity, ref sceneState);
+                        candidateBy = VisualSceneState.UNINITIALIZED;
+                    }
+                    // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
+                    sceneState.FullQuality = false;
+                }
+                else
+                {
+                    // Nothing else can load. And we need to unload the loaded which are still inside the loading range
+                    TryUnload(entity, ref sceneState);
+                    candidateBy = VisualSceneState.UNINITIALIZED;
+                }
+            }
+
+            //No new promise is required
+            if (candidateBy == VisualSceneState.UNINITIALIZED
+                || sceneState.VisualSceneState == candidateBy)
+                return;
+
+            promisesCreated++;
+            sceneState.PromiseCreated = true;
+            sceneState.VisualSceneState = candidateBy;
+
+            switch (sceneState.VisualSceneState)
+            {
+                case VisualSceneState.SHOWING_LOD:
+                    //The SceneLODInfo may still be in the entity, since it remains there until SceneIsReady (Check UnloadSceneLODInfoSystem)
+                    //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
+                    if (!World.Has<SceneLODInfo>(entity))
+                        World.Add(entity, SceneLODInfo.Create());
+                    break;
+                default:
+                    //The check is not needed here because the SceneFacade and promise are removed on the same frame that a SceneLODInfo was added
+                    World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                        new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
+                    break;
             }
         }
 
-        [Query]
-        [All(typeof(SceneDefinitionComponent))]
-        [None(typeof(DeleteEntityIntention))]
-        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
-        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
+
+
+        public struct OrdenedDataNativeComparer : IComparer<OrderedDataNative>
         {
-            if (partitionComponent.OutOfRange)
-                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+            public int Compare(OrderedDataNative x, OrderedDataNative y)
+            {
+                //Out of range always go last
+                int compareOutOfRange = x.OutOfRange.CompareTo(y.OutOfRange);
+
+                if (compareOutOfRange != 0)
+                    return compareOutOfRange;
+
+                //Parcels infront should always have higher priority
+                int compareIsBehind = x.IsBehind.CompareTo(y.IsBehind);
+                if (compareIsBehind != 0)
+                    return compareIsBehind;
+
+                if (x.IsPlayerInsideParcel && !y.IsPlayerInsideParcel) return -1;
+                if (y.IsPlayerInsideParcel && !x.IsPlayerInsideParcel) return 1;
+
+                // discrete distance comparison
+                int bucketComparison = x.RawSqrDistance.CompareTo(y.RawSqrDistance);
+                if (bucketComparison != 0)
+                    return bucketComparison;
+
+                //If everything fails, the scene on the right has higher priority
+                return x.XCoordinate.CompareTo(y.XCoordinate);
+            }
         }
 
-        /// <summary>
-        ///     It must be a structure to be compatible with Burst SortJob
-        /// </summary>
-        private struct Comparer : IComparer<OrderedData>
+        public struct OrderedDataNative
         {
-            public int Compare(OrderedData x, OrderedData y) =>
-                DistanceBasedComparer.Compare(x.Data, y.Data);
+            public int ReferenceListIndex;
+            public float RawSqrDistance;
+            public bool IsBehind;
+            public bool IsPlayerInsideParcel;
+            public int XCoordinate;
+            public bool OutOfRange;
         }
 
-        private struct OrderedData
+        public class OrderedDataManaged
         {
-            /// <summary>
-            ///     Referencing entity is expensive and at the moment we don't delete scene entities at all
-            /// </summary>
+            //Need it to get the ref of SceneLoadingState
             public Entity Entity;
-            public DistanceBasedComparer.DataSurrogate Data;
+
+            public readonly SceneDefinitionComponent SceneDefinitionComponent;
+            public readonly SceneLoadingState SceneLoadingState;
+            public readonly PartitionComponent PartitionComponent;
+
+            public int XCoordinate;
+
+
+            public OrderedDataManaged(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState)
+            {
+                Entity = entity;
+                SceneDefinitionComponent = sceneDefinitionComponent;
+                SceneLoadingState = sceneLoadingState;
+                PartitionComponent = partitionComponent;
+                XCoordinate = sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x;
+            }
+
         }
+
+
     }
 }

@@ -1,10 +1,9 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -17,7 +16,6 @@ namespace ECS.SceneLifeCycle
     public class ECSReloadScene : IReloadScene
     {
         private readonly IScenesCache scenesCache;
-        private readonly ICacheCleaner cacheCleaner;
 
         private readonly Entity playerEntity;
         private readonly World world;
@@ -26,14 +24,12 @@ namespace ECS.SceneLifeCycle
         public ECSReloadScene(IScenesCache scenesCache,
             World world,
             Entity playerEntity,
-            bool localSceneDevelopment,
-            ICacheCleaner cacheCleaner)
+            bool localSceneDevelopment)
         {
             this.scenesCache = scenesCache;
             this.world = world;
             this.playerEntity = playerEntity;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.cacheCleaner = cacheCleaner;
         }
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
@@ -87,6 +83,13 @@ namespace ECS.SceneLifeCycle
             //We wait until scene is fully disposed
             await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Equals(SceneState.Disposed), cancellationToken: ct);
 
+            if (world.IsAlive(entity))
+            {
+                SceneLoadingState sceneLoadingState = world.Get<SceneLoadingState>(entity);
+                sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+                sceneLoadingState.PromiseCreated = false;
+            }
+
             if (localSceneDevelopment)
             {
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
@@ -94,16 +97,7 @@ namespace ECS.SceneLifeCycle
                     {
                         staticScenePointers.Promise = null;
                     });
-
                 Resources.UnloadUnusedAssets();
-
-                // Nothing can be called after cacheCleaner.UnloadCache(), as that code becomes unreachable.
-                cacheCleaner.UnloadCache(false);
-            }
-            else
-            {
-                // Forcing a fake IsDirty to force a reload of the scene at ResolveVisualSceneStateSystem.AddSceneVisualStateQuery()
-                world.Get<PartitionComponent>(entity).IsDirty = true;
             }
         }
     }

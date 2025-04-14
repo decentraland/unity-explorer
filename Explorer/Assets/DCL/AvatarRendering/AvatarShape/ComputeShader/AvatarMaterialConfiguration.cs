@@ -33,9 +33,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private static readonly (string suffix, string category, int defaultSlotIndexUsed, GetFacialFeatureColor getColor)[] SUFFIX_CATEGORY_MAP =
         {
-            ("eyes", WearablesConstants.Categories.EYES, defaultSlotIndexUsed: 1, (in AvatarShapeComponent shape) => shape.EyesColor),
-            ("eyebrows", WearablesConstants.Categories.EYEBROWS, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.HairColor),
-            ("mouth", WearablesConstants.Categories.MOUTH, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
+            ("Mask_Eyes", WearablesConstants.Categories.EYES, defaultSlotIndexUsed: 1, (in AvatarShapeComponent shape) => shape.EyesColor),
+            ("Mask_Eyebrows", WearablesConstants.Categories.EYEBROWS, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.HairColor),
+            ("Mask_Mouth", WearablesConstants.Categories.MOUTH, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
         };
 
         public static AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
@@ -71,9 +71,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
             avatarMaterial.renderQueue = (int)RenderQueue.Geometry;
 
-            // this should really check for keyword _EMISSION, however for some reason it's rather inconsistent.
             var emissionColor = originalMaterial.GetColor("_EmissionColor");
             avatarMaterial.SetColor("_Emissive_Color", emissionColor);
+
             avatarMaterial.DisableKeyword("_IS_CLIPPING_MODE");
             avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");
             avatarMaterial.SetInt(Z_WRITE_MODE, 1);
@@ -120,7 +120,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 (string suffix, string category, int defaultSlotIndexUsed, GetFacialFeatureColor getColor) = SUFFIX_CATEGORY_MAP[i];
 
-                if (meshRenderer.name.Contains(suffix, StringComparison.OrdinalIgnoreCase))
+                if (meshRenderer.name.EndsWith(suffix))
                 {
                     result = true;
                     return DoFacialFeature(poolHandler, facialFeatures.Value[category], getColor(in avatarShapeComponent), defaultSlotIndexUsed);

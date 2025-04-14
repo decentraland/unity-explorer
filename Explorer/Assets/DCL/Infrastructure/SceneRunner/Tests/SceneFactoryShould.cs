@@ -4,7 +4,6 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
-using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -41,15 +40,13 @@ namespace SceneRunner.Tests
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-            activeEngines = new V8ActiveEngines();
-            engineFactory = new V8EngineFactory(activeEngines);
+            engineFactory = new V8EngineFactory();
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
             IWebRequestController webRequestController = TestWebRequestController.Create(webRequestsMode);
 
             sceneRuntimeFactory = new SceneRuntimeFactory(webRequestController,
-                new IRealmData.Fake(), engineFactory, activeEngines,
-                new WebJsSources(new JsCodeResolver(webRequestController)));
+                new IRealmData.Fake(), engineFactory, new WebJsSources(new JsCodeResolver(webRequestController)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
@@ -80,12 +77,12 @@ namespace SceneRunner.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public async Task TearDown()
         {
             TestWebRequestController.RestoreCache();
 
-            sceneFacade?.DisposeAsync().Forget();
-            activeEngines.Clear();
+            if (sceneFacade != null)
+                await sceneFacade.DisposeAsync();
         }
 
         private readonly WebRequestsMode webRequestsMode;

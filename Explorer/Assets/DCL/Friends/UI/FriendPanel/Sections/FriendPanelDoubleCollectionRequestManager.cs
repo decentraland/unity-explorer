@@ -12,6 +12,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
         private readonly ViewDependencies viewDependencies;
+        private readonly LoopListView2 loopListView;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
         private readonly bool disablePagination;
@@ -27,6 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private int totalFetched;
         private int totalToFetch;
         private bool isFetching;
+        private bool isInitializing;
 
         private bool excludeFirstCollection;
         private bool excludeSecondCollection;
@@ -41,6 +43,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             ViewDependencies viewDependencies,
+            LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold,
             FriendPanelStatus firstCollectionStatus,
@@ -53,6 +56,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.viewDependencies = viewDependencies;
+            this.loopListView = loopListView;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
             this.firstCollectionStatus = firstCollectionStatus;
@@ -182,9 +186,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             HasElements = false;
             WasInitialised = false;
+            isInitializing = false;
             pageNumber = 0;
             totalFetched = 0;
             ResetCollections();
+            RefreshLoopList();
+        }
+
+        protected void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetElementsNumber(), false);
+            loopListView.RefreshAllShownItem();
         }
 
         protected abstract void ResetCollections();
@@ -193,10 +205,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public async UniTask InitAsync(CancellationToken ct)
         {
+            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes
+            if (isInitializing) return;
+
+            isInitializing = true;
+
             await FetchDataInternalAsync(ct);
 
             HasElements = GetFirstCollectionCount() + GetSecondCollectionCount() > 0;
             WasInitialised = true;
+            isInitializing = false;
         }
 
         private void FolderClick(bool isFolded, FriendPanelStatus panelStatus)

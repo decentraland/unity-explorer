@@ -1,5 +1,5 @@
 using Best.HTTP.Caching;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.Collections.Generic;
 
@@ -33,8 +33,9 @@ namespace DCL.WebRequests.RequestsHub
         }
 
         private readonly IReadOnlyDictionary<Key, object> map;
+        private bool ktxEnabled;
 
-        public RequestHub(ITexturesFuse texturesFuse, HTTPCache cache, bool isTextureCompressionEnabled, WebRequestsMode webRequestsMode)
+        public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, WebRequestsMode webRequestsMode)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
@@ -66,6 +67,11 @@ namespace DCL.WebRequests.RequestsHub
                 return (InitializeRequest<TArgs, TWebRequest>)requestDelegate!;
 
             throw new InvalidOperationException("Request type not supported.");
+        }
+
+        public void SetKTXEnabled(bool enabled)
+        {
+            ktxEnabled = enabled;
         }
     }
 }

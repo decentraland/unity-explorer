@@ -20,8 +20,10 @@ namespace DCL.Profiling
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
         private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
-        private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
-        private ProfilerRecorder gpuFrameTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
+        private ProfilerRecorder mainThreadTimeRecorder = new (ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
+        private ProfilerRecorder gpuFrameTimeRecorder = new (ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
+
+        private bool isCollectingFrameTimings;
 
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
         public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
@@ -33,6 +35,20 @@ namespace DCL.Profiling
         public ulong LastFrameTimeValueNs => (ulong)mainThreadTimeRecorder.LastValue;
         public ulong LastGpuFrameTimeValueNs => (ulong)gpuFrameTimeRecorder.LastValue;
 
+        public ulong AllScenesTotalHeapSize { get; set; }
+        public ulong AllScenesTotalHeapSizeExecutable { get; set; }
+        public ulong AllScenesTotalPhysicalSize { get; set; }
+        public ulong AllScenesUsedHeapSize { get; set; }
+        public ulong AllScenesHeapSizeLimit { get; set; }
+        public ulong AllScenesTotalExternalSize { get; set; }
+        public int ActiveEngines { get; set; }
+        public ulong CurrentSceneTotalHeapSize { get; set; }
+        public ulong CurrentSceneTotalHeapSizeExecutable { get; set; }
+        public ulong CurrentSceneUsedHeapSize { get; set; }
+        public bool CurrentSceneHasStats { get; set; }
+
+        public bool IsCollectingFrameData => mainThreadTimeRecorder.IsRunning;
+
         public void Dispose()
         {
             systemUsedMemoryRecorder.Dispose();
@@ -42,6 +58,24 @@ namespace DCL.Profiling
 
             mainThreadTimeRecorder.Dispose();
             gpuFrameTimeRecorder.Dispose();
+        }
+
+        public void StopFrameTimeDataCollection()
+        {
+            if (mainThreadTimeRecorder.IsRunning)
+            {
+                mainThreadTimeRecorder.Stop();
+                gpuFrameTimeRecorder.Stop();
+            }
+        }
+
+        public void StartFrameTimeDataCollection()
+        {
+            if (!mainThreadTimeRecorder.IsRunning)
+            {
+                mainThreadTimeRecorder.Start();
+                gpuFrameTimeRecorder.Start();
+            }
         }
 
         /// <summary>
@@ -132,4 +166,37 @@ namespace DCL.Profiling
             return r;
         }
     }
+
+#if ENABLE_PROFILER
+    public static class JavaScriptProfilerCounters
+    {
+        public const string CATEGORY_NAME = "JavaScript";
+        public static readonly ProfilerCategory CATEGORY = new (CATEGORY_NAME);
+
+        public static readonly string TOTAL_HEAP_SIZE_NAME = "Total Heap Size";
+        public static readonly string TOTAL_HEAP_SIZE_EXECUTABLE_NAME = "Total Executable Heap Size";
+        public static readonly string TOTAL_PHYSICAL_SIZE_NAME = "Total Physical Memory Size";
+        public static readonly string USED_HEAP_SIZE_NAME = "Used Heap Size";
+        public static readonly string TOTAL_EXTERNAL_SIZE_NAME = "Total External Memory Size";
+        public static readonly string ACTIVE_ENGINES_NAME = "Active Engines";
+
+        public static readonly ProfilerCounter<ulong> TOTAL_HEAP_SIZE
+            = new (CATEGORY, TOTAL_HEAP_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
+
+        public static readonly ProfilerCounter<ulong> TOTAL_HEAP_SIZE_EXECUTABLE
+            = new (CATEGORY, TOTAL_HEAP_SIZE_EXECUTABLE_NAME, ProfilerMarkerDataUnit.Bytes);
+
+        public static readonly ProfilerCounter<ulong> TOTAL_PHYSICAL_SIZE
+            = new (CATEGORY, TOTAL_PHYSICAL_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
+
+        public static readonly ProfilerCounter<ulong> USED_HEAP_SIZE
+            = new (CATEGORY, USED_HEAP_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
+
+        public static readonly ProfilerCounter<ulong> TOTAL_EXTERNAL_SIZE
+            = new (CATEGORY, TOTAL_EXTERNAL_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
+
+        public static readonly ProfilerCounter<int> ACTIVE_ENGINES
+            = new (CATEGORY, ACTIVE_ENGINES_NAME, ProfilerMarkerDataUnit.Count);
+    }
+#endif
 }

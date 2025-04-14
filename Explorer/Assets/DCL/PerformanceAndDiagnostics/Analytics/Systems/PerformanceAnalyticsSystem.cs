@@ -1,13 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Profiling.ECS;
+using DCL.RealmNavigation;
 using ECS;
 using ECS.Abstract;
-using ECS.SceneLifeCycle;
-using SceneRuntime;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -24,43 +24,50 @@ namespace DCL.Analytics.Systems
 
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IJsonObjectBuilder jsonObjectBuilder;
 
         private readonly IRealmData realmData;
-
         private readonly IProfiler profiler;
-        private readonly V8ActiveEngines v8ActiveEngines;
-
-        // private readonly IScenesCache scenesCache;
 
         private readonly FrameTimesRecorder mainThreadFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
         private readonly FrameTimesRecorder gpuFrameTimes = new (FRAMES_SAMPLES_CAPACITY);
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
         private float lastReportTime;
 
         public PerformanceAnalyticsSystem(
             World world,
             IAnalyticsController analytics,
+            ILoadingStatus loadingStatus,
             IRealmData realmData,
             IProfiler profiler,
-            V8ActiveEngines v8ActiveEngines,
-            IScenesCache scenesCache,
-            IJsonObjectBuilder jsonObjectBuilder
-        ) : base(world)
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            IJsonObjectBuilder jsonObjectBuilder) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
-            this.v8ActiveEngines = v8ActiveEngines;
 
-            // this.scenesCache = scenesCache;
             this.analytics = analytics;
+            this.loadingStatus = loadingStatus;
             this.jsonObjectBuilder = jsonObjectBuilder;
+            this.entityParticipantTable = entityParticipantTable;
             config = analytics.Configuration;
         }
 
         protected override void Update(float t)
         {
-            if (!realmData.Configured) return;
+            if (!realmData.Configured || loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+            {
+                if (profiler.IsCollectingFrameData) profiler.StopFrameTimeDataCollection();
+                return;
+            }
+
+            if (!profiler.IsCollectingFrameData)
+            {
+                profiler.StartFrameTimeDataCollection();
+                return; // skip one frame so at least one frame is collected
+            }
 
             mainThreadFrameTimes.AddFrameTime(profiler.LastFrameTimeValueNs);
             gpuFrameTimes.AddFrameTime(profiler.LastGpuFrameTimeValueNs);
@@ -83,20 +90,19 @@ namespace DCL.Analytics.Systems
 
             // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
             jsonObjectBuilder.Set("quality_level", QualitySettings.names[QualitySettings.GetQualityLevel()]);
-            jsonObjectBuilder.Set("player_count", 0); // TODO (Vit): How many users where nearby the current user
+            jsonObjectBuilder.Set("player_count", entityParticipantTable.Count);
 
             // JS runtime memory
-            // bool isCurrentScene = scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } };
-            // JsMemorySizeInfo totalJsMemoryData = v8ActiveEngines.GetEnginesSumMemoryData();
-            // JsMemorySizeInfo currentSceneJsMemoryData = isCurrentScene ? v8ActiveEngines.GetEnginesMemoryDataForScene(scenesCache.CurrentScene.Info) : new JsMemorySizeInfo();
-            // jsonObjectBuilder.Set("jsheap_used", totalJsMemoryData.UsedHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total", totalJsMemoryData.TotalHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total_executable", totalJsMemoryData.TotalHeapSizeExecutableMB);
-            // jsonObjectBuilder.Set("jsheap_limit", totalJsMemoryData.HeapSizeLimitMB);
-            // jsonObjectBuilder.Set("jsheap_used_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.UsedHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeMB);
-            // jsonObjectBuilder.Set("jsheap_total_executable_current_scene", !isCurrentScene ? -1f : currentSceneJsMemoryData.TotalHeapSizeExecutableMB);
-            jsonObjectBuilder.Set("running_v8_engines", v8ActiveEngines.Count);
+            jsonObjectBuilder.Set("jsheap_used", profiler.AllScenesUsedHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total", profiler.AllScenesTotalHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_executable", profiler.AllScenesTotalHeapSizeExecutable.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_limit", profiler.AllScenesHeapSizeLimit.ByteToMB());
+
+            jsonObjectBuilder.Set("jsheap_used_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneUsedHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneTotalHeapSize.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_total_executable_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB());
+
+            jsonObjectBuilder.Set("running_v8_engines", profiler.ActiveEngines);
 
             // Memory
             jsonObjectBuilder.Set("total_used_memory", ((ulong)profiler.TotalUsedMemoryInBytes).ByteToMB());
@@ -129,11 +135,11 @@ namespace DCL.Analytics.Systems
 
             // GPU
             hiccups = profiler.CalculateGpuHiccups();
-            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", !hiccups.hasValue ? 0 : hiccups.count);
-            jsonObjectBuilder.Set("gpu_hiccups_time", !hiccups.hasValue ? 0 : hiccups.sumTime * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_min", !hiccups.hasValue ? 0 : hiccups.min * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_max", !hiccups.hasValue ? 0 : hiccups.max * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_avg", !hiccups.hasValue ? 0 : hiccups.avg * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", hiccups.count);
+            jsonObjectBuilder.Set("gpu_hiccups_time", hiccups.count == 0 ? 0 : hiccups.sumTime * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_min", hiccups.count == 0 ? 0 : hiccups.min * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_max", hiccups.count == 0 ? 0 : hiccups.max * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_avg", hiccups.count == 0 ? 0 : hiccups.avg * NS_TO_MS);
 
             jsonObjectBuilder.Set("gpu_min_frame_time", gpuFrameTimes.Min * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_max_frame_time", gpuFrameTimes.Max * NS_TO_MS);

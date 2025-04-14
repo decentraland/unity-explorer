@@ -309,15 +309,32 @@ jobs:
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
 
-      - name: Set short SHA
-        run: echo "SHA_SHORT=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+      - name: Set SHA, branch, and build prefix
+        run: |
+          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
+          echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
+
+          EVENT_NAME="${{ github.event_name }}"
+          echo "Detected event: $EVENT_NAME"
+          case "$EVENT_NAME" in
+            pull_request) echo "BUILD_PREFIX=pr" >> $GITHUB_ENV ;;
+            push) echo "BUILD_PREFIX=pu" >> $GITHUB_ENV ;;
+            merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
+            workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
+            workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
+            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
+            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
+          esac
 
       - name: Upload artifact to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: ${{ inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version) || format('@dcl/{0}/branch/{1}', github.event.repository.name, github.head_ref || github.ref_name) }}
+          DESTINATION_PATH: "${{
+            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
+            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
+          }}"
         run: |
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \

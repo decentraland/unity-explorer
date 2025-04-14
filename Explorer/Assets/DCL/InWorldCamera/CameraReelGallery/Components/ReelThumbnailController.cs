@@ -53,6 +53,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.loadingBrightView.StartLoadingAnimation(view.thumbnailImage.gameObject);
 
             Texture2D thumbnailTexture = await cameraReelScreenshotsStorage.GetScreenshotThumbnailAsync(CameraReelResponse.thumbnailUrl, token);
+            thumbnailTexture.Apply(false, true);
             float originalToSmallerRatio = thumbnailTexture.height * 1f / rectTransform.rect.height;
             float realWidth = originalToSmallerRatio * rectTransform.rect.width;
             float realWidthDiff = thumbnailTexture.width - realWidth;
@@ -63,7 +64,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
             view.thumbnailImage.DOFade(1f, view.thumbnailLoadedAnimationDuration).ToUniTask(cancellationToken: token).Forget();
 
-            ThumbnailLoaded?.Invoke(CameraReelResponse, view.thumbnailImage.texture);
+            ThumbnailLoaded?.Invoke(CameraReelResponse, thumbnailTexture);
             view.button.onClick.AddListener( () => ThumbnailClicked?.Invoke(CameraReelResponse));
             imageLoaded = true;
         }
@@ -82,11 +83,11 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             view.gameObject.SetActive(true);
             view.thumbnailImage.enabled = true;
-            view.thumbnailImage.texture = null;
         }
 
         public void PoolRelease(Transform parent)
         {
+            view.thumbnailImage.texture = null;
             view.transform.SetParent(parent, false);
             view.gameObject.SetActive(false);
             loadImageCts.SafeCancelAndDispose();

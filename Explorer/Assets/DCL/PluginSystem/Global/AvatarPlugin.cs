@@ -25,6 +25,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -51,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
@@ -72,8 +74,6 @@ namespace DCL.PluginSystem.Global
 
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
-        private readonly RemoteEntities remoteEntities;
-        private readonly ExposedTransform playerTransform;
         private readonly IWearableStorage wearableStorage;
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
@@ -96,8 +96,7 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
-            RemoteEntities remoteEntities,
-            ExposedTransform playerTransform
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -111,9 +110,8 @@ namespace DCL.PluginSystem.Global
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
-            this.remoteEntities = remoteEntities;
-            this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
@@ -171,7 +169,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
                 avatarTransformMatrixJobWrapper);
 
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);

@@ -31,15 +31,13 @@ namespace SceneRuntime.Factory.Tests
         }
 
         private V8EngineFactory engineFactory;
-        private V8ActiveEngines activeEngines;
         private IWebJsSources webJsSources;
         private IWebRequestController webRequestController;
 
         [SetUp]
         public void SetUp()
         {
-            activeEngines = new V8ActiveEngines();
-            engineFactory = new V8EngineFactory(activeEngines);
+            engineFactory = new V8EngineFactory();
             webJsSources = new WebJsSources(new JsCodeResolver(webRequestController = TestWebRequestController.Create(webRequestsMode)));
         }
 
@@ -47,7 +45,6 @@ namespace SceneRuntime.Factory.Tests
         public void TearDown()
         {
             TestWebRequestController.RestoreCache();
-            activeEngines.Clear();
         }
 
         [UnityTest]
@@ -56,7 +53,7 @@ namespace SceneRuntime.Factory.Tests
             {
                 // Arrange
                 var factory = new SceneRuntimeFactory(webRequestController,
-                    new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
+                    new IRealmData.Fake(), engineFactory, webJsSources);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -73,7 +70,8 @@ namespace SceneRuntime.Factory.Tests
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
+                    instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.ExecuteSceneJson();
 
@@ -90,15 +88,19 @@ namespace SceneRuntime.Factory.Tests
             {
                 // Arrange
                 var factory = new SceneRuntimeFactory(webRequestController,
-                    new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
+                    new IRealmData.Fake(), engineFactory, webJsSources);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
-                instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>())
+                                     .Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), _ => { }));
+
+                using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
+                    instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+
                 sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
@@ -114,14 +116,15 @@ namespace SceneRuntime.Factory.Tests
         {
             // Arrange
             var factory = new SceneRuntimeFactory(webRequestController,
-                new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
+                new IRealmData.Fake(), engineFactory, webJsSources);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act
             string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
 
             // Assert: Check that the module compiles
-            engineFactory.Create(new SceneShortInfo()).Compile(moduleWrapper);
+            using var engine = engineFactory.Create(new SceneShortInfo());
+            engine.Compile(moduleWrapper);
         }
     }
 }

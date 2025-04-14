@@ -23,12 +23,12 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -83,6 +83,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 scenesUI,
+                new ObjectProxy<IProfileRepository>(),
                 ct,
                 enableGPUInstancing: false
             );

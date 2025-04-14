@@ -44,6 +44,10 @@ namespace DCL.LOD.Systems
 
         public ILODCache LodCache { get; private set; } = null!;
 
+        public ILODSettingsAsset LODSettings { get; private set; } = null!;
+
+        public HashSet<Vector2Int> RoadCoordinates { get; private set; }
+
         private LODContainer(IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -70,7 +74,7 @@ namespace DCL.LOD.Systems
                 foreach (RoadDescription roadDescription in c.roadSettingsAsset.Value.RoadDescriptions)
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
-                var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
+                container.RoadCoordinates = roadDataDictionary.Keys.ToHashSet();
 
                 var roadAssetPool = new RoadAssetsPool(realmData, c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
                 container.RoadAssetsPool = roadAssetPool;
@@ -82,20 +86,23 @@ namespace DCL.LOD.Systems
                     roadDataDictionary,
                     staticContainer.ScenesCache,
                     staticContainer.SceneReadinessReportQueue,
-                    roadAssetPool);
+                    roadAssetPool,
+                    gpuInstancingService,
+                    debugBuilder);
 
                 IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
                 LODGroupPoolUtils.DEFAULT_LOD_AMOUT = LOD_LEVELS;
                 LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, LODGROUP_POOL_PREWARM_VALUE);
 
                 c.LodCache = new LODCache(lodGroupPool);
+                c.LODSettings = c.lodSettingsAsset.Value;
                 staticContainer.CacheCleaner.Register(c.LodCache);
 
-                c.LODPlugin = new LODPlugin(realmData,
+                c.LODPlugin = new LODPlugin(
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value,
+                    textureArrayContainerFactory, c.lodSettingsAsset.Value,
                     staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, decentralandUrlsSource, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;

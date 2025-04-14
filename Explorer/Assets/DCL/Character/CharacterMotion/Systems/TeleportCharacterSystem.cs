@@ -38,13 +38,15 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void TeleportPlayer(Entity entity, CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
+        private void TeleportPlayer(Entity entity, in PlayerTeleportIntent teleportIntent, CharacterController controller,
+            CharacterPlatformComponent platformComponent, CharacterRigidTransform rigidTransform)
         {
+
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
             if (loadReport == null)
                 // If there are no assets to wait for, teleport immediately
-                ResolveAsSuccess(entity, in teleportIntent, controller, ref platformComponent);
+                ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
             else
             {
                 AsyncLoadProcessReport.Status status = loadReport.GetStatus();
@@ -56,7 +58,7 @@ namespace DCL.CharacterMotion.Systems
                         controller.transform.position = MordorConstants.PLAYER_MORDOR_POSITION;
                         return;
                     case UniTaskStatus.Succeeded:
-                        ResolveAsSuccess(entity, in teleportIntent, controller, ref platformComponent);
+                        ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
                         return;
                     case UniTaskStatus.Canceled:
                         ResolveAsCancelled(entity, in teleportIntent);
@@ -123,18 +125,19 @@ namespace DCL.CharacterMotion.Systems
             World.Remove<PlayerTeleportIntent>(entity);
         }
 
-        private void ResolveAsSuccess(Entity entity, in PlayerTeleportIntent teleportIntent, CharacterController controller, ref CharacterPlatformComponent platformComponent)
+        private void ResolveAsSuccess(Entity playerEntity, in PlayerTeleportIntent teleportIntent, CharacterController characterController,
+            CharacterPlatformComponent platformComponent, CharacterRigidTransform rigidTransform)
         {
             FinalizeQueuedLoadReport(in teleportIntent, static report => report.SetProgress(1f));
 
-            // Teleport the character
-            controller.transform.position = teleportIntent.Position;
+            characterController.transform.position = teleportIntent.Position;
+            rigidTransform.IsGrounded = false; // teleportation is always above
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
 
-            World.Remove<PlayerTeleportIntent>(entity);
-            World.Add(entity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES));
+            World.Remove<PlayerTeleportIntent>(playerEntity);
+            World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
         }
 
         [Query]

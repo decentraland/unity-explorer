@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
 using DG.Tweening;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
 using Utility;

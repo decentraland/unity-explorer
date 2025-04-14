@@ -34,6 +34,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PeerAbout,
         RemotePeers,
+        RemotePeersWorld,
 
         DAO,
 
@@ -41,6 +42,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         NotificationRead,
 
         Help,
+        MinimumSpecs,
 
         FeatureFlags,
 
@@ -61,5 +63,10 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BuilderApiDtos,
         BuilderApiContent,
+
+        Blocklist,
+
+        Servers,
+        MediaConverter,
     }
 }

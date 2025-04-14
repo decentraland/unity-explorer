@@ -3,8 +3,8 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures.Tests
@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem(IWebRequestController webRequestController) =>
-            new (world, cache, webRequestController, IDiskCache<Texture2DData>.Null.INSTANCE);
+            new (world, cache, webRequestController, IDiskCache<Texture2DData>.Null.INSTANCE, Substitute.For<IAvatarTextureUrlProvider>());
 
         protected override void AssertSuccess(Texture2DData data)
         {

@@ -179,6 +179,10 @@ MonoBehaviour:
     mPadding: 8
     mInitCreateCount: 1
     mStartPosOffset: 0
+  - mItemPrefab: {fileID: 315238571471859014, guid: d784ecebf4a994aefa6c965f3712f3d5, type: 3}
+    mPadding: 4
+    mInitCreateCount: 3
+    mStartPosOffset: 0
   mArrangeType: 1
   mSupportScrollBar: 1
   mItemSnapEnable: 0
@@ -201,6 +205,7 @@ MonoBehaviour:
   scrollbarCanvasGroup: {fileID: 5299699939936977056}
   chatEntriesCanvasGroup: {fileID: 6636967551683476283}
   loopList: {fileID: 4226233381184064841}
+  scrollRect: {fileID: 5266907368250149817}
 --- !u!1 &1464650193662970722
 GameObject:
   m_ObjectHideFlags: 0

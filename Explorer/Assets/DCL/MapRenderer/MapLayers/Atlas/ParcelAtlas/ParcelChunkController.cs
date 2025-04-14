@@ -3,13 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Atlas
