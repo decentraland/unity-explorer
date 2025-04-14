@@ -38,7 +38,7 @@ namespace DCL.UI.SceneDebugConsole
         /// <summary>
         /// Raised when the options button of a log message is clicked.
         /// </summary>
-        public LogMessageOptionsButtonClickedDelegate? LogMessageOptionsButtonClicked;
+        // public LogMessageOptionsButtonClickedDelegate? LogMessageOptionsButtonClicked;
 
         /// <summary>
         /// Raised every time the scroll position of the messages viewer changes.
@@ -328,8 +328,8 @@ namespace DCL.UI.SceneDebugConsole
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
 
                     LogEntryView itemScript = item!.GetComponent<LogEntryView>()!;
-                    Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
-                    messageOptionsButton?.onClick.RemoveAllListeners();
+                    // Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                    // messageOptionsButton?.onClick.RemoveAllListeners();
 
                     SetItemDataAsync(index, itemData, itemScript).Forget();
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
@@ -338,42 +338,21 @@ namespace DCL.UI.SceneDebugConsole
                     /*if (itemData is { SentByOwnUser: false, SystemMessage: false })
                         itemScript.LogEntryClicked += OnLogEntryClicked;*/
 
-                    messageOptionsButton?.onClick.AddListener(() =>
-                        OnLogMessageOptionsButtonClicked(itemData.Message, itemScript));
+                    // messageOptionsButton?.onClick.AddListener(() =>
+                    //     OnLogMessageOptionsButtonClicked(itemData.Message, itemScript));
                 }
             }
 
             return item;
         }
 
-        // private bool IsUserBlocked(string userAddress) =>
-        //     viewDependencies.UserBlockingCacheProxy.Configured && viewDependencies.UserBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
-
         private void OnLogEntryClicked()
         {
             popupCts = popupCts.SafeRestart();
-            // viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, popupCts.Token).Forget();
-        }
-
-        private void OnLogMessageOptionsButtonClicked(string itemDataMessage, LogEntryView itemScript)
-        {
-            LogMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
         }
 
         private async UniTaskVoid SetItemDataAsync(int index, SceneDebugConsoleLogMessage itemData, LogEntryView itemView)
         {
-            // if (itemData.SystemMessage) itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
-            // else
-            // {
-            //     Profile? profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
-            //
-            //     if (profile != null)
-            //     {
-            //         itemView.usernameElement.userName.color = profile.UserNameColor;
-            //         itemView.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
-            //     }
-            // }
-
             itemView.SetItemData(itemData);
 
             // Views that correspond to new added items have to be animated

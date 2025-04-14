@@ -1,8 +1,6 @@
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DG.Tweening;
-using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.SceneDebugConsole
 {
@@ -30,19 +28,12 @@ namespace DCL.UI.SceneDebugConsole
         [field: SerializeField] internal CanvasGroup logEntryCanvasGroup { get; private set; }
 
         [field: Header("Elements")]
-        // [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal LogEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
         private SceneDebugConsoleLogMessage logMessage;
 
-        private void Awake()
-        {
-            // profileButton.onClick.AddListener(OpenContextMenu);
-        }
-
         private void OpenContextMenu()
         {
-            // LogEntryClicked?.Invoke(profileButton.transform.position);
             LogEntryClicked?.Invoke();
         }
 
@@ -55,9 +46,7 @@ namespace DCL.UI.SceneDebugConsole
         public void SetItemData(SceneDebugConsoleLogMessage data)
         {
             logMessage = data;
-            // usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
-            // rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
         }
     }
 }
