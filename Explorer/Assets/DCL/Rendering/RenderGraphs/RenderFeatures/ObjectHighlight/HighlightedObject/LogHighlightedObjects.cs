@@ -5,12 +5,12 @@ using DCL.Diagnostics;
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
-    public class LogObjectHighlight : IObjectHighlight
+    public class LogHighlightedObjects : IHighlightedObjects
     {
         private readonly HashSet<Renderer> highlighted = new ();
-        private readonly IObjectHighlight origin;
+        private readonly IHighlightedObjects origin;
 
-        public LogObjectHighlight(IObjectHighlight origin)
+        public LogHighlightedObjects(IHighlightedObjects origin)
         {
             this.origin = origin;
         }

@@ -27,11 +27,6 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                 internal Material highlightInputBlurMaterial;
             }
 
-            class CopyPassData
-            {
-                internal TextureHandle Source;
-            }
-
             class OutputPassData
             {
                 internal Material highlightOutputMaterial;
@@ -65,11 +60,10 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
             private TextureHandle highLightRTHandle_Colour;
             private TextureHandle highLightRTHandle_Depth;
-            private TextureHandle highLightRTHandle_Colour_Blur_Ping;
-            private TextureHandle highLightRTHandle_Colour_Blur_Pong;
+            private TextureHandle highLightRTHandle_Colour_Blur_PingPong;
+
             private RenderTextureDescriptor highLightRTDescriptor_Colour;
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
-            private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
 
             private Dictionary<Renderer, ObjectHighlightSettings> m_HighLightRenderers;
 
@@ -94,12 +88,6 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                     Screen.height,
                     RenderTextureFormat.Default,
                     depthBufferBits: 32);
-
-                highLightRTDescriptor_Colour_Blur = new RenderTextureDescriptor(
-                    Screen.width,
-                    Screen.height,
-                    RenderTextureFormat.Default,
-                    depthBufferBits: 0);
             }
 
             private static void ExecuteDrawObjects(RenderObjectsPassData data, RasterGraphContext context)
@@ -171,71 +159,25 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                 highLightRTDescriptor_Depth.height = cameraData.cameraTargetDescriptor.height;
                 highLightRTDescriptor_Depth.msaaSamples = cameraData.cameraTargetDescriptor.msaaSamples;
 
-                highLightRTDescriptor_Colour_Blur.width = cameraData.cameraTargetDescriptor.width;
-                highLightRTDescriptor_Colour_Blur.height = cameraData.cameraTargetDescriptor.height;
-                highLightRTDescriptor_Colour_Blur.msaaSamples = cameraData.cameraTargetDescriptor.msaaSamples;
-
-                // TextureDesc texDesc = new TextureDesc();
-                // texDesc.name = "_Highlight_ColourTexture";
-                // texDesc.sizeMode = TextureSizeMode.Explicit;
-                // texDesc.width = cameraData.cameraTargetDescriptor.width;
-                // texDesc.height = cameraData.cameraTargetDescriptor.height;
-                // texDesc.slices = 0;
-                // texDesc.scale = Vector2.one;
-                // texDesc.format = GraphicsFormat.R8G8B8A8_SRGB;
-                // texDesc.filterMode = FilterMode.Bilinear;
-                // texDesc.wrapMode = TextureWrapMode.Clamp;
-                // texDesc.dimension = TextureDimension.Tex2D;
-                // texDesc.enableRandomWrite = true;
-                // texDesc.useMipMap = false;
-                // texDesc.autoGenerateMips = false;
-                // texDesc.isShadowMap = false;
-                // texDesc.anisoLevel = 0;
-                // texDesc.mipMapBias = 0.0f;
-                // texDesc.msaaSamples = MSAASamples.None;
-                // texDesc.memoryless = RenderTextureMemoryless.None;
-                // texDesc.vrUsage = VRTextureUsage.None;
-                // texDesc.fallBackToBlackTexture = true;
-                // texDesc.disableFallBackToImportedTexture = true;
-                // texDesc.clearBuffer = true;
-                // texDesc.clearColor = Color.clear;
-                // texDesc.discardBuffer = true;
-
                 TextureHandle highLightRTHandle_Colour = UniversalRenderer.CreateRenderGraphTexture(
                     renderGraph,
                     highLightRTDescriptor_Colour,
                     "_Highlight_ColourTexture",
-                    clear: false);
+                    clear: true);
 
                 TextureHandle highLightRTHandle_Depth = UniversalRenderer.CreateRenderGraphTexture(
                     renderGraph,
                     highLightRTDescriptor_Depth,
                     "_Highlight_ColourTexture",
-                    clear: false);
-                TextureHandle highLightRTHandle_Colour_Blur_Ping= UniversalRenderer.CreateRenderGraphTexture(
+                    clear: true);
+                TextureHandle highLightRTHandle_Colour_Blur_PingPong = UniversalRenderer.CreateRenderGraphTexture(
                     renderGraph,
-                    highLightRTDescriptor_Colour_Blur,
-                    "_Highlight_ColourTexture_Blur_Ping",
-                    clear: false);
-                TextureHandle highLightRTHandle_Colour_Blur_Pong= UniversalRenderer.CreateRenderGraphTexture(
-                    renderGraph,
-                    highLightRTDescriptor_Colour_Blur,
-                    "_Highlight_ColourTexture_Blur_Pong",
-                    clear: false);
+                    highLightRTDescriptor_Colour,
+                    "_Highlight_ColourTexture_Blur_PingPong",
+                    clear: true);
 
                 using (var builder = renderGraph.AddRasterRenderPass<RenderObjectsPassData>(PROFILER_TAG_ADDITIVE, out var passData))
                 {
-                    var texRefExist = frameData.Contains<TexRefData>();
-                    var texRef = frameData.GetOrCreate<TexRefData>();
-
-                    // First time running this pass. Fetch ref from active color buffer.
-                    if (!texRefExist)
-                    {
-                        var localResourceData = frameData.Get<UniversalResourceData>();
-                        // For this first occurence we would like
-                        texRef.texture = localResourceData.activeColorTexture;
-                    }
-
                     // Configure pass data
                     passData.highlightRenderers = m_HighLightRenderers;
                     passData.highLightInputMaterial = m_highLightInputMaterial;
@@ -249,25 +191,12 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                         ExecuteDrawObjects(data, context));
                 }
 
-                using (var builder = renderGraph.AddRasterRenderPass<CopyPassData>(PROFILER_TAG_FIRST_COPY, out var passData))
-                {
-                    // Configure pass data
-                    passData.Source = highLightRTHandle_Colour;
-                    builder.UseTexture(passData.Source);
-                    builder.SetRenderAttachment(highLightRTHandle_Colour_Blur_Ping, 0);
-
-                    builder.SetRenderFunc((CopyPassData data, RasterGraphContext context) =>
-                    {
-                        Blitter.BlitTexture(context.cmd, data.Source, Vector2.one, 0, true);
-                    });
-                }
-
                 using (var builder = renderGraph.AddUnsafePass<BlurPassData>(PROFILER_TAG_BLUR, out var passData))
                 {
                     // Configure pass data
                     passData.highlightInputBlurMaterial = m_highlightInputBlurMaterial;
-                    passData.PingSource = highLightRTHandle_Colour_Blur_Ping;
-                    passData.PongSource = highLightRTHandle_Colour_Blur_Ping;
+                    passData.PingSource = highLightRTHandle_Colour;
+                    passData.PongSource = highLightRTHandle_Colour_Blur_PingPong;
 
                     builder.UseTexture(passData.PingSource);
                     builder.UseTexture(passData.PongSource);
@@ -275,33 +204,18 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                     builder.SetRenderFunc((BlurPassData data, UnsafeGraphContext context) =>
                     {
                         var cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-                        int nOutputTexture = -1;
                         uint _nBlurCount = 4;
 
                         using (new ProfilingScope(cmd, profilingSampler))
                         {
                             for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                             {
-                                ++nOutputTexture;
                                 cmd.SetGlobalTexture("_HighlightTexture", (nBlurPass % 2) < 1 ? data.PingSource : data.PongSource);
                                 cmd.SetRenderTarget((nBlurPass % 2) > 0 ? data.PingSource : data.PongSource, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
                                 CoreUtils.DrawFullScreen(cmd, data.highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Horizontal);
                                 CoreUtils.DrawFullScreen(cmd, data.highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Vertical);
                             }
                         }
-                    });
-                }
-
-                using (var builder = renderGraph.AddRasterRenderPass<CopyPassData>(PROFILER_TAG_SECOND_COPY, out var passData))
-                {
-                    // Configure pass data
-                    passData.Source = highLightRTHandle_Colour_Blur_Ping;
-                    builder.UseTexture(passData.Source);
-                    builder.SetRenderAttachment(highLightRTHandle_Colour, 0);
-
-                    builder.SetRenderFunc((CopyPassData data, RasterGraphContext context) =>
-                    {
-                        Blitter.BlitTexture(context.cmd, data.Source, Vector2.one, 0, true);
                     });
                 }
 

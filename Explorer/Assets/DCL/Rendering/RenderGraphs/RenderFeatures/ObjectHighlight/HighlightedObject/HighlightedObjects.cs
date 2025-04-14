@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
-    public class ObjectHighlight : IObjectHighlight
+    public class HighlightedObjects : IHighlightedObjects
     {
         private readonly Dictionary<Renderer, ObjectHighlightSettings> highLightRenderers;
 
-        public ObjectHighlight(Dictionary<Renderer, ObjectHighlightSettings> highLightRenderers)
+        public HighlightedObjects(Dictionary<Renderer, ObjectHighlightSettings> highLightRenderers)
         {
             this.highLightRenderers = highLightRenderers;
         }

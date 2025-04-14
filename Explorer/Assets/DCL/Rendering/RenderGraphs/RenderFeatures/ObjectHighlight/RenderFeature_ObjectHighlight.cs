@@ -35,8 +35,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
         private static readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> m_HighLightRenderers = new ();
 
-        public static readonly IObjectHighlight HighlightedObjects = new LogObjectHighlight(
-            new ObjectHighlight(m_HighLightRenderers)
+        public static readonly IHighlightedObjects HighlightedObjects = new LogHighlightedObjects(
+            new HighlightedObjects(m_HighLightRenderers)
         );
 
         // Input Pass Data
@@ -74,8 +74,11 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
         {
-            _renderer.EnqueuePass(renderPass_DrawObjects);
-            _renderer.EnqueuePass(renderPass_RenderResult);
+            if (renderPass_RenderResult != null && renderPass_RenderResult != null)
+            {
+                _renderer.EnqueuePass(renderPass_DrawObjects);
+                _renderer.EnqueuePass(renderPass_RenderResult);
+            }
         }
 
         protected override void Dispose(bool _bDisposing)

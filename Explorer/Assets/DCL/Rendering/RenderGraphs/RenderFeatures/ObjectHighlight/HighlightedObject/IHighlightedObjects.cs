@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
-    public interface IObjectHighlight
+    public interface IHighlightedObjects
     {
         void Highlight(Renderer renderer, Color color, float thickness);
 
@@ -12,15 +12,15 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
         void DisparageAll();
     }
 
-    public static class ObjectHighlightExtensions
+    public static class HighlightedObjectsExtensions
     {
-        public static void Highlight(this IObjectHighlight highlightedObjects, IEnumerable<Renderer> renderers, Color color, float thickness)
+        public static void Highlight(this IHighlightedObjects highlightedObjects, IEnumerable<Renderer> renderers, Color color, float thickness)
         {
             foreach (Renderer renderer in renderers)
                 highlightedObjects.Highlight(renderer, color, thickness);
         }
 
-        public static void Disparage(this IObjectHighlight highlightedObjects, IEnumerable<Renderer> renderers)
+        public static void Disparage(this IHighlightedObjects highlightedObjects, IEnumerable<Renderer> renderers)
         {
             foreach (Renderer renderer in renderers)
                 highlightedObjects.Disparage(renderer);
