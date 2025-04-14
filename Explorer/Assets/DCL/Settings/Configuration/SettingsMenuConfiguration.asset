@@ -64,8 +64,8 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
           options:
-          - Only Friends
-          - Everybody
+          - Friends Only
+          - Everyone
           defaultOptionIndex: 1
         <Feature>k__BackingField: 9
     - rid: 1708279571579404289
@@ -79,8 +79,8 @@ MonoBehaviour:
           isMultiselect: 0
           options:
           - None
-          - Nearby only
-          - All
+          - Nearby Only
+          - All Chats
           defaultOptionIndex: 2
         <Feature>k__BackingField: 10
     - rid: 3126482891795070976

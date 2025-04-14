@@ -134,7 +134,11 @@ namespace DCL.Settings
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
                 SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
-                generalGroupView.GroupTitle.text = group.GroupTitle;
+
+                if (!string.IsNullOrEmpty(group.GroupTitle))
+                    generalGroupView.GroupTitle.text = group.GroupTitle;
+                else
+                    generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, userBlockingCacheProxy, worldVolumeMacBus));
