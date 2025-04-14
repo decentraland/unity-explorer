@@ -22,9 +22,6 @@ namespace DCL.UI.SceneDebugConsole
         public delegate void PointerEventDelegate();
 
         [Header("Settings")]
-        [Tooltip("The time it takes, in seconds, for the background of the console window to fade-in/out when hovering with the mouse.")]
-        [SerializeField]
-        private float backgroundFadeTime = 0.2f;
 
         [Tooltip("The time it waits, in seconds, since the scroll view reaches the bottom until the scroll-to-bottom button starts hiding.")]
         [SerializeField]
@@ -39,10 +36,10 @@ namespace DCL.UI.SceneDebugConsole
         private TMP_InputField inputField;
 
         [SerializeField]
-        private CanvasGroup panelBackgroundCanvasGroup;
+        private Button closeConsoleButton;
 
         [SerializeField]
-        private Button closeConsoleButton;
+        private SceneDebugConsoleLogViewerElement logMessageViewer;
 
         [SerializeField]
         private ScrollRect logScrollRect;
@@ -139,11 +136,6 @@ namespace DCL.UI.SceneDebugConsole
         }
 
         public bool IsFocused { get; private set; }
-
-        private void Start()
-        {
-            panelBackgroundCanvasGroup.alpha = 0;
-        }
 
         public void Dispose()
         {
@@ -266,18 +258,17 @@ namespace DCL.UI.SceneDebugConsole
         public void OnPointerEnter(PointerEventData eventData)
         {
             PointerEnter?.Invoke();
-            panelBackgroundCanvasGroup.DOFade(1, backgroundFadeTime);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             PointerExit?.Invoke();
-            panelBackgroundCanvasGroup.DOFade(0, backgroundFadeTime);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
+            logMessageViewer.InjectDependencies(dependencies);
         }
 
         private void OnInputFieldSelected(string value)

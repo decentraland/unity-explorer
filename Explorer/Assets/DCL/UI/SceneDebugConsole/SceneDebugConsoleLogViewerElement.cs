@@ -332,7 +332,6 @@ namespace DCL.UI.SceneDebugConsole
                     // messageOptionsButton?.onClick.RemoveAllListeners();
 
                     SetItemDataAsync(index, itemData, itemScript).Forget();
-                    itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.LogEntryClicked -= OnLogEntryClicked;
 
                     /*if (itemData is { SentByOwnUser: false, SystemMessage: false })

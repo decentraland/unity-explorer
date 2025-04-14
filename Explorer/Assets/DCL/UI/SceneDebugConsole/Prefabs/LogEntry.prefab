@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 5785169694027298878}
   - component: {fileID: 6044816886769802169}
   - component: {fileID: 2537960986540191662}
-  - component: {fileID: 5377404735001484274}
   m_Layer: 5
   m_Name: LogEntryMessageContentElement
   m_TagString: Untagged
@@ -152,20 +151,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <messageContentRectTransform>k__BackingField: {fileID: 310421536270070612}
   <messageContentText>k__BackingField: {fileID: 6044816886769802169}
-  <textHyperlinkHandler>k__BackingField: {fileID: 5377404735001484274}
---- !u!114 &5377404735001484274
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4494787449158613098}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71db578cd89a48d0903a2e608024fcd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  textComponent: {fileID: 6044816886769802169}
+  <textHyperlinkHandler>k__BackingField: {fileID: 0}
 --- !u!1 &4746648056159356455
 GameObject:
   m_ObjectHideFlags: 0
