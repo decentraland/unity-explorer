@@ -1,16 +1,16 @@
 ﻿using CRDT;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
-using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
 {
     public struct GetTextureIntention : ILoadingIntention, IEquatable<GetTextureIntention>
     {
+        public bool DisableDiskCache => true;
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public readonly TextureWrapMode WrapMode;
