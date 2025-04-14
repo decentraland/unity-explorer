@@ -45,11 +45,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private bool arraysInSync;
         private bool inTeleport;
 
-
         //Loading helpers
-        private int loadedScenes;
-        private int loadedLODs;
-        private int qualityReductedLOD;
         private int promisesCreated;
 
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -123,6 +119,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             else
             {
                 var sceneLoadingState = new SceneLoadingState();
+
                 //Sizes should always be the same
                 orderedDataManaged.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
                 orderedDataNative.Add(new OrderedDataNative());
@@ -231,9 +228,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
-            loadedScenes = 0;
-            loadedLODs = 0;
-            qualityReductedLOD = 0;
+            sceneLoadingLimit.Reset();
             promisesCreated = 0;
 
             unsafe
@@ -253,11 +248,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 for (var i = 0; i < orderedDataNativeLength && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
                 {
-                    OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
-
                     //Ignore unpartitioned and out of range
                     //Optimization: remove out of range from list when adding DeleteEntityIntention
                     if (dataPtr[i].RawSqrDistance < 0 || dataPtr[i].OutOfRange) continue;
+
+                    OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
+
+                    if (data.SceneDefinitionComponent.Definition.id.Equals("bafkreidyramqp6eydzgow46p2zkr4xvlfek63adygluga7ywx23a3z5oka"))
+                        UnityEngine.Debug.Log("FOR THE DEBUG");
 
                     UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
                 }
@@ -291,8 +289,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
-            if (candidateBy == VisualSceneState.SHOWING_SCENE && loadedScenes < sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad)
-                loadedScenes++;
+            if (candidateBy == VisualSceneState.SHOWING_SCENE && sceneLoadingLimit.CanLoadScene(sceneDefinitionComponent))
+            {
+                //TODO: Remove this comment
+            }
             else
             {
                 //Lets do a quality reduction analysis
@@ -302,15 +302,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //Reduce quality
             if (candidateBy == VisualSceneState.SHOWING_LOD)
             {
-                if (loadedLODs < sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad)
+                if (sceneLoadingLimit.CanLoadLOD(sceneDefinitionComponent))
                 {
                     // This LOD is within the full-quality limit, so load it normally. Nothing to do here
-                    loadedLODs++;
                     sceneState.FullQuality = true;
                 }
-                else if (qualityReductedLOD < sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad)
+                else if (sceneLoadingLimit.CanLoadQualityReductedLOD(sceneDefinitionComponent))
                 {
-                    qualityReductedLOD++;
                     if (sceneState.FullQuality)
                     {
                         //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load

@@ -27,6 +27,11 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         private readonly SceneFastLookup SceneLookup;
 
+        public int EstimatedMemoryUsageInMB;
+        public int EstimatedMemoryUsageForLODMB;
+        public int EstimatedMemoryUsageForQualityReductedLODMB;
+
+
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
@@ -43,6 +48,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
             SceneLookup = new SceneFastLookup(parcels);
+
+            // Following the limits from the docs. One parcel gives 15MB, capped at 300MB
+            // https://docs.decentraland.org/creator/development-guide/sdk7/scene-limitations/#scene-limitation-rules
+            EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, 300);
+
+            //Another assumption.
+            EstimatedMemoryUsageForLODMB = EstimatedMemoryUsageInMB / 3;
+
+            //Another assumption.
+            EstimatedMemoryUsageForQualityReductedLODMB = EstimatedMemoryUsageInMB / 30;
         }
 
         //Used in hot path to avoid additional getters
