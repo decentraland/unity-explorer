@@ -50,6 +50,7 @@ MonoBehaviour:
   - rid: 2168772563850493955
   - rid: 7621844642437005314
   - rid: 7621844642437005315
+  - rid: 8449516130764587014
   references:
     version: 2
     RefIds:
@@ -604,6 +605,8 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        startFadeDistanceDithering: 2
+        endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
@@ -792,6 +795,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ChatEntryMenuPopupPrefab:
           m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 8449516130764587014
+      type: {class: AdaptivePerformanceSettings, ns: DCL.Optimization.AdaptivePerformance.Systems, asm: DCL.Plugins}
+      data:
+        <phyiscsSettings>k__BackingField:
+          m_AssetGUID: b68ba436e63c39949b58b7aac96c291c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

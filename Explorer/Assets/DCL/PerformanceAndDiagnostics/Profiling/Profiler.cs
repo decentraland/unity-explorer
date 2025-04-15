@@ -10,7 +10,8 @@ namespace DCL.Profiling
     public class Profiler : IProfiler
     {
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
-        private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
+        private const int FRAME_BUFFER_SIZE = 1_024; // 1000 samples: for 34 FPS it's 33 seconds gameplay, for 60 FPS it's 17 seconds
+        private const int PHYS_SIM_BUFFER_SIZE = 10;
 
         private readonly List<ProfilerRecorderSample> samples = new (FRAME_BUFFER_SIZE);
 
@@ -24,6 +25,17 @@ namespace DCL.Profiling
         private ProfilerRecorder gpuFrameTimeRecorder = new (ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
 
         private bool isCollectingFrameTimings;
+
+        private readonly float[] physSimRingBuffer = new float[PHYS_SIM_BUFFER_SIZE];
+
+        private int physSimBufferIndex;
+        private float physSimRunningSum;
+
+        public FrameTimesRecorder MainThreadFrameTimes { get; } = new (FRAME_BUFFER_SIZE);
+        public FrameTimesRecorder GpuFrameTimes { get; } = new (FRAME_BUFFER_SIZE);
+
+        public int PhysicsSimulationInFrame { get; set; }
+        public float PhysicsSimulationsAvgInTenFrames => physSimRunningSum / PHYS_SIM_BUFFER_SIZE;
 
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
         public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
@@ -76,6 +88,29 @@ namespace DCL.Profiling
                 mainThreadTimeRecorder.Start();
                 gpuFrameTimeRecorder.Start();
             }
+        }
+
+        public void UpdatePhysicsSimRingBuffer()
+        {
+            float oldValue = physSimRingBuffer[physSimBufferIndex];
+            physSimRunningSum -= oldValue;
+
+            physSimRingBuffer[physSimBufferIndex] = PhysicsSimulationInFrame;
+            physSimRunningSum += PhysicsSimulationInFrame;
+
+            physSimBufferIndex = (physSimBufferIndex + 1) % PHYS_SIM_BUFFER_SIZE;
+        }
+
+        public void UpdateFrameTimings()
+        {
+            MainThreadFrameTimes.AddFrameTime(LastFrameTimeValueNs);
+            GpuFrameTimes.AddFrameTime(LastGpuFrameTimeValueNs);
+        }
+
+        public void ClearFrameTimings()
+        {
+            MainThreadFrameTimes.Clear();
+            GpuFrameTimes.Clear();
         }
 
         /// <summary>
