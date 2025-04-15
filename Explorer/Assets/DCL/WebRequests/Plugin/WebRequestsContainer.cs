@@ -53,15 +53,15 @@ namespace DCL.WebRequests
             var container = new WebRequestsContainer();
             await settingsContainer.InitializePluginAsync(container, ct);
 
-            HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
-
             HTTPManager.Logger.Level = Loglevels.Warning;
 
             ulong cacheSize = container.settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
-
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
             var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.CacheLifetimeDays), cacheSize));
             HTTPManager.LocalCache = httpCache;
+
+            // Set Threading Mode initialize the cache itself so we must do it after our cache initialization, otherwise there will be a sharing violation exception
+            HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
 
             var options = new ArtificialDelayOptions.ElementBindingOptions();
 

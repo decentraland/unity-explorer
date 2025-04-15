@@ -80,6 +80,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
+                await UniTask.SwitchToMainThread();
                 var result = await options.SceneRoomMetaDataSource.MetaDataAsync(options.SceneRoomMetaDataSource.GetMetadataInput(), token);
 
                 if (result.Success == false)
