@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
                 privateConversationsRoom.StartIfNotAsync()
             );
 
-            return result is { Item1: true, Item2: true, Item3: true };
+            return result is { Item1: true, Item2: true };
         }
 
         public UniTask StopAsync() =>
