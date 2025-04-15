@@ -29,6 +29,18 @@ namespace DCL.Notifications.NotificationEntry
         [field: SerializeField]
         public AudioClipConfig NotificationAudio { get; private set; }
 
+        public void SetHeaderText(string text) =>
+            HeaderText.text = text;
+
+        public void SetTitleText(string text) =>
+            TitleText.text = text;
+
+        public void SetNotification(NotificationType notificationType, INotification notification)
+        {
+            NotificationType = notificationType;
+            Notification = notification;
+        }
+
         private void Start() =>
             MainButton.onClick.AddListener(() => NotificationClicked.Invoke(NotificationType, Notification));
 

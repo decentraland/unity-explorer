@@ -177,10 +177,9 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTask ProcessMarketplaceCreditsNotificationAsync(INotification notification)
         {
-            viewInstance!.MarketplaceCreditsNotificationView.HeaderText.text = notification.GetHeader();
-            viewInstance.MarketplaceCreditsNotificationView.TitleText.text = notification.GetTitle();
-            viewInstance.MarketplaceCreditsNotificationView.NotificationType = notification.Type;
-            viewInstance.MarketplaceCreditsNotificationView.Notification = notification;
+            viewInstance!.MarketplaceCreditsNotificationView.SetHeaderText(notification.GetHeader());
+            viewInstance.MarketplaceCreditsNotificationView.SetTitleText(notification.GetTitle());
+            viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
                 marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
