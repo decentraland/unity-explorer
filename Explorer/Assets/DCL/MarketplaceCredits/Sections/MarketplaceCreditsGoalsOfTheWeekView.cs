@@ -28,6 +28,9 @@ namespace DCL.MarketplaceCredits.Sections
         [field: SerializeField]
         public MarketplaceCreditsGoalRowView GoalRowPrefab { get; private set; }
 
+        public void SetTimeLeftText(string text) =>
+            TimeLeftText.text = text;
+
         public void ToggleTimeLeftTooltip() =>
             TimeLeftLinkTooltip.SetActive(!TimeLeftLinkTooltip.activeSelf);
 

@@ -31,7 +31,6 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly ISelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
 
-        private Profile ownProfile;
         private CreditsProgramProgressResponse currentCreditsProgramProgress;
         private CancellationTokenSource fetchProgramRegistrationInfoCts;
         private CancellationTokenSource registerInTheProgramCts;
@@ -101,7 +100,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 view.SetAsLoading(true);
 
-                ownProfile = await selfProfile.ProfileAsync(ct);
+                var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
                 {
                     currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
@@ -221,9 +220,9 @@ namespace DCL.MarketplaceCredits.Sections
                 marketplaceCreditsWeekGoalsCompletedController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
             }
-            else if (ownProfile != null)
+            else
             {
-                marketplaceCreditsGoalsOfTheWeekController.Setup(ownProfile.UserId, currentCreditsProgramProgress);
+                marketplaceCreditsGoalsOfTheWeekController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
             }
         }

@@ -80,11 +80,11 @@ namespace DCL.MarketplaceCredits.Sections
         public void CloseSection() =>
             view.gameObject.SetActive(false);
 
-        public void Setup(string walletId, CreditsProgramProgressResponse creditsProgramProgressResponse)
+        public void Setup(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             ClearGoals();
 
-            view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft);
+            view.SetTimeLeftText(MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft));
             view.ShowTimeLeftTooltip(false);
 
             foreach (GoalData goalData in creditsProgramProgressResponse.goals)
