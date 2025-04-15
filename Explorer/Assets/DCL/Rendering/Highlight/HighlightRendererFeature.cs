@@ -141,7 +141,7 @@ namespace DCL.Rendering.Highlight
                     desc.stencilFormat = GraphicsFormat.None;
                     desc.useDynamicScale = false;
                     desc.useMipMap = false;
-                    desc.volumeDepth = 0;
+                    desc.volumeDepth = 1;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Colour = desc;
@@ -168,7 +168,7 @@ namespace DCL.Rendering.Highlight
                     desc.stencilFormat = GraphicsFormat.None;
                     desc.useDynamicScale = false;
                     desc.useMipMap = false;
-                    desc.volumeDepth = 0;
+                    desc.volumeDepth = 1;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Depth = desc;
@@ -195,7 +195,7 @@ namespace DCL.Rendering.Highlight
                     desc.stencilFormat = GraphicsFormat.None;
                     desc.useDynamicScale = false;
                     desc.useMipMap = false;
-                    desc.volumeDepth = 0;
+                    desc.volumeDepth = 1;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Colour_Blur = desc;
