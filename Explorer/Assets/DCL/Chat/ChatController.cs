@@ -168,7 +168,7 @@ namespace DCL.Chat
                 //TODO FRAN: here we must restore the state of the chat when returning to it from anywhere, unless overwritten for some reason.
                 //This should be the only way to open the chat, params should adjust to these possibilities.
 
-                IsUnfolded = showParams.ShowUnfolded;
+                IsUnfolded = true;//showParams.ShowUnfolded;
 
                 if(showParams.HasToFocusInputBox)
                     viewInstance!.FocusInputBox();
@@ -288,7 +288,7 @@ namespace DCL.Chat
             //TODO FRAN: Check what is this doing
             if (viewInstance!.IsFocused) return;
 
-            viewInstance!.IsChatSelected = true;
+            IsUnfolded = true;
             //viewInstance.EnableInputBoxSubmissions();
         }
 
