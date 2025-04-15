@@ -189,7 +189,7 @@ namespace DCL.MarketplaceCredits.Sections
 
                 if (claimCreditsResponse.ok)
                 {
-                    marketplaceCreditsMenuController.ShowCreditsUnlockedPanel(claimCreditsResponse.credits_granted);
+                    marketplaceCreditsMenuController.ShowCreditsUnlockedPanel(claimCreditsResponse.credits_granted).Forget();
                     marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
                     marketplaceCreditsMenuController.SetSidebarButtonAsClaimIndicator(false);
                 }

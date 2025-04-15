@@ -47,7 +47,6 @@ namespace DCL.MarketplaceCredits
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
-        private readonly INotificationsBusController notificationBusController;
         private readonly Animator sidebarCreditsButtonAnimator;
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
@@ -91,7 +90,6 @@ namespace DCL.MarketplaceCredits
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
-            this.notificationBusController = notificationBusController;
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
@@ -107,7 +105,6 @@ namespace DCL.MarketplaceCredits
 
         protected override void OnViewInstantiated()
         {
-            mvcManager.OnViewClosed += OnCreditsUnlockedPanelClosed;
             viewInstance!.OnAnyPlaceClick += OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
@@ -209,10 +206,14 @@ namespace DCL.MarketplaceCredits
             viewInstance.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
-        public void ShowCreditsUnlockedPanel(float claimedCredits)
+        public async UniTaskVoid ShowCreditsUnlockedPanel(float claimedCredits)
         {
             showCreditsUnlockedCts = showCreditsUnlockedCts.SafeRestart();
-            mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(new CreditsUnlockedController.Params(claimedCredits)), showCreditsUnlockedCts.Token).Forget();
+            await mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(new CreditsUnlockedController.Params(claimedCredits)), showCreditsUnlockedCts.Token);
+
+            // We open the welcome section after closing the credits unlocked panel
+            haveJustClaimedCredits = true;
+            OpenSection(MarketplaceCreditsSection.WELCOME);
         }
 
         public void ShowErrorNotification(string message)
@@ -228,7 +229,6 @@ namespace DCL.MarketplaceCredits
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
-            mvcManager.OnViewClosed -= OnCreditsUnlockedPanelClosed;
             viewInstance!.OnAnyPlaceClick -= OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
@@ -264,15 +264,6 @@ namespace DCL.MarketplaceCredits
             viewInstance.ErrorNotification.Show(ct);
             await UniTask.Delay(ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
             viewInstance.ErrorNotification.Hide(false, ct);
-        }
-
-        private void OnCreditsUnlockedPanelClosed(IController controller)
-        {
-            if (controller is not CreditsUnlockedController)
-                return;
-
-            haveJustClaimedCredits = true;
-            OpenSection(MarketplaceCreditsSection.WELCOME);
         }
 
         private void OnMarketplaceCreditsNotificationReceived(INotification notification)
