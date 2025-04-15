@@ -25,6 +25,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             // No limits.
             { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
+
+            // 1 scene, 1 high quality LOD. Only for debugging purposes
+            { SceneLimitsKey.SINGLE_SCENE, new SceneLimits(1, 1, 0) },
+
         };
 
 
@@ -104,6 +108,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private enum SceneLimitsKey
         {
+            SINGLE_SCENE,
             LOW_MEMORY,
             MEDIUM_MEMORY,
             MAX_MEMORY,
