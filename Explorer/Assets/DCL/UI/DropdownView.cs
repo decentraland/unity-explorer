@@ -1,7 +1,9 @@
 ﻿using DCL.Audio;
+using DCL.UI.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DCL.UI
 {
@@ -16,6 +18,11 @@ namespace DCL.UI
         public AudioClipConfig DropDownClickedAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig DropDownInteractedAudio { get; private set; }
+
+        private void Awake()
+        {
+            Dropdown.template.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
 
         private void OnEnable()
         {

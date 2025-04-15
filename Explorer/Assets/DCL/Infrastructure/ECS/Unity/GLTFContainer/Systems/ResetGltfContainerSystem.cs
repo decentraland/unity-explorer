@@ -82,7 +82,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         }
 
         [Query]
-        private void InvalidatePromise(Entity entity, ref PBGltfContainer sdkComponent, ref GltfContainerComponent component)
+        private void InvalidatePromise(Entity entity, in PBGltfContainer sdkComponent, ref GltfContainerComponent component)
         {
             if (sdkComponent.IsDirty && !string.Equals(sdkComponent.Src, component.Name, StringComparison.OrdinalIgnoreCase))
             {
