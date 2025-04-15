@@ -215,6 +215,7 @@ namespace DCL.Chat
         {
             chatStorage?.UnloadAllFiles();
             chatUsersStateCache.ClearAll();
+            chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
             memberListCts.SafeCancelAndDispose();
@@ -255,7 +256,7 @@ namespace DCL.Chat
             if (chatStorage != null)
                 await chatStorage.LoadAllChannelsWithoutMessagesAsync();
 
-            var connectedUsers = await chatUserStateUpdater.Initialize(chatHistory.Channels.Keys);
+            var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
