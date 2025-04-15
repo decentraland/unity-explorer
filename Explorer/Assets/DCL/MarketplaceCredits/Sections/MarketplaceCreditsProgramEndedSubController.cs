@@ -1,5 +1,6 @@
 using DCL.Browser;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using System;
 
@@ -7,9 +8,7 @@ namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsProgramEndedSubController : IDisposable
     {
-        private const string SUBSCRIBE_LINK = "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend";
         private const string SUBSCRIBE_LINK_ID = "SUBSCRIBE_LINK_ID";
-        private const string X_LINK = "https://x.com/decentraland";
         private const string X_LINK_ID = "X_LINK_ID";
 
         private readonly MarketplaceCreditsProgramEndedSubView subView;
@@ -47,10 +46,10 @@ namespace DCL.MarketplaceCredits.Sections
             switch (id)
             {
                 case SUBSCRIBE_LINK_ID:
-                    webBrowser.OpenUrl(SUBSCRIBE_LINK);
+                    webBrowser.OpenUrl(DecentralandUrl.NewsletterSubscriptionLink);
                     break;
                 case X_LINK_ID:
-                    webBrowser.OpenUrl(X_LINK);
+                    webBrowser.OpenUrl(DecentralandUrl.TwitterLink);
                     break;
             }
 
