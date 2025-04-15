@@ -58,7 +58,7 @@ namespace DCL.StylizedSkybox.Scripts
             desc.stencilFormat = GraphicsFormat.None;
             desc.useDynamicScale = false;
             desc.useMipMap = true;
-            desc.volumeDepth = 0;
+            desc.volumeDepth = 1;
             desc.vrUsage = VRTextureUsage.None;
 
             renderPass = new SkyboxToCubemapRenderPass(skyBoxMaterial, settings.originalMaterial);
