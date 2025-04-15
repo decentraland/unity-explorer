@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private void HandleEntityDestruction(in Entity entity, ref UIInputComponent uiInputComponent) =>
             RemoveTextField(entity, uiInputComponent);
 
-        private void RemoveTextField(in Entity entity, UIInputComponent uiInputComponent)
+        private void RemoveTextField(Entity entity, UIInputComponent uiInputComponent)
         {
             componentPool.Release(uiInputComponent);
 

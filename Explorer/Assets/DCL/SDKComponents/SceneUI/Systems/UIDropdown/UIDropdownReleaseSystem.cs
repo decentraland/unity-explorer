@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private void HandleEntityDestruction(in Entity entity, ref UIDropdownComponent uiDropdownComponent) =>
             RemoveDropdownField(entity, uiDropdownComponent);
 
-        private void RemoveDropdownField(in Entity entity, UIDropdownComponent uiDropdownComponent)
+        private void RemoveDropdownField(Entity entity, UIDropdownComponent uiDropdownComponent)
         {
             componentPool.Release(uiDropdownComponent);
 
