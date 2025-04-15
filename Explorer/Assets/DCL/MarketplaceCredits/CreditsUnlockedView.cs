@@ -26,6 +26,9 @@ namespace DCL.MarketplaceCredits
         [field: SerializeField]
         public RewardBackgroundRaysAnimation RewardBackgroundRaysAnimation { get; private set; }
 
+        public void SetCreditsText(string text) =>
+            CreditsText.text = text;
+
         protected override async UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             SetCanvasGroupInteractable(true);

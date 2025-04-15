@@ -13,7 +13,7 @@ namespace DCL.MarketplaceCredits
         public CreditsUnlockedController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
         protected override void OnBeforeViewShow() =>
-            viewInstance.CreditsText.text = MarketplaceCreditsUtils.FormatClaimedGoalReward(inputData.ClaimedCredits);
+            viewInstance.SetCreditsText(MarketplaceCreditsUtils.FormatClaimedGoalReward(inputData.ClaimedCredits));
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
