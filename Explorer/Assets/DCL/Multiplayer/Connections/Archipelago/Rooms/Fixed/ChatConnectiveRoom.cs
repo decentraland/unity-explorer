@@ -23,7 +23,7 @@ using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class ChatConnectiveRoom : IConnectiveRoom
+    public class ChatConnectiveRoom : IActivatableConnectiveRoom
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
@@ -43,6 +43,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             this.adapterAddress = adapterAddress;
             logPrefix = GetType().Name;
         }
+
+        public IConnectiveRoom.State CurrentState() => roomState.Value();
+        public IRoom Room() => room;
+        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
+        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
+
 
         protected UniTask PrewarmAsync(CancellationToken token) =>
             UniTask.CompletedTask;
@@ -67,7 +73,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             return connectionString;
         }
 
-        protected async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
+        private async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to room started: {connectionString}");
 
@@ -84,6 +90,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 return false;
             }
 
+            roomState.Set(IConnectiveRoom.State.Running);
             ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to new room finished successfully {connectionString}");
 
             return true;
@@ -165,11 +172,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
-
-        public IConnectiveRoom.State CurrentState() => roomState.Value();
-        public IRoom Room() => room;
-        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
 
         private async UniTaskVoid RunAsync(CancellationToken token)
