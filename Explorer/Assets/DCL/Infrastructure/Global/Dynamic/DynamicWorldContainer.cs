@@ -75,7 +75,6 @@ using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
-using DCL.UI.SceneDebugConsole.MessageBus;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -881,7 +880,7 @@ namespace Global.Dynamic
             if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
                 globalPlugins.Add(new SceneDebugConsolePlugin(
                     mvcManager,
-                    new SceneDebugConsoleMessageBus(),
+                    bootstrapContainer.SceneDebugConsoleMessageBus!,
                     new SceneDebugConsoleLogHistory(),
                     mainUIView,
                     staticContainer.InputBlock,

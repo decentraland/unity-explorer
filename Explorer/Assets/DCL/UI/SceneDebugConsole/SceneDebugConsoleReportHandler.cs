@@ -1,13 +1,13 @@
-using DCL.UI.SceneDebugConsole.LogHistory;
-using DCL.UI.SceneDebugConsole.MessageBus;
-using UnityEngine;
+// using DCL.UI.SceneDebugConsole.LogHistory;
+// using DCL.UI.SceneDebugConsole.MessageBus;
+// using UnityEngine;
 
 namespace DCL.UI.SceneDebugConsole
 {
     /// <summary>
     /// Captures Unity logs and sends them to the Scene Debug Console
     /// </summary>
-    public class SceneDebugConsoleReportHandler : MonoBehaviour
+    /*public class SceneDebugConsoleReportHandler : MonoBehaviour
     {
         private ISceneDebugConsoleMessageBus logMessagesBus;
         private SceneDebugConsoleSettings settings;
@@ -35,5 +35,5 @@ namespace DCL.UI.SceneDebugConsole
                 logMessagesBus.Send(logString, type, stackTrace);
             }
         }
-    }
+    }*/
 }
