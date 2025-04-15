@@ -75,6 +75,9 @@ namespace DCL.Chat
             foreach (ChatChannel.ChannelId conversation in openConversations)
                 this.openConversations.Add(conversation.Id);
 
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Open Conversations Loaded! {openConversations}");
+
+
             var conversationParticipants = new HashSet<string>();
 
             try
@@ -206,36 +209,38 @@ namespace DCL.Chat
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {update.ToString()}");
+            string userId = participant.Identity;
 
             switch (update)
             {
                 case UpdateFromParticipant.Connected:
                     //If the user is not blocked, we add it as a connected user, then check if its a friend, otherwise, we add it as a blocked user
-                    if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity))
+
+                    if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(userId))
                     {
-                        chatUsersStateCache.AddConnectedUser(participant.Identity);
+                        chatUsersStateCache.AddConnectedUser(userId);
 
-                        if (openConversations.Contains(participant.Identity))
+                        if (openConversations.Contains(userId))
                         {
-                            chatUserStateEventBus.OnUserConnectionStateChanged(participant.Identity, true);
+                            chatUserStateEventBus.OnUserConnectionStateChanged(userId, true);
 
-                            if (CurrentConversation == participant.Identity)
-                                CheckFriendStatusAsync(participant.Identity).Forget();
+                            if (CurrentConversation == userId)
+                                CheckFriendStatusAsync(userId).Forget();
                         }
                     }
                     else
                     {
                         //If the user is blocked (or blocking us) we consider them as if they remained offline.
-                        chatUserStateEventBus.OnUserConnectionStateChanged(participant.Identity, false);
-                        chatUsersStateCache.AddConnectedBlockedUser(participant.Identity);
+                        chatUserStateEventBus.OnUserConnectionStateChanged(userId, false);
+                        chatUsersStateCache.AddConnectedBlockedUser(userId);
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed!!! {participant.Metadata}");
 
-                    if (CurrentConversation != participant.Identity) return;
+                    if (CurrentConversation != userId) return;
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
-                    if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant.Identity)) return;
+                    if (userBlockingCacheProxy.StrictObject.UserIsBlocked(userId)) return;
 
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed - Passed all checks!!! {participant.Metadata}");
 
@@ -243,8 +248,8 @@ namespace DCL.Chat
                     CheckUserMetadataAsync(participant).Forget();
                     break;
                 case UpdateFromParticipant.Disconnected:
-                    chatUsersStateCache.RemoveConnectedUser(participant.Identity);
-                    chatUsersStateCache.RemovedConnectedBlockedUser(participant.Identity);
+                    chatUsersStateCache.RemoveConnectedUser(userId);
+                    chatUsersStateCache.RemovedConnectedBlockedUser(userId);
 
                     if (!openConversations.Contains(participant.Identity)) return;
 
@@ -276,7 +281,7 @@ namespace DCL.Chat
         {
             var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
 
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Read metadata from user {participant.Metadata}");
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Read metadata from user {message}");
 
             //If they accept all conversations, we dont need to check if they are friends or not
             if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
@@ -295,19 +300,14 @@ namespace DCL.Chat
         {
             if (!chatUsersStateCache.IsUserConnected(userid)) return;
 
-            if (openConversations.Contains(userid))
-            {
-                chatUserStateEventBus.OnUserConnectionStateChanged(userid, true);
-                if (CurrentConversation == userid)
-                    chatUserStateEventBus.OnNonFriendConnected(userid);
-            }
+            if (CurrentConversation == userid)
+                chatUserStateEventBus.OnNonFriendConnected(userid);
         }
 
         private void OnNewFriendAdded(string userid)
         {
             if (!chatUsersStateCache.IsUserConnected(userid)) return;
 
-            chatUserStateEventBus.OnUserConnectionStateChanged(userid, true);
             if (CurrentConversation == userid)
                 chatUserStateEventBus.OnFriendConnected(userid);
         }

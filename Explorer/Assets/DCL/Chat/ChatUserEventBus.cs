@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 
 namespace DCL.Chat
@@ -67,6 +68,7 @@ namespace DCL.Chat
 
         public void OnUserConnectionStateChanged(string userId, bool isConnected)
         {
+            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"On User Connection State Changed {isConnected}");
             UserConnectionStateChanged?.Invoke(userId, isConnected);
         }
     }
