@@ -33,8 +33,7 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
-            IWebJsSources webJsSources)
+        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory, IWebJsSources webJsSources)
         {
             this.realmData = realmData;
             this.engineFactory = engineFactory;
@@ -91,7 +90,7 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            
+
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
                 engineFactory);
         }

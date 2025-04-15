@@ -4,7 +4,9 @@ using Best.HTTP.Shared.PlatformSupport.Memory;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -51,28 +53,34 @@ namespace DCL.WebRequests
             CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
             JsonSerializerSettings? serializerSettings = null)
         {
-            using IWebRequest? rqs = await request.SendAsync(ct);
+            using IWebRequest? createdRequest = await request.SendAsync(ct);
 
-            string text = rqs.Response.Text;
-
-            await SwitchToThreadAsync(threadFlags);
+            string text = string.Empty;
 
             try
             {
                 switch (jsonParser)
                 {
                     case WRJsonParser.Unity:
-                        JsonUtility.FromJsonOverwrite(text, target);
-                        return target;
-                    case WRJsonParser.Newtonsoft:
-                        JsonConvert.PopulateObject(text, target!, serializerSettings);
-                        return target;
+#if !UNITY_EDITOR
                     case WRJsonParser.NewtonsoftInEditor:
-                        if (Application.isEditor)
-                            goto case WRJsonParser.Newtonsoft;
+#endif
+                        await SwitchToThreadAsync(threadFlags);
+                        JsonUtility.FromJsonOverwrite(text = createdRequest.Response.Text, target);
+                        break;
+                    default:
+                    {
+                        using Stream stream = createdRequest.Response.GetCompleteStream();
 
-                        goto case WRJsonParser.Unity;
-                    default: throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
+                        await SwitchToThreadAsync(threadFlags);
+
+                        var serializer = JsonSerializer.CreateDefault(serializerSettings);
+
+                        using var textReader = new StreamReader(stream, Encoding.UTF8);
+                        using var jsonReader = new JsonTextReader(textReader);
+                        serializer.Populate(jsonReader, target!);
+                        break;
+                    }
                 }
             }
             catch (Exception e)
@@ -83,6 +91,8 @@ namespace DCL.WebRequests
                     throw;
             }
             finally { await SwitchToMainThreadAsync(threadFlags); }
+
+            return target;
         }
 
         public static UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
@@ -102,25 +112,30 @@ namespace DCL.WebRequests
         {
             using IWebRequest? createdRequest = await request.SendAsync(ct);
 
-            string text = createdRequest.Response.Text;
-
-            await SwitchToThreadAsync(threadFlags);
+            string text = string.Empty;
 
             try
             {
                 switch (jsonParser)
                 {
                     case WRJsonParser.Unity:
-                        return JsonUtility.FromJson<T>(text);
-                    case WRJsonParser.Newtonsoft:
-                        return JsonConvert.DeserializeObject<T>(text, newtonsoftSettings);
+#if !UNITY_EDITOR
                     case WRJsonParser.NewtonsoftInEditor:
-                        if (Application.isEditor)
-                            goto case WRJsonParser.Newtonsoft;
-
-                        goto case WRJsonParser.Unity;
+#endif
+                        await SwitchToThreadAsync(threadFlags);
+                        return JsonUtility.FromJson<T>(text = createdRequest.Response.Text);
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
+                    {
+                        using Stream stream = createdRequest.Response.GetCompleteStream();
+
+                        await SwitchToThreadAsync(threadFlags);
+
+                        var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
+
+                        using var textReader = new StreamReader(stream, Encoding.UTF8);
+                        using var jsonReader = new JsonTextReader(textReader);
+                        return serializer.Deserialize<T>(jsonReader)!;
+                    }
                 }
             }
             catch (Exception e)

@@ -1,15 +1,14 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Caching;
-using Best.HTTP.Shared;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Linq;
 using System.Threading;
@@ -54,7 +53,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         {
             cache = TestWebRequestController.InitializeCache();
 
-            var requestsHub = new RequestHub(Substitute.For<ITexturesFuse>(), cache, false, WebRequestsMode.HTTP2);
+            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, WebRequestsMode.HTTP2, false);
 
             webRequestController = new Http2WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
                 Substitute.For<IWeb3IdentityCache>(), requestsHub, cache, chunkSize);

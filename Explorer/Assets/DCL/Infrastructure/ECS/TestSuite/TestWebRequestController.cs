@@ -1,12 +1,12 @@
 ﻿using Best.HTTP.Caching;
 using Best.HTTP.Shared;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using NSubstitute;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using UnityEngine;
@@ -43,7 +43,7 @@ namespace ECS.TestSuite
         {
             cache ??= InitializeCache();
 
-            var hub = new RequestHub(ITexturesFuse.NewTestInstance(), cache, false, WebRequestsMode.HTTP2);
+            var hub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, WebRequestsMode.HTTP2, false);
             IWebRequestsAnalyticsContainer? analyticsContainer = Substitute.For<IWebRequestsAnalyticsContainer>();
             IWeb3IdentityCache? identityCache = Substitute.For<IWeb3IdentityCache>();
 

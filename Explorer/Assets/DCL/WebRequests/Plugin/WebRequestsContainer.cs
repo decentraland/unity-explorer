@@ -4,12 +4,14 @@ using Best.HTTP.Shared.Logger;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using System;
+using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 using Utility.Storage;
@@ -37,13 +39,13 @@ namespace DCL.WebRequests
 
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; } = null!;
 
+        private readonly RequestHub requestHub = null!;
+
         public static async UniTask<WebRequestsContainer> CreateAsync(
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IDecentralandUrlsSource urlsSource,
             IDebugContainerBuilder debugContainerBuilder,
-            int coreBudget,
-            int sceneBudget,
             bool ktxEnabled,
             CancellationToken ct
         )
@@ -74,7 +76,7 @@ namespace DCL.WebRequests
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
-            var textureFuseRequestHub = new RequestHub(httpCache, urlsSource, container.WebRequestsMode);
+            var textureFuseRequestHub = new RequestHub(urlsSource, httpCache, container.WebRequestsMode, ktxEnabled);
 
             int partialChunkSize = container.settings.PartialChunkSizeMB * 1024 * 1024;
 
@@ -178,8 +180,7 @@ namespace DCL.WebRequests
         public void SetKTXEnabled(bool enabled)
         {
             // TODO: Temporary until we rewrite FF to be static
-            WebRequestController.requestHub.SetKTXEnabled(enabled);
-            SceneWebRequestController.requestHub.SetKTXEnabled(enabled);
+            requestHub.SetKTXEnabled(enabled);
         }
     }
 }

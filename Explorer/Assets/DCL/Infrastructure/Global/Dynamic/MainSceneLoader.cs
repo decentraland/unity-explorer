@@ -41,6 +41,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -157,7 +158,7 @@ namespace Global.Dynamic
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
-            WebRequestsContainer webRequestsContainer = await WebRequestsContainer.CreateAsync(globalPluginSettingsContainer, identityCache, decentralandUrlsSource, debugContainerBuilder, compressionEnabled, ct);
+            WebRequestsContainer webRequestsContainer = await WebRequestsContainer.CreateAsync(globalPluginSettingsContainer, identityCache, decentralandUrlsSource, debugContainerBuilder, KTX_ENABLED, ct);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             IDiskCache diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings, webRequestsContainer.WebRequestsMode);
@@ -230,7 +231,7 @@ namespace Global.Dynamic
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
 #if UNITY_EDITOR
-                        UnityEditor.EditorApplication.isPlaying = false;
+                        EditorApplication.isPlaying = false;
 #else
                         Application.Quit();
 #endif
@@ -426,8 +427,8 @@ namespace Global.Dynamic
 
             // If we want to save one http request, we could have a hardcoded list of trusted realms instead
             var url = URLAddress.FromString(dclUrls.Url(DecentralandUrl.Servers));
-            var adapter = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-            TrustedRealmApiResponse[] realms = await adapter.CreateFromJson<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft);
+            GenericGetRequest adapter = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
+            TrustedRealmApiResponse[] realms = await adapter.CreateFromJsonAsync<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft, ct);
 
             foreach (TrustedRealmApiResponse trustedRealm in realms)
                 if (string.Equals(trustedRealm.baseUrl, realm, StringComparison.OrdinalIgnoreCase))

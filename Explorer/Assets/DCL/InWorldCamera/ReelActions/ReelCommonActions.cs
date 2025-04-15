@@ -4,12 +4,10 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.ReelActions
 {

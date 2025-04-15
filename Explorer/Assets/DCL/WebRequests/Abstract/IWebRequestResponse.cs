@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace DCL.WebRequests
 {
@@ -40,6 +41,15 @@ namespace DCL.WebRequests
         bool IsSuccess { get; }
 
         ulong DataLength { get; }
+
+        /// <summary>
+        ///     Gets or creates a stream from the complete data
+        ///     <remarks>
+        ///         When the stream is created, the underlying handler is disposed of.
+        ///     </remarks>
+        /// </summary>
+        /// <returns></returns>
+        Stream GetCompleteStream();
 
         /// <summary>
         ///     Gets the first value of the given header

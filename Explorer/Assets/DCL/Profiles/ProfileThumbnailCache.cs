@@ -95,11 +95,10 @@ namespace DCL.Profiles
                 IOwnedTexture2D? ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(thumbnailUrl)),
                     new GetTextureArguments(TextureType.Albedo),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                    ct,
                     ReportCategory.UI,
                     suppressErrors: true
-                );
+                                                                           )
+                                                                          .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);
 
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;

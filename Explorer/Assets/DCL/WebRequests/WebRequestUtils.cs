@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.Networking;
 using Utility;
 
 namespace DCL.WebRequests

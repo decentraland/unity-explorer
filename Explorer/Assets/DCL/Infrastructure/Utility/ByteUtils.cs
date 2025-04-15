@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Utility
 {
@@ -123,6 +125,36 @@ namespace Utility
         {
             source.CopyTo(destination);
             destination = destination[source.Length..];
+        }
+
+        /// <summary>
+        ///     Reinterprets the given array to the slice. There is no way to include the same safety handle
+        ///     so it's up to the caller to ensure that the slice is not used after the array is disposed, and avoid using it in Jobs.
+        /// </summary>
+        public static NativeSlice<byte> AsWritableSliceUnsafe(this NativeArray<byte>.ReadOnly readOnlyArray)
+        {
+            unsafe
+            {
+                // Technically we only have a "read-only" pointer here
+                // but it is indeed just the same underlying memory.
+                var ptr = (byte*)readOnlyArray.GetUnsafeReadOnlyPtr();
+
+                // Convert that pointer to a NativeSlice.
+                // Stride is 1 for a byte array, length is the length of the array.
+                NativeSlice<byte> slice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(
+                    ptr,
+                    /* stride: */ 1,
+                    readOnlyArray.Length
+                );
+
+                // We can't retrieve the same safety handle so we just ignore it relying on the caller site
+                // AtomicSafetyHandle safetyHandle = NativeArrayUnsafeUtility.GetAtomicSafetyHandle(readOnlyArray);
+
+                // Assign that handle to the new slice.
+                NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref slice, AtomicSafetyHandle.Create());
+
+                return slice;
+            }
         }
     }
 }

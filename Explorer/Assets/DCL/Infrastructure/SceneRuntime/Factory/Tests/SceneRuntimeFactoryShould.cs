@@ -52,8 +52,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(webRequestController,
-                    new IRealmData.Fake(), engineFactory, webJsSources);
+                var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, webJsSources);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -87,8 +86,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(webRequestController,
-                    new IRealmData.Fake(), engineFactory, webJsSources);
+                var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, webJsSources);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -115,8 +113,7 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(webRequestController,
-                new IRealmData.Fake(), engineFactory, webJsSources);
+            var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, webJsSources);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act

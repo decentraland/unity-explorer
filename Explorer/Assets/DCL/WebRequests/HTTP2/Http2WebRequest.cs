@@ -2,6 +2,7 @@
 using Best.HTTP.Response;
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using Best.HTTP.Shared.PlatformSupport.Text;
+using Best.HTTP.Shared.Streams;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -172,6 +173,18 @@ namespace DCL.WebRequests.HTTP2
             internal Http2Response(HTTPRequest request)
             {
                 this.request = request;
+            }
+
+            public Stream GetCompleteStream()
+            {
+                using DownloadContentStream downStream = request.Response.DownStream;
+
+                var bufferStream = new BufferSegmentStream();
+
+                while (downStream.TryTake(out BufferSegment segment))
+                    bufferStream.Write(segment);
+
+                return bufferStream;
             }
 
             public string? GetHeader(string headerName) =>

@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT.Deserializer;
@@ -84,8 +82,7 @@ namespace SceneRunner.Tests
 
             IWebRequestController webRequestController = TestWebRequestController.Create(webRequestsMode);
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(webRequestController,
-                new IRealmData.Fake(), engineFactory,
+            sceneRuntimeFactory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
                 new WebJsSources(new JsCodeResolver(webRequestController)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
@@ -118,7 +115,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.UNITY,
+                webRequestController,
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),

@@ -54,8 +54,7 @@ namespace SceneRuntime.Tests
         {
             IWebRequestController webRequestController = TestWebRequestController.Create(webRequestsMode);
 
-            return new SceneRuntimeFactory(webRequestController, new IRealmData.Fake(),
-                new V8EngineFactory(), new WebJsSources(new JsCodeResolver(webRequestController)));
+            return new SceneRuntimeFactory(new IRealmData.Fake(), new V8EngineFactory(), new WebJsSources(new JsCodeResolver(webRequestController)));
         }
 
         [UnityTest]

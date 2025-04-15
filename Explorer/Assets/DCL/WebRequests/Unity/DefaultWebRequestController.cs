@@ -41,6 +41,10 @@ namespace DCL.WebRequests
                 try
                 {
                     UnityWebRequest nativeRequest = requestWrap.CreateUnityWebRequest();
+
+                    // In reality the life-cycle of WRs is always closed. Uncomment this line and introduce individual dispose if required in the future
+                    // nativeRequest.disposeDownloadHandlerOnDispose = !detachDownloadHandler;
+
                     adapter = new DefaultWebRequest(nativeRequest, requestWrap);
 
                     envelope.OnCreated?.Invoke(adapter);

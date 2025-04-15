@@ -153,13 +153,15 @@ namespace DCL.WebRequests
             GetTextureArguments args,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false
         ) =>
             controller.requestHub.RequestDelegateFor<GetTextureArguments, GetTextureWebRequest>()(controller, new RequestEnvelope(
                 commonArguments,
                 reportData,
                 headersInfo,
-                signInfo
+                signInfo,
+                suppressErrors
             ), args);
 
         /// <summary>

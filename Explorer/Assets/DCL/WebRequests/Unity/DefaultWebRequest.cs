@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -61,6 +64,11 @@ namespace DCL.WebRequests
             unityWebRequest.SetRequestHeader(name, value);
         }
 
+        protected override void OnDispose()
+        {
+            unityWebRequest.Dispose();
+        }
+
         internal class DefaultWebRequestResponse : IWebRequestResponse
         {
             private readonly UnityWebRequest unityWebRequest;
@@ -82,6 +90,17 @@ namespace DCL.WebRequests
             public DefaultWebRequestResponse(UnityWebRequest unityWebRequest)
             {
                 this.unityWebRequest = unityWebRequest;
+            }
+
+            public Stream GetCompleteStream()
+            {
+                NativeArray<byte>.ReadOnly nativeData = unityWebRequest.downloadHandler.nativeData;
+
+                unsafe
+                {
+                    var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
+                    return new UnmanagedMemoryStream(dataPtr, nativeData.Length, nativeData.Length, FileAccess.Read);
+                }
             }
 
             public string? GetHeader(string headerName) =>

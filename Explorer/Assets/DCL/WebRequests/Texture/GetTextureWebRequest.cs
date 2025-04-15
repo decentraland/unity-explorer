@@ -1,15 +1,14 @@
+using Best.HTTP;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
-using Plugins.TexturesFuse.TexturesServerWrap;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using KtxUnity;
 using System;
 using System.Threading;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
-using Utility.Types;
 
 namespace DCL.WebRequests
 {
@@ -18,20 +17,28 @@ namespace DCL.WebRequests
     /// </summary>
     public class GetTextureWebRequest : TypedWebRequestBase<GetTextureArguments>
     {
-        private readonly ITexturesFuse texturesFuse;
-        private readonly bool isTextureCompressionEnabled;
+        private readonly bool ktxEnabled;
+        private readonly IDecentralandUrlsSource urlsSource;
 
-        internal GetTextureWebRequest(RequestEnvelope envelope, GetTextureArguments args, IWebRequestController controller, ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
+        internal GetTextureWebRequest(RequestEnvelope envelope, GetTextureArguments args, IWebRequestController controller, bool ktxEnabled, IDecentralandUrlsSource urlsSource)
             : base(envelope, args, controller)
         {
-            this.texturesFuse = texturesFuse;
-            this.isTextureCompressionEnabled = isTextureCompressionEnabled;
+            this.ktxEnabled = ktxEnabled;
+            this.urlsSource = urlsSource;
         }
 
-        public override bool Http2Supported => false;
+        public override bool Http2Supported => useKtx;
+
+        private bool useKtx => ktxEnabled && Args.UseKtx;
 
         public override UnityWebRequest CreateUnityWebRequest() =>
-            isTextureCompressionEnabled ? UnityWebRequest.Get(Envelope.CommonArguments.URL) : UnityWebRequestTexture.GetTexture(Envelope.CommonArguments.URL, false);
+            UnityWebRequestTexture.GetTexture(GetEffectiveUrl());
+
+        public override HTTPRequest CreateHttp2Request() =>
+            new (GetEffectiveUrl());
+
+        private Uri GetEffectiveUrl() =>
+            new (useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(Envelope.CommonArguments.URL)) : Envelope.CommonArguments.URL);
 
         /// <summary>
         ///     Creates the texture
@@ -45,7 +52,14 @@ namespace DCL.WebRequests
             switch (wr.nativeRequest)
             {
                 case UnityWebRequest unityWebRequest:
-                    return await (isTextureCompressionEnabled ? ExecuteWithCompressionAsync(unityWebRequest, wrapMode, filterMode, ct) : ExecuteNoCompressionAsync(unityWebRequest, wrapMode, filterMode, ct));
+                    if (useKtx)
+                        return await ExecuteKtxAsync(unityWebRequest.downloadHandler.nativeData.AsWritableSliceUnsafe(), wrapMode, filterMode, ct);
+
+                    return await ExecuteNoCompressionAsync(unityWebRequest, wrapMode, filterMode, ct);
+
+                case HTTPRequest http2Request when useKtx:
+                    // Streams are non-linear memory, not much we can do about it to avoid allocations
+                    return await ExecuteKtxAsync(new NativeArray<byte>(http2Request.Response.Data, Allocator.None), wrapMode, filterMode, ct);
 
                 default:
                     throw new NotSupportedException($"{nameof(CreateTextureAsync)} does not support {wr.GetType().Name})");
@@ -79,41 +93,25 @@ namespace DCL.WebRequests
             return UniTask.FromResult((IOwnedTexture2D)new IOwnedTexture2D.Const(texture));
         }
 
-        private async UniTask<IOwnedTexture2D> ExecuteWithCompressionAsync(UnityWebRequest request, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
+        private async UniTask<IOwnedTexture2D> ExecuteKtxAsync(NativeSlice<byte> data, TextureWrapMode wrapMode, FilterMode filterMode, CancellationToken ct)
         {
-            NativeArray<byte>.ReadOnly? data = request.downloadHandler?.nativeData;
+            var ktxTexture = new KtxTexture();
 
-            if (data == null)
-                throw new Exception("Texture content is empty");
+            TextureResult? result = await ktxTexture.LoadFromBytes(
+                data,
+                Args.TextureType != TextureType.Albedo
+            );
 
-            EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> result = await texturesFuse
-               .TextureFromBytesAsync(
-                    AsPointer(data.Value),
-                    data.Value.Length,
-                    Args.TextureType,
-                    ct
-                );
+            if (result == null)
+                throw new Exception($"Failed to load ktx texture from data: {Envelope.CommonArguments.URL}");
 
-            // Fallback to uncompressed texture if compression fails
-            if (result.Success == false)
-                return await ExecuteNoCompressionAsync(request, wrapMode, filterMode, ct);
+            Texture2D? finalTex = result.texture;
 
-            Texture2D texture = result.Value.Texture;
-
-            texture.wrapMode = wrapMode;
-            texture.filterMode = filterMode;
-            texture.SetDebugName(Envelope.CommonArguments.URL);
+            finalTex.wrapMode = wrapMode;
+            finalTex.filterMode = filterMode;
+            finalTex.SetDebugName(Envelope.CommonArguments.URL);
             ProfilingCounters.TexturesAmount.Value++;
-            return result.Value;
-        }
-
-        private static IntPtr AsPointer<T>(NativeArray<T>.ReadOnly readOnly) where T: struct
-        {
-            unsafe
-            {
-                void* ptr = readOnly.GetUnsafeReadOnlyPtr();
-                return new IntPtr(ptr!);
-            }
+            return new IOwnedTexture2D.Const(finalTex);
         }
     }
 }
