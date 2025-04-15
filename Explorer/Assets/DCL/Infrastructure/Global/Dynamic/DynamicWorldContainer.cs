@@ -500,7 +500,8 @@ namespace Global.Dynamic
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
-                new ClearChatCommand(chatCommandsBus)
+                new ClearChatCommand(chatCommandsBus),
+                new LogsChatCommand(),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
