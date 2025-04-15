@@ -50,7 +50,7 @@ MonoBehaviour:
   - rid: 2168772563850493955
   - rid: 7621844642437005314
   - rid: 7621844642437005315
-  - rid: 5395167839458164738
+  - rid: 8449516130764587014
   references:
     version: 2
     RefIds:
@@ -636,19 +636,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 5395167839458164738
-      type: {class: MarketplaceCreditsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <MarketplaceCreditsPrefab>k__BackingField:
-          m_AssetGUID: c84eadd488acd19418270435e047bffb
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <CreditsUnlockedPrefab>k__BackingField:
-          m_AssetGUID: adccb7c4aa6e2424c95ac85e0d3f0a35
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -808,6 +795,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ChatEntryMenuPopupPrefab:
           m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 8449516130764587014
+      type: {class: AdaptivePerformanceSettings, ns: DCL.Optimization.AdaptivePerformance.Systems, asm: DCL.Plugins}
+      data:
+        <phyiscsSettings>k__BackingField:
+          m_AssetGUID: b68ba436e63c39949b58b7aac96c291c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
