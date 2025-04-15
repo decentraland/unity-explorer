@@ -9,14 +9,16 @@ namespace DCL.WebRequests.Analytics.Metrics
         public DebugLongMarkerDef.Unit GetUnit() =>
             DebugLongMarkerDef.Unit.NoFormat;
 
-        public ulong GetMetric() =>
-            counter;
+        public ulong GetMetric()
+        {
+            lock (this) { return counter; }
+        }
 
         void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest) { }
 
         void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            counter++;
+            lock (this) { counter++; }
         }
     }
 }

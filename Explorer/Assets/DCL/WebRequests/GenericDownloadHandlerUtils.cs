@@ -220,14 +220,14 @@ namespace DCL.WebRequests
             }
         }
 
-        private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
+        internal static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
             if (EnumUtils.HasFlag(flags, WRThreadFlags.SwitchBackToMainThread))
                 await UniTask.SwitchToMainThread();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static async UniTask SwitchToThreadAsync(WRThreadFlags deserializationThreadFlags)
+        internal static async UniTask SwitchToThreadAsync(WRThreadFlags deserializationThreadFlags)
         {
             if (EnumUtils.HasFlag(deserializationThreadFlags, WRThreadFlags.SwitchToThreadPool))
                 await UniTask.SwitchToThreadPool();

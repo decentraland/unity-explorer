@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    internal class ServerTimeSmallFileAverage : IRequestMetric
+    internal class ServeTimeSmallFileAverage : IRequestMetric
     {
         private double sum;
         private uint count;
@@ -20,11 +20,15 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            if (webRequest.DownloadedBytes > ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
+            if (webRequest.DownloadedBytes is > 0 and > ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
 
             double elapsedMs = (DateTime.Now - webRequest.CreationTime).TotalMilliseconds;
-            count++;
-            sum += elapsedMs;
+
+            lock (this)
+            {
+                count++;
+                sum += elapsedMs;
+            }
         }
     }
 }

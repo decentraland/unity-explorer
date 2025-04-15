@@ -85,7 +85,7 @@ namespace DCL.WebRequests.HTTP2
                 nativeRequest.DownloadSettings.ContentStreamMaxBuffered = requestWrap.DownloadBufferMaxSize;
 
                 if (detachDownloadHandler)
-                    nativeRequest.DownloadSettings.OnDownloadStarted = detachDownloadStream;
+                    nativeRequest.DownloadSettings.OnDownloadStarted += detachDownloadStream;
 
                 envelope.OnCreated?.Invoke(requestAdapter);
 

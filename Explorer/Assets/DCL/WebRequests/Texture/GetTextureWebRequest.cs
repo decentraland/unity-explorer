@@ -1,4 +1,5 @@
 using Best.HTTP;
+using Best.HTTP.Response;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
@@ -49,6 +50,8 @@ namespace DCL.WebRequests
 
             // For simplicity simply switch
 
+            await UniTask.SwitchToMainThread();
+
             switch (wr.nativeRequest)
             {
                 case UnityWebRequest unityWebRequest:
@@ -58,8 +61,15 @@ namespace DCL.WebRequests
                     return await ExecuteNoCompressionAsync(unityWebRequest, wrapMode, filterMode, ct);
 
                 case HTTPRequest http2Request when useKtx:
+                {
                     // Streams are non-linear memory, not much we can do about it to avoid allocations
-                    return await ExecuteKtxAsync(new NativeArray<byte>(http2Request.Response.Data, Allocator.None), wrapMode, filterMode, ct);
+                    using var nativeArray = new NativeArray<byte>((int)http2Request.Response.DownStream.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+                    using DownloadContentStream? stream = http2Request.Response.DownStream;
+                    stream.Read(nativeArray.AsSpan());
+
+                    return await ExecuteKtxAsync(nativeArray, wrapMode, filterMode, ct);
+                }
 
                 default:
                     throw new NotSupportedException($"{nameof(CreateTextureAsync)} does not support {wr.GetType().Name})");

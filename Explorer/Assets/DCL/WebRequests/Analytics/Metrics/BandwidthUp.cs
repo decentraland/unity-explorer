@@ -1,5 +1,4 @@
 ﻿using DCL.DebugUtilities;
-using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {

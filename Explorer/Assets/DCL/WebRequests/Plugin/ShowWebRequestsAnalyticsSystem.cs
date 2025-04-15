@@ -23,7 +23,7 @@ namespace DCL.WebRequests.Analytics
         internal ShowWebRequestsAnalyticsSystem(World world, IWebRequestsAnalyticsContainer analyticsContainer, DebugWidgetBuilder? widget) : base(world)
         {
             this.analyticsContainer = analyticsContainer;
-            widget?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(false));
+            widget?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
             metrics = analyticsContainer.GetTrackedMetrics();
         }

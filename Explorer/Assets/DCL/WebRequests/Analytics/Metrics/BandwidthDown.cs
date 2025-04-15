@@ -19,7 +19,9 @@ namespace DCL.WebRequests.Analytics.Metrics
         void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
             if (webRequest.Response.IsSuccess)
-                bandwidth += webRequest.DownloadedBytes;
+            {
+                lock (this) { bandwidth += webRequest.DownloadedBytes; }
+            }
         }
     }
 }

@@ -1,11 +1,10 @@
 using DCL.DebugUtilities;
 using System;
-using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
     /// <summary>
-    ///     Reversed of <see cref="ServeTimePerMBAverage" />
+    ///     Reversed of <see cref="ServeTimePerMBAverage" /> TODO Implemented improperly: fix me!
     /// </summary>
     internal class FillRateAverage : IRequestMetric
     {

@@ -17,7 +17,7 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            if (webRequest.Response.IsSuccess) counter++;
+            if (!webRequest.Response.IsSuccess) counter++;
         }
     }
 }

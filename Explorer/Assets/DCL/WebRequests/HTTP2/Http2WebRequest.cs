@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Unity.Collections;
 
 namespace DCL.WebRequests.HTTP2
 {
@@ -47,7 +48,8 @@ namespace DCL.WebRequests.HTTP2
 
         private void OnDownloadProgress(HTTPRequest req, long progress, long length)
         {
-            DownloadedBytes = (ulong)progress;
+            // If there is no content size, it won't be reported
+            DownloadedBytes = (ulong)Math.Max(progress, length);
         }
 
         private void OnUploadProgress(HTTPRequest req, long progress, long length)
@@ -142,7 +144,7 @@ namespace DCL.WebRequests.HTTP2
             {
                 get
                 {
-                    // The following will not work as it checks the reponse itself is disposed of (but should rely on the stream instead)
+                    // The following will not work as it checks the response itself is disposed of (but should rely on the stream instead)
                     // request.Response?.Data ?? Array.Empty<byte>();
                     DownloadContentStream? downStream = request.Response.DownStream;
 

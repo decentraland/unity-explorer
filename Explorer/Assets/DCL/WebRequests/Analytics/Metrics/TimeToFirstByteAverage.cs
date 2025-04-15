@@ -1,7 +1,5 @@
 ﻿using DCL.DebugUtilities;
 using System;
-using System.Collections.Generic;
-using UnityEngine.Pool;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
@@ -13,13 +11,18 @@ namespace DCL.WebRequests.Analytics.Metrics
         public DebugLongMarkerDef.Unit GetUnit() =>
             DebugLongMarkerDef.Unit.TimeNanoseconds;
 
-        public ulong GetMetric() =>
-            (ulong)(sum / count) * 1_000_000UL;
+        public ulong GetMetric()
+        {
+            lock (this) { return (ulong)(sum / count) * 1_000_000UL; }
+        }
 
         private void TrackFirstByteDownloaded(IWebRequest analytics)
         {
-            count++;
-            sum += (DateTime.Now - analytics.CreationTime).TotalMilliseconds;
+            lock (this)
+            {
+                count++;
+                sum += (DateTime.Now - analytics.CreationTime).TotalMilliseconds;
+            }
         }
 
         void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)

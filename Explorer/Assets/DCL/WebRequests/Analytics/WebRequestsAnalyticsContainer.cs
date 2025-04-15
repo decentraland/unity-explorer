@@ -15,7 +15,7 @@ namespace DCL.WebRequests.Analytics
             new (typeof(GetAssetBundleWebRequest), "Asset Bundle"),
             new (typeof(GenericGetRequest), "Get"),
 
-            // TODO new (typeof(PartialDownloadRequest), "Partial"),
+            new (typeof(PartialDownloadRequest), "Partial"),
             new (typeof(GenericPostRequest), "Post"),
             new (typeof(GenericPutRequest), "Put"),
             new (typeof(GenericPatchRequest), "Patch"),
@@ -33,7 +33,7 @@ namespace DCL.WebRequests.Analytics
             new (typeof(CannotConnectCounter), MetricAggregationMode.SUM),
             new (typeof(BandwidthDown)),
             new (typeof(BandwidthUp)),
-            new (typeof(ServerTimeSmallFileAverage)),
+            new (typeof(ServeTimeSmallFileAverage)),
             new (typeof(ServeTimePerMBAverage)),
             new (typeof(FillRateAverage)),
             new (typeof(TimeToFirstByteAverage)),
@@ -70,7 +70,7 @@ namespace DCL.WebRequests.Analytics
                     if (debugWidgetBuilder != null)
                     {
                         binding = new ElementBinding<ulong>(0);
-                        debugWidgetBuilder.AddMarker(requestType.MarkerName + "-" + requestType.Type.Name, binding, instance.GetUnit());
+                        debugWidgetBuilder.AddMarker(requestType.MarkerName + "-" + metricType.Type.Name, binding, instance.GetUnit());
                     }
 
                     var registration = new MetricRegistration(instance, binding);
