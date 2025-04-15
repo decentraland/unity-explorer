@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsWelcomeView : MonoBehaviour
+    public class MarketplaceCreditsWelcomeSubView : MonoBehaviour
     {
         [field: SerializeField]
         public GameObject ContentContainer { get; private set; }

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsVerifyEmailView : MonoBehaviour
+    public class MarketplaceCreditsVerifyEmailSubView : MonoBehaviour
     {
         [field: SerializeField]
         public TMP_Text Subtitle { get; private set; }

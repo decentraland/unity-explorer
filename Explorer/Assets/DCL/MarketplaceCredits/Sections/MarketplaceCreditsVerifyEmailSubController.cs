@@ -8,11 +8,11 @@ using Utility;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsVerifyEmailController : IDisposable
+    public class MarketplaceCreditsVerifyEmailSubController : IDisposable
     {
         private const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
 
-        private readonly MarketplaceCreditsVerifyEmailView view;
+        private readonly MarketplaceCreditsVerifyEmailSubView subView;
         private readonly ISelfProfile selfProfile;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
@@ -22,24 +22,24 @@ namespace DCL.MarketplaceCredits.Sections
         private CancellationTokenSource resendVerificationEmailCts;
         private string currentEmail;
 
-        public MarketplaceCreditsVerifyEmailController(
-            MarketplaceCreditsVerifyEmailView view,
+        public MarketplaceCreditsVerifyEmailSubController(
+            MarketplaceCreditsVerifyEmailSubView subView,
             ISelfProfile selfProfile,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
-            this.view = view;
+            this.subView = subView;
             this.selfProfile = selfProfile;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
-            view.UpdateEmailButton.onClick.AddListener(UpdateEmail);
-            view.ResendVerificationEmailButton.onClick.AddListener(ResendVerificationEmail);
+            subView.UpdateEmailButton.onClick.AddListener(UpdateEmail);
+            subView.ResendVerificationEmailButton.onClick.AddListener(ResendVerificationEmail);
         }
 
         public void OpenSection()
         {
-            view.gameObject.SetActive(true);
+            subView.gameObject.SetActive(true);
 
             checkEmailVerificationCts = checkEmailVerificationCts.SafeRestart();
             CheckEmailVerificationAsync(checkEmailVerificationCts.Token).Forget();
@@ -50,19 +50,19 @@ namespace DCL.MarketplaceCredits.Sections
             checkEmailVerificationCts.SafeCancelAndDispose();
             updateEmailCts.SafeCancelAndDispose();
             resendVerificationEmailCts.SafeCancelAndDispose();
-            view.gameObject.SetActive(false);
+            subView.gameObject.SetActive(false);
         }
 
         public void Setup(string email)
         {
-            view.SetEmailToVerify(email);
+            subView.SetEmailToVerify(email);
             currentEmail = email;
         }
 
         public void Dispose()
         {
-            view.UpdateEmailButton.onClick.RemoveListener(UpdateEmail);
-            view.ResendVerificationEmailButton.onClick.RemoveListener(ResendVerificationEmail);
+            subView.UpdateEmailButton.onClick.RemoveListener(UpdateEmail);
+            subView.ResendVerificationEmailButton.onClick.RemoveListener(ResendVerificationEmail);
 
             checkEmailVerificationCts.SafeCancelAndDispose();
             updateEmailCts.SafeCancelAndDispose();
@@ -109,7 +109,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetAsLoading(true);
+                subView.SetAsLoading(true);
 
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
@@ -128,7 +128,7 @@ namespace DCL.MarketplaceCredits.Sections
             }
             finally
             {
-                view.SetAsLoading(false);
+                subView.SetAsLoading(false);
             }
         }
 
@@ -142,7 +142,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetAsLoading(true);
+                subView.SetAsLoading(true);
 
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
@@ -158,7 +158,7 @@ namespace DCL.MarketplaceCredits.Sections
             }
             finally
             {
-                view.SetAsLoading(false);
+                subView.SetAsLoading(false);
             }
         }
     }

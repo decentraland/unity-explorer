@@ -728,11 +728,11 @@ MonoBehaviour:
   <TotalCreditsWidget>k__BackingField: {fileID: 7463072906583247113}
   <InfoLinkButton>k__BackingField: {fileID: 8412040699094680254}
   <CloseButton>k__BackingField: {fileID: 4723671895938667204}
-  <WelcomeView>k__BackingField: {fileID: 4266060441270789246}
-  <VerifyEmailView>k__BackingField: {fileID: 2826341061384331396}
-  <GoalsOfTheWeekView>k__BackingField: {fileID: 6987591857266816133}
-  <WeekGoalsCompletedView>k__BackingField: {fileID: 2769573504672181379}
-  <ProgramEndedView>k__BackingField: {fileID: 5023345625708864108}
+  <WelcomeSubView>k__BackingField: {fileID: 4266060441270789246}
+  <VerifyEmailSubView>k__BackingField: {fileID: 2826341061384331396}
+  <GoalsOfTheWeekSubView>k__BackingField: {fileID: 6987591857266816133}
+  <WeekGoalsCompletedSubView>k__BackingField: {fileID: 2769573504672181379}
+  <ProgramEndedSubView>k__BackingField: {fileID: 5023345625708864108}
   <ErrorNotification>k__BackingField: {fileID: 5140657797053299228}
 --- !u!1 &5019498267584366488
 GameObject:
@@ -3912,7 +3912,7 @@ MonoBehaviour:
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!95 &6990039414383959708
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -3926,6 +3926,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1

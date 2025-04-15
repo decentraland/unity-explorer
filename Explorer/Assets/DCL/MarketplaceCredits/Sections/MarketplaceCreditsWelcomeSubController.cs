@@ -14,18 +14,18 @@ using Utility;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsWelcomeController : IDisposable
+    public class MarketplaceCreditsWelcomeSubController : IDisposable
     {
         private const string EMAIL_PATTERN = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
         private const string LEARN_MORE_LINK = "https://docs.decentraland.org";
 
-        private readonly MarketplaceCreditsWelcomeView view;
+        private readonly MarketplaceCreditsWelcomeSubView subView;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
-        private readonly MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
-        private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
-        private readonly MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
-        private readonly MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
+        private readonly MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController;
+        private readonly MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
+        private readonly MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
+        private readonly MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
         private readonly IWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -35,61 +35,61 @@ namespace DCL.MarketplaceCredits.Sections
         private CancellationTokenSource fetchProgramRegistrationInfoCts;
         private CancellationTokenSource registerInTheProgramCts;
 
-        public MarketplaceCreditsWelcomeController(
-            MarketplaceCreditsWelcomeView view,
+        public MarketplaceCreditsWelcomeSubController(
+            MarketplaceCreditsWelcomeSubView subView,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
-            MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController,
-            MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController,
-            MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController,
-            MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController,
+            MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController,
+            MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController,
+            MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController,
+            MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController,
             IWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
             IInputBlock inputBlock)
         {
-            this.view = view;
+            this.subView = subView;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
-            this.marketplaceCreditsVerifyEmailController = marketplaceCreditsVerifyEmailController;
-            this.marketplaceCreditsGoalsOfTheWeekController = marketplaceCreditsGoalsOfTheWeekController;
-            this.marketplaceCreditsWeekGoalsCompletedController = marketplaceCreditsWeekGoalsCompletedController;
-            this.marketplaceCreditsProgramEndedController = marketplaceCreditsProgramEndedController;
+            this.marketplaceCreditsVerifyEmailSubController = marketplaceCreditsVerifyEmailSubController;
+            this.marketplaceCreditsGoalsOfTheWeekSubController = marketplaceCreditsGoalsOfTheWeekSubController;
+            this.marketplaceCreditsWeekGoalsCompletedSubController = marketplaceCreditsWeekGoalsCompletedSubController;
+            this.marketplaceCreditsProgramEndedSubController = marketplaceCreditsProgramEndedSubController;
             this.webBrowser = webBrowser;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.inputBlock = inputBlock;
 
-            view.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
-            view.StartWithEmailButton.onClick.AddListener(RegisterInTheProgramWithNewEmail);
-            view.StartButton.onClick.AddListener(RegisterInTheProgramWithExistingEmail);
-            view.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
+            subView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
+            subView.StartWithEmailButton.onClick.AddListener(RegisterInTheProgramWithNewEmail);
+            subView.StartButton.onClick.AddListener(RegisterInTheProgramWithExistingEmail);
+            subView.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
         }
 
         public void OpenSection()
         {
-            view.gameObject.SetActive(true);
+            subView.gameObject.SetActive(true);
 
             fetchProgramRegistrationInfoCts = fetchProgramRegistrationInfoCts.SafeRestart();
             LoadProgramRegistrationInfoAsync(fetchProgramRegistrationInfoCts.Token).Forget();
 
-            view.CleanEmailInput();
-            OnEmailInputValueChanged(view.EmailInput.text);
+            subView.CleanEmailInput();
+            OnEmailInputValueChanged(subView.EmailInput.text);
             CheckStartWithEmailButtonState();
         }
 
         public void CloseSection()
         {
-            view.gameObject.SetActive(false);
+            subView.gameObject.SetActive(false);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         public void Dispose()
         {
-            view.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
-            view.StartWithEmailButton.onClick.RemoveListener(RegisterInTheProgramWithNewEmail);
-            view.StartButton.onClick.RemoveListener(RegisterInTheProgramWithExistingEmail);
-            view.EmailInput.onValueChanged.RemoveListener(OnEmailInputValueChanged);
+            subView.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
+            subView.StartWithEmailButton.onClick.RemoveListener(RegisterInTheProgramWithNewEmail);
+            subView.StartButton.onClick.RemoveListener(RegisterInTheProgramWithExistingEmail);
+            subView.EmailInput.onValueChanged.RemoveListener(OnEmailInputValueChanged);
             fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
             registerInTheProgramCts.SafeCancelAndDispose();
         }
@@ -98,7 +98,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetAsLoading(true);
+                subView.SetAsLoading(true);
 
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile != null)
@@ -107,7 +107,7 @@ namespace DCL.MarketplaceCredits.Sections
                     RedirectToSection();
                 }
 
-                view.SetAsLoading(false);
+                subView.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -122,7 +122,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
             RegisterInTheProgramWithNewEmailAsync(
-                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? view.EmailInput.text : currentCreditsProgramProgress.user.email,
+                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailInput.text : currentCreditsProgramProgress.user.email,
                 registerInTheProgramCts.Token).Forget();
         }
 
@@ -130,7 +130,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetAsLoading(true);
+                subView.SetAsLoading(true);
                 await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
                 currentCreditsProgramProgress.user.email = email;
                 currentCreditsProgramProgress.user.isEmailConfirmed = false;
@@ -146,7 +146,7 @@ namespace DCL.MarketplaceCredits.Sections
             }
             finally
             {
-                view.SetAsLoading(false);
+                subView.SetAsLoading(false);
             }
         }
 
@@ -160,7 +160,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetAsLoading(true);
+                subView.SetAsLoading(true);
 
                 if (currentCreditsProgramProgress.IsUserEmailVerified())
                     await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
@@ -176,13 +176,13 @@ namespace DCL.MarketplaceCredits.Sections
             }
             finally
             {
-                view.SetAsLoading(false);
+                subView.SetAsLoading(false);
             }
         }
 
         private void RedirectToSection(bool ignoreHasUserStartedProgramFlag = false)
         {
-            view.IsEmailLoginActive = false;
+            subView.IsEmailLoginActive = false;
             totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(currentCreditsProgramProgress.credits.available));
             totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(currentCreditsProgramProgress.credits.expiresIn));
             totalCreditsWidgetView.SetDaysToExpireVisible(currentCreditsProgramProgress.credits.available > 0);
@@ -190,7 +190,7 @@ namespace DCL.MarketplaceCredits.Sections
             // PROGRAM ENDED FLOW
             if (currentCreditsProgramProgress.IsProgramEnded())
             {
-                marketplaceCreditsProgramEndedController.Setup(currentCreditsProgramProgress);
+                marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
                 return;
             }
@@ -198,7 +198,7 @@ namespace DCL.MarketplaceCredits.Sections
             // NON-REGISTERED USER FLOW
             if (!currentCreditsProgramProgress.IsUserEmailRegistered())
             {
-                view.IsEmailLoginActive = true;
+                subView.IsEmailLoginActive = true;
                 inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
                 return;
             }
@@ -209,7 +209,7 @@ namespace DCL.MarketplaceCredits.Sections
             // REGISTERED BUT NON-VERIFIED USER FLOW
             if (!currentCreditsProgramProgress.IsUserEmailVerified())
             {
-                marketplaceCreditsVerifyEmailController.Setup(currentCreditsProgramProgress.user.email);
+                marketplaceCreditsVerifyEmailSubController.Setup(currentCreditsProgramProgress.user.email);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VERIFY_EMAIL);
                 return;
             }
@@ -217,12 +217,12 @@ namespace DCL.MarketplaceCredits.Sections
             // ALREADY REGISTERED USER FLOW
             if (currentCreditsProgramProgress.AreWeekGoalsCompleted())
             {
-                marketplaceCreditsWeekGoalsCompletedController.Setup(currentCreditsProgramProgress);
+                marketplaceCreditsWeekGoalsCompletedSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
             }
             else
             {
-                marketplaceCreditsGoalsOfTheWeekController.Setup(currentCreditsProgramProgress);
+                marketplaceCreditsGoalsOfTheWeekSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
             }
         }
@@ -233,11 +233,11 @@ namespace DCL.MarketplaceCredits.Sections
         private void OnEmailInputValueChanged(string email)
         {
             CheckStartWithEmailButtonState();
-            view.ShowEmailError(!string.IsNullOrEmpty(email) && !IsValidEmail(email));
+            subView.ShowEmailError(!string.IsNullOrEmpty(email) && !IsValidEmail(email));
         }
 
         private void CheckStartWithEmailButtonState() =>
-            view.SetStartWithEmailButtonInteractable(IsValidEmail(view.EmailInput.text));
+            subView.SetStartWithEmailButtonInteractable(IsValidEmail(subView.EmailInput.text));
 
         private static bool IsValidEmail(string email) =>
             !string.IsNullOrEmpty(email) && Regex.IsMatch(email, EMAIL_PATTERN);

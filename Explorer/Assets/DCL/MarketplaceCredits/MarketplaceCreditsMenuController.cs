@@ -54,11 +54,11 @@ namespace DCL.MarketplaceCredits
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly FeatureFlagsCache featureFlagsCache;
 
-        private MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
-        private MarketplaceCreditsVerifyEmailController marketplaceCreditsVerifyEmailController;
-        private MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
-        private MarketplaceCreditsWeekGoalsCompletedController marketplaceCreditsWeekGoalsCompletedController;
-        private MarketplaceCreditsProgramEndedController marketplaceCreditsProgramEndedController;
+        private MarketplaceCreditsWelcomeSubController marketplaceCreditsWelcomeSubController;
+        private MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController;
+        private MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
+        private MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
+        private MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
 
         private UniTaskCompletionSource closeTaskCompletionSource;
         private CancellationTokenSource showCreditsUnlockedCts;
@@ -112,34 +112,34 @@ namespace DCL.MarketplaceCredits
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
 
-            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(
-                viewInstance.GoalsOfTheWeekView,
+            marketplaceCreditsGoalsOfTheWeekSubController = new MarketplaceCreditsGoalsOfTheWeekSubController(
+                viewInstance.GoalsOfTheWeekSubView,
                 marketplaceCreditsAPIClient,
                 webRequestController,
                 viewInstance.TotalCreditsWidget,
                 this);
 
-            marketplaceCreditsWeekGoalsCompletedController = new MarketplaceCreditsWeekGoalsCompletedController(
-                viewInstance.WeekGoalsCompletedView);
+            marketplaceCreditsWeekGoalsCompletedSubController = new MarketplaceCreditsWeekGoalsCompletedSubController(
+                viewInstance.WeekGoalsCompletedSubView);
 
-            marketplaceCreditsProgramEndedController = new MarketplaceCreditsProgramEndedController(
-                viewInstance.ProgramEndedView,
+            marketplaceCreditsProgramEndedSubController = new MarketplaceCreditsProgramEndedSubController(
+                viewInstance.ProgramEndedSubView,
                 webBrowser);
 
-            marketplaceCreditsVerifyEmailController = new MarketplaceCreditsVerifyEmailController(
-                viewInstance.VerifyEmailView,
+            marketplaceCreditsVerifyEmailSubController = new MarketplaceCreditsVerifyEmailSubController(
+                viewInstance.VerifyEmailSubView,
                 selfProfile,
                 marketplaceCreditsAPIClient,
                 this);
 
-            marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(
-                viewInstance.WelcomeView,
+            marketplaceCreditsWelcomeSubController = new MarketplaceCreditsWelcomeSubController(
+                viewInstance.WelcomeSubView,
                 viewInstance.TotalCreditsWidget,
                 this,
-                marketplaceCreditsVerifyEmailController,
-                marketplaceCreditsGoalsOfTheWeekController,
-                marketplaceCreditsWeekGoalsCompletedController,
-                marketplaceCreditsProgramEndedController,
+                marketplaceCreditsVerifyEmailSubController,
+                marketplaceCreditsGoalsOfTheWeekSubController,
+                marketplaceCreditsWeekGoalsCompletedSubController,
+                marketplaceCreditsProgramEndedSubController,
                 webBrowser,
                 marketplaceCreditsAPIClient,
                 selfProfile,
@@ -185,24 +185,24 @@ namespace DCL.MarketplaceCredits
             switch (section)
             {
                 case MarketplaceCreditsSection.WELCOME:
-                    marketplaceCreditsWelcomeController.OpenSection();
+                    marketplaceCreditsWelcomeSubController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
                     haveJustClaimedCredits = false;
-                    marketplaceCreditsVerifyEmailController.OpenSection();
+                    marketplaceCreditsVerifyEmailSubController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
-                    marketplaceCreditsGoalsOfTheWeekController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
-                    marketplaceCreditsGoalsOfTheWeekController.OpenSection();
+                    marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
+                    marketplaceCreditsGoalsOfTheWeekSubController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
                     haveJustClaimedCredits = false;
-                    marketplaceCreditsWeekGoalsCompletedController.OpenSection();
+                    marketplaceCreditsWeekGoalsCompletedSubController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
                     haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
-                    marketplaceCreditsProgramEndedController.OpenSection();
+                    marketplaceCreditsProgramEndedSubController.OpenSection();
                     break;
             }
 
@@ -233,20 +233,20 @@ namespace DCL.MarketplaceCredits
             viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
 
-            marketplaceCreditsWelcomeController.Dispose();
-            marketplaceCreditsVerifyEmailController.Dispose();
-            marketplaceCreditsGoalsOfTheWeekController.Dispose();
-            marketplaceCreditsWeekGoalsCompletedController.Dispose();
-            marketplaceCreditsProgramEndedController.Dispose();
+            marketplaceCreditsWelcomeSubController.Dispose();
+            marketplaceCreditsVerifyEmailSubController.Dispose();
+            marketplaceCreditsGoalsOfTheWeekSubController.Dispose();
+            marketplaceCreditsWeekGoalsCompletedSubController.Dispose();
+            marketplaceCreditsProgramEndedSubController.Dispose();
         }
 
         private void CloseAllSections()
         {
-            marketplaceCreditsWelcomeController.CloseSection();
-            marketplaceCreditsVerifyEmailController.CloseSection();
-            marketplaceCreditsGoalsOfTheWeekController.CloseSection();
-            marketplaceCreditsWeekGoalsCompletedController.CloseSection();
-            marketplaceCreditsProgramEndedController.CloseSection();
+            marketplaceCreditsWelcomeSubController.CloseSection();
+            marketplaceCreditsVerifyEmailSubController.CloseSection();
+            marketplaceCreditsGoalsOfTheWeekSubController.CloseSection();
+            marketplaceCreditsWeekGoalsCompletedSubController.CloseSection();
+            marketplaceCreditsProgramEndedSubController.CloseSection();
         }
 
         private void OnAnyPlaceClicked() =>

@@ -12,13 +12,13 @@ using Object = UnityEngine.Object;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsGoalsOfTheWeekController : IDisposable
+    public class MarketplaceCreditsGoalsOfTheWeekSubController : IDisposable
     {
         private const int GOALS_POOL_DEFAULT_CAPACITY = 4;
 
         public bool HasToPlayClaimCreditsAnimation { get; set; }
 
-        private readonly MarketplaceCreditsGoalsOfTheWeekView view;
+        private readonly MarketplaceCreditsGoalsOfTheWeekSubView subView;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IObjectPool<MarketplaceCreditsGoalRowView> goalRowsPool;
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
@@ -29,23 +29,23 @@ namespace DCL.MarketplaceCredits.Sections
         private CancellationTokenSource claimCreditsCts;
         private CancellationTokenSource playClaimCreditsAnimationCts;
 
-        public MarketplaceCreditsGoalsOfTheWeekController(
-            MarketplaceCreditsGoalsOfTheWeekView view,
+        public MarketplaceCreditsGoalsOfTheWeekSubController(
+            MarketplaceCreditsGoalsOfTheWeekSubView subView,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebRequestController webRequestController,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
-            this.view = view;
+            this.subView = subView;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
 
             marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
-            view.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
-            view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.AddListener(ReloadCaptcha);
-            view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.AddListener(ReloadCaptcha);
-            view.CaptchaControl.OnCaptchaSolved += ClaimCredits;
+            subView.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
+            subView.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.AddListener(ReloadCaptcha);
+            subView.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.AddListener(ReloadCaptcha);
+            subView.CaptchaControl.OnCaptchaSolved += ClaimCredits;
 
             goalRowsPool = new ObjectPool<MarketplaceCreditsGoalRowView>(
                 InstantiateGoalRowPrefab,
@@ -61,7 +61,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void OpenSection()
         {
-            view.gameObject.SetActive(true);
+            subView.gameObject.SetActive(true);
 
             if (HasToPlayClaimCreditsAnimation)
             {
@@ -78,14 +78,14 @@ namespace DCL.MarketplaceCredits.Sections
         }
 
         public void CloseSection() =>
-            view.gameObject.SetActive(false);
+            subView.gameObject.SetActive(false);
 
         public void Setup(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             ClearGoals();
 
-            view.SetTimeLeftText(MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft));
-            view.ShowTimeLeftTooltip(false);
+            subView.SetTimeLeftText(MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft));
+            subView.ShowTimeLeftTooltip(false);
 
             foreach (GoalData goalData in creditsProgramProgressResponse.goals)
             {
@@ -93,7 +93,7 @@ namespace DCL.MarketplaceCredits.Sections
                 instantiatedGoalRows.Add(goalRow);
             }
 
-            view.ShowCaptcha(creditsProgramProgressResponse.SomethingToClaim());
+            subView.ShowCaptcha(creditsProgramProgressResponse.SomethingToClaim());
 
             if (creditsProgramProgressResponse.SomethingToClaim())
                 ReloadCaptcha();
@@ -102,10 +102,10 @@ namespace DCL.MarketplaceCredits.Sections
         public void Dispose()
         {
             marketplaceCreditsMenuController.OnAnyPlaceClick -= CloseTimeLeftTooltip;
-            view.TimeLeftInfoButton.onClick.RemoveListener(ToggleTimeLeftTooltip);
-            view.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.RemoveListener(ReloadCaptcha);
-            view.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.RemoveListener(ReloadCaptcha);
-            view.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
+            subView.TimeLeftInfoButton.onClick.RemoveListener(ToggleTimeLeftTooltip);
+            subView.CaptchaControl.ReloadFromNotLoadedStateButton.onClick.RemoveListener(ReloadCaptcha);
+            subView.CaptchaControl.ReloadFromNotSolvedStateButton.onClick.RemoveListener(ReloadCaptcha);
+            subView.CaptchaControl.OnCaptchaSolved -= ClaimCredits;
             fetchCaptchaCts.SafeCancelAndDispose();
             claimCreditsCts.SafeCancelAndDispose();
             playClaimCreditsAnimationCts.SafeCancelAndDispose();
@@ -113,7 +113,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         private MarketplaceCreditsGoalRowView InstantiateGoalRowPrefab()
         {
-            MarketplaceCreditsGoalRowView goalRowView = Object.Instantiate(view.GoalRowPrefab, view.GoalsContainer);
+            MarketplaceCreditsGoalRowView goalRowView = Object.Instantiate(subView.GoalRowPrefab, subView.GoalsContainer);
             return goalRowView;
         }
 
@@ -143,10 +143,10 @@ namespace DCL.MarketplaceCredits.Sections
         }
 
         private void ToggleTimeLeftTooltip() =>
-            view.ToggleTimeLeftTooltip();
+            subView.ToggleTimeLeftTooltip();
 
         private void CloseTimeLeftTooltip() =>
-            view.ShowTimeLeftTooltip(false);
+            subView.ShowTimeLeftTooltip(false);
 
         private void ReloadCaptcha()
         {
@@ -158,16 +158,16 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetCaptchaAsLoading(true);
+                subView.SetCaptchaAsLoading(true);
                 var captchaSprite = await marketplaceCreditsAPIClient.GenerateCaptchaAsync(ct);
-                view.SetCaptchaTargetAreaImage(captchaSprite);
-                view.SetCaptchaAsLoading(false);
-                view.SetCaptchaPercentageValue(0f);
+                subView.SetCaptchaTargetAreaImage(captchaSprite);
+                subView.SetCaptchaAsLoading(false);
+                subView.SetCaptchaPercentageValue(0f);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                view.SetCaptchaAsErrorState(true, isNonSolvedError: false);
+                subView.SetCaptchaAsErrorState(true, isNonSolvedError: false);
                 const string ERROR_MESSAGE = "There was an error loading the captcha. Please try again!";
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -183,9 +183,9 @@ namespace DCL.MarketplaceCredits.Sections
         {
             try
             {
-                view.SetCaptchaAsLoading(true);
+                subView.SetCaptchaAsLoading(true);
                 var claimCreditsResponse = await marketplaceCreditsAPIClient.ClaimCreditsAsync(captchaValue, ct);
-                view.SetCaptchaAsLoading(false);
+                subView.SetCaptchaAsLoading(false);
 
                 if (claimCreditsResponse.ok)
                 {
@@ -194,12 +194,12 @@ namespace DCL.MarketplaceCredits.Sections
                     marketplaceCreditsMenuController.SetSidebarButtonAsClaimIndicator(false);
                 }
                 else
-                    view.SetCaptchaAsErrorState(true, isNonSolvedError: true);
+                    subView.SetCaptchaAsErrorState(true, isNonSolvedError: true);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                view.SetCaptchaAsErrorState(true, isNonSolvedError: false);
+                subView.SetCaptchaAsErrorState(true, isNonSolvedError: false);
                 const string ERROR_MESSAGE = "There was an error claiming the credits. Please try again!";
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }

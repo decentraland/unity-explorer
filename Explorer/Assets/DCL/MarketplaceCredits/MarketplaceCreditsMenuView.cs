@@ -32,19 +32,19 @@ namespace DCL.MarketplaceCredits
         public Button CloseButton { get; private set; }
 
         [field: SerializeField]
-        public MarketplaceCreditsWelcomeView WelcomeView { get; private set; }
+        public MarketplaceCreditsWelcomeSubView WelcomeSubView { get; private set; }
 
         [field: SerializeField]
-        public MarketplaceCreditsVerifyEmailView VerifyEmailView { get; private set; }
+        public MarketplaceCreditsVerifyEmailSubView VerifyEmailSubView { get; private set; }
 
         [field: SerializeField]
-        public MarketplaceCreditsGoalsOfTheWeekView GoalsOfTheWeekView { get; private set; }
+        public MarketplaceCreditsGoalsOfTheWeekSubView GoalsOfTheWeekSubView { get; private set; }
 
         [field: SerializeField]
-        public MarketplaceCreditsWeekGoalsCompletedView WeekGoalsCompletedView { get; private set; }
+        public MarketplaceCreditsWeekGoalsCompletedSubView WeekGoalsCompletedSubView { get; private set; }
 
         [field: SerializeField]
-        public MarketplaceCreditsProgramEndedView ProgramEndedView { get; private set; }
+        public MarketplaceCreditsProgramEndedSubView ProgramEndedSubView { get; private set; }
 
         [field: SerializeField]
         public WarningNotificationView ErrorNotification { get; private set; }

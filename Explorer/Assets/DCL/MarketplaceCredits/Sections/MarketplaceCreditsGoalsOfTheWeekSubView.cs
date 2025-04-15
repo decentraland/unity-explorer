@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Sections
 {
-    public class MarketplaceCreditsGoalsOfTheWeekView : MonoBehaviour
+    public class MarketplaceCreditsGoalsOfTheWeekSubView : MonoBehaviour
     {
         [field: SerializeField]
         public TMP_Text TimeLeftText { get; private set; }
