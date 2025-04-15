@@ -19,7 +19,7 @@ namespace DCL.MarketplaceCredits.Sections
             view.gameObject.SetActive(false);
 
         public void Setup(CreditsProgramProgressResponse creditsProgramProgressResponse) =>
-            view.TimeLeftText.text = MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft);
+            view.SetTimeLeftText(MarketplaceCreditsUtils.FormatEndOfTheWeekDate(creditsProgramProgressResponse.currentWeek.timeLeft));
 
         public void Dispose() { }
     }
