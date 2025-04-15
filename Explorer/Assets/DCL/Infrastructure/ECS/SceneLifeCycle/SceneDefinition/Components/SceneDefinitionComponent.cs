@@ -27,9 +27,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         private readonly SceneFastLookup SceneLookup;
 
-        public int EstimatedMemoryUsageInMB;
-        public int EstimatedMemoryUsageForLODMB;
-        public int EstimatedMemoryUsageForQualityReductedLODMB;
+        public float EstimatedMemoryUsageInMB;
+        public float EstimatedMemoryUsageForLODMB;
+        public float EstimatedMemoryUsageForQualityReductedLODMB;
 
 
         public SceneDefinitionComponent(
@@ -49,14 +49,15 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IsPortableExperience = isPortableExperience;
             SceneLookup = new SceneFastLookup(parcels);
 
-            // Following the limits from the docs. One parcel gives 15MB, capped at 300MB
+            // Following the limits from the docs. One parcel gives 15MB, capped at 300MB. Im considering here the 'worst scenarios' possible
             // https://docs.decentraland.org/creator/development-guide/sdk7/scene-limitations/#scene-limitation-rules
-            EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, 300);
+            // We add an estimation factor; assets loaded in memory do not have the same size as in disk
+            EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, 300) * 1.1f;
 
-            //Another assumption.
+            // Another assumption.
             EstimatedMemoryUsageForLODMB = EstimatedMemoryUsageInMB / 3;
 
-            //Another assumption.
+            // Another assumption.
             EstimatedMemoryUsageForQualityReductedLODMB = EstimatedMemoryUsageInMB / 30;
         }
 

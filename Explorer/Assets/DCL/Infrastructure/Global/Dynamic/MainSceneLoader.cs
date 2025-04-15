@@ -148,10 +148,9 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
-
             ISystemMemoryCap memoryCap = hasSimulatedMemory
-                ? new SystemMemoryCap(MemoryCapMode.SIMULATED_MEMORY, systemMemory)
-                : new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+                ? new SystemMemoryCap(systemMemory)
+                : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -270,7 +269,6 @@ namespace Global.Dynamic
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
 
-                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)

@@ -10,14 +10,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal int MaximumAmountOfReductedLoDsThatCanLoad;
         internal int MaximumAmountOfLODsThatCanLoad;
 
-        private int SceneCurrentMemoryUsageInMB;
-        private int LODCurrentMemoryUsageInMB;
-        private int QualityReductedLODCurrentMemoryUsageInMB;
+        private float SceneCurrentMemoryUsageInMB;
+        private float LODCurrentMemoryUsageInMB;
+        private float QualityReductedLODCurrentMemoryUsageInMB;
 
         //1GB for scene usage
-        private readonly int SceneMaxAmountOfUsableMemoryInMB = 300;
-        private readonly int LODMaxAmountOfUsableMemoryInMB = 100;
-        private readonly int QualityReductedLODMaxAmountOfUsableMemoryInMB = 100;
+        private readonly float SceneMaxAmountOfUsableMemoryInMB = 300;
+        private readonly float LODMaxAmountOfUsableMemoryInMB = 100;
+        private readonly float QualityReductedLODMaxAmountOfUsableMemoryInMB = 100;
 
         public void Reset()
         {
