@@ -125,5 +125,11 @@ namespace DCL.Chat
         {
             memberListCts.SafeCancelAndDispose();
         }
+
+        public void OnViewMemberListVisibilityChanged(bool isVisible)
+        {
+            if (isVisible && roomHub.HasAnyRoomConnected())
+                RefreshMemberList();
+        }
     }
 }

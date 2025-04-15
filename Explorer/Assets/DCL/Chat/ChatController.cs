@@ -154,7 +154,8 @@ namespace DCL.Chat
             conversationEventsHelper = new ChatControllerConversationEventsHelper(
                 chatHistory,
                 chatUserStateUpdater,
-                this);
+                this,
+                chatStorage);
 
             userStateHelper = new ChatControllerUserStateHelper(
                 chatUserStateUpdater,
@@ -164,7 +165,8 @@ namespace DCL.Chat
                 chatHistory,
                 this,
                 chatBubblesHelper,
-                chatSettings);
+                chatSettings,
+                hyperlinkTextFormatter);
         }
 
 #region Panel Visibility
@@ -376,18 +378,12 @@ namespace DCL.Chat
 #region Channel Events
         private async void OnViewCurrentChannelChangedAsync()
         {
-            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER &&
-                chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
-            {
-                await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
-                chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
-                viewInstance.RefreshMessages();
-            }
+            await conversationEventsHelper.OnCurrentChannelChangedAsync();
         }
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
         {
-            chatHistory.RemoveChannel(channelId);
+            conversationEventsHelper.OnChannelRemovalRequested(channelId);
         }
 #endregion
 
@@ -464,24 +460,12 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            if (!chatMessage.IsSystemMessage)
-            {
-                string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
-                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
-                chatHistory.AddMessage(channelId, newChatMessage);
-            }
-            else
-                chatHistory.AddMessage(channelId, chatMessage);
-        }
-        private void OnViewMemberListVisibilityChanged(bool isVisible)
-        {
-            if (isVisible && roomHub.HasAnyRoomConnected())
-                RefreshMemberList();
+            messageHandlingHelper.OnChatBusMessageAdded(channelId, chatMessage);
         }
 
-        private void RefreshMemberList()
+        private void OnViewMemberListVisibilityChanged(bool isVisible)
         {
-            memberListHelper.RefreshMemberList();
+            memberListHelper.OnViewMemberListVisibilityChanged(isVisible);
         }
 
         private void GetProfilesFromParticipants(List<Profile> outProfiles)

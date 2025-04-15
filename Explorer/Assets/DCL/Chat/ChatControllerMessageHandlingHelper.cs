@@ -1,6 +1,7 @@
 using DCL.Audio;
 using DCL.Chat.History;
 using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
 
 namespace DCL.Chat
 {
@@ -10,6 +11,7 @@ namespace DCL.Chat
         private readonly IChatController chatController;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatSettingsAsset chatSettings;
+        private readonly ITextFormatter hyperlinkTextFormatter;
 
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
         private int messageCountWhenSeparatorViewed;
@@ -18,12 +20,14 @@ namespace DCL.Chat
             IChatHistory chatHistory,
             IChatController chatController,
             ChatControllerChatBubblesHelper chatBubblesHelper,
-            ChatSettingsAsset chatSettings)
+            ChatSettingsAsset chatSettings,
+            ITextFormatter hyperlinkTextFormatter)
         {
             this.chatHistory = chatHistory;
             this.chatController = chatController;
             this.chatBubblesHelper = chatBubblesHelper;
             this.chatSettings = chatSettings;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
         }
 
         public void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -63,6 +67,18 @@ namespace DCL.Chat
                     currentView.RefreshUnreadMessages(destinationChannel.Id);
                 }
             }
+        }
+
+        public void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
+        {
+            if (!chatMessage.IsSystemMessage)
+            {
+                string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
+                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
+                chatHistory.AddMessage(channelId, newChatMessage);
+            }
+            else
+                chatHistory.AddMessage(channelId, chatMessage);
         }
 
         private void HandleMessageAudioFeedback(ChatMessage message)
