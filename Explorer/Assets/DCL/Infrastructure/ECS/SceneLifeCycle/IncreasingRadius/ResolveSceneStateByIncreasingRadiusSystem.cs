@@ -253,10 +253,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     if (dataPtr[i].RawSqrDistance < 0 || dataPtr[i].OutOfRange) continue;
 
                     OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
-
-                    if (data.SceneDefinitionComponent.Definition.id.Equals("bafkreidyramqp6eydzgow46p2zkr4xvlfek63adygluga7ywx23a3z5oka"))
-                        UnityEngine.Debug.Log("FOR THE DEBUG");
-
                     UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
                 }
             }
