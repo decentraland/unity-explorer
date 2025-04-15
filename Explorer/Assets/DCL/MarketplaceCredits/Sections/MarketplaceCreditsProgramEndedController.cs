@@ -33,11 +33,11 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void Setup(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            view.Title.text = !creditsProgramProgressResponse.season.isOutOfFunds ?
+            view.SetTitle(!creditsProgramProgressResponse.season.isOutOfFunds ?
                 $"The current run of Marketplace Credits Weekly Rewards ({MarketplaceCreditsUtils.FormatSeasonDateRange(creditsProgramProgressResponse.season.startDate, creditsProgramProgressResponse.season.endDate)}) has closed" :
-                "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
+                "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed");
 
-            view.Subtitle.text = $"Make sure to <color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> to find out when the next run goes live!";
+            view.SetSubtitle($"Make sure to <color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> to find out when the next run goes live!");
         }
 
         public void Dispose() { }

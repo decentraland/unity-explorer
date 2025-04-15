@@ -15,6 +15,12 @@ namespace DCL.MarketplaceCredits.Sections
         [field: SerializeField]
         public AudioClipConfig ClickOnLinksAudio { get; private set; }
 
+        public void SetTitle(string title) =>
+            Title.text = title;
+
+        public void SetSubtitle(string subtitle) =>
+            Subtitle.text = subtitle;
+
         public void PlayOnLinkClickAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickOnLinksAudio);
     }
