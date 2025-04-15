@@ -27,6 +27,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -678,45 +679,34 @@ namespace DCL.Chat
 
         private void OnUserDisconnected(string userId)
         {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
-            if (viewInstance.CurrentChannelId.Id == userId)
-            {
-                var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
-                viewInstance.SetInputWithUserState(state);
-            }
+            var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnNonFriendConnected(string userId)
         {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
-            if (viewInstance.CurrentChannelId.Id == userId)
-                GetAndSetupNonFriendUserStateAsync(userId).Forget();
+            GetAndSetupNonFriendUserStateAsync(userId).Forget();
         }
 
         private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
         {
+            //We might need a new state of type "LOADING" or similar to display until we resolve the real state
+            viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
             viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnFriendConnected(string userId)
         {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.ONLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-                viewInstance.SetInputWithUserState(state);
-            }
+            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            viewInstance!.SetInputWithUserState(state);
+
         }
 
         private void OnUserBlockedByOwnUser(string userId)
         {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, OnlineStatus.OFFLINE);
-            if (viewInstance!.CurrentChannelId.Id == userId)
-            {
-                var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-                viewInstance.SetInputWithUserState(state);
-            }
+            var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnCurrentConversationUserUnavailable()
@@ -730,6 +720,12 @@ namespace DCL.Chat
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
             viewInstance!.SetInputWithUserState(state);
         }
+
+        private void OnUserConnectionStateChanged(string userId, bool isConnected)
+        {
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, isConnected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+        }
+
         #endregion
 
         private void SubscribeToEvents()
@@ -767,6 +763,7 @@ namespace DCL.Chat
             chatUserStateEventBus.CurrentConversationUserAvailable += OnCurrentConversationUserAvailable;
             chatUserStateEventBus.CurrentConversationUserUnavailable += OnCurrentConversationUserUnavailable;
             chatUserStateEventBus.UserBlocked += OnUserBlockedByOwnUser;
+            chatUserStateEventBus.UserConnectionStateChanged += OnUserConnectionStateChanged;
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
@@ -808,6 +805,7 @@ namespace DCL.Chat
             chatUserStateEventBus.CurrentConversationUserAvailable -= OnCurrentConversationUserAvailable;
             chatUserStateEventBus.CurrentConversationUserUnavailable -= OnCurrentConversationUserUnavailable;
             chatUserStateEventBus.UserBlocked -= OnUserBlockedByOwnUser;
+            chatUserStateEventBus.UserConnectionStateChanged -= OnUserConnectionStateChanged;
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;

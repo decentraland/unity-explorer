@@ -216,11 +216,17 @@ namespace DCL.Chat
                         chatUsersStateCache.AddConnectedUser(participant.Identity);
 
                         if (openConversations.Contains(participant.Identity))
-                            CheckFriendStatusAsync(participant.Identity).Forget();
+                        {
+                            chatUserStateEventBus.OnUserConnectionStateChanged(participant.Identity, true);
+
+                            if (CurrentConversation == participant.Identity)
+                                CheckFriendStatusAsync(participant.Identity).Forget();
+                        }
                     }
                     else
                     {
                         //If the user is blocked (or blocking us) we consider them as if they remained offline.
+                        chatUserStateEventBus.OnUserConnectionStateChanged(participant.Identity, false);
                         chatUsersStateCache.AddConnectedBlockedUser(participant.Identity);
                     }
                     break;
@@ -242,11 +248,16 @@ namespace DCL.Chat
 
                     if (!openConversations.Contains(participant.Identity)) return;
 
+                    chatUserStateEventBus.OnUserConnectionStateChanged(participant.Identity, false);
+
+                    if (CurrentConversation != participant.Identity) return;
+
                     if (userBlockingCacheProxy.StrictObject.BlockedUsers.Contains(participant.Identity))
                     {
                         chatUserStateEventBus.OnUserBlocked(participant.Identity);
                         return;
                     }
+
                     chatUserStateEventBus.OnUserDisconnected(participant.Identity);
                     break;
             }
@@ -285,36 +296,54 @@ namespace DCL.Chat
             if (!chatUsersStateCache.IsUserConnected(userid)) return;
 
             if (openConversations.Contains(userid))
-                chatUserStateEventBus.OnNonFriendConnected(userid);
+            {
+                chatUserStateEventBus.OnUserConnectionStateChanged(userid, true);
+                if (CurrentConversation == userid)
+                    chatUserStateEventBus.OnNonFriendConnected(userid);
+            }
         }
 
         private void OnNewFriendAdded(string userid)
         {
             if (!chatUsersStateCache.IsUserConnected(userid)) return;
 
-            if (openConversations.Contains(userid))
+            chatUserStateEventBus.OnUserConnectionStateChanged(userid, true);
+            if (CurrentConversation == userid)
                 chatUserStateEventBus.OnFriendConnected(userid);
         }
 
-        private void OnUserUnblocked(string userid)
+        private void OnUserUnblocked(string userId)
         {
-            chatUsersStateCache.RemovedConnectedBlockedUser(userid);
-            chatUsersStateCache.AddConnectedUser(userid);
+            chatUsersStateCache.RemovedConnectedBlockedUser(userId);
+            chatUsersStateCache.AddConnectedUser(userId);
 
-            if (openConversations.Contains(userid))
-                chatUserStateEventBus.OnNonFriendConnected(userid);
+            if (openConversations.Contains(userId))
+            {
+                chatUserStateEventBus.OnUserConnectionStateChanged(userId, true);
+
+                if (CurrentConversation == userId)
+                    chatUserStateEventBus.OnNonFriendConnected(userId);
+            }
         }
 
         private void OnYouUnblockedProfile(BlockedProfile profile)
         {
-            if (!chatUsersStateCache.IsBlockedUserConnected(profile.Address))
+            var userId = profile.Address.ToString();
+            if (openConversations.Contains(userId)) return;
+
+            if (chatUsersStateCache.IsBlockedUserConnected(userId))
             {
-                if (openConversations.Contains(profile.Address))
-                    chatUserStateEventBus.OnUserDisconnected(profile.Address);
-                return;
+                //We need to make sure we are still not blocked by the other user
+                if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(userId))
+                {
+                    OnUserUnblocked(userId);
+                    return;
+                }
             }
 
-            OnUserUnblocked(profile.Address);
+            chatUserStateEventBus.OnUserConnectionStateChanged(userId, false);
+            if (CurrentConversation == userId)
+                chatUserStateEventBus.OnUserDisconnected(userId);
         }
 
         private void OnYouBlockedProfile(BlockedProfile profile)
@@ -327,7 +356,13 @@ namespace DCL.Chat
             }
 
             if (openConversations.Contains(userId))
-                chatUserStateEventBus.OnUserBlocked(userId);
+            {
+                chatUserStateEventBus.OnUserConnectionStateChanged(userId, false);
+
+                if (CurrentConversation == userId)
+                    chatUserStateEventBus.OnUserBlocked(userId);
+
+            }
         }
 
         private void OnYouBlockedByUser(string userId)
@@ -338,7 +373,12 @@ namespace DCL.Chat
             chatUsersStateCache.AddConnectedBlockedUser(userId);
 
             if (openConversations.Contains(userId))
-                chatUserStateEventBus.OnUserDisconnected(userId);
+            {
+                chatUserStateEventBus.OnUserConnectionStateChanged(userId, false);
+
+                if (CurrentConversation == userId)
+                    chatUserStateEventBus.OnUserDisconnected(userId);
+            }
         }
 
         [Serializable]
