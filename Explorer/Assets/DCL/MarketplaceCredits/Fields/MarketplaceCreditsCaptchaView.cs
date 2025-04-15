@@ -2,7 +2,6 @@ using DCL.Audio;
 using DCL.UI;
 using System;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Fields
@@ -43,21 +42,6 @@ namespace DCL.MarketplaceCredits.Fields
 
         private float lastCaptchaValue;
 
-        private void Awake()
-        {
-            EventTrigger trigger = MainSlider.Slider.gameObject.AddComponent<EventTrigger>();
-            EventTrigger.Entry entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
-            entry.callback.AddListener(_ => OnSliderPointerUp());
-            trigger.triggers.Add(entry);
-        }
-
-        private void OnDestroy()
-        {
-            EventTrigger trigger = MainSlider.Slider.GetComponent<EventTrigger>();
-            if (trigger != null)
-                trigger.triggers.Clear();
-        }
-
         public void SetAsLoading(bool isLoading)
         {
             SetAsErrorState(false);
@@ -85,7 +69,7 @@ namespace DCL.MarketplaceCredits.Fields
             NotLoadedErrorContainer.gameObject.SetActive(isError && !isNonSolvedError);
         }
 
-        private void OnSliderPointerUp()
+        public void OnSliderPointerUp()
         {
             if (Mathf.Approximately(MainSlider.Slider.value, lastCaptchaValue))
                 return;
