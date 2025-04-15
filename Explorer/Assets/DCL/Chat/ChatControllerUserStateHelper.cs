@@ -35,13 +35,13 @@ namespace DCL.Chat
             chatController.SetInputWithUserState(state);
         }
 
-        public void OnFriendConnected(string userId)
+        public void OnFriendConnected(string _)
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
             chatController.SetInputWithUserState(state);
         }
 
-        public void OnUserBlockedByOwnUser(string userId)
+        public void OnUserBlockedByOwnUser()
         {
             var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
             chatController.SetInputWithUserState(state);
@@ -64,4 +64,4 @@ namespace DCL.Chat
             chatController.UpdateConversationToolbarStatusIcon(userId, isConnected ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
         }
     }
-} 
+}
