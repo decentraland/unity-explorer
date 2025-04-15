@@ -124,13 +124,13 @@ namespace DCL.Chat
             chatUserStateEventBus = new ChatUserStateEventBus();
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
-                roomHub.SharedPrivateConversationsRoom().Participants,
+                roomHub.PrivateConversationsRoom().Participants,
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
                 chatUsersStateCache,
                 friendsEventBus,
-                roomHub.SharedPrivateConversationsRoom(),
+                roomHub.PrivateConversationsRoom(),
                 friendsService);
         }
 

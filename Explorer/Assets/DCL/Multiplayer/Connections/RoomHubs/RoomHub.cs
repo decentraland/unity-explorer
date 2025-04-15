@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     {
         private readonly IConnectiveRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-        private readonly IConnectiveRoom sharedPrivateConversationsRoom;
+        private readonly IConnectiveRoom privateConversationsRoom;
 
         private readonly IParticipantsHub islandParticipantsHub;
         private readonly IParticipantsHub sceneParticipantsHub;
@@ -21,11 +21,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         private long participantsUpdateLastFrame = -1;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom sharedPrivateConversationsRoom)
+        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom privateConversationsRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
-            this.sharedPrivateConversationsRoom = sharedPrivateConversationsRoom;
+            this.privateConversationsRoom = privateConversationsRoom;
 
             islandParticipantsHub = this.archipelagoIslandRoom.Room().Participants;
             sceneParticipantsHub = this.gateKeeperSceneRoom.Room().Participants;
@@ -39,26 +39,29 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IGateKeeperSceneRoom SceneRoom() =>
             gateKeeperSceneRoom;
 
-        public IRoom SharedPrivateConversationsRoom() =>
-            sharedPrivateConversationsRoom.Room();
+        public IRoom PrivateConversationsRoom() =>
+            privateConversationsRoom.Room();
 
         public async UniTask<bool> StartAsync()
         {
             var result = await UniTask.WhenAll(
                 archipelagoIslandRoom.StartIfNotAsync(),
                 gateKeeperSceneRoom.StartIfNotAsync(),
-                sharedPrivateConversationsRoom.StartIfNotAsync()
+                privateConversationsRoom.StartIfNotAsync()
             );
 
-            return result is { Item1: true, Item2: true };
+            return result is { Item1: true, Item2: true, Item3: true };
         }
 
         public UniTask StopAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
-                gateKeeperSceneRoom.StopIfNotAsync(),
-                sharedPrivateConversationsRoom.StopIfNotAsync()
+                gateKeeperSceneRoom.StopIfNotAsync()
             );
+
+        public UniTask StopPrivateConversationsRoomAsync() =>
+            privateConversationsRoom.StopIfNotAsync();
+
 
         public IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities()
         {
