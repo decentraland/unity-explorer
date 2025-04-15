@@ -8,7 +8,6 @@ using Best.HTTP.Shared.PlatformSupport.FileSystem;
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
-using DCL.WebRequests.CustomDownloadHandlers;
 using System;
 using System.Collections.Generic;
 using System.IO;

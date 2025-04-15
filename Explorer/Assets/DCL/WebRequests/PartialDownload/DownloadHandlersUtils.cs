@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace DCL.WebRequests.CustomDownloadHandlers
+namespace DCL.WebRequests
 {
     public static class DownloadHandlersUtils
     {
@@ -19,7 +19,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             return STRING_BUILDER.ToString();
         }
 
-        public static bool TryParseContentRange(string input, out int fullSize, out int chunkSize)
+        public static bool TryParseContentRange(string? input, out int fullSize, out int chunkSize)
         {
             fullSize = 0;
             chunkSize = 0;
