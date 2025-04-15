@@ -18,13 +18,12 @@ using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class ChatConnectiveRoom : IActivatableConnectiveRoom
+    public class ChatConnectiveRoom : IConnectiveRoom
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
@@ -170,7 +169,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IConnectiveRoom.State CurrentState() => roomState.Value();
         public IRoom Room() => room;
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth { get; }
+        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
 
         private async UniTaskVoid RunAsync(CancellationToken token)
@@ -235,7 +234,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<bool> CreateNewRoomAsync<T>(T credentials, CancellationToken ct)
             where T: ICredentials
         {
-            IRoom? newRoom = new LogRoom(new Room(
+            IRoom newRoom = new LogRoom(new Room(
                 new ArrayMemoryPool(),
                 new DefaultActiveSpeakers(),
                 new ParticipantsHub(),
