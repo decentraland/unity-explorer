@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal AssetBundle AssetBundle => Asset;
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
-            string version = "", string source = "")
+            string version = "", string source = "", Stream? underlyingStream = null)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
@@ -44,9 +44,10 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
+            this.underlyingStream = underlyingStream ?? Stream.Null;
 
             description = $"AB:{AssetBundle?.name}_{version}_{source}";
-            UnloadAB(Stream.Null);
+            UnloadAB();
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -80,14 +81,17 @@ namespace ECS.StreamableLoading.AssetBundles
         //Very hacky, because the asset will remain in cache as AssetBundle == null
         //When DestroyObject is invoked, it will do nothing.
         //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
-        internal void UnloadAB(Stream ownedStream)
+        internal void UnloadAB()
         {
             if (unloaded)
                 return;
 
             unloaded = true;
-            AssetBundle?.UnloadAsync(false);
-            ownedStream.Dispose();
+
+            if (AssetBundle)
+                AssetBundle.UnloadAsync(false);
+
+            underlyingStream.Dispose();
         }
 
         protected override void DestroyObject()
@@ -98,10 +102,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (mainAsset != null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            if (AssetBundle && !unloaded)
-                AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
-
-            underlyingStream.Dispose();
+            UnloadAB();
         }
 
         public T GetMainAsset<T>() where T: Object

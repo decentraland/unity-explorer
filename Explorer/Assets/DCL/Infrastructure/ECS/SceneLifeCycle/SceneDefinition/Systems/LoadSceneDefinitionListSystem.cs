@@ -68,9 +68,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(await webRequestController.PostAsync(intention.CommonArguments, GenericUploadArguments.CreateJson(bodyBuilder.ToString()), GetReportData())
                                                                                                                 .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, ct)));
 
-            // TODO
+            // TODO This logic should be modified to work with Stream (according to the expectations of BestHTTP and the corresponding generalization)
 
-            var adapter = webRequestController.PostAsync(intention.CommonArguments,
+            /*var adapter = webRequestController.PostAsync(intention.CommonArguments,
                 GenericUploadArguments.CreateJson(bodyBuilder.ToString()), GetReportData());
 
             //using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
@@ -96,7 +96,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(
-                new SceneDefinitions(intention.TargetCollection));
+                new SceneDefinitions(intention.TargetCollection));*/
         }
 
         private sealed class SceneMetadataConverter : JsonConverter

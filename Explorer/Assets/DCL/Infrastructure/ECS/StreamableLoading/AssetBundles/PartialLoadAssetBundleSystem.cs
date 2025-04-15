@@ -166,8 +166,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 version: version,
                 source: source);
 
-            assetBundleData.UnloadAB(stream);
-
             // After this point it's no longer possible to load other assets from the asset bundle
 
             return new StreamableLoadingResult<AssetBundleData>(assetBundleData);
