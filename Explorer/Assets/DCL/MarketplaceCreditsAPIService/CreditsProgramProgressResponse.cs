@@ -57,7 +57,7 @@ namespace DCL.MarketplaceCreditsAPIService
     [Serializable]
     public class GoalProgressData
     {
-        public int totalSteps;
-        public int completedSteps;
+        public uint totalSteps;
+        public uint completedSteps;
     }
 }

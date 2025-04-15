@@ -92,7 +92,7 @@ namespace DCL.MarketplaceCredits.Fields
             CreditsCanvasGroup.alpha = isClaimed ? AlphaValueForClaimedCredits : 1f;
         }
 
-        public void SetProgress(int progressPercentage, int stepsDone, int totalSteps)
+        public void SetProgress(uint progressPercentage, uint stepsDone, uint totalSteps)
         {
             ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(progressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             ProgressValueText.text = $"{stepsDone}/{totalSteps}";

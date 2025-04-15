@@ -78,7 +78,7 @@ namespace DCL.MarketplaceCredits
         /// </summary>
         /// <param name="goalProgress">The goal progress data containing the completed and total steps.</param>
         /// <returns>>The progress percentage of the goal.</returns>
-        public static int GetProgressPercentage(this GoalProgressData goalProgress) =>
+        public static uint GetProgressPercentage(this GoalProgressData goalProgress) =>
             goalProgress.completedSteps * 100 / goalProgress.totalSteps;
 
         /// <summary>
