@@ -7,7 +7,7 @@ namespace DCL.CharacterCamera.Settings
     public class CinemachinePreset : MonoBehaviour, ICinemachinePreset
     {
         [SerializeField] private CinemachineFirstPersonCameraData firstPersonCameraData = null!;
-        [SerializeField] private CinemachineThirdPersonCameraData thirdPersonCameraData = null!;
+        [SerializeField] private CinemachineThirdPersonCameraData2 thirdPersonCameraData = null!;
         [SerializeField] private CinemachineThirdPersonCameraData droneViewCameraData = null!;
         [SerializeField] private CinemachineFreeCameraData freeCameraData = null!;
         [SerializeField] private  CinemachineFreeCameraData inWorldCameraData = null!;
@@ -28,7 +28,7 @@ namespace DCL.CharacterCamera.Settings
         [field: SerializeField]
         public CinemachineBrain Brain { get; private set; } = null!;
 
-        ICinemachineThirdPersonCameraData ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
+        ICinemachineThirdPersonCameraData2 ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
 
         ICinemachineFirstPersonCameraData ICinemachinePreset.FirstPersonCameraData => firstPersonCameraData;
         ICinemachineThirdPersonCameraData ICinemachinePreset.DroneViewCameraData => droneViewCameraData;
