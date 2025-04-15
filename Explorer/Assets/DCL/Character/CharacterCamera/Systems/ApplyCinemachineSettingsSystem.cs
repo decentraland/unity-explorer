@@ -64,8 +64,8 @@ namespace DCL.Character.CharacterCamera.Systems
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
             cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
-            cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
-            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
+            cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
+            cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
         }
     }
 }

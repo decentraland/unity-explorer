@@ -47,9 +47,10 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.ThirdPerson:
                 case CameraMode.SDKCamera:
-                    CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
-                    tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
-                    tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
+                    // CinemachineVirtualCamera tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
+                    // tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
+                    // tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
+                    ApplyPOV(cinemachinePreset.ThirdPersonCameraData.POV, in cameraInput);
                     break;
 
                 case CameraMode.FirstPerson:

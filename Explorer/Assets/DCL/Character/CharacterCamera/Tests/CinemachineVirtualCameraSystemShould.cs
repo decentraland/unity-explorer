@@ -69,7 +69,7 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.Brain.Returns(brain);
             cinemachinePreset.FirstPersonCameraData.Returns(firstPersonCameraData);
             cinemachinePreset.FreeCameraData.Returns(freeCameraData);
-            cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
+            // cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
             cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();

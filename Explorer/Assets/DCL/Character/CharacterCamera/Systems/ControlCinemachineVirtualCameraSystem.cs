@@ -110,7 +110,10 @@ namespace DCL.Character.CharacterCamera.Systems
             if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
                 return;
 
-            ICinemachineThirdPersonCameraData cameraData = cameraComponent.Mode == CameraMode.ThirdPerson ? cinemachinePreset.ThirdPersonCameraData : cinemachinePreset.DroneViewCameraData;
+            if (cameraComponent.Mode is CameraMode.ThirdPerson)
+                return;
+
+            ICinemachineThirdPersonCameraData cameraData = cinemachinePreset.DroneViewCameraData;
 
             if (input.ChangeShoulder)
                 cameraComponent.Shoulder = cameraComponent.Shoulder switch
@@ -194,10 +197,10 @@ namespace DCL.Character.CharacterCamera.Systems
                     cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode != CameraMode.FirstPerson && camera.PreviousMode != CameraMode.SDKCamera;
                     if (camera.PreviousMode == CameraMode.FirstPerson)
                     {
-                        cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                        cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
 
                         // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
-                        cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
+                        cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
                     }
 
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
@@ -215,8 +218,8 @@ namespace DCL.Character.CharacterCamera.Systems
                     cinemachinePreset.FreeCameraData.Camera.transform.position = tpPos + cinemachinePreset.FreeCameraData.DefaultPosition;
 
                     // copy POV
-                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value;
-                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
+                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.Value;
+                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.Value;
                     break;
             }
 
