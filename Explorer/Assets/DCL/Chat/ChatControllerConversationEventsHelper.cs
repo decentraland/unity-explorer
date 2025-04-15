@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
-using System;
 using System.Threading;
 using DCL.UI;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -10,22 +10,17 @@ namespace DCL.Chat
     {
         private readonly IChatHistory chatHistory;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
-        private readonly Func<ChatView?> getViewInstance;
-        private readonly Func<CancellationTokenSource> getChatUsersUpdateCts;
-        private readonly Action<CancellationTokenSource> setChatUsersUpdateCts;
+        private readonly IChatController chatController;
+        private CancellationTokenSource chatUsersUpdateCts = new();
 
         public ChatControllerConversationEventsHelper(
             IChatHistory chatHistory,
             ChatUserStateUpdater chatUserStateUpdater,
-            Func<ChatView?> getViewInstance,
-            Func<CancellationTokenSource> getChatUsersUpdateCts,
-            Action<CancellationTokenSource> setChatUsersUpdateCts)
+            IChatController chatController)
         {
             this.chatHistory = chatHistory;
             this.chatUserStateUpdater = chatUserStateUpdater;
-            this.getViewInstance = getViewInstance;
-            this.getChatUsersUpdateCts = getChatUsersUpdateCts;
-            this.setChatUsersUpdateCts = setChatUsersUpdateCts;
+            this.chatController = chatController;
         }
 
         public void OnOpenConversation(string userId)
@@ -33,41 +28,53 @@ namespace DCL.Chat
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
-            getViewInstance()!.CurrentChannelId = channel.Id;
-            
-            var cts = getChatUsersUpdateCts().SafeRestart();
-            setChatUsersUpdateCts(cts);
-            UpdateChatUserStateAsync(userId, cts.Token, true).Forget();
+            if (chatController.TryGetView(out var view))
+            {
+                view.CurrentChannelId = channel.Id;
+            }
+
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
         public void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             chatUserStateUpdater.CurrentConversation = channelId.Id;
-            getViewInstance()!.CurrentChannelId = channelId;
-
-            if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+            if (chatController.TryGetView(out var view))
             {
-                getViewInstance()!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
-                return;
+                view.CurrentChannelId = channelId;
+
+                if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+                {
+                    view.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                    return;
+                }
             }
 
             chatUserStateUpdater.AddConversation(channelId.Id);
-            var cts = getChatUsersUpdateCts().SafeRestart();
-            setChatUsersUpdateCts(cts);
-            UpdateChatUserStateAsync(channelId.Id, cts.Token).Forget();
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateChatUserStateAsync(string userId, CancellationToken ct, bool updateToolbar = false)
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
             var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
-            getViewInstance()!.SetInputWithUserState(userState);
+            if (chatController.TryGetView(out var view))
+            {
+                view.SetInputWithUserState(userState);
 
-            if (!updateToolbar) return;
+                if (!updateToolbar) return;
 
-            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
-                           || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+                bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                             || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
 
-            getViewInstance()!.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+                view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+            }
+        }
+
+        public void Dispose()
+        {
+            chatUsersUpdateCts.SafeCancelAndDispose();
         }
     }
-} 
+}

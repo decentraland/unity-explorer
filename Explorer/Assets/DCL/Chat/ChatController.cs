@@ -6,7 +6,6 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
-using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -20,39 +19,32 @@ using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.InputFieldFormatting;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
-using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>, IControllerInSharedSpace<ChatView, ChatControllerShowParams>
+    public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>,
+        IControllerInSharedSpace<ChatView, ChatControllerShowParams>, IChatController
     {
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
-        private static readonly Color DEFAULT_COLOR = Color.white;
 
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
         private readonly IChatHistory chatHistory;
         private readonly World world;
-        private readonly Entity playerEntity;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
-        private readonly IRoom currentRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatSettingsAsset chatSettings;
@@ -71,15 +63,22 @@ namespace DCL.Chat
         private readonly List<Profile> participantProfileBuffer = new ();
         private readonly IRoomHub roomHub;
 
-        private CancellationTokenSource chatUsersUpdateCts;
         private SingleInstanceEntity cameraEntity;
-        private CancellationTokenSource memberListCts;
-        private string previousRoomSid = string.Empty;
+
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
         // We use this to avoid doing null checks after the viewInstance was created
         private bool viewInstanceCreated;
+
+        string IChatController.IslandRoomSid => islandRoom.Info.Sid;
+        string IChatController.PreviousRoomSid { get; set; } = string.Empty;
+
+        public bool TryGetView(out ChatView view)
+        {
+            view = viewInstance!;
+            return viewInstanceCreated && view != null;
+        }
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -107,10 +106,8 @@ namespace DCL.Chat
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
-            this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.world = world;
-            this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
@@ -137,29 +134,25 @@ namespace DCL.Chat
                 roomHub.PrivateConversationsRoom(),
                 friendsService);
 
-            chatBubblesHelper = new ChatControllerChatBubblesHelper(world,
+            chatBubblesHelper = new ChatControllerChatBubblesHelper(
+                world,
             playerEntity,
             entityParticipantTable,
             profileCache,
             nametagsData,
             chatSettings);
 
-            memberListHelper = new ChatControllerMemberListHelper(roomHub,
-            profileCache,
-            membersBuffer,
-            participantProfileBuffer,
-            () => islandRoom.Info.Sid,
-            () => viewInstance,
-            () => previousRoomSid,
-            v => previousRoomSid = v,
-            () => memberListCts);
+            memberListHelper = new ChatControllerMemberListHelper(
+                roomHub,
+                profileCache,
+                membersBuffer,
+                participantProfileBuffer,
+                this);
 
             conversationEventsHelper = new ChatControllerConversationEventsHelper(
                 chatHistory,
                 chatUserStateUpdater,
-                () => viewInstance,
-                () => chatUsersUpdateCts,
-                cts => chatUsersUpdateCts = cts);
+                this);
         }
 
 #region Panel Visibility
@@ -246,7 +239,7 @@ namespace DCL.Chat
             chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
-            memberListCts.SafeCancelAndDispose();
+            memberListHelper.StopUpdating();
         }
 
 #region View Show and Close
@@ -262,8 +255,7 @@ namespace DCL.Chat
 
             AddNearbyChannelAndSendWelcomeMessage();
 
-            memberListCts = new CancellationTokenSource();
-            UniTask.RunOnThreadPool(memberListHelper.UpdateMembersDataAsync).Forget();
+            memberListHelper.StartUpdating();
 
             InitializeChannelsAndConversationsAsync().Forget();
 
@@ -291,6 +283,7 @@ namespace DCL.Chat
         protected override void OnViewClose()
         {
             UnsubscribeFromEvents();
+            memberListHelper.StopUpdating();
             Dispose();
         }
 
@@ -351,47 +344,61 @@ namespace DCL.Chat
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();
-                viewInstance!.RefreshMessages();
-                viewInstance.ShowLastMessage();
-            }
-            else
-            {
-                switch (chatSettings.chatAudioSettings)
+                if (TryGetView(out var view))
                 {
-                    case ChatAudioSettings.NONE:
-                        return;
-                    case ChatAudioSettings.MENTIONS_ONLY when addedMessage.IsMention:
-                    case ChatAudioSettings.ALL:
-                        UIAudioEventsBus.Instance.SendPlayAudioEvent(addedMessage.IsMention ?
-                            viewInstance!.ChatReceiveMentionMessageAudio :
-                            viewInstance!.ChatReceiveMessageAudio);
-                        break;
+                    view.RefreshMessages();
+                    view.ShowLastMessage();
                 }
+                return;
+            }
 
-                // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-                bool shouldMarkChannelAsRead = viewInstance!.IsMessageListVisible && viewInstance.IsScrollAtBottom;
+            HandleMessageAudioFeedback(addedMessage);
 
-                if (destinationChannel.Id.Equals(viewInstance.CurrentChannelId))
+            if (TryGetView(out var currentView))
+            {
+                bool shouldMarkChannelAsRead = currentView is { IsMessageListVisible: true, IsScrollAtBottom: true };
+                bool isCurrentChannel = destinationChannel.Id.Equals(currentView.CurrentChannelId);
+
+                if (isCurrentChannel)
                 {
                     if (shouldMarkChannelAsRead)
                         MarkCurrentChannelAsRead();
 
-                    // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
-                    //       Once a new message arrives, the separator moves to the position of that new message and the count of
-                    //       unread messages is set to 1.
-                    if (hasToResetUnreadMessagesWhenNewMessageArrive)
-                    {
-                        hasToResetUnreadMessagesWhenNewMessageArrive = false;
-                        destinationChannel.ReadMessages = messageCountWhenSeparatorViewed;
-                    }
-
-                    viewInstance.RefreshMessages();
+                    HandleUnreadMessagesSeparator(destinationChannel);
+                    currentView.RefreshMessages();
                 }
-                else // Messages arrived to other conversations
+                else
                 {
-                    viewInstance.RefreshUnreadMessages(destinationChannel.Id);
+                    currentView.RefreshUnreadMessages(destinationChannel.Id);
                 }
             }
+        }
+
+        private void HandleMessageAudioFeedback(ChatMessage message)
+        {
+            if (!TryGetView(out var view))
+                return;
+
+            switch (chatSettings.chatAudioSettings)
+            {
+                case ChatAudioSettings.NONE:
+                    return;
+                case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
+                case ChatAudioSettings.ALL:
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ?
+                        view.ChatReceiveMentionMessageAudio :
+                        view.ChatReceiveMessageAudio);
+                    break;
+            }
+        }
+
+        private void HandleUnreadMessagesSeparator(ChatChannel channel)
+        {
+            if (!hasToResetUnreadMessagesWhenNewMessageArrive)
+                return;
+
+            hasToResetUnreadMessagesWhenNewMessageArrive = false;
+            channel.ReadMessages = messageCountWhenSeparatorViewed;
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -619,19 +626,22 @@ namespace DCL.Chat
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
 
-            viewInstance.PointerEnter += OnViewPointerEnter;
-            viewInstance.PointerExit += OnViewPointerExit;
+            if (TryGetView(out var view))
+            {
+                view.PointerEnter += OnViewPointerEnter;
+                view.PointerExit += OnViewPointerExit;
 
-            viewInstance.ChatSelectStateChanged += OnViewChatSelectStateChanged;
-            viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.InputSubmitted += OnViewInputSubmitted;
-            viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
-            viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
-            viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
-            viewInstance.FoldingChanged += OnViewFoldingChanged;
-            viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
-            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
-            viewInstance.ConversationSelected += OnSelectConversation;
+                view.ChatSelectStateChanged += OnViewChatSelectStateChanged;
+                view.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
+                view.InputSubmitted += OnViewInputSubmitted;
+                view.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
+                view.ScrollBottomReached += OnViewScrollBottomReached;
+                view.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
+                view.FoldingChanged += OnViewFoldingChanged;
+                view.ChannelRemovalRequested += OnViewChannelRemovalRequested;
+                view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
+                view.ConversationSelected += OnSelectConversation;
+            }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;

@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.UI;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -14,32 +15,32 @@ namespace DCL.Chat
         private readonly IProfileCache profileCache;
         private readonly List<ChatMemberListView.MemberData> membersBuffer;
         private readonly List<Profile> participantProfileBuffer;
-        private readonly Func<string> getIslandRoomSid;
-        private readonly Func<ChatView?> getViewInstance;
-        private readonly Func<string> getPreviousRoomSid;
-        private readonly Action<string> setPreviousRoomSid;
-        private readonly Func<CancellationTokenSource> getMemberListCts;
+        private readonly IChatController controller;
+        private CancellationTokenSource memberListCts = new();
 
         public ChatControllerMemberListHelper(
             IRoomHub roomHub,
             IProfileCache profileCache,
             List<ChatMemberListView.MemberData> membersBuffer,
             List<Profile> participantProfileBuffer,
-            Func<string> getIslandRoomSid,
-            Func<ChatView?> getViewInstance,
-            Func<string> getPreviousRoomSid,
-            Action<string> setPreviousRoomSid,
-            Func<CancellationTokenSource> getMemberListCts)
+            IChatController controller)
         {
             this.roomHub = roomHub;
             this.profileCache = profileCache;
             this.membersBuffer = membersBuffer;
             this.participantProfileBuffer = participantProfileBuffer;
-            this.getIslandRoomSid = getIslandRoomSid;
-            this.getViewInstance = getViewInstance;
-            this.getPreviousRoomSid = getPreviousRoomSid;
-            this.setPreviousRoomSid = setPreviousRoomSid;
-            this.getMemberListCts = getMemberListCts;
+            this.controller = controller;
+        }
+
+        public void StartUpdating()
+        {
+            memberListCts = memberListCts.SafeRestart();
+            UniTask.RunOnThreadPool(UpdateMembersDataAsync).Forget();
+        }
+
+        public void StopUpdating()
+        {
+            memberListCts.SafeCancelAndDispose();
         }
 
         private List<ChatMemberListView.MemberData> GenerateMemberList()
@@ -79,7 +80,9 @@ namespace DCL.Chat
         public void RefreshMemberList()
         {
             List<ChatMemberListView.MemberData> members = GenerateMemberList();
-            getViewInstance()?.SetMemberData(members);
+
+            if (controller.TryGetView(out var viewInstance))
+                viewInstance.SetMemberData(members);
         }
 
         private void GetProfilesFromParticipants(List<Profile> outProfiles)
@@ -93,28 +96,34 @@ namespace DCL.Chat
             }
         }
 
-        public async UniTask UpdateMembersDataAsync()
+        private async UniTask UpdateMembersDataAsync()
         {
             const int WAIT_TIME_IN_BETWEEN_UPDATES = 500;
-            var memberListCts = getMemberListCts();
 
             while (!memberListCts.IsCancellationRequested)
             {
-                var viewInstance = getViewInstance();
+                if (!controller.TryGetView(out var viewInstance)) continue;
+
                 // If the player jumps to another island room (like a world) while the member list is visible, it must refresh
-                if (getPreviousRoomSid() != getIslandRoomSid() && viewInstance?.IsMemberListVisible == true)
+                if (controller.PreviousRoomSid != controller.IslandRoomSid && viewInstance?.IsMemberListVisible == true)
                 {
-                    setPreviousRoomSid(getIslandRoomSid());
+                    controller.PreviousRoomSid = controller.IslandRoomSid;
                     RefreshMemberList();
                 }
 
                 // Updates the amount of members
                 int participantsCount = roomHub.ParticipantsCount();
+
                 if (roomHub.HasAnyRoomConnected() && viewInstance != null && participantsCount != viewInstance.MemberCount)
                     viewInstance.MemberCount = participantsCount;
 
                 await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES, cancellationToken: memberListCts.Token);
             }
         }
+
+        public void Dispose()
+        {
+            memberListCts.SafeCancelAndDispose();
+        }
     }
-} 
+}
