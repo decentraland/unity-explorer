@@ -85,13 +85,9 @@ namespace DCL.Chat
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
                 await UniTask.WaitUntil(() => roomConnected && userBlockingCacheProxy.Configured, cancellationToken: cts.Token);
 
-                await ProcessInitialParticipants(conversationParticipants);
+                ProcessInitialParticipants(ref conversationParticipants);
             }
-            catch (OperationCanceledException)
-            {
-                // Handle cancellation gracefully
-            }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Error during initialization: {e.Message}");
             }
@@ -99,7 +95,7 @@ namespace DCL.Chat
             return conversationParticipants;
         }
 
-        private async UniTask ProcessInitialParticipants(HashSet<string> conversationParticipants)
+        private void ProcessInitialParticipants(ref HashSet<string> conversationParticipants)
         {
             foreach (string participant in participantsHub.RemoteParticipantIdentities())
             {
@@ -115,7 +111,9 @@ namespace DCL.Chat
             }
         }
 
-        public async UniTask UpdateConversationUsersConnectedStatus()
+        // TODO FRAN: This might not be needed at all, was added when Livekit was behaving strange, might be fixed by now.
+        // But if we do the Livekit change, it should be trivial to do this check just in case.
+        private async UniTask UpdateConversationUsersConnectedStatus()
         {
             if (!updatedUsers) return;
 
@@ -127,11 +125,7 @@ namespace DCL.Chat
                 updatedUsers = true;
 
             }
-            catch (OperationCanceledException)
-            {
-                // Handle cancellation gracefully
-            }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Error checking user status: {e.Message}");
             }
@@ -139,6 +133,7 @@ namespace DCL.Chat
 
         private void ProcessConnectedUsers()
         {
+            // TODO FRAN: update Livekit Implementation to have direct access to the dictionary, so we can just do a .Contains, instead of all this mess.
             var connectedParticipants = new HashSet<string>(participantsHub.RemoteParticipantIdentities());
 
             ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"connectedParticipants {connectedParticipants.Count}");
@@ -158,6 +153,7 @@ namespace DCL.Chat
                 }
                 else
                 {
+                    chatUserStateEventBus.OnUserDisconnected(participant);
                     chatUsersStateCache.RemoveConnectedUser(participant);
                     chatUsersStateCache.RemovedConnectedBlockedUser(participant);
                 }
