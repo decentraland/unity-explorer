@@ -1,8 +1,5 @@
-using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using DCL.MarketplaceCreditsAPIService;
-using DCL.Profiles.Self;
-using ECS;
 using System;
 using System.Globalization;
 using System.Threading;
@@ -143,16 +140,14 @@ namespace DCL.MarketplaceCredits
         /// Checks if the user is allowed to use the feature based on the white list from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public static async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, IRealmData realmData, ISelfProfile selfProfile, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
+        public static bool IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, string userId, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
         {
             if (!includeMarketplaceCredits)
                 return false;
 
-            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            var ownProfile = await selfProfile.ProfileAsync(ct);
             featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
 
-            return ownProfile != null && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(ownProfile.UserId, StringComparison.OrdinalIgnoreCase));
+            return !string.IsNullOrEmpty(userId) && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

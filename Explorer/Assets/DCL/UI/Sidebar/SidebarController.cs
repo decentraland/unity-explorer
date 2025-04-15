@@ -204,10 +204,16 @@ namespace DCL.UI.Sidebar
 
         private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
         {
-            includeMarketplaceCredits = await MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(false);
+
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
+
+            includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
                 includeMarketplaceCredits,
-                realmData,
-                selfProfile,
+                ownProfile.UserId,
                 featureFlagsCache,
                 ct);
 

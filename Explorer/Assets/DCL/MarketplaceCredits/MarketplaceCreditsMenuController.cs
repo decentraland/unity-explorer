@@ -32,7 +32,7 @@ namespace DCL.MarketplaceCredits
 
         public event Action<bool> MarketplaceCreditsOpened;
 
-        private bool isFeatureActivated = true;
+        private bool isFeatureActivated;
 
         [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
@@ -64,7 +64,6 @@ namespace DCL.MarketplaceCredits
         private CancellationTokenSource showErrorNotificationCts;
         private CancellationTokenSource sidebarButtonStateCts;
 
-        private Profile ownProfile;
         private bool haveJustClaimedCredits;
 
         public MarketplaceCreditsMenuController(
@@ -290,15 +289,17 @@ namespace DCL.MarketplaceCredits
         {
             try
             {
-                isFeatureActivated = await MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, realmData, selfProfile, featureFlagsCache, ct);
+                await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile == null)
+                    return;
+
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, ownProfile.UserId, featureFlagsCache, ct);
                 if (!isFeatureActivated)
                     return;
 
-                if (ownProfile != null)
-                {
-                    var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
-                    SetSidebarButtonState(creditsProgramProgressResponse);
-                }
+                var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
+                SetSidebarButtonState(creditsProgramProgressResponse);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
