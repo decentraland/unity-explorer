@@ -55,6 +55,11 @@ namespace DCL.WebRequests
         {
             using IWebRequest? createdRequest = await request.SendAsync(ct);
 
+            // If it is Unity API we must first switch to the main thread to read the response
+
+            if (createdRequest.nativeRequest is UnityWebRequest)
+                await UniTask.SwitchToMainThread();
+
             string text = string.Empty;
 
             try
@@ -65,8 +70,9 @@ namespace DCL.WebRequests
 #if !UNITY_EDITOR
                     case WRJsonParser.NewtonsoftInEditor:
 #endif
+                        text = createdRequest.Response.Text;
                         await SwitchToThreadAsync(threadFlags);
-                        JsonUtility.FromJsonOverwrite(text = createdRequest.Response.Text, target);
+                        JsonUtility.FromJsonOverwrite(text, target);
                         break;
                     default:
                     {
@@ -112,6 +118,11 @@ namespace DCL.WebRequests
         {
             using IWebRequest? createdRequest = await request.SendAsync(ct);
 
+            // If it is Unity API we must first switch to the main thread to read the response
+
+            if (createdRequest.nativeRequest is UnityWebRequest)
+                await UniTask.SwitchToMainThread();
+
             string text = string.Empty;
 
             try
@@ -122,8 +133,9 @@ namespace DCL.WebRequests
 #if !UNITY_EDITOR
                     case WRJsonParser.NewtonsoftInEditor:
 #endif
+                        text = createdRequest.Response.Text;
                         await SwitchToThreadAsync(threadFlags);
-                        return JsonUtility.FromJson<T>(text = createdRequest.Response.Text);
+                        return JsonUtility.FromJson<T>(text);
                     default:
                     {
                         using Stream stream = createdRequest.Response.GetCompleteStream();

@@ -143,8 +143,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     OngoingRequestResult<TAsset> ongoingRequestResult;
 
-                    // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
+
+                    // The following scenarios are possible:
+                    // 1. The cached request was cancelled => relaunch the flow
+                    // 2. The cached request produced a non-null result => conclude
+                    // 3. The cached request produced a null result (re-evaluation needed) => conclude
 
                     ReportHub.Log(GetReportData(), $"{intention}({state.Value}) loading from {intention.CommonArguments.CurrentSource} continued from the ongoing request:"
                                                    + $"\nNot Fulfilled: {requestIsNotFulfilled}, Has Result: {ongoingRequestResult.Result.HasValue}, Has Partial Data: {ongoingRequestResult.PartialDownloadingData.HasValue}");
@@ -157,6 +161,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     SynchronizePartialData(entity, state, ongoingRequestResult);
                     result = ongoingRequestResult.Result;
+                    return;
                 }
 
                 // If the given URL failed irrecoverably just return the failure

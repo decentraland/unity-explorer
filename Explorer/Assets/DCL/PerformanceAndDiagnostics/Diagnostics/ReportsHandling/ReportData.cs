@@ -27,5 +27,8 @@ namespace DCL.Diagnostics
 
         public ReportData WithSessionStatic() =>
             new (Category, ReportHint.SessionStatic | Hint, SceneShortInfo, SceneTickNumber);
+
+        public override string ToString() =>
+            $"Category: {Category}, Hint: {Hint}, SceneShortInfo: {SceneShortInfo}, SceneTickNumber: {SceneTickNumber}";
     }
 }

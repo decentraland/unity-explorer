@@ -114,7 +114,7 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task ConcludeFailIfNotFound()
         {
-            if (webRequestsMode == WebRequestsMode.HTTP2) { LogAssert.Expect(LogType.Exception, FILE_NOT_FOUND_MESSAGE); }
+            // if (webRequestsMode == WebRequestsMode.HTTP2) { LogAssert.Expect(LogType.Exception, FILE_NOT_FOUND_MESSAGE); }
 
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);

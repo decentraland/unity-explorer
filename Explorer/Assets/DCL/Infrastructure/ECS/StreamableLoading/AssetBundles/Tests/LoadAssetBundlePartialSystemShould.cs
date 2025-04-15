@@ -175,6 +175,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         private PartialLoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController) =>
-            new (world, new NoCache<AssetBundleData, GetAssetBundleIntention>(true, false), webRequestController, new AssetBundleLoadingMutex());
+            new (world, new NoCache<AssetBundleData, GetAssetBundleIntention>(true, true), webRequestController, new AssetBundleLoadingMutex());
     }
 }
