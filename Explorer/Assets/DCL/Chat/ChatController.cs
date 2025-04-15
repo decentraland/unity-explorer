@@ -60,6 +60,7 @@ namespace DCL.Chat
         private readonly ChatControllerConversationEventsHelper conversationEventsHelper;
         private readonly ChatControllerUserStateHelper userStateHelper;
         private readonly ChatControllerMessageHandlingHelper messageHandlingHelper;
+        private readonly ChatControllerInputHelper inputHelper;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -167,6 +168,12 @@ namespace DCL.Chat
                 chatBubblesHelper,
                 chatSettings,
                 hyperlinkTextFormatter);
+
+            inputHelper = new ChatControllerInputHelper(
+                world,
+                inputBlock,
+                this,
+                cameraEntity);
         }
 
 #region Panel Visibility
@@ -418,18 +425,12 @@ namespace DCL.Chat
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)
         {
-            if (isVisible)
-                DisableUnwantedInputs();
-            else
-                EnableUnwantedInputs();
+            inputHelper.OnViewEmojiSelectionVisibilityChanged(isVisible);
         }
 
         private void OnViewChatSelectStateChanged(bool isChatSelected)
         {
-            if (isChatSelected)
-                DisableUnwantedInputs();
-            else
-                EnableUnwantedInputs();
+            inputHelper.OnViewChatSelectStateChanged(isChatSelected);
         }
 
         private void OnViewPointerExit() =>
@@ -447,10 +448,7 @@ namespace DCL.Chat
         //This comes from the paste option or mention, we check if it's possible to do it as if there is a mask we cannot
         private void OnTextInserted(string text)
         {
-            if (viewInstance!.IsMaskActive) return;
-
-            viewInstance.FocusInputBox();
-            viewInstance.InsertTextInInputBox(text);
+            inputHelper.OnTextInserted(text);
         }
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
