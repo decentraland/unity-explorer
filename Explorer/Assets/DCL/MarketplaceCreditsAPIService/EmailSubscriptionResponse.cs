@@ -3,7 +3,7 @@ using System;
 namespace DCL.MarketplaceCreditsAPIService
 {
     [Serializable]
-    public class EmailSubscriptionResponse
+    public struct EmailSubscriptionResponse
     {
         public string email;
         public string unconfirmedEmail;

@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.Serialization;
 
 namespace DCL.MarketplaceCreditsAPIService
 {
     [Serializable]
-    public class CreditsProgramProgressResponse
+    public struct CreditsProgramProgressResponse
     {
         public SeasonData season;
         public CurrentWeekData currentWeek;
@@ -15,7 +14,7 @@ namespace DCL.MarketplaceCreditsAPIService
     }
 
     [Serializable]
-    public class SeasonData
+    public struct SeasonData
     {
         public string startDate;
         public string endDate;
@@ -24,13 +23,13 @@ namespace DCL.MarketplaceCreditsAPIService
     }
 
     [Serializable]
-    public class CurrentWeekData
+    public struct CurrentWeekData
     {
         public uint timeLeft;
     }
 
     [Serializable]
-    public class UserData
+    public struct UserData
     {
         public string email;
         public bool isEmailConfirmed;
@@ -38,14 +37,14 @@ namespace DCL.MarketplaceCreditsAPIService
     }
 
     [Serializable]
-    public class CreditsData
+    public struct CreditsData
     {
         public float available;
         public uint expiresIn;
     }
 
     [Serializable]
-    public class GoalData
+    public struct GoalData
     {
         public string title;
         public string thumbnail;
@@ -55,7 +54,7 @@ namespace DCL.MarketplaceCreditsAPIService
     }
 
     [Serializable]
-    public class GoalProgressData
+    public struct GoalProgressData
     {
         public uint totalSteps;
         public uint completedSteps;
