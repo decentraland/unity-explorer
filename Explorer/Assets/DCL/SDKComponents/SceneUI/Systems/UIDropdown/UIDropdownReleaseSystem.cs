@@ -31,24 +31,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             HandleEntityDestructionQuery(World);
             HandleUIDropdownRemovalQuery(World);
-            World.Remove<UIDropdownComponent>(in HandleUIDropdownRemoval_QueryDescription);
         }
 
         [Query]
         [None(typeof(PBUiDropdown), typeof(DeleteEntityIntention))]
-        private void HandleUIDropdownRemoval(ref UIDropdownComponent uiDropdownComponent) =>
-            RemoveDropdownField(uiDropdownComponent);
+        private void HandleUIDropdownRemoval(in Entity entity, ref UIDropdownComponent uiDropdownComponent) =>
+            RemoveDropdownField(entity, uiDropdownComponent);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UIDropdownComponent uiDropdownComponent) =>
-            RemoveDropdownField(uiDropdownComponent);
+        private void HandleEntityDestruction(in Entity entity, ref UIDropdownComponent uiDropdownComponent) =>
+            RemoveDropdownField(entity, uiDropdownComponent);
 
-        private void RemoveDropdownField(UIDropdownComponent uiDropdownComponent)
+        private void RemoveDropdownField(Entity entity, UIDropdownComponent uiDropdownComponent)
         {
-            if (componentPool != null)
-                componentPool.Release(uiDropdownComponent);
+            componentPool.Release(uiDropdownComponent);
 
+            //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
+            World.Remove<UIDropdownComponent>(entity);
             uiDropdownComponent.UnregisterDropdownCallbacks();
         }
     }
