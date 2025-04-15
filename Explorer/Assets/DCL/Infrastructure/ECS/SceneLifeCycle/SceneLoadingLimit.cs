@@ -1,38 +1,38 @@
+using DCL.FeatureFlags;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
     public class SceneLoadingLimit
     {
-        internal int MaximumAmountOfScenesThatCanLoad;
-        internal int MaximumAmountOfReductedLoDsThatCanLoad;
-        internal int MaximumAmountOfLODsThatCanLoad;
-
         private float SceneCurrentMemoryUsageInMB;
         private float LODCurrentMemoryUsageInMB;
         private float QualityReductedLODCurrentMemoryUsageInMB;
 
         //1GB for scene usage
-        private readonly float SceneMaxAmountOfUsableMemoryInMB = 300;
-        private readonly float LODMaxAmountOfUsableMemoryInMB = 100;
-        private readonly float QualityReductedLODMaxAmountOfUsableMemoryInMB = 100;
+        private float SceneMaxAmountOfUsableMemoryInMB = 300;
+        private float LODMaxAmountOfUsableMemoryInMB = 100;
+        private float QualityReductedLODMaxAmountOfUsableMemoryInMB = 100;
 
-        public void Reset()
+        private readonly ISystemMemoryCap systemMemoryCap;
+        private readonly bool isEnabled;
+
+        public SceneLoadingLimit(ISystemMemoryCap memoryCap, bool isEnabled)
+        {
+            systemMemoryCap = memoryCap;
+            this.isEnabled = isEnabled;
+            UpdateMemoryCap();
+        }
+
+        public void ResetCurrentUsage()
         {
             SceneCurrentMemoryUsageInMB = 0;
             LODCurrentMemoryUsageInMB = 0;
             QualityReductedLODCurrentMemoryUsageInMB = 0;
         }
-
-        public static SceneLoadingLimit CreateMax() =>
-            new ()
-            {
-                MaximumAmountOfScenesThatCanLoad = int.MaxValue,
-                MaximumAmountOfReductedLoDsThatCanLoad = int.MaxValue,
-                MaximumAmountOfLODsThatCanLoad = int.MaxValue,
-            };
 
         public bool CanLoadScene(SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -70,10 +70,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             return false;
         }
 
-        public static SceneLoadingLimit Create(IMemoryUsageProvider memoryBudget)
+        public void UpdateMemoryCap()
         {
-            UnityEngine.Debug.Log($"JUANII {memoryBudget.GetTotalSystemMemoryInMB()}");
-            return CreateMax();
+            if (!isEnabled)
+                SetMax();
+            else
+            {
+                if (systemMemoryCap.MemoryCapInMB < 16_000)
+                {
+                    //Put limits under 16GB
+                }
+                else
+                    SetMax();
+            }
+        }
+
+        private void SetMax()
+        {
+            SceneMaxAmountOfUsableMemoryInMB = float.MaxValue;
+            LODMaxAmountOfUsableMemoryInMB = float.MaxValue;
+            QualityReductedLODMaxAmountOfUsableMemoryInMB = float.MaxValue;
         }
     }
 }

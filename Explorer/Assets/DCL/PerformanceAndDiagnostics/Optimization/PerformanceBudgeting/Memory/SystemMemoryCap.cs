@@ -16,7 +16,6 @@ namespace DCL.Optimization.PerformanceBudgeting
         public SystemMemoryCap()
         {
             mode = MemoryCapMode.REAL_MEMORY;
-
             //Default value will be later set in `MemoryLimitSettingController`. We start with the max value
             MemoryCap = -1;
         }

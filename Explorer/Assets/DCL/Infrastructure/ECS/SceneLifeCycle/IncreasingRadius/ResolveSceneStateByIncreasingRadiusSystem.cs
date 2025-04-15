@@ -228,7 +228,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
         {
-            sceneLoadingLimit.Reset();
+            sceneLoadingLimit.ResetCurrentUsage();
             promisesCreated = 0;
 
             unsafe

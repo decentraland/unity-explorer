@@ -8,9 +8,11 @@ using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -41,10 +43,11 @@ namespace DCL.Settings.Configuration
             ControlsSettingsAsset controlsSettingsAsset,
             ChatAudioSettingsAsset chatAudioSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
-            var viewInstance = UnityEngine.Object.Instantiate(View, parent);
+            var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch

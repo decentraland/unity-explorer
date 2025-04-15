@@ -29,6 +29,8 @@
 
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
 
+        public const string SCENE_MEMORY_LIMIT = "alfa_use_scene_memory_limit";
+
         public const string KTX2_CONVERSION = "ktx2-conversion";
     }
 }

@@ -10,6 +10,7 @@ using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace DCL.Settings
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
@@ -56,7 +58,9 @@ namespace DCL.Settings
             ISystemMemoryCap memoryCap,
             ChatAudioSettingsAsset chatAudioSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            WorldVolumeMacBus worldVolumeMacBus = null)
+            SceneLoadingLimit sceneLoadingLimit,
+            WorldVolumeMacBus worldVolumeMacBus = null
+        )
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -70,6 +74,7 @@ namespace DCL.Settings
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -137,7 +142,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatAudioSettingsAsset, memoryCap, userBlockingCacheProxy, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatAudioSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, worldVolumeMacBus));
             }
         }
 

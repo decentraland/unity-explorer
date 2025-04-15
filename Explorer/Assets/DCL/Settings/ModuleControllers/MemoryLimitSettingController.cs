@@ -1,5 +1,6 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.ModuleViews;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using SystemInfo = UnityEngine.Device.SystemInfo;
@@ -12,11 +13,13 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsDropdownModuleView view;
         private readonly ISystemMemoryCap systemMemoryCap;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
 
-        public MemoryLimitSettingController(SettingsDropdownModuleView view, ISystemMemoryCap systemMemoryCap)
+        public MemoryLimitSettingController(SettingsDropdownModuleView view, ISystemMemoryCap systemMemoryCap, SceneLoadingLimit sceneLoadingLimit)
         {
             this.view = view;
             this.systemMemoryCap = systemMemoryCap;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             if (settingsDataStore.HasKey(MEMORY_CAP_DATA_STORE_KEY))
                 view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY) < view.DropdownView.Dropdown.options.Count ? settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY) : DefaultMemoryCap();
@@ -46,6 +49,8 @@ namespace DCL.Settings.ModuleControllers
                 var newCap = Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
                 systemMemoryCap.MemoryCap = newCap;
             }
+
+            sceneLoadingLimit.UpdateMemoryCap();
 
             settingsDataStore.SetDropdownValue(MEMORY_CAP_DATA_STORE_KEY, index, save: true);
         }
