@@ -39,7 +39,7 @@ namespace DCL.WebRequests
 
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; } = null!;
 
-        private readonly RequestHub requestHub = null!;
+        private RequestHub requestHub = null!;
 
         public static async UniTask<WebRequestsContainer> CreateAsync(
             IPluginSettingsContainer settingsContainer,
@@ -76,14 +76,15 @@ namespace DCL.WebRequests
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
-            var textureFuseRequestHub = new RequestHub(urlsSource, httpCache, container.WebRequestsMode, ktxEnabled);
+            var requestHub = new RequestHub(urlsSource, httpCache, container.WebRequestsMode, ktxEnabled);
+            container.requestHub = requestHub;
 
             int partialChunkSize = container.settings.PartialChunkSizeMB * 1024 * 1024;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
-                                                                 new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub),
-                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub, httpCache, partialChunkSize),
-                                                                 textureFuseRequestHub)
+                                                                 new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
+                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, httpCache, partialChunkSize),
+                                                                 requestHub)
                                                             .WithLog()
                                                             .WithArtificialDelay(options);
 
