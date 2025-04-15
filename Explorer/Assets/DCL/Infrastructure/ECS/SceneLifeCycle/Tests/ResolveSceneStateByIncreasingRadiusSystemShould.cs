@@ -72,7 +72,7 @@ namespace ECS.SceneLifeCycle.Tests
 
         [Test]
         [TestCase(0, "7")]
-        [TestCase(20, "7")]
+        [TestCase(10, "7")]
         [TestCase(20, "6")]
         public async Task LimitSceneLoadingByMemory(int sceneAmount, string runtimeVersion)
         {
@@ -88,11 +88,10 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0f);
 
-            /*
+
             //If no scene were requested, or all of them were sdk6
-            AssertResult(sceneAmount == 0 || runtimeVersion != "7" ? 0 : sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad, sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad + sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad,
-                sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad, sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad);
-            */
+            AssertResult(sceneAmount == 0 || runtimeVersion != "7" ? 0 : sceneAmount, realmPartitionSettings.ScenesRequestBatchSize - sceneAmount,
+                realmPartitionSettings.ScenesRequestBatchSize - sceneAmount, 0);
         }
 
         [Test]
