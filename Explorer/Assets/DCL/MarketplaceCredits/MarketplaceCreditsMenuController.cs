@@ -26,7 +26,7 @@ namespace DCL.MarketplaceCredits
     {
         private const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org";
         private const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
-        private const int ERROR_NOTIFICATION_DURATION = 3;
+        private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -262,7 +262,7 @@ namespace DCL.MarketplaceCredits
         {
             viewInstance!.ErrorNotification.SetText(message);
             viewInstance.ErrorNotification.Show(ct);
-            await UniTask.Delay(ERROR_NOTIFICATION_DURATION * 1000, cancellationToken: ct);
+            await UniTask.Delay(ERROR_NOTIFICATION_DURATION_MS, cancellationToken: ct);
             viewInstance.ErrorNotification.Hide(false, ct);
         }
 

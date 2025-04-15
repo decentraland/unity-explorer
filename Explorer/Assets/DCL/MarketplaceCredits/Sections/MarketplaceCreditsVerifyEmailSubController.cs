@@ -10,7 +10,7 @@ namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsVerifyEmailSubController : IDisposable
     {
-        private const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL = 5;
+        private const int CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL_MS = 5000;
 
         private readonly MarketplaceCreditsVerifyEmailSubView subView;
         private readonly ISelfProfile selfProfile;
@@ -73,7 +73,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             while (!ct.IsCancellationRequested)
             {
-                await UniTask.Delay(CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL * 1000, cancellationToken: ct);
+                await UniTask.Delay(CHECKING_EMAIL_VERIFICATION_TIME_INTERVAL_MS, cancellationToken: ct);
 
                 try
                 {
