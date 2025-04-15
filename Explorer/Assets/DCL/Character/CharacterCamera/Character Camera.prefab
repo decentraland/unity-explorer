@@ -161,7 +161,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5644055857878136702}
   - component: {fileID: 940965429792860062}
-  - component: {fileID: 9155413875376945905}
   - component: {fileID: 9199401824850561604}
   m_Layer: 0
   m_Name: cm
@@ -197,23 +196,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0b09e7857660247b1477e93731de29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &9155413875376945905
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 816969233459784630}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68bb026fafb42b14791938953eaace77, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_NoiseProfile: {fileID: 11400000, guid: 46965f9cbaf525742a6da4c2172a99cd, type: 2}
-  m_PivotOffset: {x: 0, y: 0, z: 1}
-  m_AmplitudeGain: 1
-  m_FrequencyGain: 1
-  mNoiseOffsets: {x: -765.3436, y: 412.4553, z: 513.0689}
 --- !u!114 &9199401824850561604
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1514,7 +1496,7 @@ GameObject:
   - component: {fileID: 769675175854280020}
   - component: {fileID: 5294527864094199746}
   m_Layer: 0
-  m_Name: ThirdPersonCameraSettings
+  m_Name: ThirdPersonCameraSettings2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1699,7 +1681,7 @@ GameObject:
   - component: {fileID: 5037376222953494877}
   - component: {fileID: 9117841965452288491}
   m_Layer: 0
-  m_Name: _CM NEW_
+  m_Name: ThirdPersonCameraSettings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1728,7 +1710,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5722964383721357104}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45e653bab7fb20e499bda25e1b646fea, type: 3}
   m_Name: 
@@ -1738,7 +1720,7 @@ MonoBehaviour:
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:

@@ -197,10 +197,9 @@ namespace DCL.Character.CharacterCamera.Systems
                     cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode != CameraMode.FirstPerson && camera.PreviousMode != CameraMode.SDKCamera;
                     if (camera.PreviousMode == CameraMode.FirstPerson)
                     {
-                        cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
-
+                        // cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
                         // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
-                        cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
+                        // cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
                     }
 
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
