@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     /// <summary>
     /// Attached to every mesh using the Ocean shader

@@ -1,9 +1,8 @@
-﻿using StylizedWater2;
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     public class RendererFeature_Ocean : ScriptableRendererFeature
     {

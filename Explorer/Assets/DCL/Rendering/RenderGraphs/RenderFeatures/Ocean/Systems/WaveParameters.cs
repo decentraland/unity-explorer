@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     /// <summary>
     /// Helper class to retrieve and store a water material's wave settings

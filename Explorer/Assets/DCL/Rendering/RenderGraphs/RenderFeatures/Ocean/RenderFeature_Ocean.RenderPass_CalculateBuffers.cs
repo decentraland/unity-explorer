@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.Universal.Internal;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     public class RenderPass_CalculateBuffers : ScriptableRenderPass
     {

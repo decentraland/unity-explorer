@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     public class RenderPass_Displacement : ScriptableRenderPass
     {

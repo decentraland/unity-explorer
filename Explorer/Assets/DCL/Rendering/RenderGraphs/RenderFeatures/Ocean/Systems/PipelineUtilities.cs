@@ -16,7 +16,7 @@ using ScriptableRendererFeature = UnityEngine.Rendering.Universal.ScriptableRend
 using UnityEditor;
 #endif
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
 	//Stay awesome Unity, locking everything behind internal UI code just makes things convoluted.
     public static class PipelineUtilities

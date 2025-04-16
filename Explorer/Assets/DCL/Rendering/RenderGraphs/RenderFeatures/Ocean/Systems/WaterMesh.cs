@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using Random = System.Random;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     [Serializable]
     public class WaterMesh

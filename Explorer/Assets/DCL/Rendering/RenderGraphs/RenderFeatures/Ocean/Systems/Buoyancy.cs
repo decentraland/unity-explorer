@@ -16,7 +16,7 @@ using Vector2 = Unity.Mathematics.float2;
 using UnityEditor;
 #endif
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.Ocean
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     public static partial class Buoyancy
     {
