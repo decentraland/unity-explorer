@@ -69,7 +69,6 @@ namespace DCL.PluginSystem.Global
 
             await UniTask.CompletedTask;
 
-            // mvcManager.ShowAsync<SceneDebugConsoleView>(ct);
             mvcManager.ShowAsync(SceneDebugConsoleController.IssueCommand(), ct);
         }
     }

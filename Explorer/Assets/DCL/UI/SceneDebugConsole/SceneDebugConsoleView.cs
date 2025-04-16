@@ -34,7 +34,7 @@ namespace DCL.UI.SceneDebugConsole
         private TMP_InputField inputField;
 
         [SerializeField]
-        private Button closeConsoleButton;
+        private Button togglePanelButton;
 
         [SerializeField]
         private SceneDebugConsoleLogViewerElement logMessageViewer;
@@ -124,10 +124,16 @@ namespace DCL.UI.SceneDebugConsole
 
                 consolePanel.SetActive(value);
 
-                if (!value)
+                if (value)
+                {
+                    RefreshLogs();
+                    ShowLatestLogs();
+                }
+                else
                 {
                     inputField.DeactivateInputField();
                 }
+
 
                 FoldingChanged?.Invoke(value);
             }
@@ -143,7 +149,7 @@ namespace DCL.UI.SceneDebugConsole
             // inputField.onDeselect.RemoveListener(OnInputFieldDeselected);
             // inputField.onSubmit.RemoveListener(OnInputFieldSubmit);
             // clearButton.onClick.RemoveListener(OnClearButtonClicked);
-            // closeConsoleButton.onClick.RemoveListener(OnCloseConsoleButtonClicked);
+            togglePanelButton.onClick.RemoveListener(OnTogglePanelButtonClicked);
 
             viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
@@ -153,7 +159,7 @@ namespace DCL.UI.SceneDebugConsole
             this.logMessages = logMessages;
             this.consoleSettings = settings;
 
-            // closeConsoleButton.onClick.AddListener(OnCloseConsoleButtonClicked);
+            togglePanelButton.onClick.AddListener(OnTogglePanelButtonClicked);
             // clearButton.onClick.AddListener(OnClearButtonClicked);
             //
             // inputField.onSelect.AddListener(OnInputFieldSelected);
@@ -168,7 +174,7 @@ namespace DCL.UI.SceneDebugConsole
         private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
         {
             if (IsUnfolded)
-                OnCloseConsoleButtonClicked();
+                OnTogglePanelButtonClicked();
         }
 
         /// <summary>
@@ -213,8 +219,6 @@ namespace DCL.UI.SceneDebugConsole
             }
             logEntryViews.Clear();
 
-            Debug.Log($"PRAVS - RefreshLogs()... messages: {logMessages.Count}");
-
             // Create new entries for all log messages
             foreach (var logMessage in logMessages)
             {
@@ -226,8 +230,6 @@ namespace DCL.UI.SceneDebugConsole
         {
             GameObject entryGO = Instantiate(logEntryPrefab, logContentTransform);
             LogEntryView entryView = entryGO.GetComponent<LogEntryView>();
-
-            Debug.Log($"PRAVS - AddLogEntryView()...", entryGO);
 
             if (entryView != null)
             {
@@ -302,9 +304,9 @@ namespace DCL.UI.SceneDebugConsole
             logEntryViews.Clear();
         }
 
-        private void OnCloseConsoleButtonClicked()
+        private void OnTogglePanelButtonClicked()
         {
-            IsUnfolded = false;
+            IsUnfolded = !IsUnfolded;
         }
     }
 }
