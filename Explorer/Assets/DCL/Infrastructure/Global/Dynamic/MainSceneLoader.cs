@@ -38,7 +38,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using TMPro;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;

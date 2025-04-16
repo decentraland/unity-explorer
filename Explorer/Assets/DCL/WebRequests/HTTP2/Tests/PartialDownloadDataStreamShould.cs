@@ -19,7 +19,7 @@ using UnityEngine.Networking;
 namespace DCL.WebRequests.HTTP2.Tests
 {
     [TestFixture(600 * 1024)] // 600 KB
-    [TestFixture(10 * 1024)] // 10 KB
+    [TestFixture(128 * 1024)] // 128 KB
     public class PartialDownloadDataStreamShould
     {
         private readonly long chunkSize;
@@ -152,6 +152,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, new PartialDownloadArguments(stream), CancellationToken.None);
             Assert.That(stream, Is.Not.Null);
             Assert.That(stream.IsFullyDownloaded, Is.True);
+            Assert.That(stream.underlyingStream, Is.Not.Null);
             Assert.That(stream.GetMemoryStreamPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.MemoryStreamPartialData)));
             Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
             Http2PartialDownloadDataStream.CachedPartialData partialData = stream.GetCachedPartialData();
@@ -179,6 +180,8 @@ namespace DCL.WebRequests.HTTP2.Tests
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
             Assert.That(stream.GetMemoryStreamPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.MemoryStreamPartialData)));
             Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
+
+            Assert.That(stream.underlyingStream, Is.Not.Null);
 
             Http2PartialDownloadDataStream.CachedPartialData partialData = stream.GetCachedPartialData();
 
@@ -245,24 +248,26 @@ namespace DCL.WebRequests.HTTP2.Tests
             Http2PartialDownloadDataStream.MemoryStreamPartialData partialData = stream.GetMemoryStreamPartialData();
 
             Assert.That(partialData.stream, Is.Not.Null);
+            Assert.That(stream.underlyingStream, Is.Not.Null);
 
             Assert.That(stream.CanRead, Is.True);
             Assert.That(stream.CanSeek, Is.True);
         }
 
         [Test]
-        public async Task ConstructLocalDataInMemoryAsync()
+        public async Task ConstructDataFromFileStream()
         {
             // It should be constructed for one iteration
             stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(LOCAL_ASSET_PATH, new PartialDownloadArguments(stream), CancellationToken.None);
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
             Assert.That(stream.GetCachedPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.CachedPartialData)));
-            Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
+            Assert.That(stream.GetMemoryStreamPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.MemoryStreamPartialData)));
 
-            Http2PartialDownloadDataStream.MemoryStreamPartialData partialData = stream.GetMemoryStreamPartialData();
+            Http2PartialDownloadDataStream.FileStreamData partialData = stream.GetFileStreamData();
 
             Assert.That(partialData.stream, Is.Not.Null);
+            Assert.That(stream.underlyingStream, Is.Not.Null);
 
             Assert.That(stream.CanRead, Is.True);
             Assert.That(stream.CanSeek, Is.True);

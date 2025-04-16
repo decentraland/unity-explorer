@@ -42,14 +42,26 @@ namespace DCL.WebRequests.HTTP2
             // If the result is fully cached in the stream that was passed, return it immediately
             var partialStream = partialArgs.Stream as Http2PartialDownloadDataStream;
 
+            var uri = new Uri(commonArguments.URL);
+
             if (partialStream is { IsFullyDownloaded: true })
+            {
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"{nameof(PartialDownloadStream)} {commonArguments.URL} is already fully downloaded");
                 return partialStream;
+            }
+
+            if (uri.IsFile)
+            {
+                try { return Http2PartialDownloadDataStream.InitializeFromFile(uri); }
+                catch (Exception ex) { throw new WebRequestException(uri, ex); }
+            }
 
             // if the result is already fully cached return it immediately without creating a web request
             if (partialStream == null
-                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, HTTPCache.CalculateHash(HTTPMethods.Get, new Uri(commonArguments.URL)), out partialStream)
+                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, uri, HTTPCache.CalculateHash(HTTPMethods.Get, uri), out partialStream)
                 && partialStream!.IsFullyDownloaded)
                 return partialStream;
+
 
             // Create headers accordingly, at this point don't create a partial stream as we don't know if the endpoint actually supports "Range" requests
             long chunkStart = partialStream?.partialContentLength ?? 0;

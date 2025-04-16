@@ -6,6 +6,7 @@ using Best.HTTP.Shared.Extensions;
 using Best.HTTP.Shared.Logger;
 using Best.HTTP.Shared.PlatformSupport.FileSystem;
 using Best.HTTP.Shared.PlatformSupport.Memory;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using System;
@@ -56,10 +57,10 @@ namespace DCL.WebRequests.HTTP2
             COMPLETE_SEGMENTED_STREAM = 5,
 
             /// <summary>
-            /// File is provided directly from the file system and thus it's never partial,
-            /// BESTHttp does not provide a file stream directly so it loads it into the memory chunks
+            ///     File is provided directly from the file system and thus it's never partial,
+            ///     BESTHttp does not provide a file stream directly so it loads it into the memory chunks
             /// </summary>
-            // EMBEDDED_FILE_STREAM = 6 TODO special fast path for files
+            EMBEDDED_FILE_STREAM = 6,
         }
 
         internal const string PARTIAL_CONTENT_LENGTH_CUSTOM_HEADER = "Partial-Content-Length";
@@ -88,7 +89,9 @@ namespace DCL.WebRequests.HTTP2
         private MemoryStreamPartialData memoryStreamPartialData;
         private FileStreamData fileStreamData;
 
-        public override bool IsFullyDownloaded => opMode is Mode.COMPLETE_DATA_CACHED or Mode.COMPLETE_SEGMENTED_STREAM;
+        private bool discardOnDisposal;
+
+        public override bool IsFullyDownloaded => opMode is Mode.COMPLETE_DATA_CACHED or Mode.COMPLETE_SEGMENTED_STREAM or Mode.EMBEDDED_FILE_STREAM;
 
         internal Mode opMode { get; private set; }
 
@@ -113,7 +116,24 @@ namespace DCL.WebRequests.HTTP2
         internal ref readonly FileStreamData GetFileStreamData() =>
             ref fileStreamData;
 
-        internal static bool TryInitializeFromCache(HTTPCache cache, Hash128 requestHash, out Http2PartialDownloadDataStream? partialStream)
+        /// <summary>
+        ///     Allows to read directly from the file stream without going throguh the normal flow of the web requests
+        /// </summary>
+        internal static Http2PartialDownloadDataStream InitializeFromFile(Uri uri)
+        {
+            string filePath = uri.LocalPath;
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} initialized from the embedded file");
+
+            return new Http2PartialDownloadDataStream((int)fileStream.Length)
+            {
+                fileStreamData = new FileStreamData(fileStream),
+                opMode = Mode.EMBEDDED_FILE_STREAM,
+            };
+        }
+
+        internal static bool TryInitializeFromCache(HTTPCache cache, Uri uri, Hash128 requestHash, out Http2PartialDownloadDataStream? partialStream)
         {
             partialStream = null;
 
@@ -155,6 +175,12 @@ namespace DCL.WebRequests.HTTP2
             partialStream.opMode = partialStream.cachedPartialData.partialContentLength == fullFileSize
                 ? Mode.COMPLETE_DATA_CACHED
                 : Mode.INCOMPLETE_DATA_CACHED;
+
+            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} initialized as {partialStream.opMode} "
+                                                          + $"{BytesFormatter.Convert((ulong)partialStream.cachedPartialData.partialContentLength, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} / "
+                                                          + $"{BytesFormatter.Convert((ulong)fullFileSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)}");
+
+            ;
 
             return true;
 
@@ -432,8 +458,6 @@ namespace DCL.WebRequests.HTTP2
             ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{funcName} can't be invoked in the current state: {opMode}\n{context}");
         }
 
-        private bool discardOnDisposal;
-
         /// <summary>
         ///     Discards cached results and disposes the stream
         /// </summary>
@@ -466,6 +490,9 @@ namespace DCL.WebRequests.HTTP2
                 case Mode.WRITING_TO_SEGMENTED_STREAM:
                 case Mode.COMPLETE_SEGMENTED_STREAM:
                     memoryStreamPartialData.stream.Dispose();
+                    break;
+                case Mode.EMBEDDED_FILE_STREAM:
+                    fileStreamData.stream.Dispose();
                     break;
             }
 
@@ -639,12 +666,13 @@ namespace DCL.WebRequests.HTTP2
             set => underlyingStream.Position = value;
         }
 
-        private Stream underlyingStream => opMode switch
-                                           {
-                                               Mode.COMPLETE_DATA_CACHED => cachedPartialData.readHandler!.Value.stream,
-                                               Mode.COMPLETE_SEGMENTED_STREAM => memoryStreamPartialData.stream,
-                                               _ => throw new InvalidOperationException("The stream is not fully downloaded yet"),
-                                           };
+        internal Stream underlyingStream => opMode switch
+                                            {
+                                                Mode.COMPLETE_DATA_CACHED => cachedPartialData.readHandler!.Value.stream,
+                                                Mode.COMPLETE_SEGMENTED_STREAM => memoryStreamPartialData.stream,
+                                                Mode.EMBEDDED_FILE_STREAM => fileStreamData.stream,
+                                                _ => throw new InvalidOperationException("The stream is not fully downloaded yet"),
+                                            };
 
         public override void Flush()
         {
