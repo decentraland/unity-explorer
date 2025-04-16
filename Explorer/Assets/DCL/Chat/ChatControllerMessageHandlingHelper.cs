@@ -133,7 +133,7 @@ namespace DCL.Chat
             MarkCurrentChannelAsRead();
         }
 
-        public void MarkCurrentChannelAsRead()
+        private void MarkCurrentChannelAsRead()
         {
             if (chatController.TryGetView(out var view))
             {
