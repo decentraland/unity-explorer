@@ -87,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                             roomsPool.Release(previous);
 
                         Subscribe(newRoom);
-                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Assigned a new room {newRoom.Info.Name}");
+                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Assigned a new room {assigned.Info.Name} ");
 
                         // During the connection we skipped the connection callback, so we need to notify the subscribers
                         if (newRoom is not NullRoom)
@@ -117,7 +117,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
                                                 };
-            ReportHub.LogError(ReportCategory.LIVEKIT, $"Simulate Connection State Changed {connectionUpdate}");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Simulate Connection State Changed {connectionUpdate} {assigned.Info.Name}");
 
             // TODO check the order of these messages
             ConnectionUpdated?.Invoke(assigned, connectionUpdate);
