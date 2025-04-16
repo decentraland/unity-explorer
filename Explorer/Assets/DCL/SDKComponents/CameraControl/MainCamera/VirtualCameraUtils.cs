@@ -104,6 +104,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
             }
         }
 
+        public static bool VirtualCameraExistsInEntitiesMap(IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, CRDTEntity? cameraCRDTEntity) =>
+            cameraCRDTEntity.HasValue &&
+            entitiesMap.TryGetValue(cameraCRDTEntity.Value, out Entity archEntity);
+
         public static void ConfigureVirtualCameraFOV(in PBVirtualCamera pbVirtualCamera, in VirtualCameraComponent virtualCameraComponent)
         {
             if (!pbVirtualCamera.HasFov) return;

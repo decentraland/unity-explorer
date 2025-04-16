@@ -314,13 +314,16 @@ jobs:
           echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
           echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
 
-          case "${GITHUB_EVENT_NAME}" in
+          EVENT_NAME="${{ github.event_name }}"
+          echo "Detected event: $EVENT_NAME"
+          case "$EVENT_NAME" in
             pull_request) echo "BUILD_PREFIX=pr" >> $GITHUB_ENV ;;
             push) echo "BUILD_PREFIX=pu" >> $GITHUB_ENV ;;
             merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
             workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
             workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
-            *) echo "BUILD_PREFIX=gen" >> $GITHUB_ENV ;;
+            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
+            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
           esac
 
       - name: Upload artifact to S3

@@ -2,6 +2,10 @@
 {
     public interface IProfiler : IMemoryProfiler
     {
+        bool IsCollectingFrameData { get; }
+        void StopFrameTimeDataCollection();
+        void StartFrameTimeDataCollection();
+
         FrameTimeStats? CalculateMainThreadFrameTimesNs();
 
         (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateMainThreadHiccups();
@@ -29,5 +33,13 @@
         public ulong CurrentSceneUsedHeapSize { get; set; }
 
         public bool CurrentSceneHasStats { get; set; }
+
+        FrameTimesRecorder GpuFrameTimes { get; }
+        FrameTimesRecorder MainThreadFrameTimes { get; }
+        float PhysicsSimulationsAvgInTenFrames { get; }
+
+        void UpdateFrameTimings();
+
+        void ClearFrameTimings();
     }
 }

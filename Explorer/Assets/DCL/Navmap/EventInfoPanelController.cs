@@ -6,6 +6,7 @@ using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Utilities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -57,6 +58,7 @@ namespace DCL.Navmap
             interestedButtonController.OnButtonClicked += SetInterested;
             view.ShareButton.onClick.AddListener(Share);
             view.JumpInButton.onClick.AddListener(JumpIn);
+            view.EventsScrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Show()

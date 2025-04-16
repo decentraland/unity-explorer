@@ -102,6 +102,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             CancellationTokenSource? cancellationTokenSource = null
         )
         {
+            // Means that it has already been resolved, or we have an un-cancelled promise running that we want to keep
             if (attachment.ThumbnailAssetResult != null)
                 return;
 

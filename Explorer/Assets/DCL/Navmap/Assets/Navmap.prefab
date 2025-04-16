@@ -444,7 +444,7 @@ MonoBehaviour:
   <ClickAudio>k__BackingField: {fileID: 11400000, guid: 7b6fe3a7507b38b4cb27bf406f7d6d23, type: 2}
 --- !u!95 &2726765163011453291
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -458,6 +458,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -612,6 +613,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 816873455510436537}
     m_Modifications:
+    - target: {fileID: 913762309639761086, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}
+      propertyPath: m_text
+      value: Powered by the Decentraland Foundation
+      objectReference: {fileID: 0}
     - target: {fileID: 2005151103343429525, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}
       propertyPath: m_Color.a
       value: 0.8
@@ -699,7 +704,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8091987123767866125, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 406
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 8091987123767866125, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}
       propertyPath: m_SizeDelta.y
@@ -4575,6 +4580,10 @@ PrefabInstance:
     - target: {fileID: 4035667263217711451, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
       propertyPath: m_Name
       value: PlacesAndEventsPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 4035667263217711451, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5018670242715034790, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
       propertyPath: m_AnchorMax.y
