@@ -57,14 +57,17 @@ namespace DCL.CharacterCamera.Systems
                     dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
                     break;
                 case CameraMode.ThirdPerson:
-                    float yaw = cameraInput.Delta.x * 1 * dt;
-                    float pitch = -cameraInput.Delta.y * 1 * dt;
-                    cameraFocus.Rotate(pitch, yaw, 0, Space.Self);
-
-                    ApplyPOV(cinemachinePreset.ThirdPersonCameraData.POV, in cameraInput);
-                    break;
                 case CameraMode.SDKCamera:
-                    // CinemachineVirtualCamera tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
+                    float horizontalRotation = cameraInput.Delta.x * 3 * dt;
+                    float verticalRotation = cameraInput.Delta.y * 3 * dt;
+
+                    cameraFocus.Rotate(Vector3.up, horizontalRotation, Space.World);
+
+                    float newVerticalAngle = cameraFocus.eulerAngles.x - verticalRotation;
+                    if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
+
+                    cameraFocus.localRotation = Quaternion.Euler(newVerticalAngle, cameraFocus.eulerAngles.y, cameraFocus.eulerAngles.z);
+
                     ApplyPOV(cinemachinePreset.ThirdPersonCameraData.POV, in cameraInput);
                     break;
 

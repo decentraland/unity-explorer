@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.Global
 
             cinemachinePreset.FirstPersonCameraData.Camera.Follow = playerFocus.CameraFocus;
             cinemachinePreset.ThirdPersonCameraData.Camera.Follow = playerFocus.CameraFocus;
-            // cinemachinePreset.ThirdPersonCameraData.Camera.LookAt = playerFocus.CameraFocus;
+            cinemachinePreset.ThirdPersonCameraData.Camera.LookAt = playerFocus.CameraFocus;
             cinemachinePreset.DroneViewCameraData.Camera.Follow = playerFocus.CameraFocus;
             cinemachinePreset.DroneViewCameraData.Camera.LookAt = playerFocus.CameraFocus;
 
