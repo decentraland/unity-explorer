@@ -5,9 +5,9 @@ using System.Collections.Generic;
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
     // Reference for worst case scenarios (Using Genesis Plaza as reference):
-    // A single scene can take 300MB
-    // A single high quality LOD can take 111MB (MaxSceneSize/3 + MaxSceneSize/30)
-    // A single low quality LOD can take 10MB (MaxSceneSize/30)
+    // A single scene can take 330MB
+    // A single high quality LOD can take 121MB (MaxSceneSize/3 + MaxSceneSize/30)
+    // A single low quality LOD can take 11MB (MaxSceneSize/30)
     // To check where this values are assigned, look at SceneDefinitionComponent.cs
     // The following values take into consideration the 'worst scenarios'. Since all scenes dont take do the worst scenario, more will be loaded. This just ensures the upper limit
     public class SceneLoadingMemoryConstants
