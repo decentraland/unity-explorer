@@ -1,27 +1,36 @@
-using DCL.FeatureFlags;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.SceneLifeCycle.SceneDefinition;
-using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
+    // Reference for worst case scenarios (Using Genesis Plaza as reference):
+    // A single scene can take 300MB
+    // A single high quality LOD can take 111MB (MaxSceneSize/3 + MaxSceneSize/30)
+    // A single low quality LOD can take 10MB (MaxSceneSize/30)
+    // To check where this values are assigned, look at SceneDefinitionComponent.cs
+    // The following values take into consideration the 'worst scenarios'. Since all scenes dont take do the worst scenario, more will be loaded. This just ensures the upper limit
+    public class SceneLoadingMemoryConstants
+    {
+        public static float MAX_SCENE_SIZE = 300 * RUNTIME_MEMORY_COEFFICENT;
+        public static float MAX_SCENE_LOD = (MAX_SCENE_SIZE / LOD_REDUCTION) + (MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION);
+        public static float MAX_SCENE_LOWQUALITY_LOD = MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION;
+
+        public static float RUNTIME_MEMORY_COEFFICENT = 1.1f;
+        public static float LOD_REDUCTION = 3;
+        public static float QUALITY_REDUCTED_LOD_REDUCTION = 30;
+    }
+
     public class SceneLoadingLimit
     {
-        // Reference for worst case scenarios (Using Genesis Plaza as reference):
-        // A single scene can take 330MB
-        // A single high quality LOD can take 121MB
-        // A single low quality LOD can take 11MB
-        // To check where this values are assigned, look at SceneDefinitionComponent.cs
-        // The following values take into consideration the 'worst scenarios'. Since all scenes dont take do the worst scenario, more will be loaded. This just ensures the upper limit
+
         private readonly Dictionary<SceneLimitsKey, SceneLimits> sceneLimits = new ()
         {
             // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 561MB
-            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(330, 121, 110) },
+            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE, SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // 3 scenes, 5 high quality LODs, 30 low quality LODs. Limit: 1925MB
-            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits(990, 605, 330) },
+            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits(3 * SceneLoadingMemoryConstants.MAX_SCENE_SIZE, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOD, 30 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // No limits.
             { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
