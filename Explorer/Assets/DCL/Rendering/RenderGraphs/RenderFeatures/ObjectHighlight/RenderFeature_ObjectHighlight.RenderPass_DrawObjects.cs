@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
-using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 using DCL.Diagnostics;
 using System.Collections.Generic;
@@ -25,27 +24,6 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                 internal int cullingMask;
             }
 
-            class RenderObjectsPassData
-            {
-                internal IReadOnlyDictionary<Renderer, ObjectHighlightSettings> highlightRenderers;
-                internal Material highLightInputMaterial;
-                internal int cullingMask;
-                internal bool clear;
-            }
-
-            class BlurPassData
-            {
-                internal TextureHandle PingSource;
-                internal TextureHandle PongSource;
-                internal Material highlightInputBlurMaterial;
-            }
-
-            class OutputPassData
-            {
-                internal Material highlightOutputMaterial;
-                internal TextureHandle Source;
-            }
-
             private static readonly int highlightColour = Shader.PropertyToID("_HighlightColour");
             private static readonly int outlineWidth = Shader.PropertyToID("_Outline_Width");
             private static readonly int highlightObjectOffset = Shader.PropertyToID("_HighlightObjectOffset");
@@ -63,24 +41,12 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                 HighlightOutput = 0,
             }
 
-            private const string PROFILER_TAG_ADDITIVE = "Highlight Additive";
-            private const string PROFILER_TAG_SUBTRACTIVE = "Highlight Subtractive";
-            private const string PROFILER_TAG_BLUR = "Highlight Blur";
-            private const string PROFILER_TAG_SECOND_COPY = "Highlight Blur Second Copy";
-            private const string PROFILER_TAG_FIRST_COPY = "Highlight Blur First Copy";
-            private const string PROFILER_TAG_OUTPUT = "Object Highlight Output";
-
-            //private RTHandle destinationHandle;
             private readonly ShaderTagId m_ShaderTagId = new ("Highlight");
             private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_InputPass", ReportHint.SessionStatic);
 
             public Material m_highLightInputMaterial;
             public Material m_highlightInputBlurMaterial;
             public Material m_highlightOutputMaterial;
-
-            // private TextureHandle highLightRTHandle_Colour;
-            // private TextureHandle highLightRTHandle_Depth;
-            // private TextureHandle highLightRTHandle_Colour_Blur_PingPong;
 
             private RenderTextureDescriptor highLightRTDescriptor_Colour;
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
@@ -89,11 +55,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
             private Dictionary<string, ProfilingSampler> m_ProfilingSamplers;
 
-            //private FilteringSettings m_FilteringSettings;
-
             public RenderPass_DrawObjects(Dictionary<Renderer, ObjectHighlightSettings> highLightRenderers)
             {
-                //m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
                 m_HighLightRenderers = highLightRenderers;
                 m_ProfilingSamplers = new Dictionary<string, ProfilingSampler>();
 
@@ -221,7 +184,6 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                         context.cmd.SetRenderTarget(data.BackBufferColourSource, data.BackBufferDepthSource);
                         CoreUtils.DrawFullScreen(cmd, data.highlightOutputMaterial, properties: null, (int)ShaderPasses.HighlightOutput);
                     });
-
                 }
             }
 

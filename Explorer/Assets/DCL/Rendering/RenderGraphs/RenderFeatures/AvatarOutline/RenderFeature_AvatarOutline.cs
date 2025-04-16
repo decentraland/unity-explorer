@@ -16,18 +16,10 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline
             name = "RendererFeature_AvatarOutline";
 
             // Pass in constructor variables which don't/shouldn't need to be updated every frame.
-            m_OutlineDrawPass = new RenderPass_OutlineDraw(m_AvatarOutlineRenderers);
-            m_OutlineDrawPass.renderPassEvent = RenderPassEvent.BeforeRenderingOpaques;;
-        }
-
-        public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
-        {
-
-        }
-
-        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
-        {
-
+            m_OutlineDrawPass = new RenderPass_OutlineDraw(m_AvatarOutlineRenderers)
+            {
+                renderPassEvent = RenderPassEvent.BeforeRenderingOpaques,
+            };
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)

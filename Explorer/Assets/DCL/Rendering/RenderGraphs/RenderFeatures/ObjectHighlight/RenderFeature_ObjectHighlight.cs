@@ -1,11 +1,7 @@
 ﻿using DCL.Diagnostics;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering.RenderGraphModule;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Rendering.RenderGraphModule.Util;
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 {
@@ -17,24 +13,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
     public partial class RenderFeature_ObjectHighlight : ScriptableRendererFeature
     {
-        // The ContextItem used to store the texture reference at.
-        public class TexRefData : ContextItem
-        {
-            // The texture reference variable.
-            public TextureHandle textureColour = TextureHandle.nullHandle;
-            public TextureHandle textureDepth = TextureHandle.nullHandle;
-
-            // Reset function required by ContextItem. It should reset all variables not carried
-            // over to next frame.
-            public override void Reset()
-            {
-                // We should always reset texture handles since they are only vaild for the current frame.
-                textureColour = TextureHandle.nullHandle;
-                textureDepth = TextureHandle.nullHandle;
-            }
-        }
-
-        private static readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
+        private static readonly ReportData m_ReportData = new ("RenderFeature_ObjectHighlight", ReportHint.SessionStatic);
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> m_HighLightRenderers = new ();
 
         public static readonly IHighlightedObjects HighlightedObjects = new LogHighlightedObjects(

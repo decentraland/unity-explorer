@@ -80,12 +80,10 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.SkyboxEnvironmentProbe
                     for (var index = 0; index < FACES.Count; index++)
                     {
                         CubemapFace face = FACES[index];
-                        
                         context.cmd.SetRenderTarget(data.skyBoxCubeMapRTHandle, 0, face);
-                        //data.materialPropertyBlock.SetFloat(cubeMapFacePropId, (int)face);
                         data.newMaterial.SetFloat(cubeMapFacePropId, (int)face);
+
                         // Draw fullscreen triangle
-                        //CoreUtils.DrawFullScreen(cmd, data.newMaterial, data.materialPropertyBlock);
                         CoreUtils.DrawFullScreen(cmd, data.newMaterial);
                     }
                 });
