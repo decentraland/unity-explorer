@@ -75,8 +75,8 @@ namespace DCL.InWorldCamera.Systems
             Vector2 targetRotation = lookInput * settings.RotationSpeed;
             aim.Current = Vector2.SmoothDamp(aim.Current, targetRotation, ref aim.Velocity, settings.RotationDamping);
 
-            float horizontalRotation = aim.Current.x * deltaTime;
-            float verticalRotation = Mathf.Clamp(aim.Current.y * deltaTime, -90, 90);
+            float horizontalRotation = Mathf.Clamp(aim.Current.x * deltaTime, -settings.MaxRotationPerFrame, settings.MaxRotationPerFrame);
+            float verticalRotation = Mathf.Clamp(aim.Current.y * deltaTime, -settings.MaxRotationPerFrame, settings.MaxRotationPerFrame);
 
             target.Rotate(Vector3.up, horizontalRotation, Space.World);
 
