@@ -117,6 +117,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
                                                 };
+            ReportHub.LogError(ReportCategory.LIVEKIT, $"Simulate Connection State Changed {connectionUpdate}");
 
             // TODO check the order of these messages
             ConnectionUpdated?.Invoke(assigned, connectionUpdate);
