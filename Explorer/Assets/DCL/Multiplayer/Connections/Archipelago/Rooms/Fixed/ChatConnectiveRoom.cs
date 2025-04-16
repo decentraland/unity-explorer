@@ -175,7 +175,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StopAsync");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
-            room = new InteriorRoom();
+            
+            // Properly transition to a null room to handle event unsubscription
+            await room.SwapRoomsAsync(RoomSelection.NEW, room.Current(), NullRoom.INSTANCE, async (oldRoom, newRoom, token) =>
+            {
+                if (oldRoom != null)
+                {
+                    await oldRoom.DisconnectAsync();
+                }
+            }, CancellationToken.None);
+
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
@@ -253,7 +262,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 return (connectResult);
             }
 
-            await room.SwapRoomsAsync(RoomSelection.NEW, NullRoom.INSTANCE, newRoom, null, ct);
+            // Add proper transition handler to manage event subscriptions
+            await room.SwapRoomsAsync(RoomSelection.NEW, room.Current(), newRoom, async (oldRoom, newRoom, token) =>
+            {
+                if (oldRoom != null)
+                {
+                    await oldRoom.DisconnectAsync();
+                }
+                // Re-subscribe to necessary events on the new room
+                if (newRoom != null && newRoom != NullRoom.INSTANCE)
+                {
+                    await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+                }
+            }, ct);
 
             return (connectResult);
         }
