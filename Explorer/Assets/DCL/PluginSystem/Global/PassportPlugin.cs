@@ -65,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
 
+        private ProfileNameEditorController? profileNameEditorController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -137,6 +138,9 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             passportController?.Dispose();
+
+            if (profileNameEditorController != null)
+                profileNameEditorController.NameChangedWithProfile -= BridgeProfileNameChange;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -196,10 +200,17 @@ namespace DCL.PluginSystem.Global
 
             ProfileNameEditorView profileNameEditorView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.NameEditorPrefab, ct)).Value.GetComponent<ProfileNameEditorView>();
 
-            mvcManager.RegisterController(new ProfileNameEditorController(
+            profileNameEditorController = new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource));
+                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource);
+
+            mvcManager.RegisterController(profileNameEditorController);
+
+            profileNameEditorController.NameChangedWithProfile += BridgeProfileNameChange;
         }
+
+        private void BridgeProfileNameChange(Profile profile) =>
+            viewDependencies.ProfileNameChanged?.Invoke(profile);
 
         public class PassportSettings : IDCLPluginSettings
         {

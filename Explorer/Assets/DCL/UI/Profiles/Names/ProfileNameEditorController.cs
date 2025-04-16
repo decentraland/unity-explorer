@@ -35,6 +35,7 @@ namespace DCL.UI.ProfileNames
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action? NameChanged;
+        public event Action<Profile?>? NameChangedWithProfile;
         public event Action? NameClaimRequested;
 
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
@@ -241,8 +242,9 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
+                        NameChangedWithProfile?.Invoke(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
@@ -274,8 +276,9 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
+                        NameChangedWithProfile?.Invoke(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }

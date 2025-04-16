@@ -30,6 +30,18 @@ namespace DCL.UI.ProfileElements
             this.viewDependencies = viewDependencies;
         }
 
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            viewDependencies.ProfileNameChanged -= ProfileNameChanged;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewDependencies.ProfileNameChanged += ProfileNameChanged;
+        }
+
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
@@ -41,19 +53,32 @@ namespace DCL.UI.ProfileElements
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
+        private void ProfileNameChanged(Profile? profile)
+        {
+            if (profile == null) return;
+
+            SetupProfileData(profile);
+            viewInstance!.ProfilePictureView.Setup(profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+        }
+
         private async UniTaskVoid LoadAsync(CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
             if (profile == null) return;
 
+            SetupProfileData(profile);
+
+            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
+        }
+
+        private void SetupProfileData(Profile profile)
+        {
             if (viewInstance!.NameLabel != null) viewInstance.NameLabel.text = profile.ValidatedName ?? GUEST_NAME;
 
             if (viewInstance.AddressLabel != null)
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
-
-            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
     }
 }
