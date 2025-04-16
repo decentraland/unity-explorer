@@ -65,6 +65,8 @@ namespace DCL.Chat
 
         public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> openConversations)
         {
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Initialize Async");
+
             SubscribeToEvents();
             isDisposed = false;
 
@@ -399,6 +401,7 @@ namespace DCL.Chat
 
         private void SubscribeToEvents()
         {
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Subscribe To Events");
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
             participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
@@ -413,6 +416,7 @@ namespace DCL.Chat
 
         private void UnsubscribeFromEvents()
         {
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Unsubscribe to events");
             settingsAsset.PrivacySettingsSet -= OnPrivacySettingsSet;
             participantsHub.UpdatesFromParticipant -= OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser -= OnYouBlockedByUser;

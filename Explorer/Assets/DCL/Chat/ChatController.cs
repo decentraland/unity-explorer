@@ -6,6 +6,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -245,6 +246,8 @@ namespace DCL.Chat
 #region View Show and Close
         protected override void OnViewShow()
         {
+
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow");
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -276,12 +279,14 @@ namespace DCL.Chat
             if (chatStorage != null)
                 await chatStorage.LoadAllChannelsWithoutMessagesAsync();
 
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "InitializeChannelsAndConversations");
             var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
         protected override void OnViewClose()
         {
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewClose");
             UnsubscribeFromEvents();
             memberListHelper.StopUpdating();
             Dispose();
