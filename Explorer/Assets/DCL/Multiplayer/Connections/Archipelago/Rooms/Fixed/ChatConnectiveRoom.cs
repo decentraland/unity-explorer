@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to room started: {connectionString}");
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Trying to connect to room started: {connectionString}");
 
             var credentials = new ConnectionStringCredentials(connectionString);
 
@@ -86,12 +86,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             if (connectResult == false)
             {
-                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
+                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
                 return false;
             }
 
             roomState.Set(IConnectiveRoom.State.Running);
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to new room finished successfully {connectionString}");
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Trying to connect to new room finished successfully {connectionString}");
 
             return true;
         }
@@ -127,6 +127,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 return;
             }
 
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - ActivateAsync");
+
             Activated = true;
             await this.StartIfNotAsync();
         }
@@ -138,6 +140,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} is already deactivated");
                 return;
             }
+
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - DeactivateAsync");
 
             Activated = false;
             await this.StopIfNotAsync();
@@ -154,6 +158,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StartAsync");
+
             attemptToConnectState.Set(AttemptToConnectState.None);
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
@@ -165,6 +171,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
+
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StopAsync");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
             room = new InteriorRoom();
@@ -210,23 +218,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) => UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
 
-        protected async UniTask DisconnectCurrentRoomAsync(bool connectionIsNoLongerRequired, CancellationToken token)
-        {
-            ReportHub
-               .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{logPrefix} - Trying to disconnect current room started");
-
-            roomState.Set(IConnectiveRoom.State.Stopping);
-            room = new InteriorRoom();
-            roomState.Set(IConnectiveRoom.State.Stopped);
-
-            if (connectionIsNoLongerRequired)
-                attemptToConnectState.Set(AttemptToConnectState.NoConnectionRequired);
-
-            ReportHub
-               .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{logPrefix} - Trying to disconnect current room finished");
-        }
 
         /// <summary>
         ///     Disconnect the previous room, assigns a new one, and connects to it<br />

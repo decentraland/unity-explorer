@@ -87,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                             roomsPool.Release(previous);
 
                         Subscribe(newRoom);
-                        ReportHub.LogError(ReportCategory.LIVEKIT, $"Assigned a new room {newRoom.Info.Name}");
+                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Assigned a new room {newRoom.Info.Name}");
 
                         // During the connection we skipped the connection callback, so we need to notify the subscribers
                         if (newRoom is not NullRoom)
@@ -126,7 +126,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Subscribe(IRoom room)
         {
-            ReportHub.LogError(ReportCategory.LIVEKIT, $"Subscribed to room events {room.Info.Name}");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Subscribed to room events {room.Info.Name}");
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
@@ -148,7 +148,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Unsubscribe(IRoom previous)
         {
-            ReportHub.LogError(ReportCategory.LIVEKIT, $"Unsubscribed to room events {previous}");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Unsubscribed to room events {previous}");
 
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
@@ -167,14 +167,14 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
         {
-            ReportHub.LogError(ReportCategory.LIVEKIT, $"RoomOnConnectionUpdated {room.Info.Name} {connectionupdate}");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"RoomOnConnectionUpdated {room.Info.Name} {connectionupdate}");
 
             ConnectionUpdated?.Invoke(room, connectionupdate);
         }
 
         private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
         {
-            ReportHub.LogError(ReportCategory.LIVEKIT, $"RoomOnConnectionStateChanged {connectionstate}");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"RoomOnConnectionStateChanged {connectionstate}");
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 
