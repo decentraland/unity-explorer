@@ -11,6 +11,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         NONE = 0,
         GATEKEEPER = 1,
         ISLAND = 1 << 1,
-        CHAT = 1 << 2,
+        PRIVATE_CONVERSATIONS = 1 << 2,
     }
 }

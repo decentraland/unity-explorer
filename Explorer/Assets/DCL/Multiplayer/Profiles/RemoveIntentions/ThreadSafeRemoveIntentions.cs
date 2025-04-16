@@ -21,8 +21,10 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
 
             this.roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnParticipantUpdateFromIsland;
             this.roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnParticipantUpdateFromScene;
+            this.roomHub.PrivateConversationsRoom().Participants.UpdatesFromParticipant += OnParticipantUpdateFromPrivateConversations;
 
             this.roomHub.IslandRoom().ConnectionUpdated += OnConnectionUpdateFromIsland;
+            this.roomHub.PrivateConversationsRoom().ConnectionUpdated += OnConnectionUpdateFromPrivateConversations;
             this.roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdateFromScene;
         }
 
@@ -37,6 +39,12 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             OnConnectionUpdated(room, connectionupdate, RoomSource.GATEKEEPER);
         }
 
+        private void OnConnectionUpdateFromPrivateConversations(IRoom room, ConnectionUpdate connectionupdate)
+        {
+            OnConnectionUpdated(room, connectionupdate, RoomSource.PRIVATE_CONVERSATIONS);
+        }
+
+
         private void OnParticipantUpdateFromIsland(Participant participant, UpdateFromParticipant update)
         {
             ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.ISLAND);
@@ -46,6 +54,12 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         {
             ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.GATEKEEPER);
         }
+
+        private void OnParticipantUpdateFromPrivateConversations(Participant participant, UpdateFromParticipant update)
+        {
+            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.PRIVATE_CONVERSATIONS);
+        }
+
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, RoomSource roomSource)
         {
@@ -71,9 +85,11 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromIsland;
             roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromScene;
+            roomHub.PrivateConversationsRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromPrivateConversations;
 
             roomHub.IslandRoom().ConnectionUpdated -= OnConnectionUpdateFromIsland;
             roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdateFromScene;
+            roomHub.PrivateConversationsRoom().ConnectionUpdated -= OnConnectionUpdateFromPrivateConversations;
         }
 
         public OwnedBunch<RemoveIntention> Bunch() =>
