@@ -51,8 +51,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             // Following the limits from the docs. One parcel gives 15MB, capped at 300MB. Im considering here the 'worst scenarios' possible
             // https://docs.decentraland.org/creator/development-guide/sdk7/scene-limitations/#scene-limitation-rules
-            // We add an estimation factor; assets loaded in memory do not have the same size as in disk
-            EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, 330) * 1.1f;
+            // We add an estimation factor (1.1f); assets loaded in memory do not have the same size as in disk
+            EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, 300) * 1.1f;
 
             // Another assumption. A High quality LOD is composed of the high quality asset and the low quality asset.
             EstimatedMemoryUsageForLODMB = (EstimatedMemoryUsageInMB / 3) + (EstimatedMemoryUsageInMB / 30);

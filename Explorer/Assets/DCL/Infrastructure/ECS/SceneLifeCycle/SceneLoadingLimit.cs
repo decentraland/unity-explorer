@@ -11,17 +11,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     {
         // Reference for worst case scenarios (Using Genesis Plaza as reference):
         // A single scene can take 330MB
-        // A single high quality LOD can take 44MB
+        // A single high quality LOD can take 121MB
         // A single low quality LOD can take 11MB
         // To check where this values are assigned, look at SceneDefinitionComponent.cs
         // The following values take into consideration the 'worst scenarios'. Since all scenes dont take do the worst scenario, more will be loaded. This just ensures the upper limit
         private readonly Dictionary<SceneLimitsKey, SceneLimits> sceneLimits = new ()
         {
-            // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 440MB
-            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(330, 11, 110) },
+            // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 561MB
+            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(330, 121, 110) },
 
-            // 3 scenes, 10 high quality LODs, 10 low quality LODs. Limit: 1890MB
-            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits(990, 450, 450) },
+            // 3 scenes, 5 high quality LODs, 30 low quality LODs. Limit: 1925MB
+            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits(990, 605, 330) },
 
             // No limits.
             { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
