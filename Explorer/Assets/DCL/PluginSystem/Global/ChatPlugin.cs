@@ -138,8 +138,6 @@ namespace DCL.PluginSystem.Global
             chatController = new ChatController(
                 () =>
                 {
-                    ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, "Chat Controller created View");
-
                     ChatView? view = mainUIView.ChatView;
                     view.gameObject.SetActive(true);
                     return view;
