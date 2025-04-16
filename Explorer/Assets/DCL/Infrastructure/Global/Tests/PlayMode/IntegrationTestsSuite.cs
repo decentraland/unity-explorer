@@ -27,6 +27,7 @@ using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
@@ -67,7 +68,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), dclUrls, Substitute.For<IDebugContainerBuilder>(), false, ct),
+                await WebRequestsContainer.CreateAsync(Substitute.For<IAppArgs>(), globalSettingsContainer, new IWeb3IdentityCache.Default(), dclUrls, Substitute.For<IDebugContainerBuilder>(), false, ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,

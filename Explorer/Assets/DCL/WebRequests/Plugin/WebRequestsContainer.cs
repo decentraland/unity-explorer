@@ -4,12 +4,14 @@ using Best.HTTP.Shared.Logger;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
+using Global.AppArgs;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -31,7 +33,7 @@ namespace DCL.WebRequests
             [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
         }
 
-        public WebRequestsMode WebRequestsMode => settings.WebRequestsMode;
+        public WebRequestsMode WebRequestsMode { get; private set; }
 
         public IWebRequestController WebRequestController { get; private set; } = null!;
 
@@ -42,6 +44,7 @@ namespace DCL.WebRequests
         private RequestHub requestHub = null!;
 
         public static async UniTask<WebRequestsContainer> CreateAsync(
+            IAppArgs appArgs,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IDecentralandUrlsSource urlsSource,
@@ -52,6 +55,22 @@ namespace DCL.WebRequests
         {
             var container = new WebRequestsContainer();
             await settingsContainer.InitializePluginAsync(container, ct);
+
+            const string CLI_ARG_NAME = "web_requests_mode";
+
+            // Resolve Web Requests Mode
+            if (appArgs.TryGetValue(CLI_ARG_NAME, out string? webRequestsMode))
+            {
+                if (Enum.TryParse(webRequestsMode, true, out WebRequestsMode mode))
+                    container.WebRequestsMode = mode;
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Web Requests Mode {webRequestsMode} is not valid. Defaulting to HTTP2.");
+                    container.WebRequestsMode = WebRequestsMode.HTTP2;
+                }
+            }
+            else
+                container.WebRequestsMode = WebRequestsMode.HTTP2;
 
             HTTPManager.Logger.Level = Loglevels.Warning;
 
@@ -175,7 +194,6 @@ namespace DCL.WebRequests
                                               }),
                                           new DebugHintDef("Sequential"));
             }
-
         }
 
         public void SetKTXEnabled(bool enabled)
