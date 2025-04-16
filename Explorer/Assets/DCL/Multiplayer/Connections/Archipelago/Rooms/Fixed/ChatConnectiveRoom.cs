@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private CancellationTokenSource? cancellationTokenSource;
-        private InteriorRoom room = new ();
+        private readonly InteriorRoom room = new ();
         private readonly ObjectPool<IRoom> roomPool = new (
             createFunc: () => new LogRoom(new Room(
                 new ArrayMemoryPool(),
@@ -67,10 +67,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
-
         protected UniTask PrewarmAsync(CancellationToken token) =>
             UniTask.CompletedTask;
-
 
         protected async UniTask CycleStepAsync(CancellationToken token)
         {
@@ -97,7 +95,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            bool connectResult = await CreateNewRoomAsync(credentials, token);
+            bool connectResult = await ConnectToRoomAsync(credentials, token);
 
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
             attemptToConnectState.Set(connectionState);
@@ -114,6 +112,29 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             return true;
         }
 
+        private async UniTask<bool> ConnectToRoomAsync<T>(T credentials, CancellationToken ct)
+            where T: ICredentials
+        {
+            try
+            {
+                IRoom newRoom = roomPool.Get();
+                bool connectResult = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
+
+                if (!connectResult)
+                {
+                    roomPool.Release(newRoom);
+                    return false;
+                }
+
+                await room.SwapRoomsAsync(RoomSelection.NEW, room.assigned, newRoom, roomPool, ct);
+                return true;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Connection failed: {e}");
+                return false;
+            }
+        }
 
         [Serializable]
         private struct FixedMetadata
@@ -194,15 +215,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StopAsync");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
-
-            // Properly transition to a null room to handle event unsubscription
-            await room.SwapRoomsAsync(RoomSelection.NEW, room, NullRoom.INSTANCE, roomPool, CancellationToken.None);
-
+            await room.ResetRoom(roomPool, CancellationToken.None);
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
-
 
         private async UniTaskVoid RunAsync(CancellationToken token)
         {
@@ -239,40 +256,5 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         }
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) => UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
-
-
-        /// <summary>
-        ///     Disconnect the previous room, assigns a new one, and connects to it<br />
-        ///     This way the flow of events is preserved so room status will be propagated properly to the subscribers
-        /// </summary>
-        /// <returns>Previous room</returns>
-        private async UniTask<bool> CreateNewRoomAsync<T>(T credentials, CancellationToken ct)
-            where T: ICredentials
-        {
-            IRoom newRoom = roomPool.Get();
-
-            bool connectResult;
-            try
-            {
-                connectResult = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-            }
-            catch (Exception)
-            {
-                roomPool.Release(newRoom);
-                throw;
-            }
-
-            if (connectResult == false)
-            {
-                roomPool.Release(newRoom);
-                return (connectResult);
-            }
-
-            // Add proper transition handler to manage event subscriptions
-            await room.SwapRoomsAsync(RoomSelection.NEW, room, newRoom, roomPool, ct);
-
-            return (connectResult);
-        }
-
     }
 }
