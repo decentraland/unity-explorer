@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -127,6 +128,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 }
 
                 await room.SwapRoomsAsync(RoomSelection.NEW, room.assigned, newRoom, roomPool, ct);
+
+                if (newRoom is not NullRoom)
+                {
+                    room.SimulateConnectionStateChanged();
+                }
+
                 return true;
             }
             catch (Exception e)
@@ -215,7 +222,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StopAsync");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
-            await room.ResetRoom(roomPool, CancellationToken.None);
+
+            await room.SwapRoomsAsync(RoomSelection.NEW, room.assigned, NullRoom.INSTANCE, roomPool, CancellationToken.None);
+
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
@@ -229,8 +238,23 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             while (token.IsCancellationRequested == false)
             {
-                await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
-                await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
+                try
+                {
+                    await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
+
+                    if (room.assigned.Info.ConnectionState is ConnectionState.ConnDisconnected)
+                    {
+                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Detected disconnection, attempting to reconnect");
+                        roomState.Set(IConnectiveRoom.State.Stopped);
+                    }
+
+                    await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Run loop error: {e}");
+                    await RecoveryDelayAsync(token);
+                }
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
