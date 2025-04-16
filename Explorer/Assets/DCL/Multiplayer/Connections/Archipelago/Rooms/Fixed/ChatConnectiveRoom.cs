@@ -1,77 +1,29 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Credentials;
-using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
-using LiveKit.Internal;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
-using LiveKit.Rooms;
-using LiveKit.Rooms.ActiveSpeakers;
-using LiveKit.Rooms.DataPipes;
-using LiveKit.Rooms.Info;
-using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.Participants.Factory;
-using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Pool;
-using Utility;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class ChatConnectiveRoom : IActivatableConnectiveRoom
+    public class ChatConnectiveRoom : ConnectiveRoom, IActivatableConnectiveRoom
     {
-        private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
-        private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
-        private readonly string logPrefix;
-        private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
-        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
-        private CancellationTokenSource? cancellationTokenSource;
-        private readonly InteriorRoom room = new ();
-        private readonly ObjectPool<IRoom> roomPool = new (
-            createFunc: () => new LogRoom(new Room(
-                new ArrayMemoryPool(),
-                new DefaultActiveSpeakers(),
-                new ParticipantsHub(),
-                new TracksFactory(),
-                new FfiHandleFactory(),
-                new ParticipantFactory(),
-                new TrackPublicationFactory(),
-                new DataPipe(),
-                new MemoryRoomInfo())),
-            actionOnGet: null,
-            actionOnRelease: room => room.DisconnectAsync(CancellationToken.None),
-            actionOnDestroy: null,
-            defaultCapacity: 10,
-            maxSize: 100
-        );
 
         public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-            logPrefix = GetType().Name;
         }
 
-        public IConnectiveRoom.State CurrentState() => roomState.Value();
-        public IRoom Room() => room;
-        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
-
-        protected UniTask PrewarmAsync(CancellationToken token) =>
+        protected override UniTask PrewarmAsync(CancellationToken token) =>
             UniTask.CompletedTask;
 
-        protected async UniTask CycleStepAsync(CancellationToken token)
+        protected override async UniTask CycleStepAsync(CancellationToken token)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
             {
@@ -88,71 +40,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_CHAT_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
-        }
-
-        private async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
-        {
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Trying to connect to room started: {connectionString}");
-
-            var credentials = new ConnectionStringCredentials(connectionString);
-
-            bool connectResult = await ConnectToRoomAsync(credentials, token);
-
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
-            attemptToConnectState.Set(connectionState);
-
-            if (connectResult == false)
-            {
-                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
-                return false;
-            }
-
-            roomState.Set(IConnectiveRoom.State.Running);
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Trying to connect to new room finished successfully {connectionString}");
-
-            return true;
-        }
-
-        private async UniTask<bool> ConnectToRoomAsync<T>(T credentials, CancellationToken ct)
-            where T: ICredentials
-        {
-            try
-            {
-                IRoom newRoom = roomPool.Get();
-                bool connectResult = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-
-                if (!connectResult)
-                {
-                    roomPool.Release(newRoom);
-                    return false;
-                }
-
-                if (room.assigned != NullRoom.INSTANCE)
-                {
-                    try
-                    {
-                        await room.assigned.DisconnectAsync(ct);
-                    }
-                    catch (Exception e)
-                    {
-                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error disconnecting previous room: {e}");
-                    }
-                }
-
-                room.Assign(newRoom, out _);
-
-                ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Forcing connection state notifications");
-                room.SimulateConnectionStateChanged();
-
-                ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Connected with {room.Participants.RemoteParticipantIdentities().Count} remote participants");
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Connection failed: {e}");
-                return false;
-            }
         }
 
         [Serializable]
@@ -185,8 +72,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 return;
             }
 
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - ActivateAsync");
-
             Activated = true;
             await this.StartIfNotAsync();
         }
@@ -199,219 +84,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 return;
             }
 
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - DeactivateAsync");
-
             Activated = false;
-            
-            try
-            {
-                await this.StopIfNotAsync();
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during deactivation: {e}");
-                // Force disconnect as fallback
-                ForceDisconnect();
-            }
+            await this.StopIfNotAsync();
         }
-
-        public void Dispose()
-        {
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Dispose called, ensuring proper disconnection");
-            
-            try
-            {
-                // Set state to prevent further reconnections
-                roomState.Set(IConnectiveRoom.State.Stopping);
-                
-                // Cancel any pending operations
-                cancellationTokenSource.SafeCancelAndDispose();
-                cancellationTokenSource = null;
-                
-                // Force immediate disconnection - this MUST be synchronous to work on application close
-                if (room.assigned != null && room.assigned != NullRoom.INSTANCE)
-                {
-                    try
-                    {
-                        // Try to disconnect synchronously
-                        var disconnectTask = room.assigned.DisconnectAsync(CancellationToken.None);
-                        
-                        // Wait for disconnection to complete (synchronously)
-                        if (!disconnectTask.IsCompleted)
-                        {
-                            disconnectTask.GetAwaiter().GetResult();
-                        }
-                        
-                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Successfully disconnected from room during disposal");
-                    }
-                    catch (Exception e)
-                    {
-                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during room disconnection in Dispose: {e}");
-                    }
-                }
-                
-                // Clear room reference
-                try 
-                {
-                    room.Assign(NullRoom.INSTANCE, out _);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error assigning NullRoom in Dispose: {e}");
-                }
-                
-                // Dispose the room pool
-                try
-                {
-                    roomPool.Dispose();
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error disposing room pool: {e}");
-                }
-                
-                roomState.Set(IConnectiveRoom.State.Stopped);
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Unhandled error during Dispose: {e}");
-            }
-            
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Dispose completed");
-        }
-
-        private void ForceDisconnect()
-        {
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Force disconnecting room");
-            
-            try
-            {
-                // Set state immediately to prevent reconnection attempts
-                roomState.Set(IConnectiveRoom.State.Stopping);
-                
-                // Force immediate disconnection
-                if (room.assigned != NullRoom.INSTANCE)
-                {
-                    // Use sync version if available, otherwise use async without await
-                    try 
-                    {
-                        room.assigned.DisconnectAsync(CancellationToken.None).GetAwaiter().GetResult();
-                    }
-                    catch (Exception e)
-                    {
-                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during sync disconnection: {e}");
-                        // If immediate disconnection fails, at least try to fire it off
-                        room.assigned.DisconnectAsync(CancellationToken.None);
-                    }
-                }
-                
-                // Directly assign null room
-                room.Assign(NullRoom.INSTANCE, out _);
-                roomState.Set(IConnectiveRoom.State.Stopped);
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during force disconnect: {e}");
-            }
-        }
-
-        public async UniTask<bool> StartAsync()
-        {
-            if (CurrentState() is not IConnectiveRoom.State.Stopped)
-                throw new InvalidOperationException("Room is already running");
-
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StartAsync");
-
-            attemptToConnectState.Set(AttemptToConnectState.None);
-            roomState.Set(IConnectiveRoom.State.Starting);
-            RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
-            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
-        }
-
-        public virtual async UniTask StopAsync()
-        {
-            if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
-                throw new InvalidOperationException("Room is already stopped");
-
-            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StopAsync");
-
-            roomState.Set(IConnectiveRoom.State.Stopping);
-
-            try
-            {
-                if (room.assigned != NullRoom.INSTANCE)
-                {
-                    await room.assigned.DisconnectAsync(CancellationToken.None);
-                }
-                
-                room.Assign(NullRoom.INSTANCE, out _);
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error stopping room: {e}");
-            }
-
-            roomState.Set(IConnectiveRoom.State.Stopped);
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = null;
-        }
-
-        private async UniTaskVoid RunAsync(CancellationToken token)
-        {
-            roomState.Set(IConnectiveRoom.State.Starting);
-
-            await ExecuteWithRecoveryAsync(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
-
-            while (token.IsCancellationRequested == false)
-            {
-                try
-                {
-                    await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
-
-                    var currentState = room.assigned.Info.ConnectionState;
-                    if (currentState is ConnectionState.ConnDisconnected || currentState is ConnectionState.ConnReconnecting)
-                    {
-                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Detected disconnection state {currentState}, attempting to reconnect");
-                        roomState.Set(IConnectiveRoom.State.Stopped);
-                    }
-                    else if (currentState is ConnectionState.ConnConnected)
-                    {
-                        int participantCount = room.Participants.RemoteParticipantIdentities().Count;
-                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Room status: {currentState} with {participantCount} participants");
-                    }
-
-                    await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Run loop error: {e}");
-                    await RecoveryDelayAsync(token);
-                }
-            }
-
-            connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        }
-
-        private async UniTask ExecuteWithRecoveryAsync(Func<CancellationToken, UniTask> func, string funcName, IConnectiveRoom.ConnectionLoopHealth enterState, IConnectiveRoom.ConnectionLoopHealth stateOnException, CancellationToken ct)
-        {
-            do
-            {
-                try
-                {
-                    connectionLoopHealth.Set(enterState);
-                    await func(ct);
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
-                    connectionLoopHealth.Set(stateOnException);
-                    await RecoveryDelayAsync(ct);
-                }
-            }
-            while (!ct.IsCancellationRequested && connectionLoopHealth.Value() == stateOnException);
-        }
-
-        private UniTask RecoveryDelayAsync(CancellationToken ct) => UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
     }
 }
