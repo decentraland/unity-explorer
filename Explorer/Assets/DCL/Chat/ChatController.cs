@@ -135,6 +135,7 @@ namespace DCL.Chat
         }
 
 #region Panel Visibility
+
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
@@ -152,6 +153,10 @@ namespace DCL.Chat
                 if (!viewInstanceCreated) return;
 
                 viewInstance!.IsUnfolded = value;
+
+                // When opened from outside, it should show the unread messages
+                if (value)
+                    viewInstance.ShowNewMessages();
             }
         }
 
@@ -159,25 +164,18 @@ namespace DCL.Chat
         {
             if (State != ControllerState.ViewHidden)
             {
-                if (!viewInstanceCreated) return;
+                if (!viewInstanceCreated)
+                    return;
 
-                //If the view is disabled, we re-enable it
+                // If the view is disabled, we re-enable it
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-                //TODO FRAN: here we must restore the state of the chat when returning to it from anywhere, unless overwritten for some reason.
-                //This should be the only way to open the chat, params should adjust to these possibilities.
-
-                //if(showParams.ShowUnfolded)
-                IsUnfolded = true;//showParams.ShowUnfolded;
+                if(showParams.Unfold)
+                    IsUnfolded = true;
 
                 if(showParams.HasToFocusInputBox)
                     viewInstance!.FocusInputBox();
-
-                if (showParams.ShowLastState)
-                {
-                    //IsUnfolded = !viewInstance!.LastChatState.HasFlag(ChatView.ChatState.FOLDED);
-                }
 
                 ViewShowingComplete?.Invoke(this);
             }
@@ -222,6 +220,7 @@ namespace DCL.Chat
         }
 
 #region View Show and Close
+
         protected override void OnViewShow()
         {
             cameraEntity = world.CacheCamera();
@@ -240,7 +239,7 @@ namespace DCL.Chat
             InitializeChannelsAndConversationsAsync().Forget();
 
             OnFocus();
-            IsUnfolded = inputData.ShowUnfolded;
+            IsUnfolded = inputData.Unfold;
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
@@ -278,22 +277,6 @@ namespace DCL.Chat
             viewInstanceCreated = true;
         }
 
-        protected override void OnBlur()
-        {
-            //TODO FRAN: Check what is this doing if its doing anything
-            viewInstance!.IsChatSelected = false;
-            //viewInstance!.DisableInputBoxSubmissions();
-        }
-
-        protected override void OnFocus()
-        {
-            //TODO FRAN: Check what is this doing
-            if (viewInstance!.IsFocused) return;
-
-            IsUnfolded = true;
-            //viewInstance.EnableInputBoxSubmissions();
-        }
-
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             ViewShowingComplete?.Invoke(this);
@@ -302,6 +285,7 @@ namespace DCL.Chat
 #endregion
 
 #region Conversation Events
+
         private void OnOpenConversation(string userId)
         {
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
@@ -343,6 +327,7 @@ namespace DCL.Chat
 #endregion
 
 #region Chat History Events
+
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
@@ -405,6 +390,7 @@ namespace DCL.Chat
 #endregion
 
 #region Channel Events
+
         private async void OnViewCurrentChannelChangedAsync()
         {
             if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER &&
@@ -476,9 +462,9 @@ namespace DCL.Chat
                 EnableUnwantedInputs();
         }
 
-        private void OnViewChatSelectStateChanged(bool isChatSelected)
+        private void OnViewFocusChanged(bool isFocused)
         {
-            if (isChatSelected)
+            if (isFocused)
                 DisableUnwantedInputs();
             else
                 EnableUnwantedInputs();
@@ -528,6 +514,7 @@ namespace DCL.Chat
         }
 
 #region ChatBubbles
+
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
             if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
@@ -581,6 +568,7 @@ namespace DCL.Chat
 #endregion
 
 #region Member List
+
         private List<ChatMemberListView.MemberData> GenerateMemberList()
         {
             membersBuffer.Clear();
@@ -744,7 +732,7 @@ namespace DCL.Chat
             viewInstance.PointerEnter += OnViewPointerEnter;
             viewInstance.PointerExit += OnViewPointerExit;
 
-            viewInstance.ChatSelectStateChanged += OnViewChatSelectStateChanged;
+            viewInstance.FocusChanged += OnViewFocusChanged;
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
             viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
@@ -784,7 +772,7 @@ namespace DCL.Chat
             {
                 viewInstance.PointerEnter -= OnViewPointerEnter;
                 viewInstance.PointerExit -= OnViewPointerExit;
-                viewInstance.ChatSelectStateChanged -= OnViewChatSelectStateChanged;
+                viewInstance.FocusChanged -= OnViewFocusChanged;
                 viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
                 viewInstance.InputSubmitted -= OnViewInputSubmitted;
                 viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
@@ -815,7 +803,5 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
         }
-
-
-}
+    }
 }

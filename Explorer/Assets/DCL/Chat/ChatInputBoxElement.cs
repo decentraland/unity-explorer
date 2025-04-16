@@ -142,7 +142,8 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
-            if(!isInputSubmissionEnabled) return;
+            if(!isInputSubmissionEnabled)
+                return;
             isInputSubmissionEnabled = false;
 
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
@@ -153,7 +154,8 @@ namespace DCL.Chat
 
         public void EnableInputBoxSubmissions()
         {
-            if(isInputSubmissionEnabled) return;
+            if(isInputSubmissionEnabled)
+                return;
             isInputSubmissionEnabled = true;
 
             //inputField.onSubmit.AddListener(OnInputFieldSubmitted);

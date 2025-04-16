@@ -28,7 +28,7 @@ namespace DCL.Chat
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
-        public delegate void ChatSelectStateChangedDelegate(bool isSelected);
+        public delegate void FocusChangedDelegate(bool isFocused);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string s, string origin);
         public delegate void MemberListVisibilityChangedDelegate(bool isVisible);
         public delegate void PointerEventDelegate();
@@ -126,7 +126,7 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when either the input box gains the focus or loses it.
         /// </summary>
-        public event ChatSelectStateChangedDelegate ChatSelectStateChanged;
+        public event FocusChangedDelegate FocusChanged;
 
         /// <summary>
         /// Raised when either the emoji selection panel opens or closes.
@@ -190,6 +190,7 @@ namespace DCL.Chat
         private ILoadingStatus loadingStatus;
         private GameObject chatInputBoxGameObject;
         private GameObject inputMaskGameObject;
+        private bool isFocused;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -269,26 +270,40 @@ namespace DCL.Chat
         public bool IsMemberListVisible => memberListView.IsVisible && IsUnfolded;
 
         private bool isChatUnfolded;
-        private bool isChatVisible;
         [FormerlySerializedAs("isMaskActive")] public bool IsMaskActive;
         private bool isPointerOverChat;
-        public bool IsFocused { get; private set; }
+        private bool IsInputBoxFocused { get; set; }
 
-        private bool isChatSelected;
-
-        public bool IsChatSelected
+        public bool IsFocused
         {
-            get => isChatSelected;
+            get
+            {
+                return isFocused;
+            }
+
             set
             {
-                if (isChatSelected == value)
-                    return;
+                if (isFocused != value)
+                {
+                    isFocused = value;
 
-                isChatSelected = value;
-                ChatSelectStateChanged?.Invoke(value);
+                    if(!IsFocused && !isPointerOverChat)
+                        SetBackgroundVisibility(false, true);
+
+                    if (!memberListView.IsVisible)
+                    {
+                        SetChatVisibility(value);
+
+                        if (isFocused)
+                            EnableInputBoxSubmissions();
+                        else
+                            DisableInputBoxSubmissions();
+                    }
+
+                    FocusChanged?.Invoke(isFocused);
+                }
             }
         }
-
 
         /// <summary>
         /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
@@ -307,7 +322,6 @@ namespace DCL.Chat
 
                 unfoldedPanelInteractableArea.enabled = value;
                 chatMessageViewer.IsVisible = value;
-                IsChatSelected = value;
                 SetChatVisibility(value);
                 SetBackgroundVisibility(value, false);
 
@@ -406,9 +420,8 @@ namespace DCL.Chat
 
             PointerExit?.Invoke();
 
-            if (IsUnfolded && !IsChatSelected)
+            if (IsUnfolded && !IsFocused)
                 SetChatVisibility(false);
-
         }
 
         public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
@@ -513,7 +526,7 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
-            IsFocused = false;
+            IsInputBoxFocused = false;
             chatInputBox.DisableInputBoxSubmissions();
         }
 
@@ -522,7 +535,7 @@ namespace DCL.Chat
         /// </summary>
         public void EnableInputBoxSubmissions()
         {
-            IsFocused = true;
+            IsInputBoxFocused = true;
             chatInputBox.EnableInputBoxSubmissions();
         }
 
@@ -544,6 +557,10 @@ namespace DCL.Chat
         /// <param name="text">The new content of the input box.</param>
         public void FocusInputBoxWithText(string text)
         {
+            memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
+
+            if (IsMaskActive) return;
+
             if (gameObject.activeInHierarchy)
                 chatInputBox.FocusInputBoxWithText(text);
         }
@@ -574,7 +591,8 @@ namespace DCL.Chat
         {
             int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
 
-            if (pendingMessages > 0) { chatMessageViewer.ShowSeparator(pendingMessages + 1); }
+            if (pendingMessages > 0)
+                chatMessageViewer.ShowSeparator(pendingMessages + 1);
 
             chatMessageViewer.RefreshMessages();
 
@@ -679,6 +697,7 @@ namespace DCL.Chat
         }
 
 #region Conversations
+
         /// <summary>
         /// Creates a new item in the conversation toolbar.
         /// </summary>
@@ -734,18 +753,21 @@ namespace DCL.Chat
 
         private void SetChatVisibility(bool isVisible)
         {
-            this.isChatVisible = isVisible;
             SetBackgroundVisibility(isVisible, true);
             chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
+
+            if(!isVisible)
+                isPointerOverChat = false;
 
             if (isVisible)
             {
                 chatMessageViewer.StopChatEntriesFadeout();
 
-                if (!IsMaskActive) return;
-
-                chatInputBox.gameObject.SetActive(false);
-                inputBoxMask.gameObject.SetActive(true);
+                if (IsMaskActive)
+                {
+                    chatInputBox.gameObject.SetActive(false);
+                    inputBoxMask.gameObject.SetActive(true);
+                }
             }
             else
             {
@@ -758,43 +780,30 @@ namespace DCL.Chat
 
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
-            //When the submit key is pressed, we toggle the selection status and select the chat if it corresponds or hide it
-            if (!IsUnfolded) return;
-
-            if (IsChatSelected)
+            if (IsInputBoxFocused)
             {
                 bool inputTextSubmitted = chatInputBox.TrySubmitInputField();
                 if (inputTextSubmitted)
                     return;
             }
-
-            IsChatSelected = !IsChatSelected;
-
-            if (IsChatSelected)
+            else
             {
-                if (!isChatVisible)
-                    SetChatVisibility(true);
-                else if (memberListView.IsVisible)
+                if (!IsFocused)
+                    IsFocused = true;
+
+                if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
 
                 chatInputBox.FocusInputBox();
             }
-            else if (!isPointerOverChat)
-                SetChatVisibility(false);
         }
 
         private void OnClickUIInputPerformed(InputAction.CallbackContext callbackContext)
         {
-            if (!isPointerOverChat)
-            {
-                SetChatVisibility(false);
-                IsChatSelected = false;
-            }
-            else
-            {
-                chatInputBox.Click();
-                IsChatSelected = true;
-            }
+            IsFocused = isPointerOverChat;
+
+            if (isPointerOverChat)
+              chatInputBox.Click();
         }
 
         private void OnChatContextMenuVisibilityChanged(bool isVisible)
@@ -807,22 +816,18 @@ namespace DCL.Chat
 
         private void OnInputBoxSelectionChanged(bool inputBoxSelected)
         {
-            //When the input box is selected, the chat must unfold and if there is no mask, the input should be selected
-            //the chat itself will be considered selected as well until a click outside the chat is registered
-            //If the chat was already unfolded, it will just select the input box if possible
-            //While the chat is in selected state, all unwanted inputs will be blocked
+            // When the input box is selected, the chat must unfold and if there is no mask, the input should be selected
+            // the chat itself will be considered focused as well until a click outside the chat is registered
+            // If the chat was already unfolded, it will just select the input box if possible
+            // While the chat is focused, all unwanted inputs will be blocked
             if (inputBoxSelected)
             {
                 if (!IsUnfolded)
                 {
                     IsUnfolded = true;
+                    IsFocused = true;
                     chatMessageViewer.ShowLastMessage();
                 }
-
-                if (IsChatSelected) return;
-
-                IsChatSelected = true;
-                SetChatVisibility(true);
             }
         }
 
