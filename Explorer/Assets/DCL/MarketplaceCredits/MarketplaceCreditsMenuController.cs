@@ -204,7 +204,7 @@ namespace DCL.MarketplaceCredits
             viewInstance.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
-        public async UniTaskVoid ShowCreditsUnlockedPanel(float claimedCredits)
+        public async UniTaskVoid ShowCreditsUnlockedPanelAsync(float claimedCredits)
         {
             showCreditsUnlockedCts = showCreditsUnlockedCts.SafeRestart();
             await mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(new CreditsUnlockedController.Params(claimedCredits)), showCreditsUnlockedCts.Token);
