@@ -107,13 +107,10 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(InWorldCameraComponent))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
-            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
+            if (cameraComponent.Mode is not CameraMode.ThirdPerson)
                 return;
 
-            if (cameraComponent.Mode is CameraMode.ThirdPerson)
-                return;
-
-            ICinemachineThirdPersonCameraData cameraData = cinemachinePreset.DroneViewCameraData;
+            ICinemachineThirdPersonCameraData2 cameraData = cinemachinePreset.ThirdPersonCameraData;
 
             if (input.ChangeShoulder)
                 cameraComponent.Shoulder = cameraComponent.Shoulder switch
@@ -124,7 +121,14 @@ namespace DCL.Character.CharacterCamera.Systems
 
             ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
 
-            float value = cameraData.Camera.m_YAxis.Value;
+            float currentPitch = cameraData.POV.rotation.x;
+            var maxPitch = 90;
+            var minPitch = -90;
+
+            float pitchRange = maxPitch - minPitch; // -30..+60 => 90 total
+            float pitchNormalized = (currentPitch - minPitch) / pitchRange;
+            pitchNormalized = Mathf.Clamp01(pitchNormalized);
+            var value = pitchNormalized;
 
             Vector3 offset;
 
@@ -134,17 +138,21 @@ namespace DCL.Character.CharacterCamera.Systems
             else
                 offset = Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (value - 0.5f) * 2);
 
+            var follow = cameraData.Camera.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
+
             if (cursorComponent.CursorState != CursorState.Locked)
                 thirdPersonCameraShoulder = ThirdPersonCameraShoulder.Center;
 
-            offset.x *= thirdPersonCameraShoulder switch
-                        {
-                            ThirdPersonCameraShoulder.Right => 1,
-                            ThirdPersonCameraShoulder.Left => -1,
-                            ThirdPersonCameraShoulder.Center => 0,
-                        };
+            float targetSide = thirdPersonCameraShoulder switch
+                               {
+                                   ThirdPersonCameraShoulder.Right   => 1f,
+                                   ThirdPersonCameraShoulder.Left    => 0f,
+                                   ThirdPersonCameraShoulder.Center  => 0.5f,
+                                   _ => follow.CameraSide,
+                               };
 
-            cameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cameraData.CameraOffset.m_Offset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
+            follow.CameraSide = Mathf.MoveTowards(follow.CameraSide, targetSide, cinemachinePreset.ShoulderChangeSpeed * dt);
+            follow.ShoulderOffset =  Vector3.MoveTowards(follow.ShoulderOffset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
         [Query]
