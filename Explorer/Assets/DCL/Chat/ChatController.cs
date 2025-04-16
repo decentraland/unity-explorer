@@ -58,7 +58,6 @@ namespace DCL.Chat
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly ChatControllerConversationEventsHelper conversationEventsHelper;
-        private readonly ChatControllerUserStateHelper userStateHelper;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -152,10 +151,6 @@ namespace DCL.Chat
 
             conversationEventsHelper = new ChatControllerConversationEventsHelper(
                 chatHistory,
-                chatUserStateUpdater,
-                this);
-
-            userStateHelper = new ChatControllerUserStateHelper(
                 chatUserStateUpdater,
                 this);
         }
@@ -573,40 +568,54 @@ namespace DCL.Chat
 
         private void OnUserDisconnected(string userId)
         {
-            userStateHelper.OnUserDisconnected(userId);
+            var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnNonFriendConnected(string userId)
         {
-            userStateHelper.OnNonFriendConnected(userId);
+            GetAndSetupNonFriendUserStateAsync(userId).Forget();
+        }
+
+        private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
+        {
+            //We might need a new state of type "LOADING" or similar to display until we resolve the real state
+            viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
+            var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnFriendConnected(string userId)
         {
-            userStateHelper.OnFriendConnected(userId);
+            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            viewInstance!.SetInputWithUserState(state);
+
         }
 
         private void OnUserBlockedByOwnUser(string userId)
         {
-            userStateHelper.OnUserBlockedByOwnUser(userId);
+            var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnCurrentConversationUserUnavailable()
         {
-            userStateHelper.OnCurrentConversationUserUnavailable();
+            var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnCurrentConversationUserAvailable()
         {
-            userStateHelper.OnCurrentConversationUserAvailable();
+            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            viewInstance!.SetInputWithUserState(state);
         }
 
         private void OnUserConnectionStateChanged(string userId, bool isConnected)
         {
-            userStateHelper.OnUserConnectionStateChanged(userId, isConnected);
+            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, isConnected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
         }
 
-#endregion
+        #endregion
 
         private void SubscribeToEvents()
         {
@@ -660,22 +669,22 @@ namespace DCL.Chat
             chatCommandsBus.ClearChat -= OnClearChatCommandReceived;
             chatEventBus.InsertTextInChat -= OnTextInserted;
 
-            if (TryGetView(out var view))
+            if (viewInstance != null)
             {
-                view.PointerEnter -= OnViewPointerEnter;
-                view.PointerExit -= OnViewPointerExit;
-                view.ChatSelectStateChanged -= OnViewChatSelectStateChanged;
-                view.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-                view.InputSubmitted -= OnViewInputSubmitted;
-                view.ScrollBottomReached -= OnViewScrollBottomReached;
-                view.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
-                view.FoldingChanged -= OnViewFoldingChanged;
-                view.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
-                view.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
-                view.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
-                view.ConversationSelected -= OnSelectConversation;
-                view.RemoveAllConversations();
-                view.Dispose();
+                viewInstance.PointerEnter -= OnViewPointerEnter;
+                viewInstance.PointerExit -= OnViewPointerExit;
+                viewInstance.ChatSelectStateChanged -= OnViewChatSelectStateChanged;
+                viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
+                viewInstance.InputSubmitted -= OnViewInputSubmitted;
+                viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
+                viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
+                viewInstance.FoldingChanged -= OnViewFoldingChanged;
+                viewInstance.MemberListVisibilityChanged -= OnViewMemberListVisibilityChanged;
+                viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
+                viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
+                viewInstance.ConversationSelected -= OnSelectConversation;
+                viewInstance.RemoveAllConversations();
+                viewInstance.Dispose();
             }
 
             chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
@@ -692,22 +701,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-        }
-
-        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState state)
-        {
-            if (TryGetView(out var view))
-            {
-                view.SetInputWithUserState(state);
-            }
-        }
-
-        public void UpdateConversationToolbarStatusIcon(string userId, OnlineStatus status)
-        {
-            if (TryGetView(out var view))
-            {
-                view.UpdateConversationToolbarStatusIconForUser(userId, status);
-            }
         }
     }
 }
