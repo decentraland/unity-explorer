@@ -11,19 +11,16 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatController chatController;
-        private readonly ChatHistoryStorage? chatStorage;
         private CancellationTokenSource chatUsersUpdateCts = new();
 
         public ChatControllerConversationEventsHelper(
             IChatHistory chatHistory,
             ChatUserStateUpdater chatUserStateUpdater,
-            IChatController chatController,
-            ChatHistoryStorage? chatStorage)
+            IChatController chatController)
         {
             this.chatHistory = chatHistory;
             this.chatUserStateUpdater = chatUserStateUpdater;
             this.chatController = chatController;
-            this.chatStorage = chatStorage;
         }
 
         public void OnOpenConversation(string userId)
@@ -59,26 +56,7 @@ namespace DCL.Chat
             UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        public async UniTask OnCurrentChannelChangedAsync()
-        {
-            if (!chatController.TryGetView(out var view))
-                return;
-
-            if (chatHistory.Channels[view.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER &&
-                chatStorage != null && !chatStorage.IsChannelInitialized(view.CurrentChannelId))
-            {
-                await chatStorage.InitializeChannelWithMessagesAsync(view.CurrentChannelId);
-                chatHistory.Channels[view.CurrentChannelId].MarkAllMessagesAsRead();
-                view.RefreshMessages();
-            }
-        }
-
-        public void OnChannelRemovalRequested(ChatChannel.ChannelId channelId)
-        {
-            chatHistory.RemoveChannel(channelId);
-        }
-
-        private async UniTask UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
             var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
             if (chatController.TryGetView(out var view))
