@@ -151,7 +151,9 @@ namespace Utility
                 // AtomicSafetyHandle safetyHandle = NativeArrayUnsafeUtility.GetAtomicSafetyHandle(readOnlyArray);
 
                 // Assign that handle to the new slice.
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                 NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref slice, AtomicSafetyHandle.Create());
+#endif
 
                 return slice;
             }
