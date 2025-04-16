@@ -42,12 +42,15 @@ namespace DCL.Notifications.NotificationEntry
         }
 
         private void Start() =>
-            MainButton.onClick.AddListener(() => NotificationClicked.Invoke(NotificationType, Notification));
+            MainButton.onClick.AddListener(OnMainButtonClicked);
 
         private void OnDestroy() =>
             MainButton.onClick.RemoveAllListeners();
 
         public void PlayNotificationAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(NotificationAudio);
+
+        private void OnMainButtonClicked() =>
+            NotificationClicked.Invoke(NotificationType, Notification);
     }
 }
