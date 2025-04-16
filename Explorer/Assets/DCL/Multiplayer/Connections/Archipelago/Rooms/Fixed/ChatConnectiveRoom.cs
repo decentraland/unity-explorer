@@ -18,6 +18,7 @@ using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
 
@@ -36,6 +37,23 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private CancellationTokenSource? cancellationTokenSource;
         private InteriorRoom room = new ();
+        private readonly ObjectPool<IRoom> roomPool = new (
+            createFunc: () => new LogRoom(new Room(
+                new ArrayMemoryPool(),
+                new DefaultActiveSpeakers(),
+                new ParticipantsHub(),
+                new TracksFactory(),
+                new FfiHandleFactory(),
+                new ParticipantFactory(),
+                new TrackPublicationFactory(),
+                new DataPipe(),
+                new MemoryRoomInfo())),
+            actionOnGet: null,
+            actionOnRelease: room => room.DisconnectAsync(CancellationToken.None),
+            actionOnDestroy: null,
+            defaultCapacity: 10,
+            maxSize: 100
+        );
 
         public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
         {
@@ -149,6 +167,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public void Dispose()
         {
+            roomPool.Dispose();
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
@@ -175,15 +194,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - StopAsync");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
-            
+
             // Properly transition to a null room to handle event unsubscription
-            await room.SwapRoomsAsync(RoomSelection.NEW, room.Current(), NullRoom.INSTANCE, async (oldRoom, newRoom, token) =>
-            {
-                if (oldRoom != null)
-                {
-                    await oldRoom.DisconnectAsync();
-                }
-            }, CancellationToken.None);
+            await room.SwapRoomsAsync(RoomSelection.NEW, room, NullRoom.INSTANCE, roomPool, CancellationToken.None);
 
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
@@ -236,16 +249,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<bool> CreateNewRoomAsync<T>(T credentials, CancellationToken ct)
             where T: ICredentials
         {
-            IRoom newRoom = new LogRoom(new Room(
-                new ArrayMemoryPool(),
-                new DefaultActiveSpeakers(),
-                new ParticipantsHub(),
-                new TracksFactory(),
-                new FfiHandleFactory(),
-                new ParticipantFactory(),
-                new TrackPublicationFactory(),
-                new DataPipe(),
-                new MemoryRoomInfo()));
+            IRoom newRoom = roomPool.Get();
 
             bool connectResult;
             try
@@ -254,31 +258,21 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             }
             catch (Exception)
             {
+                roomPool.Release(newRoom);
                 throw;
             }
 
             if (connectResult == false)
             {
+                roomPool.Release(newRoom);
                 return (connectResult);
             }
 
             // Add proper transition handler to manage event subscriptions
-            await room.SwapRoomsAsync(RoomSelection.NEW, room.Current(), newRoom, async (oldRoom, newRoom, token) =>
-            {
-                if (oldRoom != null)
-                {
-                    await oldRoom.DisconnectAsync();
-                }
-                // Re-subscribe to necessary events on the new room
-                if (newRoom != null && newRoom != NullRoom.INSTANCE)
-                {
-                    await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
-                }
-            }, ct);
+            await room.SwapRoomsAsync(RoomSelection.NEW, room, newRoom, roomPool, ct);
 
             return (connectResult);
         }
-
 
     }
 }
