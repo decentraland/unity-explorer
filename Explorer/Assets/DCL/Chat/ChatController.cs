@@ -59,7 +59,6 @@ namespace DCL.Chat
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly ChatControllerConversationEventsHelper conversationEventsHelper;
         private readonly ChatControllerUserStateHelper userStateHelper;
-        private readonly ChatControllerMessageHandlingHelper messageHandlingHelper;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -159,12 +158,6 @@ namespace DCL.Chat
             userStateHelper = new ChatControllerUserStateHelper(
                 chatUserStateUpdater,
                 this);
-
-            messageHandlingHelper = new ChatControllerMessageHandlingHelper(
-                chatHistory,
-                this,
-                chatBubblesHelper,
-                chatSettings);
         }
 
 #region Panel Visibility
@@ -349,27 +342,76 @@ namespace DCL.Chat
 #region Chat History Events
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
-            messageHandlingHelper.OnChatHistoryMessageAdded(destinationChannel, addedMessage);
+            bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
+
+            chatBubblesHelper.CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
+
+            if (isSentByOwnUser)
+            {
+                MarkCurrentChannelAsRead();
+                if (TryGetView(out var view))
+                {
+                    view.RefreshMessages();
+                    view.ShowLastMessage();
+                }
+                return;
+            }
+
+            HandleMessageAudioFeedback(addedMessage);
+
+            if (TryGetView(out var currentView))
+            {
+                bool shouldMarkChannelAsRead = currentView is { IsMessageListVisible: true, IsScrollAtBottom: true };
+                bool isCurrentChannel = destinationChannel.Id.Equals(currentView.CurrentChannelId);
+
+                if (isCurrentChannel)
+                {
+                    if (shouldMarkChannelAsRead)
+                        MarkCurrentChannelAsRead();
+
+                    HandleUnreadMessagesSeparator(destinationChannel);
+                    currentView.RefreshMessages();
+                }
+                else
+                {
+                    currentView.RefreshUnreadMessages(destinationChannel.Id);
+                }
+            }
+        }
+
+        private void HandleMessageAudioFeedback(ChatMessage message)
+        {
+            if (!TryGetView(out var view))
+                return;
+
+            switch (chatSettings.chatAudioSettings)
+            {
+                case ChatAudioSettings.NONE:
+                    return;
+                case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
+                case ChatAudioSettings.ALL:
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ?
+                        view.ChatReceiveMentionMessageAudio :
+                        view.ChatReceiveMessageAudio);
+                    break;
+            }
+        }
+
+        private void HandleUnreadMessagesSeparator(ChatChannel channel)
+        {
+            if (!hasToResetUnreadMessagesWhenNewMessageArrive)
+                return;
+
+            hasToResetUnreadMessagesWhenNewMessageArrive = false;
+            channel.ReadMessages = messageCountWhenSeparatorViewed;
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
         {
-            messageHandlingHelper.OnChatHistoryReadMessagesChanged(changedChannel);
-        }
-
-        private void OnViewUnreadMessagesSeparatorViewed()
-        {
-            messageHandlingHelper.OnUnreadMessagesSeparatorViewed();
-        }
-
-        private void OnViewScrollBottomReached()
-        {
-            messageHandlingHelper.OnScrollBottomReached();
-        }
-
-        private void OnClearChatCommandReceived()
-        {
-            messageHandlingHelper.ClearChannel();
+            if(changedChannel.Id.Equals(viewInstance!.CurrentChannelId))
+                viewInstance!.RefreshMessages();
+            else
+                viewInstance.RefreshUnreadMessages(changedChannel.Id);
         }
 #endregion
 
@@ -391,11 +433,28 @@ namespace DCL.Chat
         }
 #endregion
 
+        private void OnClearChatCommandReceived() // Called by a command
+        {
+            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
+            messageCountWhenSeparatorViewed = 0;
+        }
+
         private void OnViewFoldingChanged(bool isUnfolded)
         {
             //TODO FRAN: Check what is this doing
             if (!isUnfolded)
                 MarkCurrentChannelAsRead();
+        }
+
+        private void OnViewUnreadMessagesSeparatorViewed()
+        {
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannelId].Messages.Count;
+            hasToResetUnreadMessagesWhenNewMessageArrive = true;
+        }
+
+        private void OnViewScrollBottomReached()
+        {
+            MarkCurrentChannelAsRead();
         }
 
         private void MarkCurrentChannelAsRead()
@@ -527,9 +586,9 @@ namespace DCL.Chat
             userStateHelper.OnFriendConnected(userId);
         }
 
-        private void OnUserBlockedByOwnUser(string _)
+        private void OnUserBlockedByOwnUser(string userId)
         {
-            userStateHelper.OnUserBlockedByOwnUser();
+            userStateHelper.OnUserBlockedByOwnUser(userId);
         }
 
         private void OnCurrentConversationUserUnavailable()
