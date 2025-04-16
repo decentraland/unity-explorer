@@ -5,14 +5,19 @@ using System.Collections.Generic;
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
     // Reference for worst case scenarios (Using Genesis Plaza as reference):
+    // Following the limits from the docs. One parcel gives 15MB, capped at 300MB. Im considering here the 'worst scenarios' possible
+    // https://docs.decentraland.org/creator/development-guide/sdk7/scene-limitations/#scene-limitation-rules
+    // We add an estimation factor (1.1f); assets loaded in memory do not have the same size as in disk
+
+    // IE:
     // A single scene can take 330MB
     // A single high quality LOD can take 121MB (MaxSceneSize/3 + MaxSceneSize/30)
     // A single low quality LOD can take 11MB (MaxSceneSize/30)
-    // To check where this values are assigned, look at SceneDefinitionComponent.cs
+
     // The following values take into consideration the 'worst scenarios'. Since all scenes dont take do the worst scenario, more will be loaded. This just ensures the upper limit
     public class SceneLoadingMemoryConstants
     {
-        public static float RUNTIME_MEMORY_COEFFICENT = 1.1f;
+        private static readonly float RUNTIME_MEMORY_COEFFICENT = 1.1f;
         public static float LOD_REDUCTION = 3;
         public static float QUALITY_REDUCTED_LOD_REDUCTION = 30;
 
@@ -108,7 +113,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
             else
             {
-                if (systemMemoryCap.MemoryCapInMB < 8_000)
+                if (systemMemoryCap.MemoryCapInMB < 10_000)
                     currentSceneLimits = sceneLimits[SceneLimitsKey.LOW_MEMORY];
                 else if (systemMemoryCap.MemoryCapInMB < 16_000)
                     currentSceneLimits = sceneLimits[SceneLimitsKey.MEDIUM_MEMORY];
