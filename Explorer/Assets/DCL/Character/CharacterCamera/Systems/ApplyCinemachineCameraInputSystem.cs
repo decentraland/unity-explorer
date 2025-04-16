@@ -20,18 +20,29 @@ namespace DCL.CharacterCamera.Systems
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput input;
+        private readonly Transform cameraFocus;
         private readonly bool isFreeCameraAllowed;
+        private readonly Transform cameraFocusParent;
+        private readonly Vector3 offset;
 
-        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, bool isFreeCameraAllowed) : base(world)
+        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, Transform cameraFocus, bool isFreeCameraAllowed) : base(world)
         {
             this.input = input;
+            this.cameraFocus = cameraFocus;
             this.isFreeCameraAllowed = isFreeCameraAllowed;
+
+            cameraFocusParent = cameraFocus.transform.parent;
+            cameraFocus.transform.parent = null;
+
+            offset = cameraFocus.position - cameraFocusParent.position;
         }
 
         protected override void Update(float t)
         {
             ApplyQuery(World!, t);
             ForceLookAtQuery(World!);
+
+            cameraFocus.transform.position = cameraFocusParent.position + offset;
         }
 
         [Query]
@@ -46,10 +57,14 @@ namespace DCL.CharacterCamera.Systems
                     dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
                     break;
                 case CameraMode.ThirdPerson:
+                    float yaw = cameraInput.Delta.x * 1 * dt;
+                    float pitch = -cameraInput.Delta.y * 1 * dt;
+                    cameraFocus.Rotate(pitch, yaw, 0, Space.Self);
+
+                    ApplyPOV(cinemachinePreset.ThirdPersonCameraData.POV, in cameraInput);
+                    break;
                 case CameraMode.SDKCamera:
                     // CinemachineVirtualCamera tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
-                    // tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
-                    // tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
                     ApplyPOV(cinemachinePreset.ThirdPersonCameraData.POV, in cameraInput);
                     break;
 

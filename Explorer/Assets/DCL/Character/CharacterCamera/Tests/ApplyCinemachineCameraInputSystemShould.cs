@@ -81,7 +81,7 @@ namespace DCL.CharacterCamera.Tests
             dclInput.Enable();
 
             // Create system with free camera allowed
-            system = new ApplyCinemachineCameraInputSystem(world, dclInput, true);
+            system = new ApplyCinemachineCameraInputSystem(world, dclInput, camera.transform, true);
 
             // Create entity with camera components
             entity = world.Create(
