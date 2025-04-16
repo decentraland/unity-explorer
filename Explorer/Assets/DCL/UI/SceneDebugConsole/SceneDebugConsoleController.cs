@@ -36,9 +36,6 @@ namespace DCL.UI.SceneDebugConsole
                     viewInstance.IsUnfolded = value;
 
                     if (value)
-                        viewInstance.ShowLatestLogs();
-
-                    if (value)
                         viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
                     else
                         viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
@@ -128,8 +125,6 @@ namespace DCL.UI.SceneDebugConsole
 
         private void OnLogHistoryMessageAdded(SceneDebugConsoleLogMessage logMessage)
         {
-            if (!IsUnfolded) return;
-
             viewInstance?.RefreshLogs();
 
             if (consoleSettings.AutoScrollToBottom)

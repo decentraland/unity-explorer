@@ -134,7 +134,6 @@ namespace DCL.UI.SceneDebugConsole
                     inputField.DeactivateInputField();
                 }
 
-
                 FoldingChanged?.Invoke(value);
             }
         }
