@@ -7,8 +7,6 @@ namespace DCL.CharacterCamera
     {
         public static void ForceThirdPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
-            if (cinemachinePreset.ThirdPersonCameraData.POV == null) return;
-
             (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
             cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(verticalAxis, horizontalAxis, 0f);
         }
