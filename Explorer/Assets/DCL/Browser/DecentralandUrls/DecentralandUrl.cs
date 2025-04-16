@@ -12,6 +12,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DiscordLink,
         TwitterLink,
         NewsletterSubscriptionLink,
+        MarketplaceLink,
 
         PrivacyPolicy,
         TermsOfUse,

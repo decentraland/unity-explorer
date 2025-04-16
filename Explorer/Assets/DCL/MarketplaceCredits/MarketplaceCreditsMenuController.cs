@@ -5,9 +5,9 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
 using DCL.UI.SharedSpaceManager;
@@ -25,7 +25,6 @@ namespace DCL.MarketplaceCredits
     public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
         private const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org";
-        private const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -255,7 +254,7 @@ namespace DCL.MarketplaceCredits
             webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(GO_SHOPPING_LINK);
+            webBrowser.OpenUrl(DecentralandUrl.MarketplaceLink);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
