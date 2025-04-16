@@ -58,7 +58,7 @@ namespace DCL.UI.ProfileElements
             if (profile == null) return;
 
             SetupProfileData(profile);
-            viewInstance!.ProfilePictureView.Setup(profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            viewInstance!.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 
         private async UniTaskVoid LoadAsync(CancellationToken ct)
