@@ -127,12 +127,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     return false;
                 }
 
-                await room.SwapRoomsAsync(RoomSelection.NEW, room.assigned, newRoom, roomPool, ct);
-
-                if (newRoom is not NullRoom)
+                if (room.assigned != NullRoom.INSTANCE)
                 {
-                    room.SimulateConnectionStateChanged();
+                    try
+                    {
+                        await room.assigned.DisconnectAsync(ct);
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error disconnecting previous room: {e}");
+                    }
                 }
+
+                room.Assign(newRoom, out _);
+
+                ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Forcing connection state notifications");
+                room.SimulateConnectionStateChanged();
+
+                ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Connected with {room.Participants.RemoteParticipantIdentities().Count} remote participants");
 
                 return true;
             }
@@ -223,7 +235,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             roomState.Set(IConnectiveRoom.State.Stopping);
 
-            await room.SwapRoomsAsync(RoomSelection.NEW, room.assigned, NullRoom.INSTANCE, roomPool, CancellationToken.None);
+            try
+            {
+                if (room.assigned != NullRoom.INSTANCE)
+                {
+                    await room.assigned.DisconnectAsync(CancellationToken.None);
+                }
+                
+                room.Assign(NullRoom.INSTANCE, out _);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error stopping room: {e}");
+            }
 
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
@@ -242,10 +266,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 {
                     await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
 
-                    if (room.assigned.Info.ConnectionState is ConnectionState.ConnDisconnected)
+                    var currentState = room.assigned.Info.ConnectionState;
+                    if (currentState is ConnectionState.ConnDisconnected || currentState is ConnectionState.ConnReconnecting)
                     {
-                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Detected disconnection, attempting to reconnect");
+                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Detected disconnection state {currentState}, attempting to reconnect");
                         roomState.Set(IConnectiveRoom.State.Stopped);
+                    }
+                    else if (currentState is ConnectionState.ConnConnected)
+                    {
+                        int participantCount = room.Participants.RemoteParticipantIdentities().Count;
+                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Room status: {currentState} with {participantCount} participants");
                     }
 
                     await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
