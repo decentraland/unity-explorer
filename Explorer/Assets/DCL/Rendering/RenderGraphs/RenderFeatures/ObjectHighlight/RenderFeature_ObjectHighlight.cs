@@ -41,14 +41,11 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
             new HighlightedObjects(m_HighLightRenderers)
         );
 
-        // Input Pass Data
+        // Pass Data
         private RenderPass_DrawObjects renderPass_DrawObjects = null!;
         public Material highlightInputMaterial;
         public Material highlightInputBlurMaterial;
         public Material highlightOutputMaterial;
-
-        // Output Pass Data
-        //private RenderPass_RenderResult renderPass_RenderResult;
 
         public RenderFeature_ObjectHighlight()
         {
@@ -67,14 +64,6 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                     m_highlightOutputMaterial = highlightOutputMaterial,
                 };
             }
-
-            // if (highlightOutputMaterial != null)
-            // {
-            //     renderPass_RenderResult = new RenderPass_RenderResult(m_HighLightRenderers)
-            //     {
-            //         renderPassEvent = RenderPassEvent.AfterRenderingTransparents,
-            //     };
-            // }
         }
 
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
@@ -82,7 +71,6 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
             if (renderPass_DrawObjects != null)
             {
                 _renderer.EnqueuePass(renderPass_DrawObjects);
-                //_renderer.EnqueuePass(renderPass_RenderResult);
             }
         }
 

@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: ObjectHighlightBlur
-  m_Shader: {fileID: 4800000, guid: 6e9f244bbe8f40e38644cb9c55cf1a67, type: 3}
+  m_Shader: {fileID: 4800000, guid: 9f3c26b521ac7c44ea7ce1b164cc3808, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

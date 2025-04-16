@@ -4,8 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Settings;
-using DCL.Rendering.Highlight;
-using DCL.Rendering.Highlight.HighlightedObject;
+using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -42,7 +41,7 @@ namespace DCL.Interaction.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            HighlightRendererFeature.HighlightedObjects.DisparageAll();
+            RenderFeature_ObjectHighlight.HighlightedObjects.DisparageAll();
             UpdateHighlightsQuery(World);
         }
 
@@ -93,7 +92,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
-                HighlightRendererFeature.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
+                RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
             }
         }
 
@@ -112,7 +111,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-                HighlightRendererFeature.HighlightedObjects.Disparage(renderers);
+                RenderFeature_ObjectHighlight.HighlightedObjects.Disparage(renderers);
             }
         }
 

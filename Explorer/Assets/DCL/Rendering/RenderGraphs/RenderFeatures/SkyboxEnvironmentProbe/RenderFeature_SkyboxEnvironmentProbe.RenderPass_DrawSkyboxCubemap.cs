@@ -4,8 +4,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.SkyboxEnvironmentProbe
 {
     public class RenderPass_DrawSkyboxCubemap : ScriptableRenderPass
     {
@@ -24,14 +25,22 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
         private readonly Material originalMaterial;
         private readonly ProfilingSampler profilingSampler;
 
-        private RTHandle skyBoxCubeMapRTHandle;
+        public RTHandle m_skyBoxCubeMapRTHandle;
+
+        private class CubeMapGenerationPassData
+        {
+            internal MaterialPropertyBlock materialPropertyBlock;
+            internal Material newMaterial;
+            internal Material originalMaterial;
+            internal RTHandle skyBoxCubeMapRTHandle;
+        }
 
         public RenderPass_DrawSkyboxCubemap(Material material, Material originalMaterial)
         {
             this.material = material;
             this.originalMaterial = originalMaterial;
 
-            renderPassEvent = RenderPassEvent.BeforeRenderingSkybox;
+
             profilingSampler = new ProfilingSampler($"{nameof(RendererFeature_SkyboxEnvironmentProbe)}.{nameof(RenderPass_DrawSkyboxCubemap)}");
 
             // It looks like upon Rendering Unity compensates UV Flip automatically
@@ -40,40 +49,52 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
 
         internal void Setup(RTHandle skyBoxCubeMapRTHandle)
         {
-            this.skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle;
+            this.m_skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle;
         }
 
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            if (!material || !originalMaterial) return;
+            if (!material || !originalMaterial)
+                return;
 
             // Copy properties from the original material as it is being constantly modified
             material.CopyPropertiesFromMaterial(originalMaterial);
 
-            CommandBuffer cmd = CommandBufferPool.Get("SkyBoxToCubemapPass");
-
-            using (new ProfilingScope(cmd, profilingSampler))
+            using (var builder = renderGraph.AddUnsafePass<CubeMapGenerationPassData>("SkyboxCubeMapGeneration", out var passData))
             {
-                // Draw 6 faces of the cube map
+                // Configure pass data
+                passData.materialPropertyBlock = materialPropertyBlock;
+                passData.newMaterial = material;
+                passData.originalMaterial = originalMaterial;
+                passData.skyBoxCubeMapRTHandle = m_skyBoxCubeMapRTHandle;
+                builder.AllowPassCulling(false);
 
-                for (var index = 0; index < FACES.Count; index++)
+                builder.SetRenderFunc((CubeMapGenerationPassData data, UnsafeGraphContext context) =>
                 {
-                    CubemapFace face = FACES[index];
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
 
                     // Set render target
-                    CoreUtils.SetRenderTarget(cmd, skyBoxCubeMapRTHandle, ClearFlag.None, Color.green, 0, face);
+                    context.cmd.SetRenderTarget(data.skyBoxCubeMapRTHandle);
 
-                    materialPropertyBlock.SetFloat(cubeMapFacePropId, (int)face);
-
-                    // Draw fullscreen triangle
-                    CoreUtils.DrawFullScreen(cmd, material, materialPropertyBlock);
-                }
-
-                CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
+                    // Draw 6 faces of the cube map
+                    for (var index = 0; index < FACES.Count; index++)
+                    {
+                        CubemapFace face = FACES[index];
+                        
+                        context.cmd.SetRenderTarget(data.skyBoxCubeMapRTHandle, 0, face);
+                        //data.materialPropertyBlock.SetFloat(cubeMapFacePropId, (int)face);
+                        data.newMaterial.SetFloat(cubeMapFacePropId, (int)face);
+                        // Draw fullscreen triangle
+                        //CoreUtils.DrawFullScreen(cmd, data.newMaterial, data.materialPropertyBlock);
+                        CoreUtils.DrawFullScreen(cmd, data.newMaterial);
+                    }
+                });
             }
+        }
 
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
+        public override void OnCameraCleanup(CommandBuffer cmd)
+        {
+
         }
     }
 }

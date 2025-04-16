@@ -4,7 +4,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
+namespace DCL.Rendering.RenderGraphs.RenderFeatures.SkyboxEnvironmentProbe
 {
     public class RendererFeature_SkyboxEnvironmentProbe : ScriptableRendererFeature
     {
@@ -38,7 +38,6 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
                 return;
 
             // Create renderTexture cubeMap
-
             desc = new RenderTextureDescriptor();
             desc.autoGenerateMips = true;
             desc.bindMS = false;
@@ -61,25 +60,18 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
             desc.volumeDepth = 1;
             desc.vrUsage = VRTextureUsage.None;
 
-            renderPass = new RenderPass_DrawSkyboxCubemap(skyBoxMaterial, settings.originalMaterial);
+            RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+
+            renderPass = new RenderPass_DrawSkyboxCubemap(skyBoxMaterial, settings.originalMaterial)
+            {
+                m_skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle,
+                renderPassEvent = RenderPassEvent.BeforeRenderingOpaques,
+            };
         }
 
-        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
+        public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
         {
-            if (SkipInEditorMode())
-                return;
-
-            if (RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp,
-                    isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex"))
-            {
-                if (settings.assignAsReflectionProbe)
-                {
-                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
-                    RenderSettings.customReflectionTexture = skyBoxCubeMapRTHandle;
-                }
-
-                renderPass.Setup(skyBoxCubeMapRTHandle);
-            }
+            base.OnCameraPreCull(renderer, in cameraData);
         }
 
         protected override void Dispose(bool disposing)
@@ -106,7 +98,17 @@ namespace DCL.Rendering.RenderGraph.RenderFeatures.SkyboxEnvironmentProbe
             if (!skyBoxMaterial)
                 return;
 
-            renderer.EnqueuePass(renderPass);
+            if (renderPass != null)
+                renderer.EnqueuePass(renderPass);
+
+            if (skyBoxCubeMapRTHandle != null)
+            {
+                if (settings.assignAsReflectionProbe)
+                {
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                    RenderSettings.customReflectionTexture = skyBoxCubeMapRTHandle;
+                }
+            }
         }
 
         [Serializable]
