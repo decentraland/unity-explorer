@@ -1,7 +1,6 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Caching;
 using Best.HTTP.Request.Settings;
-using Best.HTTP.Response;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -10,7 +9,6 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using System;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.WebRequests.HTTP2
 {
@@ -67,7 +65,13 @@ namespace DCL.WebRequests.HTTP2
 
         public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
-            await using ExecuteOnThreadPoolScope scope = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
+            bool fromMainThread = PlayerLoopHelper.IsMainThread;
+
+            if (fromMainThread)
+                await UniTask.SwitchToThreadPool();
+
+            // Doesn't work with the scope, not clear why
+            // await using ExecuteOnThreadPoolScope scope = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
 
             // Don't Dispose the wrap here as it can outlive the original request to process the response
             RequestEnvelope envelope = requestWrap.Envelope;
@@ -123,6 +127,11 @@ namespace DCL.WebRequests.HTTP2
                     requestWrap.Dispose();
 
                 throw;
+            }
+            finally
+            {
+                if (fromMainThread)
+                    await UniTask.SwitchToMainThread();
             }
 
             return requestAdapter;
