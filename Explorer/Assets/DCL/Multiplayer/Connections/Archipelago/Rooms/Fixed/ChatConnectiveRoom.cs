@@ -202,14 +202,117 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - DeactivateAsync");
 
             Activated = false;
-            await this.StopIfNotAsync();
+            
+            try
+            {
+                await this.StopIfNotAsync();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during deactivation: {e}");
+                // Force disconnect as fallback
+                ForceDisconnect();
+            }
         }
 
         public void Dispose()
         {
-            roomPool.Dispose();
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = null;
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Dispose called, ensuring proper disconnection");
+            
+            try
+            {
+                // Set state to prevent further reconnections
+                roomState.Set(IConnectiveRoom.State.Stopping);
+                
+                // Cancel any pending operations
+                cancellationTokenSource.SafeCancelAndDispose();
+                cancellationTokenSource = null;
+                
+                // Force immediate disconnection - this MUST be synchronous to work on application close
+                if (room.assigned != null && room.assigned != NullRoom.INSTANCE)
+                {
+                    try
+                    {
+                        // Try to disconnect synchronously
+                        var disconnectTask = room.assigned.DisconnectAsync(CancellationToken.None);
+                        
+                        // Wait for disconnection to complete (synchronously)
+                        if (!disconnectTask.IsCompleted)
+                        {
+                            disconnectTask.GetAwaiter().GetResult();
+                        }
+                        
+                        ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Successfully disconnected from room during disposal");
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during room disconnection in Dispose: {e}");
+                    }
+                }
+                
+                // Clear room reference
+                try 
+                {
+                    room.Assign(NullRoom.INSTANCE, out _);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error assigning NullRoom in Dispose: {e}");
+                }
+                
+                // Dispose the room pool
+                try
+                {
+                    roomPool.Dispose();
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error disposing room pool: {e}");
+                }
+                
+                roomState.Set(IConnectiveRoom.State.Stopped);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Unhandled error during Dispose: {e}");
+            }
+            
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Dispose completed");
+        }
+
+        private void ForceDisconnect()
+        {
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Force disconnecting room");
+            
+            try
+            {
+                // Set state immediately to prevent reconnection attempts
+                roomState.Set(IConnectiveRoom.State.Stopping);
+                
+                // Force immediate disconnection
+                if (room.assigned != NullRoom.INSTANCE)
+                {
+                    // Use sync version if available, otherwise use async without await
+                    try 
+                    {
+                        room.assigned.DisconnectAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during sync disconnection: {e}");
+                        // If immediate disconnection fails, at least try to fire it off
+                        room.assigned.DisconnectAsync(CancellationToken.None);
+                    }
+                }
+                
+                // Directly assign null room
+                room.Assign(NullRoom.INSTANCE, out _);
+                roomState.Set(IConnectiveRoom.State.Stopped);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Error during force disconnect: {e}");
+            }
         }
 
         public async UniTask<bool> StartAsync()
