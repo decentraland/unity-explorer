@@ -20,7 +20,7 @@ namespace DCL.CharacterCamera.Settings
         Vector3 OffsetMid { get; }
         Vector3 OffsetTop { get; }
 
-        CinemachinePOV POV { get; }
+        Transform POV { get; }
 
         CinemachineBasicMultiChannelPerlin Noise { get; }
     }

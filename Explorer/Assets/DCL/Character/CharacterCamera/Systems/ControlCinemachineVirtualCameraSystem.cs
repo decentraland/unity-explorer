@@ -164,7 +164,7 @@ namespace DCL.Character.CharacterCamera.Systems
             ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
-        private bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
+        private static bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
         {
             switch (mode)
             {
@@ -195,12 +195,10 @@ namespace DCL.Character.CharacterCamera.Systems
                     break;
                 case CameraMode.ThirdPerson:
                     cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode != CameraMode.FirstPerson && camera.PreviousMode != CameraMode.SDKCamera;
-                    if (camera.PreviousMode == CameraMode.FirstPerson)
-                    {
-                        // cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
-                        // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
-                        // cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
-                    }
+
+                    float yaw   = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                    float pitch =  cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
+                    cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(pitch, yaw, 0f);
 
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
                     break;
@@ -217,8 +215,9 @@ namespace DCL.Character.CharacterCamera.Systems
                     cinemachinePreset.FreeCameraData.Camera.transform.position = tpPos + cinemachinePreset.FreeCameraData.DefaultPosition;
 
                     // copy POV
-                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.Value;
-                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.Value;
+                    Vector3 euler = cinemachinePreset.ThirdPersonCameraData.POV.localEulerAngles;
+                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = euler.y;
+                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = euler.x;
                     break;
             }
 

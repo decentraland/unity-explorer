@@ -67,8 +67,6 @@ namespace DCL.CharacterCamera.Systems
                     if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
 
                     cameraFocus.localRotation = Quaternion.Euler(newVerticalAngle, cameraFocus.eulerAngles.y, cameraFocus.eulerAngles.z);
-
-                    ApplyPOV(cinemachinePreset.ThirdPersonCameraData.POV, in cameraInput);
                     break;
 
                 case CameraMode.FirstPerson:
