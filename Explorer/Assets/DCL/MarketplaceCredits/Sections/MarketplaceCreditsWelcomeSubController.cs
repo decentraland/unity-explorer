@@ -5,7 +5,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Text.RegularExpressions;
@@ -16,7 +15,7 @@ namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsWelcomeSubController : IDisposable
     {
-        private const string EMAIL_PATTERN = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
         private const string LEARN_MORE_LINK = "https://docs.decentraland.org";
 
         private readonly MarketplaceCreditsWelcomeSubView subView;
@@ -240,6 +239,6 @@ namespace DCL.MarketplaceCredits.Sections
             subView.SetStartWithEmailButtonInteractable(IsValidEmail(subView.EmailInput.text));
 
         private static bool IsValidEmail(string email) =>
-            !string.IsNullOrEmpty(email) && Regex.IsMatch(email, EMAIL_PATTERN);
+            !string.IsNullOrEmpty(email) && EMAIL_PATTERN_REGEX.IsMatch(email);
     }
 }
