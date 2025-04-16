@@ -262,7 +262,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 return (connectResult);
             }
 
-            room.Assign(newRoom, out _);
+            await room.SwapRoomsAsync(RoomSelection.NEW, NullRoom.INSTANCE, newRoom, null, ct);
 
             return (connectResult);
         }
