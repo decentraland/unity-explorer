@@ -13,6 +13,5 @@ MonoBehaviour:
   m_Name: VelocityAngleDiffExceedRule
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:VelocityAngleDiffExceedRule
   color: {r: 0.6616756, g: 1, b: 0.48490566, a: 1}
-  IsEnabled: 1
   MinTimeDelta: 0.1
   VelocityCosAngleDiffInverseThreshold: 0
