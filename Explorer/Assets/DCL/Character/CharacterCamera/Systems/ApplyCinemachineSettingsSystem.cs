@@ -56,16 +56,14 @@ namespace DCL.Character.CharacterCamera.Systems
         [Query]
         private void UpdateCameraSettings(ref ICinemachinePreset cinemachinePreset)
         {
-            float mMaxSpeed = currentSens / 100f; // for UX reasons we left the sensitivity value to be shown as 0 to 100 so we divide back
-            float tpsVerticalMaxSpeed = mMaxSpeed / 100; // third person camera Y values go from 0 to 1, so we approximately divide by 100 again
+            controlsSettingsAsset.mMaxSpeed = currentSens / 100f; // for UX reasons we left the sensitivity value to be shown as 0 to 100 so we divide back
+            float tpsVerticalMaxSpeed = controlsSettingsAsset.mMaxSpeed / 100; // third person camera Y values go from 0 to 1, so we approximately divide by 100 again
 
-            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
-            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
+            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = controlsSettingsAsset.mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
+            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = controlsSettingsAsset.mMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
-            cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
+            cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.m_MaxSpeed = controlsSettingsAsset.mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
-            // cinemachinePreset.ThirdPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
-            // cinemachinePreset.ThirdPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
         }
     }
 }

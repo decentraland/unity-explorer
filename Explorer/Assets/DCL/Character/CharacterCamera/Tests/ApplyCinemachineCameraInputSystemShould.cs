@@ -5,6 +5,7 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.InWorldCamera;
+using DCL.Settings.Settings;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -81,7 +82,7 @@ namespace DCL.CharacterCamera.Tests
             dclInput.Enable();
 
             // Create system with free camera allowed
-            system = new ApplyCinemachineCameraInputSystem(world, dclInput, camera.transform, true);
+            system = new ApplyCinemachineCameraInputSystem(world, dclInput, camera.transform, ScriptableObject.CreateInstance<ControlsSettingsAsset>() , true);
 
             // Create entity with camera components
             entity = world.Create(

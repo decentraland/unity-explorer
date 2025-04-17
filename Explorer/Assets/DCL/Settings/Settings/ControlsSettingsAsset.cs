@@ -8,5 +8,8 @@ namespace DCL.Settings.Settings
         [Header("Mouse")]
         public float VerticalMouseSensitivity = 1;
         public float HorizontalMouseSensitivity = 1;
+
+        public float mMaxSpeed;
+        public float ThirdPersonPOVSpeed = 100;
     }
 }

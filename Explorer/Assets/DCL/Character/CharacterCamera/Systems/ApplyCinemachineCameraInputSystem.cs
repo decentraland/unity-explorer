@@ -6,6 +6,7 @@ using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
+using DCL.Settings.Settings;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -21,14 +22,16 @@ namespace DCL.CharacterCamera.Systems
     {
         private readonly DCLInput input;
         private readonly Transform cameraFocus;
+        private readonly ControlsSettingsAsset settings;
         private readonly bool isFreeCameraAllowed;
         private readonly Transform cameraFocusParent;
         private readonly Vector3 offset;
 
-        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, Transform cameraFocus, bool isFreeCameraAllowed) : base(world)
+        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, Transform cameraFocus, ControlsSettingsAsset settings, bool isFreeCameraAllowed) : base(world)
         {
             this.input = input;
             this.cameraFocus = cameraFocus;
+            this.settings = settings;
             this.isFreeCameraAllowed = isFreeCameraAllowed;
 
             cameraFocusParent = cameraFocus.transform.parent;
@@ -58,8 +61,11 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.ThirdPerson:
                 case CameraMode.SDKCamera:
-                    float horizontalRotation = cameraInput.Delta.x * 3 * dt;
-                    float verticalRotation = cameraInput.Delta.y * 3 * dt;
+
+                    float horizontalRotation = cameraInput.Delta.x
+                                               * settings.ThirdPersonPOVSpeed * settings.mMaxSpeed * settings.HorizontalMouseSensitivity * dt;
+                    float verticalRotation = cameraInput.Delta.y
+                                             * settings.ThirdPersonPOVSpeed * settings.mMaxSpeed * settings.VerticalMouseSensitivity * dt ;
 
                     cameraFocus.Rotate(Vector3.up, horizontalRotation, Space.World);
 

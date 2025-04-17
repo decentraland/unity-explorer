@@ -121,38 +121,31 @@ namespace DCL.Character.CharacterCamera.Systems
 
             ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
 
-            float currentPitch = cameraData.POV.rotation.x;
-            var maxPitch = 90;
-            var minPitch = -90;
-
-            float pitchRange = maxPitch - minPitch; // -30..+60 => 90 total
-            float pitchNormalized = (currentPitch - minPitch) / pitchRange;
-            pitchNormalized = Mathf.Clamp01(pitchNormalized);
-            var value = pitchNormalized;
-
-            Vector3 offset;
+            float currentPitch = cameraData.POV.rotation.eulerAngles.x;
+            currentPitch = ((currentPitch + 180) % 360) - 180;
+            currentPitch = Mathf.Clamp(currentPitch, -90, 90);
+            currentPitch = (currentPitch + 90) / 180f;
 
             // in order to lerp the offset correctly, the value from the YAxis goes from 0 to 1, being 0.5 the middle rig
-            if (value < 0.5f)
-                offset = Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, value * 2);
-            else
-                offset = Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (value - 0.5f) * 2);
-
-            var follow = cameraData.Camera.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
+            Vector3 offset = currentPitch < 0.5f
+                ? Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, currentPitch * 2)
+                : Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (currentPitch - 0.5f) * 2);
 
             if (cursorComponent.CursorState != CursorState.Locked)
                 thirdPersonCameraShoulder = ThirdPersonCameraShoulder.Center;
-
             float targetSide = thirdPersonCameraShoulder switch
                                {
                                    ThirdPersonCameraShoulder.Right   => 1f,
                                    ThirdPersonCameraShoulder.Left    => 0f,
                                    ThirdPersonCameraShoulder.Center  => 0.5f,
-                                   _ => follow.CameraSide,
                                };
 
+            var follow = cameraData.Camera.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
+
             follow.CameraSide = Mathf.MoveTowards(follow.CameraSide, targetSide, cinemachinePreset.ShoulderChangeSpeed * dt);
-            follow.ShoulderOffset =  Vector3.MoveTowards(follow.ShoulderOffset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
+            follow.ShoulderOffset.x = Mathf.MoveTowards(follow.ShoulderOffset.x, offset.x, cinemachinePreset.ShoulderChangeSpeed * dt);
+            follow.VerticalArmLength = Mathf.MoveTowards(follow.VerticalArmLength, offset.y, cinemachinePreset.ShoulderChangeSpeed * dt);
+            follow.CameraDistance = Mathf.MoveTowards(follow.CameraDistance, offset.z, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
         [Query]

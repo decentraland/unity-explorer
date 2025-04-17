@@ -209,10 +209,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Damping: {x: 0.1, y: 0.5, z: 0.3}
-  ShoulderOffset: {x: 0.3, y: -0.4, z: 0}
-  VerticalArmLength: 0.4
-  CameraSide: 1
-  CameraDistance: 2
+  ShoulderOffset: {x: 1, y: 0, z: 0}
+  VerticalArmLength: 0
+  CameraSide: 0.5
+  CameraDistance: 3.5
   CameraCollisionFilter:
     serializedVersion: 2
     m_Bits: 1
@@ -403,15 +403,15 @@ MonoBehaviour:
   thirdPersonCameraData:
     <Camera>k__BackingField: {fileID: 9117841965452288491}
     <CameraOffset>k__BackingField: {fileID: 5294527864094199746}
+    <OffsetBottom>k__BackingField: {x: 0.3, y: 0.2, z: -0.75}
+    <OffsetMid>k__BackingField: {x: 0.6, y: 0, z: 3.5}
+    <OffsetTop>k__BackingField: {x: 0.3, y: 0.7, z: 4.5}
+  droneViewCameraData:
+    <Camera>k__BackingField: {fileID: 1829658356799049534}
+    <CameraOffset>k__BackingField: {fileID: 5294527864094199746}
     <OffsetBottom>k__BackingField: {x: 0.3, y: 0.2, z: 0}
     <OffsetMid>k__BackingField: {x: 0.6, y: 0, z: 0}
     <OffsetTop>k__BackingField: {x: 0.3, y: 0.7, z: 0}
-  droneViewCameraData:
-    <Camera>k__BackingField: {fileID: 3873798736405262014}
-    <CameraOffset>k__BackingField: {fileID: 8869747115766645440}
-    <OffsetBottom>k__BackingField: {x: 0, y: 0, z: 0}
-    <OffsetMid>k__BackingField: {x: 0, y: 0, z: 0}
-    <OffsetTop>k__BackingField: {x: 0, y: 2, z: 0}
   freeCameraData:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
     <Speed>k__BackingField: 10
@@ -1348,7 +1348,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4708074778744885137}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e501d18bb52cf8c40b1853ca4904654f, type: 3}
   m_Name: 
@@ -1378,7 +1378,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4708074778744885137}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44d70cc20219cd84593f67d248eafe36, type: 3}
   m_Name: 
@@ -1412,7 +1412,7 @@ Transform:
   m_GameObject: {fileID: 5722964383721357104}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10.3, y: 2.6230001, z: -2}
+  m_LocalPosition: {x: 0, y: 1, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
