@@ -56,10 +56,8 @@ namespace DCL.UI.ProfileElements
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        private void ProfileNameChanged(Profile? profile)
+        private void ProfileNameChanged(Profile profile)
         {
-            if (profile == null) return;
-
             SetupProfileData(profile);
             viewInstance!.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
