@@ -29,6 +29,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
 
+        public bool Activated { get; private set; }
+
+
         public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
         {
             this.webRequests = webRequests;
@@ -50,29 +53,30 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             );
         }
 
-        protected UniTask PrewarmAsync(CancellationToken token) =>
-            UniTask.CompletedTask;
-
-        protected async UniTask CycleStepAsync(CancellationToken token)
+        protected async UniTask CycleStepAsync(CancellationToken ct)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
             {
-                string connectionString = await ConnectionStringAsync(token);
-                await TryConnectToRoomAsync(connectionString, token);
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"CycleStepAsync - await Disconnect");
+                await room.DisconnectAsync(ct);
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"CycleStepAsync - await ConnectionString");
+                string connectionString = await ConnectionStringAsync(ct);
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"CycleStepAsync - await TryConnect");
+                await TryConnectToRoomAsync(connectionString, ct);
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"CycleStepAsync - finish TryConnect");
             }
         }
 
-        private async UniTask<string> ConnectionStringAsync(CancellationToken token)
+        private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
         {
             string metadata = FixedMetadata.Default.ToJson();
-            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, token);
+            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_CHAT_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 
-        public bool Activated { get; private set; }
 
         public async UniTask ActivateAsync()
         {
@@ -174,8 +178,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            await ExecuteWithRecoveryAsync(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
-
             while (token.IsCancellationRequested == false)
             {
                 await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
@@ -210,7 +212,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         protected async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to started: {connectionString}");
+            ReportHub.Log(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Trying to connect to started: {connectionString}");
 
             var credentials = new ConnectionStringCredentials(connectionString);
 
@@ -226,16 +228,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             }
 
             roomState.Set(IConnectiveRoom.State.Running);
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to finished successfully {connectionString}");
+            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"{logPrefix} - Trying to connect to finished successfully {connectionString}");
 
             return connectResult;
         }
 
-        /// <summary>
-        ///     Disconnect the previous room, assigns a new one, and connects to it<br />
-        ///     This way the flow of events is preserved so room status will be propagated properly to the subscribers
-        /// </summary>
-        /// <returns>Previous room</returns>
         private async UniTask<bool> ConnectToRoomAsync<T>(T credentials, CancellationToken ct)
             where T: ICredentials
         {
@@ -244,7 +241,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             try
             {
                 //Disconnect from room
-                await room.DisconnectAsync(ct);
+                //await roomInstance.DisconnectAsync(ct);
                 //Reconnect to the room
                 connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
             }
