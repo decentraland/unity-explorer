@@ -61,13 +61,14 @@ namespace DCL.Chat
             this.friendsEventBus = friendsEventBus;
             this.chatRoom = chatRoom;
             this.friendsService = friendsService;
+            SubscribeToEvents();
         }
 
         public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> openConversations)
         {
             ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Initialize Async");
 
-            SubscribeToEvents();
+            //SubscribeToEvents();
             isDisposed = false;
 
             this.openConversations.Clear();
@@ -435,7 +436,7 @@ namespace DCL.Chat
 
             isDisposed = true;
             cts.SafeCancelAndDispose();
-            UnsubscribeFromEvents();
+            //UnsubscribeFromEvents();
             openConversations.Clear();
             CurrentConversation = string.Empty;
         }
