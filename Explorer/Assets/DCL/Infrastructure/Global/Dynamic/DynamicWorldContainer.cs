@@ -574,7 +574,6 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
-            var sceneLoadingLimit = new SceneLoadingLimit(staticContainer.MemoryCap, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -708,7 +707,7 @@ namespace Global.Dynamic
                     viewDependencies,
                     userBlockingCacheProxy,
                     sharedSpaceManager,
-                    sceneLoadingLimit
+                    staticContainer.SceneLoadingLimit
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -903,7 +902,7 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 profileRepository,
                 lodContainer.RoadAssetsPool,
-                sceneLoadingLimit
+                staticContainer.SceneLoadingLimit
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

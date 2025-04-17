@@ -9,8 +9,7 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
         private readonly int DEFAULT_FRAME_FAILURE_THRESHOLD = 250;
 
-        public UnloadStrategyHandler(IRealmPartitionSettings realmPartitionSettings,
-            ICacheCleaner cacheCleaner)
+        public UnloadStrategyHandler(ICacheCleaner cacheCleaner)
         {
 
             //The base strategy at 0 will always run

@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
 
             // 1 scene, 1 high quality LOD. Only for debugging purposes
-            { SceneLimitsKey.SINGLE_SCENE, new SceneLimits(1, 1, 0) },
+            { SceneLimitsKey.SINGLE_SCENE, new SceneLimits(1, 0, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
         };
 
@@ -142,6 +142,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 LODMaxAmountOfUsableMemoryInMB = lodMaxAmountOfUsableMemoryInMB;
                 QualityReductedLODMaxAmountOfUsableMemoryInMB = qualityReductedLODMaxAmountOfUsableMemoryInMB;
             }
+        }
+
+        public void WarnMemoryFull(bool isInMemoryWarning)
+        {
+            //If we are in memory full, we must only load one scene
+            if (isInMemoryWarning)
+                currentSceneLimits = sceneLimits[SceneLimitsKey.SINGLE_SCENE];
+            else
+                currentSceneLimits = sceneLimits[SceneLimitsKey.LOW_MEMORY];
         }
     }
 }
