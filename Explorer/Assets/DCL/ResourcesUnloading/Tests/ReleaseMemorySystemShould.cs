@@ -1,7 +1,7 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading.UnloadStrategies;
-using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -23,8 +23,8 @@ namespace DCL.ResourcesUnloading.Tests
             {
             }
         }
-        
-        
+
+
         private ReleaseMemorySystem releaseMemorySystem;
 
         // Subs
@@ -52,13 +52,13 @@ namespace DCL.ResourcesUnloading.Tests
                 aggresiveStrategy
             };
 
-
-            var partitionSettings = Substitute.For<IRealmPartitionSettings>();
-
-            unloadStrategyHandler = new UnloadStrategyHandler(partitionSettings, cacheCleaner);
+            unloadStrategyHandler = new UnloadStrategyHandler(cacheCleaner);
             unloadStrategyHandler.unloadStrategies = unloadStrategies;
 
-            releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler);
+            ISystemMemoryCap systemMemoryCap = Substitute.For<ISystemMemoryCap>();
+            var sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap, false);
+
+            releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler, sceneLoadingLimit);
         }
 
         [TestCase(MemoryUsageStatus.NORMAL, 0)]
@@ -85,10 +85,10 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Assert
             Assert.AreEqual(1, standardStrategy.strategyRunCount);
-            
+
             // Act
             releaseMemorySystem.Update(0);
-            
+
             // Assert
             Assert.AreEqual(2, standardStrategy.strategyRunCount);
             Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
@@ -103,7 +103,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.AreEqual(0, aggresiveStrategy.currentFailureCount);
             Assert.IsFalse(standardStrategy.FaillingOverThreshold());
         }
-        
+
         [Test]
         public void IncreaseTierAggresiveness()
         {
@@ -117,7 +117,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Act
             releaseMemorySystem.Update(0);
-            
+
             // Assert
             Assert.AreEqual(2, standardStrategy.strategyRunCount);
             Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
@@ -141,7 +141,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.AreEqual(0, aggresiveStrategy.strategyRunCount);
         }
 
-        
+
     }
 
 }
