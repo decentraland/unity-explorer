@@ -117,6 +117,9 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
+                if (m_HighLightRenderers.Count <= 0)
+                    return;
+
                 using (var builder = renderGraph.AddUnsafePass<FullHighlightPassData>("FullHighlight", out var passData))
                 {
                     UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();

@@ -35,6 +35,9 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            if (m_OutlineRenderers.Count <= 0)
+                return;
+
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
             // The following line ensures that the render pass doesn't blit from the back buffer.
