@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public SceneLoadingLimit(ISystemMemoryCap memoryCap)
         {
             systemMemoryCap = memoryCap;
-            this.isEnabled = true;
+            isEnabled = false;
             UpdateMemoryCap();
         }
 
@@ -111,12 +111,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         public void UpdateMemoryCap()
         {
-            if (!isEnabled)
-            {
-                currentKey = SceneLimitsKey.MAX_MEMORY;
-                currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
-            }
-            else
+            if (isEnabled)
             {
                 if (systemMemoryCap.MemoryCapInMB < 10_000)
                 {
@@ -133,6 +128,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     currentKey = SceneLimitsKey.MAX_MEMORY;
                     currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
                 }
+            }
+            else
+            {
+                currentKey = SceneLimitsKey.MAX_MEMORY;
+                currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
             }
         }
 
