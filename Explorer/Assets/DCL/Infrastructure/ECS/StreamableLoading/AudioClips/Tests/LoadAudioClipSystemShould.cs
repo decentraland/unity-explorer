@@ -13,9 +13,11 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.AudioClips.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
     public class LoadAudioClipSystemShould : LoadSystemBaseShould<LoadAudioClipSystem, AudioClipData, GetAudioClipIntention>
     {
+        public LoadAudioClipSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Audio/non_existing.mp3"}";
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.mp3"}";
@@ -33,11 +35,11 @@ namespace ECS.StreamableLoading.AudioClips.Tests
         protected override GetAudioClipIntention CreateWrongTypeIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
-        protected override LoadAudioClipSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE);
+        protected override LoadAudioClipSystem CreateSystem(IWebRequestController webRequestController) =>
+            new (world, cache, webRequestController);
 
-        public static LoadAudioClipSystem CreateSystem(World world) =>
-            new (world, Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>(), TestWebRequestController.INSTANCE);
+        public static LoadAudioClipSystem CreateSystem(World world, IWebRequestController webRequestController) =>
+            new (world, Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>(), webRequestController);
 
         protected override void AssertSuccess(AudioClipData data)
         {

@@ -32,7 +32,8 @@ using UnityEngine;
 
 namespace SceneRunner.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.HTTP2)]
     public class SceneFactoryShould
     {
         [SetUp]
@@ -42,9 +43,9 @@ namespace SceneRunner.Tests
             engineFactory = new V8EngineFactory();
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
+            IWebRequestController webRequestController = TestWebRequestController.Create(webRequestsMode);
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
-                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
+            sceneRuntimeFactory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, new WebJsSources(new JsCodeResolver(webRequestController)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
@@ -66,7 +67,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.DEFAULT,
+                IWebRequestController.UNITY,
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
@@ -77,9 +78,13 @@ namespace SceneRunner.Tests
         [TearDown]
         public async Task TearDown()
         {
+            TestWebRequestController.RestoreCache();
+
             if (sceneFacade != null)
                 await sceneFacade.DisposeAsync();
         }
+
+        private readonly WebRequestsMode webRequestsMode;
 
         private V8EngineFactory engineFactory;
 
@@ -94,6 +99,11 @@ namespace SceneRunner.Tests
         private ISceneFacade sceneFacade;
 
         private string path;
+
+        public SceneFactoryShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
 
         [Test]
         public async Task CreateSceneFacadeForTestScene()

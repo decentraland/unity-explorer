@@ -12,11 +12,11 @@ namespace DCL.WebRequests.WebContentSizes
         {
             private readonly IWebContentSizes webContentSizes;
 
-            public Default(IMaxSize maxSize)
+            public Default(IMaxSize maxSize, IWebRequestController webRequestController)
             {
                 webContentSizes = new SeveralWebContentSizes(
-                    new ContentLengthBasedWebContentSizes(maxSize),
-                    new RangeBasedWebContentSizes(maxSize)
+                    new ContentLengthBasedWebContentSizes(maxSize, webRequestController),
+                    new RangeBasedWebContentSizes(maxSize, webRequestController)
                 );
             }
 

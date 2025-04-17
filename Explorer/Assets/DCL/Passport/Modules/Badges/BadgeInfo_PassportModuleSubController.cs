@@ -294,9 +294,8 @@ namespace DCL.Passport.Modules.Badges
             (await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
                 new GetTextureArguments(textureType),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
-                ct,
                 ReportCategory.BADGES)
+                                       .CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Bilinear)
             ).Texture;
 
         private void SetBadgeInfoViewAsLoading(bool isLoading)

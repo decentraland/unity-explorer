@@ -1,5 +1,7 @@
 ﻿using AssetManagement;
+using Best.HTTP.Caching;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -10,8 +12,10 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.Tests;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.Tests
 {
@@ -19,12 +23,23 @@ namespace ECS.StreamableLoading.Tests
         where TSystem: LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
+        private static readonly Regex FILE_NOT_FOUND_MESSAGE = new ("^FileNotFoundException: .*", RegexOptions.Compiled);
+        private readonly WebRequestsMode webRequestsMode;
+
         protected IStreamableCache<TAsset, TIntention> cache;
+        protected IWebRequestController webRequestController;
+        protected HTTPCache httpCache;
 
         private MockedReportScope mockedReportScope;
+
         private IAcquiredBudget budget;
 
         protected AssetPromise<TAsset, TIntention> promise { get; private set; }
+
+        protected LoadSystemBaseShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
 
         protected abstract TIntention CreateSuccessIntention();
 
@@ -32,7 +47,7 @@ namespace ECS.StreamableLoading.Tests
 
         protected abstract TIntention CreateWrongTypeIntention();
 
-        protected abstract TSystem CreateSystem();
+        protected abstract TSystem CreateSystem(IWebRequestController webRequestController);
 
         [SetUp]
         public void BaseSetUp()
@@ -41,13 +56,16 @@ namespace ECS.StreamableLoading.Tests
 
             cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
             budget = Substitute.For<IAcquiredBudget>();
-            system = CreateSystem();
+            httpCache = TestWebRequestController.InitializeCache();
+            webRequestController = TestWebRequestController.Create(webRequestsMode, httpCache, 1 * 1024 * 1024 * 1024);
+            system = CreateSystem(webRequestController);
             system.Initialize();
         }
 
         [TearDown]
         public void TearDown()
         {
+            TestWebRequestController.RestoreCache();
             mockedReportScope.Dispose();
             promise.LoadingIntention.CommonArguments.CancellationTokenSource?.Cancel();
         }
@@ -96,6 +114,8 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task ConcludeFailIfNotFound()
         {
+            // if (webRequestsMode == WebRequestsMode.HTTP2) { LogAssert.Expect(LogType.Exception, FILE_NOT_FOUND_MESSAGE); }
+
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);

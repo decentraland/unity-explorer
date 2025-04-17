@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT.Deserializer;
@@ -63,10 +61,18 @@ using Utility.Multithreading;
 
 namespace SceneRunner.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.HTTP2)]
     public class SceneFacadeShould
     {
         private V8EngineFactory engineFactory;
+
+        private readonly WebRequestsMode webRequestsMode;
+
+        public SceneFacadeShould(WebRequestsMode webRequestsMode)
+        {
+            this.webRequestsMode = webRequestsMode;
+        }
 
         [SetUp]
         public void SetUp()
@@ -74,8 +80,10 @@ namespace SceneRunner.Tests
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
             engineFactory = new V8EngineFactory();
 
+            IWebRequestController webRequestController = TestWebRequestController.Create(webRequestsMode);
+
             sceneRuntimeFactory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
-                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
+                new WebJsSources(new JsCodeResolver(webRequestController)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 
@@ -107,7 +115,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.DEFAULT,
+                webRequestController,
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
@@ -118,6 +126,8 @@ namespace SceneRunner.Tests
         [OneTimeTearDown]
         public async Task TearDown()
         {
+            TestWebRequestController.RestoreCache();
+
             foreach (ISceneFacade sceneFacade in sceneFacades)
             {
                 try { await sceneFacade.DisposeAsync(); }
@@ -128,11 +138,17 @@ namespace SceneRunner.Tests
         }
 
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
+
         private IECSWorldFactory ecsWorldFactory = null!;
+
         private ISharedPoolsProvider sharedPoolsProvider = null!;
+
         private ICRDTDeserializer crdtDeserializer = null!;
+
         private ICRDTSerializer crdtSerializer = null!;
+
         private ISDKComponentsRegistry componentsRegistry = null!;
+
         private SceneFactory sceneFactory = null!;
 
         private readonly ConcurrentBag<ISceneFacade> sceneFacades = new ();

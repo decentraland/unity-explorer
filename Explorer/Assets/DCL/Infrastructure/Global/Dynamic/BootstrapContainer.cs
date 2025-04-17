@@ -15,6 +15,7 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -81,7 +82,6 @@ namespace Global.Dynamic
             ISplashScreen splashScreen,
             IRealmUrls realmUrls,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
             DecentralandEnvironment decentralandEnvironment,
             DCLVersion dclVersion,
@@ -109,7 +109,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
 
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
 
                 if (container.enableAnalytics)
@@ -139,7 +139,6 @@ namespace Global.Dynamic
             ISplashScreen splashScreen,
             IRealmUrls realmUrls,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,
             WebRequestsContainer webRequestsContainer,
             BootstrapSettings bootstrapSettings,
@@ -152,7 +151,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

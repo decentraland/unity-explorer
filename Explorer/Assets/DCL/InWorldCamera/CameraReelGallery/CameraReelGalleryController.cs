@@ -10,6 +10,8 @@ using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.WebRequests;
 using DCL.UI.Utilities;
 using DG.Tweening;
 using MVC;
@@ -73,6 +75,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
+        private readonly IWebRequestController webRequestController;
 
         private bool isLoading;
         private bool isDragging;
@@ -93,6 +96,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
+            IWebRequestController webRequestController,
             CameraReelOptionButtonView? optionButtonView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
@@ -113,6 +117,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollBarDragHandler.EndDrag += ScrollEndDrag;
             this.elementMaskRect = this.view.elementMask.GetWorldRect();
             this.useSignedRequest = useSignedRequest;
+            this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.systemClipboard = systemClipboard;
             this.webBrowser = webBrowser;
@@ -153,7 +158,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 try
                 {
-                    await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
+                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, response.url, ct);
                     ScreenshotDownloaded?.Invoke();
 
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.DOWNLOAD,
@@ -192,7 +197,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     response.isPublic = isPublic;
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
                 }
-                catch (UnityWebRequestException e)
+                catch (WebRequestException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
@@ -277,7 +282,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
             }
-            catch (UnityWebRequestException e)
+            catch (WebRequestException e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
 

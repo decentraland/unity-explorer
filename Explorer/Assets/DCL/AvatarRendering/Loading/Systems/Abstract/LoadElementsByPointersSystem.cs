@@ -80,8 +80,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             using PoolExtensions.Scope<List<TDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportCategory())
-                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            await webRequestController.PostAsync(new CommonArguments(url), GenericUploadArguments.CreateJson(bodyBuilder.ToString()), GetReportCategory())
+                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
 
             lock (results) { results.AddRange(dtoPooledList.Value); }
         }

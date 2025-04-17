@@ -9,9 +9,11 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
     public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
     {
+        public LoadTextureSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
@@ -25,11 +27,8 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override GetTextureIntention CreateWrongTypeIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
-        protected override LoadTextureSystem CreateSystem()
-        {
-            return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
-        }
+        protected override LoadTextureSystem CreateSystem(IWebRequestController webRequestController) =>
+            new (world, cache, webRequestController, IDiskCache<Texture2DData>.Null.INSTANCE, Substitute.For<IAvatarTextureUrlProvider>());
 
         protected override void AssertSuccess(Texture2DData data)
         {

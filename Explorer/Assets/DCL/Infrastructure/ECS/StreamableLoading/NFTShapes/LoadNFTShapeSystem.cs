@@ -52,13 +52,12 @@ namespace ECS.StreamableLoading.NFTShapes
             // No need to check the size since we're using our converter so size will always be ok
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            var result = await webRequestController.GetTextureAsync(
-                new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
-                new GetTextureArguments(TextureType.Albedo, true),
-                new GetTextureWebRequest.CreateTextureOp(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE),
-                ct,
-                GetReportData()
-            );
+            IOwnedTexture2D? result = await webRequestController.GetTextureAsync(
+                                                                     new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
+                                                                     new GetTextureArguments(TextureType.Albedo, true),
+                                                                     GetReportData())
+                                                                .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);
+
 
             if (result == null)
                 return new StreamableLoadingResult<Texture2DData>(
@@ -71,8 +70,8 @@ namespace ECS.StreamableLoading.NFTShapes
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> infoRequest = webRequestController.GetAsync(commonArguments, ct, GetReportData());
-            var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+            GenericGetRequest? infoRequest = webRequestController.GetAsync(commonArguments, GetReportData());
+            NftInfoDto nft = await infoRequest.CreateFromJsonAsync<NftInfoDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchBackToMainThread);
             return nft.ImageUrl();
         }
     }

@@ -1,5 +1,5 @@
+using Best.HTTP.Caching;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 
@@ -28,43 +28,44 @@ namespace DCL.WebRequests.RequestsHub
             public override int GetHashCode() =>
                 HashCode.Combine(requestType, webType);
 
-            public static Key NewKey<T, TWebRequest>() where T: struct where TWebRequest: struct, ITypedWebRequest =>
-                new (typeof(T), typeof(TWebRequest));
+            public static Key NewKey<TArgs, TWebRequest>() where TArgs: struct where TWebRequest: ITypedWebRequest<TArgs> =>
+                new (typeof(TArgs), typeof(TWebRequest));
         }
 
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
-        public RequestHub(IDecentralandUrlsSource urlsSource)
+        public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, WebRequestsMode webRequestsMode, bool ktxEnabled)
         {
+            this.ktxEnabled = ktxEnabled;
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
-            Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
-            Add<GenericPostArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
-            Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
-            Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
-            Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
-            Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
-            Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-            Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
-            Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, ktxEnabled, urlsSource));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericGetArguments args) => new GenericGetRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericHeadArguments args) => new GenericHeadRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPostRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPutRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericDeleteRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPatchRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAudioClipArguments args) => new GetAudioClipWebRequest(envelope, args, controller));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller, webRequestsMode == WebRequestsMode.HTTP2));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller));
         }
 
-        private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
-            where T: struct
-            where TWebRequest: struct, ITypedWebRequest
+        private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)
+            where TArgs: struct
+            where TWebRequest: ITypedWebRequest<TArgs>
         {
-            map.Add(Key.NewKey<T, TWebRequest>(), requestDelegate);
+            map.Add(Key.NewKey<TArgs, TWebRequest>(), requestDelegate);
         }
 
-        public InitializeRequest<T, TWebRequest> RequestDelegateFor<T, TWebRequest>()
-            where T: struct
-            where TWebRequest: struct, ITypedWebRequest
+        public InitializeRequest<TArgs, TWebRequest> RequestDelegateFor<TArgs, TWebRequest>()
+            where TArgs: struct
+            where TWebRequest: ITypedWebRequest<TArgs>
         {
-            if (map.TryGetValue(Key.NewKey<T, TWebRequest>(), out object requestDelegate))
-                return (InitializeRequest<T, TWebRequest>)requestDelegate!;
+            if (map.TryGetValue(Key.NewKey<TArgs, TWebRequest>(), out object requestDelegate))
+                return (InitializeRequest<TArgs, TWebRequest>)requestDelegate!;
 
             throw new InvalidOperationException("Request type not supported.");
         }

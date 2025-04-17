@@ -1,5 +1,7 @@
+using Arch.Core;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
@@ -47,13 +49,6 @@ namespace ECS.StreamableLoading.Common.Components
                 state.disposed = false;
                 state.Value = Status.NotStarted;
             },
-            actionOnRelease: state =>
-            {
-                state.DisposeBudgetIfExists();
-
-                state.PartialDownloadingData?.Dispose();
-                state.PartialDownloadingData = null;
-            },
             collectionCheck: PoolConstants.CHECK_COLLECTIONS,
             defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT, maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT);
 
@@ -76,17 +71,11 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
 
-        public ReadOnlyMemory<byte> GetFullyDownloadedData()
+        public PartialDownloadStream ClaimOwnershipOverFullyDownloadedData()
         {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
-            return PartialDownloadingData!.Value.FullData;
-        }
-
-        public SlicedOwnedMemory<byte> ClaimOwnershipOverFullyDownloadedData()
-        {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            Assert.IsTrue(PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: true } });
             PartialLoadingState value = PartialDownloadingData!.Value;
-            SlicedOwnedMemory<byte> owner = value.TransferMemoryOwnership();
+            PartialDownloadStream owner = value.TransferMemoryOwnership();
             PartialDownloadingData = value;
             return owner;
         }
@@ -159,12 +148,18 @@ namespace ECS.StreamableLoading.Common.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
+        public void Dispose(EntityReference entity)
         {
             if (disposed) return;
 
             disposed = true;
 
+            DisposeBudgetIfExists();
+
+            if (entity == PartialDownloadingData?.PartialDownloadStream.Entity)
+                PartialDownloadingData.Value.Dispose();
+
+            PartialDownloadingData = null;
             POOL.Release(this);
         }
     }

@@ -13,7 +13,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
 
         public struct Response
         {
-            public Dictionary<string, string> Headers;
+            public Dictionary<string, string>? Headers;
             public bool Ok;
             public bool Redirected;
             public int Status;

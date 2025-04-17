@@ -1,15 +1,18 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.WebRequests.GenericDelete;
+﻿using Best.HTTP;
+using Best.HTTP.Response;
+using Best.HTTP.Shared.PlatformSupport.Memory;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 
 namespace DCL.WebRequests
 {
@@ -20,344 +23,227 @@ namespace DCL.WebRequests
     {
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
 
-        public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
-            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+        public delegate void TransformChunk<in T>(T context, NativeArray<byte>.ReadOnly chunk, ulong chunkIndex);
+        public delegate T PrepareContext<out T>(ulong dataLength);
 
-        public static Adapter<GenericPostRequest, GenericPostArguments> PostAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            GenericPostArguments arguments,
-            CancellationToken ct,
-            ReportData reportData,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
-
-        public static Adapter<GenericDeleteRequest, GenericDeleteArguments> DeleteAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            GenericDeleteArguments arguments,
-            CancellationToken ct,
-            ReportData reportData,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
-
-        public static Adapter<GenericPutRequest, GenericPutArguments> PutAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            GenericPutArguments arguments,
-            CancellationToken ct,
-            ReportData reportData,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
-
-        public static Adapter<GenericPatchRequest, GenericPatchArguments> PatchAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            GenericPatchArguments arguments,
-            CancellationToken ct,
-            ReportData reportData,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
-
-        public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            CancellationToken ct,
-            ReportData reportData,
-            WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null);
-
-        /// <summary>
-        ///     Adapts existing calls to the required-op flow
-        /// </summary>
-        public readonly struct Adapter<TRequest, TWebRequestArgs>
-            where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
-            where TWebRequestArgs: struct
+        public static async UniTask<TResult> ProcessAndDisposeAsync<TResult>(this ITypedWebRequest request, Func<IWebRequest, TResult> getResult, CancellationToken ct)
         {
-            private readonly TWebRequestArgs args;
-            private readonly CommonArguments commonArguments;
-            private readonly IWebRequestController controller;
-            private readonly CancellationToken ct;
-            private readonly WebRequestHeadersInfo? headersInfo;
-            private readonly ISet<long>? ignoreErrorCodes;
-            private readonly ReportData reportData;
-            private readonly WebRequestSignInfo? signInfo;
+            using IWebRequest? req = await request.SendAsync(ct);
+            return getResult(req);
+        }
 
-            public Adapter(
-                IWebRequestController controller,
-                CommonArguments commonArguments,
-                TWebRequestArgs args,
-                CancellationToken ct,
-                ReportData reportData,
-                WebRequestHeadersInfo? headersInfo,
-                WebRequestSignInfo? signInfo,
-                ISet<long>? ignoreErrorCodes
-            )
+        public static UniTask<string> StoreTextAsync(this ITypedWebRequest request, CancellationToken ct) =>
+            request.ProcessAndDisposeAsync(static r => r.Response.Text, ct);
+
+        public static UniTask<byte[]> GetDataCopyAsync(this ITypedWebRequest request, CancellationToken ct) =>
+            request.ProcessAndDisposeAsync(static r => r.Response.Data, ct);
+
+        public static async UniTask<string?> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
+        {
+            using IWebRequest req = await request.SendAsync(ct);
+            return req.Response.GetHeader(headerName);
+        }
+
+        public static async UniTask<T> OverwriteFromJsonAsync<T>(
+            this ITypedWebRequest request,
+            T target,
+            WRJsonParser jsonParser,
+            CancellationToken ct,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
+            JsonSerializerSettings? serializerSettings = null)
+        {
+            using IWebRequest? createdRequest = await request.SendAsync(ct);
+
+            // If it is Unity API we must first switch to the main thread to read the response
+
+            if (createdRequest.nativeRequest is UnityWebRequest)
+                await UniTask.SwitchToMainThread();
+
+            string text = string.Empty;
+
+            try
             {
-                this.commonArguments = commonArguments;
-                this.args = args;
-                this.ct = ct;
-                this.reportData = reportData;
-                this.headersInfo = headersInfo;
-                this.signInfo = signInfo;
-                this.ignoreErrorCodes = ignoreErrorCodes;
-                this.controller = controller;
-            }
-
-            internal UniTask<TResult> SendAsync<TOp, TResult>(TOp op) where TOp: struct, IWebRequestOp<TRequest, TResult> =>
-                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(commonArguments, args, op, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
-
-            public UniTask WithNoOpAsync() =>
-                SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
-
-            public UniTask<T> CreateFromJson<T>(WRJsonParser jsonParser,
-                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
-                SendAsync<CreateFromJsonOp<T, TRequest>, T>(new CreateFromJsonOp<T, TRequest>(jsonParser, threadFlags, createCustomExceptionOnFailure));
-
-            public UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
-                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
-                JsonSerializerSettings? serializerSettings = null) =>
-                SendAsync<CreateFromJsonOp<T, TRequest>, T>(new CreateFromJsonOp<T, TRequest>(WRJsonParser.Newtonsoft, threadFlags, createCustomExceptionOnFailure, serializerSettings));
-
-            public UniTask<string> StoreTextAsync() =>
-                SendAsync<StoreTextOp<TRequest>, string>(new StoreTextOp<TRequest>());
-
-            public UniTask<byte[]> GetDataCopyAsync() =>
-                SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
-
-            public UniTask<string> GetResponseHeaderAsync(string headerName) =>
-                SendAsync<GetResponseHeaderOp<TRequest>, string>(new GetResponseHeaderOp<TRequest>(headerName));
-
-            /// <summary>
-            ///     Exposes the download handler to the caller so it's the caller responsibility to dispose it later
-            /// </summary>
-            /// <returns></returns>
-            public UniTask<DownloadHandler> ExposeDownloadHandlerAsync() =>
-                SendAsync<ExposeDownloadHandler<TRequest>, DownloadHandler>(new ExposeDownloadHandler<TRequest>());
-
-            public UniTask<int> StatusCodeAsync() =>
-                SendAsync<StatusCodeOp<TRequest>, int>(new StatusCodeOp<TRequest>());
-
-            public UniTask<T> OverwriteFromJsonAsync<T>(
-                T targetObject,
-                WRJsonParser jsonParser,
-                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
-                SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure));
-
-            /// <summary>
-            ///     Executes the web request and does nothing with the result
-            /// </summary>
-            public async UniTask<WebRequestUtils.NoOp<TRequest>> WithCustomExceptionAsync(Func<UnityWebRequestException, Exception> newExceptionFactoryMethod)
-            {
-                try
+                switch (jsonParser)
                 {
-                    await SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
-                    return new WebRequestUtils.NoOp<TRequest>();
-                }
-                catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
-            }
-        }
-
-        public interface IGenericDownloadHandlerRequest { }
-
-        /// <summary>
-        ///     Reads the text from the download handler and saves in the property
-        /// </summary>
-        /// <typeparam name="TRequest"></typeparam>
-        public struct StoreTextOp<TRequest> : IWebRequestOp<TRequest, string> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
-        {
-            public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
-                UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.text)!;
-        }
-
-        public struct StatusCodeOp<TRequest> : IWebRequestOp<TRequest, int> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
-        {
-            public UniTask<int> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
-                UniTask.FromResult((int)webRequest.UnityWebRequest.responseCode);
-        }
-
-        public struct CreateFromJsonOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
-        {
-            private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
-            private readonly WRJsonParser jsonParser;
-            private readonly JsonSerializerSettings? newtonsoftSettings;
-            private readonly WRThreadFlags threadFlags;
-
-            public CreateFromJsonOp(WRJsonParser jsonParser, WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread, CreateExceptionOnParseFail? createCustomExceptionOnFailure = null, JsonSerializerSettings? newtonsoftSettings = null)
-            {
-                this.jsonParser = jsonParser;
-                this.threadFlags = threadFlags;
-                this.newtonsoftSettings = newtonsoftSettings;
-                this.createCustomExceptionOnFailure = createCustomExceptionOnFailure;
-            }
-
-            public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
-            {
-                DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = null;
-
-                try
-                {
-                    if (jsonParser == WRJsonParser.Unity
+                    case WRJsonParser.Unity:
 #if !UNITY_EDITOR
-                        || jsonParser == WRJsonParser.NewtonsoftInEditor
+                    case WRJsonParser.NewtonsoftInEditor:
 #endif
-                        )
+                        text = createdRequest.Response.Text;
+                        await SwitchToThreadAsync(threadFlags);
+                        JsonUtility.FromJsonOverwrite(text, target);
+                        break;
+                    default:
                     {
-                        text = downloadHandler.text;
+                        using Stream stream = createdRequest.Response.GetCompleteStream();
 
-                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                        await SwitchToThreadAsync(threadFlags);
 
-                        return JsonUtility.FromJson<T>(text);
+                        var serializer = JsonSerializer.CreateDefault(serializerSettings);
+
+                        using var textReader = new StreamReader(stream, Encoding.UTF8);
+                        using var jsonReader = new JsonTextReader(textReader);
+                        serializer.Populate(jsonReader, target!);
+                        break;
                     }
-                    else
-                    {
-                        var nativeData = downloadHandler.nativeData;
+                }
+            }
+            catch (Exception e)
+            {
+                if (createCustomExceptionOnFailure != null)
+                    throw createCustomExceptionOnFailure(e, text);
+                else
+                    throw;
+            }
+            finally { await SwitchToMainThreadAsync(threadFlags); }
 
-                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+            return target;
+        }
+
+        public static UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
+            this ITypedWebRequest request,
+            CancellationToken ct,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
+            JsonSerializerSettings? serializerSettings = null) =>
+            request.CreateFromJsonAsync<T>(WRJsonParser.Newtonsoft, ct, threadFlags, serializerSettings, createCustomExceptionOnFailure);
+
+        public static async UniTask<T> CreateFromJsonAsync<T>(this ITypedWebRequest request,
+            WRJsonParser jsonParser,
+            CancellationToken ct,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            JsonSerializerSettings? newtonsoftSettings = null,
+            CreateExceptionOnParseFail? createCustomExceptionOnFailure = null)
+        {
+            using IWebRequest? createdRequest = await request.SendAsync(ct);
+
+            // If it is Unity API we must first switch to the main thread to read the response
+
+            if (createdRequest.nativeRequest is UnityWebRequest)
+                await UniTask.SwitchToMainThread();
+
+            string text = string.Empty;
+
+            try
+            {
+                switch (jsonParser)
+                {
+                    case WRJsonParser.Unity:
+#if !UNITY_EDITOR
+                    case WRJsonParser.NewtonsoftInEditor:
+#endif
+                        text = createdRequest.Response.Text;
+                        await SwitchToThreadAsync(threadFlags);
+                        return JsonUtility.FromJson<T>(text);
+                    default:
+                    {
+                        using Stream stream = createdRequest.Response.GetCompleteStream();
+
+                        await SwitchToThreadAsync(threadFlags);
 
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
-                        unsafe
-                        {
-                            var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
-
-                            using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
-                                nativeData.Length, FileAccess.Read);
-
-                            using var textReader = new StreamReader(stream, Encoding.UTF8);
-                            using var jsonReader = new JsonTextReader(textReader);
-                            return serializer.Deserialize<T>(jsonReader);
-                        }
+                        using var textReader = new StreamReader(stream, Encoding.UTF8);
+                        using var jsonReader = new JsonTextReader(textReader);
+                        return serializer.Deserialize<T>(jsonReader)!;
                     }
                 }
-                catch (Exception ex)
-                {
-                    if (createCustomExceptionOnFailure != null && text != null)
-                        throw createCustomExceptionOnFailure(ex, text);
-                    else
-                        throw;
-                }
-                finally
-                {
-                    if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
-                        await UniTask.SwitchToMainThread();
-                }
             }
+            catch (Exception e)
+            {
+                if (createCustomExceptionOnFailure != null)
+                    throw createCustomExceptionOnFailure(e, text);
+                else
+                    throw;
+            }
+            finally { await SwitchToMainThreadAsync(threadFlags); }
         }
 
-        public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        /// <summary>
+        ///     Executes the request, transforms the output data and disposes of the request <br />
+        ///     It's an efficient method to process data without allocations
+        ///     <remarks>
+        ///         <list type="bullet">
+        ///             <item> The underlying downloaded data will be disposed upon completion </item>
+        ///         </list>
+        ///     </remarks>
+        /// </summary>
+        public static async UniTask<T> TransformDataAsync<T>(this ITypedWebRequest request, PrepareContext<T> prepareContext, TransformChunk<T> transformChunk, CancellationToken ct, WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread)
         {
-            private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
-            private readonly WRJsonParser jsonParser;
+            using IWebRequest? sentRequest = await request.SendAsync(ct);
 
-            public readonly T Target;
-            private readonly WRThreadFlags threadFlags;
+            await SwitchToThreadAsync(threadFlags);
 
-            public OverwriteFromJsonAsyncOp(T target, WRJsonParser jsonParser, WRThreadFlags threadFlags, CreateExceptionOnParseFail? createCustomExceptionOnFailure)
+            T context = prepareContext(sentRequest.Response.DataLength);
+
+            switch (sentRequest.nativeRequest)
             {
-                Target = target;
-                this.jsonParser = jsonParser;
-                this.threadFlags = threadFlags;
-                this.createCustomExceptionOnFailure = createCustomExceptionOnFailure;
+                case UnityWebRequest uwr:
+                    NativeArray<byte>.ReadOnly nativeData = uwr.downloadHandler.nativeData;
+
+                    transformChunk(context, nativeData, 0);
+                    break;
+                case HTTPRequest http2Req:
+                    await using (http2Req.Response.DownStream)
+                        ProcessSegments(http2Req.Response.DownStream);
+
+                    break;
             }
 
-            public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
-            {
-                DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = null;
+            return context;
 
-                try
+            unsafe void ProcessSegments(DownloadContentStream stream)
+            {
+                ulong offsetFromStart = 0;
+
+                while (stream.TryTake(out BufferSegment segment))
                 {
-                    if (jsonParser == WRJsonParser.Unity
-#if !UNITY_EDITOR
-                        || jsonParser == WRJsonParser.NewtonsoftInEditor
+                    // Convert segment to native array
+                    fixed (byte* segmentPtr = segment.Data)
+                    {
+                        void* ptr = segmentPtr + segment.Offset;
+                        NativeArray<byte> nativeArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, segment.Count, Allocator.None);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                        NativeArrayUnsafeUtility.SetAtomicSafetyHandle(
+                            ref nativeArray,
+                            AtomicSafetyHandle.Create()
+                        );
 #endif
-                        )
-                    {
-                        text = downloadHandler.text;
 
-                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
-
-                        JsonUtility.FromJsonOverwrite(text, Target);
+                        transformChunk(context, nativeArray.AsReadOnly(), offsetFromStart);
                     }
-                    else
-                    {
-                        var nativeData = downloadHandler.nativeData;
 
-                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
-
-                        var serializer = JsonSerializer.CreateDefault();
-
-                        unsafe
-                        {
-                            var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
-
-                            using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
-                                nativeData.Length, FileAccess.Read);
-
-                            using var textReader = new StreamReader(stream, Encoding.UTF8);
-                            using var jsonReader = new JsonTextReader(textReader);
-                            serializer.Populate(jsonReader, Target);
-                        }
-                    }
+                    offsetFromStart += (ulong)segment.Count;
                 }
-                catch (Exception ex)
-                {
-                    if (createCustomExceptionOnFailure != null && text != null)
-                        throw createCustomExceptionOnFailure(ex, text);
-                    else
-                        throw;
-                }
-                finally
-                {
-                    if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
-                        await UniTask.SwitchToMainThread();
-                }
-
-                return Target;
             }
         }
 
-        public struct GetDataCopyOp<TRequest> : IWebRequestOp<TRequest, byte[]> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        internal static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
-            public UniTask<byte[]?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
-                UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.data)!;
+            if (EnumUtils.HasFlag(flags, WRThreadFlags.SwitchBackToMainThread))
+                await UniTask.SwitchToMainThread();
         }
 
-        public struct GetResponseHeaderOp<TRequest> : IWebRequestOp<TRequest, string> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static async UniTask SwitchToThreadAsync(WRThreadFlags deserializationThreadFlags)
         {
-            private readonly string headerName;
+            if (EnumUtils.HasFlag(deserializationThreadFlags, WRThreadFlags.SwitchToThreadPool))
+                await UniTask.SwitchToThreadPool();
+        }
 
-            public GetResponseHeaderOp(string headerName)
+        /// <summary>
+        ///     Executes the web request and does nothing with the result <br />
+        ///     On Exception: Throws a new exception created by the provided factory method
+        /// </summary>
+        public static async UniTask WithCustomExceptionAsync(this ITypedWebRequest webRequest, Func<WebRequestException, Exception> newExceptionFactoryMethod, CancellationToken ct)
+        {
+            try
             {
-                this.headerName = headerName;
+                await webRequest.SendAndForgetAsync(ct);
             }
-
-            public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
-                UniTask.FromResult(webRequest.UnityWebRequest.GetResponseHeader(headerName))!;
-        }
-
-        public struct ExposeDownloadHandler<TRequest> : IWebRequestOp<TRequest, DownloadHandler> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
-        {
-            public UniTask<DownloadHandler?> ExecuteAsync(TRequest webRequest, CancellationToken ct)
-            {
-                webRequest.UnityWebRequest.disposeDownloadHandlerOnDispose = false;
-                return UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler)!;
-            }
+            catch (WebRequestException e) { throw newExceptionFactoryMethod(e); }
         }
     }
 }

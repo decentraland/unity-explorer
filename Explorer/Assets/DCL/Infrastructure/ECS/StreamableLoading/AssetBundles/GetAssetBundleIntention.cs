@@ -97,17 +97,5 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
-
-        public class DiskHashCompute : AbstractDiskHashCompute<GetAssetBundleIntention>
-        {
-            public static readonly DiskHashCompute INSTANCE = new ();
-
-            private DiskHashCompute() { }
-
-            protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
-            {
-                keyPayload.Put(asset.Hash ?? asset.Name!);
-            }
-        }
     }
 }

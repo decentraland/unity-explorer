@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera.Playground
                 new LogIpfsRealm(
                     new IpfsRealm(
                         web3IdentityCache,
-                        IWebRequestController.DEFAULT,
+                        IWebRequestController.UNITY,
                         URLDomain.FromString("TestRealm"),
                         URLDomain.EMPTY,
                         new ServerAbout(
@@ -84,7 +84,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
+                    new RealmProfileRepository(IWebRequestController.UNITY, realmData, new DefaultProfileCache())
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

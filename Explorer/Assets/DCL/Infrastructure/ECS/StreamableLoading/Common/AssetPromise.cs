@@ -136,7 +136,7 @@ namespace ECS.StreamableLoading.Common
 
         private void DestroyEntity(World world)
         {
-            world.Get<StreamableLoadingState>(Entity).Dispose();
+            world.Get<StreamableLoadingState>(Entity).Dispose(Entity);
 
             world.Destroy(Entity);
             Entity = EntityReference.Null;

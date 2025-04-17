@@ -88,6 +88,7 @@ jobs:
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/BestHTTP', 'file:../../unity-explorer-packages/BestHTTP' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' |
                 Set-Content $jsonFilePath
             

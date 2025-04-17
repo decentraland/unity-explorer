@@ -2,6 +2,8 @@
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
+using System;
+using System.Threading;
 
 namespace DCL.WebRequests
 {
@@ -18,19 +20,21 @@ namespace DCL.WebRequests
             this.totalBudget = new ConcurrentLoadingPerformanceBudget(totalBudget);
         }
 
-        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op) where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
+        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+
+        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             IAcquiredBudget totalBudgetAcquired;
 
             // Try bypass total budget
             while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
-                await UniTask.Yield(envelope.Ct);
+                await UniTask.Yield(ct);
 
             try
             {
                 lock (debugBudget) { debugBudget.Value--; }
 
-                return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
+                return await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
             }
             finally
             {
@@ -40,6 +44,26 @@ namespace DCL.WebRequests
             }
         }
 
-        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
+        {
+            IAcquiredBudget totalBudgetAcquired;
+
+            // Try bypass total budget
+            while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
+                await UniTask.Yield(ct);
+
+            try
+            {
+                lock (debugBudget) { debugBudget.Value--; }
+
+                return await origin.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
+            }
+            finally
+            {
+                lock (debugBudget) { debugBudget.Value++; }
+
+                totalBudgetAcquired.Dispose();
+            }
+        }
     }
 }
