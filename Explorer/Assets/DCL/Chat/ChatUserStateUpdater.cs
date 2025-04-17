@@ -102,14 +102,15 @@ namespace DCL.Chat
         {
             foreach (string participant in participantsHub.RemoteParticipantIdentities())
             {
+                if (openConversations.Contains(participant))
+                    conversationParticipants.Add(participant);
+
                 if (userBlockingCacheProxy.StrictObject.UserIsBlocked(participant))
                     chatUsersStateCache.AddConnectedBlockedUser(participant);
                 else
                 {
                     chatUsersStateCache.AddConnectedUser(participant);
 
-                    if (openConversations.Contains(participant))
-                        conversationParticipants.Add(participant);
                 }
             }
         }
@@ -241,14 +242,16 @@ namespace DCL.Chat
                 case UpdateFromParticipant.MetadataChanged:
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed!!! {participant.Metadata}");
 
-                    if (CurrentConversation != userId) return;
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
+                    if (CurrentConversation != userId) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(userId)) return;
 
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed - Passed all checks!!! {participant.Metadata}");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
-                    CheckUserMetadataAsync(participant).Forget();
+                    //var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
+                    //ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Read metadata from user {message}");
+                    //CheckUserMetadataAsync(userId, message).Forget();
                     break;
                 case UpdateFromParticipant.Disconnected:
                     chatUsersStateCache.RemoveConnectedUser(userId);
@@ -280,12 +283,8 @@ namespace DCL.Chat
                 chatUserStateEventBus.OnNonFriendConnected(userId);
         }
 
-        private async UniTaskVoid CheckUserMetadataAsync(Participant participant)
+        private async UniTaskVoid CheckUserMetadataAsync(string userId, ParticipantPrivacyMetadata message)
         {
-            var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
-
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Read metadata from user {message}");
-
             //If they accept all conversations, we dont need to check if they are friends or not
             if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
             {
@@ -293,8 +292,8 @@ namespace DCL.Chat
                 return;
             }
 
-            var status = await friendsService.StrictObject.GetFriendshipStatusAsync(participant.Identity, cts.Token);
-            if (status == FriendshipStatus.FRIEND) return;
+            var status = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).TimeoutWithoutException(new TimeSpan(0,0,5));
+            if (!status.IsTimeout && status.Result == FriendshipStatus.FRIEND) return;
 
             chatUserStateEventBus.OnCurrentConversationUserUnavailable();
         }
@@ -404,7 +403,7 @@ namespace DCL.Chat
         {
             ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Subscribe To Events");
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
-            //participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
+            participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
             friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
             friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
