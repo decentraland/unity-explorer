@@ -1,5 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using System;
 using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -56,9 +57,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private SceneLimitsKey currentKey;
 
         private readonly ISystemMemoryCap systemMemoryCap;
-        private readonly bool isEnabled;
+        private bool isEnabled;
 
-        public SceneLoadingLimit(ISystemMemoryCap memoryCap, bool isEnabled)
+        public SceneLoadingLimit(ISystemMemoryCap memoryCap)
         {
             systemMemoryCap = memoryCap;
             this.isEnabled = true;
@@ -164,6 +165,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 currentSceneLimits = sceneLimits[SceneLimitsKey.WARNING];
             else
                 currentSceneLimits = sceneLimits[currentKey];
+        }
+
+        public void SetEnabled(bool isEnabled)
+        {
+            this.isEnabled = isEnabled;
+            UpdateMemoryCap();
         }
     }
 }

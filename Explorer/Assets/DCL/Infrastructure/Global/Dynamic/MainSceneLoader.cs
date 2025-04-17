@@ -12,6 +12,7 @@ using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -41,6 +42,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -209,7 +211,9 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                //TODO: This is a hack. Feature flags should be the first thing to be initialized
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
+                staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
@@ -238,7 +242,7 @@ namespace Global.Dynamic
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
 #if UNITY_EDITOR
-                        UnityEditor.EditorApplication.isPlaying = false;
+                        EditorApplication.isPlaying = false;
 #else
                         Application.Quit();
 #endif

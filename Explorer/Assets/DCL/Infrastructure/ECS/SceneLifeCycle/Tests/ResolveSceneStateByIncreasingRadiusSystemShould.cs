@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             systemMemoryCap = Substitute.For<ISystemMemoryCap>();
             systemMemoryCap.MemoryCapInMB.Returns(long.MaxValue);
-            sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap, true);
+            sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap);
 
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
             system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, realmData, sceneLoadingLimit);

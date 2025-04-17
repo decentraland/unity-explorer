@@ -56,7 +56,7 @@ namespace DCL.ResourcesUnloading.Tests
             unloadStrategyHandler.unloadStrategies = unloadStrategies;
 
             ISystemMemoryCap systemMemoryCap = Substitute.For<ISystemMemoryCap>();
-            var sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap, false);
+            var sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap);
 
             releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler, sceneLoadingLimit);
         }

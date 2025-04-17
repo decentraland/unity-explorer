@@ -284,7 +284,7 @@ namespace Global
 #endif
             };
 
-            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap, container.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
