@@ -14,6 +14,7 @@ namespace DCL.UI.ProfileElements
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ViewDependencies viewDependencies;
+        private readonly IProfileChangesBus profileChangesBus;
 
         private CancellationTokenSource? loadProfileCts;
 
@@ -22,24 +23,26 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            ViewDependencies viewDependencies
+            ViewDependencies viewDependencies,
+            IProfileChangesBus profileChangesBus
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.viewDependencies = viewDependencies;
+            this.profileChangesBus = profileChangesBus;
         }
 
         public override void Dispose()
         {
-            base.Dispose();
+            profileChangesBus.UnsubscribeToProfileNameChange(ProfileNameChanged);
 
-            viewDependencies.ProfileNameChanged -= ProfileNameChanged;
+            base.Dispose();
         }
 
         protected override void OnViewInstantiated()
         {
-            viewDependencies.ProfileNameChanged += ProfileNameChanged;
+            profileChangesBus.SubscribeToProfileNameChange(ProfileNameChanged);
         }
 
         protected override void OnBeforeViewShow()

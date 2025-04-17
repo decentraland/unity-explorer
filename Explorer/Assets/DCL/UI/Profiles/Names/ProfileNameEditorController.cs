@@ -26,6 +26,7 @@ namespace DCL.UI.ProfileNames
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
@@ -35,19 +36,20 @@ namespace DCL.UI.ProfileNames
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action? NameChanged;
-        public event Action<Profile?>? NameChangedWithProfile;
         public event Action? NameClaimRequested;
 
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
-            IDecentralandUrlsSource decentralandUrlsSource) : base(viewFactory)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IProfileChangesBus profileChangesBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -244,7 +246,9 @@ namespace DCL.UI.ProfileNames
                     {
                         Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
-                        NameChangedWithProfile?.Invoke(updatedProfile);
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
@@ -278,7 +282,9 @@ namespace DCL.UI.ProfileNames
                     {
                         Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
-                        NameChangedWithProfile?.Invoke(updatedProfile);
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }

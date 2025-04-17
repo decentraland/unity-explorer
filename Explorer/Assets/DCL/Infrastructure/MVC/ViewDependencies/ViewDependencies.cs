@@ -5,7 +5,6 @@ using DCL.Input;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.Utilities;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -23,8 +22,6 @@ namespace MVC
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
         public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
-
-        public Action<Profile?>? ProfileNameChanged;
 
         private readonly IProfileThumbnailCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
