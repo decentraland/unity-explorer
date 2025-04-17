@@ -389,7 +389,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
             if (!isExplorePanelVisible && !isTransitioning)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
+                await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)

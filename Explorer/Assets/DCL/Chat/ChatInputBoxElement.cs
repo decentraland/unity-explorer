@@ -88,6 +88,8 @@ namespace DCL.Chat
             set => inputField.text = value;
         }
 
+        public bool IsPasteMenuOpen { get; private set; }
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
@@ -168,13 +170,11 @@ namespace DCL.Chat
             closePopupTask.TrySetResult();
         }
 
-        public void FocusInputBox()
+        public void FocusInputBox(string? newText = null)
         {
             if (suggestionPanel.IsActive) return;
 
-            if (inputField.isFocused) return;
-
-            inputField.SelectInputField();
+            inputField.SelectInputField(newText);
         }
 
         private void OnPasteShortcutPerformed()
@@ -214,15 +214,6 @@ namespace DCL.Chat
             characterCounter.SetCharacterCount(inputText.Length);
             layoutElement.preferredHeight = inputField.preferredHeight;
             InputChanged?.Invoke(inputText);
-        }
-
-        /// <summary>
-        ///     Makes the input box gain the focus and replaces its content.
-        /// </summary>
-        /// <param name="text">The new content of the input box.</param>
-        public void FocusInputBoxWithText(string text)
-        {
-            inputField.SelectInputField(text);
         }
 
         /// <summary>
@@ -273,6 +264,8 @@ namespace DCL.Chat
         {
             if (isInputSelected && viewDependencies.ClipboardManager.HasValue())
             {
+                IsPasteMenuOpen = true;
+
                 closePopupTask.TrySetResult();
                 closePopupTask = new UniTaskCompletionSource();
 
@@ -303,6 +296,7 @@ namespace DCL.Chat
 
         private void PasteClipboardText(object sender, string pastedText)
         {
+            IsPasteMenuOpen = false;
             InsertTextAtCaretPosition(pastedText);
         }
 
@@ -358,13 +352,13 @@ namespace DCL.Chat
             inputField.OnDeselect(null);
         }
 
-        public bool TrySubmitInputField()
+        public void SubmitInputField()
         {
             if (suggestionPanel.IsActive)
             {
                 //suggestionPanelController!.SetPanelVisibility(false);
                 //lastMatch = Match.Empty;
-                return true;
+                return;
             }
 
             if (emojiPanel.gameObject.activeInHierarchy)
@@ -376,21 +370,16 @@ namespace DCL.Chat
 
             string submittedText = inputField.text;
 
-            if (string.IsNullOrWhiteSpace(submittedText))
+            if (!string.IsNullOrWhiteSpace(submittedText))
             {
-                inputField.DeactivateInputField();
-                inputField.OnDeselect(null);
-                return false;
+                //TODO FRAN: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
+                if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
+
+                inputField.ResetInputField();
+
+                InputSubmitted?.Invoke(submittedText, ORIGIN);
             }
-
-            //TODO FRAN: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
-            if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
-
-            inputField.ResetInputField();
-
-            InputSubmitted?.Invoke(submittedText, ORIGIN);
-            return true;
         }
 
         public void Dispose()

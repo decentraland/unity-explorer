@@ -174,8 +174,8 @@ namespace DCL.Chat
                 if(showParams.Unfold)
                     IsUnfolded = true;
 
-                if(showParams.HasToFocusInputBox)
-                    viewInstance!.FocusInputBox();
+                if(showParams.Focus)
+                    viewInstance!.Focus();
 
                 ViewShowingComplete?.Invoke(this);
             }
@@ -185,8 +185,6 @@ namespace DCL.Chat
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            // TODO FRAN: We only need to minimize the chat when the sidebar chat button is pressed or the enter key is pressed,
-            // in the other cases, we want to preserve their last state, how to do it??
             IsUnfolded = false;
             await UniTask.CompletedTask;
         }
@@ -238,8 +236,8 @@ namespace DCL.Chat
 
             InitializeChannelsAndConversationsAsync().Forget();
 
-            OnFocus();
             IsUnfolded = inputData.Unfold;
+            viewInstance.Blur();
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
@@ -261,6 +259,7 @@ namespace DCL.Chat
 
         protected override void OnViewClose()
         {
+            Blur();
             UnsubscribeFromEvents();
             Dispose();
         }
@@ -310,6 +309,7 @@ namespace DCL.Chat
             chatUserStateUpdater.AddConversation(channelId.Id);
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(channelId.Id, chatUsersUpdateCts.Token).Forget();
+//            viewInstance.Focus();
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, CancellationToken ct, bool updateToolbar = false)
@@ -416,7 +416,6 @@ namespace DCL.Chat
 
         private void OnViewFoldingChanged(bool isUnfolded)
         {
-            //TODO FRAN: Check what is this doing
             if (!isUnfolded)
                 MarkCurrentChannelAsRead();
         }
@@ -479,7 +478,7 @@ namespace DCL.Chat
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
             //TODO FRAN: This should take us to the nearby channel and send the command there
-            viewInstance!.FocusInputBoxWithText("/");
+            viewInstance!.Focus("/");
         }
 
         //This comes from the paste option or mention, we check if it's possible to do it as if there is a mask we cannot
@@ -487,7 +486,7 @@ namespace DCL.Chat
         {
             if (viewInstance!.IsMaskActive) return;
 
-            viewInstance.FocusInputBox();
+            viewInstance.Focus();
             viewInstance.InsertTextInInputBox(text);
         }
 

@@ -20,7 +20,7 @@ namespace DCL.Chat
         public event Action? CloseMemberListButtonClicked;
         public event Action? HideMemberListButtonClicked;
         public event Action? ShowMemberListButtonClicked;
-        public event VisibilityChangedDelegate? ChatBubblesVisibilityChanged;
+
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
 
         [SerializeField] private Button closeChatButton;
