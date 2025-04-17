@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: VelocitySpeedTiersRule
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:VelocitySpeedTiersRule
   color: {r: 1, g: 1, b: 1, a: 1}
-  IsEnabled: 1
   MinTimeDelta: 0.1
   SprintSentRate: 0.1
   RunSentRate: 0.33

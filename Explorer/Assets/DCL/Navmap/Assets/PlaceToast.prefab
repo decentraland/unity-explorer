@@ -1229,7 +1229,7 @@ MonoBehaviour:
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!95 &3411182882544677066
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1243,6 +1243,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -4206,7 +4207,7 @@ MonoBehaviour:
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!95 &7955915033149286137
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -4220,6 +4221,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -4366,7 +4368,7 @@ MonoBehaviour:
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!95 &2273004056072619044
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -4380,6 +4382,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -4595,6 +4598,7 @@ MonoBehaviour:
     m_AssetGUID: 624d527621f514c5999533539668c4d3
     m_SubObjectName: 
     m_SubObjectType: 
+    m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   <TabsLayoutRoot>k__BackingField: {fileID: 2668638129558591895}
   <OverviewTabButton>k__BackingField: {fileID: 1394763361104185966}
@@ -4605,13 +4609,14 @@ MonoBehaviour:
   <ParcelCountLabel>k__BackingField: {fileID: 172371242640318156}
   <AppearsOnContainer>k__BackingField: {fileID: 3435207277801023283}
   <AppearsOnCategories>k__BackingField: []
-  <OverviewElementsThatShouldBeEnabled>k__BackingField: []
-  <OverviewElementsThatShouldBeDisabled>k__BackingField: []
   <PhotosTabButton>k__BackingField: {fileID: 1394763361104185966}
+  <PhotosTabButtonText>k__BackingField: {fileID: 0}
   <PhotosTabContainer>k__BackingField: {fileID: 3435207277801023283}
   <PhotosTabSelected>k__BackingField: {fileID: 3435207277801023283}
+  <CameraReelGalleryView>k__BackingField: {fileID: 0}
   <EventsTabButton>k__BackingField: {fileID: 1394763361104185966}
   <EventsTabContainer>k__BackingField: {fileID: 3435207277801023283}
+  <EventsContentContainer>k__BackingField: {fileID: 0}
   <EventsTabSelected>k__BackingField: {fileID: 3435207277801023283}
   <EmptyEventsContainer>k__BackingField: {fileID: 3435207277801023283}
 --- !u!1 &7874188500811588088
