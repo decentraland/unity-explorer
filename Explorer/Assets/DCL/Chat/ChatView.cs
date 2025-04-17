@@ -502,6 +502,8 @@ namespace DCL.Chat
             {
                 isChatFocused = true;
 
+                chatInputBox.LockSelectedState = true; // This prevents the input box from flickering when clicking on the panel
+
                 if (!memberListView.IsVisible)
                 {
                     SetChatVisibility(true);
@@ -520,6 +522,8 @@ namespace DCL.Chat
             if (isChatFocused)
             {
                 isChatFocused = false;
+
+                chatInputBox.LockSelectedState = false;
 
                 if(!isPointerOverChat)
                     SetBackgroundVisibility(false, true);

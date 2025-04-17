@@ -88,7 +88,15 @@ namespace DCL.Chat
             set => inputField.text = value;
         }
 
+        /// <summary>
+        /// Gets whether the paste context menu is visible.
+        /// </summary>
         public bool IsPasteMenuOpen { get; private set; }
+
+        /// <summary>
+        /// Gets or sets whether the selected state of the input box should stay unchanged even if clicking outside.
+        /// </summary>
+        public bool LockSelectedState { get; set; }
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -308,6 +316,9 @@ namespace DCL.Chat
 
         private void OnInputDeselected(string _)
         {
+            if(LockSelectedState)
+                return;
+
             outlineObject.SetActive(false);
             isInputSelected = false;
             emojiPanelButton.SetColor(false);
