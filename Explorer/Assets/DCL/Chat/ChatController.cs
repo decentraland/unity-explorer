@@ -288,7 +288,6 @@ namespace DCL.Chat
         {
             ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewClose");
             UnsubscribeFromEvents();
-            memberListHelper.StopUpdating();
             Dispose();
         }
 
