@@ -213,6 +213,7 @@ namespace DCL.Chat
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {update.ToString()}");
+            return;
             string userId = participant.Identity;
 
             switch (update)
