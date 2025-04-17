@@ -14,5 +14,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         [field: SerializeField]
         public Button ReadMoreButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Toggle DontShowAgainToggle { get; private set; } = null!;
     }
 }
