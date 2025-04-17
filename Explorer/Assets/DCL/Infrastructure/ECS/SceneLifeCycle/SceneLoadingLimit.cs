@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
 
             // 1 scene, 1 high quality LOD. Only for debugging purposes
-            { SceneLimitsKey.WARNING, new SceneLimits(1, 0, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.WARNING, new SceneLimits(1, 0, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
         };
 
@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public SceneLoadingLimit(ISystemMemoryCap memoryCap, bool isEnabled)
         {
             systemMemoryCap = memoryCap;
-            this.isEnabled = isEnabled;
+            this.isEnabled = true;
             UpdateMemoryCap();
         }
 
@@ -111,7 +111,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public void UpdateMemoryCap()
         {
             if (!isEnabled)
+            {
+                currentKey = SceneLimitsKey.MAX_MEMORY;
                 currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
+            }
             else
             {
                 if (systemMemoryCap.MemoryCapInMB < 10_000)
