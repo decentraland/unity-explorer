@@ -126,7 +126,12 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Subscribe(IRoom room)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Subscribed to room events {room.Info.Name}");
+            if (room.Info.Name.Contains("ChatConnectiveRoom"))
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, 
+                    $"[Subscribe] Subscribing to room events - Room: {room.Info.Name} State: {room.Info.ConnectionState}");
+            }
+            
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
@@ -144,12 +149,22 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.ConnectionQualityChanged += RoomOnConnectionQualityChanged;
             room.ConnectionStateChanged += RoomOnConnectionStateChanged;
             room.ConnectionUpdated += RoomOnConnectionUpdated;
+
+            if (room.Info.Name.Contains("ChatConnectiveRoom"))
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, 
+                    $"[Subscribe] Subscription completed");
+            }
         }
 
         private void Unsubscribe(IRoom previous)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Unsubscribed to room events {previous}");
-
+            if (previous.Info.Name.Contains("ChatConnectiveRoom"))
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, 
+                    $"[Unsubscribe] Unsubscribing from room events - Room: {previous.Info.Name}");
+            }
+            
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
@@ -163,18 +178,31 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+
+            if (previous.Info.Name.Contains("ChatConnectiveRoom"))
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, 
+                    $"[Unsubscribe] Unsubscription completed");
+            }
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"RoomOnConnectionUpdated {room.Info.Name} {connectionupdate}");
-
+            if (room.Info.Name.Contains("ChatConnectiveRoom"))
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, 
+                    $"[ConnectionUpdate] Room: {room.Info.Name} State: {connectionupdate} Participants: {room.Participants.RemoteParticipantIdentities().Count}");
+            }
             ConnectionUpdated?.Invoke(room, connectionupdate);
         }
 
         private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"RoomOnConnectionStateChanged {connectionstate}");
+            if (assigned.Info.Name.Contains("ChatConnectiveRoom"))
+            {
+                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, 
+                    $"[ConnectionState] New State: {connectionstate} Room: {assigned.Info.Name} Participants: {assigned.Participants.RemoteParticipantIdentities().Count}");
+            }
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 
