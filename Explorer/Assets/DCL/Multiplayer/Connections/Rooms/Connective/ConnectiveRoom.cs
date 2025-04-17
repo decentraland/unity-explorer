@@ -9,6 +9,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
@@ -59,6 +60,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 var hub = new ParticipantsHub();
                 var videoStreams = new VideoStreams(hub);
+                var audioStreams = new AudioStreams(hub);
 
                 return new LogRoom(
                     new Room(
@@ -71,7 +73,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                         new TrackPublicationFactory(),
                         new DataPipe(),
                         new MemoryRoomInfo(),
-                        videoStreams
+                        videoStreams,
+                        audioStreams
                     )
                 );
             });

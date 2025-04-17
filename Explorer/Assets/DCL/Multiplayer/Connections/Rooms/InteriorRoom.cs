@@ -8,6 +8,7 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
@@ -25,12 +26,14 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
         private readonly InteriorVideoStreams videoStreams = new ();
+        private readonly InteriorAudioStreams audioStreams = new ();
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
         public IVideoStreams VideoStreams => videoStreams;
+        public IAudioStreams AudioStreams => audioStreams;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 

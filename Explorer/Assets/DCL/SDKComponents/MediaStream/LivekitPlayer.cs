@@ -1,19 +1,36 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Optimization.ThreadSafePool;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.VideoStreaming;
 using System;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream
 {
     public class LivekitPlayer : IDisposable
     {
+        private static readonly IObjectPool<LivekitAudioSource> OBJECT_POOL = new ThreadSafeObjectPool<LivekitAudioSource>(
+            () => LivekitAudioSource.New(),
+            actionOnGet: static source => source.gameObject.SetActive(true),
+            actionOnRelease: static source =>
+            {
+                source.Stop();
+                source.Free();
+                source.gameObject.SetActive(false);
+            });
+
         private readonly IRoom room;
-        private WeakReference<IVideoStream>? currentStream;
+        private readonly LivekitAudioSource audioSource;
+        private (WeakReference<IVideoStream>? video, WeakReference<IAudioStream>? audio)? currentStream;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
+
+        private bool disposed;
 
         public bool MediaOpened => currentStream != null;
 
@@ -22,6 +39,7 @@ namespace DCL.SDKComponents.MediaStream
         public LivekitPlayer(IRoomHub roomHub)
         {
             room = roomHub.StreamingRoom();
+            audioSource = OBJECT_POOL.Get();
         }
 
         public void EnsurePlaying()
@@ -40,12 +58,25 @@ namespace DCL.SDKComponents.MediaStream
                     var firstTrack = FirstAvailableTrack();
 
                     if (firstTrack.HasValue)
-                        currentStream = room.VideoStreams.VideoStream(firstTrack.Value.identity, firstTrack.Value.sid);
+                    {
+                        var value = firstTrack.Value;
+                        var video = room.VideoStreams.ActiveStream(value.identity, value.sid);
+                        var audio = room.AudioStreams.ActiveStream(value.identity, value.sid);
+                        currentStream = (video, audio);
+
+                        if (audio != null)
+                        {
+                            audioSource.Construct(audio);
+                            audioSource.Play();
+                        }
+                    }
 
                     break;
                 case LivekitAddress.Kind.USER_STREAM:
                     (string identity, string sid) = livekitAddress.UserStream;
-                    currentStream = room.VideoStreams.VideoStream(identity, sid);
+
+                    //Audio via user stream are not supported yet
+                    currentStream = (room.VideoStreams.ActiveStream(identity, sid), null);
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
@@ -76,6 +107,8 @@ namespace DCL.SDKComponents.MediaStream
             // doesn't need to dispose the stream, because it's responsibility of the owning room
             currentStream = null;
             playerState = PlayerState.STOPPED;
+            audioSource.Stop();
+            audioSource.Free();
         }
 
         public Texture? LastTexture()
@@ -83,29 +116,52 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.PLAYING)
                 return null;
 
-            return currentStream?.TryGetTarget(out var videoStream) ?? false
+            return currentStream?.video?.TryGetTarget(out var videoStream) ?? false
                 ? videoStream.DecodeLastFrame()
                 : null;
         }
 
         public void Dispose()
         {
+            if (disposed)
+            {
+                ReportHub.LogError(ReportCategory.MEDIA_STREAM, $"Attempt to double dispose {nameof(LivekitPlayer)}");
+                return;
+            }
+
+            disposed = true;
+
             CloseCurrentStream();
+            OBJECT_POOL.Release(audioSource);
         }
 
         public void Play()
         {
             playerState = PlayerState.PLAYING;
+            audioSource.Play();
         }
 
         public void Pause()
         {
             playerState = PlayerState.PAUSED;
+            //it's actually no "pause" for a streaming source
+            audioSource.Stop();
         }
 
         public void Stop()
         {
             playerState = PlayerState.STOPPED;
+            audioSource.Stop();
+        }
+
+        public void SetVolume(float target)
+        {
+            audioSource.SetVolume(target);
+        }
+
+        public void PlaceAudioAt(Vector3 position)
+        {
+            audioSource.transform.position = position;
         }
     }
 }

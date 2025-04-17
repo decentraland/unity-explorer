@@ -6,6 +6,7 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
@@ -27,6 +28,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe { get; }
         public IRoomInfo Info { get; }
         public IVideoStreams VideoStreams { get; }
+        public IAudioStreams AudioStreams { get; }
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -55,6 +57,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             DataPipe = new LogDataPipe(origin.DataPipe);
             Info = new LogRoomInfo(origin.Info);
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
+            AudioStreams = new LogAudioStreams(origin.AudioStreams);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;

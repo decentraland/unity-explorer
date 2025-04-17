@@ -130,7 +130,7 @@ namespace DCL.SDKComponents.MediaStream
                     avProMediaPlayer!.transform.position = position;
                     break;
                 case MediaAddress.Kind.LIVEKIT:
-                    //Livekit doesn't support sound yet
+                    livekitMediaPlayer!.PlaceAudioAt(position);
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
@@ -152,7 +152,8 @@ namespace DCL.SDKComponents.MediaStream
                     avProMediaPlayer!.UpdateVolume(isCurrentScene, hasVolume, volume);
                     break;
                 case MediaAddress.Kind.LIVEKIT:
-                    //Ignore, Livekit doesn't support sound yet
+                    float target = hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME;
+                    livekitMediaPlayer!.SetVolume(target);
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
