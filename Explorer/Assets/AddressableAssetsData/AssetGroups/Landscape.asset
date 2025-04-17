@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Landscape
   m_EditorClassIdentifier: 
   m_GroupName: Landscape
-  m_Data:
-    m_SerializedData: []
   m_GUID: 1646f20aac43b7e489a0df42ff7d2024
   m_SerializeEntries:
   - m_GUID: 034505001d7fc99419a8eefba5c708c7

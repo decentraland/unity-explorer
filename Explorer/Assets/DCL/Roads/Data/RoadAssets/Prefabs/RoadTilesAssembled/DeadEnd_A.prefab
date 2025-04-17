@@ -417,11 +417,11 @@ PrefabInstance:
       value: HedgeCapsule
       objectReference: {fileID: 0}
     - target: {fileID: 4956359309732666291, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 5542500168062412816, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 5807913119630283541, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
@@ -437,7 +437,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
     - target: {fileID: 6113664660616365765, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     m_RemovedComponents: []
@@ -514,11 +514,11 @@ PrefabInstance:
       value: HedgeCapsule (1)
       objectReference: {fileID: 0}
     - target: {fileID: 4956359309732666291, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 5542500168062412816, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 5807913119630283541, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
@@ -534,7 +534,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
     - target: {fileID: 6113664660616365765, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     m_RemovedComponents: []
@@ -707,11 +707,11 @@ PrefabInstance:
       value: HedgeCapsule (2)
       objectReference: {fileID: 0}
     - target: {fileID: 4956359309732666291, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 5542500168062412816, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 5807913119630283541, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
@@ -727,7 +727,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
     - target: {fileID: 6113664660616365765, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     m_RemovedComponents: []

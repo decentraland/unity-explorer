@@ -174,8 +174,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 5182163631995387074}
   <raycaster>k__BackingField: {fileID: 1198347562387777253}
-  <ThumbnailBackground>k__BackingField: {fileID: 0}
-  <ThumbnailImageView>k__BackingField: {fileID: 0}
   <ProfilePictureView>k__BackingField: {fileID: 1590963799873223141}
   <UserNameText>k__BackingField: {fileID: 2284920159079410261}
   <UserAddressText>k__BackingField: {fileID: 6595118147335801466}

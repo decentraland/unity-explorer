@@ -592,7 +592,7 @@ MonoBehaviour:
   <HoverAudio>k__BackingField: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}
 --- !u!95 &611709950445522836
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -606,6 +606,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1

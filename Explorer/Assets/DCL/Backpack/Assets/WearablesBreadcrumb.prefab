@@ -34,7 +34,6 @@ RectTransform:
   - {fileID: 7226048329798012896}
   - {fileID: 2118311021420466999}
   m_Father: {fileID: 7294333419115145998}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -98,7 +97,6 @@ RectTransform:
   m_Children:
   - {fileID: 9117979778340158318}
   m_Father: {fileID: 3924119466273712775}
-  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
@@ -144,7 +142,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5462065637422891389}
-  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -222,7 +219,6 @@ RectTransform:
   m_Children:
   - {fileID: 3924119466273712775}
   m_Father: {fileID: 0}
-  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -285,6 +281,7 @@ MonoBehaviour:
   <AllButton>k__BackingField: {fileID: 5630423887126403932}
   <FilterButton>k__BackingField: {fileID: 3633724073606676297}
   <SearchButton>k__BackingField: {fileID: 5422405178218898334}
+  <ColorPickerView>k__BackingField: {fileID: 0}
 --- !u!1001 &156683611259045044
 PrefabInstance:
   m_ObjectHideFlags: 0

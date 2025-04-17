@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Chat
   m_EditorClassIdentifier: 
   m_GroupName: Chat
-  m_Data:
-    m_SerializedData: []
   m_GUID: 8b013415c163949639034d60860ef87f
   m_SerializeEntries:
   - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LodPartitionBucketThresholds>k__BackingField: 05000000
   <SDK7LodThreshold>k__BackingField: 2
+  <UnloadTolerance>k__BackingField: 1
   <DefaultTextureArrayResolutionDescriptors>k__BackingField:
   - Resolution: 512
     ArraySize: 100

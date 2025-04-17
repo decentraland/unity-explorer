@@ -516,7 +516,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &6654053651110562472
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -530,6 +530,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -1231,6 +1232,9 @@ SkinnedMeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 3
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -2077,7 +2081,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2645e75a453f6954f8aa7b950093750d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  avatarAnimator: {fileID: 6654053651110562472}
+  RandomID: 0
+  <AvatarAnimator>k__BackingField: {fileID: 0}
+  <RigBuilder>k__BackingField: {fileID: 0}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 0}
   <RightLegConstraint>k__BackingField: {fileID: 0}
