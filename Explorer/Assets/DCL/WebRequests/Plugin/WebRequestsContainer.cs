@@ -1,4 +1,5 @@
 using Best.HTTP.Caching;
+using Best.HTTP.Proxies;
 using Best.HTTP.Shared;
 using Best.HTTP.Shared.Logger;
 using Cysharp.Threading.Tasks;
@@ -13,10 +14,10 @@ using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using Global.AppArgs;
 using System;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
-using Utility.Multithreading;
-using Utility.Storage;
 
 namespace DCL.WebRequests
 {
@@ -73,6 +74,11 @@ namespace DCL.WebRequests
                 container.WebRequestsMode = WebRequestsMode.HTTP2;
 
             HTTPManager.Logger.Level = Loglevels.Warning;
+
+            if (appArgs.TryGetValue(AppArgsFlags.PROXY_ADDRESS, out string? proxyAddress) && !string.IsNullOrEmpty(proxyAddress))
+                HTTPManager.Proxy = new HTTPProxy(new Uri(proxyAddress));
+            else if (appArgs.HasDebugFlag() && await IsLocalProxyRunningAsync(ct))
+                HTTPManager.Proxy = new HTTPProxy(new Uri("http://127.0.0.1:8888"));
 
             ulong cacheSize = container.settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
@@ -194,6 +200,30 @@ namespace DCL.WebRequests
                                               }),
                                           new DebugHintDef("Sequential"));
             }
+        }
+
+        private static async Task<bool> IsLocalProxyRunningAsync(CancellationToken ct)
+        {
+            try
+            {
+                using var client = new TcpClient();
+
+                // Default address of local proxies
+                var connectTask = client.ConnectAsync("127.0.0.1", 8888);
+                var timeoutTask = Task.Delay(500, ct);
+
+                // Wait for either the connect or the timeout
+                var finished = await Task.WhenAny(connectTask, timeoutTask);
+
+                if (finished == connectTask && client.Connected)
+                    return true;
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return false;
         }
 
         public void SetKTXEnabled(bool enabled)
