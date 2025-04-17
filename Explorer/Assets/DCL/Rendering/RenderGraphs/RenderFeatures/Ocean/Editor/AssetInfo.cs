@@ -13,7 +13,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
     {
         private const string THIS_FILE_GUID = "d5972a1c9cddd9941aec37a3343647aa";
 
-        public const string ASSET_NAME = "Stylized Water 2";
+        public const string ASSET_NAME = "Ocean";
         public const string ASSET_ID = "170386";
         public const string ASSET_ABRV = "SW2";
 
@@ -128,7 +128,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             private void OnPreprocessAsset()
             {
                 var oldShaders = false;
-                //Importing/updating the Stylized Water 2 asset
+                //Importing/updating the Ocean asset
                 if (assetPath.EndsWith("StylizedWater2/Editor/AssetInfo.cs") || assetPath.EndsWith("sc.stylizedwater2/Editor/AssetInfo.cs"))
                 {
                     oldShaders = OldShadersPresent();
@@ -170,7 +170,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
             private void OnImportExtension(string name)
             {
-                Debug.Log($"[Stylized Water 2] {name} extension installed/deleted or updated. Reimporting water shader(s) to toggle integration.");
+                Debug.Log($"[Ocean] {name} extension installed/deleted or updated. Reimporting water shader(s) to toggle integration.");
 
                 //Re-import any .watershader files, since these depend on the installation state of extensions
                 WaterShaderImporter.ReimportAll();
@@ -265,7 +265,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
             AssetDatabase.SaveAssets();
 
-            Debug.Log("<b>[Stylized Water 2]</b> Upgrade of materials and project complete!");
+            Debug.Log("<b>[Ocean]</b> Upgrade of materials and project complete!");
         }
 
         public static bool MeetsMinimumVersion(string versionMinimum)

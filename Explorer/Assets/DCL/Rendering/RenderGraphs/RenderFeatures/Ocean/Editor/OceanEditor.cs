@@ -7,7 +7,7 @@ using ForwardRendererData = UnityEngine.Rendering.Universal.UniversalRendererDat
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
-    public class StylizedWaterEditor : Editor
+    public class OceanEditor : Editor
     {
         #if URP
         [MenuItem("GameObject/3D Object/Water/Object", false, 0)]
@@ -32,7 +32,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         }
 
         [MenuItem("GameObject/3D Object/Water/Grid", false, 1)]
-        [MenuItem("Window/Stylized Water 2/Create water grid", false, 2001)]
+        [MenuItem("Window/Ocean/Create water grid", false, 2001)]
         public static void CreateWaterGrid()
         {
             GameObject obj = new GameObject("Water Grid", typeof(WaterGrid));
@@ -59,14 +59,14 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             if(Application.isPlaying == false) EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         }
 
-        [MenuItem("Window/Stylized Water 2/Set up render feature", false, 2000)]
+        [MenuItem("Window/Ocean/Set up render feature", false, 2000)]
         public static void SetupRenderFeature()
         {
-            PipelineUtilities.SetupRenderFeature<RendererFeature_Ocean>("Stylized Water 2");
+            PipelineUtilities.SetupRenderFeature<RendererFeature_Ocean>("Ocean");
         }
 
         [MenuItem("GameObject/3D Object/Water/Planar Reflections Renderer", false, 2)]
-        [MenuItem("Window/Stylized Water 2/Set up planar reflections", false, 2001)]
+        [MenuItem("Window/Ocean/Set up planar reflections", false, 2001)]
         public static void CreatePlanarReflectionRenderer()
         {
             GameObject obj = new GameObject("Planar Reflections Renderer", typeof(PlanarReflectionRenderer));
@@ -205,7 +205,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         public static void SetupForDWP2()
         {
             #if NWH_DWP2
-            if (!EditorUtility.DisplayDialog("Dynamic Water Physics 2 -> Stylized Water 2",
+            if (!EditorUtility.DisplayDialog("Dynamic Water Physics 2 -> Ocean",
                 "This operation will look for a \"Flat Water Data Provider\" component and replace it with the \"Stylized Water Data Provider\" component",
                 "OK", "Cancel"))
             {
@@ -217,7 +217,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
             if (dataProvider)
             {
-                EditorUtility.DisplayDialog("Dynamic Water Physics 2 -> Stylized Water 2", "A \"Stylized Water Data Provider\" component was already found in the scene", "OK");
+                EditorUtility.DisplayDialog("Dynamic Water Physics 2 -> Ocean", "A \"Stylized Water Data Provider\" component was already found in the scene", "OK");
 
                 EditorGUIUtility.PingObject(dataProvider.gameObject);
 
@@ -226,7 +226,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
             if(oldProvider == null)
             {
-                if (EditorUtility.DisplayDialog("Dynamic Water Physics 2 -> Stylized Water 2",
+                if (EditorUtility.DisplayDialog("Dynamic Water Physics 2 -> Ocean",
                     "Could not find a \"Flat Water Data Provider\" component in the scene.\n\nIt's recommended to first set up DWP2 according to their manual.",
                     "OK"))
                 {

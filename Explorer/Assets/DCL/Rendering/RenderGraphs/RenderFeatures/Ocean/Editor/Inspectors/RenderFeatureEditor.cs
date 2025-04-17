@@ -54,7 +54,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             {
                 EditorGUILayout.HelpBox("This will pre-render all the water geometry's height (including any displacement effects) into a buffer. Allowing other shaders to access this information." +
                                         "\n\nSee the Displacement.hlsl shader library for the API, or use the \"Sample Water Height\" Sub-graph in Shader Graph." +
-                                        "\n\nThis is for advanced users, there is currently no functionality in Stylized Water 2 that makes use of this.", MessageType.Info);
+                                        "\n\nThis is for advanced users, there is currently no functionality in Ocean that makes use of this.", MessageType.Info);
             }
 
             if (EditorGUI.EndChangeCheck())

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     [ExecuteInEditMode]
-    [AddComponentMenu("Stylized Water 2/Align Transform To Waves")]
+    [AddComponentMenu("Ocean/Align Transform To Waves")]
     public class AlignToWaves : MonoBehaviour
     {
         [Tooltip("This reference is required to grab the wave distance and height values")]

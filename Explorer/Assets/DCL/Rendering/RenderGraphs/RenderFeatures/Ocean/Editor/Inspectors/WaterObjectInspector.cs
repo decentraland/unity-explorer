@@ -62,7 +62,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                     "Enable",
                     () =>
                     {
-                        StylizedWaterEditor.EnableDepthTexture();
+                        OceanEditor.EnableDepthTexture();
                         CheckMaterial();
                     },
                     MessageType.Error);
@@ -73,7 +73,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                     "Enable",
                     () =>
                     {
-                        StylizedWaterEditor.EnableOpaqueTexture();
+                        OceanEditor.EnableOpaqueTexture();
                         CheckMaterial();
                     },
                     MessageType.Error);

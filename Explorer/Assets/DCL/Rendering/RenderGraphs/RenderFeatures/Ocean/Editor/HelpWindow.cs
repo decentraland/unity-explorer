@@ -25,7 +25,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         [NonSerialized] private string projectDetails;
         private Vector2 projectDetailsScrollPos;
 
-		[MenuItem("Window/Stylized Water 2/Hub Window", false, 1001)]
+		[MenuItem("Window/Ocean/Hub Window", false, 1001)]
         public static void ShowWindow()
         {
             HelpWindow editorWindow = EditorWindow.GetWindow<HelpWindow>(true, AssetInfo.ASSET_NAME, true);
@@ -40,7 +40,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             editorWindow.Show();
         }
 
-        [MenuItem("Window/Stylized Water 2/Forum", false, 1002)]
+        [MenuItem("Window/Ocean/Forum", false, 1002)]
         public static void OpenForum()
         {
             AssetInfo.OpenForumPage();
@@ -76,8 +76,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             AssetInfo.VersionChecking.CheckForUpdate(false);
             AssetInfo.VersionChecking.CheckUnityVersion();
 
-            underwaterExtensionInstalled = StylizedWaterEditor.UnderwaterRenderingInstalled();
-            dynamicEffectsInstalled = StylizedWaterEditor.DynamicEffectsInstalled();
+            underwaterExtensionInstalled = OceanEditor.UnderwaterRenderingInstalled();
+            dynamicEffectsInstalled = OceanEditor.DynamicEffectsInstalled();
 
             sections = new List<Section>();
             sections.Add(new Section("Home", DrawHome));
@@ -278,7 +278,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         {
             using (new EditorGUILayout.VerticalScope())
             {
-                UI.DrawH2("Thank you for licensing Stylized Water 2!");
+                UI.DrawH2("Thank you for licensing Ocean!");
 
                 EditorGUILayout.LabelField("This window houses common functionality and installation information.", EditorStyles.label);
 
@@ -319,11 +319,11 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                 {
                     if (GUILayout.Button(new GUIContent("<b><size=12> Create water grid</size></b>", EditorGUIUtility.IconContent("Mesh Icon").image), UI.Styles.Button, GUILayout.Height(45f), GUILayout.Width(200f)))
                     {
-                        StylizedWaterEditor.CreateWaterGrid();
+                        OceanEditor.CreateWaterGrid();
                     }
                     if (GUILayout.Button(new GUIContent("<b><size=12> Setup planar reflections</size></b>", EditorGUIUtility.IconContent("ReflectionProbe Icon").image), UI.Styles.Button, GUILayout.Height(45f), GUILayout.Width(200f)))
                     {
-                        StylizedWaterEditor.CreatePlanarReflectionRenderer();
+                        OceanEditor.CreatePlanarReflectionRenderer();
                     }
                 }
 
@@ -455,8 +455,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.textField))
                 {
-                    if (StylizedWaterEditor.DWP2Installed) GUI.contentColor = UI.GreenColor;
-                    EditorGUILayout.LabelField(StylizedWaterEditor.DWP2Installed ? "Installed" : "Not Installed", GUILayout.MaxWidth((75f)));
+                    if (OceanEditor.DWP2Installed) GUI.contentColor = UI.GreenColor;
+                    EditorGUILayout.LabelField(OceanEditor.DWP2Installed ? "Installed" : "Not Installed", GUILayout.MaxWidth((75f)));
                     GUI.contentColor = defaultColor;
 
                     GUILayout.FlexibleSpace();
@@ -468,7 +468,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                 }
             }
 
-            UI.DrawNotification(StylizedWaterEditor.DWP2Installed, "Set up water data provider component", "Execute", StylizedWaterEditor.SetupForDWP2);
+            UI.DrawNotification(OceanEditor.DWP2Installed, "Set up water data provider component", "Execute", OceanEditor.SetupForDWP2);
 
             EditorGUILayout.Space();
 
@@ -480,8 +480,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.textField))
                 {
-                    if (StylizedWaterEditor.CurvedWorldInstalled(out var _)) GUI.contentColor = UI.GreenColor;
-                    EditorGUILayout.LabelField(StylizedWaterEditor.CurvedWorldInstalled(out var _) ? "Installed" : "Not Installed", GUILayout.MaxWidth((75f)));
+                    if (OceanEditor.CurvedWorldInstalled(out var _)) GUI.contentColor = UI.GreenColor;
+                    EditorGUILayout.LabelField(OceanEditor.CurvedWorldInstalled(out var _) ? "Installed" : "Not Installed", GUILayout.MaxWidth((75f)));
                     GUI.contentColor = defaultColor;
 
                     GUILayout.FlexibleSpace();
@@ -527,7 +527,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                 EditorGUILayout.Separator();
 
                 UI.DrawExtension("Underwater Rendering",
-                    "Extends the Stylized Water 2 shader asset with underwater rendering, by seamlessly blending the water with post processing effects.", underwaterExtensionInstalled,
+                    "Extends the Ocean shader asset with underwater rendering, by seamlessly blending the water with post processing effects.", underwaterExtensionInstalled,
                     "https://assetstore.unity.com/packages/slug/185030?aid=1011l7Uk8&pubref=sw2editor", UI.UnderwaterAssetIcon);
             }
 
@@ -670,8 +670,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             stringBuilder.AppendLine($"");
 
             stringBuilder.AppendLine($"First available fog integration: {ShaderConfigurator.Fog.GetFirstInstalled().name}");
-            stringBuilder.AppendLine($"Underwater Rendering installed: {StylizedWaterEditor.UnderwaterRenderingInstalled()}");
-            stringBuilder.AppendLine($"Dynamic Effects installed: {StylizedWaterEditor.DynamicEffectsInstalled()}");
+            stringBuilder.AppendLine($"Underwater Rendering installed: {OceanEditor.UnderwaterRenderingInstalled()}");
+            stringBuilder.AppendLine($"Dynamic Effects installed: {OceanEditor.DynamicEffectsInstalled()}");
 
             #if URP
             stringBuilder.AppendLine($"");

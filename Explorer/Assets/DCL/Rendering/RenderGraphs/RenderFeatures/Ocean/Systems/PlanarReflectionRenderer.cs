@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
     [ExecuteInEditMode]
-    [AddComponentMenu("Stylized Water 2/Planar Reflection Renderer")]
+    [AddComponentMenu("Ocean/Planar Reflection Renderer")]
     [HelpURL("https://staggart.xyz/unity/stylized-water-2/sws-2-docs/?section=planar-reflections")]
     public class PlanarReflectionRenderer : MonoBehaviour
     {

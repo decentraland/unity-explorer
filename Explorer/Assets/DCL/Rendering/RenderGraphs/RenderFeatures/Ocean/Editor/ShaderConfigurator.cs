@@ -217,8 +217,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             public static string CreateShaderCode(string templatePath, ref string[] lines, WaterShaderImporter importer, bool tessellation = false)
             {
                 //Extension installation states
-                var underwaterInstalled = StylizedWaterEditor.UnderwaterRenderingInstalled();
-                var dynamicEffectsInstalled = StylizedWaterEditor.DynamicEffectsInstalled();
+                var underwaterInstalled = OceanEditor.UnderwaterRenderingInstalled();
+                var dynamicEffectsInstalled = OceanEditor.DynamicEffectsInstalled();
 
                 Fog.Integration fogIntegration = importer.settings.autoIntegration ? Fog.GetFirstInstalled() : Fog.GetIntegration(importer.settings.fogIntegration);
 
@@ -584,7 +584,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         //Strips keywords from the shader for features belonging to newer URP versions.
         private class KeywordStripper : IPreprocessShaders
         {
-            private const string LOG_FILEPATH = "Logs/Stylized Water 2 Compilation.log";
+            private const string LOG_FILEPATH = "Logs/Ocean Compilation.log";
 
 		    #if ENABLE_SHADER_STRIPPING_LOG
             private System.Diagnostics.Stopwatch m_stripTimer = new System.Diagnostics.Stopwatch();
@@ -659,7 +659,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                 {
                     if (UniversalRenderPipeline.asset.msaaSampleCount > 1)
                     {
-                        Debug.LogWarning("[Stylized Water 2] You are deploying a build using the OpenGLES 3.0 graphics API with MSAA enabled (in your URP pipeline asset). Due to a bug in some graphics chips, transparent materials (including the water) will not render. " +
+                        Debug.LogWarning("[Ocean] You are deploying a build using the OpenGLES 3.0 graphics API with MSAA enabled (in your URP pipeline asset). Due to a bug in some graphics chips, transparent materials (including the water) will not render. " +
                                          "Disable MSAA, or use the Vulkan graphics API", UniversalRenderPipeline.asset);
                     }
                 }

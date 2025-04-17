@@ -360,8 +360,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             sections.Add(intersectionSection = new UI.Material.Section(materialEditorIn,"INTERSECTION", new GUIContent("Intersection Foam", "Draws a foam effects on opaque objects that are touching the water")));
             sections.Add(wavesSection = new UI.Material.Section(materialEditorIn,"WAVES", new GUIContent("Waves", "Parametric gerstner waves, which modify the surface curvature and animate the mesh's vertices")));
 
-            underwaterRenderingInstalled = StylizedWaterEditor.UnderwaterRenderingInstalled();
-            dynamicEffectsInstalled = StylizedWaterEditor.DynamicEffectsInstalled();
+            underwaterRenderingInstalled = OceanEditor.UnderwaterRenderingInstalled();
+            dynamicEffectsInstalled = OceanEditor.DynamicEffectsInstalled();
 
             #if URP
             transparentShadowsEnabled = PipelineUtilities.TransparentShadowsEnabled();
@@ -503,7 +503,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
         void DrawNotifications()
         {
-            UI.DrawNotification(!UniversalRenderPipeline.asset, "Universal Render Pipeline is currently not active!", "Show me", StylizedWaterEditor.OpenGraphicsSettings, MessageType.Error);
+            UI.DrawNotification(!UniversalRenderPipeline.asset, "Universal Render Pipeline is currently not active!", "Show me", OceanEditor.OpenGraphicsSettings, MessageType.Error);
 
             if (!UniversalRenderPipeline.asset) return;
 
@@ -514,14 +514,14 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                     _DisableDepthTexture.floatValue == 0f,
                     "Depth texture is disabled, which is required for the material's current configuration",
                     "Enable",
-                    StylizedWaterEditor.EnableDepthTexture,
+                    OceanEditor.EnableDepthTexture,
                     MessageType.Error);
 
                 UI.DrawNotification(
                     UniversalRenderPipeline.asset.supportsCameraOpaqueTexture == false && _RefractionOn.floatValue == 1f,
                     "Opaque texture is disabled, which is required for the material's current configuration",
                     "Enable",
-                    StylizedWaterEditor.EnableOpaqueTexture,
+                    OceanEditor.EnableOpaqueTexture,
                     MessageType.Error);
             }
 
@@ -560,7 +560,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                 UI.DrawNotification(true, "The Stylized Water render feature hasn't been added to the default renderer." +
                                           "\n\nFeatures such as Directional Caustics and Screen-space Reflections are unavailable.", "Add", () =>
                 {
-                    PipelineUtilities.ValidateRenderFeatureSetup<RendererFeature_Ocean>("Stylized Water 2");
+                    PipelineUtilities.ValidateRenderFeatureSetup<RendererFeature_Ocean>("Ocean");
                     renderFeature = RendererFeature_Ocean.GetDefault();
                 }, MessageType.Info);
             }
@@ -895,7 +895,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                 }
                 UI.DrawNotification((_ReceiveShadows.floatValue > 0 || _ReceiveShadows.hasMixedValue) && !transparentShadowsEnabled,
                     "Transparent shadows are disabled in the default Forward renderer", "Show me",
-                    StylizedWaterEditor.SelectForwardRenderer, MessageType.Warning);
+                    OceanEditor.SelectForwardRenderer, MessageType.Warning);
 
                 using (new EditorGUI.DisabledScope(_LightingOn.floatValue < 1f || _LightingOn.hasMixedValue))
                 {

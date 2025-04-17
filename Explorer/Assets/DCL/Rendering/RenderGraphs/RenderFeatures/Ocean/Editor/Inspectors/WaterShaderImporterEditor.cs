@@ -38,10 +38,10 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         {
             base.OnEnable();
 
-            underwaterRenderingInstalled = StylizedWaterEditor.UnderwaterRenderingInstalled();
-            dynamicEffectsInstalled = StylizedWaterEditor.DynamicEffectsInstalled();
+            underwaterRenderingInstalled = OceanEditor.UnderwaterRenderingInstalled();
+            dynamicEffectsInstalled = OceanEditor.DynamicEffectsInstalled();
             firstIntegration = ShaderConfigurator.Fog.GetFirstInstalled();
-            curvedWorldInstalled = StylizedWaterEditor.CurvedWorldInstalled(out var _);
+            curvedWorldInstalled = OceanEditor.CurvedWorldInstalled(out var _);
 
             importer = (WaterShaderImporter)target;
 

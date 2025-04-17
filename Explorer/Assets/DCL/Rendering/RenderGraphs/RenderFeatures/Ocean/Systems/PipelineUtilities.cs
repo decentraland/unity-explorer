@@ -245,12 +245,12 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                         rendererNames[i] = "• " + renderers[i].name;
                     }
 
-                    if (EditorUtility.DisplayDialog($"Stylized Water 2",
+                    if (EditorUtility.DisplayDialog($"Ocean",
                             $"The {name} render feature hasn't been added to the following renderers:\n\n" +
                             System.String.Join(System.Environment.NewLine, rendererNames) +
                             $"\n\nThis is required for rendering to take effect", "Setup", "Ignore"))
                     {
-                        SetupRenderFeature<T>(name:$"Stylized Water 2: {name}");
+                        SetupRenderFeature<T>(name:$"Ocean: {name}");
                     }
                     #endif
                 }
