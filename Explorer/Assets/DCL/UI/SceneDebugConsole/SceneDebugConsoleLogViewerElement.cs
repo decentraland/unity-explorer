@@ -288,7 +288,7 @@ namespace DCL.UI.SceneDebugConsole
 
             LoopListViewItem2 item;
 
-            bool isSeparatorIndex = IsSeparatorVisible && index == CurrentSeparatorIndex;
+            /*bool isSeparatorIndex = IsSeparatorVisible && index == CurrentSeparatorIndex;
 
             if (isSeparatorIndex)
 
@@ -314,7 +314,13 @@ namespace DCL.UI.SceneDebugConsole
 
                 SetItemDataAsync(index, itemData, itemScript).Forget();
                 itemScript.LogEntryClicked -= OnLogEntryClicked;
-            }
+            }*/
+
+            SceneDebugConsoleLogMessage itemData = logMessages[index];
+            item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
+            LogEntryView itemScript = item!.GetComponent<LogEntryView>()!;
+            SetItemDataAsync(index, itemData, itemScript).Forget();
+            itemScript.LogEntryClicked -= OnLogEntryClicked;
 
             return item;
         }

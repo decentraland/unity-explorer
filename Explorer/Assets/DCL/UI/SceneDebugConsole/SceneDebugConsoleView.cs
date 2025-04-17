@@ -40,15 +40,6 @@ namespace DCL.UI.SceneDebugConsole
         private SceneDebugConsoleLogViewerElement logMessageViewer;
 
         [SerializeField]
-        private ScrollRect logScrollRect;
-
-        [SerializeField]
-        private RectTransform logContentTransform;
-
-        [SerializeField]
-        private GameObject logEntryPrefab;
-
-        [SerializeField]
         private Button clearButton;
 
         [SerializeField]
@@ -106,11 +97,6 @@ namespace DCL.UI.SceneDebugConsole
         }
 
         /// <summary>
-        /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
-        /// </summary>
-        public bool IsScrollAtBottom => Mathf.Approximately(logScrollRect.normalizedPosition.y, 0f);
-
-        /// <summary>
         /// Gets or sets whether the console panel is open or close.
         /// </summary>
         public bool IsUnfolded
@@ -123,6 +109,7 @@ namespace DCL.UI.SceneDebugConsole
                     return;
 
                 consolePanel.SetActive(value);
+                logMessageViewer.IsVisible = value;
 
                 if (value)
                 {
@@ -164,9 +151,10 @@ namespace DCL.UI.SceneDebugConsole
             // inputField.onSelect.AddListener(OnInputFieldSelected);
             // inputField.onDeselect.AddListener(OnInputFieldDeselected);
             // inputField.onSubmit.AddListener(OnInputFieldSubmit);
-
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
 
+            logMessageViewer.Initialize();
+            logMessageViewer.SetData(logMessages);
             RefreshLogs();
         }
 
@@ -206,62 +194,74 @@ namespace DCL.UI.SceneDebugConsole
             }
         }
 
-        /// <summary>
-        /// Makes sure the console window is showing all the log messages in the history.
-        /// </summary>
         public void RefreshLogs()
         {
-            // Clean up existing entries
-            foreach (var entry in logEntryViews)
-            {
-                Destroy(entry.gameObject);
-            }
-            logEntryViews.Clear();
-
-            // Create new entries for all log messages
-            foreach (var logMessage in logMessages)
-            {
-                AddLogEntryView(logMessage);
-            }
-        }
-
-        private void AddLogEntryView(SceneDebugConsoleLogMessage logMessage)
-        {
-            GameObject entryGO = Instantiate(logEntryPrefab, logContentTransform);
-            LogEntryView entryView = entryGO.GetComponent<LogEntryView>();
-
-            if (entryView != null)
-            {
-                entryView.SetItemData(logMessage);
-                logEntryViews.Add(entryView);
-            }
+            logMessageViewer.RefreshMessages();
+            // SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
         }
 
         /// <summary>
-        /// Performs a click event on the console window.
+        /// Changes the visibility of the scroll-to-bottom button.
         /// </summary>
-        public void Click()
+        /// <param name="isVisible">Whether to make it visible or invisible.</param>
+        /// <param name="useAnimation">Whether to use a fading animation or change its visual state immediately.</param>
+        /*public void SetScrollToBottomVisibility(bool isVisible, bool useAnimation = false)
         {
-            // No action needed for click in this simplified version
-        }
+            // Resets animation
+            scrollToBottomCanvasGroup.DOKill();
+
+            if (isVisible)
+            {
+                scrollToBottomCanvasGroup.alpha = 1.0f;
+                scrollToBottomButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                if(useAnimation)
+                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).
+                                              SetDelay(scrollToBottomButtonTimeBeforeHiding).
+                                              OnComplete(() => { scrollToBottomButton.gameObject.SetActive(false); });
+                else
+                {
+                    scrollToBottomCanvasGroup.alpha = 0.0f;
+                    scrollToBottomButton.gameObject.SetActive(false);
+                }
+            }
+        }*/
+
+        /*private void AddLogEntryView(SceneDebugConsoleLogMessage logMessage)
+        {
+            // TODO: optimize with pool of this prefab
+            GameObject entryGO = Instantiate(logEntryPrefab, logContentTransform);
+            LogEntryView entryView = entryGO.GetComponent<LogEntryView>();
+            entryView.SetItemData(logMessage);
+            logEntryViews.Add(entryView);
+        }*/
 
         /// <summary>
         /// Moves the console so it shows the latest logs.
         /// </summary>
         public void ShowLatestLogs()
         {
-            Canvas.ForceUpdateCanvases();
-            logScrollRect.normalizedPosition = new Vector2(0, 0);
+            /*Canvas.ForceUpdateCanvases();
+            logScrollRect.normalizedPosition = new Vector2(0, 0);*/
+            logMessageViewer.ShowLastMessage();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
             PointerEnter?.Invoke();
+            // panelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
+            // chatMessageViewer.SetScrollbarVisibility(true, BackgroundFadeTime);
+            // chatMessageViewer.StopChatEntriesFadeout();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             PointerExit?.Invoke();
+            // panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
+            // chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
+            // chatMessageViewer.StartChatEntriesFadeout();
         }
 
         public void InjectDependencies(ViewDependencies dependencies)

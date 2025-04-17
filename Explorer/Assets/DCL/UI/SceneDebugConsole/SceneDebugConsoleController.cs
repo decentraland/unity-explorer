@@ -76,15 +76,12 @@ namespace DCL.UI.SceneDebugConsole
 
             if (viewInstance != null)
             {
-                viewInstance.PointerEnter -= OnConsoleViewPointerEnter;
-                viewInstance.PointerExit -= OnConsoleViewPointerExit;
                 viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
                 viewInstance.InputSubmitted -= OnViewInputSubmitted;
                 viewInstance.FoldingChanged -= OnViewFoldingChanged;
                 viewInstance.Dispose();
             }
 
-            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
         }
@@ -98,8 +95,6 @@ namespace DCL.UI.SceneDebugConsole
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(logHistory.LogMessages, consoleSettings);
 
-            viewInstance.PointerEnter += OnConsoleViewPointerEnter;
-            viewInstance.PointerExit += OnConsoleViewPointerExit;
             viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
@@ -151,7 +146,6 @@ namespace DCL.UI.SceneDebugConsole
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
             IsUnfolded = false; // Start hidden by default
@@ -160,7 +154,6 @@ namespace DCL.UI.SceneDebugConsole
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
         }
 
@@ -187,18 +180,9 @@ namespace DCL.UI.SceneDebugConsole
                 EnableUnwantedInputs();
         }
 
-        private void OnConsoleViewPointerExit() => EnableUnwantedInputs();
-
-        private void OnConsoleViewPointerEnter() => DisableUnwantedInputs();
-
         private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj)
         {
             IsUnfolded = !IsUnfolded;
-        }
-
-        private void OnUIClickPerformed(InputAction.CallbackContext obj)
-        {
-            viewInstance!.Click();
         }
 
         private void OnSubmitShortcutPerformed(InputAction.CallbackContext obj)
