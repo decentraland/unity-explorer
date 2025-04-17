@@ -404,7 +404,7 @@ namespace DCL.Chat
         {
             ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Subscribe To Events");
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
-            participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
+            //participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
             friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
             friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
