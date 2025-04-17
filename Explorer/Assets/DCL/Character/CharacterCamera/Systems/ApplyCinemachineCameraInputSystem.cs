@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Character.CharacterCamera;
+using DCL.Character.CharacterCamera.Components;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -50,7 +52,7 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(CameraLookAtIntent), typeof(InWorldCameraComponent))]
-        private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
+        private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref CameraDampedPOV dampedPOV, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
             {
@@ -61,20 +63,12 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.ThirdPerson:
                 case CameraMode.SDKCamera:
+                    float horizontalRotation = cameraInput.Delta.x * settings.HorizontalMouseSensitivity;
+                    float verticalRotation = cameraInput.Delta.y * settings.VerticalMouseSensitivity;
+                    Vector2 deltaInput = new Vector2(horizontalRotation, verticalRotation);
 
-                    float horizontalRotation = cameraInput.Delta.x
-                                               * settings.ThirdPersonPOVSpeed * settings.mMaxSpeed * settings.HorizontalMouseSensitivity * dt;
-                    float verticalRotation = cameraInput.Delta.y
-                                             * settings.ThirdPersonPOVSpeed * settings.mMaxSpeed * settings.VerticalMouseSensitivity * dt ;
-
-                    cameraFocus.Rotate(Vector3.up, horizontalRotation, Space.World);
-
-                    float newVerticalAngle = cameraFocus.eulerAngles.x - verticalRotation;
-                    if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
-
-                    cameraFocus.localRotation = Quaternion.Euler(newVerticalAngle, cameraFocus.eulerAngles.y, cameraFocus.eulerAngles.z);
+                    CameraMovementUtils.Rotate(ref dampedPOV, cameraFocus, deltaInput, settings.CameraMovementPOVSettings, dt);
                     break;
-
                 case CameraMode.FirstPerson:
                     ApplyPOV(cinemachinePreset.FirstPersonCameraData.POV, in cameraInput);
                     break;

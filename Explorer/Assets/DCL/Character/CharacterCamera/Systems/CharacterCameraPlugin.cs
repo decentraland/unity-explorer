@@ -13,6 +13,7 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.DebugUtilities;
+using DCL.InWorldCamera;
 using DCL.Settings.Settings;
 using ECS.Prioritization.Components;
 using Global.AppArgs;
@@ -97,6 +98,7 @@ namespace DCL.PluginSystem.Global
                 exposedCameraData,
                 cinemachinePreset,
                 new CinemachineCameraState(),
+                new CameraDampedPOV { Current = Vector2.up, Velocity = Vector2.up },
                 realmSamplingData
             );
 

@@ -1,3 +1,4 @@
+using DCL.Character.CharacterCamera.Settings;
 using UnityEngine;
 
 namespace DCL.Settings.Settings
@@ -9,7 +10,7 @@ namespace DCL.Settings.Settings
         public float VerticalMouseSensitivity = 1;
         public float HorizontalMouseSensitivity = 1;
 
-        public float mMaxSpeed;
-        public float ThirdPersonPOVSpeed = 100;
+        [Header("3d Person Camera")]
+        public CameraMovementPOVSettings CameraMovementPOVSettings;
     }
 }

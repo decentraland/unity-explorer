@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   VerticalMouseSensitivity: 2
   HorizontalMouseSensitivity: 2
-  mMaxSpeed: 0.1
-  ThirdPersonPOVSpeed: 15
+  CameraMovementPOVSettings: {fileID: 11400000, guid: 8a1f09e6e5747894a938d78df9b76bdd, type: 2}
