@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
 
             // 1 scene, 1 high quality LOD. Only for debugging purposes
-            { SceneLimitsKey.SINGLE_SCENE, new SceneLimits(1, 0, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.WARNING, new SceneLimits(1, 0, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
         };
 
@@ -53,6 +53,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private float QualityReductedLODCurrentMemoryUsageInMB;
 
         private SceneLimits currentSceneLimits;
+        private SceneLimitsKey currentKey;
 
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly bool isEnabled;
@@ -114,17 +115,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             else
             {
                 if (systemMemoryCap.MemoryCapInMB < 10_000)
+                {
+                    currentKey = SceneLimitsKey.LOW_MEMORY;
                     currentSceneLimits = sceneLimits[SceneLimitsKey.LOW_MEMORY];
+                }
                 else if (systemMemoryCap.MemoryCapInMB < 16_000)
+                {
+                    currentKey = SceneLimitsKey.MEDIUM_MEMORY;
                     currentSceneLimits = sceneLimits[SceneLimitsKey.MEDIUM_MEMORY];
+                }
                 else
+                {
+                    currentKey = SceneLimitsKey.MAX_MEMORY;
                     currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
+                }
             }
         }
 
         private enum SceneLimitsKey
         {
-            SINGLE_SCENE,
+            WARNING,
             LOW_MEMORY,
             MEDIUM_MEMORY,
             MAX_MEMORY,
@@ -148,9 +158,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             //If we are in memory full, we must only load one scene
             if (isInMemoryWarning)
-                currentSceneLimits = sceneLimits[SceneLimitsKey.SINGLE_SCENE];
+                currentSceneLimits = sceneLimits[SceneLimitsKey.WARNING];
             else
-                currentSceneLimits = sceneLimits[SceneLimitsKey.LOW_MEMORY];
+                currentSceneLimits = sceneLimits[currentKey];
         }
     }
 }
