@@ -1,13 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using rpc_csharp.transport;
 using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility;
+using ITransport = rpc_csharp.transport.ITransport;
 
-namespace DCL.Friends
+namespace DCL.SocialService
 {
     public class WebSocketRpcTransport : ITransport
     {

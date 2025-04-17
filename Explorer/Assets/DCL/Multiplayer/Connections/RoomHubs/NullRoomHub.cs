@@ -16,8 +16,12 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IGateKeeperSceneRoom SceneRoom() =>
             new IGateKeeperSceneRoom.Fake();
 
-        public IRoom SharedPrivateConversationsRoom() =>
+        public IRoom PrivateConversationsRoom() =>
             NullRoom.INSTANCE;
+
+        public UniTask StopPrivateConversationsRoomAsync() =>
+            UniTask.CompletedTask;
+
         public IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities() =>
             new List<string>();
 

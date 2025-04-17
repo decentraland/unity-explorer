@@ -12,13 +12,15 @@ namespace DCL.Chat.History
         public event IChatHistory.ReadMessagesChangedDelegate ReadMessagesChanged;
         public event IChatHistory.AllChannelsRemovedDelegate AllChannelsRemoved;
 
+        public IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels => channels;
+
         private readonly Dictionary<ChatChannel.ChannelId, ChatChannel> channels = new ();
+
         private int cachedReadMessages;
         private int cachedTotalMessages;
         private bool isReadMessagesDirty = true;
         private bool isTotalMessagesDirty = true;
 
-        public IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels => channels;
 
         public int ReadMessages
         {
@@ -44,12 +46,12 @@ namespace DCL.Chat.History
             }
         }
 
-        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.Undefined)
+        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.UNDEFINED)
         {
             if (channels.TryGetValue(channelId, out ChatChannel channel))
                 return channel;
 
-            if (type == ChatChannel.ChatChannelType.Undefined)
+            if (type == ChatChannel.ChatChannelType.UNDEFINED)
                 type = GetChannelTypeFromId(channelId);
 
             ChatChannel newChannel = new ChatChannel(type, channelId.Id);
@@ -60,6 +62,51 @@ namespace DCL.Chat.History
             channels.Add(newChannel.Id, newChannel);
             ChannelAdded?.Invoke(newChannel);
             return newChannel;
+        }
+
+        public void RemoveChannel(ChatChannel.ChannelId channelId)
+        {
+            if (!channels.TryGetValue(channelId, out ChatChannel channel))
+                return;
+
+            UnsubscribeFromChannelEvents(channel);
+            channels.Remove(channelId);
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+
+            if(channel.ReadMessages != channel.Messages.Count)
+                ReadMessagesChanged?.Invoke(channel);
+
+            ChannelRemoved?.Invoke(channelId);
+        }
+
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
+        {
+            var channel = AddOrGetChannel(channelId);
+            channel.AddMessage(newMessage);
+        }
+
+        public void ClearChannel(ChatChannel.ChannelId channelId)
+        {
+            if (channels.TryGetValue(channelId, out ChatChannel channel))
+            {
+                channel.Clear();
+            }
+
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+        }
+
+        public void DeleteAllChannels()
+        {
+            foreach (var channel in channels.Values)
+            {
+                UnsubscribeFromChannelEvents(channel);
+                channel.Clear();
+            }
+            channels.Clear();
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
         }
 
         private void OnChannelMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -80,22 +127,6 @@ namespace DCL.Chat.History
             ReadMessagesChanged?.Invoke(changedChannel);
         }
 
-        public void RemoveChannel(ChatChannel.ChannelId channelId)
-        {
-            if (!channels.TryGetValue(channelId, out ChatChannel channel))
-                return;
-
-            UnsubscribeFromChannelEvents(channel);
-            channels.Remove(channelId);
-            isReadMessagesDirty = true;
-            isTotalMessagesDirty = true;
-
-            if(channel.ReadMessages != channel.Messages.Count)
-                ReadMessagesChanged?.Invoke(channel);
-
-            ChannelRemoved?.Invoke(channelId);
-        }
-
         private void UnsubscribeFromChannelEvents(ChatChannel channel)
         {
             channel.MessageAdded -= OnChannelMessageAdded;
@@ -103,50 +134,10 @@ namespace DCL.Chat.History
             channel.ReadMessagesChanged -= OnChannelReadMessagesChanged;
         }
 
-        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
-        {
-            var channel = AddOrGetChannel(channelId);
-            channel.AddMessage(newMessage);
-        }
-
         private static ChatChannel.ChatChannelType GetChannelTypeFromId(ChatChannel.ChannelId channelId) =>
             channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)
-                ? ChatChannel.ChatChannelType.Nearby
-                : ChatChannel.ChatChannelType.User;
+                ? ChatChannel.ChatChannelType.NEARBY
+                : ChatChannel.ChatChannelType.USER;
 
-        public void ClearChannel(ChatChannel.ChannelId channelId)
-        {
-            if (channels.TryGetValue(channelId, out ChatChannel channel))
-            {
-                channel.Clear();
-            }
-
-            isReadMessagesDirty = true;
-            isTotalMessagesDirty = true;
-        }
-
-        public void ClearAllChannels()
-        {
-            foreach (var channel in channels.Values)
-            {
-                channel.Clear();
-            }
-
-            isReadMessagesDirty = true;
-            isTotalMessagesDirty = true;
-        }
-
-        public void DeleteAllChannels()
-        {
-            foreach (var channel in channels.Values)
-            {
-                UnsubscribeFromChannelEvents(channel);
-            }
-            ClearAllChannels();
-            channels.Clear();
-            isReadMessagesDirty = true;
-            isTotalMessagesDirty = true;
-            AllChannelsRemoved?.Invoke();
-        }
     }
 }

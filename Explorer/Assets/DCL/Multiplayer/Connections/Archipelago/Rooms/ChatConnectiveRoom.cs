@@ -1,17 +1,15 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class ChatConnectiveRoom : ConnectiveRoom
+    public class ChatConnectiveRoom : ConnectiveRoom, IActivatableConnectiveRoom
     {
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
@@ -62,6 +60,32 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private struct AdapterResponse
         {
             public string adapter;
+        }
+
+        public bool Activated { get; private set; }
+
+        public async UniTask ActivateAsync()
+        {
+            if (Activated)
+            {
+                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} is already activated");
+                return;
+            }
+
+            Activated = true;
+            await this.StartIfNotAsync();
+        }
+
+        public async UniTask DeactivateAsync()
+        {
+            if (!Activated)
+            {
+                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} is already deactivated");
+                return;
+            }
+
+            Activated = false;
+            await this.StopIfNotAsync();
         }
     }
 }

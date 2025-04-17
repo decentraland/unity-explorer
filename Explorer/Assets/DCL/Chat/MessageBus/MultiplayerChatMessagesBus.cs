@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
+using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -63,6 +64,7 @@ namespace DCL.Chat.MessageBus
                     return;
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
+                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Received message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
                 ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
@@ -80,11 +82,11 @@ namespace DCL.Chat.MessageBus
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             switch (channel.ChannelType)
             {
-                case ChatChannel.ChatChannelType.Nearby:
+                case ChatChannel.ChatChannelType.NEARBY:
                     SendTo(message, timestamp, messagePipesHub.IslandPipe());
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
-                case ChatChannel.ChatChannelType.User:
+                case ChatChannel.ChatChannelType.USER:
                     SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 default:

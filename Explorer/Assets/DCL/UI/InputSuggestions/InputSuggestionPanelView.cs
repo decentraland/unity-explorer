@@ -79,8 +79,8 @@ namespace DCL.UI.SuggestionPanel
         {
             if (lastSelectedInputSuggestion != null && IsActive)
                 SuggestionSelected?.Invoke(lastSelectedInputSuggestion.SuggestionId);
-            else
-                SetPanelVisibility(false);
+
+            SetPanelVisibility(false);
         }
 
         private void OnArrowDown(InputAction.CallbackContext obj)

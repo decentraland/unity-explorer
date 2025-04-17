@@ -10,11 +10,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     {
         IRoom IslandRoom();
         IGateKeeperSceneRoom SceneRoom();
-
-        IRoom SharedPrivateConversationsRoom();
+        IRoom PrivateConversationsRoom();
 
         UniTask<bool> StartAsync();
         UniTask StopAsync();
+        UniTask StopPrivateConversationsRoomAsync();
 
         IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities();
     }
