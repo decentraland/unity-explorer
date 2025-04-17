@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee9231dcf7da42f2a03a8f15766af268, type: 3}
   m_Name: ChatInputSuggestionPanelConfiguration
   m_EditorClassIdentifier: 
-  minHeight: 50
   padding: 16
-  maxHeight: 340
+  noResultsHeight: 50
   suggestionElements:
   - {fileID: 4258326920563445101, guid: 4da947c8fa953224697dd2760ead5403, type: 3}
   - {fileID: 8877576985344398107, guid: 989e03fb5d1638f4fb34b9d0e109b45c, type: 3}

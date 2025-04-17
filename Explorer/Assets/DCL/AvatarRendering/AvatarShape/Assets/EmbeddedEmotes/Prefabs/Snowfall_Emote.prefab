@@ -65,7 +65,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 3558416630937567377, guid: 45e50297576694dd3aae3f6c5e575e5a, type: 3}
-      propertyPath: m_Animations.Array.data[0]
+      propertyPath: 'm_Animations.Array.data[0]'
       value: 
       objectReference: {fileID: 7400000, guid: b5dccc691e029c948a962268096f14a5, type: 2}
     m_RemovedComponents: []

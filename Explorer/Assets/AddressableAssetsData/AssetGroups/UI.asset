@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: UI
   m_EditorClassIdentifier: 
   m_GroupName: UI
-  m_Data:
-    m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
   - m_GUID: 028bf9eb42404424bbd1df5cd802720e

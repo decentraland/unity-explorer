@@ -28,3 +28,4 @@ MonoBehaviour:
   <TiltSpeed>k__BackingField: 30
   <MaxTiltPerFrame>k__BackingField: 30
   <MaxTiltAngle>k__BackingField: 360
+  <TiltDamping>k__BackingField: 0.1

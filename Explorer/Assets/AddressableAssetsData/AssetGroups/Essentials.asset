@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Essentials
   m_EditorClassIdentifier: 
   m_GroupName: Essentials
-  m_Data:
-    m_SerializedData: []
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
   - m_GUID: 04a7ffcd277754f7c91237894604f522

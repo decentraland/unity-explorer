@@ -13,6 +13,5 @@ MonoBehaviour:
   m_Name: ProjectivePositionDiffExceedRule
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:ProjectivePositionDiffExceedRule
   color: {r: 1, g: 1, b: 1, a: 1}
-  IsEnabled: 1
   MinTimeDelta: 0
   PositionChangeSqrThreshold: 2
