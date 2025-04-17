@@ -243,8 +243,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 //Disconnect from room
                 //await roomInstance.DisconnectAsync(ct);
                 //Reconnect to the room
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Connect {credentials.Url} - {credentials.AuthToken}");
-
                 connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
             }
             catch (Exception)
