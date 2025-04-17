@@ -446,9 +446,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 5955218336980720692}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &2023346753107801526
@@ -686,9 +689,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 7842449937539363204}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &2867952759841112629
@@ -826,6 +832,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 7958055780637685757}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!1 &2969449224312939305
 GameObject:
   m_ObjectHideFlags: 0
@@ -1545,9 +1552,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 6555097432216779288}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &3635873723333952851
@@ -2179,9 +2189,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 7633547421710987726}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &5245102259747535115
@@ -2505,9 +2518,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 5964133028972326592}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &5930153560094184124
@@ -3047,9 +3063,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 3687672318763325900}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &7094371508821354211
@@ -3535,9 +3554,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 2933582599640135009}
   <OnImage>k__BackingField: {fileID: 0}
   <OffImage>k__BackingField: {fileID: 0}
+  <OnBackgroundImage>k__BackingField: {fileID: 0}
+  <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &8941797862656969361

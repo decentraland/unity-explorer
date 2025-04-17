@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showNameTags: 1
   showChatBubbles: 1
-  maxDistance: 40

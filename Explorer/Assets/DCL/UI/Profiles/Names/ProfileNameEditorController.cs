@@ -26,6 +26,7 @@ namespace DCL.UI.ProfileNames
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
@@ -41,12 +42,14 @@ namespace DCL.UI.ProfileNames
             IWebBrowser webBrowser,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
-            IDecentralandUrlsSource decentralandUrlsSource) : base(viewFactory)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IProfileChangesBus profileChangesBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -241,8 +244,11 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
@@ -274,8 +280,11 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }

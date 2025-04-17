@@ -13,47 +13,15 @@ MonoBehaviour:
   m_Name: Avatar
   m_EditorClassIdentifier: 
   m_GroupName: Avatar
-  m_Data:
-    m_SerializedData: []
   m_GUID: 1dd1efed42c2dcb48954101ce18c8946
   m_SerializeEntries:
+  - m_GUID: 00657accebbe6c348b5208e385e5ec73
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b6579d7e91068e41872ba3a3eb66fdf
     m_Address: Avatar_Male_Mesh
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
-    m_Address: AvatarBase
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ccf99be97dbda744981e8b0ec1ef8faf
-    m_Address: Avatar_CelShading
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e18034962a56eac40ab5df62e159c314
-    m_Address: Avatar Randomizer.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
-    m_Address: DefaultBlack_256_BC7.DDS
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
-    m_Address: DefaultBlack_512_BC7.DDS
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b0989591ebd3293419eece13d705a1e3
-    m_Address: DefaultWhite_256_BC7.DDS
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b7201c2efeb480b4293d5baae77973d6
-    m_Address: DefaultWhite_512_BC7.DDS
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -72,8 +40,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 00657accebbe6c348b5208e385e5ec73
-    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
+  - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
+    m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
+    m_Address: AvatarBase
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0989591ebd3293419eece13d705a1e3
+    m_Address: DefaultWhite_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7201c2efeb480b4293d5baae77973d6
+    m_Address: DefaultWhite_512_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ccf99be97dbda744981e8b0ec1ef8faf
+    m_Address: Avatar_CelShading
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e18034962a56eac40ab5df62e159c314
+    m_Address: Avatar Randomizer.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
+    m_Address: DefaultBlack_512_BC7.DDS
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -81,5 +79,5 @@ MonoBehaviour:
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: e4e44e1629d2cde4aa4efcbd0ddf1b8c, type: 2}
     - {fileID: 11400000, guid: 2094e3b64157b0243a16ba026d9ece3d, type: 2}
+    - {fileID: 11400000, guid: e4e44e1629d2cde4aa4efcbd0ddf1b8c, type: 2}

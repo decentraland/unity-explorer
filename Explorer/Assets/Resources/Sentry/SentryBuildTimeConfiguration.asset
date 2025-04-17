@@ -12,3 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48b1da1d516524a04863de4f85c6cad7, type: 3}
   m_Name: SentryBuildTimeConfiguration
   m_EditorClassIdentifier: 
+  configJsonFilePath: ./.sentryconfig.json

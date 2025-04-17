@@ -54,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ViewDependencies viewDependencies;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
@@ -80,6 +81,7 @@ namespace DCL.PluginSystem.Global
             IChatHistory chatHistory,
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
+            IProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
             FeatureFlagsCache featureFlagsCache)
@@ -105,6 +107,7 @@ namespace DCL.PluginSystem.Global
             this.chatHistory = chatHistory;
             this.viewDependencies = viewDependencies;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
@@ -131,7 +134,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 notificationsBusController,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies, profileChangesBus),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
