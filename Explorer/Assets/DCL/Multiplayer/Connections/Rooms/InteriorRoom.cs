@@ -134,6 +134,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
             videoStreams.Assign(room.VideoStreams);
+            audioStreams.Assign(room.AudioStreams);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;

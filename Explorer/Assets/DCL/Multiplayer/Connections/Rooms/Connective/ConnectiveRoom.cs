@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -60,7 +61,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 var hub = new ParticipantsHub();
                 var videoStreams = new VideoStreams(hub);
-                var audioStreams = new AudioStreams(hub);
+
+                var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+                var audioStreams = new AudioStreams(hub, audioRemixConveyor);
 
                 return new LogRoom(
                     new Room(

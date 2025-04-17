@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.MediaStream
     public class LivekitPlayer : IDisposable
     {
         private static readonly IObjectPool<LivekitAudioSource> OBJECT_POOL = new ThreadSafeObjectPool<LivekitAudioSource>(
-            () => LivekitAudioSource.New(),
+            () => LivekitAudioSource.New(explicitName: true),
             actionOnGet: static source => source.gameObject.SetActive(true),
             actionOnRelease: static source =>
             {
@@ -55,20 +55,14 @@ namespace DCL.SDKComponents.MediaStream
             switch (livekitAddress.StreamKind)
             {
                 case LivekitAddress.Kind.CURRENT_STREAM:
-                    var firstTrack = FirstAvailableTrack();
+                    var videoTrack = FirstVideo();
+                    var audioTrack = FirstAudio();
+                    currentStream = (videoTrack, audioTrack);
 
-                    if (firstTrack.HasValue)
+                    if (audioTrack != null)
                     {
-                        var value = firstTrack.Value;
-                        var video = room.VideoStreams.ActiveStream(value.identity, value.sid);
-                        var audio = room.AudioStreams.ActiveStream(value.identity, value.sid);
-                        currentStream = (video, audio);
-
-                        if (audio != null)
-                        {
-                            audioSource.Construct(audio);
-                            audioSource.Play();
-                        }
+                        audioSource.Construct(audioTrack);
+                        audioSource.Play();
                     }
 
                     break;
@@ -85,7 +79,23 @@ namespace DCL.SDKComponents.MediaStream
             playingAddress = livekitAddress;
         }
 
-        private (string identity, string sid)? FirstAvailableTrack()
+        private WeakReference<IVideoStream>? FirstVideo()
+        {
+            var result = FirstAvailableTrackSid(TrackKind.KindVideo);
+            if (result.HasValue == false) return null;
+            var value = result.Value;
+            return room.VideoStreams.ActiveStream(value.identity, value.sid);
+        }
+
+        private WeakReference<IAudioStream>? FirstAudio()
+        {
+            var result = FirstAvailableTrackSid(TrackKind.KindAudio);
+            if (result.HasValue == false) return null;
+            var value = result.Value;
+            return room.AudioStreams.ActiveStream(value.identity, value.sid);
+        }
+
+        private (string identity, string sid)? FirstAvailableTrackSid(TrackKind kind)
         {
             foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
             {
@@ -95,7 +105,7 @@ namespace DCL.SDKComponents.MediaStream
                     continue;
 
                 foreach ((string sid, TrackPublication value) in participant.Tracks)
-                    if (value.Kind is TrackKind.KindVideo)
+                    if (value.Kind == kind)
                         return (remoteParticipantIdentity, sid);
             }
 
@@ -144,6 +154,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Pause()
         {
             playerState = PlayerState.PAUSED;
+
             //it's actually no "pause" for a streaming source
             audioSource.Stop();
         }
