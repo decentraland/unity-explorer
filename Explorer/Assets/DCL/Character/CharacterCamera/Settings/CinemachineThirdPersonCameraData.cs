@@ -13,8 +13,5 @@ namespace DCL.CharacterCamera.Settings
         [field: SerializeField] public Vector3 OffsetBottom { get; private set; }
         [field: SerializeField] public Vector3 OffsetMid { get; private set; }
         [field: SerializeField] public Vector3 OffsetTop { get; private set; }
-
-        private CinemachineBasicMultiChannelPerlin cachedNoise;
-        public CinemachineBasicMultiChannelPerlin Noise => cachedNoise ??= Camera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
     }
 }
