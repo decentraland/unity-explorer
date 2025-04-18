@@ -45,14 +45,26 @@ namespace DCL.Chat
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
 
 
-        private ViewDependencies viewDependencies;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
 
+        /// <summary>
+        /// Gets the button that is currently available for folding the chat panel. The titlebar may change depending on whether the Member List is visible or not.
+        /// </summary>
+        public Button CurrentTitleBarCloseButton
+        {
+            get
+            {
+                if (closeChatButton.gameObject.activeInHierarchy)
+                    return closeChatButton;
+                else
+                    return closeMemberListButton;
+            }
+        }
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
-            viewDependencies = dependencies;
             profileView.InjectDependencies(dependencies);
         }
 
@@ -112,7 +124,7 @@ namespace DCL.Chat
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
 
-            // TODO: Will be resurrected soon
+            // TODO: Will be resurrected soon, it should tell ChatView that the context menu is open so it does not hide the background
             //viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed, contextMenuTask.Task).Forget();
         }
 

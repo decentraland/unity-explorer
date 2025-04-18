@@ -7,7 +7,6 @@ using DCL.UI;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -27,7 +26,7 @@ namespace DCL.Chat
     public class ChatInputBoxElement : MonoBehaviour, IViewWithGlobalDependencies
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
-        public delegate void InputBoxSelectionChangedDelegate(bool isSelected);
+        public delegate void InputBoxFocusChangedDelegate(bool isFocused);
         public delegate void InputChangedDelegate(string input);
         public delegate void InputSubmittedDelegate(string messageToSend, string origin);
 
@@ -71,7 +70,7 @@ namespace DCL.Chat
         private IProfileCache profileCache;
 
         private CancellationTokenSource emojiPanelCts = new ();
-        private bool isInputSelected;
+        private bool isInputFocused;
         private Match lastMatch = Match.Empty;
         private int wordMatchIndex;
         private ChatSettingsAsset chatSettings;
@@ -104,9 +103,9 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        ///     Raised when either the input box is selected or deselected.
+        ///     Raised when either the input box is focused or unfocused.
         /// </summary>
-        public event InputBoxSelectionChangedDelegate? InputBoxSelectionChanged;
+        public event InputBoxFocusChangedDelegate? InputBoxFocusChanged;
 
         /// <summary>
         ///     Raised when either the emoji selection panel opens or closes.
@@ -138,8 +137,8 @@ namespace DCL.Chat
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
             inputField.onValueChanged.AddListener(OnInputChanged);
-            inputField.OnRightClickEvent += OnRightClickRegistered;
-            inputField.OnPasteShortcutPerformedEvent += OnPasteShortcutPerformed;
+            inputField.Clicked += OnClicked;
+            inputField.PasteShortcutPerformed += OnPasteShortcutPerformed;
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
@@ -176,13 +175,22 @@ namespace DCL.Chat
         public void ClosePopups()
         {
             closePopupTask.TrySetResult();
+
+            if(emojiPanel.gameObject.activeInHierarchy)
+                IsEmojiPanelVisible = false;
         }
 
-        public void FocusInputBox(string? newText = null)
+        public void Focus(string? newText = null)
         {
             if (suggestionPanel.IsActive) return;
 
             inputField.SelectInputField(newText);
+        }
+
+        public void Blur()
+        {
+            ClosePopups();
+            inputField.onDeselect.Invoke(inputField.text);
         }
 
         private void OnPasteShortcutPerformed()
@@ -233,44 +241,34 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        ///     Performs a click event on the chat window.
+        ///     Called when a click event occurs in the parent object.
         /// </summary>
-        public void Click()
+        public void OnClicked(IReadOnlyList<RaycastResult> raycastResults)
         {
             //TODO FRAN Issue #3317 after release: This could work with callbacks from the panels, not by checking raycasts.
-            CheckIfClickedOnEmojiPanel();
+            if (!(emojiPanel.gameObject.activeInHierarchy ||
+                  suggestionPanel.gameObject.activeInHierarchy)) return;
 
-            void CheckIfClickedOnEmojiPanel()
+            var clickedOnPanel = false;
+
+            foreach (RaycastResult result in raycastResults)
+                if (result.gameObject == emojiPanel.gameObject ||
+                    result.gameObject == emojiPanelButton.gameObject ||
+                    result.gameObject == suggestionPanel.ScrollViewRect.gameObject)
+                    clickedOnPanel = true;
+
+            if (!clickedOnPanel)
             {
-                if (!(emojiPanel.gameObject.activeInHierarchy ||
-                      suggestionPanel.gameObject.activeInHierarchy)) return;
+                if (emojiPanel.gameObject.activeInHierarchy)
+                    IsEmojiPanelVisible = false;
 
-                IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(device.position.value);
-                var clickedOnPanel = false;
-
-                foreach (RaycastResult result in raycastResults)
-                    if (result.gameObject == emojiPanel.gameObject ||
-                        result.gameObject == emojiPanelButton.gameObject ||
-                        result.gameObject == suggestionPanel.ScrollViewRect.gameObject)
-                        clickedOnPanel = true;
-
-                if (!clickedOnPanel)
-                {
-                    if (emojiPanel.gameObject.activeInHierarchy)
-                    {
-                        emojiPanelButton.SetState(false);
-                        emojiPanel.gameObject.SetActive(false);
-                        EmojiSelectionVisibilityChanged?.Invoke(false);
-                    }
-
-                    suggestionPanelController.SetPanelVisibility(false);
-                }
+                suggestionPanelController.SetPanelVisibility(false);
             }
         }
 
-        private void OnRightClickRegistered()
+        private void OnClicked(PointerEventData.InputButton button)
         {
-            if (isInputSelected && viewDependencies.ClipboardManager.HasValue())
+            if (button == PointerEventData.InputButton.Right && isInputFocused && viewDependencies.ClipboardManager.HasValue())
             {
                 IsPasteMenuOpen = true;
 
@@ -286,20 +284,30 @@ namespace DCL.Chat
                 inputField.ActivateInputField();
                 InputChanged?.Invoke(inputField.text);
             }
+
+            Focus();
         }
 
-        private void ToggleEmojiPanel()
+        private bool IsEmojiPanelVisible
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(openEmojiPanelAudio);
+            get => emojiPanel.gameObject.activeInHierarchy;
 
-            emojiPanelCts = emojiPanelCts.SafeRestart();
-            bool toggle = !emojiPanel.gameObject.activeInHierarchy;
-            emojiPanel.gameObject.SetActive(toggle);
-            emojiPanelButton.SetState(toggle);
-            suggestionPanelController!.SetPanelVisibility(false);
-            emojiPanel.EmojiContainer.gameObject.SetActive(toggle);
-            inputField.ActivateInputField();
-            EmojiSelectionVisibilityChanged?.Invoke(toggle);
+            set
+            {
+                if (emojiPanel.gameObject.activeInHierarchy != value)
+                {
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(openEmojiPanelAudio);
+
+                    emojiPanelCts = emojiPanelCts.SafeRestart();
+
+                    emojiPanel.gameObject.SetActive(value);
+                    emojiPanelButton.SetState(value);
+                    suggestionPanelController!.SetPanelVisibility(false);
+                    emojiPanel.EmojiContainer.gameObject.SetActive(value);
+
+                    EmojiSelectionVisibilityChanged?.Invoke(value);
+                }
+            }
         }
 
         private void PasteClipboardText(object sender, string pastedText)
@@ -316,28 +324,31 @@ namespace DCL.Chat
 
         private void OnInputDeselected(string _)
         {
-            if(LockSelectedState)
+            if (LockSelectedState)
+            {
+                inputField.ActivateInputField(); // So it does not hide the caret
                 return;
+            }
 
             outlineObject.SetActive(false);
-            isInputSelected = false;
+            isInputFocused = false;
             emojiPanelButton.SetColor(false);
             characterCounter.gameObject.SetActive(false);
-            InputBoxSelectionChanged?.Invoke(false);
+            InputBoxFocusChanged?.Invoke(false);
         }
 
         private void OnInputSelected(string _)
         {
-            InputBoxSelectionChanged?.Invoke(true);
+            if (isInputFocused) return;
 
             outlineObject.SetActive(true);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(enterInputAudio);
 
-            if (isInputSelected) return;
-
-            isInputSelected = true;
+            isInputFocused = true;
             emojiPanelButton.SetColor(true);
             characterCounter.gameObject.SetActive(true);
+
+            InputBoxFocusChanged?.Invoke(true);
         }
 
         private void OnUICloseInput(InputAction.CallbackContext callbackContext)
@@ -409,8 +420,8 @@ namespace DCL.Chat
 
             emojiPanelCts.SafeCancelAndDispose();
 
-            inputField.OnRightClickEvent -= OnRightClickRegistered;
-            inputField.OnPasteShortcutPerformedEvent -= OnPasteShortcutPerformed;
+            inputField.Clicked -= OnClicked;
+            inputField.PasteShortcutPerformed -= OnPasteShortcutPerformed;
         }
 
         private void OnSuggestionSelected(string suggestionId)
@@ -473,7 +484,12 @@ namespace DCL.Chat
         {
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.EmojiSelected += OnEmojiSelected;
-            emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
+            emojiPanelButton.Button.onClick.AddListener(OnEmojiPanelButtonClicked);
+        }
+
+        private void OnEmojiPanelButtonClicked()
+        {
+            IsEmojiPanelVisible = !IsEmojiPanelVisible;
         }
 
         private void InitializeEmojiMapping(Dictionary<string, EmojiData> emojiNameDataMapping)

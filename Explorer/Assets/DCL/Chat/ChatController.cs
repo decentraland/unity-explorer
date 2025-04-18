@@ -6,7 +6,6 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
-using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -303,13 +302,13 @@ namespace DCL.Chat
             if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
             {
                 viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
-                return;
             }
-
-            chatUserStateUpdater.AddConversation(channelId.Id);
-            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
-            UpdateChatUserStateAsync(channelId.Id, chatUsersUpdateCts.Token).Forget();
-//            viewInstance.Focus();
+            else
+            {
+                chatUserStateUpdater.AddConversation(channelId.Id);
+                chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                UpdateChatUserStateAsync(channelId.Id, chatUsersUpdateCts.Token).Forget();
+            }
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, CancellationToken ct, bool updateToolbar = false)
