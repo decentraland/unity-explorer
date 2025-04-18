@@ -50,7 +50,7 @@ namespace ECS.StreamableLoading.Textures
                 if (url == null)
                     throw new Exception($"No profile found for {intention.CommonArguments.URL}");
 
-                result = await TryResolveAvatarTexture(url.Value, intention, ct);
+                result = await TryResolveAvatarTextureAsync(url.Value, intention, ct);
             }
             else
                 // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
@@ -65,7 +65,7 @@ namespace ECS.StreamableLoading.Textures
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
         }
 
-        private async UniTask<IOwnedTexture2D?> TryResolveAvatarTexture(URLAddress url, GetTextureIntention intention, CancellationToken ct)
+        private async UniTask<IOwnedTexture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
         {
             CommonArguments newCommonArgs = new CommonArguments(url, AVATAR_TEXTURE_MAX_ATTEMPTS, StreamableLoadingDefaults.TIMEOUT, AVATAR_TEXTURE_REQUEST_DELAY_MS);
 
