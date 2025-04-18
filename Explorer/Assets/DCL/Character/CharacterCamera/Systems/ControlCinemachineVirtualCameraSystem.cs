@@ -24,16 +24,26 @@ namespace DCL.Character.CharacterCamera.Systems
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity inputMap;
+        private readonly Transform cameraFocus;
         private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
+
+        private Transform cameraFocusParent;
+        private Vector3 offset;
+
         private int hotkeySwitchStateDirection = 1;
 
-        internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
+        internal ControlCinemachineVirtualCameraSystem(World world, Transform cameraFocus, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
         {
+            this.cameraFocus = cameraFocus;
             this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
         }
 
         public override void Initialize()
         {
+            cameraFocusParent = cameraFocus.transform.parent;
+            cameraFocus.transform.parent = null;
+            offset = cameraFocus.position - cameraFocusParent.position;
+
             inputMap = World.CacheInputMap();
             ApplyDefaultCameraModeQuery(World);
         }
@@ -51,6 +61,8 @@ namespace DCL.Character.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
+            cameraFocus.transform.position = cameraFocusParent.position + offset;
+
             HandleCameraInputQuery(World, t);
             UpdateCameraStateQuery(World);
         }
@@ -107,10 +119,15 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(InWorldCameraComponent))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
-            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
-                return;
+            ICinemachineThirdPersonCameraData? cameraData = cameraComponent.Mode switch
+                                                            {
+                                                                CameraMode.ThirdPerson => cinemachinePreset.ThirdPersonCameraData,
+                                                                CameraMode.DroneView => cinemachinePreset.DroneViewCameraData,
+                                                                _ => null,
+                                                            };
 
-            ICinemachineThirdPersonCameraData cameraData = cameraComponent.Mode == CameraMode.ThirdPerson ? cinemachinePreset.ThirdPersonCameraData : cinemachinePreset.DroneViewCameraData;
+            if (cameraData == null)
+                return;
 
             if (input.ChangeShoulder)
                 cameraComponent.Shoulder = cameraComponent.Shoulder switch
@@ -121,27 +138,30 @@ namespace DCL.Character.CharacterCamera.Systems
 
             ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
 
-            float value = cameraData.Camera.m_YAxis.Value;
-
-            Vector3 offset;
+            float currentPitch = cameraFocus.rotation.eulerAngles.x;
+            currentPitch = ((currentPitch + 180) % 360) - 180;
+            currentPitch = Mathf.Clamp(currentPitch, -90, 90);
+            currentPitch = (currentPitch + 90) / 180f;
 
             // in order to lerp the offset correctly, the value from the YAxis goes from 0 to 1, being 0.5 the middle rig
-            if (value < 0.5f)
-                offset = Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, value * 2);
-            else
-                offset = Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (value - 0.5f) * 2);
+            Vector3 offset = currentPitch < 0.5f
+                ? Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, currentPitch * 2)
+                : Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (currentPitch - 0.5f) * 2);
 
             if (cursorComponent.CursorState != CursorState.Locked)
                 thirdPersonCameraShoulder = ThirdPersonCameraShoulder.Center;
 
-            offset.x *= thirdPersonCameraShoulder switch
-                        {
-                            ThirdPersonCameraShoulder.Right => 1,
-                            ThirdPersonCameraShoulder.Left => -1,
-                            ThirdPersonCameraShoulder.Center => 0,
-                        };
+            float targetSide = thirdPersonCameraShoulder switch
+                               {
+                                   ThirdPersonCameraShoulder.Right => 1f,
+                                   ThirdPersonCameraShoulder.Left => 0f,
+                                   ThirdPersonCameraShoulder.Center => 0.5f,
+                               };
 
-            cameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cameraData.CameraOffset.m_Offset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.CameraSide = Mathf.MoveTowards(cameraData.ThirdPersonFollow.CameraSide, targetSide, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.ShoulderOffset.x = Mathf.MoveTowards(cameraData.ThirdPersonFollow.ShoulderOffset.x, offset.x, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.VerticalArmLength = Mathf.MoveTowards(cameraData.ThirdPersonFollow.VerticalArmLength, offset.y, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.CameraDistance = Mathf.MoveTowards(cameraData.ThirdPersonFollow.CameraDistance, offset.z, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
         [Query]
@@ -161,7 +181,7 @@ namespace DCL.Character.CharacterCamera.Systems
             ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
-        private bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
+        private static bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
         {
             switch (mode)
             {
@@ -187,24 +207,25 @@ namespace DCL.Character.CharacterCamera.Systems
             {
                 case CameraMode.FirstPerson:
                     cinemachinePreset.FirstPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode == CameraMode.ThirdPerson;
-
                     SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
                     break;
                 case CameraMode.ThirdPerson:
-                    cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode != CameraMode.FirstPerson && camera.PreviousMode != CameraMode.SDKCamera;
-                    if (camera.PreviousMode == CameraMode.FirstPerson)
-                    {
-                        cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                    cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
 
-                        // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
-                        cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
+                    if (camera.PreviousMode is CameraMode.FirstPerson or CameraMode.SDKCamera)
+                    {
+                        cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = false;
+
+                        float yaw = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                        float pitch = cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
+
+                        cameraFocus.rotation = Quaternion.Euler(pitch, yaw, 0f);
                     }
 
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
                     break;
                 case CameraMode.DroneView:
                     cinemachinePreset.DroneViewCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode == CameraMode.ThirdPerson;
-
                     SetActiveCamera(ref cameraState, cinemachinePreset.DroneViewCameraData.Camera);
                     break;
                 case CameraMode.Free:
@@ -215,8 +236,9 @@ namespace DCL.Character.CharacterCamera.Systems
                     cinemachinePreset.FreeCameraData.Camera.transform.position = tpPos + cinemachinePreset.FreeCameraData.DefaultPosition;
 
                     // copy POV
-                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value;
-                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
+                    Vector3 euler = cameraFocus.localEulerAngles;
+                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = euler.y;
+                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = euler.x;
                     break;
             }
 
