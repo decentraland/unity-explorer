@@ -51,8 +51,6 @@ namespace DCL.SDKComponents.AudioSources
         {
             CreateAudioSourceQuery(World);
             UpdateAudioSourceQuery(World);
-
-            MuteAudioSourceQuery(World, !sceneStateProvider.IsCurrent);
         }
 
         [Query]
@@ -85,9 +83,9 @@ namespace DCL.SDKComponents.AudioSources
 
         [Query]
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
-        private void UpdateAudioSource(ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
+        private void UpdateAudioSource(in Entity entity, ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
         {
-            HandleSDKChanges(sdkComponent, ref component, partitionComponent);
+            HandleSDKChanges(entity, sdkComponent, ref component, partitionComponent);
         }
 
 
@@ -100,11 +98,39 @@ namespace DCL.SDKComponents.AudioSources
         private void UpdateCurrentSceneVolume([Data] bool isCurrentScene, ref PBAudioSource sdkComponent, ref AudioSourceComponent component)
         {
             if (component.AudioSourceAssigned)
-                component.AudioSource!.volume = isCurrentScene ? sdkComponent.GetVolume() : 0;
+            {
+                if (isCurrentScene)
+                {
+                    component.Mute(false);
+                    component.AudioSource!.volume = sdkComponent.GetVolume();
+                }
+                else
+                    component.Mute(true);
+            }
         }
 
-        private void HandleSDKChanges(PBAudioSource sdkComponent, ref AudioSourceComponent component, PartitionComponent partitionComponent)
+        private void HandleSDKChanges(in Entity entity, PBAudioSource sdkComponent, ref AudioSourceComponent component, PartitionComponent partitionComponent)
         {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
+            if (component.AudioSourceAssigned)
+            {
+                if ((sdkComponent.HasPlaying && sdkComponent.Playing) != component.AudioSource.isPlaying)
+                {
+                    if (sdkComponent.HasPlaying && sdkComponent.Playing)
+                    {
+                        Debug.Log($"JUANI WE ARE IN THE WEIRD STATE {entity.Id} NEEDS PLAY");
+                        component.AudioSource.Play();
+                    }
+                    else
+                    {
+                        Debug.Log($"JUANI WE ARE IN THE WEIRD STATE {entity.Id} NEEDS STOP");
+                        component.AudioSource.Stop();
+                    }
+                }
+            }
+
             if (!sdkComponent.IsDirty) return;
 
             if (component.AudioSourceAssigned)
@@ -122,15 +148,5 @@ namespace DCL.SDKComponents.AudioSources
             sdkComponent.IsDirty = false;
         }
 
-        /// <summary>
-        /// Mutes an AudioSource.
-        /// </summary>
-        /// <param name="component">The AudioSource component.</param>
-        /// <param name="mute">Whether the AudioSource has to be muted or not.</param>
-        [Query]
-        private void MuteAudioSource(ref AudioSourceComponent component, [Data] bool mute)
-        {
-            component.Mute(mute);
-        }
     }
 }
