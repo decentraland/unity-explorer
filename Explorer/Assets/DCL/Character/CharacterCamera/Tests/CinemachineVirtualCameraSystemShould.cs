@@ -20,6 +20,7 @@ namespace DCL.CharacterCamera.Tests
         private const float ZOOM_SENSITIVITY = 0.05f;
 
         private Camera camera;
+        private GameObject cameraFocus;
         private GameObject cinemachineObj;
         private ICinemachinePreset cinemachinePreset;
         private ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
@@ -35,6 +36,8 @@ namespace DCL.CharacterCamera.Tests
         public void CreateCameraSetup()
         {
             camera = new GameObject("Camera Test").AddComponent<Camera>();
+            cameraFocus = new GameObject("Camera Focus");
+            cameraFocus.transform.SetParent(camera.transform);
             cinemachineObj = new GameObject("Cinemachine");
 
             CinemachineVirtualCamera firstPersonCamera = new GameObject("First Person Camera").AddComponent<CinemachineVirtualCamera>();
@@ -45,17 +48,15 @@ namespace DCL.CharacterCamera.Tests
             firstPersonCameraData.Camera.Returns(firstPersonCamera);
             firstPersonCameraData.POV.Returns(pov);
 
-            CinemachineFreeLook thirdPersonCamera = new GameObject("Third Person Camera").AddComponent<CinemachineFreeLook>();
+            CinemachineVirtualCamera thirdPersonCamera = new GameObject("Third Person Camera").AddComponent<CinemachineVirtualCamera>();
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
-            // thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
-            // thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
-            // thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
+            thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
 
-            CinemachineFreeLook droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineFreeLook>();
+            CinemachineVirtualCamera droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineVirtualCamera>();
             droneView.transform.SetParent(cinemachineObj.transform);
-            // droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
-            // droneViewData.Camera.Returns(droneView);
-            // droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<CinemachineCameraOffset>());
+            droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            droneViewData.Camera.Returns(droneView);
 
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();
             freeCamera.transform.SetParent(cinemachineObj.transform);
@@ -69,11 +70,11 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.Brain.Returns(brain);
             cinemachinePreset.FirstPersonCameraData.Returns(firstPersonCameraData);
             cinemachinePreset.FreeCameraData.Returns(freeCameraData);
-            // cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
-            // cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
+            cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
+            cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
-            // system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);
+            system = new ControlCinemachineVirtualCameraSystem(world, cameraFocus.transform, cinemachineCameraAudioSettings);
             world.Create(new InputMapComponent(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
 
             inputMap = world.CacheInputMap();
@@ -87,6 +88,8 @@ namespace DCL.CharacterCamera.Tests
         public void DisposeCameraSetup()
         {
             Object.DestroyImmediate(camera.gameObject);
+            Object.DestroyImmediate(cameraFocus);
+            Object.DestroyImmediate(cinemachineObj);
         }
 
         [Test]
@@ -337,8 +340,10 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
             Assert.That(thirdPersonCameraData.Camera.m_Transitions.m_InheritPosition, Is.False,
                 "When coming from FirstPerson, the ThirdPerson camera should not inherit position");
-            // Assert.That(thirdPersonCameraData.Camera.m_XAxis.Value, Is.EqualTo(firstPersonCameraData.POV.m_HorizontalAxis.Value),
-                // "The ThirdPerson camera should copy the horizontal axis value from FirstPerson");
+            Assert.That(cameraFocus.transform.rotation.eulerAngles.y, Is.EqualTo(firstPersonCameraData.POV.m_HorizontalAxis.Value),
+                "CameraFocus for ThirdPerson camera should copy the horizontal axis value from FirstPerson");
+            Assert.That(cameraFocus.transform.rotation.eulerAngles.x, Is.EqualTo(firstPersonCameraData.POV.m_VerticalAxis.Value),
+                "CameraFocus for ThirdPerson camera should copy the Vecrtical axis value from FirstPerson");
         }
 
         [Test]

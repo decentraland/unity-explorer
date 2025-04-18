@@ -158,12 +158,10 @@ namespace DCL.Character.CharacterCamera.Systems
                                    ThirdPersonCameraShoulder.Center => 0.5f,
                                };
 
-            var follow = cameraData.Camera.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
-
-            follow.CameraSide = Mathf.MoveTowards(follow.CameraSide, targetSide, cinemachinePreset.ShoulderChangeSpeed * dt);
-            follow.ShoulderOffset.x = Mathf.MoveTowards(follow.ShoulderOffset.x, offset.x, cinemachinePreset.ShoulderChangeSpeed * dt);
-            follow.VerticalArmLength = Mathf.MoveTowards(follow.VerticalArmLength, offset.y, cinemachinePreset.ShoulderChangeSpeed * dt);
-            follow.CameraDistance = Mathf.MoveTowards(follow.CameraDistance, offset.z, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.CameraSide = Mathf.MoveTowards(cameraData.ThirdPersonFollow.CameraSide, targetSide, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.ShoulderOffset.x = Mathf.MoveTowards(cameraData.ThirdPersonFollow.ShoulderOffset.x, offset.x, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.VerticalArmLength = Mathf.MoveTowards(cameraData.ThirdPersonFollow.VerticalArmLength, offset.y, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.ThirdPersonFollow.CameraDistance = Mathf.MoveTowards(cameraData.ThirdPersonFollow.CameraDistance, offset.z, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
         [Query]

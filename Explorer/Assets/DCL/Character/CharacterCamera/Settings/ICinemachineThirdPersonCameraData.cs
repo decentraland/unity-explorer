@@ -9,5 +9,7 @@ namespace DCL.CharacterCamera.Settings
         Vector3 OffsetBottom { get; }
         Vector3 OffsetMid { get; }
         Vector3 OffsetTop { get; }
+
+        public Cinemachine3rdPersonFollow ThirdPersonFollow { get; }
     }
 }
