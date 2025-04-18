@@ -509,7 +509,12 @@ namespace DCL.Chat
                     SetChatVisibility(true);
                     chatInputBox.EnableInputBoxSubmissions();
 
-                    if (!IsMaskActive)
+                    if (IsMaskActive)
+                    {
+                        inputBoxMask.gameObject.SetActive(true);
+                        chatInputBox.gameObject.SetActive(false);
+                    }
+                    else
                         chatInputBox.Focus(newText);
                 }
 
@@ -527,6 +532,9 @@ namespace DCL.Chat
 
                 if(!isPointerOverChat)
                     SetBackgroundVisibility(false, true);
+
+                inputBoxMask.gameObject.SetActive(false);
+                chatInputBox.gameObject.SetActive(true);
 
                 chatInputBox.Blur();
                 chatInputBox.DisableInputBoxSubmissions();
@@ -726,22 +734,9 @@ namespace DCL.Chat
                 isPointerOverChat = false;
 
             if (isVisible)
-            {
                 chatMessageViewer.StopChatEntriesFadeout();
-
-                if (IsMaskActive)
-                {
-                    chatInputBox.gameObject.SetActive(false);
-                    inputBoxMask.gameObject.SetActive(true);
-                }
-            }
             else
-            {
                 chatMessageViewer.StartChatEntriesFadeout();
-
-                chatInputBox.gameObject.SetActive(true);
-                inputBoxMask.gameObject.SetActive(false);
-            }
         }
 
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
