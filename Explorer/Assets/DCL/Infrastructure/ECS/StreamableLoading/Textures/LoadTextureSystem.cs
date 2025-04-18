@@ -72,14 +72,24 @@ namespace ECS.StreamableLoading.Textures
             GetTextureWebRequest.CreateTextureOp textureOp = GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode);
             GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType);
 
-            IOwnedTexture2D? result = await webRequestController.GetTextureAsync(
-                newCommonArgs,
-                textureArguments,
-                textureOp,
-                ct,
-                GetReportData(),
-                suppressErrors: true
-            );
+            IOwnedTexture2D? result = null;
+
+            try
+            {
+                result = await webRequestController.GetTextureAsync(
+                    newCommonArgs,
+                    textureArguments,
+                    textureOp,
+                    ct,
+                    GetReportData(),
+                    suppressErrors: true,
+                    ignoreIrrecoverableErrors: true
+                );
+            }
+            catch (Exception)
+            {
+                //Ignore exceptions AVATAR_TEXTURE_MAX_ATTEMPTS times so that we can try once more with exception logging enabled
+            }
 
             if (result != null) return result;
 
