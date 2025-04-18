@@ -177,9 +177,6 @@ namespace DCL.InWorldCamera.Systems
 
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
 
-            // ref CameraDampedPOV dampedPOV = ref World.Get<CameraDampedPOV>(camera);
-            // dampedPOV.Current = dampedPOV.Velocity = Vector2.up;
-
             World.Add(camera,
                 new InWorldCameraComponent(),
                 new CameraTarget { Value = followTarget },

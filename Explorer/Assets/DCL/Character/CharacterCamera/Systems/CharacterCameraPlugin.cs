@@ -13,7 +13,6 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.DebugUtilities;
-using DCL.InWorldCamera;
 using DCL.Settings.Settings;
 using ECS.Prioritization.Components;
 using Global.AppArgs;

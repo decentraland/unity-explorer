@@ -35,19 +35,13 @@ namespace DCL.CharacterCamera.Systems
             this.cameraFocus = cameraFocus;
             this.settings = settings;
             this.isFreeCameraAllowed = isFreeCameraAllowed;
-
-            cameraFocusParent = cameraFocus.transform.parent;
-            cameraFocus.transform.parent = null;
-
-            offset = cameraFocus.position - cameraFocusParent.position;
         }
 
         protected override void Update(float t)
         {
+
             ApplyQuery(World!, t);
             ForceLookAtQuery(World!);
-
-            cameraFocus.transform.position = cameraFocusParent.position + offset;
         }
 
         [Query]
