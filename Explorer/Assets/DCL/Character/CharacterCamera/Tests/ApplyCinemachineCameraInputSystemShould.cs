@@ -21,8 +21,8 @@ namespace DCL.CharacterCamera.Tests
         private Entity entity;
         private ICinemachineFirstPersonCameraData firstPersonCameraData;
         private ICinemachineFreeCameraData freeCameraData;
-        private ICinemachineThirdPersonCameraData2 thirdPersonCameraData;
-        private ICinemachineThirdPersonCameraData2 droneViewData;
+        private ICinemachineThirdPersonCameraData thirdPersonCameraData;
+        private ICinemachineThirdPersonCameraData droneViewData;
         private DCLInput dclInput;
         private World world;
         private ApplyCinemachineCameraInputSystem system;
@@ -48,7 +48,7 @@ namespace DCL.CharacterCamera.Tests
             // Setup Third Person Camera
             CinemachineFreeLook thirdPersonCamera = new GameObject("Third Person Camera").AddComponent<CinemachineFreeLook>();
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
-            thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData2>();
+            thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
             // thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
             // thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
 

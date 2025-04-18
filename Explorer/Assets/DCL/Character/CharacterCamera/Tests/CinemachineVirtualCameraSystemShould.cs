@@ -28,8 +28,8 @@ namespace DCL.CharacterCamera.Tests
         private ICinemachineFreeCameraData freeCameraData;
 
         private SingleInstanceEntity inputMap;
-        private ICinemachineThirdPersonCameraData2 thirdPersonCameraData;
-        private ICinemachineThirdPersonCameraData2 droneViewData;
+        private ICinemachineThirdPersonCameraData thirdPersonCameraData;
+        private ICinemachineThirdPersonCameraData droneViewData;
 
         [SetUp]
         public void CreateCameraSetup()

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.CharacterCamera.Settings
 {
-    internal interface ICinemachineThirdPersonCameraData2
+    internal interface ICinemachineThirdPersonCameraData
     {
         CinemachineVirtualCamera Camera { get; }
         Vector3 OffsetBottom { get; }

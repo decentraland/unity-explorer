@@ -6,7 +6,7 @@ using UnityEngine;
 namespace DCL.CharacterCamera.Settings
 {
     [Serializable]
-    public class CinemachineThirdPersonCameraData2 : ICinemachineThirdPersonCameraData2
+    public class CinemachineThirdPersonCameraData : ICinemachineThirdPersonCameraData
     {
         [field: SerializeField] public CinemachineVirtualCamera Camera { get; private set; }
 

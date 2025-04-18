@@ -119,7 +119,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(InWorldCameraComponent))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
-            ICinemachineThirdPersonCameraData2? cameraData = cameraComponent.Mode switch
+            ICinemachineThirdPersonCameraData? cameraData = cameraComponent.Mode switch
                                                             {
                                                                 CameraMode.ThirdPerson => cinemachinePreset.ThirdPersonCameraData,
                                                                 CameraMode.DroneView => cinemachinePreset.DroneViewCameraData,
