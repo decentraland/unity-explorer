@@ -70,7 +70,6 @@ MonoBehaviour:
   <ProfileWidget>k__BackingField: {fileID: 8183886167291671765}
   <profileMenu>k__BackingField: {fileID: 617051157247145518}
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
-  <FaceFrame>k__BackingField: {fileID: 0}
   <InWorldCameraButton>k__BackingField: {fileID: 1734187727223042766}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}

@@ -523,7 +523,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7995160920644543220, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_Name
-      value: ShorctutElement.Key Variant
+      value: ShorctutElement.TwoKeys
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

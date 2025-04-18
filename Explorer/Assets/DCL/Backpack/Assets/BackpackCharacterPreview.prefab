@@ -235,10 +235,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 0}
   <raycaster>k__BackingField: {fileID: 0}
+  <Spinner>k__BackingField: {fileID: 0}
   <RawImage>k__BackingField: {fileID: 1124832982894223493}
   <CharacterPreviewInputDetector>k__BackingField: {fileID: 2460058156442629763}
   <CharacterPreviewCursorContainer>k__BackingField: {fileID: 8921462143626868842}
   <CharacterPreviewSettingsSo>k__BackingField: {fileID: 11400000, guid: 5ef5ad65d6df9cc4a90512012d6ca99a, type: 2}
+  EnableZooming: 1
+  EnablePanning: 1
+  EnableRotating: 1
+  <HoverAudio>k__BackingField: {fileID: 0}
+  <RotateAudio>k__BackingField: {fileID: 0}
+  <VerticalPanAudio>k__BackingField: {fileID: 0}
+  <ZoomInAudio>k__BackingField: {fileID: 0}
+  <ZoomOutAudio>k__BackingField: {fileID: 0}
 --- !u!1 &6897458527996807904
 GameObject:
   m_ObjectHideFlags: 0

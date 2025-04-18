@@ -13,32 +13,15 @@ MonoBehaviour:
   m_Name: Test Resources
   m_EditorClassIdentifier: 
   m_GroupName: Test Resources
-  m_Data:
-    m_SerializedData: []
   m_GUID: 08d9776e0234ee84d85625da0bd57c97
   m_SerializeEntries:
-  - m_GUID: c9893189605d84349b03f89a01d6abca
-    m_Address: Test Report Settings
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f13b19cfc3075014aaddb1fd403e2081
-    m_Address: Integration Tests Global Container
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 75051ef81d8168741991242a9b201866
-    m_Address: Integration Tests World Container
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 486f606f1a298b545960f36dcfc573ae
-    m_Address: Avatar_Male_Mesh_TestAsset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 16513b4a84461084ab73a396ec1710b2
     m_Address: AvatarBase_TestAsset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 374b47588f593124fa043c20ba8cd91c
+    m_Address: Avatar_Toon_TestAsset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -47,8 +30,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 374b47588f593124fa043c20ba8cd91c
-    m_Address: Avatar_Toon_TestAsset
+  - m_GUID: 486f606f1a298b545960f36dcfc573ae
+    m_Address: Avatar_Male_Mesh_TestAsset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 75051ef81d8168741991242a9b201866
+    m_Address: Integration Tests World Container
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9893189605d84349b03f89a01d6abca
+    m_Address: Test Report Settings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f13b19cfc3075014aaddb1fd403e2081
+    m_Address: Integration Tests Global Container
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

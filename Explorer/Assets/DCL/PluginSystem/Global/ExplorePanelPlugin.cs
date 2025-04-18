@@ -113,6 +113,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly IProfileChangesBus profileChangesBus;
 
         private readonly bool includeCameraReel;
 
@@ -175,7 +176,9 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs, ViewDependencies viewDependencies,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            SceneLoadingLimit sceneLoadingLimit)
+            IProfileChangesBus profileChangesBus,
+            SceneLoadingLimit sceneLoadingLimit
+            )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -226,6 +229,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.profileChangesBus = profileChangesBus;
         }
 
         public void Dispose()
@@ -367,7 +371,7 @@ namespace DCL.PluginSystem.Global
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                     dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
