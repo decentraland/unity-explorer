@@ -537,9 +537,9 @@ MonoBehaviour:
   droneViewCameraData:
     <Camera>k__BackingField: {fileID: 4768914399050688592}
     <CameraOffset>k__BackingField: {fileID: 8869747115766645440}
-    <OffsetBottom>k__BackingField: {x: 0, y: 0.2, z: 0}
+    <OffsetBottom>k__BackingField: {x: 0, y: 0, z: 0}
     <OffsetMid>k__BackingField: {x: 0, y: 0, z: 0}
-    <OffsetTop>k__BackingField: {x: 0, y: 0.7, z: 0}
+    <OffsetTop>k__BackingField: {x: 0, y: 2, z: 0}
   freeCameraData:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
     <Speed>k__BackingField: 10
@@ -680,7 +680,7 @@ MonoBehaviour:
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
   m_Priority: 1
-  m_StandbyUpdate: 0
+  m_StandbyUpdate: 2
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:
@@ -886,7 +886,7 @@ MonoBehaviour:
   m_LockStageInInspector: 00000000
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:
@@ -1997,7 +1997,7 @@ MonoBehaviour:
   m_LockStageInInspector: 00000000
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:
@@ -2190,7 +2190,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6234749757729860735}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 319d2fe34a804e245819465c9505ea59, type: 3}
   m_Name: 
@@ -2200,7 +2200,7 @@ MonoBehaviour:
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_CommonLens: 1
@@ -2830,7 +2830,7 @@ MonoBehaviour:
   m_LockStageInInspector: 00000000
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:

@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   VerticalMouseSensitivity: 2
   HorizontalMouseSensitivity: 2
-  CameraMovementPOVSettings: {fileID: 11400000, guid: 8a1f09e6e5747894a938d78df9b76bdd, type: 2}
+  CameraMovementPOVSettings: {fileID: 11400000, guid: 321099f170007b140a66b64b762642f0, type: 2}
