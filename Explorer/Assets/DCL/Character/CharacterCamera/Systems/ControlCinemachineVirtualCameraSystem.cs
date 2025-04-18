@@ -212,8 +212,12 @@ namespace DCL.Character.CharacterCamera.Systems
                     SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
                     break;
                 case CameraMode.ThirdPerson:
+                    cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
+
                     if (camera.PreviousMode is CameraMode.FirstPerson or CameraMode.SDKCamera)
                     {
+                        cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = false;
+
                         float yaw = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
                         float pitch = cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
 

@@ -39,7 +39,6 @@ namespace DCL.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
-
             ApplyQuery(World!, t);
             ForceLookAtQuery(World!);
         }
