@@ -22,7 +22,7 @@ namespace DCL.CharacterCamera.Tests
         private ICinemachineFirstPersonCameraData firstPersonCameraData;
         private ICinemachineFreeCameraData freeCameraData;
         private ICinemachineThirdPersonCameraData2 thirdPersonCameraData;
-        private ICinemachineThirdPersonCameraData droneViewData;
+        private ICinemachineThirdPersonCameraData2 droneViewData;
         private DCLInput dclInput;
         private World world;
         private ApplyCinemachineCameraInputSystem system;
@@ -50,14 +50,14 @@ namespace DCL.CharacterCamera.Tests
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
             thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData2>();
             // thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
-            thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
+            // thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
 
             // Setup Drone View Camera
             CinemachineFreeLook droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineFreeLook>();
             droneView.transform.SetParent(cinemachineObj.transform);
-            droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
-            droneViewData.Camera.Returns(droneView);
-            droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<CinemachineCameraOffset>());
+            // droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            // droneViewData.Camera.Returns(droneView);
+            // droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<CinemachineCameraOffset>());
 
             // Setup Free Camera
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();

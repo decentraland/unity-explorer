@@ -24,11 +24,13 @@ namespace DCL.Character.CharacterCamera.Systems
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity inputMap;
+        private readonly Transform cameraFocus;
         private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
         private int hotkeySwitchStateDirection = 1;
 
-        internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
+        internal ControlCinemachineVirtualCameraSystem(World world, Transform cameraFocus, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
         {
+            this.cameraFocus = cameraFocus;
             this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
         }
 
@@ -127,7 +129,7 @@ namespace DCL.Character.CharacterCamera.Systems
 
                 ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
 
-                float currentPitch = cameraData.POV.rotation.eulerAngles.x;
+                float currentPitch = cameraFocus.rotation.eulerAngles.x;
                 currentPitch = ((currentPitch + 180) % 360) - 180;
                 currentPitch = Mathf.Clamp(currentPitch, -90, 90);
                 currentPitch = (currentPitch + 90) / 180f;
@@ -207,7 +209,7 @@ namespace DCL.Character.CharacterCamera.Systems
                         float yaw = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
                         float pitch = cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
 
-                        cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(pitch, yaw, 0f);
+                        cameraFocus.rotation = Quaternion.Euler(pitch, yaw, 0f);
                     }
 
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
@@ -224,7 +226,7 @@ namespace DCL.Character.CharacterCamera.Systems
                     cinemachinePreset.FreeCameraData.Camera.transform.position = tpPos + cinemachinePreset.FreeCameraData.DefaultPosition;
 
                     // copy POV
-                    Vector3 euler = cinemachinePreset.ThirdPersonCameraData.POV.localEulerAngles;
+                    Vector3 euler = cameraFocus.localEulerAngles;
                     cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = euler.y;
                     cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = euler.x;
                     break;
