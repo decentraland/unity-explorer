@@ -102,6 +102,12 @@ namespace DCL.Chat
             viewDependencies = dependencies;
         }
 
+        private bool IsEmojisEnabled
+        {
+            get => emojiPanelButton.gameObject.activeSelf;
+            set => emojiPanelButton.gameObject.SetActive(value);
+        }
+
         /// <summary>
         ///     Raised when either the input box is focused or unfocused.
         /// </summary>
@@ -142,6 +148,8 @@ namespace DCL.Chat
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
+
+            IsEmojisEnabled = false;
 
             closePopupTask = new UniTaskCompletionSource();
         }
@@ -333,6 +341,7 @@ namespace DCL.Chat
             outlineObject.SetActive(false);
             isInputFocused = false;
             emojiPanelButton.SetColor(false);
+            IsEmojisEnabled = false;
             characterCounter.gameObject.SetActive(false);
             InputBoxFocusChanged?.Invoke(false);
         }
@@ -345,6 +354,7 @@ namespace DCL.Chat
             UIAudioEventsBus.Instance.SendPlayAudioEvent(enterInputAudio);
 
             isInputFocused = true;
+            IsEmojisEnabled = true;
             emojiPanelButton.SetColor(true);
             characterCounter.gameObject.SetActive(true);
 
