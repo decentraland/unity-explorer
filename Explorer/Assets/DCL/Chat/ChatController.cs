@@ -6,6 +6,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -28,6 +29,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
+using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat
@@ -57,11 +59,11 @@ namespace DCL.Chat
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
-        private readonly ChatControllerConversationEventsHelper conversationEventsHelper;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
         private readonly IRoomHub roomHub;
+        private CancellationTokenSource chatUsersUpdateCts = new();
 
         private SingleInstanceEntity cameraEntity;
 
@@ -148,11 +150,6 @@ namespace DCL.Chat
                 membersBuffer,
                 participantProfileBuffer,
                 this);
-
-            conversationEventsHelper = new ChatControllerConversationEventsHelper(
-                chatHistory,
-                chatUserStateUpdater,
-                this);
         }
 
 #region Panel Visibility
@@ -236,6 +233,7 @@ namespace DCL.Chat
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
             memberListHelper.StopUpdating();
+            chatUsersUpdateCts.SafeCancelAndDispose();
         }
 
 #region View Show and Close
@@ -311,26 +309,51 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
-            conversationEventsHelper.OnOpenConversation(userId);
+            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
+            chatUserStateUpdater.CurrentConversation = userId;
+            chatUserStateUpdater.AddConversation(userId);
+
+            if (TryGetView(out var view))
+                view.CurrentChannelId = channel.Id;
+
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
-            conversationEventsHelper.OnSelectConversation(channelId);
+            chatUserStateUpdater.CurrentConversation = channelId.Id;
+            viewInstance!.CurrentChannelId = channelId;
+
+            if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+            {
+                viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+            }
+            else
+            {
+                chatUserStateUpdater.AddConversation(channelId.Id);
+                chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
+            }
         }
 
-        private async UniTaskVoid UpdateChatUserStateAsync(string userId, CancellationToken ct, bool updateToolbar = false)
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
             var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
-            viewInstance!.SetInputWithUserState(userState);
 
-            if (!updateToolbar) return;
+            if (TryGetView(out var view))
+            {
+                view.SetInputWithUserState(userState);
 
-            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
-                           || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+                if (!updateToolbar) return;
 
-            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+                bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                             || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+
+                view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+            }
         }
+
 #endregion
 
 #region Chat History Events
@@ -551,6 +574,7 @@ namespace DCL.Chat
         }
 
 #region Chat History Channel Events
+
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
             chatUserStateUpdater.RemoveConversation(removedChannel.Id);
@@ -631,7 +655,7 @@ namespace DCL.Chat
                 view.PointerEnter += OnViewPointerEnter;
                 view.PointerExit += OnViewPointerExit;
 
-                view.ChatSelectStateChanged += OnViewFocusChanged;
+                view.FocusChanged += OnViewFocusChanged;
                 view.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
                 view.InputSubmitted += OnViewInputSubmitted;
                 view.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
