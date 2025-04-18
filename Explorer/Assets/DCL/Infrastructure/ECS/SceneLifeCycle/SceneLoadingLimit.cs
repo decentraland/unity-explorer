@@ -1,7 +1,12 @@
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utilities;
 using ECS.SceneLifeCycle.SceneDefinition;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
@@ -35,29 +40,30 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Dictionary<SceneLimitsKey, SceneLimits> sceneLimits = new ()
         {
             // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 561MB
-            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE, SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE + SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // 3 scenes, 5 high quality LODs, 30 low quality LODs. Limit: 1925MB
-            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits(3 * SceneLoadingMemoryConstants.MAX_SCENE_SIZE, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOD, 30 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits((3 * SceneLoadingMemoryConstants.MAX_SCENE_SIZE) + (5 * SceneLoadingMemoryConstants.MAX_SCENE_LOD), 30 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // No limits.
-            { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue, float.MaxValue) },
+            { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue) },
 
-            // 1 scene, 1 high quality LOD. Only for debugging purposes
-            { SceneLimitsKey.WARNING, new SceneLimits(1, 0, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
-
+            // 1 scene, 1 high quality LOD. Could be useful for debugging single scenes
+            { SceneLimitsKey.WARNING, new SceneLimits(1, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
         };
 
 
         private float SceneCurrentMemoryUsageInMB;
-        private float LODCurrentMemoryUsageInMB;
         private float QualityReductedLODCurrentMemoryUsageInMB;
 
         private SceneLimits currentSceneLimits;
-        private SceneLimitsKey currentKey;
+        private SceneLimitsKey initialKey;
+        private bool CurrentWarningState;
+
 
         private readonly ISystemMemoryCap systemMemoryCap;
         private bool isEnabled;
+
 
         public SceneLoadingLimit(ISystemMemoryCap memoryCap)
         {
@@ -69,7 +75,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public void ResetCurrentUsage()
         {
             SceneCurrentMemoryUsageInMB = 0;
-            LODCurrentMemoryUsageInMB = 0;
             QualityReductedLODCurrentMemoryUsageInMB = 0;
         }
 
@@ -88,9 +93,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public bool CanLoadLOD(SceneDefinitionComponent sceneDefinitionComponent)
         {
             //We will let it overflow, only once. Avoid deadlock
-            if (LODCurrentMemoryUsageInMB < currentSceneLimits.LODMaxAmountOfUsableMemoryInMB)
+            if (SceneCurrentMemoryUsageInMB < currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB)
             {
-                LODCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageForLODMB;
+                SceneCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageForLODMB;
                 return true;
             }
 
@@ -114,26 +119,65 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (isEnabled)
             {
                 if (systemMemoryCap.MemoryCapInMB < 10_000)
-                {
-                    currentKey = SceneLimitsKey.LOW_MEMORY;
-                    currentSceneLimits = sceneLimits[SceneLimitsKey.LOW_MEMORY];
-                }
-                else if (systemMemoryCap.MemoryCapInMB < 16_000)
-                {
-                    currentKey = SceneLimitsKey.MEDIUM_MEMORY;
-                    currentSceneLimits = sceneLimits[SceneLimitsKey.MEDIUM_MEMORY];
-                }
+                    initialKey = SceneLimitsKey.LOW_MEMORY;
+                else if (systemMemoryCap.MemoryCapInMB < 17_000)
+                    initialKey = SceneLimitsKey.MEDIUM_MEMORY;
                 else
-                {
-                    currentKey = SceneLimitsKey.MAX_MEMORY;
-                    currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
-                }
+                    initialKey = SceneLimitsKey.MAX_MEMORY;
             }
             else
+                initialKey = SceneLimitsKey.MAX_MEMORY;
+
+            currentSceneLimits = sceneLimits[initialKey];
+        }
+
+
+        public void WarnMemoryFull(bool isInMemoryWarning)
+        {
+            if (!isEnabled)
+                return;
+
+            if (isInMemoryWarning != CurrentWarningState)
             {
-                currentKey = SceneLimitsKey.MAX_MEMORY;
-                currentSceneLimits = sceneLimits[SceneLimitsKey.MAX_MEMORY];
+                CurrentWarningState = isInMemoryWarning;
+                easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
+                EasingInOutMemory(easingCancellationTokenSource.Token).Forget();
             }
+        }
+
+        private CancellationTokenSource easingCancellationTokenSource;
+        private float interpolationProgress;
+
+        private readonly float totalFramesToComplete = 500;
+
+        private async UniTask EasingInOutMemory(CancellationToken cancellationToken)
+        {
+            float currentFrames = 0;
+            SceneLimits start = sceneLimits[initialKey];
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // Interpolate between the previous and target limits
+                if (CurrentWarningState)
+                    interpolationProgress = Mathf.Lerp(0, 1, currentFrames / totalFramesToComplete);
+                else
+                    interpolationProgress = Mathf.Lerp(1, 0, currentFrames / totalFramesToComplete);
+
+                currentSceneLimits = SceneLimits.Lerp(start, sceneLimits[SceneLimitsKey.WARNING], interpolationProgress);
+
+                if (currentFrames / totalFramesToComplete >= 1f)
+                    break;
+
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                currentFrames++;
+            }
+        }
+
+
+        public void SetEnabled(bool isEnabled)
+        {
+            this.isEnabled = isEnabled;
+            UpdateMemoryCap();
         }
 
         private enum SceneLimitsKey
@@ -147,30 +191,19 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private struct SceneLimits
         {
             public readonly float SceneMaxAmountOfUsableMemoryInMB;
-            public readonly float LODMaxAmountOfUsableMemoryInMB;
             public readonly float QualityReductedLODMaxAmountOfUsableMemoryInMB;
 
-            public SceneLimits(float sceneMaxAmountOfUsableMemoryInMB, float lodMaxAmountOfUsableMemoryInMB, float qualityReductedLODMaxAmountOfUsableMemoryInMB)
+            public SceneLimits(float sceneMaxAmountOfUsableMemoryInMB, float qualityReductedLODMaxAmountOfUsableMemoryInMB)
             {
                 SceneMaxAmountOfUsableMemoryInMB = sceneMaxAmountOfUsableMemoryInMB;
-                LODMaxAmountOfUsableMemoryInMB = lodMaxAmountOfUsableMemoryInMB;
                 QualityReductedLODMaxAmountOfUsableMemoryInMB = qualityReductedLODMaxAmountOfUsableMemoryInMB;
             }
-        }
 
-        public void WarnMemoryFull(bool isInMemoryWarning)
-        {
-            //If we are in memory full, we must only load one scene
-            if (isInMemoryWarning)
-                currentSceneLimits = sceneLimits[SceneLimitsKey.WARNING];
-            else
-                currentSceneLimits = sceneLimits[currentKey];
-        }
-
-        public void SetEnabled(bool isEnabled)
-        {
-            this.isEnabled = isEnabled;
-            UpdateMemoryCap();
+            public static SceneLimits Lerp(SceneLimits a, SceneLimits b, float t) =>
+                new (
+                    Mathf.Lerp(a.SceneMaxAmountOfUsableMemoryInMB, b.SceneMaxAmountOfUsableMemoryInMB, t),
+                    Mathf.Lerp(a.QualityReductedLODMaxAmountOfUsableMemoryInMB, b.QualityReductedLODMaxAmountOfUsableMemoryInMB, t)
+                );
         }
     }
 }
