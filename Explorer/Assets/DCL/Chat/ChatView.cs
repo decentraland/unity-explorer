@@ -28,7 +28,7 @@ namespace DCL.Chat
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
-        public delegate void ChatSelectStateChangedDelegate(bool isSelected);
+        public delegate void FocusChangedDelegate(bool isFocused);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string s, string origin);
         public delegate void MemberListVisibilityChangedDelegate(bool isVisible);
         public delegate void PointerEventDelegate();
@@ -126,7 +126,7 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when either the input box gains the focus or loses it.
         /// </summary>
-        public event ChatSelectStateChangedDelegate ChatSelectStateChanged;
+        public event FocusChangedDelegate FocusChanged;
 
         /// <summary>
         /// Raised when either the emoji selection panel opens or closes.
@@ -185,11 +185,15 @@ namespace DCL.Chat
         private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
         private int memberListCount;
         private bool isChatContextMenuOpen;
+        private bool isChatViewerMessageContextMenuOpen;
         private CancellationTokenSource popupCts;
         private bool pointerExit;
         private ILoadingStatus loadingStatus;
         private GameObject chatInputBoxGameObject;
         private GameObject inputMaskGameObject;
+        private bool isChatFocused;
+        private bool isChatUnfolded;
+        private bool isPointerOverChat;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -268,27 +272,7 @@ namespace DCL.Chat
         /// </summary>
         public bool IsMemberListVisible => memberListView.IsVisible && IsUnfolded;
 
-        private bool isChatUnfolded;
-        private bool isChatVisible;
         [FormerlySerializedAs("isMaskActive")] public bool IsMaskActive;
-        private bool isPointerOverChat;
-        public bool IsFocused { get; private set; }
-
-        private bool isChatSelected;
-
-        public bool IsChatSelected
-        {
-            get => isChatSelected;
-            set
-            {
-                if (isChatSelected == value)
-                    return;
-
-                isChatSelected = value;
-                ChatSelectStateChanged?.Invoke(value);
-            }
-        }
-
 
         /// <summary>
         /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
@@ -307,7 +291,6 @@ namespace DCL.Chat
 
                 unfoldedPanelInteractableArea.enabled = value;
                 chatMessageViewer.IsVisible = value;
-                IsChatSelected = value;
                 SetChatVisibility(value);
                 SetBackgroundVisibility(value, false);
 
@@ -319,6 +302,7 @@ namespace DCL.Chat
                 }
                 else
                 {
+                    Blur();
                     chatMessageViewer.HideSeparator();
                     SetScrollToBottomVisibility(false);
                 }
@@ -399,16 +383,16 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if(isChatContextMenuOpen)
+            // When hovering a context menu, it considers that the mouse is not on the chat, it's a false positive
+            if(isChatContextMenuOpen || isChatViewerMessageContextMenuOpen || chatInputBox.IsPasteMenuOpen)
                 return;
 
             isPointerOverChat = false;
 
             PointerExit?.Invoke();
 
-            if (IsUnfolded && !IsChatSelected)
+            if (IsUnfolded && !isChatFocused)
                 SetChatVisibility(false);
-
         }
 
         public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
@@ -422,7 +406,7 @@ namespace DCL.Chat
             chatTitleBar.HideMemberListButtonClicked -= OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
 
-            chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClicked;
+            chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClickedAsync;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged -= OnChatMessageViewerScrollPositionChanged;
             scrollToBottomButton.onClick.RemoveListener(OnScrollToEndButtonClicked);
 
@@ -431,7 +415,7 @@ namespace DCL.Chat
 
             loadingStatus.CurrentStage.OnUpdate -= SetInputFieldInteractable;
             memberListView.VisibilityChanged -= OnMemberListViewVisibilityChanged;
-            chatInputBox.InputBoxSelectionChanged -= OnInputBoxSelectionChanged;
+            chatInputBox.InputBoxFocusChanged -= OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged -= OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged -= OnInputChanged;
             chatInputBox.InputSubmitted -= OnInputSubmitted;
@@ -470,13 +454,13 @@ namespace DCL.Chat
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
 
             chatMessageViewer.Initialize();
-            chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
+            chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClickedAsync;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
             memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
             chatInputBox.Initialize(chatSettings, getParticipantProfilesDelegate);
-            chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
+            chatInputBox.InputBoxFocusChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
@@ -509,43 +493,54 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the input box stop receiving user inputs.
+        /// Makes the chat panel gain the focus so the entire panel will be visible. If there is no mask in the input box, it will be focused.
         /// </summary>
-        public void DisableInputBoxSubmissions()
+        /// <param name="newText">Optional. It replaces the content of the input box.</param>
+        public void Focus(string? newText = null)
         {
-            IsFocused = false;
-            chatInputBox.DisableInputBoxSubmissions();
+            if (!isChatFocused)
+            {
+                isChatFocused = true;
+
+                chatInputBox.LockSelectedState = true; // This prevents the input box from flickering when clicking on the panel
+
+                if (!memberListView.IsVisible)
+                {
+                    SetChatVisibility(true);
+                    chatInputBox.EnableInputBoxSubmissions();
+
+                    if (IsMaskActive)
+                    {
+                        inputBoxMask.gameObject.SetActive(true);
+                        chatInputBox.gameObject.SetActive(false);
+                    }
+                    else
+                        chatInputBox.Focus(newText);
+                }
+
+                FocusChanged?.Invoke(true);
+            }
         }
 
-        /// <summary>
-        /// Makes the input box start receiving user inputs.
-        /// </summary>
-        public void EnableInputBoxSubmissions()
+        public void Blur()
         {
-            IsFocused = true;
-            chatInputBox.EnableInputBoxSubmissions();
-        }
+            if (isChatFocused)
+            {
+                isChatFocused = false;
 
-        /// <summary>
-        /// Marks the Chat as selected, if there is no mask in the input box, it gives it focus. It does not modify its content.
-        /// </summary>
-        public void FocusInputBox()
-        {
-            memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
+                chatInputBox.LockSelectedState = false;
 
-            if (IsMaskActive) return;
+                if(!isPointerOverChat)
+                    SetBackgroundVisibility(false, true);
 
-            chatInputBox.FocusInputBox();
-        }
+                inputBoxMask.gameObject.SetActive(false);
+                chatInputBox.gameObject.SetActive(true);
 
-        /// <summary>
-        /// Makes the input box gain the focus and replaces its content.
-        /// </summary>
-        /// <param name="text">The new content of the input box.</param>
-        public void FocusInputBoxWithText(string text)
-        {
-            if (gameObject.activeInHierarchy)
-                chatInputBox.FocusInputBoxWithText(text);
+                chatInputBox.Blur();
+                chatInputBox.DisableInputBoxSubmissions();
+
+                FocusChanged?.Invoke(false);
+            }
         }
 
         /// <summary>
@@ -574,7 +569,8 @@ namespace DCL.Chat
         {
             int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
 
-            if (pendingMessages > 0) { chatMessageViewer.ShowSeparator(pendingMessages + 1); }
+            if (pendingMessages > 0)
+                chatMessageViewer.ShowSeparator(pendingMessages + 1);
 
             chatMessageViewer.RefreshMessages();
 
@@ -679,6 +675,7 @@ namespace DCL.Chat
         }
 
 #region Conversations
+
         /// <summary>
         /// Creates a new item in the conversation toolbar.
         /// </summary>
@@ -723,111 +720,102 @@ namespace DCL.Chat
             IsMaskActive = !isOtherUserConnected;
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
-            if (isOtherUserConnected)
-                chatInputBox.FocusInputBox();
-            else
-            {
-                memberListView.IsVisible = false;
+            if (!isOtherUserConnected)
                 inputBoxMask.SetUpWithUserState(userState);
-            }
+            else if(isChatFocused)
+                chatInputBox.Focus();
         }
 
         private void SetChatVisibility(bool isVisible)
         {
-            this.isChatVisible = isVisible;
             SetBackgroundVisibility(isVisible, true);
-            chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
+
+            if(!isVisible)
+                isPointerOverChat = false;
 
             if (isVisible)
-            {
                 chatMessageViewer.StopChatEntriesFadeout();
-
-                if (!IsMaskActive) return;
-
-                chatInputBox.gameObject.SetActive(false);
-                inputBoxMask.gameObject.SetActive(true);
-            }
             else
-            {
                 chatMessageViewer.StartChatEntriesFadeout();
-
-                chatInputBox.gameObject.SetActive(true);
-                inputBoxMask.gameObject.SetActive(false);
-            }
         }
 
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
-            //When the submit key is pressed, we toggle the selection status and select the chat if it corresponds or hide it
-            if (!IsUnfolded) return;
-
-            if (IsChatSelected)
+            if (isChatFocused)
             {
-                bool inputTextSubmitted = chatInputBox.TrySubmitInputField();
-                if (inputTextSubmitted)
-                    return;
+                chatInputBox.SubmitInputField();
+                chatInputBox.Focus(); // Necessary in order not to hide the caret
             }
-
-            IsChatSelected = !IsChatSelected;
-
-            if (IsChatSelected)
+            else
             {
-                if (!isChatVisible)
-                    SetChatVisibility(true);
-                else if (memberListView.IsVisible)
+                // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
+                if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
 
-                chatInputBox.FocusInputBox();
+                Focus();
             }
-            else if (!isPointerOverChat)
-                SetChatVisibility(false);
         }
 
         private void OnClickUIInputPerformed(InputAction.CallbackContext callbackContext)
         {
-            if (!isPointerOverChat)
+            if(!IsUnfolded)
+                return;
+
+            IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
+            bool hasClickedOnPanel = false;
+            bool hasClickedOnCloseButton = false;
+            bool hasClickedOnEmojiPanel = false;
+
+            foreach (RaycastResult result in raycastResults)
             {
-                SetChatVisibility(false);
-                IsChatSelected = false;
+                if (result.gameObject == unfoldedPanelInteractableArea.gameObject)
+                    hasClickedOnPanel = true;
+                else if(result.gameObject == chatTitleBar.CurrentTitleBarCloseButton.gameObject)
+                    hasClickedOnCloseButton = true;
+                else if(result.gameObject == chatInputBox.EmojiSelectionPanel)
+                    hasClickedOnEmojiPanel = true;
             }
-            else
+
+            if (!hasClickedOnCloseButton)
             {
-                chatInputBox.Click();
-                IsChatSelected = true;
+                if (hasClickedOnPanel)
+                {
+                    if (!hasClickedOnEmojiPanel)
+                        Focus();
+
+                    chatInputBox.OnClicked(raycastResults);
+                }
+                else if(!isPointerOverChat) // This is necessary to avoid blurring while a context menu is open
+                    Blur();
             }
         }
 
         private void OnChatContextMenuVisibilityChanged(bool isVisible)
         {
             isChatContextMenuOpen = isVisible;
-
-            if (!isChatContextMenuOpen)
-                OnPointerExit(null);
         }
 
         private void OnInputBoxSelectionChanged(bool inputBoxSelected)
         {
-            //When the input box is selected, the chat must unfold and if there is no mask, the input should be selected
-            //the chat itself will be considered selected as well until a click outside the chat is registered
-            //If the chat was already unfolded, it will just select the input box if possible
-            //While the chat is in selected state, all unwanted inputs will be blocked
+            // When the input box is selected, the chat must unfold and if there is no mask, the input should be selected
+            // the chat itself will be considered focused as well until a click outside the chat is registered
+            // If the chat was already unfolded, it will just select the input box if possible
+            // While the chat is focused, all unwanted inputs will be blocked
             if (inputBoxSelected)
             {
                 if (!IsUnfolded)
                 {
                     IsUnfolded = true;
+                    Focus();
                     chatMessageViewer.ShowLastMessage();
                 }
-
-                if (IsChatSelected) return;
-
-                IsChatSelected = true;
-                SetChatVisibility(true);
             }
         }
 
-        private void OnChatMessageOptionsButtonClicked(string messageText, ChatEntryView chatEntryView)
+        private async void OnChatMessageOptionsButtonClickedAsync(string messageText, ChatEntryView chatEntryView)
         {
+            isChatViewerMessageContextMenuOpen = true;
+
             closePopupTask.TrySetResult();
             closePopupTask = new UniTaskCompletionSource();
 
@@ -838,7 +826,9 @@ namespace DCL.Chat
                 closePopupTask.Task);
 
             popupCts = popupCts.SafeRestart();
-            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token).Forget();
+            await viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
+
+            isChatViewerMessageContextMenuOpen = false;
         }
 
         private void OnCloseChatButtonClicked()
@@ -855,6 +845,15 @@ namespace DCL.Chat
 
         private void OnEmojiSelectionVisibilityChanged(bool isVisible)
         {
+            // If the user opens the emoji panel by clicking on the button while not focused...
+            if(!isChatFocused)
+                Focus();
+
+            if(!isVisible)
+                chatInputBox.Focus(); // Makes sure that the focus is back on the chat input box
+
+            chatInputBox.LockSelectedState = !isVisible; // Unlocks the selected state to allow the emoji selection panel to get the focus
+
             EmojiSelectionVisibilityChanged?.Invoke(isVisible);
         }
 
@@ -880,6 +879,7 @@ namespace DCL.Chat
         private void OnMemberListClosingButtonClicked()
         {
             memberListView.IsVisible = false;
+            chatInputBox.Focus();
         }
 
         private void OnMemberListOpeningButtonClicked()
@@ -902,6 +902,7 @@ namespace DCL.Chat
             if(memberListView.IsVisible)
                 return;
 
+            chatMessageViewer.SetScrollbarVisibility(isVisible, BackgroundFadeTime);
             messagesPanelBackgroundCanvasGroup.DOKill();
             conversationsToolbarCanvasGroup.DOKill();
             titlebarCanvasGroup.DOKill();
@@ -939,6 +940,8 @@ namespace DCL.Chat
         {
             if (memberListView.IsVisible)
                 OnMemberListClosingButtonClicked();
+
+            Blur();
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)

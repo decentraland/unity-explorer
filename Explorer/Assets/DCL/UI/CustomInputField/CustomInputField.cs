@@ -16,8 +16,8 @@ namespace DCL.UI.CustomInputField
         private bool isControlPressed;
         private readonly StringBuilder stringBuilder = new ();
 
-        public event Action? OnRightClickEvent;
-        public event Action? OnPasteShortcutPerformedEvent;
+        public event Action<PointerEventData.InputButton>? Clicked;
+        public event Action? PasteShortcutPerformed;
 
         public bool UpAndDownArrowsEnabled { get; set; }
 
@@ -28,10 +28,11 @@ namespace DCL.UI.CustomInputField
                 OnSelect(null);
                 int insertionIndex = TMP_TextUtilities.GetCursorIndexFromPosition(m_TextComponent, eventData.position, eventData.pressEventCamera);
                 caretPosition = insertionIndex;
-                OnRightClickEvent?.Invoke();
             }
             else
                 base.OnPointerClick(eventData);
+
+            Clicked?.Invoke(eventData.button);
         }
 
         public override void OnDeselect(BaseEventData eventData)
@@ -69,7 +70,7 @@ namespace DCL.UI.CustomInputField
 
             if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
             {
-                OnPasteShortcutPerformedEvent?.Invoke();
+                PasteShortcutPerformed?.Invoke();
                 return true;
             }
 
