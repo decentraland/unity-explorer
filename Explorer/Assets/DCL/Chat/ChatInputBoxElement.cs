@@ -97,6 +97,11 @@ namespace DCL.Chat
         /// </summary>
         public bool LockSelectedState { get; set; }
 
+        /// <summary>
+        /// Gets the panel that appears when selecting an emoji.
+        /// </summary>
+        public GameObject EmojiSelectionPanel => emojiPanel.gameObject;
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;

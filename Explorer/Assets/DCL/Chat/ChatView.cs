@@ -764,6 +764,7 @@ namespace DCL.Chat
             IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
             bool hasClickedOnPanel = false;
             bool hasClickedOnCloseButton = false;
+            bool hasClickedOnEmojiPanel = false;
 
             foreach (RaycastResult result in raycastResults)
             {
@@ -771,13 +772,17 @@ namespace DCL.Chat
                     hasClickedOnPanel = true;
                 else if(result.gameObject == chatTitleBar.CurrentTitleBarCloseButton.gameObject)
                     hasClickedOnCloseButton = true;
+                else if(result.gameObject == chatInputBox.EmojiSelectionPanel)
+                    hasClickedOnEmojiPanel = true;
             }
 
             if (!hasClickedOnCloseButton)
             {
                 if (hasClickedOnPanel)
                 {
-                    Focus();
+                    if (!hasClickedOnEmojiPanel)
+                        Focus();
+
                     chatInputBox.OnClicked(raycastResults);
                 }
                 else if(!isPointerOverChat) // This is necessary to avoid blurring while a context menu is open
@@ -841,8 +846,13 @@ namespace DCL.Chat
         private void OnEmojiSelectionVisibilityChanged(bool isVisible)
         {
             // If the user opens the emoji panel by clicking on the button while not focused...
-            if(isVisible && !isChatFocused)
+            if(!isChatFocused)
                 Focus();
+
+            if(!isVisible)
+                chatInputBox.Focus(); // Makes sure that the focus is back on the chat input box
+
+            chatInputBox.LockSelectedState = !isVisible; // Unlocks the selected state to allow the emoji selection panel to get the focus
 
             EmojiSelectionVisibilityChanged?.Invoke(isVisible);
         }
