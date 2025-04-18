@@ -83,6 +83,7 @@ GameObject:
   - component: {fileID: 5644055857878136702}
   - component: {fileID: 940965429792860062}
   - component: {fileID: 9199401824850561604}
+  - component: {fileID: 4285191979780013453}
   m_Layer: 0
   m_Name: cm
   m_TagString: Untagged
@@ -141,6 +142,18 @@ MonoBehaviour:
   CameraRadius: 0.2
   DampingIntoCollision: 0.5
   DampingFromCollision: 0.2
+--- !u!114 &4285191979780013453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 816969233459784630}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e8b78ac948f05a46a6d8339a503172b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1160864454286599285
 GameObject:
   m_ObjectHideFlags: 0
@@ -1001,6 +1014,7 @@ GameObject:
   - component: {fileID: 9084899954595470685}
   - component: {fileID: 8236121502406322410}
   - component: {fileID: 4884780505539911212}
+  - component: {fileID: 7601631287079010576}
   m_Layer: 0
   m_Name: cm
   m_TagString: Untagged
@@ -1059,6 +1073,18 @@ MonoBehaviour:
   CameraRadius: 0.2
   DampingIntoCollision: 0.1
   DampingFromCollision: 0.1
+--- !u!114 &7601631287079010576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5677108712089392030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e8b78ac948f05a46a6d8339a503172b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5722964383721357104
 GameObject:
   m_ObjectHideFlags: 0
