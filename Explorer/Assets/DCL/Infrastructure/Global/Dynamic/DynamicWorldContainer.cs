@@ -83,6 +83,7 @@ using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -575,6 +576,7 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -707,7 +709,8 @@ namespace Global.Dynamic
                     viewDependencies,
                     userBlockingCacheProxy,
                     sharedSpaceManager,
-                    profileChangesBus
+                    profileChangesBus,
+                    staticContainer.SceneLoadingLimit
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -902,7 +905,8 @@ namespace Global.Dynamic
                 staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment,
                 profileRepository,
-                lodContainer.RoadAssetsPool
+                lodContainer.RoadAssetsPool,
+                staticContainer.SceneLoadingLimit
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

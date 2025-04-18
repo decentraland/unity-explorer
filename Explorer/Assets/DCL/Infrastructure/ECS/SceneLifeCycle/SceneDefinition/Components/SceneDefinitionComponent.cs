@@ -27,6 +27,11 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         private readonly SceneFastLookup SceneLookup;
 
+        public float EstimatedMemoryUsageInMB;
+        public float EstimatedMemoryUsageForLODMB;
+        public float EstimatedMemoryUsageForQualityReductedLODMB;
+
+
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
@@ -43,6 +48,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
             SceneLookup = new SceneFastLookup(parcels);
+
+            EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, SceneLoadingMemoryConstants.MAX_SCENE_SIZE);
+            EstimatedMemoryUsageForLODMB = (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.LOD_REDUCTION) + (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.QUALITY_REDUCTED_LOD_REDUCTION);
+            EstimatedMemoryUsageForQualityReductedLODMB = EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.QUALITY_REDUCTED_LOD_REDUCTION;
         }
 
         //Used in hot path to avoid additional getters

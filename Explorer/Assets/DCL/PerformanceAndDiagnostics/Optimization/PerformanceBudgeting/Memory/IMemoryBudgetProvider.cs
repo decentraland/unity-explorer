@@ -3,5 +3,8 @@
     public interface IMemoryUsageProvider
     {
         MemoryUsageStatus GetMemoryUsageStatus();
+
+        long GetTotalSystemMemoryInMB();
+
     }
 }
