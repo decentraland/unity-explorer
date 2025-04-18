@@ -1,13 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
