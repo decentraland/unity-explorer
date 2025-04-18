@@ -1,3 +1,4 @@
+using DCL.Optimization.Iterations;
 using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 
@@ -16,8 +17,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         public void Update()
         {
-            foreach (IRoomDisplay roomDisplay in list)
-                roomDisplay.Update();
+            list.ForeachNonAlloc(static i => i.Update());
         }
     }
 }
