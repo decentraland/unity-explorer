@@ -32,7 +32,7 @@ namespace DCL.Character.CharacterCamera.Systems
             this.controlsSettingsAsset = controlsSettingsAsset;
 
             debugBuilder.TryAddWidget("Camera")
-                        ?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
+                       ?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
                         .AddToggleField("Enable Noise", OnNoiseChange, false)
                         .AddFloatSliderField("Noise Value", noiseSlider, 0, 20);
         }
@@ -57,13 +57,10 @@ namespace DCL.Character.CharacterCamera.Systems
         private void UpdateCameraSettings(ref ICinemachinePreset cinemachinePreset)
         {
             float maxSpeed = currentSens / 100f; // for UX reasons we left the sensitivity value to be shown as 0 to 100 so we divide back
-            float tpsVerticalMaxSpeed = maxSpeed / 100; // third person camera Y values go from 0 to 1, so we approximately divide by 100 again
 
             cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = maxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = maxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
-            cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.m_MaxSpeed = maxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
-            cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
         }
     }
 }

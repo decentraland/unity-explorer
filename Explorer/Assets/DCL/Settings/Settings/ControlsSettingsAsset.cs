@@ -13,4 +13,5 @@ namespace DCL.Settings.Settings
         [Header("3d Person Camera")]
         public CameraMovementPOVSettings CameraMovementPOVSettings;
     }
+
 }

@@ -11,6 +11,4 @@ namespace DCL.Character.CharacterCamera.Settings
         [field: SerializeField] public float MinVerticalAngle { get; private set; } = -90f;
         [field: SerializeField] public float MaxVerticalAngle { get; private set; } = 90f;
     }
-
-
 }

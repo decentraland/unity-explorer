@@ -5,12 +5,6 @@ namespace DCL.CharacterCamera
 {
     public static class CinemachineExtensions
     {
-        public static void ForceThirdPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
-        {
-            (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
-            cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(verticalAxis, horizontalAxis, 0f);
-        }
-
         public static void ForceFirstPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
             if (cinemachinePreset.FirstPersonCameraData.POV == null) return;
@@ -20,11 +14,16 @@ namespace DCL.CharacterCamera
             cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value = verticalAxis;
         }
 
+        public static void ForceThirdPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
+        {
+            (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
+            cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(verticalAxis, horizontalAxis, 0f);
+        }
+
         public static void ForceDroneCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
             (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
-            cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.Value = horizontalAxis;
-            cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.Value = verticalAxis;
+            cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(verticalAxis, horizontalAxis, 0f);
         }
 
         private static (float, float) GetHorizontalAndVerticalAxisForIntent(CameraLookAtIntent lookAtIntent)

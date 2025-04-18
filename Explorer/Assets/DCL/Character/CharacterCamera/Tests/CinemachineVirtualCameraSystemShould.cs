@@ -70,7 +70,7 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.FirstPersonCameraData.Returns(firstPersonCameraData);
             cinemachinePreset.FreeCameraData.Returns(freeCameraData);
             // cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
-            cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
+            // cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
             system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);

@@ -75,7 +75,7 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.FirstPersonCameraData.Returns(firstPersonCameraData);
             cinemachinePreset.FreeCameraData.Returns(freeCameraData);
             cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
-            cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
+            // cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
 
             // Setup Input
             dclInput = new DCLInput();
@@ -122,8 +122,8 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(cameraInput.Delta, Is.EqualTo(new Vector2(0.5f, 0.3f)));
 
             // Check the camera input was applied correctly to the drone view camera
-            Assert.That(preset.DroneViewCameraData.Camera.m_XAxis.m_InputAxisValue, Is.EqualTo(0.5f));
-            Assert.That(preset.DroneViewCameraData.Camera.m_YAxis.m_InputAxisValue, Is.EqualTo(0.3f));
+            // Assert.That(preset.DroneViewCameraData.Camera.m_XAxis.m_InputAxisValue, Is.EqualTo(0.5f));
+            // Assert.That(preset.DroneViewCameraData.Camera.m_YAxis.m_InputAxisValue, Is.EqualTo(0.3f));
         }
 
         [Test]

@@ -57,10 +57,6 @@ namespace DCL.CharacterCamera.Systems
             switch (camera.Mode)
             {
                 case CameraMode.DroneView:
-                    CinemachineFreeLook dvc = cinemachinePreset.DroneViewCameraData.Camera;
-                    dvc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
-                    dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
-                    break;
                 case CameraMode.ThirdPerson:
                 case CameraMode.SDKCamera:
                     float horizontalRotation = cameraInput.Delta.x * settings.HorizontalMouseSensitivity;
@@ -101,10 +97,8 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.Free:
                 case CameraMode.ThirdPerson:
-                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
-                    break;
                 case CameraMode.DroneView:
-                    cinemachinePreset.ForceDroneCameraLookAt(lookAtIntent);
+                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");

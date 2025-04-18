@@ -194,21 +194,14 @@ namespace DCL.Character.CharacterCamera.Systems
                     SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
                     break;
                 case CameraMode.ThirdPerson:
-
-                    float yaw = 0, pitch = 0;
-
                     if (camera.PreviousMode is CameraMode.FirstPerson or CameraMode.SDKCamera)
                     {
-                        yaw   = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
-                        pitch =  cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
-                    }
-                    else if (camera.PreviousMode == CameraMode.DroneView)
-                    {
-                        yaw = cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.Value;
-                        pitch = cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.Value;
+                        float yaw = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                        float pitch = cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value;
+
+                        cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(pitch, yaw, 0f);
                     }
 
-                    cinemachinePreset.ThirdPersonCameraData.POV.rotation = Quaternion.Euler(pitch, yaw, 0f);
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
                     break;
                 case CameraMode.DroneView:
