@@ -855,7 +855,6 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
                     userBlockingCacheProxy,
-                    profileThumbnailCache,
                     notificationsBusController,
                     onlineUsersProvider,
                     realmNavigator,
