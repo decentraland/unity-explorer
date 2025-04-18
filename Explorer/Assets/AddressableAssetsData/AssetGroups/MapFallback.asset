@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: MapFallback
   m_EditorClassIdentifier: 
   m_GroupName: MapFallback
-  m_Data:
-    m_SerializedData: []
   m_GUID: 252df334c0d72452a9d633172f0d664d
   m_SerializeEntries:
   - m_GUID: 0071e477d02b34317b64d4eb2f3a927f

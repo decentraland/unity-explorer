@@ -13,6 +13,5 @@ MonoBehaviour:
   m_Name: VelocityDiffExceedRule
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:VelocityDiffExceedRule
   color: {r: 1, g: 1, b: 1, a: 1}
-  IsEnabled: 1
   MinTimeDelta: 0.1
   VelocityChangeThreshold: 150

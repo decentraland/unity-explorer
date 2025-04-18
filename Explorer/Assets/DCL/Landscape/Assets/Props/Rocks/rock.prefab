@@ -8,74 +8,60 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.66
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.601
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: -8679921383154817045, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: 919132149155446097, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_Name
       value: rock
       objectReference: {fileID: 0}
-    - target: {fileID: 4742473837712756890, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: 4742473837712756890, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_FadeMode
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 4742473837712756890, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
+    - target: {fileID: 4742473837712756890, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
       propertyPath: m_AnimateCrossFading
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 5179826455309273444, guid: ea275b055f3bb754ab503c82dd2351b0,
-        type: 3}
-      propertyPath: m_Materials.Array.data[0]
+    - target: {fileID: 5179826455309273444, guid: ea275b055f3bb754ab503c82dd2351b0, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 0cd72a267e8634b4d9ecade4d663563e, type: 2}
     m_RemovedComponents: []
