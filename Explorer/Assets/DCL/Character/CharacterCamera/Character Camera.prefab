@@ -50,7 +50,7 @@ MonoBehaviour:
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
   m_Priority: 1
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:
@@ -322,13 +322,11 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4115714836209283951}
   thirdPersonCameraData:
     <Camera>k__BackingField: {fileID: 9117841965452288491}
-    <CameraOffset>k__BackingField: {fileID: 0}
     <OffsetBottom>k__BackingField: {x: 0.3, y: 0.3, z: -1.3}
     <OffsetMid>k__BackingField: {x: 0.6, y: 0.3, z: 4.5}
     <OffsetTop>k__BackingField: {x: 0.3, y: 0.7, z: 4.5}
   droneViewCameraData:
     <Camera>k__BackingField: {fileID: 4768914399050688592}
-    <CameraOffset>k__BackingField: {fileID: 0}
     <OffsetBottom>k__BackingField: {x: 0, y: 2, z: 0}
     <OffsetMid>k__BackingField: {x: 0, y: 1, z: 11}
     <OffsetTop>k__BackingField: {x: 0, y: 2, z: 11}
@@ -671,7 +669,7 @@ MonoBehaviour:
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_StandbyUpdate: 2
+  m_StandbyUpdate: 0
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:

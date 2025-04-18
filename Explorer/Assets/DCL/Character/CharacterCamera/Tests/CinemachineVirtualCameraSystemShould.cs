@@ -94,6 +94,8 @@ namespace DCL.CharacterCamera.Tests
             Object.DestroyImmediate(camera.gameObject);
             Object.DestroyImmediate(cameraFocus);
             Object.DestroyImmediate(cinemachineObj);
+
+            world.Dispose();
         }
 
         [Test]
