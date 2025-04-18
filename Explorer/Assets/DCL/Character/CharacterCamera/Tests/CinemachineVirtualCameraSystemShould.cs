@@ -45,25 +45,29 @@ namespace DCL.CharacterCamera.Tests
             firstPersonCamera.AddCinemachineComponent<CinemachineTransposer>();
             CinemachinePOV pov = firstPersonCamera.AddCinemachineComponent<CinemachinePOV>();
             firstPersonCameraData = Substitute.For<ICinemachineFirstPersonCameraData>();
-            firstPersonCameraData.Camera.Returns(firstPersonCamera);
             firstPersonCameraData.POV.Returns(pov);
+            firstPersonCameraData.Camera.Returns(firstPersonCamera);
 
             CinemachineVirtualCamera thirdPersonCamera = new GameObject("Third Person Camera").AddComponent<CinemachineVirtualCamera>();
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
+            var thirdPersonFollow = thirdPersonCamera.AddCinemachineComponent<Cinemachine3rdPersonFollow>();
             thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            thirdPersonCameraData.ThirdPersonFollow.Returns(thirdPersonFollow);
             thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
 
             CinemachineVirtualCamera droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineVirtualCamera>();
             droneView.transform.SetParent(cinemachineObj.transform);
+            var droneViewFollow = droneView.AddCinemachineComponent<Cinemachine3rdPersonFollow>();
             droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            droneViewData.ThirdPersonFollow.Returns(droneViewFollow);
             droneViewData.Camera.Returns(droneView);
 
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();
             freeCamera.transform.SetParent(cinemachineObj.transform);
             CinemachinePOV freeCamPov = freeCamera.AddCinemachineComponent<CinemachinePOV>();
             freeCameraData = Substitute.For<ICinemachineFreeCameraData>();
-            freeCameraData.Camera.Returns(freeCamera);
             freeCameraData.POV.Returns(freeCamPov);
+            freeCameraData.Camera.Returns(freeCamera);
 
             CinemachineBrain brain = cinemachineObj.AddComponent<CinemachineBrain>();
             cinemachinePreset = Substitute.For<ICinemachinePreset>();
@@ -126,8 +130,7 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void ChangeShouldersWhenOnThirdPersonCamera()
         {
-            world.Set(entity, new CursorComponent
-                { CursorState = CursorState.Locked });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Locked });
             world.Set(entity, new CameraInput { ChangeShoulder = true });
             world.Set(entity, new CameraComponent { Mode = CameraMode.ThirdPerson, Shoulder = ThirdPersonCameraShoulder.Right });
 
