@@ -641,6 +641,18 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 00c66f380f003b141b75b3430d50772a, type: 3}
+    - target: {fileID: 6536838295727438890, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Color.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6536838295727438890, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6536838295727438890, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Color.r
+      value: 0.9882353
+      objectReference: {fileID: 0}
     - target: {fileID: 6794543341588572917, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
       propertyPath: m_SizeDelta.x
       value: 32
@@ -792,6 +804,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChatUnreadMessages.SidebarButton
       objectReference: {fileID: 0}
+    - target: {fileID: 2572776792413058915, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_Name
+      value: NumericBadge
+      objectReference: {fileID: 0}
+    - target: {fileID: 2572776792413058915, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2901034790782870669, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_Color.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 2901034790782870669, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 2901034790782870669, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_Color.r
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 5963940505578897515, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_fontSize
+      value: 9.05
+      objectReference: {fileID: 0}
     - target: {fileID: 7334132066458495893, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -872,6 +908,46 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_Pivot.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8416480898834707091, guid: 8fe3e14c7a3a2a645ad600dc03f7980e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -892,11 +968,47 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1465399142383621682, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
       propertyPath: m_fontSize
-      value: 10.55
+      value: 9.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 1465399142383621682, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_fontSizeMin
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679078014158236800, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3076032502904695219, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
       propertyPath: m_Name
-      value: NotificationIndicator
+      value: NumericBadge
       objectReference: {fileID: 0}
     - target: {fileID: 3076032502904695219, guid: 21d891fe070fe479ebac513ad5a9ce71, type: 3}
       propertyPath: m_IsActive
@@ -1208,6 +1320,18 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 679d0d15f198c4a30b30cd2a074d4614, type: 3}
+    - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Color.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Color.r
+      value: 0.9882353
+      objectReference: {fileID: 0}
     - target: {fileID: 8350839749097872697, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -1354,6 +1478,18 @@ PrefabInstance:
       propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7110058270174963677, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Color.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 7110058270174963677, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 7110058270174963677, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Color.r
+      value: 0.9882353
+      objectReference: {fileID: 0}
     - target: {fileID: 8808912871982244420, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
       propertyPath: m_Name
       value: SkyboxWidget
@@ -1379,6 +1515,18 @@ PrefabInstance:
     - target: {fileID: 295338025792269447, guid: a04b1390c1d67044daee0000800dff26, type: 3}
       propertyPath: m_Name
       value: InWorldCamera.SIdebarButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 2424964013850637101, guid: a04b1390c1d67044daee0000800dff26, type: 3}
+      propertyPath: m_Color.b
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 2424964013850637101, guid: a04b1390c1d67044daee0000800dff26, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 2424964013850637101, guid: a04b1390c1d67044daee0000800dff26, type: 3}
+      propertyPath: m_Color.r
+      value: 0.9882353
       objectReference: {fileID: 0}
     - target: {fileID: 5557610074570603611, guid: a04b1390c1d67044daee0000800dff26, type: 3}
       propertyPath: m_AnchoredPosition.x

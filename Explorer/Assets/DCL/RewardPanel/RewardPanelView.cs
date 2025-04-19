@@ -1,20 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI;
-using DG.Tweening;
 using MVC;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.RewardPanel
 {
     public class RewardPanelView : ViewBase, IView
     {
-        private const float FADE_ANIMATION_DURATION = 0.4f;
-        private const float SCALE_ANIMATION_DURATION = 0.5f;
-
         [field: SerializeField]
         public Button ContinueButton { get; private set; }
 
@@ -22,13 +17,7 @@ namespace DCL.RewardPanel
         public CanvasGroup PanelCanvasGroup { get; private set; }
 
         [field: SerializeField]
-        public GameObject RaysGameObject { get; private set; }
-
-        [field: SerializeField]
         public Image RaysImage { get; private set; }
-
-        [field: SerializeField]
-        public GameObject PanelContent { get; private set; }
 
         [field: SerializeField]
         public ImageView ThumbnailImage { get; private set; }
@@ -45,25 +34,18 @@ namespace DCL.RewardPanel
         [field: SerializeField]
         public TMP_Text ItemName { get; private set; }
 
-        private readonly Vector3 finalRotation = new (0,0,360);
-        private CancellationTokenSource cts;
+        [field: SerializeField]
+        public RewardBackgroundRaysAnimation RewardBackgroundRaysAnimation { get; private set; }
 
         protected override async UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
-            cts = new CancellationTokenSource();
             SetCanvasGroupInteractable(true);
-            RaysGameObject.transform.rotation = Quaternion.identity;
-            PanelContent.transform.localScale = Vector3.zero;
-            await PanelCanvasGroup.DOFade(1, FADE_ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
-            await PanelContent.transform.DOScale(Vector3.one, SCALE_ANIMATION_DURATION).SetEase(Ease.OutBounce).ToUniTask(cancellationToken: ct);
-            RaysGameObject.transform.DORotate(finalRotation, 2f, RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).ToUniTask(cancellationToken: cts.Token);
+            await RewardBackgroundRaysAnimation.ShowAnimationAsync(ct);
         }
 
         protected override async UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
-            cts.SafeCancelAndDispose();
-            PanelContent.transform.DOScale(Vector3.zero, SCALE_ANIMATION_DURATION / 2);
-            await PanelCanvasGroup.DOFade(0, FADE_ANIMATION_DURATION / 2).ToUniTask(cancellationToken: ct);
+            await RewardBackgroundRaysAnimation.HideAnimationAsync(ct);
             SetCanvasGroupInteractable(false);
         }
 

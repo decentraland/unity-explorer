@@ -10,6 +10,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ArchipelagoHotScenes,
 
         DiscordLink,
+        TwitterLink,
+        NewsletterSubscriptionLink,
+        MarketplaceLink,
 
         PrivacyPolicy,
         TermsOfUse,
@@ -69,6 +72,10 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         WorldContentServer,
 
         Servers,
+
         MediaConverter,
+
+        MarketplaceCredits,
+        EmailSubscriptions,
     }
 }

@@ -8,8 +8,14 @@ namespace DCL.Notifications.Serialization
 {
     public class NotificationJsonDtoConverter : JsonConverter<List<INotification>>
     {
+        private const string EVENT_STARTED_TYPE = "events_started";
+        private const string EVENT_ENDED_TYPE = "events_ended";
+        private const string REWARD_ASSIGNED_TYPE = "reward_assignment";
+        private const string REWARD_IN_PROGRESS_TYPE = "reward_in_progress";
+        private const string BADGE_GRANTED_TYPE = "badge_granted";
         private const string FRIENDSHIP_RECEIVED_TYPE = "social_service_friendship_request";
         private const string FRIENDSHIP_ACCEPTED_TYPE = "social_service_friendship_accepted";
+        private const string MARKETPLACE_CREDITS_TYPE = "credits_goal_completed";
 
         private readonly List<string> excludedTypes = new ();
 
@@ -54,13 +60,14 @@ namespace DCL.Notifications.Serialization
 
                 INotification notificationObject = type switch
                 {
-                    "events_started" => new EventStartedNotification(),
-                    "events_ended" => new EventEndedNotification(),
-                    "reward_assignment" => new RewardAssignedNotification(),
-                    "reward_in_progress" => new RewardInProgressNotification(),
-                    "badge_granted" => new BadgeGrantedNotification(),
+                    EVENT_STARTED_TYPE => new EventStartedNotification(),
+                    EVENT_ENDED_TYPE => new EventEndedNotification(),
+                    REWARD_ASSIGNED_TYPE => new RewardAssignedNotification(),
+                    REWARD_IN_PROGRESS_TYPE => new RewardInProgressNotification(),
+                    BADGE_GRANTED_TYPE => new BadgeGrantedNotification(),
                     FRIENDSHIP_RECEIVED_TYPE => new FriendRequestReceivedNotification(),
                     FRIENDSHIP_ACCEPTED_TYPE => new FriendRequestAcceptedNotification(),
+                    MARKETPLACE_CREDITS_TYPE => new MarketplaceCreditsNotification(),
                     _ => null
                 };
 
