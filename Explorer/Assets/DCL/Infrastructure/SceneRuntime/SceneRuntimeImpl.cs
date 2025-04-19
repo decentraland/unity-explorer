@@ -9,10 +9,8 @@ using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
-using Utility;
 
 namespace SceneRuntime
 {
@@ -20,6 +18,10 @@ namespace SceneRuntime
     public sealed class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         internal readonly V8ScriptEngine engine;
+        private readonly ScriptObject arrayCtor;
+        private readonly ScriptObject unit8ArrayCtor;
+        private readonly List<ITypedArray<byte>> uint8Arrays;
+        private int nextUint8Array;
         private readonly JsApiBunch jsApiBunch;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
@@ -59,6 +61,11 @@ namespace SceneRuntime
 
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
+
+            arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
+            unit8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
+            uint8Arrays = new ();
+            nextUint8Array = 0;
         }
 
         public void ExecuteSceneJson()
@@ -130,6 +137,7 @@ namespace SceneRuntime
 
         public UniTask UpdateScene(float dt)
         {
+            nextUint8Array = 0;
             RuntimeHeapInfo = engine.GetRuntimeHeapInfo();
             resetableSource.Reset();
             updateFunc.InvokeAsFunction(dt);
@@ -144,36 +152,19 @@ namespace SceneRuntime
             Assert.IsTrue(result.IsEmpty);
         }
 
-        public ITypedArray<byte> CreateUint8Array(int length) =>
-            (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()").EnsureNotNull();
+        ScriptObject IJsOperations.NewArray() =>
+            (ScriptObject)arrayCtor.Invoke(true);
 
-        public ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory)
+        ITypedArray<byte> IJsOperations.NewUint8Array(int length) =>
+            (ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length);
+
+        ITypedArray<byte> IJsOperations.GetTempUint8Array()
         {
-            var jsArray = CreateUint8Array(memory.Length);
-            if (!memory.IsEmpty)
-                jsArray.Write(memory, (ulong)memory.Length, 0);
-            return jsArray;
-        }
+            if (nextUint8Array >= uint8Arrays.Count)
+                uint8Arrays.Add((ITypedArray<byte>)unit8ArrayCtor.Invoke(true,
+                    IJsOperations.LIVEKIT_MAX_SIZE));
 
-        public ScriptObject ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
-        {
-            var js2DArray = (ScriptObject) engine.Evaluate("[]"); // create an outer array
-
-            // for every inner array create ITypedArray<byte>
-            foreach (var innerArray in byteArrays)
-            {
-                var memory = innerArray.Memory;
-
-                var innerJsArray = CreateUint8Array(memory.Length);
-
-                // Call into JS to write the data via a pointer
-                innerJsArray.Write(memory, (ulong)memory.Length, 0);
-
-                // Push the new element to js2DArray
-                js2DArray.InvokeMethod("push", innerJsArray);
-            }
-
-            return js2DArray;
+            return uint8Arrays[nextUint8Array++];
         }
     }
 }
