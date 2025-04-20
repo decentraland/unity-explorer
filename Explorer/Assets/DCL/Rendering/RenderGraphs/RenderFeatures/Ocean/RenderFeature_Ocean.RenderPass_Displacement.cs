@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
@@ -64,10 +65,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         private float orthoSize;
         private Settings settings;
 
-        #if UNITY_2023_1_OR_NEWER
         private RendererListParams rendererListParams;
         private RendererList rendererList;
-        #endif
 
         public void Setup(Settings settings)
         {
@@ -78,57 +77,9 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             orthoSize = 0.5f * settings.range;
         }
 
-        //Important to snap the projection to the nearest texel. Otherwise pixel swimming is introduced when moving, due to bilinear filtering
-        private static Vector3 StabilizeProjection(Vector3 pos, float texelSize)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            float Snap(float coord, float cellSize) => Mathf.FloorToInt(coord / cellSize) * (cellSize) + (cellSize * 0.5f);
-
-            return new Vector3(Snap(pos.x, texelSize), Snap(pos.y, texelSize), Snap(pos.z, texelSize));
-        }
-
-        private void SetupProjection(CommandBuffer cmd, Camera camera)
-        {
-            centerPosition = camera.transform.position;
-            centerPosition += camera.transform.forward * settings.range * 0.5f;
-
-            centerPosition = StabilizeProjection(centerPosition, (settings.range) / resolution);
-
-            //var frustumHeight = 2.0f * renderRange * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad); //Still clips, plus doesn't support orthographc
-            var frustumHeight = settings.range;
-            centerPosition += (Vector3.up * frustumHeight * 0.5f);
-
-            projection = Matrix4x4.Ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.03f, frustumHeight * 2f);
-
-            view = Matrix4x4.TRS(centerPosition, viewRotation, viewScale).inverse;
-
-            cmd.SetViewProjectionMatrices(view, projection);
-            //RenderingUtils.SetViewAndProjectionMatrices(cmd, view, projection, true);
-
-            viewportRect.width = resolution;
-            viewportRect.height = resolution;
-            cmd.SetViewport(viewportRect);
-
-            cmd.SetGlobalMatrix("UNITY_MATRIX_V", view);
-
-            //Position/scale of projection. Converted to a UV in the shader
-            rendererCoords.x = centerPosition.x - orthoSize;
-            rendererCoords.y = centerPosition.z - orthoSize;
-            rendererCoords.z = settings.range;
-            rendererCoords.w = 1f; //Enable in shader
-
-            cmd.SetGlobalVector(_WaterDisplacementCoords, rendererCoords);
-        }
-
-        #if UNITY_6000_0_OR_NEWER //Silence warning spam
-        public override void RecordRenderGraph(UnityEngine.Rendering.RenderGraphModule.RenderGraph renderGraph, ContextContainer frameData) { }
-        #endif
-
-        #if UNITY_6000_0_OR_NEWER
-        #pragma warning disable CS0672
-        #pragma warning disable CS0618
-        #endif
-        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
-        {
+            // Configure start
             if (resolution != m_resolution || renderTarget == null)
             {
                 RTHandles.Release(renderTarget);
@@ -148,10 +99,9 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
             ConfigureTarget(renderTarget);
             ConfigureClear(ClearFlag.Color, targetClearColor);
-        }
+            // configure end
 
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-        {
+            //Execute Start
             CommandBuffer cmd = CommandBufferPool.Get();
 
             DrawingSettings drawingSettings = CreateDrawingSettings(m_ShaderTagIdList, ref renderingData, SortingCriteria.RenderQueue | SortingCriteria.SortingLayer | SortingCriteria.CommonTransparent);
@@ -161,30 +111,55 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             {
                 ref CameraData cameraData = ref renderingData.cameraData;
 
-                SetupProjection(cmd, cameraData.camera);
+                // SetupProjection Start
+                centerPosition = camera.transform.position;
+                centerPosition += camera.transform.forward * settings.range * 0.5f;
+
+                float texelSize = (settings.range) / resolution;
+                //Important to snap the projection to the nearest texel. Otherwise pixel swimming is introduced when moving, due to bilinear filtering
+                float Snap(float coord, float cellSize) => Mathf.FloorToInt(coord / cellSize) * (cellSize) + (cellSize * 0.5f);
+                centerPosition.x = Snap(centerPosition.x, texelSize);
+                centerPosition.y = Snap(centerPosition.y, texelSize);
+                centerPosition.z = Snap(centerPosition.z, texelSize);
+
+                //var frustumHeight = 2.0f * renderRange * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad); //Still clips, plus doesn't support orthographc
+                var frustumHeight = settings.range;
+                centerPosition += (Vector3.up * frustumHeight * 0.5f);
+
+                projection = Matrix4x4.Ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.03f, frustumHeight * 2f);
+
+                view = Matrix4x4.TRS(centerPosition, viewRotation, viewScale).inverse;
+
+                cmd.SetViewProjectionMatrices(view, projection);
+                //RenderingUtils.SetViewAndProjectionMatrices(cmd, view, projection, true);
+
+                viewportRect.width = resolution;
+                viewportRect.height = resolution;
+                cmd.SetViewport(viewportRect);
+
+                cmd.SetGlobalMatrix("UNITY_MATRIX_V", view);
+
+                //Position/scale of projection. Converted to a UV in the shader
+                rendererCoords.x = centerPosition.x - orthoSize;
+                rendererCoords.y = centerPosition.z - orthoSize;
+                rendererCoords.z = settings.range;
+                rendererCoords.w = 1f; //Enable in shader
+
+                cmd.SetGlobalVector(_WaterDisplacementCoords, rendererCoords);
+                // SetupProjection End
 
                 //Execute current commands first
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
-                #if UNITY_2023_1_OR_NEWER
                 rendererListParams.cullingResults = renderingData.cullResults;
                 rendererListParams.drawSettings = drawingSettings;
                 rendererListParams.filteringSettings = m_FilteringSettings;
                 rendererList = context.CreateRendererList(ref rendererListParams);
 
                 cmd.DrawRendererList(rendererList);
-                #else
-                context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref m_FilteringSettings, ref m_RenderStateBlock);
-                #endif
-
-                //Restore
-                //Disabled, because this pass renders before the camera is initialized anyway
-                //cmd.SetViewProjectionMatrices(cameraData.camera.worldToCameraMatrix, cameraData.camera.projectionMatrix);
             }
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
+            // Execute End
         }
 
         public void Dispose()

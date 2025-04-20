@@ -2,6 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.Universal.Internal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 {
@@ -31,21 +32,11 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             m_directionalCaustics = settings.directionalCaustics;
         }
 
-        #if UNITY_2020_2_OR_NEWER
         private ScriptableRenderPassInput requirements;
-        #endif
 
-        #if UNITY_6000_0_OR_NEWER //Silence warning spam
-        public override void RecordRenderGraph(UnityEngine.Rendering.RenderGraphModule.RenderGraph renderGraph, ContextContainer frameData) { }
-        #endif
-
-        #if UNITY_6000_0_OR_NEWER
-        #pragma warning disable CS0672
-        #pragma warning disable CS0618
-        #endif
-        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            #if UNITY_2020_2_OR_NEWER
+            // Configure Start
             //Inform the render pipeline which pre-passes are required
             requirements = ScriptableRenderPassInput.None;
 
@@ -64,8 +55,9 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             cmd.SetGlobalInt(_WaterDisplacementPrePassAvailable, settings.displacementPrePassSettings.enable ? 1 : 0);
 
             ConfigureInput(requirements);
-            #endif
+            // Configure End
         }
+        
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
@@ -85,10 +77,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
                         cmd.SetGlobalMatrix(CausticsProjection, causticsProjection.inverse);
                     }
 
-                    #if UNITY_2021_2_OR_NEWER
                     //Sets up the required View- -> Clip-space matrices
                     NormalReconstruction.SetupProperties(cmd, renderingData.cameraData);
-                    #endif
                 }
                 else
                 {
