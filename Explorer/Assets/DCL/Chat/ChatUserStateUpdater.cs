@@ -19,7 +19,7 @@ namespace DCL.Chat
     public class ChatUserStateUpdater : IDisposable
     {
         private const string PRIVACY_SETTING_ALL = "all";
-
+        private static readonly TimeSpan TIMEOUT_TIME_SPAN = new TimeSpan(0, 0, 5);
         private readonly IChatUsersStateCache chatUsersStateCache;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IParticipantsHub participantsHub;
@@ -213,14 +213,12 @@ namespace DCL.Chat
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {update.ToString()}");
-            return;
-            string userId = participant.Identity;
+            var userId = participant.Identity;
 
             switch (update)
             {
                 case UpdateFromParticipant.Connected:
                     //If the user is not blocked, we add it as a connected user, then check if its a friend, otherwise, we add it as a blocked user
-
                     if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(userId))
                     {
                         chatUsersStateCache.AddConnectedUser(userId);
@@ -250,27 +248,26 @@ namespace DCL.Chat
                     ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed - Passed all checks!!! {participant.Metadata}");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
-                    //var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
-                    //ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Read metadata from user {message}");
-                    //CheckUserMetadataAsync(userId, message).Forget();
+
+                    CheckUserMetadataAsync(userId, participant.Metadata).Forget();
                     break;
                 case UpdateFromParticipant.Disconnected:
                     chatUsersStateCache.RemoveConnectedUser(userId);
                     chatUsersStateCache.RemovedConnectedBlockedUser(userId);
 
-                    if (!openConversations.Contains(participant.Identity)) return;
+                    if (!openConversations.Contains(userId)) return;
 
-                    chatUserStateEventBus.OnUserConnectionStateChanged(participant.Identity, false);
+                    chatUserStateEventBus.OnUserConnectionStateChanged(userId, false);
 
-                    if (CurrentConversation != participant.Identity) return;
+                    if (CurrentConversation != userId) return;
 
-                    if (userBlockingCacheProxy.StrictObject.BlockedUsers.Contains(participant.Identity))
+                    if (userBlockingCacheProxy.StrictObject.BlockedUsers.Contains(userId))
                     {
-                        chatUserStateEventBus.OnUserBlocked(participant.Identity);
+                        chatUserStateEventBus.OnUserBlocked(userId);
                         return;
                     }
 
-                    chatUserStateEventBus.OnUserDisconnected(participant.Identity);
+                    chatUserStateEventBus.OnUserDisconnected(userId);
                     break;
             }
         }
@@ -284,8 +281,10 @@ namespace DCL.Chat
                 chatUserStateEventBus.OnNonFriendConnected(userId);
         }
 
-        private async UniTaskVoid CheckUserMetadataAsync(string userId, ParticipantPrivacyMetadata message)
+        private async UniTaskVoid CheckUserMetadataAsync(string userId, string metadata)
         {
+            var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(metadata);
+
             //If they accept all conversations, we dont need to check if they are friends or not
             if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
             {
@@ -293,7 +292,7 @@ namespace DCL.Chat
                 return;
             }
 
-            var status = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).TimeoutWithoutException(new TimeSpan(0,0,5));
+            var status = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).TimeoutWithoutException(TIMEOUT_TIME_SPAN);
             if (!status.IsTimeout && status.Result == FriendshipStatus.FRIEND) return;
 
             chatUserStateEventBus.OnCurrentConversationUserUnavailable();

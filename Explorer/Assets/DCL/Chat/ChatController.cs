@@ -281,6 +281,8 @@ namespace DCL.Chat
 
             ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "InitializeChannelsAndConversations");
             var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+
+            await UniTask.SwitchToMainThread();
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
