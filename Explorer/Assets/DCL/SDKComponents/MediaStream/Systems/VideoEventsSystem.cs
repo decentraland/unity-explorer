@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (mediaPlayer.State != newState)
                 {
-                    mediaPlayer.PreviousCurrentTimeChecked = mediaPlayer.MediaPlayer.Control.GetCurrentTime();
+                    mediaPlayer.PreviousCurrentTimeChecked = mediaPlayer.CurrentTime;
                     mediaPlayer.SetState(newState);
                 }
             }
@@ -80,23 +80,23 @@ namespace DCL.SDKComponents.MediaStream
 
         private static VideoState GetCurrentVideoState(in MediaPlayerComponent mediaPlayer)
         {
-            if (string.IsNullOrEmpty(mediaPlayer.URL)) return VideoState.VsNone;
+            if (mediaPlayer.MediaAddress.IsEmpty) return VideoState.VsNone;
 
             // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
-            var mediaPlayerControl = mediaPlayer.MediaPlayer.Control;
+            var player = mediaPlayer.MediaPlayer;
 
-            if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
-            if (mediaPlayerControl.GetLastError() != ErrorCode.None) return VideoState.VsError;
-            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
+            if (player.IsFinished) return VideoState.VsNone;
+            if (player.GetLastError() != ErrorCode.None) return VideoState.VsError;
+            if (player.IsPaused) return VideoState.VsPaused;
 
             VideoState state = VideoState.VsNone;
-            if (mediaPlayerControl.IsPlaying())
+            if (player.IsPlaying)
             {
                 state = VideoState.VsPlaying;
 
-                if (mediaPlayerControl.GetCurrentTime().Equals(mediaPlayer.PreviousCurrentTimeChecked)) // Video is frozen
+                if (player.CurrentTime.Equals(mediaPlayer.PreviousCurrentTimeChecked)) // Video is frozen
                 {
-                    state = mediaPlayerControl.IsSeeking() ? VideoState.VsSeeking : VideoState.VsBuffering;
+                    state = player.IsSeeking ? VideoState.VsSeeking : VideoState.VsBuffering;
 
                     // If the seeking/buffering never ends, update state with error so the scene can react
                     if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR

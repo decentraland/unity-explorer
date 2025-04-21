@@ -35,8 +35,18 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 $"Realm: {RealmName}, Parcel: {Parcel}";
         }
 
+        [Serializable]
+        public struct Realm
+        {
+            public string serverName;
+        }
+
+        // Just keep both realmName and realm for backward compatibility until it's migrated on the prod version
         public string realmName;
+        public Realm realm;
+
         public string? sceneId;
+
 
         [NonSerialized]
         public readonly Vector2Int Parcel;
@@ -44,6 +54,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public MetaData(string? sceneId, Input input)
         {
             realmName = input.RealmName;
+            realm = new Realm { serverName = input.RealmName };
             Parcel = input.Parcel;
             this.sceneId = sceneId;
         }
