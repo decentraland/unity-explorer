@@ -8,12 +8,9 @@ namespace DCL.WebRequests
 {
     public class GetAssetBundleWebRequest : TypedWebRequestBase<GetAssetBundleArguments>
     {
-        internal GetAssetBundleWebRequest(RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller, bool partialDownloadEnabled) : base(envelope, args, controller)
+        internal GetAssetBundleWebRequest(RequestEnvelope envelope, GetAssetBundleArguments args, IWebRequestController controller) : base(envelope, args, controller)
         {
-            Http2Supported = partialDownloadEnabled;
         }
-
-        public override bool Http2Supported { get; }
 
         public override UnityWebRequest CreateUnityWebRequest()
         {

@@ -9,15 +9,17 @@ namespace DCL.WebRequests
     {
         internal bool isDisposed;
 
+        protected RequestEnvelope envelope;
+
         protected internal TypedWebRequestBase(RequestEnvelope envelope, TArgs args, IWebRequestController controller)
         {
-            Envelope = envelope;
+            this.envelope = envelope;
             Controller = controller;
             Args = args;
         }
 
         public IWebRequestController Controller { get; }
-        public RequestEnvelope Envelope { get; }
+        public ref readonly RequestEnvelope Envelope => ref envelope;
         public TArgs Args { get; }
 
         public virtual bool Http2Supported => true;
@@ -29,6 +31,8 @@ namespace DCL.WebRequests
 
         public virtual HTTPRequest CreateHttp2Request() =>
             throw new NotSupportedException($"{nameof(CreateHttp2Request)} is not supported by {GetType().Name}");
+
+        protected CommonArguments commonArguments => Envelope.CommonArguments;
 
         public void Dispose()
         {

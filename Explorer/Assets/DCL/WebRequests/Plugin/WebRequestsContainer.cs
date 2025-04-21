@@ -57,7 +57,7 @@ namespace DCL.WebRequests
 
         public WebRequestsMode WebRequestsMode { get; private set; }
 
-        public bool EnablePartialDownloading => settings.Http2Settings.EnablePartialDownloading;
+        public bool EnablePartialDownloading => WebRequestsMode == WebRequestsMode.HTTP2 && settings.Http2Settings.EnablePartialDownloading;
 
         public IWebRequestController WebRequestController { get; private set; } = null!;
 
@@ -139,14 +139,14 @@ namespace DCL.WebRequests
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
-            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, ktxEnabled);
-            container.requestHub = requestHub;
-
             int partialChunkSize = container.settings.Http2Settings.PartialChunkSizeMB * 1024 * 1024;
+
+            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, ktxEnabled);
+            container.requestHub = requestHub;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
                                                                  new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
-                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, httpCache, partialChunkSize),
+                                                                 new Http2WebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
                                                                  requestHub)
                                                             .WithLog()
                                                             .WithArtificialDelay(options);

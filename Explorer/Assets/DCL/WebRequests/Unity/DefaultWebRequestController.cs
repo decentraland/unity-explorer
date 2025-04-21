@@ -105,9 +105,6 @@ namespace DCL.WebRequests
             throw new Exception($"{nameof(DefaultWebRequestController)}: Unexpected code path!");
         }
 
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
-            throw new NotSupportedException($"{nameof(GetPartialAsync)}");
-
         private async UniTask ExecuteWithAnalyticsAsync(ITypedWebRequest request, DefaultWebRequest adapter, CancellationToken ct)
         {
             UnityWebRequest uwr = adapter.unityWebRequest;

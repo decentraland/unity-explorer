@@ -20,6 +20,7 @@ namespace DCL.WebRequests
                 new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY),
                 HTTPManager.LocalCache,
                 false,
+                0L,
                 false
             )
         );
@@ -39,17 +40,5 @@ namespace DCL.WebRequests
         /// </summary>
         /// <param name="detachDownloadHandler">Detached Download Handler will outlive the response, and thus must be disposed by the caller</param>
         UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct);
-
-        /// <summary>
-        ///     Receives a chunk of the response. if <see cref="PartialDownloadArguments.Stream" /> is provided it will be used to continue the partial request
-        /// </summary>
-        /// <param name="commonArguments"></param>
-        /// <param name="reportData"></param>
-        /// <param name="partialArgs">If provided will continue retrieving chunks from where it stopped before</param>
-        /// <param name="ct"></param>
-        /// <param name="headersInfo">"Content-Range" header will be supplied automatically based on <see cref="partialArgs" /></param>
-        /// <returns>The partial stream will be returned only if the request is fully successful. If any error occurs during the process the stream will be disposed of. But if it is returned it's the responsibility of the consumer to dispose of it properly</returns>
-        /// <exception cref="System.Exception">Will be thrown if the partial stream could not finalize</exception>
-        UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null);
     }
 }

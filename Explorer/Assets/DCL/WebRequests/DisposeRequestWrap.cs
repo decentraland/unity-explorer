@@ -29,8 +29,5 @@ namespace DCL.WebRequests
                 throw;
             }
         }
-
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
-            origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct);
     }
 }

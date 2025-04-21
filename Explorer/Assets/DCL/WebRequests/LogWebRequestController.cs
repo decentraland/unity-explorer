@@ -34,21 +34,5 @@ namespace DCL.WebRequests
                 throw; // don't re-throw it as a new exception as we loose the original type in that case
             }
         }
-
-        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
-        {
-            try
-            {
-                ReportHub.Log(reportData, $"WebRequestController {nameof(GetPartialAsync)} start: {commonArguments}");
-                PartialDownloadStream? result = await origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
-                ReportHub.Log(reportData, $"WebRequestController {nameof(GetPartialAsync)} finish: {commonArguments}");
-                return result;
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ReportHub.Log(reportData, $"WebRequestController {nameof(GetPartialAsync)} error: {e}");
-                throw; // don't re-throw it as a new exception as we loose the original type in that case
-            }
-        }
     }
 }

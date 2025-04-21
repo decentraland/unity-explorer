@@ -39,7 +39,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
 
         private HTTPCache cache;
-        private Http2WebRequestController webRequestController;
+        private IWebRequestController webRequestController;
 
         private Http2PartialDownloadDataStream? stream;
 
@@ -53,10 +53,10 @@ namespace DCL.WebRequests.HTTP2.Tests
         {
             cache = TestWebRequestController.InitializeCache();
 
-            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, true, false);
+            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, true, chunkSize, false);
 
-            webRequestController = new Http2WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
-                Substitute.For<IWeb3IdentityCache>(), requestsHub, cache, chunkSize);
+            webRequestController = new DisposeRequestWrap(new Http2WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
+                Substitute.For<IWeb3IdentityCache>(), requestsHub));
         }
 
         [TearDown]
@@ -87,7 +87,10 @@ namespace DCL.WebRequests.HTTP2.Tests
             cache.Delete(PARTIAL_TEST_URL_HASH, null);
 
             // Perform one iteration
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                               .GetStreamAsync(CancellationToken.None);
+
+            ;
 
             iterationsCount--;
 
@@ -116,7 +119,8 @@ namespace DCL.WebRequests.HTTP2.Tests
             // Perform remaining iterations to finish its downloading
 
             for (var i = 0; i < iterationsCount; i++)
-                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                                   .GetStreamAsync(CancellationToken.None);
 
             Assert.That(stream, Is.Not.Null);
             Assert.That(stream.IsFullyDownloaded, Is.EqualTo(finalize));
@@ -149,7 +153,10 @@ namespace DCL.WebRequests.HTTP2.Tests
             stream = null;
 
             // At this point the data should be fully cached
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                               .GetStreamAsync(CancellationToken.None);
+
+            ;
             Assert.That(stream, Is.Not.Null);
             Assert.That(stream.IsFullyDownloaded, Is.True);
             Assert.That(stream.underlyingStream, Is.Not.Null);
@@ -171,7 +178,10 @@ namespace DCL.WebRequests.HTTP2.Tests
             var iterationsCount = (int)Math.Ceiling(fileSize / (double)chunkSize);
 
             for (var i = 0; i < iterationsCount; i++)
-                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                                   .GetStreamAsync(CancellationToken.None);
+
+            ;
 
             await UniTask.SwitchToMainThread();
 
@@ -214,7 +224,10 @@ namespace DCL.WebRequests.HTTP2.Tests
             ulong fileSize = await GetContentSizeAsync(PARTIAL_NOT_SUPPORTED_URL.OriginalString);
 
             // The data must be complete for one iteration
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_NOT_SUPPORTED_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_NOT_SUPPORTED_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                               .GetStreamAsync(CancellationToken.None);
+
+            ;
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
 
@@ -239,7 +252,10 @@ namespace DCL.WebRequests.HTTP2.Tests
         [Test]
         public async Task ConstructUnknownDataInMemoryAsync()
         {
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(NO_SIZE_HEADERS_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(NO_SIZE_HEADERS_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                               .GetStreamAsync(CancellationToken.None);
+
+            ;
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
             Assert.That(stream.GetCachedPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.CachedPartialData)));
@@ -258,7 +274,10 @@ namespace DCL.WebRequests.HTTP2.Tests
         public async Task ConstructDataFromFileStream()
         {
             // It should be constructed for one iteration
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(LOCAL_ASSET_PATH, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream), CancellationToken.None);
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(LOCAL_ASSET_PATH, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                                                                               .GetStreamAsync(CancellationToken.None);
+
+            ;
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
             Assert.That(stream.GetCachedPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.CachedPartialData)));

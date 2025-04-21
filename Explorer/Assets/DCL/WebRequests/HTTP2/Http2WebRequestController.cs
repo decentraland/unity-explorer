@@ -1,5 +1,4 @@
 ﻿using Best.HTTP;
-using Best.HTTP.Caching;
 using Best.HTTP.Request.Settings;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
@@ -17,62 +16,20 @@ namespace DCL.WebRequests.HTTP2
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IRequestHub requestHub;
-        private readonly HTTPCache cache;
-        private readonly long chunkSize;
 
         private readonly OnDownloadStartedDelegate detachDownloadStream;
 
         IRequestHub IWebRequestController.requestHub => requestHub;
 
-        public Http2WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache identityCache, IRequestHub requestHub, HTTPCache cache, long chunkSize)
+        public Http2WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache identityCache, IRequestHub requestHub)
         {
             this.identityCache = identityCache;
             this.analyticsContainer = analyticsContainer;
             this.requestHub = requestHub;
-            this.cache = cache;
-            this.chunkSize = chunkSize;
 
             // We can't await for DownloadStream straight-away as there is a chance that the request will be finished and disposed before we actually hit the valid stream
             // so it will be disposed and stay `null`
             detachDownloadStream = (_, _, stream) => stream.IsDetached = true;
-        }
-
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
-        {
-            // If the result is fully cached in the stream that was passed, return it immediately
-            var partialStream = partialArgs.Stream as Http2PartialDownloadDataStream;
-
-            var uri = new Uri(commonArguments.URL);
-
-            if (partialStream is { IsFullyDownloaded: true })
-            {
-                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"{nameof(PartialDownloadStream)} {commonArguments.URL} is already fully downloaded");
-                return UniTask.FromResult<PartialDownloadStream>(partialStream);
-            }
-
-            if (uri.IsFile)
-            {
-                try { return UniTask.FromResult<PartialDownloadStream>(Http2PartialDownloadDataStream.InitializeFromFile(uri)); }
-                catch (Exception ex) { throw new WebRequestException(uri, ex); }
-            }
-
-            // if the result is already fully cached return it immediately without creating a web request
-            if (partialStream == null
-                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, uri, HTTPCache.CalculateHash(HTTPMethods.Get, uri), chunkSize, out partialStream)
-                && partialStream!.IsFullyDownloaded)
-                return UniTask.FromResult<PartialDownloadStream>(partialStream);
-
-
-            // Create headers accordingly, at this point don't create a partial stream as we don't know if the endpoint actually supports "Range" requests
-            long chunkStart = partialStream?.partialContentLength ?? 0;
-            long chunkEnd = partialStream == null ? chunkSize : Math.Min(partialStream.fullFileSize - 1, chunkStart + chunkSize);
-
-            headersInfo = (headersInfo ?? new WebRequestHeadersInfo()).WithRange(chunkStart, chunkEnd);
-
-            // Recreate arguments as the partial stream could be initialized from cache
-            return
-                this.Create<PartialDownloadRequest, PartialDownloadArguments>(new PartialDownloadArguments(partialStream), commonArguments, reportData, headersInfo)
-                    .PartialFlowAsync(ct);
         }
 
         public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)

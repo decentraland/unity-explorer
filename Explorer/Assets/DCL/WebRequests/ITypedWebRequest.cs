@@ -18,7 +18,7 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Parameters associated with a request
         /// </summary>
-        RequestEnvelope Envelope { get; }
+        ref readonly RequestEnvelope Envelope { get; }
 
         /// <summary>
         ///     If Http2 is enabled then the request will be sent via <see cref="HTTPRequest" />

@@ -43,13 +43,13 @@ namespace ECS.TestSuite
         {
             cache ??= InitializeCache();
 
-            var hub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, mode == WebRequestsMode.HTTP2, false);
+            var hub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, mode == WebRequestsMode.HTTP2, chunkSize, false);
             IWebRequestsAnalyticsContainer? analyticsContainer = Substitute.For<IWebRequestsAnalyticsContainer>();
             IWeb3IdentityCache? identityCache = Substitute.For<IWeb3IdentityCache>();
 
             return new RedirectWebRequestController(mode,
                 new DefaultWebRequestController(analyticsContainer, identityCache, hub),
-                new Http2WebRequestController(analyticsContainer, identityCache, hub, cache, chunkSize),
+                new Http2WebRequestController(analyticsContainer, identityCache, hub),
                 hub);
         }
     }

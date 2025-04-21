@@ -26,9 +26,6 @@ namespace DCL.WebRequests
             return await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
         }
 
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
-            origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
-
         private async Task DelayAsync(CancellationToken ct)
         {
             (float delaySeconds, bool useDelay) = await options.GetOptionsAsync();

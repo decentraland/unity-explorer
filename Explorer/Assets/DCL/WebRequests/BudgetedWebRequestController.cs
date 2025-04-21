@@ -43,8 +43,5 @@ namespace DCL.WebRequests
                 totalBudgetAcquired.Dispose();
             }
         }
-
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
-            origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
     }
 }

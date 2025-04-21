@@ -423,10 +423,6 @@ namespace DCL.WebRequests.HTTP2
                     if (processedLength > fullFileSize)
                     {
                         ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{uri} ({cachedPartialData.requestHash}) Processed length {processedLength} is greater than the full file size {fullFileSize}");
-
-                        // delete cache entry if the size has overflown the expectancy
-                        DiscardAndDispose();
-
                         return false;
                     }
 
@@ -502,7 +498,7 @@ namespace DCL.WebRequests.HTTP2
         /// </summary>
         internal void DiscardAndDispose()
         {
-            // If the cache is complete don't discard the data
+            // If the cache is complete, don't discard the data
             switch (opMode)
             {
                 case Mode.INCOMPLETE_DATA_CACHED:

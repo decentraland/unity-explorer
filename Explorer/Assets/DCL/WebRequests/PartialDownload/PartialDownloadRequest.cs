@@ -6,6 +6,7 @@ using Best.HTTP.Shared.PlatformSupport.Memory;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.HTTP2;
+using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,27 +22,39 @@ namespace DCL.WebRequests
     /// </summary>
     public class PartialDownloadRequest : TypedWebRequestBase<PartialDownloadArguments>
     {
+        private readonly bool partialDownloadingIsEnabled;
+
         private readonly HTTPCache cache;
+        private readonly long chunkSize;
 
         private volatile HTTPRequest? request;
         private volatile Dictionary<string, List<string>>? storedHeaders;
         private volatile Http2PartialDownloadDataStream? partialStream;
-        private CancellationTokenSource partialFlowCts;
+
+        private CancellationTokenSource? partialFlowCts;
 
         public override bool Http2Supported => true;
         public override bool StreamingSupported => true;
 
-        internal PartialDownloadRequest(HTTPCache cache, RequestEnvelope envelope, PartialDownloadArguments args, IWebRequestController controller) : base(envelope, args, controller)
+        internal PartialDownloadRequest(HTTPCache cache,
+            RequestEnvelope envelope,
+            PartialDownloadArguments args,
+            IWebRequestController controller,
+            long chunkSize,
+            bool partialDownloadingIsEnabled)
+            : base(envelope, args, controller)
         {
             this.cache = cache;
+            this.partialDownloadingIsEnabled = partialDownloadingIsEnabled;
+            this.chunkSize = chunkSize;
             partialStream = args.Stream as Http2PartialDownloadDataStream;
         }
 
         public override HTTPRequest CreateHttp2Request()
         {
-            request = new HTTPRequest(Envelope.CommonArguments.URL, HTTPMethods.Get);
+            request = new HTTPRequest(commonArguments.URL, HTTPMethods.Get);
 
-            // Default Cache should be disabled as Http2PartialDownloadDataStream both partial and non-partial requests
+            // Default Cache should be disabled as Http2PartialDownloadDataStream caches both partial and non-partial requests
             request.DownloadSettings.DisableCache = true;
 
             // Warning: events are delayed, a data copy is passed to events (such as headers, may allocate heavily)
@@ -51,9 +64,57 @@ namespace DCL.WebRequests
             return request;
         }
 
-        public async UniTask<PartialDownloadStream> PartialFlowAsync(CancellationToken ct)
+        public async UniTask<PartialDownloadStream> GetStreamAsync(CancellationToken ct)
         {
-            // await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
+            if (!partialDownloadingIsEnabled)
+                throw new NotSupportedException("Partial Downloading is disabled");
+
+            // If the result is fully cached in the stream that was passed, return it immediately
+
+            var uri = new Uri(commonArguments.URL);
+
+            if (partialStream is { IsFullyDownloaded: true })
+            {
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"{nameof(PartialDownloadStream)} {commonArguments.URL} is already fully downloaded");
+                return DisposeAndReturn();
+            }
+
+            // BestHTTP does not use the file stream directly, instead it allocates chunks via SegmentBuffer as with a regular request
+            // We fix it here
+            if (uri.IsFile)
+            {
+                try
+                {
+                    partialStream = Http2PartialDownloadDataStream.InitializeFromFile(uri);
+                    return DisposeAndReturn();
+                }
+                catch (Exception ex)
+                {
+                    Dispose();
+                    throw new WebRequestException(uri, ex);
+                }
+            }
+
+            // if the result is already fully cached return it immediately without creating a web request
+            if (partialStream == null
+                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, uri, HTTPCache.CalculateHash(HTTPMethods.Get, uri), chunkSize, out partialStream)
+                && partialStream!.IsFullyDownloaded)
+                return DisposeAndReturn();
+
+            PartialDownloadStream DisposeAndReturn()
+            {
+                Http2PartialDownloadDataStream? stream = partialStream;
+                Dispose();
+                return stream!;
+            }
+
+            // Otherwise a new request is needed
+            // Create headers accordingly, at this point don't create a partial stream as we don't know if the endpoint actually supports "Range" requests
+            long chunkStart = partialStream?.partialContentLength ?? 0;
+            long chunkEnd = partialStream == null ? chunkSize - 1 : Math.Min(partialStream.fullFileSize - 1, chunkStart + chunkSize - 1);
+
+            envelope = new RequestEnvelope(envelope.CommonArguments, envelope.ReportData,
+                envelope.HeadersInfo.WithRange(chunkStart, chunkEnd), envelope.SignInfo, envelope.SuppressErrors, envelope.OnCreated);
 
             IWebRequest? createdRequest = null;
 
@@ -196,7 +257,7 @@ namespace DCL.WebRequests
         }
 
         private Exception CreateException(string message) =>
-            new ($"Exception occured in {nameof(PartialFlowAsync)} {Envelope.CommonArguments.URL}: {message}");
+            new ($"Exception occured in {nameof(GetStreamAsync)} {Envelope.CommonArguments.URL}: {message}");
 
         protected override void OnDispose()
         {
