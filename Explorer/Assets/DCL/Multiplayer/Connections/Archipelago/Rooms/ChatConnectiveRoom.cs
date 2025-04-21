@@ -18,7 +18,6 @@ using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
 
@@ -28,11 +27,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        private readonly string logPrefix;
-
+        private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
+        private readonly InteriorRoom room = new ();
+        private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
+        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
+        private readonly IRoom roomInstance;
 
+        private CancellationTokenSource? cts;
+
+        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
         public bool Activated { get; private set; }
 
 
@@ -40,7 +46,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-            this.logPrefix = GetType().Name;
 
             roomInstance = new LogRoom(
                 new Room(
@@ -100,37 +105,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             Activated = false;
             await this.StopIfNotAsync();
         }
-
-
-        private readonly InteriorRoom room = new ();
-
-        private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
-
-        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
-
-        private IRoom roomInstance;
-
-        private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
-            () => new LogRoom(
-                new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    new ParticipantsHub(),
-                    new TracksFactory(),
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo()
-                )
-            )
-        );
-
-        private CancellationTokenSource? cts;
-
-        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
         public void Dispose()
         {
@@ -192,7 +166,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
+                    ReportHub.LogError(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - {funcName} failed: {e}");
                     connectionLoopHealth.Set(stateOnException);
                     await RecoveryDelayAsync(ct);
                 }
