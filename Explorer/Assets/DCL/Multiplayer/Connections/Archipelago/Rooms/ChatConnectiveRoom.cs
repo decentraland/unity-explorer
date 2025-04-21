@@ -38,9 +38,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private CancellationTokenSource? cts;
 
-        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
         public bool Activated { get; private set; }
-
+        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
+        public IConnectiveRoom.State CurrentState() => roomState.Value();
+        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
+        public IRoom Room() => room;
 
         public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
         {
@@ -60,29 +62,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     new MemoryRoomInfo()
                 )
             );
-                    }
-
-        protected async UniTask CycleStepAsync(CancellationToken ct)
-        {
-            if (CurrentState() is not IConnectiveRoom.State.Running)
-            {
-                await room.DisconnectAsync(ct);
-
-                string connectionString = await ConnectionStringAsync(ct);
-
-                await TryConnectToRoomAsync(connectionString, ct);
-            }
         }
-
-        private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
-        {
-            string metadata = FixedMetadata.Default.ToJson();
-            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
-            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-            string connectionString = response.adapter;
-            return connectionString;
-        }
-
 
         public async UniTask ActivateAsync()
         {
@@ -136,42 +116,57 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             roomState.Set(IConnectiveRoom.State.Stopped);
         }
 
-        public IConnectiveRoom.State CurrentState() => roomState.Value();
-
-        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-
-        public IRoom Room() => room;
-
-        private async UniTaskVoid RunAsync(CancellationToken token)
+        private async UniTaskVoid RunAsync(CancellationToken ct)
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            while (token.IsCancellationRequested == false)
+            while (ct.IsCancellationRequested == false)
             {
-                await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
-                await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
+                await ExecuteWithRecoveryAsync(ct);
+                await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: ct);
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
         }
 
-        private async UniTask ExecuteWithRecoveryAsync(Func<CancellationToken, UniTask> func, string funcName, IConnectiveRoom.ConnectionLoopHealth enterState, IConnectiveRoom.ConnectionLoopHealth stateOnException, CancellationToken ct)
+        private async UniTask ExecuteWithRecoveryAsync(CancellationToken ct)
         {
             do
             {
                 try
                 {
-                    connectionLoopHealth.Set(enterState);
-                    await func(ct);
+                    connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Running);
+                    await CycleStepAsync(ct);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    ReportHub.LogError(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - {funcName} failed: {e}");
-                    connectionLoopHealth.Set(stateOnException);
+                    ReportHub.LogError(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync failed: {e}");
+                    connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.CycleFailed);
                     await RecoveryDelayAsync(ct);
                 }
             }
-            while (!ct.IsCancellationRequested && connectionLoopHealth.Value() == stateOnException);
+            while (!ct.IsCancellationRequested && connectionLoopHealth.Value() == IConnectiveRoom.ConnectionLoopHealth.CycleFailed);
+        }
+
+        private async UniTask CycleStepAsync(CancellationToken ct)
+        {
+            if (CurrentState() is not IConnectiveRoom.State.Running)
+            {
+                await room.DisconnectAsync(ct);
+
+                string connectionString = await ConnectionStringAsync(ct);
+
+                await TryConnectToRoomAsync(connectionString, ct);
+            }
+        }
+
+        private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
+        {
+            string metadata = FixedMetadata.Default.ToJson();
+            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
+            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            string connectionString = response.adapter;
+            return connectionString;
         }
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
