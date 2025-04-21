@@ -93,7 +93,7 @@ namespace DCL.MarketplaceCredits.Sections
             registerInTheProgramCts.SafeCancelAndDispose();
         }
 
-        private async UniTaskVoid LoadProgramRegistrationInfoAsync(CancellationToken ct)
+        private async UniTask LoadProgramRegistrationInfoAsync(CancellationToken ct)
         {
             try
             {
@@ -162,9 +162,12 @@ namespace DCL.MarketplaceCredits.Sections
                 subView.SetAsLoading(true);
 
                 if (currentCreditsProgramProgress.IsUserEmailVerified())
+                {
                     await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
-
-                RedirectToSection(ignoreHasUserStartedProgramFlag: true);
+                    await LoadProgramRegistrationInfoAsync(ct);
+                }
+                else
+                    RedirectToSection(ignoreHasUserStartedProgramFlag: true);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
