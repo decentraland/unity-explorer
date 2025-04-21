@@ -198,20 +198,14 @@ namespace DCL.Character.CharacterCamera.Systems
             ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
-        private static bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
-        {
-            switch (mode)
+        private static bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset) =>
+            mode switch
             {
-                case CameraMode.FirstPerson:
-                    return cinemachinePreset.FirstPersonCameraData.Camera.enabled;
-                case CameraMode.ThirdPerson:
-                    return cinemachinePreset.ThirdPersonCameraData.Camera.enabled;
-                case CameraMode.DroneView:
-                    return cinemachinePreset.DroneViewCameraData.Camera.enabled;
-                default:
-                    return cinemachinePreset.FreeCameraData.Camera.enabled;
-            }
-        }
+                CameraMode.FirstPerson => cinemachinePreset.FirstPersonCameraData.Camera.enabled,
+                CameraMode.ThirdPerson => cinemachinePreset.ThirdPersonCameraData.Camera.enabled,
+                CameraMode.DroneView => cinemachinePreset.DroneViewCameraData.Camera.enabled,
+                _ => cinemachinePreset.FreeCameraData.Camera.enabled
+            };
 
         private void ProcessCameraActivation(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
