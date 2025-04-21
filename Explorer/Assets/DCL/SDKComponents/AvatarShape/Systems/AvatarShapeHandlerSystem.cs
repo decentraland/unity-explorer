@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
@@ -15,6 +16,7 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using UnityEngine;
 using Utility.Arch;
 
 namespace ECS.Unity.AvatarShape.Systems
@@ -25,10 +27,12 @@ namespace ECS.Unity.AvatarShape.Systems
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly World globalWorld;
+        private readonly IComponentPool<Transform> globalTransformPool;
 
-        public AvatarShapeHandlerSystem(World world, World globalWorld) : base(world)
+        public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.globalTransformPool = globalTransformPool;
         }
 
         protected override void Update(float t)
@@ -44,10 +48,13 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
+            Transform globalTransform = globalTransformPool.Get();
+            globalTransform.SetParent(transformComponent.Transform);
+
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
-                new CharacterTransform(transformComponent.Transform),
-                new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
+                new CharacterTransform(globalTransform),
+                new CharacterInterpolationMovementComponent(globalTransform.position, globalTransform.position, globalTransform.rotation),
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
@@ -95,8 +102,8 @@ namespace ECS.Unity.AvatarShape.Systems
 
         public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
-            // Has to be removed, otherwise scene loading may break after teleportation (no error anywhere to know why)
-            globalWorld.Remove<CharacterTransform>(globalEntity);
+            // Need to remove parenting, since it may unintenionally deleted
+            globalWorld.Get<CharacterTransform>(globalEntity).Transform.SetParent(null);
 
             // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
             // AvatarCleanUpSystem.Update() and BEFORE the DestroyEntitiesSystem.Update(), probably has to do with
