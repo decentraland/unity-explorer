@@ -528,6 +528,9 @@ namespace DCL.Chat
             {
                 isChatFocused = false;
 
+                if(IsMemberListVisible)
+                    memberListView.IsVisible = false;
+
                 chatInputBox.LockSelectedState = false;
 
                 if(!isPointerOverChat)
@@ -785,7 +788,7 @@ namespace DCL.Chat
 
                     chatInputBox.OnClicked(raycastResults);
                 }
-                else if(!isPointerOverChat) // This is necessary to avoid blurring while a context menu is open
+                else if(!isPointerOverChat && !memberListView.IsContextMenuOpen) // This is necessary to avoid blurring while a context menu is open
                     Blur();
             }
         }
