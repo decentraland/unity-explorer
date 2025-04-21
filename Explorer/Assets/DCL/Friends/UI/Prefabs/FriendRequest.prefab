@@ -1640,7 +1640,7 @@ MonoBehaviour:
     Label: {fileID: 2642183271746782513}
     CloseButton: {fileID: 4887403452139572906}
     Sound: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
-    BackgroundRaysAnimation: {fileID: 0}
+    BackgroundRaysAnimation: {fileID: 6347581084895801781}
   cancelledConfirmed:
     Root: {fileID: 4560243566217140962}
     FriendThumbnail: {fileID: 1877014158035778951}
@@ -1648,7 +1648,7 @@ MonoBehaviour:
     Label: {fileID: 3328468437679582622}
     CloseButton: {fileID: 5280602835078342149}
     Sound: {fileID: 0}
-    BackgroundRaysAnimation: {fileID: 0}
+    BackgroundRaysAnimation: {fileID: 5948358571220277530}
   rejectedConfirmed:
     Root: {fileID: 2210905845640013490}
     FriendThumbnail: {fileID: 4317813039678013911}
@@ -1656,7 +1656,7 @@ MonoBehaviour:
     Label: {fileID: 980193407927135678}
     CloseButton: {fileID: 7543514220455058005}
     Sound: {fileID: 0}
-    BackgroundRaysAnimation: {fileID: 0}
+    BackgroundRaysAnimation: {fileID: 8316841061274821962}
   acceptedConfirmed:
     Root: {fileID: 3722759897053034441}
     FriendThumbnail: {fileID: 1309075489597829711}
@@ -1664,7 +1664,7 @@ MonoBehaviour:
     Label: {fileID: 599858875346239582}
     CloseButton: {fileID: 2179332876104412039}
     Sound: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
-    BackgroundRaysAnimation: {fileID: 0}
+    BackgroundRaysAnimation: {fileID: 2403367388087638467}
 --- !u!1 &1561383299674130822
 GameObject:
   m_ObjectHideFlags: 0
@@ -3286,6 +3286,7 @@ GameObject:
   m_Component:
   - component: {fileID: 752549806017610836}
   - component: {fileID: 5448896002237279374}
+  - component: {fileID: 2403367388087638467}
   m_Layer: 0
   m_Name: RequestAcceptedConfirmed
   m_TagString: Untagged
@@ -3330,6 +3331,21 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &2403367388087638467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3722759897053034441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 6387828872186050859}
+  <PanelContent>k__BackingField: {fileID: 3722759897053034441}
+  <PanelCanvasGroup>k__BackingField: {fileID: 5448896002237279374}
 --- !u!1 &4032394723876392234
 GameObject:
   m_ObjectHideFlags: 0
@@ -8208,7 +8224,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 696660563074615443, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
       propertyPath: m_Color.a
-      value: 0
+      value: 0.101960786
       objectReference: {fileID: 0}
     - target: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
       propertyPath: m_Name
@@ -8350,6 +8366,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &8316841061274821962 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9147094892529715447, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+  m_PrefabInstance: {fileID: 980193407927135677}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2210905845640013490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1898658730470971013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8475,17 +8502,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2649382999120572425}
     m_Modifications:
-    - target: {fileID: 696660563074615443, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
-      propertyPath: m_Color.a
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
       propertyPath: m_Name
       value: RequestSentConfirmed
-      objectReference: {fileID: 0}
-    - target: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4507916386824873467, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
       propertyPath: m_Pivot.x
@@ -8615,6 +8634,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6347581084895801781 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9147094892529715447, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+  m_PrefabInstance: {fileID: 2802964148142864706}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3878389397651845709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3205950290725048813
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8629,7 +8659,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 696660563074615443, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
       propertyPath: m_Color.a
-      value: 0
+      value: 0.101960786
       objectReference: {fileID: 0}
     - target: {fileID: 1383994391753394959, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
       propertyPath: m_Name
@@ -8769,6 +8799,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5948358571220277530 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9147094892529715447, guid: fc4c53173ca824a35ade856e4000dfe3, type: 3}
+  m_PrefabInstance: {fileID: 3205950290725048813}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4560243566217140962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &3220490385925299294
