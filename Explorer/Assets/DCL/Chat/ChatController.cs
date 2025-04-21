@@ -59,10 +59,10 @@ namespace DCL.Chat
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
+        private readonly IRoomHub roomHub;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
-        private readonly IRoomHub roomHub;
         private CancellationTokenSource chatUsersUpdateCts = new();
 
         private SingleInstanceEntity cameraEntity;
@@ -70,7 +70,6 @@ namespace DCL.Chat
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
-        // We use this to avoid doing null checks after the viewInstance was created
         private bool viewInstanceCreated;
 
         string IChatController.IslandRoomSid => islandRoom.Info.Sid;
@@ -164,13 +163,12 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => viewInstanceCreated && viewInstance!.IsUnfolded;
+            get => viewInstanceCreated && viewInstance.IsUnfolded;
 
             set
             {
-                if (!viewInstanceCreated) return;
-
-                viewInstance!.IsUnfolded = value;
+                if (TryGetView(out var view))
+                    view.IsUnfolded = value;
 
                 // When opened from outside, it should show the unread messages
                 if (value)
@@ -240,8 +238,6 @@ namespace DCL.Chat
 
         protected override void OnViewShow()
         {
-
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow");
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -273,8 +269,9 @@ namespace DCL.Chat
             if (chatStorage != null)
                 await chatStorage.LoadAllChannelsWithoutMessagesAsync();
 
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "InitializeChannelsAndConversations");
             var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+
+            await UniTask.SwitchToMainThread();
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
@@ -282,7 +279,6 @@ namespace DCL.Chat
         {
             Blur();
             UnsubscribeFromEvents();
-            memberListHelper.StopUpdating();
             Dispose();
         }
 
@@ -320,7 +316,7 @@ namespace DCL.Chat
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        private void OnSelectConversation(ChatChannel.ChannelId channelId)
+        public void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             chatUserStateUpdater.CurrentConversation = channelId.Id;
             viewInstance!.CurrentChannelId = channelId;

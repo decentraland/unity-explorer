@@ -38,21 +38,25 @@ namespace DCL.Chat
 
         public void OnFriendConnected(string userId)
         {
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"On Friend Connected {userId}");
             FriendConnected?.Invoke(userId);
         }
 
         public void OnUserDisconnected(string userId)
         {
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"On User Disconnected {userId}");
             UserDisconnected?.Invoke(userId);
         }
 
         public void OnNonFriendConnected(string userId)
         {
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"On Non Friend Connected {userId}");
             NonFriendConnected?.Invoke(userId);
         }
 
         public void OnUserBlocked(string userId)
         {
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"On User Blocked {userId}");
             UserBlocked?.Invoke(userId);
         }
 
@@ -68,7 +72,7 @@ namespace DCL.Chat
 
         public void OnUserConnectionStateChanged(string userId, bool isConnected)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"On User Connection State Changed {isConnected}");
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"On User Connection State Changed {isConnected}");
             UserConnectionStateChanged?.Invoke(userId, isConnected);
         }
     }

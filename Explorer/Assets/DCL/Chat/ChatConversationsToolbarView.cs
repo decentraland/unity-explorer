@@ -147,7 +147,8 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(ChatChannel.ChannelId destinationChannel, OnlineStatus connectionStatus)
         {
-            items[destinationChannel].SetConnectionStatus(connectionStatus);
+            if (items[destinationChannel] != null)
+                items[destinationChannel].SetConnectionStatus(connectionStatus);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
@@ -194,11 +195,6 @@ namespace DCL.Chat
         public void OnPointerExit(PointerEventData eventData)
         {
             HideScrollButtons(false);
-        }
-
-        public void UpdateConnectionStatusIcon(ChatChannel.ChannelId channelId, OnlineStatus connectionStatus)
-        {
-            items[channelId].SetConnectionStatus(connectionStatus);
         }
 
         private void Start()
