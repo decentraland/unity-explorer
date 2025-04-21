@@ -152,10 +152,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
             {
-                await room.DisconnectAsync(ct);
-
                 string connectionString = await ConnectionStringAsync(ct);
-
                 await TryConnectToRoomAsync(connectionString, ct);
             }
         }
@@ -165,8 +162,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             string metadata = FixedMetadata.Default.ToJson();
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-            string connectionString = response.adapter;
-            return connectionString;
+            return response.adapter;
         }
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
