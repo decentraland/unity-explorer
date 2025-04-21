@@ -38,6 +38,8 @@
 
         public const string IDENTITY_EXPIRATION_DURATION = "identity-expiration-duration";
 
+        public const string PROXY_ADDRESS = "proxy";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
