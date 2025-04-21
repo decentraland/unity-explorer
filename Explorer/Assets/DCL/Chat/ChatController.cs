@@ -29,6 +29,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
+using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat
@@ -71,6 +72,7 @@ namespace DCL.Chat
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
         // We use this to avoid doing null checks after the viewInstance was created
         private bool viewInstanceCreated;
+        private CancellationTokenSource chatUsersUpdateCts = new();
 
         string IChatController.IslandRoomSid => islandRoom.Info.Sid;
         string IChatController.PreviousRoomSid { get; set; } = string.Empty;
@@ -241,6 +243,7 @@ namespace DCL.Chat
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
             memberListHelper.StopUpdating();
+            chatUsersUpdateCts.SafeCancelAndDispose();
         }
 
 #region View Show and Close
@@ -329,14 +332,54 @@ namespace DCL.Chat
 #endregion
 
 #region Conversation Events
+
         private void OnOpenConversation(string userId)
         {
-            conversationEventsHelper.OnOpenConversation(userId);
+            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
+            chatUserStateUpdater.CurrentConversation = userId;
+            chatUserStateUpdater.AddConversation(userId);
+            if (TryGetView(out var view))
+            {
+                view.CurrentChannelId = channel.Id;
+            }
+
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        private void OnSelectConversation(ChatChannel.ChannelId channelId)
+        public void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
-            conversationEventsHelper.OnSelectConversation(channelId);
+            chatUserStateUpdater.CurrentConversation = channelId.Id;
+            if (TryGetView(out var view))
+            {
+                view.CurrentChannelId = channelId;
+
+                if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+                {
+                    view.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                    return;
+                }
+            }
+
+            chatUserStateUpdater.AddConversation(channelId.Id);
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
+        }
+
+        private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
+        {
+            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
+            if (TryGetView(out var view))
+            {
+                view.SetInputWithUserState(userState);
+
+                if (!updateToolbar) return;
+
+                bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                             || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+
+                view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+            }
         }
 #endregion
 
