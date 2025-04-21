@@ -227,7 +227,8 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
-            notificationView.NotificationImageBackground.sprite = iconBackground.backgroundSprite;
+            if (iconBackground.backgroundSprite != null)
+                notificationView.NotificationImageBackground.sprite = iconBackground.backgroundSprite;
             notificationView.NotificationImageBackground.color = iconBackground.backgroundColor;
 
             ProcessCustomMetadata(notificationData, notificationView);

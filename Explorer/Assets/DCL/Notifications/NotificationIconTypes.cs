@@ -10,7 +10,6 @@ namespace DCL.Notifications
         [SerializeField] private SerializableKeyValuePair<NotificationType, Sprite>[] notificationIcons;
         [SerializeField] private Sprite defaultIcon;
         [SerializeField] private SerializableKeyValuePair<NotificationType, Sprite>[] notificationIconBackgrounds;
-        [SerializeField] private Sprite defaultIconBackground;
         [SerializeField] private Color defaultIconBackgroundColor;
 
         public Sprite GetNotificationIcon(NotificationType notificationType)
@@ -32,7 +31,7 @@ namespace DCL.Notifications
                     return (background.value, Color.white);
             }
 
-            return (defaultIconBackground, defaultIconBackgroundColor);
+            return (null, defaultIconBackgroundColor);
         }
     }
 }
