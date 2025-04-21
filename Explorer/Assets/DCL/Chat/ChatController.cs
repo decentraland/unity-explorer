@@ -59,18 +59,16 @@ namespace DCL.Chat
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
-        private readonly ChatControllerConversationEventsHelper conversationEventsHelper;
+        private readonly IRoomHub roomHub;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
-        private readonly IRoomHub roomHub;
 
         private SingleInstanceEntity cameraEntity;
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
-        // We use this to avoid doing null checks after the viewInstance was created
         private bool viewInstanceCreated;
         private CancellationTokenSource chatUsersUpdateCts = new();
 
@@ -151,11 +149,6 @@ namespace DCL.Chat
                 membersBuffer,
                 participantProfileBuffer,
                 this);
-
-            conversationEventsHelper = new ChatControllerConversationEventsHelper(
-                chatHistory,
-                chatUserStateUpdater,
-                this);
         }
 
 #region Panel Visibility
@@ -169,13 +162,12 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => viewInstanceCreated && viewInstance!.IsUnfolded;
+            get => viewInstanceCreated && viewInstance.IsUnfolded;
 
             set
             {
-                if (!viewInstanceCreated) return;
-
-                viewInstance!.IsUnfolded = value;
+                if (TryGetView(out var view))
+                    view.IsUnfolded = value;
             }
         }
 

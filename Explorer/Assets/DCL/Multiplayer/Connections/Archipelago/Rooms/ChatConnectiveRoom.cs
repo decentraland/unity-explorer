@@ -26,6 +26,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
     public class ChatConnectiveRoom : IActivatableConnectiveRoom
     {
+
+        private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
+        internal readonly string logPrefix;
+
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
 
@@ -57,84 +62,46 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Current state is not Running: {CurrentState()}");
-
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Starting disconnect");
                 await room.DisconnectAsync(ct);
 
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Getting connection string");
                 string connectionString = await ConnectionStringAsync(ct);
 
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Attempting connection with string: {connectionString}");
                 await TryConnectToRoomAsync(connectionString, ct);
-
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Connection attempt completed");
             }
         }
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Starting to fetch connection string");
-
             string metadata = FixedMetadata.Default.ToJson();
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.adapter;
-
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Received connection string: {connectionString}");
-
             return connectionString;
         }
 
 
         public async UniTask ActivateAsync()
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Starting activation. Current state: {Activated}");
-
             if (Activated)
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Already activated");
                 return;
             }
 
             Activated = true;
             await this.StartIfNotAsync();
-
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Activation completed");
         }
 
         public async UniTask DeactivateAsync()
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Starting deactivation. Current state: {Activated}");
-
             if (!Activated)
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Already deactivated");
                 return;
             }
 
             Activated = false;
             await this.StopIfNotAsync();
-
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Deactivation completed");
         }
 
-        private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
-        private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        internal readonly string logPrefix;
 
         private readonly InteriorRoom room = new ();
 
@@ -196,13 +163,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             cancellationTokenSource = null;
         }
 
-        public IConnectiveRoom.State CurrentState() =>
-            roomState.Value();
+        public IConnectiveRoom.State CurrentState() => roomState.Value();
 
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
 
-        public IRoom Room() =>
-            room;
+        public IRoom Room() => room;
 
         private async UniTaskVoid RunAsync(CancellationToken token)
         {
@@ -239,12 +204,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
             UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
 
-
-        protected async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
+        private async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Starting connection attempt with string: {connectionString}");
-
             var credentials = new ConnectionStringCredentials(connectionString);
 
             bool connectResult = await ConnectToRoomAsync(credentials, token);
@@ -252,20 +213,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
             attemptToConnectState.Set(connectionState);
 
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Connection state set to: {connectionState}");
-
             if (connectResult == false)
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Failed to connect - URL: {credentials.Url}");
                 return connectResult;
             }
 
             roomState.Set(IConnectiveRoom.State.Running);
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                $"[ChatConnectiveRoom] Room state set to Running");
-
             return connectResult;
         }
 
@@ -276,18 +229,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             try
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Starting connection attempt - URL: {credentials.Url}");
-
                 connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Connection attempt result: {connectResult}");
             }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ChatConnectiveRoom] Connection failed with exception: {e.Message}");
                 throw;
             }
 
