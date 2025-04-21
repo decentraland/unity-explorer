@@ -10,6 +10,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public bool HasMinimumSpecs()
         {
+            if (!SystemInfo.supportsComputeShaders)
+                return false;
+
             if (SystemInfo.systemMemorySize < MINIMUM_RAM)
                 return false;
 
