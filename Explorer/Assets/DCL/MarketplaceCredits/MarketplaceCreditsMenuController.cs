@@ -288,6 +288,7 @@ namespace DCL.MarketplaceCredits
         {
             try
             {
+                await UniTask.WaitUntil(() => sidebarButton.gameObject.activeInHierarchy, cancellationToken: ct);
                 await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile == null)
