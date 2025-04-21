@@ -37,7 +37,8 @@ namespace DCL.PluginSystem.World
             {
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
-            });
+            },
+            maxSize: 5_000);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
