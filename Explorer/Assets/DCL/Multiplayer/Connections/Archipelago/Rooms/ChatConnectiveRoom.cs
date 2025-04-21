@@ -128,14 +128,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             )
         );
 
-        private CancellationTokenSource? cancellationTokenSource;
+        private CancellationTokenSource? cts;
 
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
         public void Dispose()
         {
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = null;
+            cts.SafeCancelAndDispose();
+            cts = null;
         }
 
         public async UniTask<bool> StartAsync()
@@ -143,9 +143,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
+            cts = cts.SafeRestart();
             attemptToConnectState.Set(AttemptToConnectState.None);
             roomState.Set(IConnectiveRoom.State.Starting);
-            RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
+            RunAsync(cts.Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
             return attemptToConnectState.Value() is not AttemptToConnectState.Error;
         }
@@ -155,11 +156,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
 
+            cts = cts.SafeRestart();
             roomState.Set(IConnectiveRoom.State.Stopping);
-            await room.ResetRoom(roomPool, CancellationToken.None);
+            await room.ResetRoomAsync(cts.Token);
             roomState.Set(IConnectiveRoom.State.Stopped);
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = null;
         }
 
         public IConnectiveRoom.State CurrentState() => roomState.Value();
