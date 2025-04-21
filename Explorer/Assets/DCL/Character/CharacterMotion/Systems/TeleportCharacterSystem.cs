@@ -55,7 +55,8 @@ namespace DCL.CharacterMotion.Systems
                 {
                     case UniTaskStatus.Pending:
                         // Teleport the character to a far away place while the teleport is executed
-                        controller.transform.position = MordorConstants.PLAYER_MORDOR_POSITION;
+                        controller.transform.position = teleportIntent.Position;
+                        rigidTransform.IsGrounded = false; // teleportation is always above
                         return;
                     case UniTaskStatus.Succeeded:
                         ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
