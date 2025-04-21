@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
+using DCL.Character.CharacterCamera.Settings;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
@@ -25,6 +26,7 @@ namespace DCL.Character.CharacterCamera.Systems
     {
         private SingleInstanceEntity inputMap;
         private readonly Transform cameraFocus;
+        private readonly CameraMovementPOVSettings povSettings;
         private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
 
         private Transform cameraFocusParent;
@@ -32,9 +34,10 @@ namespace DCL.Character.CharacterCamera.Systems
 
         private int hotkeySwitchStateDirection = 1;
 
-        internal ControlCinemachineVirtualCameraSystem(World world, Transform cameraFocus, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
+        internal ControlCinemachineVirtualCameraSystem(World world, Transform cameraFocus, CameraMovementPOVSettings povSettings,ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
         {
             this.cameraFocus = cameraFocus;
+            this.povSettings = povSettings;
             this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
         }
 
@@ -140,13 +143,19 @@ namespace DCL.Character.CharacterCamera.Systems
 
             float currentPitch = cameraFocus.rotation.eulerAngles.x;
             currentPitch = ((currentPitch + 180) % 360) - 180;
-            currentPitch = Mathf.Clamp(currentPitch, -90, 90);
-            currentPitch = (currentPitch + 90) / 180f;
+            currentPitch = Mathf.Clamp(currentPitch, povSettings.MinVerticalAngle, povSettings.MaxVerticalAngle);
+
+            float normalized = currentPitch <= 0f
+                ? 0.5f * Mathf.InverseLerp(povSettings.MinVerticalAngle, 0f, currentPitch) // minPitch → 0,  0 → 0.5
+                : 0.5f + (0.5f * Mathf.InverseLerp(0f, povSettings.MaxVerticalAngle, currentPitch)); // 0  → 0.5,  maxPitch → 1
+
+            // first half of the curve (0..0.5) is for bottom-mid rig, second (0.5..1) is for mid-top
+            float curveValue = cameraData.DistanceScale.Evaluate(normalized);
 
             // in order to lerp the offset correctly, the value from the YAxis goes from 0 to 1, being 0.5 the middle rig
-            Vector3 offset = currentPitch < 0.5f
-                ? Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, currentPitch * 2)
-                : Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (currentPitch - 0.5f) * 2);
+            Vector3 offset = curveValue < 0.5f
+                ? Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, curveValue * 2)
+                : Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (curveValue - 0.5f) * 2);
 
             if (cursorComponent.CursorState != CursorState.Locked)
                 thirdPersonCameraShoulder = ThirdPersonCameraShoulder.Center;
@@ -157,11 +166,11 @@ namespace DCL.Character.CharacterCamera.Systems
                                    ThirdPersonCameraShoulder.Left => 0f,
                                    ThirdPersonCameraShoulder.Center => 0.5f,
                                };
-
             cameraData.ThirdPersonFollow.CameraSide = Mathf.MoveTowards(cameraData.ThirdPersonFollow.CameraSide, targetSide, cinemachinePreset.ShoulderChangeSpeed * dt);
-            cameraData.ThirdPersonFollow.ShoulderOffset.x = Mathf.MoveTowards(cameraData.ThirdPersonFollow.ShoulderOffset.x, offset.x, cinemachinePreset.ShoulderChangeSpeed * dt);
-            cameraData.ThirdPersonFollow.VerticalArmLength = Mathf.MoveTowards(cameraData.ThirdPersonFollow.VerticalArmLength, offset.y, cinemachinePreset.ShoulderChangeSpeed * dt);
-            cameraData.ThirdPersonFollow.CameraDistance = Mathf.MoveTowards(cameraData.ThirdPersonFollow.CameraDistance, offset.z, cinemachinePreset.ShoulderChangeSpeed * dt);
+
+            cameraData.ThirdPersonFollow.ShoulderOffset.x = offset.x;
+            cameraData.ThirdPersonFollow.VerticalArmLength = offset.y;
+            cameraData.ThirdPersonFollow.CameraDistance = offset.z;
         }
 
         [Query]

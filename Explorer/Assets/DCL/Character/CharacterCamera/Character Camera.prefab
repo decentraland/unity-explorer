@@ -83,7 +83,6 @@ GameObject:
   - component: {fileID: 5644055857878136702}
   - component: {fileID: 940965429792860062}
   - component: {fileID: 9199401824850561604}
-  - component: {fileID: 4285191979780013453}
   m_Layer: 0
   m_Name: cm
   m_TagString: Untagged
@@ -137,23 +136,11 @@ MonoBehaviour:
   CameraDistance: 3.5
   CameraCollisionFilter:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 131073
   IgnoreTag: Player
   CameraRadius: 0.2
-  DampingIntoCollision: 0.5
-  DampingFromCollision: 0.2
---- !u!114 &4285191979780013453
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 816969233459784630}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e8b78ac948f05a46a6d8339a503172b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  DampingIntoCollision: 0.1
+  DampingFromCollision: 0.1
 --- !u!1 &1160864454286599285
 GameObject:
   m_ObjectHideFlags: 0
@@ -335,14 +322,80 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4115714836209283951}
   thirdPersonCameraData:
     <Camera>k__BackingField: {fileID: 9117841965452288491}
-    <OffsetBottom>k__BackingField: {x: 0.3, y: 0.3, z: -1.3}
-    <OffsetMid>k__BackingField: {x: 0.6, y: 0.3, z: 4.5}
+    <OffsetBottom>k__BackingField: {x: 0.25, y: 0.3, z: 1}
+    <OffsetMid>k__BackingField: {x: 0.6, y: 0.3, z: 4.3}
     <OffsetTop>k__BackingField: {x: 0.3, y: 0.7, z: 4.5}
+    <DistanceScale>k__BackingField:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0.44062635
+        outSlope: 0.44062635
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.15570125
+      - serializedVersion: 3
+        time: 0.5093771
+        value: 0.49456474
+        inSlope: 1.7843586
+        outSlope: 1.0740088
+        tangentMode: 1
+        weightedMode: 0
+        inWeight: 0.10134567
+        outWeight: 0.114952266
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1.1162375
+        outSlope: 1.1162375
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.13051122
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
   droneViewCameraData:
     <Camera>k__BackingField: {fileID: 4768914399050688592}
-    <OffsetBottom>k__BackingField: {x: 0, y: 2, z: 0}
-    <OffsetMid>k__BackingField: {x: 0, y: 1, z: 11}
+    <OffsetBottom>k__BackingField: {x: 0, y: 2, z: 6}
+    <OffsetMid>k__BackingField: {x: 0, y: 1, z: 10}
     <OffsetTop>k__BackingField: {x: 0, y: 2, z: 11}
+    <DistanceScale>k__BackingField:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.49972942
+        value: 0.49959412
+        inSlope: 1.4999996
+        outSlope: 1.4999996
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1.0401578
+        outSlope: 1.0401578
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.13041078
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
   freeCameraData:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
     <Speed>k__BackingField: 10
@@ -1014,7 +1067,6 @@ GameObject:
   - component: {fileID: 9084899954595470685}
   - component: {fileID: 8236121502406322410}
   - component: {fileID: 4884780505539911212}
-  - component: {fileID: 7601631287079010576}
   m_Layer: 0
   m_Name: cm
   m_TagString: Untagged
@@ -1068,23 +1120,11 @@ MonoBehaviour:
   CameraDistance: 12
   CameraCollisionFilter:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 131073
   IgnoreTag: Player
   CameraRadius: 0.2
   DampingIntoCollision: 0.1
   DampingFromCollision: 0.1
---- !u!114 &7601631287079010576
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5677108712089392030}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e8b78ac948f05a46a6d8339a503172b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &5722964383721357104
 GameObject:
   m_ObjectHideFlags: 0
@@ -1095,6 +1135,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5037376222953494877}
   - component: {fileID: 9117841965452288491}
+  - component: {fileID: 4454969412843431532}
   m_Layer: 0
   m_Name: ThirdPersonCameraSettings
   m_TagString: Untagged
@@ -1157,6 +1198,24 @@ MonoBehaviour:
         m_Calls: []
   m_LegacyBlendHint: 0
   m_ComponentOwner: {fileID: 5644055857878136702}
+--- !u!114 &4454969412843431532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5722964383721357104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2588cc5dedbb75e49a44aada63f7b939, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AimCollisionFilter:
+    serializedVersion: 2
+    m_Bits: 131073
+  IgnoreTag: Player
+  AimDistance: 200
+  AimTargetReticle: {fileID: 0}
 --- !u!1 &6449568558152647630
 GameObject:
   m_ObjectHideFlags: 0
@@ -1480,6 +1539,7 @@ GameObject:
   m_Component:
   - component: {fileID: 323615996052565734}
   - component: {fileID: 4768914399050688592}
+  - component: {fileID: 134032862300450940}
   m_Layer: 0
   m_Name: DroneViewCameraSettings
   m_TagString: Untagged
@@ -1545,6 +1605,24 @@ MonoBehaviour:
         m_Calls: []
   m_LegacyBlendHint: 0
   m_ComponentOwner: {fileID: 9084899954595470685}
+--- !u!114 &134032862300450940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8562356631389367512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2588cc5dedbb75e49a44aada63f7b939, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AimCollisionFilter:
+    serializedVersion: 2
+    m_Bits: 131073
+  IgnoreTag: Player
+  AimDistance: 200
+  AimTargetReticle: {fileID: 0}
 --- !u!1 &8572707583035131875
 GameObject:
   m_ObjectHideFlags: 0
