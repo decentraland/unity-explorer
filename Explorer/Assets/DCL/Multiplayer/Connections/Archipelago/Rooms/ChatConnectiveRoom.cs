@@ -26,6 +26,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
     public class ChatConnectiveRoom : IActivatableConnectiveRoom
     {
+        private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         private readonly string logPrefix;
 
@@ -174,6 +175,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             while (token.IsCancellationRequested == false)
             {
                 await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
+                await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
