@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -38,6 +39,12 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             new ShaderTagId("DepthOnly")
         };
 
+        class DisplacementPassData
+        {
+            internal TextureHandle WaterDisplacementRenderTarget;
+            internal RendererListHandle rendererListHandle;
+        }
+
         public RenderPass_Displacement()
         {
             m_FilteringSettings = new FilteringSettings(RenderQueueRange.all, LayerMask.GetMask("Water"));
@@ -67,6 +74,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
         private RendererListParams rendererListParams;
         private RendererList rendererList;
+        private RenderTextureDescriptor WaterDisplacementRTDescriptor_Colour;
 
         public void Setup(Settings settings)
         {
@@ -79,87 +87,114 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            // Configure start
-            if (resolution != m_resolution || renderTarget == null)
-            {
-                RTHandles.Release(renderTarget);
+            // // Configure start
+            // if (resolution != m_resolution || renderTarget == null)
+            // {
+            //     RTHandles.Release(renderTarget);
+            //
+            //     renderTarget = RTHandles.Alloc(resolution, resolution, 1, DepthBits.None,
+            //         UnityEngine.Experimental.Rendering.GraphicsFormat.R16_SFloat,
+            //         filterMode: FilterMode.Bilinear,
+            //         wrapMode: TextureWrapMode.Clamp,
+            //         useMipMap: false,
+            //         name: BufferName);
+            // }
 
-                renderTarget = RTHandles.Alloc(resolution, resolution, 1, DepthBits.None,
-                    UnityEngine.Experimental.Rendering.GraphicsFormat.R16_SFloat,
-                    filterMode: FilterMode.Bilinear,
-                    wrapMode: TextureWrapMode.Clamp,
-                    useMipMap: false,
-                    name: BufferName);
-            }
             m_resolution = resolution;
 
-            cmd.SetGlobalTexture(_WaterDisplacementBuffer, renderTarget);
-
-            cmd.EnableShaderKeyword(KEYWORD);
-
-            ConfigureTarget(renderTarget);
-            ConfigureClear(ClearFlag.Color, targetClearColor);
             // configure end
 
             //Execute Start
-            CommandBuffer cmd = CommandBufferPool.Get();
-
-            DrawingSettings drawingSettings = CreateDrawingSettings(m_ShaderTagIdList, ref renderingData, SortingCriteria.RenderQueue | SortingCriteria.SortingLayer | SortingCriteria.CommonTransparent);
-            drawingSettings.perObjectData = PerObjectData.None;
-
-            using (new ProfilingScope(cmd, profilerSampler))
+            using (var builder = renderGraph.AddUnsafePass<DisplacementPassData>("DisplacementPass", out var passData))
             {
-                ref CameraData cameraData = ref renderingData.cameraData;
+                UniversalRenderingData universalRenderingData = frameData.Get<UniversalRenderingData>();
+                UniversalResourceData universalResourceData = frameData.Get<UniversalResourceData>();
+                UniversalCameraData universalCameraData = frameData.Get<UniversalCameraData>();
+                UniversalLightData universalLightData = frameData.Get<UniversalLightData>();
 
-                // SetupProjection Start
-                centerPosition = camera.transform.position;
-                centerPosition += camera.transform.forward * settings.range * 0.5f;
+                DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(m_ShaderTagIdList, universalRenderingData, universalCameraData, universalLightData,
+                    SortingCriteria.RenderQueue | SortingCriteria.SortingLayer | SortingCriteria.CommonTransparent);
+                drawingSettings.perObjectData = PerObjectData.None;
+                var param = new RendererListParams(universalRenderingData.cullResults, drawingSettings, m_FilteringSettings);
+                passData.rendererListHandle = renderGraph.CreateRendererList(param);
 
-                float texelSize = (settings.range) / resolution;
-                //Important to snap the projection to the nearest texel. Otherwise pixel swimming is introduced when moving, due to bilinear filtering
-                float Snap(float coord, float cellSize) => Mathf.FloorToInt(coord / cellSize) * (cellSize) + (cellSize * 0.5f);
-                centerPosition.x = Snap(centerPosition.x, texelSize);
-                centerPosition.y = Snap(centerPosition.y, texelSize);
-                centerPosition.z = Snap(centerPosition.z, texelSize);
+                WaterDisplacementRTDescriptor_Colour.width = universalCameraData.cameraTargetDescriptor.width;
+                WaterDisplacementRTDescriptor_Colour.height = universalCameraData.cameraTargetDescriptor.height;
+                WaterDisplacementRTDescriptor_Colour.msaaSamples = 1;
+                WaterDisplacementRTDescriptor_Colour.graphicsFormat = GraphicsFormat.R16_SFloat;
+                WaterDisplacementRTDescriptor_Colour.sRGB = false;
 
-                //var frustumHeight = 2.0f * renderRange * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad); //Still clips, plus doesn't support orthographc
-                var frustumHeight = settings.range;
-                centerPosition += (Vector3.up * frustumHeight * 0.5f);
+                passData.WaterDisplacementRenderTarget = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph,
+                    WaterDisplacementRTDescriptor_Colour,
+                    "WaterDisplacementRenderTarget",
+                    clear: true,
+                    filterMode: FilterMode.Bilinear,
+                    wrapMode: TextureWrapMode.Clamp);
 
-                projection = Matrix4x4.Ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.03f, frustumHeight * 2f);
+                // ConfigureTarget(renderTarget);
+                // ConfigureClear(ClearFlag.Color, targetClearColor);
+                builder.AllowPassCulling(false);
 
-                view = Matrix4x4.TRS(centerPosition, viewRotation, viewScale).inverse;
+                builder.SetRenderFunc((DisplacementPassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
 
-                cmd.SetViewProjectionMatrices(view, projection);
-                //RenderingUtils.SetViewAndProjectionMatrices(cmd, view, projection, true);
+                    cmd.SetGlobalTexture(_WaterDisplacementBuffer, passData.WaterDisplacementRenderTarget);
+                    cmd.EnableShaderKeyword(KEYWORD);
+                    context.cmd.SetRenderTarget(passData.WaterDisplacementRenderTarget);
 
-                viewportRect.width = resolution;
-                viewportRect.height = resolution;
-                cmd.SetViewport(viewportRect);
+                    // SetupProjection Start
+                    centerPosition = universalCameraData.camera.transform.position;
+                    centerPosition += universalCameraData.camera.transform.forward * settings.range * 0.5f;
 
-                cmd.SetGlobalMatrix("UNITY_MATRIX_V", view);
+                    float texelSize = (settings.range) / resolution;
 
-                //Position/scale of projection. Converted to a UV in the shader
-                rendererCoords.x = centerPosition.x - orthoSize;
-                rendererCoords.y = centerPosition.z - orthoSize;
-                rendererCoords.z = settings.range;
-                rendererCoords.w = 1f; //Enable in shader
+                    //Important to snap the projection to the nearest texel. Otherwise pixel swimming is introduced when moving, due to bilinear filtering
+                    float Snap(float coord, float cellSize) =>
+                        Mathf.FloorToInt(coord / cellSize) * (cellSize) + (cellSize * 0.5f);
 
-                cmd.SetGlobalVector(_WaterDisplacementCoords, rendererCoords);
-                // SetupProjection End
+                    centerPosition.x = Snap(centerPosition.x, texelSize);
+                    centerPosition.y = Snap(centerPosition.y, texelSize);
+                    centerPosition.z = Snap(centerPosition.z, texelSize);
 
-                //Execute current commands first
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
+                    //var frustumHeight = 2.0f * renderRange * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad); //Still clips, plus doesn't support orthographc
+                    var frustumHeight = settings.range;
+                    centerPosition += (Vector3.up * frustumHeight * 0.5f);
 
-                rendererListParams.cullingResults = renderingData.cullResults;
-                rendererListParams.drawSettings = drawingSettings;
-                rendererListParams.filteringSettings = m_FilteringSettings;
-                rendererList = context.CreateRendererList(ref rendererListParams);
+                    projection = Matrix4x4.Ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.03f, frustumHeight * 2f);
 
-                cmd.DrawRendererList(rendererList);
+                    view = Matrix4x4.TRS(centerPosition, viewRotation, viewScale).inverse;
+
+                    cmd.SetViewProjectionMatrices(view, projection);
+
+                    //RenderingUtils.SetViewAndProjectionMatrices(cmd, view, projection, true);
+
+                    viewportRect.width = resolution;
+                    viewportRect.height = resolution;
+                    cmd.SetViewport(viewportRect);
+
+                    cmd.SetGlobalMatrix("UNITY_MATRIX_V", view);
+
+                    //Position/scale of projection. Converted to a UV in the shader
+                    rendererCoords.x = centerPosition.x - orthoSize;
+                    rendererCoords.y = centerPosition.z - orthoSize;
+                    rendererCoords.z = settings.range;
+                    rendererCoords.w = 1f; //Enable in shader
+
+                    cmd.SetGlobalVector(_WaterDisplacementCoords, rendererCoords);
+
+                    // SetupProjection End
+
+                    //Execute current commands first
+                    // context.ExecuteCommandBuffer(cmd);
+                    // cmd.Clear();
+
+
+
+                    cmd.DrawRendererList(data.rendererListHandle);
+                });
             }
-            // Execute End
         }
 
         public void Dispose()

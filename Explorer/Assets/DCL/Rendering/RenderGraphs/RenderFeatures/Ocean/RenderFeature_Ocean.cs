@@ -23,17 +23,12 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
         public RenderPass_Displacement.Settings displacementPrePassSettings = new RenderPass_Displacement.Settings();
 
-        private RenderPass_CalculateBuffers constantsSetup;
+        private RenderPass_CalculateBuffers calcBuffersPass;
         private RenderPass_Displacement displacementPass;
-
-        void OnEnable()
-        {
-
-        }
 
         public override void Create()
         {
-            constantsSetup = new RenderPass_CalculateBuffers
+            calcBuffersPass = new RenderPass_CalculateBuffers
             {
                 renderPassEvent = RenderPassEvent.BeforeRendering
             };
@@ -46,8 +41,8 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            constantsSetup.Setup(this);
-            renderer.EnqueuePass(constantsSetup);
+            calcBuffersPass.Setup(this);
+            renderer.EnqueuePass(calcBuffersPass);
 
             if (displacementPrePassSettings.enable)
             {
@@ -59,7 +54,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         private void OnDestroy()
         {
             displacementPass.Dispose();
-            constantsSetup.Dispose();
+            calcBuffersPass.Dispose();
         }
     }
 }

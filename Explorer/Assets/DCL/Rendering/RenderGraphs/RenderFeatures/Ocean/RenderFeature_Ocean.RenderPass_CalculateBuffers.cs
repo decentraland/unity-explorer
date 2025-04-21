@@ -18,13 +18,19 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
         private static VisibleLight mainLight;
         private Matrix4x4 causticsProjection;
 
+        private ScriptableRenderPassInput requirements;
+        private RendererFeature_Ocean settings;
+
+        class CalcBufferPassData
+        {
+
+        }
+
         public RenderPass_CalculateBuffers()
         {
             //Force a unit scale, otherwise affects the projection tiling of the caustics
             causticsProjection = Matrix4x4.Scale(Vector3.one);
         }
-
-        private RendererFeature_Ocean settings;
 
         public void Setup(RendererFeature_Ocean renderFeature)
         {
@@ -32,64 +38,74 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.Ocean
             m_directionalCaustics = settings.directionalCaustics;
         }
 
-        private ScriptableRenderPassInput requirements;
-
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             // Configure Start
             //Inform the render pipeline which pre-passes are required
-            requirements = ScriptableRenderPassInput.None;
+            //requirements = ScriptableRenderPassInput.None;
 
             //Only when using advanced shading, so don't forcibly enable
             //if(m_directionalCaustics) requirements = ScriptableRenderPassInput.Depth;
+            //
+            // if (settings.screenSpaceReflectionSettings.enable)
+            // {
+            //     requirements |= ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth;
+            // }
 
-            if (settings.screenSpaceReflectionSettings.enable)
-            {
-                requirements |= ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth;
-            }
 
-            if(settings.displacementPrePassSettings.enable) cmd.EnableShaderKeyword(RenderPass_Displacement.KEYWORD);
-            else cmd.DisableShaderKeyword(RenderPass_Displacement.KEYWORD);
 
-            cmd.SetGlobalInt(_WaterSSREnabled, settings.screenSpaceReflectionSettings.enable ? 1 : 0);
-            cmd.SetGlobalInt(_WaterDisplacementPrePassAvailable, settings.displacementPrePassSettings.enable ? 1 : 0);
-
-            ConfigureInput(requirements);
+            //ConfigureInput(requirements);
             // Configure End
-        }
-        
 
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-        {
-            CommandBuffer cmd = CommandBufferPool.Get();
-
-            if (m_directionalCaustics)
+            // Execute Start
+            using (var builder = renderGraph.AddUnsafePass<CalcBufferPassData>("CalcBufferPass", out var passData))
             {
-                //When no lights are visible, main light will be set to -1.
-                if (renderingData.lightData.mainLightIndex > -1)
+                builder.AllowPassCulling(false);
+
+                builder.SetRenderFunc((CalcBufferPassData data, UnsafeGraphContext context) =>
                 {
-                    mainLight = renderingData.lightData.visibleLights[renderingData.lightData.mainLightIndex];
+                    UniversalRenderingData universalRenderingData = frameData.Get<UniversalRenderingData>();
+                    UniversalResourceData universalResourceData = frameData.Get<UniversalResourceData>();
+                    UniversalCameraData universalCameraData = frameData.Get<UniversalCameraData>();
+                    UniversalLightData universalLightData = frameData.Get<UniversalLightData>();
 
-                    if (mainLight.lightType == LightType.Directional)
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+                    if(settings.displacementPrePassSettings.enable)
+                        cmd.EnableShaderKeyword(RenderPass_Displacement.KEYWORD);
+                    else
+                        cmd.DisableShaderKeyword(RenderPass_Displacement.KEYWORD);
+
+                    cmd.SetGlobalInt(_WaterSSREnabled, settings.screenSpaceReflectionSettings.enable ? 1 : 0);
+                    cmd.SetGlobalInt(_WaterDisplacementPrePassAvailable, settings.displacementPrePassSettings.enable ? 1 : 0);
+
+                    if (m_directionalCaustics)
                     {
-                        causticsProjection = Matrix4x4.Rotate(mainLight.light.transform.rotation);
+                        //When no lights are visible, main light will be set to -1.
+                        if (universalLightData.mainLightIndex > -1)
+                        {
+                            mainLight = universalLightData.visibleLights[universalLightData.mainLightIndex];
 
-                        cmd.SetGlobalMatrix(CausticsProjection, causticsProjection.inverse);
+                            if (mainLight.lightType == LightType.Directional)
+                            {
+                                causticsProjection = Matrix4x4.Rotate(mainLight.light.transform.rotation);
+
+                                cmd.SetGlobalMatrix(CausticsProjection, causticsProjection.inverse);
+                            }
+
+                            //Sets up the required View- -> Clip-space matrices
+                            NormalReconstruction.SetupProperties(cmd, universalCameraData);
+                        }
+                        else
+                        {
+                            m_directionalCaustics = false;
+                        }
                     }
 
-                    //Sets up the required View- -> Clip-space matrices
-                    NormalReconstruction.SetupProperties(cmd, renderingData.cameraData);
-                }
-                else
-                {
-                    m_directionalCaustics = false;
-                }
+                    cmd.SetGlobalInt(_EnableDirectionalCaustics, m_directionalCaustics ? 1 : 0);
+                });
+
+                // Execute End
             }
-
-            cmd.SetGlobalInt(_EnableDirectionalCaustics, m_directionalCaustics ? 1 : 0);
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
         }
 
         public override void OnCameraCleanup(CommandBuffer cmd)
