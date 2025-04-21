@@ -6,10 +6,12 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Settings.Settings;
 using ECS.Abstract;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using ControlCinemachineVirtualCameraSystem = DCL.Character.CharacterCamera.Systems.ControlCinemachineVirtualCameraSystem;
 
@@ -78,7 +80,15 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
-            system = new ControlCinemachineVirtualCameraSystem(world, cameraFocus.transform, cinemachineCameraAudioSettings);
+
+            string[] guids = AssetDatabase.FindAssets("t:ControlsSettingsAsset");
+            Assert.IsTrue(guids.Length > 0, "No ControlsSettingsAsset found in the project!");
+
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var settings = AssetDatabase.LoadAssetAtPath<ControlsSettingsAsset>(path);
+            Assert.IsNotNull(settings, $"Couldn’t load ControlsSettingsAsset at {path}");
+
+            system = new ControlCinemachineVirtualCameraSystem(world, cameraFocus.transform, settings.CameraMovementPOVSettings, cinemachineCameraAudioSettings);
             world.Create(new InputMapComponent(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
 
             inputMap = world.CacheInputMap();
