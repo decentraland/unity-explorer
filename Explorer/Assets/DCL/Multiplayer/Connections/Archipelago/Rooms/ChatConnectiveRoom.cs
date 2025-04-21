@@ -26,10 +26,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
     public class ChatConnectiveRoom : IActivatableConnectiveRoom
     {
-
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        internal readonly string logPrefix;
+        private readonly string logPrefix;
 
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
