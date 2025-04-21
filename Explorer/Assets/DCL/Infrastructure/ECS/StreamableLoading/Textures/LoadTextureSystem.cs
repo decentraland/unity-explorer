@@ -74,22 +74,15 @@ namespace ECS.StreamableLoading.Textures
 
             IOwnedTexture2D? result = null;
 
-            try
-            {
-                result = await webRequestController.GetTextureAsync(
-                    newCommonArgs,
-                    textureArguments,
-                    textureOp,
-                    ct,
-                    GetReportData(),
-                    suppressErrors: true,
-                    ignoreIrrecoverableErrors: true
-                );
-            }
-            catch (Exception)
-            {
-                //Ignore exceptions AVATAR_TEXTURE_MAX_ATTEMPTS times so that we can try once more with exception logging enabled
-            }
+            result = await webRequestController.GetTextureAsync(
+                newCommonArgs,
+                textureArguments,
+                textureOp,
+                ct,
+                GetReportData(),
+                suppressErrors: true,
+                ignoreIrrecoverableErrors: true
+            ).SuppressAnyExceptionWithFallback(null);
 
             if (result != null) return result;
 
