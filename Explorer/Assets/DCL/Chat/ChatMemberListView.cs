@@ -60,6 +60,11 @@ namespace DCL.Chat
             }
         }
 
+        /// <summary>
+        /// Gets whether any of the context menus of any member of the list is open.
+        /// </summary>
+        public bool IsContextMenuOpen { get; private set; }
+
         private void Awake()
         {
             loopListView.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
@@ -112,7 +117,9 @@ namespace DCL.Chat
             contextMenuTask?.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
             contextMenuCts = contextMenuCts.SafeRestart();
+            IsContextMenuOpen = true;
             await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
+            IsContextMenuOpen = false;
         }
 
         private void OnDisable()
