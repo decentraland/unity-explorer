@@ -61,14 +61,11 @@ namespace DCL.Chat
             this.friendsEventBus = friendsEventBus;
             this.chatRoom = chatRoom;
             this.friendsService = friendsService;
-            SubscribeToEvents();
         }
 
         public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> openConversations)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Initialize Async");
-
-            //SubscribeToEvents();
+            SubscribeToEvents();
             isDisposed = false;
 
             this.openConversations.Clear();
@@ -77,9 +74,6 @@ namespace DCL.Chat
 
             foreach (ChatChannel.ChannelId conversation in openConversations)
                 this.openConversations.Add(conversation.Id);
-
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Open Conversations Loaded! {openConversations}");
-
 
             var conversationParticipants = new HashSet<string>();
 
@@ -92,7 +86,7 @@ namespace DCL.Chat
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Error during initialization: {e.Message}");
+                ReportHub.LogError(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Error during initialization: {e.Message}");
             }
 
             return conversationParticipants;
@@ -212,7 +206,7 @@ namespace DCL.Chat
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Update From Participant!!! {update.ToString()}");
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Update From Participant {update.ToString()}");
             var userId = participant.Identity;
 
             switch (update)
@@ -239,13 +233,13 @@ namespace DCL.Chat
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
-                    ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed!!! {participant.Metadata}");
+                    ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Metadata Changed {participant.Metadata}");
 
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
                     if (CurrentConversation != userId) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(userId)) return;
 
-                    ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Metadata Changed - Passed all checks!!! {participant.Metadata}");
+                    ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Metadata Changed - Passed all checks");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
 
@@ -401,7 +395,6 @@ namespace DCL.Chat
 
         private void SubscribeToEvents()
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Subscribe To Events");
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
             participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
@@ -416,7 +409,6 @@ namespace DCL.Chat
 
         private void UnsubscribeFromEvents()
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "UPDATER Unsubscribe to events");
             settingsAsset.PrivacySettingsSet -= OnPrivacySettingsSet;
             participantsHub.UpdatesFromParticipant -= OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser -= OnYouBlockedByUser;
@@ -435,7 +427,7 @@ namespace DCL.Chat
 
             isDisposed = true;
             cts.SafeCancelAndDispose();
-            //UnsubscribeFromEvents();
+            UnsubscribeFromEvents();
             openConversations.Clear();
             CurrentConversation = string.Empty;
         }

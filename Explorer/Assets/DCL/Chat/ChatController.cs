@@ -241,8 +241,6 @@ namespace DCL.Chat
 #region View Show and Close
         protected override void OnViewShow()
         {
-
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow");
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -274,7 +272,6 @@ namespace DCL.Chat
             if (chatStorage != null)
                 await chatStorage.LoadAllChannelsWithoutMessagesAsync();
 
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "InitializeChannelsAndConversations");
             var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
 
             await UniTask.SwitchToMainThread();
@@ -283,7 +280,6 @@ namespace DCL.Chat
 
         protected override void OnViewClose()
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewClose");
             UnsubscribeFromEvents();
             Dispose();
         }

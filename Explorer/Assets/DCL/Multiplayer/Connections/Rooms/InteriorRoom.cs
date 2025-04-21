@@ -87,8 +87,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                             roomsPool.Release(previous);
 
                         Subscribe(newRoom);
-                        if (assigned.Info.Name.Contains("private-messages"))
-                            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Assigned a new room {assigned.Info.Name} ");
 
                         // During the connection we skipped the connection callback, so we need to notify the subscribers
                         if (newRoom is not NullRoom)
@@ -119,8 +117,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     _ => throw new ArgumentOutOfRangeException(),
 
                                                 };
-            if (assigned.Info.Name.Contains("private-messages"))
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Simulate Connection State Changed {connectionUpdate} {assigned.Info.Name}");
 
             // TODO check the order of these messages
             ConnectionUpdated?.Invoke(assigned, connectionUpdate);
@@ -129,12 +125,6 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Subscribe(IRoom room)
         {
-            if (room.Info.Name.Contains("private-messages"))
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[Subscribe] Subscribing to room events - Room: {room.Info.Name} State: {room.Info.ConnectionState}");
-            }
-
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
@@ -152,23 +142,11 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.ConnectionQualityChanged += RoomOnConnectionQualityChanged;
             room.ConnectionStateChanged += RoomOnConnectionStateChanged;
             room.ConnectionUpdated += RoomOnConnectionUpdated;
-
-            if (room.Info.Name.Contains("private-messages"))
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[Subscribe] Subscription completed");
-            }
         }
 
         private void Unsubscribe(IRoom previous)
         {
-            if (previous.Info.Name.Contains("private-messages"))
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[Unsubscribe] Unsubscribing from room events - Room: {previous.Info.Name}");
-            }
-
-            previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
@@ -182,30 +160,15 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
 
-            if (previous.Info.Name.Contains("private-messages"))
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[Unsubscribe] Unsubscription completed");
-            }
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
         {
-            if (room.Info.Name.Contains("private-messages"))
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ConnectionUpdate] Room: {room.Info.Name} State: {connectionupdate} Participants: {room.Participants.RemoteParticipantIdentities().Count}");
-            }
             ConnectionUpdated?.Invoke(room, connectionupdate);
         }
 
         private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
         {
-            if (assigned.Info.Name.Contains("private-messages"))
-            {
-                ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS,
-                    $"[ConnectionState] New State: {connectionstate} Room: {assigned.Info.Name} Participants: {assigned.Participants.RemoteParticipantIdentities().Count}");
-            }
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 

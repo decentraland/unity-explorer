@@ -47,7 +47,7 @@ namespace DCL.Chat.MessageBus
 
         private void OnPrivateMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
-            ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
+            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
             OnChatAsync(receivedMessage, true).Forget();
         }
 
