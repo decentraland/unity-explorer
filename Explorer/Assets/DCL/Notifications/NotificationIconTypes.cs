@@ -9,6 +9,9 @@ namespace DCL.Notifications
     {
         [SerializeField] private SerializableKeyValuePair<NotificationType, Sprite>[] notificationIcons;
         [SerializeField] private Sprite defaultIcon;
+        [SerializeField] private SerializableKeyValuePair<NotificationType, Sprite>[] notificationIconBackgrounds;
+        [SerializeField] private Sprite defaultIconBackground;
+        [SerializeField] private Color defaultIconBackgroundColor;
 
         public Sprite GetNotificationIcon(NotificationType notificationType)
         {
@@ -19,6 +22,17 @@ namespace DCL.Notifications
             }
 
             return defaultIcon;
+        }
+
+        public (Sprite? backgroundSprite, Color backgroundColor) GetNotificationIconBackground(NotificationType notificationType)
+        {
+            foreach (SerializableKeyValuePair<NotificationType, Sprite> background in notificationIconBackgrounds)
+            {
+                if (background.key == notificationType)
+                    return (background.value, Color.white);
+            }
+
+            return (defaultIconBackground, defaultIconBackgroundColor);
         }
     }
 }
