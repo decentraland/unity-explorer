@@ -282,6 +282,7 @@ namespace DCL.Chat
             //If they accept all conversations, we dont need to check if they are friends or not
             if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
             {
+                chatUserStateEventBus.OnUserConnectionStateChanged(userId, true);
                 chatUserStateEventBus.OnCurrentConversationUserAvailable();
                 return;
             }
@@ -325,7 +326,8 @@ namespace DCL.Chat
         private void OnYouUnblockedProfile(BlockedProfile profile)
         {
             var userId = profile.Address.ToString();
-            if (openConversations.Contains(userId)) return;
+
+            if (!openConversations.Contains(userId)) return;
 
             if (chatUsersStateCache.IsBlockedUserConnected(userId))
             {
