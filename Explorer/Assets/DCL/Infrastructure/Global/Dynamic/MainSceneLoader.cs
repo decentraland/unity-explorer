@@ -215,8 +215,18 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
                 staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
-                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
+                    bootstrapContainer,
+                    staticContainer!,
+                    scenePluginSettingsContainer,
+                    settings,
+                    dynamicSettings,
+                    uiToolkitRoot,
+                    scenesUIRoot,
+                    cursorRoot,
+                    backgroundMusic,
+                    worldInfoTool.EnsureNotNull(),
+                    playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,

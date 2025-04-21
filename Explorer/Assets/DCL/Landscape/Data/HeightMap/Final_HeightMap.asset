@@ -29,8 +29,12 @@ MonoBehaviour:
   operations:
   - operation: 0
     noise: {fileID: 11400000, guid: 9c77fb8d5e4c2f34aa2299f12ba5920f, type: 2}
+    disable: 0
   - operation: 2
     noise: {fileID: 11400000, guid: 7395fc850ad7b964cafcbeb87b2a3ec1, type: 2}
+    disable: 0
   - operation: 3
     noise: {fileID: 11400000, guid: 74dfc00caeced5e4593da65ce037cef7, type: 2}
+    disable: 0
+  simpleOperations: []
   finalCutOff: -2
