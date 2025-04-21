@@ -14,8 +14,6 @@ namespace DCL.WebRequests.HTTP2
     {
         internal readonly HTTPRequest httpRequest;
 
-        public string Url => httpRequest.Uri.OriginalString;
-
         public DateTime CreationTime { get; }
 
         public ulong DownloadedBytes { get; private set; }
@@ -76,6 +74,12 @@ namespace DCL.WebRequests.HTTP2
             // If zero is passed don't override timeout (it will be 20 seconds for establishing a connection, and no timeout for completing)
             if (timeout > 0)
                 httpRequest.TimeoutSettings.Timeout = TimeSpan.FromSeconds(timeout);
+        }
+
+        protected override void OnDispose()
+        {
+            if (httpRequest.Response?.DownStream?.IsDetached == true)
+                httpRequest.Response.DownStream.Dispose();
         }
 
         internal class Http2Response : IWebRequestResponse

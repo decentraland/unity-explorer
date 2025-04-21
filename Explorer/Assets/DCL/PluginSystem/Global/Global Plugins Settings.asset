@@ -471,11 +471,17 @@ MonoBehaviour:
       type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests, asm: DCL.Plugins}
       data:
         <WebRequestsMode>k__BackingField: 1
-        <CoreWebRequestsBudget>k__BackingField: 50
-        <SceneWebRequestsBudget>k__BackingField: 5
-        <CacheSizeGB>k__BackingField: 2
-        <CacheLifetimeDays>k__BackingField: 2
-        <PartialChunkSizeMB>k__BackingField: 2
+        <DefaultSettings>k__BackingField:
+          <CoreWebRequestsBudget>k__BackingField: 15
+          <SceneWebRequestsBudget>k__BackingField: 5
+        <Http2Settings>k__BackingField:
+          <CoreWebRequestsBudget>k__BackingField: 50
+          <SceneWebRequestsBudget>k__BackingField: 15
+          <CacheSizeGB>k__BackingField: 2
+          <CacheLifetimeDays>k__BackingField: 2
+          <PartialChunkSizeMB>k__BackingField: 14
+          <PingAckTimeoutSeconds>k__BackingField: 10
+          <EnablePartialDownloading>k__BackingField: 1
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

@@ -4,14 +4,15 @@ using Best.HTTP.Response;
 using Best.HTTP.Shared.Logger;
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests.HTTP2;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using Utility;
 using Utility.Multithreading;
-using Utility.Types;
 
 namespace DCL.WebRequests
 {
@@ -52,7 +53,7 @@ namespace DCL.WebRequests
 
         public async UniTask<PartialDownloadStream> PartialFlowAsync(CancellationToken ct)
         {
-            await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
+            // await ExecuteOnThreadPoolScope.NewScopeWithReturnOnOriginalThreadAsync();
 
             IWebRequest? createdRequest = null;
 
@@ -104,10 +105,10 @@ namespace DCL.WebRequests
 
                 // Check headers
                 // If at any stage headers are not correct discard the partial stream and the cached result, as the server does not support any headers
-                if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, request, storedHeaders, ref partialStream, out int expectedChunkLength))
+                if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, request, storedHeaders, ref partialStream, out long expectedChunkLength))
                 {
                     partialStream?.DiscardAndDispose();
-                    partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource();
+                    partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource(request.Uri);
                 }
 
                 long startPartialLength = partialStream!.partialContentLength;
@@ -119,18 +120,31 @@ namespace DCL.WebRequests
                 using DownloadContentStream? downStream = request.Response.DownStream;
                 LoggingContext? loggingContext = request.Response.Context;
 
+                const int CONTENT_POLL_INTERVAL = 3;
+
                 // Keep non-blocking reading from the download stream
                 do
                 {
                     ct.ThrowIfCancellationRequested();
 
                     if (downStream.TryTake(out BufferSegment segment))
-                        if (!partialStream!.TryAppend(segment, loggingContext))
+                        if (!partialStream!.TryAppend(request.Uri, segment, loggingContext))
                             throw CreateException($"{nameof(Http2PartialDownloadDataStream.TryAppend)} failed");
 
-                    await PollDelayAsync(ct);
+                    Thread.Sleep(CONTENT_POLL_INTERVAL);
                 }
                 while (!downStream.IsCompleted);
+
+                if (!request.Response.IsSuccess)
+                {
+                    const string FAIL_ERROR = "Download Stream has completed but the request has finished unsuccessfully. "
+                                              + "The Partial Stream will be disposed of to prevent data corruption";
+
+                    ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"{request.Uri} {FAIL_ERROR}");
+                    throw new Exception(FAIL_ERROR);
+                }
+
+                ct.ThrowIfCancellationRequested();
 
                 // Check that enough data was downloaded
                 if (expectedChunkLength != 0)
@@ -146,18 +160,28 @@ namespace DCL.WebRequests
                     partialStream.ForceFinalize();
                 }
             }
-            catch (TaskCanceledException)
-            {
-                // If it is a cancellation it is the result of the parent task so it should not be propagated further
-                request?.Response?.DownStream?.Dispose();
-            }
-            catch (Exception)
+            catch (Exception e)
             {
                 // Dispose it here as well to break ContentReceiveLoop if needed
-                partialFlowCts.SafeCancelAndDispose();
+                // partialFlowCts.SafeCancelAndDispose();
                 partialStream?.DiscardAndDispose();
-                request?.Response?.DownStream?.Dispose();
-                throw;
+
+                bool isLoopException = request?.State < HTTPRequestStates.Finished;
+                LogType logType = isLoopException ? LogType.Error : LogType.Warning;
+
+                // If the request is not finished, this exception is the own exception of the content loop, otherwise it's delays due to concurrency
+                if (isLoopException)
+                {
+                    ReportHub.Log(logType, ReportCategory.PARTIAL_LOADING, $"Content Receive Loop of {request?.Uri} was broken due to {e}");
+                    request?.Abort();
+                }
+
+                if (isLoopException)
+                    request?.Abort();
+
+                // If it is a cancellation, it is the result of the parent task so it should not be propagated further
+                if (isLoopException && e is not TaskCanceledException and OperationCanceledException)
+                    throw;
             }
         }
 

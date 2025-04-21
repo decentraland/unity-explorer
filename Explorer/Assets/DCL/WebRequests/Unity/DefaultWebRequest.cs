@@ -16,8 +16,6 @@ namespace DCL.WebRequests
 
         private bool downloadStarted;
 
-        public string Url => unityWebRequest.url;
-
         public IWebRequestResponse Response { get; }
 
         public bool Redirected => unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;

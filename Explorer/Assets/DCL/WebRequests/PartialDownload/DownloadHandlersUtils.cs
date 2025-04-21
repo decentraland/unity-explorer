@@ -19,7 +19,7 @@ namespace DCL.WebRequests
             return STRING_BUILDER.ToString();
         }
 
-        public static bool TryParseContentRange(string? input, out int fullSize, out int chunkSize)
+        public static bool TryParseContentRange(string? input, out long fullSize, out long chunkSize)
         {
             fullSize = 0;
             chunkSize = 0;
@@ -46,12 +46,12 @@ namespace DCL.WebRequests
 
             ReadOnlySpan<char> startPart = firstPart.Slice(0, dashIndex);
             ReadOnlySpan<char> endPart = firstPart.Slice(dashIndex + 1);
-            if (!int.TryParse(startPart, out int start) || !int.TryParse(endPart, out int end)) return false;
+            if (!long.TryParse(startPart, out long start) || !long.TryParse(endPart, out long end)) return false;
             if (start > end) return false;
             chunkSize = end - start + 1;
 
             ReadOnlySpan<char> secondPart = span.Slice(separatorIndex + 1);
-            return int.TryParse(secondPart, out fullSize);
+            return long.TryParse(secondPart, out fullSize);
         }
     }
 }

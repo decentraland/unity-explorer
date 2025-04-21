@@ -198,9 +198,7 @@ namespace DCL.WebRequests
         public static IWebRequestController WithLog(this IWebRequestController origin) =>
             new LogWebRequestController(origin);
 
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget)
-        {
-            return new BudgetedWebRequestController(origin, totalBudget, debugBudget);
-        }
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget) =>
+            new DisposeRequestWrap(new BudgetedWebRequestController(origin, totalBudget, debugBudget));
     }
 }

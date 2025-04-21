@@ -23,13 +23,13 @@ namespace DCL.WebRequests.HTTP2
             return dict;
         }
 
-        public static bool TryParseHeader(Dictionary<string, List<string>> headers, string header, ReportData reportData, out int value)
+        public static bool TryParseHeaderLong(Dictionary<string, List<string>> headers, string header, ReportData reportData, out long value)
         {
             string? headerValue = headers.GetFirstHeaderValue(header);
 
-            if (headerValue != null && int.TryParse(headerValue, out value)) return true;
+            if (headerValue != null && long.TryParse(headerValue, out value)) return true;
 
-            ReportHub.LogWarning(reportData, $"{header} can't be parsed to \"int\"");
+            ReportHub.LogWarning(reportData, $"{header} can't be parsed to \"ulong\"");
             value = 0;
             return false;
         }

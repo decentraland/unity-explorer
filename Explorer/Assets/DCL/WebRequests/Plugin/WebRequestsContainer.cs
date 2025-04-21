@@ -1,4 +1,6 @@
 using Best.HTTP.Caching;
+using Best.HTTP.HostSetting;
+using Best.HTTP.Proxies.Autodetect;
 using Best.HTTP.Shared;
 using Best.HTTP.Shared.Logger;
 using Cysharp.Threading.Tasks;
@@ -15,8 +17,6 @@ using Global.AppArgs;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
-using Utility.Storage;
 
 namespace DCL.WebRequests
 {
@@ -25,15 +25,36 @@ namespace DCL.WebRequests
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            [Serializable]
+            public class UnityWebRequestsSettings
+            {
+                [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
+                [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+            }
+
+            [Serializable]
+            public class HTTP2Settings
+            {
+                [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 50;
+                [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 15;
+
+                [field: SerializeField] public ushort CacheSizeGB { get; private set; } = 2; // 2 GB by default
+                [field: SerializeField] public ushort CacheLifetimeDays { get; private set; } = 2; // 2 days by default
+                [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
+                [field: SerializeField] public ushort PingAckTimeoutSeconds { get; private set; } = 10;
+                [field: SerializeField] public bool EnablePartialDownloading { get; private set; }
+            }
+
             [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
-            [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
-            [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
-            [field: SerializeField] public ushort CacheSizeGB { get; private set; } = 2; // 2 GB by default
-            [field: SerializeField] public ushort CacheLifetimeDays { get; private set; } = 2; // 2 days by default
-            [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
+
+            [field: SerializeField] public UnityWebRequestsSettings DefaultSettings { get; private set; } = new ();
+            [field: SerializeField] public HTTP2Settings Http2Settings { get; private set; } = new ();
+
         }
 
         public WebRequestsMode WebRequestsMode { get; private set; }
+
+        public bool EnablePartialDownloading => settings.Http2Settings.EnablePartialDownloading;
 
         public IWebRequestController WebRequestController { get; private set; } = null!;
 
@@ -70,17 +91,34 @@ namespace DCL.WebRequests
                 }
             }
             else
-                container.WebRequestsMode = WebRequestsMode.HTTP2;
+                container.WebRequestsMode = container.settings.WebRequestsMode;
+
+            int coreBudget, sceneBudget;
 
             HTTPManager.Logger.Level = Loglevels.Warning;
 
-            ulong cacheSize = container.settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
+            ulong cacheSize = container.settings.Http2Settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
-            var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.CacheLifetimeDays), cacheSize));
+            var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.Http2Settings.CacheLifetimeDays), cacheSize));
             HTTPManager.LocalCache = httpCache;
 
             // Set Threading Mode initialize the cache itself so we must do it after our cache initialization, otherwise there will be a sharing violation exception
             HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
+
+            // TODO split Unity WR and HTTP2 budgets
+            if (container.WebRequestsMode == WebRequestsMode.HTTP2)
+            {
+                coreBudget = container.settings.Http2Settings.CoreWebRequestsBudget;
+                sceneBudget = container.settings.Http2Settings.SceneWebRequestsBudget;
+
+                HTTPManager.PerHostSettings.Get("*").HTTP2ConnectionSettings.Timeout = TimeSpan.FromSeconds(container.settings.Http2Settings.PingAckTimeoutSeconds);
+            }
+            else
+            {
+                coreBudget = container.settings.DefaultSettings.CoreWebRequestsBudget;
+                sceneBudget = container.settings.DefaultSettings.SceneWebRequestsBudget;
+            }
+
 
             var options = new ArtificialDelayOptions.ElementBindingOptions();
 
@@ -88,17 +126,14 @@ namespace DCL.WebRequests
 
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
-            int coreBudget = container.settings.CoreWebRequestsBudget;
-            int sceneBudget = container.settings.SceneWebRequestsBudget;
-
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
 
-            var requestHub = new RequestHub(urlsSource, httpCache, container.WebRequestsMode, ktxEnabled);
+            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, ktxEnabled);
             container.requestHub = requestHub;
 
-            int partialChunkSize = container.settings.PartialChunkSizeMB * 1024 * 1024;
+            int partialChunkSize = container.settings.Http2Settings.PartialChunkSizeMB * 1024 * 1024;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
                                                                  new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
@@ -115,7 +150,7 @@ namespace DCL.WebRequests
             CreateWebRequestsMetricsDebugUtility();
 
             container.AnalyticsContainer = analyticsContainer;
-            container.WebRequestController = baseWebRequestController;
+            container.WebRequestController = coreWebRequestController;
             container.SceneWebRequestController = sceneWebRequestController;
             return container;
 

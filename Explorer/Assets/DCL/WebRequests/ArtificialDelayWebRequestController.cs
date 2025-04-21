@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests.RequestsHub;
 using System;
 using System.Threading;
@@ -21,22 +22,19 @@ namespace DCL.WebRequests
 
         public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
-            await DelayAsync();
+            await DelayAsync(ct);
             return await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
         }
 
-        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
-        {
-            await DelayAsync();
-            return await origin.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
-        }
+        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
+            origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
 
-        private async Task DelayAsync()
+        private async Task DelayAsync(CancellationToken ct)
         {
             (float delaySeconds, bool useDelay) = await options.GetOptionsAsync();
 
             if (useDelay)
-                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
         }
 
         public interface IReadOnlyOptions

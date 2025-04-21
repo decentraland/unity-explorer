@@ -80,7 +80,7 @@ namespace DCL.Diagnostics
         public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
 
         /// <summary>
-        ///     Partial Loading requests
+        ///     Related to debugging of the partial loading system itself, should be used to identify a consumer category
         /// </summary>
         public const string PARTIAL_LOADING = nameof(PARTIAL_LOADING);
 

@@ -27,7 +27,7 @@ namespace DCL.WebRequests.WebContentSizes
             string? header = await webRequestController.HeadAsync(url, ReportCategory.GENERIC_WEB_REQUEST, reqHeader)
                                                        .GetResponseHeaderAsync(WebRequestHeaders.CONTENT_RANGE_HEADER, token);
 
-            return DownloadHandlersUtils.TryParseContentRange(header, out int fullSize, out _) && (ulong)fullSize < maxSize.MaxSizeInBytes();
+            return DownloadHandlersUtils.TryParseContentRange(header, out long fullSize, out _) && (ulong)fullSize < maxSize.MaxSizeInBytes();
         }
     }
 }

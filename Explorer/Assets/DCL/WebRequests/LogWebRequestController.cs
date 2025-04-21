@@ -35,18 +35,18 @@ namespace DCL.WebRequests
             }
         }
 
-        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
+        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
         {
             try
             {
-                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"WebRequestController {nameof(GetPartialAsync)} start: {commonArguments}");
-                PartialDownloadStream? result = await origin.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
-                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"WebRequestController {nameof(GetPartialAsync)} finish: {commonArguments}");
+                ReportHub.Log(reportData, $"WebRequestController {nameof(GetPartialAsync)} start: {commonArguments}");
+                PartialDownloadStream? result = await origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
+                ReportHub.Log(reportData, $"WebRequestController {nameof(GetPartialAsync)} finish: {commonArguments}");
                 return result;
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"WebRequestController {nameof(GetPartialAsync)} error: {e}");
+                ReportHub.Log(reportData, $"WebRequestController {nameof(GetPartialAsync)} error: {e}");
                 throw; // don't re-throw it as a new exception as we loose the original type in that case
             }
         }

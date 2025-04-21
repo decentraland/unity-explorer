@@ -35,13 +35,14 @@ namespace DCL.WebRequests.RequestsHub
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
-        public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, WebRequestsMode webRequestsMode, bool ktxEnabled)
+        public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, bool partialDownloadingEnabled, bool ktxEnabled)
         {
             this.ktxEnabled = ktxEnabled;
+
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, ktxEnabled, urlsSource));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, this.ktxEnabled, urlsSource));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericGetArguments args) => new GenericGetRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericHeadArguments args) => new GenericHeadRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPostRequest(envelope, args, controller));
@@ -49,7 +50,7 @@ namespace DCL.WebRequests.RequestsHub
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericDeleteRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPatchRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAudioClipArguments args) => new GetAudioClipWebRequest(envelope, args, controller));
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller, webRequestsMode == WebRequestsMode.HTTP2));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller, partialDownloadingEnabled));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller));
         }
 

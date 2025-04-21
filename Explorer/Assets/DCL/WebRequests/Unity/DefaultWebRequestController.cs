@@ -36,10 +36,15 @@ namespace DCL.WebRequests
 
             DefaultWebRequest? adapter = null;
 
+            TimeSpan delayBeforeRepeat = TimeSpan.Zero;
+
             while (attemptsLeft > 0)
             {
                 try
                 {
+                    if (delayBeforeRepeat != TimeSpan.Zero)
+                        await UniTask.Delay(delayBeforeRepeat, cancellationToken: ct);
+
                     UnityWebRequest nativeRequest = requestWrap.CreateUnityWebRequest();
 
                     // In reality the life-cycle of WRs is always closed. Uncomment this line and introduce individual dispose if required in the future
@@ -52,6 +57,8 @@ namespace DCL.WebRequests
                     envelope.InitializedWebRequest(web3IdentityCache, adapter);
 
                     await ExecuteWithAnalyticsAsync(requestWrap, adapter, ct);
+
+                    adapter.successfullyExecutedByController = true;
                     return adapter;
                 }
                 catch (UnityWebRequestException exception)
@@ -68,16 +75,6 @@ namespace DCL.WebRequests
                             $"Exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with args {requestWrap.ArgsToString()},\n with {envelope}\n{exception}"
                         );
 
-                    if (exception.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
-                    {
-                        // TODO: (JUANI) From time to time we can get several curl errors that need a small delay to recover
-                        // This can be removed if we solve the issue with Unity
-                        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
-                    }
-
-                    if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
-                        await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
-
                     if (exception.IsIrrecoverableError(adapter!, attemptsLeft))
                     {
                         var adaptedException = new DefaultWebRequestException(adapter!, exception);
@@ -85,20 +82,22 @@ namespace DCL.WebRequests
                         throw adaptedException;
                     }
 
-                    if (attemptsLeft > 0)
+                    if (exception.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
 
-                        // Dispose the previous request before making a new attempt
-                        adapter!.Dispose();
+                        // TODO: (JUANI) From time to time we can get several curl errors that need a small delay to recover
+                        // This can be removed if we solve the issue with Unity
+                        delayBeforeRepeat = TimeSpan.FromSeconds(0.5f);
+
+                    else if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
+                        delayBeforeRepeat = TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds());
+
+                    // Dispose of the previous native request before repeating
+                    adapter!.unityWebRequest.Dispose();
                 }
                 catch (Exception) // any other exception
                 {
                     // Dispose adapter if it was created or the wrap on exception as it won't be returned to the caller
-
-                    if (adapter != null)
-                        adapter.Dispose();
-                    else
-                        requestWrap.Dispose();
-
+                    adapter?.Dispose();
                     throw;
                 }
             }
@@ -106,7 +105,7 @@ namespace DCL.WebRequests
             throw new Exception($"{nameof(DefaultWebRequestController)}: Unexpected code path!");
         }
 
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
+        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
             throw new NotSupportedException($"{nameof(GetPartialAsync)}");
 
         private async UniTask ExecuteWithAnalyticsAsync(ITypedWebRequest request, DefaultWebRequest adapter, CancellationToken ct)

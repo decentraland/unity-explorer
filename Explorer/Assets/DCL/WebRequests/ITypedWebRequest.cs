@@ -13,7 +13,7 @@ namespace DCL.WebRequests
         ///     Controller assigned to execute the web request <br />
         ///     It can be null if the request is saved "for later" and not yet executed, or executed in a very particular manner
         /// </summary>
-        IWebRequestController Controller { get; set; }
+        IWebRequestController Controller { get; }
 
         /// <summary>
         ///     Parameters associated with a request

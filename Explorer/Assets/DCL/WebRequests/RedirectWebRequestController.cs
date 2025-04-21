@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using System;
@@ -38,12 +39,12 @@ namespace DCL.WebRequests
             return unityWebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);
         }
 
-        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
+        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
         {
             if (mode != WebRequestsMode.HTTP2)
                 throw new NotSupportedException("Only HTTP2 partial requests are supported");
 
-            return http2WebRequestController.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
+            return http2WebRequestController.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
         }
     }
 }

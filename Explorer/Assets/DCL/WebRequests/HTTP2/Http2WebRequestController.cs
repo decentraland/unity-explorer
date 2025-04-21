@@ -37,7 +37,7 @@ namespace DCL.WebRequests.HTTP2
             detachDownloadStream = (_, _, stream) => stream.IsDetached = true;
         }
 
-        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
+        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
         {
             // If the result is fully cached in the stream that was passed, return it immediately
             var partialStream = partialArgs.Stream as Http2PartialDownloadDataStream;
@@ -47,20 +47,20 @@ namespace DCL.WebRequests.HTTP2
             if (partialStream is { IsFullyDownloaded: true })
             {
                 ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"{nameof(PartialDownloadStream)} {commonArguments.URL} is already fully downloaded");
-                return partialStream;
+                return UniTask.FromResult<PartialDownloadStream>(partialStream);
             }
 
             if (uri.IsFile)
             {
-                try { return Http2PartialDownloadDataStream.InitializeFromFile(uri); }
+                try { return UniTask.FromResult<PartialDownloadStream>(Http2PartialDownloadDataStream.InitializeFromFile(uri)); }
                 catch (Exception ex) { throw new WebRequestException(uri, ex); }
             }
 
             // if the result is already fully cached return it immediately without creating a web request
             if (partialStream == null
-                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, uri, HTTPCache.CalculateHash(HTTPMethods.Get, uri), out partialStream)
+                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, uri, HTTPCache.CalculateHash(HTTPMethods.Get, uri), chunkSize, out partialStream)
                 && partialStream!.IsFullyDownloaded)
-                return partialStream;
+                return UniTask.FromResult<PartialDownloadStream>(partialStream);
 
 
             // Create headers accordingly, at this point don't create a partial stream as we don't know if the endpoint actually supports "Range" requests
@@ -70,8 +70,8 @@ namespace DCL.WebRequests.HTTP2
             headersInfo = (headersInfo ?? new WebRequestHeadersInfo()).WithRange(chunkStart, chunkEnd);
 
             // Recreate arguments as the partial stream could be initialized from cache
-            return await
-                this.Create<PartialDownloadRequest, PartialDownloadArguments>(new PartialDownloadArguments(partialStream), commonArguments, ReportCategory.PARTIAL_LOADING, headersInfo)
+            return
+                this.Create<PartialDownloadRequest, PartialDownloadArguments>(new PartialDownloadArguments(partialStream), commonArguments, reportData, headersInfo)
                     .PartialFlowAsync(ct);
         }
 
@@ -106,6 +106,9 @@ namespace DCL.WebRequests.HTTP2
                 envelope.OnCreated?.Invoke(requestAdapter);
 
                 await ExecuteWithAnalyticsAsync(requestWrap, requestAdapter, envelope.ReportData, ct);
+
+                requestAdapter.successfullyExecutedByController = true;
+                return requestAdapter;
             }
             catch (AsyncHTTPException exception)
             {
@@ -127,16 +130,8 @@ namespace DCL.WebRequests.HTTP2
             }
             catch // any other exception
             {
-                // Dispose the download stream that was detached
-                if (detachDownloadHandler)
-                    requestAdapter?.httpRequest.Response?.DownStream?.Dispose();
-
-                // Dispose adapter if it was created or the wrap on exception as it won't be returned to the caller
-
-                if (requestAdapter != null)
-                    requestAdapter.Dispose();
-                else
-                    requestWrap.Dispose();
+                // Dispose adapter on exception as it won't be returned to the caller
+                requestAdapter?.Dispose();
 
                 throw;
             }
@@ -145,8 +140,6 @@ namespace DCL.WebRequests.HTTP2
                 if (fromMainThread)
                     await UniTask.SwitchToMainThread();
             }
-
-            return requestAdapter;
         }
 
         private async UniTask ExecuteWithAnalyticsAsync(ITypedWebRequest request, Http2WebRequest adapter, ReportData reportData, CancellationToken ct)

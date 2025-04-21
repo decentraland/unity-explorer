@@ -7,7 +7,7 @@ namespace DCL.WebRequests
 {
     public abstract class TypedWebRequestBase<TArgs> : ITypedWebRequest<TArgs> where TArgs: struct
     {
-        private bool isDisposed;
+        internal bool isDisposed;
 
         protected internal TypedWebRequestBase(RequestEnvelope envelope, TArgs args, IWebRequestController controller)
         {
@@ -16,7 +16,7 @@ namespace DCL.WebRequests
             Args = args;
         }
 
-        public IWebRequestController Controller { get; set; }
+        public IWebRequestController Controller { get; }
         public RequestEnvelope Envelope { get; }
         public TArgs Args { get; }
 
@@ -49,7 +49,7 @@ namespace DCL.WebRequests
         {
             if (isDisposed) return;
 
-            ReportHub.LogError(new ReportData(ReportCategory.GENERIC_WEB_REQUEST, ReportHint.SessionStatic), $"The request was not disposed properly. It may lead to leaks and crashes\n{this}");
+            ReportHub.LogError(new ReportData(ReportCategory.GENERIC_WEB_REQUEST), $"The envelope was not disposed properly. It may lead to leaks and crashes\n{this}");
             Dispose();
         }
     }

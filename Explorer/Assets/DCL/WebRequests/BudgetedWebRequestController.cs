@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
-using System;
 using System.Threading;
 
 namespace DCL.WebRequests
@@ -44,26 +44,7 @@ namespace DCL.WebRequests
             }
         }
 
-        public async UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null)
-        {
-            IAcquiredBudget totalBudgetAcquired;
-
-            // Try bypass total budget
-            while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
-                await UniTask.Yield(ct);
-
-            try
-            {
-                lock (debugBudget) { debugBudget.Value--; }
-
-                return await origin.GetPartialAsync(commonArguments, partialArgs, ct, headersInfo);
-            }
-            finally
-            {
-                lock (debugBudget) { debugBudget.Value++; }
-
-                totalBudgetAcquired.Dispose();
-            }
-        }
+        public UniTask<PartialDownloadStream> GetPartialAsync(CommonArguments commonArguments, ReportData reportData, PartialDownloadArguments partialArgs, CancellationToken ct, WebRequestHeadersInfo? headersInfo = null) =>
+            origin.GetPartialAsync(commonArguments, reportData, partialArgs, ct, headersInfo);
     }
 }
