@@ -8,6 +8,7 @@ using DCL.Character.CharacterCamera.Settings;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
+using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -68,6 +69,13 @@ namespace DCL.Character.CharacterCamera.Systems
 
             HandleCameraInputQuery(World, t);
             UpdateCameraStateQuery(World);
+            UpdateCameraFocusOnTeleportQuery(World);
+        }
+
+        [Query]
+        private void UpdateCameraFocusOnTeleport(in PlayerTeleportIntent teleportIntent)
+        {
+            cameraFocus.transform.position = teleportIntent.Position;
         }
 
         [Query]
