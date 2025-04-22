@@ -5030,23 +5030,10 @@
             </summary>
             <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
         </member>
-        <member name="T:System.Runtime.InteropServices.CollectionMarshal">
+        <member name="T:System.Collections.Generic.ListSpanExtensions">
             <summary>
-            An unsafe class that provides a set of methods to access
-            the underlying data representations of collections.
+            Defines extensions for System.Collections.Generic's List&lt;T&gt; collection
             </summary>
-        </member>
-        <member name="M:System.Runtime.InteropServices.CollectionMarshal.AsSpan``1(System.Collections.Generic.List{``0})">
-            <summary>
-            Gets a Span&lt;<typeparamref name="T"/>&gt; view over the data in <paramref name="list"/>.
-            </summary>
-            <remarks>
-            <para><h3><b>Warning:</b> Read-only operation!</h3></para>
-            Items should not be added or removed from the List&lt;<typeparamref name="T"/>&gt; while the Span&lt;<typeparamref name="T"/>&gt; is in use.
-            </remarks>
-            <typeparam name="T">The type of items in <paramref name="list"/>.</typeparam>
-            <param name="list">List from which to create the Span&lt;<typeparamref name="T"/>&gt;.</param>
-            <returns>A Span&lt;<typeparamref name="T"/>&gt; instance over the List&lt;<typeparamref name="T"/>&gt;.</returns>
         </member>
         <member name="M:System.Runtime.CompilerServices.CollectionBuilderAttribute.#ctor(System.Type,System.String)">
             <summary>Initialize the attribute to refer to the <paramref name="methodName"/> method on the <paramref name="builderType"/> type.</summary>
@@ -5069,23 +5056,6 @@
             <summary>
                 Forwards the SkipLocalInit to .NetStandard2.1.
             </summary>
-        </member>
-        <member name="T:System.Collections.Generic.__ListXTension">
-            <summary>
-            Defines extensions for System.Collections.Generic's List&lt;T&gt; collection
-            </summary>
-        </member>
-        <member name="M:System.Collections.Generic.__ListXTension.AsSpan``1(System.Collections.Generic.List{``0})">
-            <summary>
-            Gets a Span&lt;<typeparamref name="T"/>&gt; view over the data in this List&lt;<typeparamref name="T"/>&gt; instance
-            </summary>
-            <remarks>
-            <para><h3><b>Warning:</b> Read-only operation!</h3></para>
-            Items should not be added or removed from the List&lt;<typeparamref name="T"/>&gt; while the Span&lt;<typeparamref name="T"/>&gt; is in use.
-            </remarks>
-            <typeparam name="T">The type of items in <paramref name="list"/></typeparam>
-            <param name="list">This List&lt;<typeparamref name="T"/>&gt; instance</param>
-            <returns>A Span&lt;<typeparamref name="T"/>&gt; instance over the List&lt;<typeparamref name="T"/>&gt;.</returns>
         </member>
         <member name="T:System.Diagnostics.CodeAnalysis.UnscopedRefAttribute">
             <summary>

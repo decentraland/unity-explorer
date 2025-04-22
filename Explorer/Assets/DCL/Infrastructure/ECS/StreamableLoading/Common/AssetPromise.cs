@@ -40,10 +40,10 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Create(
+                Entity =
                     StreamableLoadingDebug.ENABLED
                         ? world.Create(loadingIntention, partition, StreamableLoadingState.Create(), new IntentionCreationTime(Time.realtimeSinceStartup))
-                        : world.Create(loadingIntention, partition, StreamableLoadingState.Create())),
+                        : world.Create(loadingIntention, partition, StreamableLoadingState.Create()),
             };
 
         public static AssetPromise<TAsset, TLoadingIntention> CreateFinalized(TLoadingIntention loadingIntention, StreamableLoadingResult<TAsset>? result) =>
@@ -149,6 +149,7 @@ namespace ECS.StreamableLoading.Common
                 ForgetLoading(world);
                 return true;
             }
+
             return false;
         }
 
