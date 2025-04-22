@@ -51,10 +51,19 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "RightPointer",
+                    "type": "PassThrough",
+                    "id": "ffb2d944-3abc-49b9-affe-67921fcd212c",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Primary",
                     "type": "Button",
                     "id": "38147d5e-c8e9-481f-b640-a485a6c6b6ae",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -90,7 +99,7 @@
                     "name": "ActionButton5",
                     "type": "Button",
                     "id": "3ee343b7-e0ac-4862-8538-435bff12a50b",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -447,6 +456,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pointer",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5b8a5bf8-448c-435f-9e1e-8a64d83395d8",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightPointer",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
