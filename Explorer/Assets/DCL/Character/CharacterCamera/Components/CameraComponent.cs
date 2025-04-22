@@ -14,7 +14,7 @@ namespace DCL.CharacterCamera
             get => mode;
             set
             {
-                if (value == mode && PreviousMode == mode) return;
+                if (value == mode) return;
 
                 PreviousMode = mode;
                 mode = value;

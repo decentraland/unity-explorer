@@ -192,10 +192,8 @@ namespace DCL.Character.CharacterCamera.Systems
 
         private void SwitchCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            if (camera.PreviousMode != CameraMode.SDKCamera && IsCorrectCameraEnabled(targetCameraMode, cinemachinePreset))
-                return;
-
-            ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
+            if (!IsCorrectCameraEnabled(targetCameraMode, cinemachinePreset))
+                ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
         private static bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset) =>
