@@ -55,7 +55,6 @@ namespace DCL.Chat
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
-        private readonly ChatUsersStateCache chatUsersStateCache;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
@@ -122,7 +121,6 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
 
-            chatUsersStateCache = new ChatUsersStateCache();
             chatUserStateEventBus = new ChatUserStateEventBus();
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
@@ -130,7 +128,6 @@ namespace DCL.Chat
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
-                chatUsersStateCache,
                 friendsEventBus,
                 roomHub.PrivateConversationsRoom(),
                 friendsService);
@@ -230,7 +227,6 @@ namespace DCL.Chat
         public override void Dispose()
         {
             chatStorage?.UnloadAllFiles();
-            chatUsersStateCache.ClearAll();
             chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
