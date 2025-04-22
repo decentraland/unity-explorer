@@ -24,7 +24,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
 
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
-        public bool SimulateAbundance;
+        public bool SimulateLackOfAbundance;
 
         public MemoryBudget(ISystemMemoryCap systemMemoryCap, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
@@ -76,7 +76,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public bool IsInAbundance()
         {
-            if (SimulateAbundance)
+            if (SimulateLackOfAbundance)
                 return false;
 
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;

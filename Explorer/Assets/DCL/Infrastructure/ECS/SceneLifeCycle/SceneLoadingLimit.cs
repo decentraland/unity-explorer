@@ -35,7 +35,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     public class SceneLoadingLimit
     {
 
-        private readonly Dictionary<SceneLimitsKey, SceneLimits> sceneLimits = new ()
+        private readonly Dictionary<SceneLimitsKey, SceneLimits> constantSceneLimits = new ()
         {
             // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 561MB
             { SceneLimitsKey.LOW_MEMORY, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE + SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
@@ -51,20 +51,19 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         };
 
 
+        public SceneLimits currentSceneLimits { get; private set; }
+
         private float SceneCurrentMemoryUsageInMB;
         private float QualityReductedLODCurrentMemoryUsageInMB;
-
-        private SceneLimits currentSceneLimits;
         private SceneLimitsKey initialKey;
-        private bool ReducedLimitDueToMemory;
-
-
+        private SceneTransitionState sceneTransitionState;
         private readonly ISystemMemoryCap systemMemoryCap;
         private bool isEnabled;
 
 
         public SceneLoadingLimit(ISystemMemoryCap memoryCap)
         {
+            sceneTransitionState = SceneTransitionState.NORMAL;
             systemMemoryCap = memoryCap;
             isEnabled = false;
             UpdateMemoryCap();
@@ -126,52 +125,54 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             else
                 initialKey = SceneLimitsKey.MAX_MEMORY;
 
-            currentSceneLimits = sceneLimits[initialKey];
+            currentSceneLimits = constantSceneLimits[initialKey];
         }
 
 
-        public void WarnAbundance(bool isAbunding)
+        public void ReportMemoryState(bool isMemoryNormal, bool isAbundance)
         {
             if (!isEnabled)
                 return;
 
-            if (ReducedLimitDueToMemory && isAbunding)
+            if (!isMemoryNormal && sceneTransitionState is SceneTransitionState.NORMAL or SceneTransitionState.TRANSITIONING_TO_NORMAL)
             {
-                ReducedLimitDueToMemory = false;
                 easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, sceneLimits[initialKey]).Forget();
+                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], SceneTransitionState.REDUCED).Forget();
+                sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_REDUCED;
             }
+
+            if (isMemoryNormal && sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_REDUCED)
+                easingCancellationTokenSource.Cancel();
+
+            if (isMemoryNormal && isAbundance && sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED)
+            {
+                easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
+                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[initialKey], SceneTransitionState.NORMAL).Forget();
+                sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_NORMAL;
+            }
+
+            if (isMemoryNormal && !isAbundance && sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_NORMAL)
+                easingCancellationTokenSource.Cancel();
         }
 
-        public void IsInMemoryWarning(bool isInMemoryWarning)
-        {
-            if (!isEnabled)
-                return;
-
-            if (!ReducedLimitDueToMemory && isInMemoryWarning)
-            {
-                ReducedLimitDueToMemory = true;
-                easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, sceneLimits[SceneLimitsKey.WARNING]).Forget();
-            }
-        }
 
         private CancellationTokenSource easingCancellationTokenSource;
         private readonly float totalFramesToComplete = 500;
 
-        private async UniTask EaseSceneLimits(CancellationToken cancellationToken, SceneLimits start, SceneLimits end)
+        private async UniTask EaseSceneLimits(CancellationToken cancellationToken, SceneLimits start, SceneLimits end, SceneTransitionState finalState)
         {
             float currentFrames = 0;
             while (!cancellationToken.IsCancellationRequested)
             {
+
                 float interpolationProgress = Mathf.Lerp(0, 1, currentFrames / totalFramesToComplete);
                 currentSceneLimits = SceneLimits.Lerp(start, end, interpolationProgress);
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-
+                currentFrames++;
                 if (currentFrames / totalFramesToComplete >= 1f)
                     break;
-                currentFrames++;
             }
+            sceneTransitionState = finalState;
         }
 
 
@@ -181,6 +182,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             UpdateMemoryCap();
         }
 
+
         private enum SceneLimitsKey
         {
             WARNING,
@@ -189,7 +191,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             MAX_MEMORY,
         }
 
-        private struct SceneLimits
+        private enum SceneTransitionState
+        {
+            NORMAL,
+            REDUCED,
+            TRANSITIONING_TO_REDUCED,
+            TRANSITIONING_TO_NORMAL,
+        }
+
+        public struct SceneLimits
         {
             public readonly float SceneMaxAmountOfUsableMemoryInMB;
             public readonly float QualityReductedLODMaxAmountOfUsableMemoryInMB;
@@ -206,5 +216,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     Mathf.Lerp(a.QualityReductedLODMaxAmountOfUsableMemoryInMB, b.QualityReductedLODMaxAmountOfUsableMemoryInMB, t)
                 );
         }
+
     }
 }
