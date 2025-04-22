@@ -48,6 +48,8 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
+            // We have to create a global transform to hold the CharacterTransform. Using the Transform from the TransformComponent
+            // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world
             Transform globalTransform = globalTransformPool.Get();
             globalTransform.SetParent(transformComponent.Transform);
 
@@ -102,7 +104,7 @@ namespace ECS.Unity.AvatarShape.Systems
 
         public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
-            // Need to remove parenting, since it may unintenionally deleted
+            // Need to remove parenting, since it may unintenionally deleted when
             globalWorld.Get<CharacterTransform>(globalEntity).Transform.SetParent(null);
 
             // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
