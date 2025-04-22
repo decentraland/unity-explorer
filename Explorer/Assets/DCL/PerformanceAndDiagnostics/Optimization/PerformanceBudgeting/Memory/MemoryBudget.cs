@@ -24,10 +24,11 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
 
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
+        public bool SimulateAbundance;
 
         public MemoryBudget(ISystemMemoryCap systemMemoryCap, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
-            SimulatedMemoryUsage = NORMAL;
+            SimulatedMemoryUsage = ABUNDANCE;
 
             this.systemMemoryCap = systemMemoryCap;
             this.profiler = profiler;
@@ -67,16 +68,16 @@ namespace DCL.Optimization.PerformanceBudgeting
 
             // ReSharper disable once PossibleLossOfFraction
             long CalculateSystemMemoryForWarningThreshold() => // Increase the threshold halfway between warning and full
-                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * GetHalfwayBetweenFullAndWarning()));
+                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * GetHalfwayBetweenLimits(FULL, WARNING)));
 
-            float GetHalfwayBetweenFullAndWarning() =>
-                (1 + ((memoryThreshold[FULL] - memoryThreshold[WARNING])/2f));
+            float GetHalfwayBetweenLimits(MemoryUsageStatus upperLimit, MemoryUsageStatus bottomLimit) =>
+                1 + ((memoryThreshold[upperLimit] - memoryThreshold[bottomLimit])/2f);
         }
 
         public bool IsInAbundance()
         {
-            if (SimulatedMemoryUsage == ABUNDANCE)
-                return true;
+            if (SimulateAbundance)
+                return false;
 
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
             long totalSystemMemory = GetTotalSystemMemoryInMB();
@@ -84,7 +85,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         }
 
         public bool IsMemoryNormal() =>
-            GetMemoryUsageStatus() != NORMAL && GetMemoryUsageStatus() != ABUNDANCE;
+            GetMemoryUsageStatus() == NORMAL;
 
         public bool IsMemoryFull() =>
             GetMemoryUsageStatus() == FULL;

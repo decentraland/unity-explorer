@@ -52,6 +52,8 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> gcUsedMemory;
+        private ElementBinding<string> isInAbundance;
+
 
         private ElementBinding<string> jsHeapUsedSize;
         private ElementBinding<string> jsHeapTotalSize;
@@ -110,10 +112,11 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Is In Abundances:", isInAbundance = new ElementBinding<string>("YES"))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.NORMAL)
                             .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.WARNING)
                             .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.FULL)
-                            .AddSingleButton("Memory ABUNDANCE", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.ABUNDANCE)
+                            .AddSingleButton("Toggle Abundance", () => this.memoryBudget.SimulateAbundance = !this.memoryBudget.SimulateAbundance)
                             .AddToggleField("Enable Scene Metrics", evt => sceneMetricsEnabled = evt.newValue, sceneMetricsEnabled)
                             .AddCustomMarker("Js-Heap Total [MB]:", jsHeapTotalSize = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js-Heap Used [MB]:", jsHeapUsedSize = new ElementBinding<string>(string.Empty))
@@ -222,6 +225,7 @@ namespace DCL.Profiling.ECS
 
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
+            isInAbundance.Value = memoryBudget.IsInAbundance() ? "YES" : "NO";
             return;
 
             string GetMemoryUsageColor()
