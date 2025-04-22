@@ -81,7 +81,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
                 ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
-                entityCollidersSceneCache.Associate(in component, World!.Reference(entity), sdkEntity);
+                entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
 
                 // Re-parent to the current transform
                 result.Asset!.Root.transform.SetParent(transformComponent.Transform);

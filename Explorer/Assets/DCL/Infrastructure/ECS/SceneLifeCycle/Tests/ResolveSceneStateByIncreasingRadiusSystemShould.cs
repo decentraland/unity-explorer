@@ -148,7 +148,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Serve 2
             var entities = new List<Entity>();
-            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities);
+            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities.AsSpan());
 
             Assert.That(entities.Count, Is.EqualTo(2));
             Assert.That(entities.Any(e => world.Get<IPartitionComponent>(e).Bucket == 0), Is.True);
@@ -191,8 +191,8 @@ namespace ECS.SceneLifeCycle.Tests
             var sceneEntities = new List<Entity>();
             var lodEntities = new List<Entity>();
 
-            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), sceneEntities);
-            world.GetEntities(new QueryDescription().WithAll<SceneLODInfo>(), lodEntities);
+            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), sceneEntities.AsSpan());
+            world.GetEntities(new QueryDescription().WithAll<SceneLODInfo>(), lodEntities.AsSpan());
 
             var qualityReductedLODCount = 0;
             var qualityHighLODCount = 0;

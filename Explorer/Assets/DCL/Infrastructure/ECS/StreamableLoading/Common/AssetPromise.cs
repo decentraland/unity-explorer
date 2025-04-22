@@ -17,12 +17,12 @@ namespace ECS.StreamableLoading.Common
     {
         private static readonly string ASSERTION_MESSAGE = $"{nameof(AssetPromise<TAsset, TLoadingIntention>)} <{typeof(TAsset)}, {typeof(TLoadingIntention)}> is already consumed";
 
-        public static readonly AssetPromise<TAsset, TLoadingIntention> NULL = new () { Entity = EntityReference.Null };
+        public static readonly AssetPromise<TAsset, TLoadingIntention> NULL = new () { Entity = Entity.Null };
 
         /// <summary>
         ///     Entity Intention will be alive if the loading process is not consumed
         /// </summary>
-        public EntityReference Entity { get; private set; }
+        public Entity Entity { get; private set; }
 
         /// <summary>
         ///     Loading intention will persist, so it can be used to dereference unused assets
@@ -34,13 +34,13 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public StreamableLoadingResult<TAsset>? Result { get; private set; }
 
-        public bool IsConsumed => Entity == EntityReference.Null;
+        public bool IsConsumed => Entity == Entity.Null;
 
         public static AssetPromise<TAsset, TLoadingIntention> Create(World world, TLoadingIntention loadingIntention, IPartitionComponent partition) =>
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(
+                Entity = world.Create(
                     StreamableLoadingDebug.ENABLED
                         ? world.Create(loadingIntention, partition, StreamableLoadingState.Create(), new IntentionCreationTime(Time.realtimeSinceStartup))
                         : world.Create(loadingIntention, partition, StreamableLoadingState.Create())),
@@ -50,7 +50,7 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = EntityReference.Null,
+                Entity = Entity.Null,
                 Result = result,
             };
 
@@ -67,7 +67,7 @@ namespace ECS.StreamableLoading.Common
 
             result = default(StreamableLoadingResult<TAsset>);
 
-            if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return false;
+            if (Entity == Entity.Null || !world.IsAlive(Entity)) return false;
 
             if (world.TryGet(Entity, out result))
             {
@@ -87,7 +87,7 @@ namespace ECS.StreamableLoading.Common
             if (Result.HasValue)
             {
                 // It means `TryGet` was called so now remove the entity
-                if (Entity != EntityReference.Null)
+                if (Entity != Entity.Null)
                 {
                     ReportHub.LogError(ReportCategory.STREAMABLE_LOADING,
                         $"{nameof(TryGetResult)} was called before {nameof(TryConsume)} for {LoadingIntention.ToString()}, the flow is inconclusive and should be fixed!");
@@ -117,7 +117,7 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public void Consume(World world)
         {
-            if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
+            if (Entity == Entity.Null || !world.IsAlive(Entity)) return;
 
             DestroyEntity(world);
         }
@@ -128,7 +128,7 @@ namespace ECS.StreamableLoading.Common
         /// <param name="world"></param>
         public void ForgetLoading(World world)
         {
-            if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
+            if (Entity == Entity.Null || !world.IsAlive(Entity)) return;
 
             LoadingIntention.CancellationTokenSource.Cancel();
             DestroyEntity(world);
@@ -139,7 +139,7 @@ namespace ECS.StreamableLoading.Common
             world.Get<StreamableLoadingState>(Entity).Dispose();
 
             world.Destroy(Entity);
-            Entity = EntityReference.Null;
+            Entity = Entity.Null;
         }
 
         public bool IsCancellationRequested(World world)

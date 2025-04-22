@@ -95,8 +95,8 @@ namespace ECS.SceneLifeCycle.Tests
             system.Update(0);
 
             QueryDescription q = new QueryDescription().WithAll<SceneDefinitionComponent>();
-            var entities = new List<Entity>();
-            world.GetEntities(in q, entities);
+            var entities = new List<Entity>(2);
+            world.GetEntities(in q, entities.AsSpan());
 
             Assert.That(entities.Count, Is.EqualTo(2));
 
