@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -9,8 +10,10 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
+using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
@@ -54,20 +57,30 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
-            () => new LogRoom(
-                new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    new ParticipantsHub(),
-                    new TracksFactory(),
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo()
-                )
-            )
-        );
+            () =>
+            {
+                var hub = new ParticipantsHub();
+                var videoStreams = new VideoStreams(hub);
+
+                var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+                var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+
+                return new LogRoom(
+                    new Room(
+                        new ArrayMemoryPool(),
+                        new DefaultActiveSpeakers(),
+                        hub,
+                        new TracksFactory(),
+                        new FfiHandleFactory(),
+                        new ParticipantFactory(),
+                        new TrackPublicationFactory(),
+                        new DataPipe(),
+                        new MemoryRoomInfo(),
+                        videoStreams,
+                        audioStreams
+                    )
+                );
+            });
 
         private CancellationTokenSource? cancellationTokenSource;
 

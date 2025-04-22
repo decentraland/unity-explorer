@@ -239,6 +239,10 @@ namespace DCL.Notifications.NotificationsMenu
                     NotificationView nView = (NotificationView)notificationView;
                     nView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
                     break;
+                case RewardInProgressNotification rewardInProgress:
+                    NotificationView rewardInProgressView = (NotificationView)notificationView;
+                    rewardInProgressView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardInProgress.Metadata.Rarity);
+                    break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;
                     friendNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);

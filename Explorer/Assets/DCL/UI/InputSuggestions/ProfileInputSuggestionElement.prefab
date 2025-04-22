@@ -141,8 +141,6 @@ MonoBehaviour:
     <SuggestionElementHeight>k__BackingField: 40
   selectionButton: {fileID: 7583984127850801498}
   selectedBackground: {fileID: 5978463543333982807}
-  faceSnapshotImage: {fileID: 0}
-  faceFrame: {fileID: 0}
   profilePictureView: {fileID: 345850478249510066}
   simpleUserNameElement: {fileID: 73166439360779973}
 --- !u!1 &5054566706010141756

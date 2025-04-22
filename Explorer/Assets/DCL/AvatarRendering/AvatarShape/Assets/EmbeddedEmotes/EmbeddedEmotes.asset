@@ -27,6 +27,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: crafting
     name: crafting
@@ -42,6 +43,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: cry
     name: cry
@@ -57,6 +59,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: dab
     name: dab
@@ -72,6 +75,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: dance
     name: dance
@@ -87,6 +91,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 1
   - id: disco
     name: disco
@@ -102,6 +107,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 1
   - id: dontsee
     name: dontsee
@@ -117,6 +123,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: fistpump
     name: fistpump
@@ -132,6 +139,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: hammer
     name: hammer
@@ -147,6 +155,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 1
   - id: handsair
     name: handsair
@@ -162,6 +171,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: headexplode
     name: headexplode
@@ -177,6 +187,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: hohoho
     name: hohoho
@@ -192,6 +203,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: kiss
     name: kiss
@@ -207,6 +219,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: money
     name: money
@@ -222,6 +235,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: raiseHand
     name: raiseHand
@@ -237,6 +251,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: robot
     name: robot
@@ -252,6 +267,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 1
   - id: shrug
     name: shrug
@@ -267,6 +283,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: snowfall
     name: snowfall
@@ -282,6 +299,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: tektonik
     name: tektonik
@@ -297,6 +315,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 1
   - id: tik
     name: tik
@@ -312,6 +331,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 1
   - id: Victory
     name: Victory
@@ -327,6 +347,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: wave
     name: wave
@@ -342,6 +363,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: Waving
     name: Waving
@@ -357,6 +379,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0
   - id: confettipopper
     name: confetti
@@ -372,4 +395,5 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
+      outlineCompatible: 1
       loop: 0

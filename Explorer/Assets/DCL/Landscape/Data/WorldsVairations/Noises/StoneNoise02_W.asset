@@ -23,3 +23,6 @@ MonoBehaviour:
     offset: {x: 18.59, y: 0}
     cutoff: 0.75
     noiseType: 0
+    baseValue: 0
+    multiplyValue: 0
+    divideValue: 0

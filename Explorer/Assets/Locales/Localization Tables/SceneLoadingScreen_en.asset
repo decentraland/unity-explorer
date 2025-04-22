@@ -30,4 +30,6 @@ MonoBehaviour:
     - rid: 4107643790665711619
       type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
       data:
-        m_Entries: 00e02fe904000000
+        m_Entries: 
+        m_SharedEntries:
+        - id: 21092098048

@@ -320,6 +320,7 @@ MonoBehaviour:
   <SelectedImage>k__BackingField: {fileID: 782066126112996038}
   <UnselectedText>k__BackingField: {fileID: 3388056574719437513}
   <SelectedText>k__BackingField: {fileID: 85566942900833079}
+  tabAnimator: {fileID: 0}
   <TabClickAudio>k__BackingField: {fileID: 11400000, guid: 0df7b16e196525d40a3a98032e38abea, type: 2}
 --- !u!1 &3388056574719437513
 GameObject:
