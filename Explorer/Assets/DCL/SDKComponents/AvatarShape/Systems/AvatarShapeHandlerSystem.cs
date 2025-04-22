@@ -56,7 +56,7 @@ namespace ECS.Unity.AvatarShape.Systems
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
                 new CharacterTransform(globalTransform),
-                new CharacterInterpolationMovementComponent(globalTransform.position, globalTransform.position, globalTransform.rotation),
+                new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
