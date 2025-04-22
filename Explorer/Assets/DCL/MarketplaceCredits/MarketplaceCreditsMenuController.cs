@@ -176,10 +176,12 @@ namespace DCL.MarketplaceCredits
             CloseAllSections();
 
             viewInstance!.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: false);
+            viewInstance.SetInfoLinkButtonActive(true);
 
             switch (section)
             {
                 case MarketplaceCreditsSection.WELCOME:
+                    viewInstance.SetInfoLinkButtonActive(false);
                     marketplaceCreditsWelcomeSubController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
