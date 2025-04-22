@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Audio
   m_EditorClassIdentifier: 
   m_GroupName: Audio
-  m_Data:
-    m_SerializedData: []
   m_GUID: 6afe569a142146542854ed2edc5deb37
   m_SerializeEntries:
   - m_GUID: 03db33273505e5d4ca2cfcdda86df7f4

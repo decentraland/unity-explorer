@@ -136,8 +136,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cbe84942f9a41acae73b97f593f9ba7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <MaxSuggestionAmount>k__BackingField: 7
-  <SuggestionElementHeight>k__BackingField: 34
   <SuggestionElementData>k__BackingField:
     <MaxSuggestionAmount>k__BackingField: 7
     <SuggestionElementHeight>k__BackingField: 34

@@ -337,6 +337,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 0
   <Toggle>k__BackingField: {fileID: 7625753975028379600}
   <OnImage>k__BackingField: {fileID: 8806659310530846726}
   <OffImage>k__BackingField: {fileID: 9008524825783389075}
