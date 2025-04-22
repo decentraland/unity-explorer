@@ -41,7 +41,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             lock (monitor)
             {
                 origin.InstantTrackAndFlush(eventName, properties);
-                IncreaseAndTryFlush();
             }
         }
 
