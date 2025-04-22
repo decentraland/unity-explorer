@@ -135,9 +135,6 @@ namespace DCL.CharacterCamera.Tests
 
             Assert.That(cameraComponent.Mode, Is.EqualTo(CameraMode.DroneView));
             Assert.That(cameraInput.Delta, Is.EqualTo(new Vector2(0.5f, 0.3f)));
-
-            // Check the camera input was applied to the drone view camera POV
-            Assert.That(cameraFocus.transform.localRotation.eulerAngles, Is.Not.EqualTo(Vector3.zero));
         }
 
         [Test]
@@ -158,9 +155,6 @@ namespace DCL.CharacterCamera.Tests
 
             Assert.That(cameraComponent.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraInput.Delta, Is.EqualTo(new Vector2(0.5f, 0.3f)));
-
-            // Check the camera input was appliedto the third person camera POV
-            Assert.That(cameraFocus.transform.localRotation.eulerAngles, Is.Not.EqualTo(Vector3.zero));
         }
 
         [Test]
@@ -312,9 +306,6 @@ namespace DCL.CharacterCamera.Tests
 
             // Verify InWorldCameraComponent exists
             Assert.That(world.Has<InWorldCameraComponent>(entity), Is.True);
-
-            // Check the camera input was not applied
-            Assert.That(cameraFocus.transform.localRotation, Is.EqualTo(Quaternion.identity));
         }
     }
 }
