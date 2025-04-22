@@ -105,7 +105,7 @@ namespace DCL.MarketplaceCredits
         {
             viewInstance!.OnAnyPlaceClick += OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
-            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
+            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenGoShoppingLink);
 
             marketplaceCreditsGoalsOfTheWeekSubController = new MarketplaceCreditsGoalsOfTheWeekSubController(
                 viewInstance.GoalsOfTheWeekSubView,
@@ -229,7 +229,7 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
             viewInstance!.OnAnyPlaceClick -= OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
-            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
+            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenGoShoppingLink);
 
             marketplaceCreditsWelcomeSubController.Dispose();
             marketplaceCreditsVerifyEmailSubController.Dispose();
@@ -253,8 +253,8 @@ namespace DCL.MarketplaceCredits
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
 
-        private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(DecentralandUrl.MarketplaceLink);
+        private void OpenGoShoppingLink() =>
+            webBrowser.OpenUrl(DecentralandUrl.GoShoppingWithMarketplaceCredits);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
