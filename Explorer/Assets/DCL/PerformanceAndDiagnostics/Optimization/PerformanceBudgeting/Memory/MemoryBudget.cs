@@ -1,4 +1,5 @@
 ﻿using DCL.Profiling;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
@@ -7,6 +8,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 {
     public enum MemoryUsageStatus
     {
+        ABUNDANCE,
         NORMAL,
         WARNING,
         FULL,
@@ -32,7 +34,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             this.memoryThreshold = memoryThreshold;
         }
 
-        public MemoryUsageStatus GetMemoryUsageStatus()
+        private MemoryUsageStatus GetMemoryUsageStatus()
         {
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
             long totalSystemMemory = GetTotalSystemMemoryInMB();
@@ -52,7 +54,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         }
 
         public bool TrySpendBudget() =>
-            GetMemoryUsageStatus() != FULL;
+            !IsMemoryFull();
 
         public long GetTotalSystemMemoryInMB()
         {
@@ -64,9 +66,28 @@ namespace DCL.Optimization.PerformanceBudgeting
                    };
 
             // ReSharper disable once PossibleLossOfFraction
-            long CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * 1.1f));
+            long CalculateSystemMemoryForWarningThreshold() => // Increase the threshold halfway between warning and full
+                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * GetHalfwayBetweenFullAndWarning()));
+
+            float GetHalfwayBetweenFullAndWarning() =>
+                (1 + ((memoryThreshold[FULL] - memoryThreshold[WARNING])/2f));
         }
+
+        public bool IsInAbundance()
+        {
+            if (SimulatedMemoryUsage == ABUNDANCE)
+                return true;
+
+            long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
+            long totalSystemMemory = GetTotalSystemMemoryInMB();
+            return usedMemory < totalSystemMemory * memoryThreshold[ABUNDANCE];
+        }
+
+        public bool IsMemoryNormal() =>
+            GetMemoryUsageStatus() != NORMAL && GetMemoryUsageStatus() != ABUNDANCE;
+
+        public bool IsMemoryFull() =>
+            GetMemoryUsageStatus() == FULL;
 
         public class Default : IPerformanceBudget
         {

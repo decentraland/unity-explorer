@@ -29,17 +29,19 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             memoryBudget = new MemoryBudget(systemMemoryCap, profiler, memoryThreshold);
         }
 
-        [TestCase(1000, 500, MemoryUsageStatus.NORMAL)]
-        [TestCase(1000, 810, MemoryUsageStatus.WARNING)]
-        [TestCase(1000, 910, MemoryUsageStatus.FULL)]
-        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, MemoryUsageStatus expectedUsage)
+        [TestCase(1000, 500, true, false)]
+        [TestCase(1000, 810, false, false)]
+        [TestCase(1000, 910, false, true)]
+        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, bool expectedUsage, bool isFull)
         {
             // Arrange
             profiler.SystemUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
             systemMemoryCap.MemoryCapInMB.Returns((int)systemMemoryInMB);
 
             // Act-Assert
-            Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
+            Assert.That(memoryBudget.IsMemoryNormal(), Is.EqualTo(expectedUsage));
+            Assert.That(memoryBudget.IsMemoryFull(), Is.EqualTo(isFull));
+
         }
 
         [TestCase(1000, 810, true)]

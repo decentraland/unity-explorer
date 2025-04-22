@@ -24,9 +24,10 @@ namespace DCL.PluginSystem.Global
 
         protected override void Update(float t)
         {
-            sceneLoadingLimit.WarnMemoryFull(memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL);
+            sceneLoadingLimit.IsInMemoryWarning(!memoryBudgetProvider.IsMemoryNormal());
+            sceneLoadingLimit.WarnAbundance(memoryBudgetProvider.IsInAbundance());
 
-            if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
+            if (!memoryBudgetProvider.IsMemoryNormal())
                 unloadStrategyHandler.TryUnload();
             else
                 unloadStrategyHandler.ResetToNormal();

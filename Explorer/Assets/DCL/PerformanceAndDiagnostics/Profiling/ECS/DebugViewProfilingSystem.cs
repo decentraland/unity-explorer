@@ -113,6 +113,7 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.NORMAL)
                             .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.WARNING)
                             .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.FULL)
+                            .AddSingleButton("Memory ABUNDANCE", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.ABUNDANCE)
                             .AddToggleField("Enable Scene Metrics", evt => sceneMetricsEnabled = evt.newValue, sceneMetricsEnabled)
                             .AddCustomMarker("Js-Heap Total [MB]:", jsHeapTotalSize = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js-Heap Used [MB]:", jsHeapUsedSize = new ElementBinding<string>(string.Empty))
@@ -225,13 +226,13 @@ namespace DCL.Profiling.ECS
 
             string GetMemoryUsageColor()
             {
-                return memoryBudget.GetMemoryUsageStatus() switch
-                       {
-                           MemoryUsageStatus.NORMAL => "green",
-                           MemoryUsageStatus.WARNING => "yellow",
-                           MemoryUsageStatus.FULL => "red",
-                           _ => throw new ArgumentOutOfRangeException(),
-                       };
+                if (memoryBudget.IsMemoryNormal())
+                    return "green";
+
+                if (memoryBudget.IsMemoryFull())
+                    return "red";
+
+                return "yellow";
             }
         }
 

@@ -30,8 +30,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public static float MAX_SCENE_SIZE = 300 * RUNTIME_MEMORY_COEFFICENT;
         public static float MAX_SCENE_LOD = (MAX_SCENE_SIZE / LOD_REDUCTION) + (MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION);
         public static float MAX_SCENE_LOWQUALITY_LOD = MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION;
-
-
     }
 
     public class SceneLoadingLimit
@@ -58,7 +56,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private SceneLimits currentSceneLimits;
         private SceneLimitsKey initialKey;
-        private bool CurrentWarningState;
+        private bool ReducedLimitDueToMemory;
 
 
         private readonly ISystemMemoryCap systemMemoryCap;
@@ -132,43 +130,46 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
 
-        public void WarnMemoryFull(bool isInMemoryWarning)
+        public void WarnAbundance(bool isAbunding)
         {
             if (!isEnabled)
                 return;
 
-            if (isInMemoryWarning != CurrentWarningState)
+            if (ReducedLimitDueToMemory && isAbunding)
             {
-                CurrentWarningState = isInMemoryWarning;
+                ReducedLimitDueToMemory = false;
                 easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EasingInOutMemory(easingCancellationTokenSource.Token).Forget();
+                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, sceneLimits[initialKey]).Forget();
+            }
+        }
+
+        public void IsInMemoryWarning(bool isInMemoryWarning)
+        {
+            if (!isEnabled)
+                return;
+
+            if (!ReducedLimitDueToMemory && isInMemoryWarning)
+            {
+                ReducedLimitDueToMemory = true;
+                easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
+                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, sceneLimits[SceneLimitsKey.WARNING]).Forget();
             }
         }
 
         private CancellationTokenSource easingCancellationTokenSource;
-        private float interpolationProgress;
-
         private readonly float totalFramesToComplete = 500;
 
-        private async UniTask EasingInOutMemory(CancellationToken cancellationToken)
+        private async UniTask EaseSceneLimits(CancellationToken cancellationToken, SceneLimits start, SceneLimits end)
         {
             float currentFrames = 0;
-            SceneLimits start = sceneLimits[initialKey];
-
             while (!cancellationToken.IsCancellationRequested)
             {
-                // Interpolate between the previous and target limits
-                if (CurrentWarningState)
-                    interpolationProgress = Mathf.Lerp(0, 1, currentFrames / totalFramesToComplete);
-                else
-                    interpolationProgress = Mathf.Lerp(1, 0, currentFrames / totalFramesToComplete);
-
-                currentSceneLimits = SceneLimits.Lerp(start, sceneLimits[SceneLimitsKey.WARNING], interpolationProgress);
+                float interpolationProgress = Mathf.Lerp(0, 1, currentFrames / totalFramesToComplete);
+                currentSceneLimits = SceneLimits.Lerp(start, end, interpolationProgress);
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
 
                 if (currentFrames / totalFramesToComplete >= 1f)
                     break;
-
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 currentFrames++;
             }
         }
