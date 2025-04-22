@@ -32,6 +32,8 @@ namespace DCL.MarketplaceCredits
         public event Action<bool> MarketplaceCreditsOpened;
 
         private bool isFeatureActivated;
+        private MarketplaceCreditsSection? currentSection;
+        private bool isCreditsUnlockedPanelOpen;
 
         [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
@@ -157,6 +159,7 @@ namespace DCL.MarketplaceCredits
             CloseAllSections();
             SetSidebarButtonAnimationAsPaused(false);
             haveJustClaimedCredits = false;
+            currentSection = null;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -177,6 +180,7 @@ namespace DCL.MarketplaceCredits
 
             viewInstance!.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: false);
             viewInstance.SetInfoLinkButtonActive(true);
+            currentSection = section;
 
             switch (section)
             {
@@ -208,10 +212,12 @@ namespace DCL.MarketplaceCredits
 
         public async UniTaskVoid ShowCreditsUnlockedPanelAsync(float claimedCredits)
         {
+            isCreditsUnlockedPanelOpen = true;
             showCreditsUnlockedCts = showCreditsUnlockedCts.SafeRestart();
             await mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(new CreditsUnlockedController.Params(claimedCredits)), showCreditsUnlockedCts.Token);
 
             // We open the welcome section after closing the credits unlocked panel
+            isCreditsUnlockedPanelOpen = false;
             haveJustClaimedCredits = true;
             OpenSection(MarketplaceCreditsSection.WELCOME);
         }
@@ -268,8 +274,15 @@ namespace DCL.MarketplaceCredits
 
         private void OnMarketplaceCreditsNotificationReceived(INotification notification)
         {
+            if (!isFeatureActivated)
+                return;
+
             SetSidebarButtonAnimationAsAlert(true);
             SetSidebarButtonAsClaimIndicator(true);
+
+            // If the user is in the Goals of the Week section, we need to refresh the information
+            if (currentSection == MarketplaceCreditsSection.GOALS_OF_THE_WEEK && !isCreditsUnlockedPanelOpen)
+                OpenSection(MarketplaceCreditsSection.WELCOME);
         }
 
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
