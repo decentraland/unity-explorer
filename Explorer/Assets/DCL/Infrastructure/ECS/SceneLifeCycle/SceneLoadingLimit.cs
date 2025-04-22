@@ -144,7 +144,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (isMemoryNormal && sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_REDUCED)
                 easingCancellationTokenSource.Cancel();
 
-            if (isMemoryNormal && isAbundance && sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED)
+            if (isMemoryNormal && isAbundance && sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED or SceneTransitionState.TRANSITIONING_TO_NORMAL)
             {
                 easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
                 EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[initialKey], SceneTransitionState.NORMAL).Forget();
