@@ -162,7 +162,7 @@ impl SegmentServer {
                 let key = guard.write_key.clone();
                 let result = guard.segment_client.send(key, m.into()).await;
                 let response = SegmentServer::result_as_response_code(result);
-                instance.call_callback(id, response).await;
+                guard.call_callback(id, response);
             },
             None => {
                 instance.call_callback(id, Response::ErrorDeserialize).await;
