@@ -55,10 +55,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 Identify(identityCache.Identity);
         }
 
-        public void Track(string eventName, JsonObject? properties = null)
+        public void Track(string eventName, JsonObject? properties = null, bool isInstant = false)
         {
-            if (Configuration.EventIsEnabled(eventName))
+            if (!Configuration.EventIsEnabled(eventName))
+                return;
+
+            if (!isInstant)
                 analytics.Track(eventName, properties);
+            else
+                analytics.InstantTrackAndFlush(eventName, properties);
         }
 
         public void Identify(IWeb3Identity? identity)
