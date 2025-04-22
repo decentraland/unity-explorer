@@ -51,7 +51,7 @@ MonoBehaviour:
   - rid: 7621844642437005314
   - rid: 7621844642437005315
   - rid: 8449516130764587014
-  - rid: 8813103923713015905
+  - rid: 8813103964372074592
   references:
     version: 2
     RefIds:
@@ -912,7 +912,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 8813103923713015905
+    - rid: 8813103964372074592
       type: {class: MarketplaceCreditsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <CreditsUnlockedPrefab>k__BackingField:

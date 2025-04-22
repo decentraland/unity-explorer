@@ -5,9 +5,9 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
 using DCL.UI.SharedSpaceManager;
@@ -24,8 +24,7 @@ namespace DCL.MarketplaceCredits
 {
     public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
-        private const string WEEKLY_REWARDS_INFO_LINK = "https://docs.decentraland.org";
-        private const string GO_SHOPPING_LINK = "https://decentraland.org/marketplace";
+        private const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -106,7 +105,7 @@ namespace DCL.MarketplaceCredits
         {
             viewInstance!.OnAnyPlaceClick += OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
-            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenLearnMoreLink);
+            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenGoShoppingLink);
 
             marketplaceCreditsGoalsOfTheWeekSubController = new MarketplaceCreditsGoalsOfTheWeekSubController(
                 viewInstance.GoalsOfTheWeekSubView,
@@ -177,10 +176,12 @@ namespace DCL.MarketplaceCredits
             CloseAllSections();
 
             viewInstance!.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: false);
+            viewInstance.SetInfoLinkButtonActive(true);
 
             switch (section)
             {
                 case MarketplaceCreditsSection.WELCOME:
+                    viewInstance.SetInfoLinkButtonActive(false);
                     marketplaceCreditsWelcomeSubController.OpenSection();
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
@@ -205,7 +206,7 @@ namespace DCL.MarketplaceCredits
             viewInstance.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
-        public async UniTaskVoid ShowCreditsUnlockedPanel(float claimedCredits)
+        public async UniTaskVoid ShowCreditsUnlockedPanelAsync(float claimedCredits)
         {
             showCreditsUnlockedCts = showCreditsUnlockedCts.SafeRestart();
             await mvcManager.ShowAsync(CreditsUnlockedController.IssueCommand(new CreditsUnlockedController.Params(claimedCredits)), showCreditsUnlockedCts.Token);
@@ -230,7 +231,7 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
             viewInstance!.OnAnyPlaceClick -= OnAnyPlaceClicked;
             viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
-            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenLearnMoreLink);
+            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenGoShoppingLink);
 
             marketplaceCreditsWelcomeSubController.Dispose();
             marketplaceCreditsVerifyEmailSubController.Dispose();
@@ -254,8 +255,8 @@ namespace DCL.MarketplaceCredits
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
 
-        private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(GO_SHOPPING_LINK);
+        private void OpenGoShoppingLink() =>
+            webBrowser.OpenUrl(DecentralandUrl.GoShoppingWithMarketplaceCredits);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
@@ -289,6 +290,7 @@ namespace DCL.MarketplaceCredits
         {
             try
             {
+                await UniTask.WaitUntil(() => sidebarButton.gameObject.activeInHierarchy, cancellationToken: ct);
                 await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile == null)

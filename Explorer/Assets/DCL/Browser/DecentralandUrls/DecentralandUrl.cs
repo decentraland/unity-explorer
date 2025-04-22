@@ -12,6 +12,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DiscordLink,
         TwitterLink,
         NewsletterSubscriptionLink,
+        MarketplaceLink,
 
         PrivacyPolicy,
         TermsOfUse,
@@ -68,11 +69,14 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         Blocklist,
 
+        WorldContentServer,
+
         Servers,
 
         MediaConverter,
 
         MarketplaceCredits,
+        GoShoppingWithMarketplaceCredits,
         EmailSubscriptions,
     }
 }

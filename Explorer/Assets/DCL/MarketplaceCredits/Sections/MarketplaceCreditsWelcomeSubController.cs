@@ -16,7 +16,7 @@ namespace DCL.MarketplaceCredits.Sections
     public class MarketplaceCreditsWelcomeSubController : IDisposable
     {
         private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
-        private const string LEARN_MORE_LINK = "https://docs.decentraland.org";
+        private const string LEARN_MORE_LINK = "https://decentraland.org";
 
         private readonly MarketplaceCreditsWelcomeSubView subView;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
@@ -93,7 +93,7 @@ namespace DCL.MarketplaceCredits.Sections
             registerInTheProgramCts.SafeCancelAndDispose();
         }
 
-        private async UniTaskVoid LoadProgramRegistrationInfoAsync(CancellationToken ct)
+        private async UniTask LoadProgramRegistrationInfoAsync(CancellationToken ct)
         {
             try
             {
@@ -162,9 +162,12 @@ namespace DCL.MarketplaceCredits.Sections
                 subView.SetAsLoading(true);
 
                 if (currentCreditsProgramProgress.IsUserEmailVerified())
+                {
                     await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
-
-                RedirectToSection(ignoreHasUserStartedProgramFlag: true);
+                    await LoadProgramRegistrationInfoAsync(ct);
+                }
+                else
+                    RedirectToSection(ignoreHasUserStartedProgramFlag: true);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

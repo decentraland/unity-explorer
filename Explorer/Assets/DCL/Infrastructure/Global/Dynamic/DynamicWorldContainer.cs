@@ -431,6 +431,7 @@ namespace Global.Dynamic
                 terrainContainer,
                 loadingScreen,
                 livekitHealthCheck,
+                bootstrapContainer.DecentralandUrlsSource,
                 mvcManager,
                 selfProfile,
                 dynamicWorldParams,
@@ -503,7 +504,8 @@ namespace Global.Dynamic
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
-                new ClearChatCommand(chatCommandsBus)
+                new ClearChatCommand(chatCommandsBus),
+                new LogsChatCommand(),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -567,6 +569,8 @@ namespace Global.Dynamic
             IChatInputBus chatInputBus = new ChatInputBus();
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus, includeUserBlocking);
+
+            var profileChangesBus = new ProfileChangesBusController();
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata, userBlockingCacheProxy);
 
@@ -633,8 +637,8 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
-                    chatHistory, viewDependencies, sharedSpaceManager, selfProfile, staticContainer.RealmData,
-                    staticContainer.FeatureFlagsCache),
+                    chatHistory, viewDependencies, sharedSpaceManager, profileChangesBus,
+                    selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -705,7 +709,8 @@ namespace Global.Dynamic
                     appArgs,
                     viewDependencies,
                     userBlockingCacheProxy,
-                    sharedSpaceManager
+                    sharedSpaceManager,
+                    profileChangesBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -780,6 +785,7 @@ namespace Global.Dynamic
                     identityCache,
                     viewDependencies,
                     realmNftNamesProvider,
+                    profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
                     isNameEditorEnabled

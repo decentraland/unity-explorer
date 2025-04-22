@@ -92,9 +92,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <RectTransformComponent>k__BackingField: {fileID: 891560713975722788}
+  <HorizontalLayoutComponent>k__BackingField: {fileID: 6983794906705303621}
   <ToggleComponent>k__BackingField: {fileID: 3675667337910807093}
   <TextComponent>k__BackingField: {fileID: 7042733739484598958}
-  <HorizontalLayoutComponent>k__BackingField: {fileID: 6983794906705303621}
 --- !u!114 &6983794906705303621
 MonoBehaviour:
   m_ObjectHideFlags: 0

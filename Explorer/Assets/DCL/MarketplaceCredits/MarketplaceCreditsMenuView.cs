@@ -51,5 +51,8 @@ namespace DCL.MarketplaceCredits
 
         public void OnPointerClick(PointerEventData eventData) =>
             OnAnyPlaceClick?.Invoke();
+
+        public void SetInfoLinkButtonActive(bool isActive) =>
+            InfoLinkButton.gameObject.SetActive(isActive);
     }
 }
