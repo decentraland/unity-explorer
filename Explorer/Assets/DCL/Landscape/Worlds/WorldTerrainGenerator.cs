@@ -51,10 +51,7 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            if (!IsInitialized) return;
-
-            if (rootGo != null)
-                UnityObjectUtils.SafeDestroy(rootGo);
+            // If we destroy rootGo here it causes issues on application exit
         }
 
         public bool Contains(Vector2Int parcel)
