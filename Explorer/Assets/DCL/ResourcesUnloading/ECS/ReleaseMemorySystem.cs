@@ -25,11 +25,7 @@ namespace DCL.PluginSystem.Global
         protected override void Update(float t)
         {
             sceneLoadingLimit.ReportMemoryState(memoryBudgetProvider.IsMemoryNormal(), memoryBudgetProvider.IsInAbundance());
-
-            if (!memoryBudgetProvider.IsMemoryNormal())
-                unloadStrategyHandler.TryUnload();
-            else
-                unloadStrategyHandler.ResetToNormal();
+            unloadStrategyHandler.ReportMemoryState(memoryBudgetProvider.IsMemoryNormal(), memoryBudgetProvider.IsInAbundance());
         }
     }
 }

@@ -1,13 +1,16 @@
+using Cysharp.Threading.Tasks;
 using System;
 using ECS.Prioritization;
+using NUnit.Framework;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class UnloadStrategyHandler
     {
         internal UnloadStrategyBase[] unloadStrategies;
-
         private readonly int DEFAULT_FRAME_FAILURE_THRESHOLD = 250;
+        private UnloadStrategyState unloadStrategyState;
+
 
         public UnloadStrategyHandler(ICacheCleaner cacheCleaner)
         {
@@ -19,9 +22,11 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
                 new StandardUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, cacheCleaner),
                 new UnloadUnusedAssetUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD)
             };
+
+            unloadStrategyState = UnloadStrategyState.Normal;
         }
 
-        public void TryUnload()
+        private void TryUnload()
         {
             for (var i = unloadStrategies.Length - 1; i >= 0; i--)
             {
@@ -30,10 +35,39 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             }
         }
 
-        public void ResetToNormal()
+        private void ResetToNormal()
         {
             for (var i = 0; i < unloadStrategies.Length; i++)
                 unloadStrategies[i].ResetStrategy();
+        }
+
+        public void ReportMemoryState(bool isMemoryNormal, bool isInAbundance)
+        {
+            switch (unloadStrategyState)
+            {
+                case UnloadStrategyState.Normal:
+                    if (!isMemoryNormal)
+                    {
+                        unloadStrategyState = UnloadStrategyState.Unloading;
+                        TryUnload();
+                    }
+                    break;
+                case UnloadStrategyState.Unloading:
+                    if (isInAbundance)
+                    {
+                        ResetToNormal();
+                        unloadStrategyState = UnloadStrategyState.Normal;
+                    }
+                    else
+                        TryUnload();
+                    break;
+            }
+        }
+
+        private enum UnloadStrategyState
+        {
+            Normal,
+            Unloading
         }
 
     }
