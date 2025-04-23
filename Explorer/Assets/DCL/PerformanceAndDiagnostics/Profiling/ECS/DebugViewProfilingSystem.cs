@@ -76,6 +76,7 @@ namespace DCL.Profiling.ECS
 
         private bool frameTimingsEnabled;
         private bool sceneMetricsEnabled;
+        private bool memoryLimitsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
             MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings, SceneLoadingLimit sceneLoadingLimit)
@@ -133,10 +134,17 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Js Heap Limit per engine [MB]:", jsHeapLimit = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty));
 
-                debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY_LIMITS)
-                            ?.SetVisibilityBinding(memoryLimitsVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                            .AddCustomMarker("Upper scene limit [MB]:", maxAmountOfScenesThatCanLoadInMB = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Upperd Reducted LOD [MB]:", maxAmountOfReductedLODsThatCanLoadInMB = new ElementBinding<string>(string.Empty));
+                DebugWidgetBuilder? memoryLimitsBuilder = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY_LIMITS);
+
+                if (memoryLimitsBuilder != null)
+                {
+                    memoryLimitsBuilder.SetVisibilityBinding(memoryLimitsVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                                       .AddCustomMarker("Upper scene limit [MB]:", maxAmountOfScenesThatCanLoadInMB = new ElementBinding<string>(string.Empty))
+                                       .AddCustomMarker("Upperd Reducted LOD [MB]:", maxAmountOfReductedLODsThatCanLoadInMB = new ElementBinding<string>(string.Empty));
+
+                    memoryLimitsEnabled = true;
+                }
+
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CRASH)?
                             .AddSingleButton("FatalError", () => { Utils.ForceCrash(ForcedCrashCategory.FatalError); })
@@ -187,7 +195,7 @@ namespace DCL.Profiling.ECS
                     UpdateSceneMetrics();
             }
 
-            if (memoryLimitsVisibilityBinding.IsExpanded)
+            if (memoryLimitsEnabled && memoryLimitsVisibilityBinding.IsExpanded)
             {
                 maxAmountOfScenesThatCanLoadInMB.Value = sceneLoadingLimit.currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB.ToString("F");
                 maxAmountOfReductedLODsThatCanLoadInMB.Value = sceneLoadingLimit.currentSceneLimits.QualityReductedLODMaxAmountOfUsableMemoryInMB.ToString("F");
