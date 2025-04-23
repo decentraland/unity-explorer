@@ -106,7 +106,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
                 var mContext = new MarshaledString(contextSource.ContextJson());
 
-                if (eventName == "logged_in_cached" || eventName == "logged_in" || eventName == "passport_opened")
+                if (eventName == "logged_in_cached" || eventName == "logged_in" || eventName == "passport_opened" || eventName == "move_to_parcel")
                     Debug.Log($"[MARKETPLACE CREDITS LOG] SegmentServerTrack: {eventName} | PROPERTIES: {properties?.ToString() ?? EMPTY_JSON}");
 
                 ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
@@ -140,7 +140,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
                 var mContext = new MarshaledString(contextSource.ContextJson());
 
-                if (eventName == "logged_in_cached" || eventName == "logged_in" || eventName == "passport_opened")
+                if (eventName == "logged_in_cached" || eventName == "logged_in" || eventName == "passport_opened" || eventName == "move_to_parcel")
                     Debug.Log($"[MARKETPLACE CREDITS LOG] SegmentServerInstantTrackAndFlush: {eventName} | PROPERTIES: {properties?.ToString() ?? EMPTY_JSON}");
 
                 ulong operationId = NativeMethods.SegmentServerInstantTrackAndFlush(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
