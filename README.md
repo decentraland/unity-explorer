@@ -37,7 +37,7 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
 
 ## 📋 Requirements
 
-- Unity 2022.3.59f1
+- Unity 6000.0.43f1
 
 ## 🚀 Installation & Setup
 

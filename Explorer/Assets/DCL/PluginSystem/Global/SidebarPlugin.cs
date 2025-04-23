@@ -50,6 +50,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ViewDependencies viewDependencies;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IProfileChangesBus profileChangesBus;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -71,7 +72,8 @@ namespace DCL.PluginSystem.Global
             bool includeFriends,
             IChatHistory chatHistory,
             ViewDependencies viewDependencies,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IProfileChangesBus profileChangesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -93,6 +95,7 @@ namespace DCL.PluginSystem.Global
             this.chatHistory = chatHistory;
             this.viewDependencies = viewDependencies;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.profileChangesBus = profileChangesBus;
         }
 
         public void Dispose() { }
@@ -116,7 +119,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 notificationsBusController,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies, profileChangesBus),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),

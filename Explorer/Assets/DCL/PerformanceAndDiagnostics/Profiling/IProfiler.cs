@@ -33,5 +33,13 @@
         public ulong CurrentSceneUsedHeapSize { get; set; }
 
         public bool CurrentSceneHasStats { get; set; }
+
+        FrameTimesRecorder GpuFrameTimes { get; }
+        FrameTimesRecorder MainThreadFrameTimes { get; }
+        float PhysicsSimulationsAvgInTenFrames { get; }
+
+        void UpdateFrameTimings();
+
+        void ClearFrameTimings();
     }
 }

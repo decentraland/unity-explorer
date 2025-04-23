@@ -59,6 +59,7 @@ using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBusController.NotificationsBus;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -250,6 +251,7 @@ namespace Global.Dynamic
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
             ProvidedAsset<MultiplayerDebugSettings> multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
+            ProvidedAsset<AdaptivePhysicsSettings> physicsSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AdaptivePhysicsSettings, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
@@ -428,6 +430,7 @@ namespace Global.Dynamic
                 terrainContainer,
                 loadingScreen,
                 livekitHealthCheck,
+                bootstrapContainer.DecentralandUrlsSource,
                 mvcManager,
                 selfProfile,
                 dynamicWorldParams,
@@ -500,7 +503,8 @@ namespace Global.Dynamic
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
-                new ClearChatCommand(chatCommandsBus)
+                new ClearChatCommand(chatCommandsBus),
+                new LogsChatCommand(),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -565,6 +569,8 @@ namespace Global.Dynamic
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, profileCache, friendServiceProxy, chatInputBus, includeUserBlocking);
 
+            var profileChangesBus = new ProfileChangesBusController();
+
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, profileThumbnailCache, profileRepository, remoteMetadata, userBlockingCacheProxy);
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
@@ -603,7 +609,7 @@ namespace Global.Dynamic
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderWearablesPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, sharedSpaceManager),
-                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion),
+                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, physicsSettings.Value),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,
@@ -630,7 +636,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory, viewDependencies, sharedSpaceManager),
+                    chatHistory, viewDependencies, sharedSpaceManager, profileChangesBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -701,7 +707,8 @@ namespace Global.Dynamic
                     appArgs,
                     viewDependencies,
                     userBlockingCacheProxy,
-                    sharedSpaceManager
+                    sharedSpaceManager,
+                    profileChangesBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -776,6 +783,7 @@ namespace Global.Dynamic
                     identityCache,
                     viewDependencies,
                     realmNftNamesProvider,
+                    profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
                     isNameEditorEnabled

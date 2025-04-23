@@ -30,7 +30,8 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null,
             bool suppressErrors = false,
-            DownloadHandler? downloadHandler = null
+            DownloadHandler? downloadHandler = null,
+            bool ignoreIrrecoverableErrors = false
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -46,7 +47,8 @@ namespace DCL.WebRequests
                     signInfo,
                     ignoreErrorCodes,
                     suppressErrors,
-                    downloadHandler
+                    downloadHandler,
+                    ignoreIrrecoverableErrors
                 ), op
             )!;
 
@@ -187,9 +189,10 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            bool suppressErrors = false
+            bool suppressErrors = false,
+            bool ignoreIrrecoverableErrors = false
         ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D> =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, IOwnedTexture2D>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo, suppressErrors: suppressErrors);
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, IOwnedTexture2D>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo, suppressErrors: suppressErrors, ignoreIrrecoverableErrors: ignoreIrrecoverableErrors);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip
