@@ -42,7 +42,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -252,7 +251,7 @@ namespace Global.Dynamic
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
 #if UNITY_EDITOR
-                        EditorApplication.isPlaying = false;
+                        UnityEditor.EditorApplication.isPlaying = false;
 #else
                         Application.Quit();
 #endif

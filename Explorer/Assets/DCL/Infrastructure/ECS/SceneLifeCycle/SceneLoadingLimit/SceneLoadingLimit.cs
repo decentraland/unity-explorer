@@ -117,7 +117,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (!isMemoryNormal && sceneTransitionState is SceneTransitionState.NORMAL or SceneTransitionState.TRANSITIONING_TO_NORMAL)
             {
                 easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], SceneTransitionState.REDUCED).Forget();
+                EaseSceneLimitsAsync(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], SceneTransitionState.REDUCED).Forget();
                 sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_REDUCED;
             }
 
@@ -127,7 +127,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (isMemoryNormal && isAbundance && sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED or SceneTransitionState.TRANSITIONING_TO_NORMAL)
             {
                 easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EaseSceneLimits(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[initialKey], SceneTransitionState.NORMAL).Forget();
+                EaseSceneLimitsAsync(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[initialKey], SceneTransitionState.NORMAL).Forget();
                 sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_NORMAL;
             }
 
@@ -139,7 +139,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private CancellationTokenSource easingCancellationTokenSource;
         private readonly float totalFramesToComplete = 500;
 
-        private async UniTask EaseSceneLimits(CancellationToken cancellationToken, SceneLimits start, SceneLimits end, SceneTransitionState finalState)
+        private async UniTask EaseSceneLimitsAsync(CancellationToken cancellationToken, SceneLimits start, SceneLimits end, SceneTransitionState finalState)
         {
             float currentFrames = 0;
             while (!cancellationToken.IsCancellationRequested)
