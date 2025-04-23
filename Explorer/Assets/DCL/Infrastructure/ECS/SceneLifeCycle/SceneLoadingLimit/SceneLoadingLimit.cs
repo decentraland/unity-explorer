@@ -155,18 +155,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sceneTransitionState = finalState;
         }
 
-
         public void SetEnabled(bool isEnabled)
         {
             this.isEnabled = isEnabled;
             UpdateMemoryCap();
         }
-
-
-
-
-
-
 
     }
 }

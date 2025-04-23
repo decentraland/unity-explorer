@@ -63,6 +63,7 @@ namespace ECS.SceneLifeCycle.Tests
             systemMemoryCap = Substitute.For<ISystemMemoryCap>();
             systemMemoryCap.MemoryCapInMB.Returns(long.MaxValue);
             sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap);
+            sceneLoadingLimit.SetEnabled(true);
 
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
             system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, realmData, sceneLoadingLimit);
@@ -82,8 +83,14 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesRequestBatchSize.Returns(30);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
 
+
             for (var i = 0; i < scenesToLoad; i++)
-                CreateScene(300, "7", i);
+            {
+                if (i < expectedScenes)
+                    CreateScene(300, "7", i);
+                else
+                    CreateLOD(300, i);
+            }
 
             system.Update(0f);
 
