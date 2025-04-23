@@ -52,7 +52,7 @@ namespace DCL.Diagnostics
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
 
             // Override Default Unity Logger
-            Debug.unityLogger.logHandler = logger;
+            // Debug.unityLogger.logHandler = logger; // TODO (Santi): Uncomment this!!
 
             // Enable Hub static accessors
             ReportHub.Initialize(logger, enableSceneDebugConsole);
