@@ -99,12 +99,15 @@ namespace DCL.Chat
                 emojisCount = GetEmojisCount(messageText);
             }
 
+            float userNamePreferredWidth = usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth);
+
             if (nameTotalLength > (needsEmojiCount && emojisCount > 0 ? parsedTextLength + emojisCount : parsedTextLength))
-                return usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth);
+                return userNamePreferredWidth;
+
             Vector2 preferredValues = messageContentText.GetPreferredValues(messageText, configurationSo.MaxEntryWidth, 0);
 
             if (preferredValues.x < configurationSo.MaxEntryWidth - configurationSo.BackgroundWidthOffset)
-                return preferredValues.x + configurationSo.BackgroundWidthOffset;
+                return Mathf.Max(preferredValues.x + configurationSo.BackgroundWidthOffset, userNamePreferredWidth);
 
             return configurationSo.MaxEntryWidth;
         }
