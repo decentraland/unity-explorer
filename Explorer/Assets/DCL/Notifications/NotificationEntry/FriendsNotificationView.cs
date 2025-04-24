@@ -50,7 +50,7 @@ namespace DCL.Notifications.NotificationEntry
         public ImageView NotificationImage { get; set; }
 
         [field: SerializeField]
-        public Image NotificationImageBackground { get; private set; }
+        public Image NotificationImageBackground { get; set; }
 
         [field: SerializeField]
         public Image NotificationTypeImage { get; set; }
