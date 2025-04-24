@@ -16,7 +16,7 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class MoveInWorldCameraSystem : BaseUnityLoopSystem
     {
-        private const float ZOOM_SPEED_SCALAR_WINDOWS = 25f;
+        private const float ZOOM_SPEED_SCALAR_WINDOWS = 50f;
         private const float ZOOM_SPEED_SCALAR_MAC = 1f;
 
         private readonly float zoomSpeedScalar;
