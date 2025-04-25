@@ -4,12 +4,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings;
+using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -85,6 +87,7 @@ namespace Global.Dynamic
             World world,
             DecentralandEnvironment decentralandEnvironment,
             DCLVersion dclVersion,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
@@ -110,7 +113,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
 
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
+                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser, featureFlagsCacheProxy);
 
                 if (container.enableAnalytics)
                 {
@@ -212,7 +215,8 @@ namespace Global.Dynamic
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource,
-                IAppArgs appArgs)
+                IAppArgs appArgs,
+                ObjectProxy<FeatureFlagsCache> featureFlagsCache)
         {
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
@@ -224,6 +228,7 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 decentralandUrlsSource.Environment,
+                () => featureFlagsCache.Object?.Configuration.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION) ?? false,
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 

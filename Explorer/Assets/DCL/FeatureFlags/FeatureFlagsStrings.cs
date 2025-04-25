@@ -30,5 +30,7 @@
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
 
         public const string KTX2_CONVERSION = "ktx2-conversion";
+
+        public const string AUTH_CODE_VALIDATION = "number-validation";
     }
 }

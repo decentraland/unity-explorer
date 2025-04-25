@@ -39,6 +39,7 @@ namespace DCL.Web3.Authenticators
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
         private readonly DecentralandEnvironment environment;
+        private readonly Func<bool> shouldWaitForCodeVerificationFunc;
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
@@ -64,6 +65,7 @@ namespace DCL.Web3.Authenticators
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             DecentralandEnvironment environment,
+            Func<bool> shouldWaitForCodeVerificationFunc,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -75,6 +77,7 @@ namespace DCL.Web3.Authenticators
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
             this.environment = environment;
+            this.shouldWaitForCodeVerificationFunc = shouldWaitForCodeVerificationFunc;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -177,7 +180,10 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                RequestCodeVerificationStatusAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
+                if (shouldWaitForCodeVerificationFunc.Invoke())
+                    WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
+                else
+                    codeVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
                 LoginAuthApiResponse response = await RequestWalletConfirmationAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
@@ -501,7 +507,7 @@ namespace DCL.Web3.Authenticators
         /// Waits until we receive the verification status from the server
         /// So then we execute the loginVerificationCallback
         /// </summary>
-        private async UniTask RequestCodeVerificationStatusAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
+        private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
         {
             codeVerificationTask?.TrySetCanceled(ct);
             codeVerificationTask = new UniTaskCompletionSource<SocketIOResponse>();

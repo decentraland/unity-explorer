@@ -55,7 +55,8 @@ namespace DCL.Web3.Authenticators
                         "eth_getBlockByNumber",
                         "eth_getCode",
                     },
-                    decentralandUrlsSource.Environment
+                    decentralandUrlsSource.Environment,
+                    () => false
                 );
 
                 originApi = origin;
