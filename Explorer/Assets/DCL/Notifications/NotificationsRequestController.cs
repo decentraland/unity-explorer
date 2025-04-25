@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.Serialization;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Optimization.ThreadSafePool;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Newtonsoft.Json;
@@ -118,24 +119,48 @@ namespace DCL.Notifications
                 if (notifications.Count > 0)
                     lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-                await UniTask.WhenAll(notifications.Select(notification =>
-                {
-                    notificationsBusController.AddNotification(notification);
-                    return SetNotificationAsReadAsync(notification.Id, ct);
-                }));
+
+                using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
+                foreach (INotification notification in notifications)
+                    try
+                    {
+                        notificationsBusController.AddNotification(notification);
+                        list.Add(notification.Id);
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogException(e, ReportCategory.UI);
+                    }
+
+                await SetNotificationAsReadAsync(list, ct);
             }
             while (ct.IsCancellationRequested == false);
         }
 
         public async UniTask SetNotificationAsReadAsync(string notificationId, CancellationToken ct)
         {
+            using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
+            list.Add(notificationId);
+            await SetNotificationAsReadAsync(list, ct);
+        }
+
+        private async UniTask SetNotificationAsReadAsync(IReadOnlyCollection<string> notificationIds, CancellationToken ct)
+        {
             if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired) return;
 
             bodyBuilder.Clear();
+            bodyBuilder.Append("{\"notificationIds\":[");
 
-            bodyBuilder.Append("{\"notificationIds\":[\"")
-                       .Append(notificationId)
-                       .Append("\"]}");
+            var first = true;
+            foreach (string id in notificationIds)
+            {
+                if (!first)
+                    bodyBuilder.Append(',');
+                bodyBuilder.Append('\"').Append(id).Append('\"');
+                first = false;
+            }
+
+            bodyBuilder.Append("]}");
 
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
