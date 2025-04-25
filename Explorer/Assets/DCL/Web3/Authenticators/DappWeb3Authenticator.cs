@@ -51,7 +51,8 @@ namespace DCL.Web3.Authenticators
         private SocketIO? authApiWebSocket;
         private ClientWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
-        private IWeb3VerifiedAuthenticator.VerificationDelegate? loginVerificationCallback;
+        private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
+        private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
         private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
@@ -176,7 +177,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
+                RequestCodeVerificationStatusAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
 
                 LoginAuthApiResponse response = await RequestWalletConfirmationAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
@@ -215,7 +216,7 @@ namespace DCL.Web3.Authenticators
             await DisconnectFromAuthApiAsync();
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            loginVerificationCallback = callback;
+            codeVerificationCallback = callback;
 
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
             signatureVerificationCallback = callback;
@@ -224,6 +225,9 @@ namespace DCL.Web3.Authenticators
         {
             if (authApiWebSocket is { Connected: true })
                 await authApiWebSocket.DisconnectAsync();
+
+            codeVerificationTask?.TrySetCanceled();
+            signatureOutcomeTask?.TrySetCanceled();
         }
 
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
@@ -404,6 +408,9 @@ namespace DCL.Web3.Authenticators
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response) =>
             signatureOutcomeTask?.TrySetResult(response);
 
+        private void ProcessCodeVerificationStatus(SocketIOResponse response) =>
+            codeVerificationTask?.TrySetResult(response);
+
         private async UniTask<T> RequestWalletConfirmationAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
         {
             webBrowser.OpenUrl($"{signatureWebAppUrl}/{requestId}");
@@ -458,6 +465,7 @@ namespace DCL.Web3.Authenticators
                 authApiWebSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
 
                 authApiWebSocket.On("outcome", ProcessSignatureOutcomeMessage);
+                authApiWebSocket.On("request-validation-status", ProcessCodeVerificationStatus);
             }
 
             if (authApiWebSocket.Connected) return;
@@ -488,5 +496,31 @@ namespace DCL.Web3.Authenticators
         private string GetNetworkId() =>
             // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
             environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+
+        /// <summary>
+        /// Waits until we receive the verification status from the server
+        /// So then we execute the loginVerificationCallback
+        /// </summary>
+        private async UniTask RequestCodeVerificationStatusAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
+        {
+            codeVerificationTask?.TrySetCanceled(ct);
+            codeVerificationTask = new UniTaskCompletionSource<SocketIOResponse>();
+
+            TimeSpan duration = expiration - DateTime.UtcNow;
+
+            try
+            {
+                SocketIOResponse response = await codeVerificationTask.Task.Timeout(duration).AttachExternalCancellation(ct);
+
+                var validation = response.GetValue<CodeVerificationStatus>();
+
+                if (validation.requestId == requestId)
+                {
+                    await UniTask.SwitchToMainThread(ct);
+                    codeVerificationCallback?.Invoke(code, expiration, requestId);
+                }
+            }
+            catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
+        }
     }
 }
