@@ -32,10 +32,12 @@ namespace DCL.Interaction.Systems
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
-        //TODO FRAN: we must add a new type of InputAction to show the right click here
+        //TODO FRAN: we must add a new type of InputAction to show the right click here,
+        //but we cant as these are SDK input actions, so we need to override this
+        // FUN
         private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip = new (HOVER_TOOLTIP, InputAction.IaRight);
         private Profile? currentProfileHovered;
-        private Vector3? currentPositionHovered;
+        private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
 
         private ProcessOtherAvatarsInteractionSystem(
@@ -70,6 +72,7 @@ namespace DCL.Interaction.Systems
             ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
         {
             currentProfileHovered = null;
+            currentPositionHovered = null;
             hoverFeedbackComponent.Remove(viewProfileTooltip);
 
             bool canHover = !eventSystem.IsPointerOverGameObject();
@@ -85,7 +88,7 @@ namespace DCL.Interaction.Systems
                                            || World.Has<BlockedPlayerComponent>(entityRef))
                 return;
 
-            currentPositionHovered = raycastResultForGlobalEntities.GetRaycastHit().transform.position;
+            currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, isAtDistance: true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
