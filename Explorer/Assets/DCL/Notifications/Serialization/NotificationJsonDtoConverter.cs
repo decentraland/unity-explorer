@@ -22,6 +22,8 @@ namespace DCL.Notifications.Serialization
         private const string STREAMING_TIME_EXCEEDED = "streaming_time_exceeded";
         private const string STREAMING_PLACE_UPDATED = "streaming_place_updated";
 
+        private static readonly JArray EMPTY_J_ARRAY = new ();
+
         private readonly List<string> excludedTypes = new ();
 
         public NotificationJsonDtoConverter(bool includeFriendsNotifications)
@@ -47,7 +49,7 @@ namespace DCL.Notifications.Serialization
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            var notificationsList = JObject.Load(reader).Value<JArray>("notifications") as IEnumerable<JToken> ?? Array.Empty<JToken>();
+            var notificationsList = JObject.Load(reader).Value<JArray>("notifications") ?? EMPTY_J_ARRAY;
             existingValue ??= new List<INotification>();
 
             foreach (var item in notificationsList)
