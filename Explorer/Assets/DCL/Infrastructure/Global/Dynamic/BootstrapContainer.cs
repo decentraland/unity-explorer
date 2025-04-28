@@ -218,6 +218,8 @@ namespace Global.Dynamic
                 IAppArgs appArgs,
                 ObjectProxy<FeatureFlagsCache> featureFlagsCache)
         {
+
+
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
@@ -228,7 +230,7 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 decentralandUrlsSource.Environment,
-                () => featureFlagsCache.Object?.Configuration.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION) ?? false,
+                new AuthCodeVerificationFeatureFlag(featureFlagsCache),
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 
@@ -239,6 +241,8 @@ namespace Global.Dynamic
 
             return (dappWeb3Authenticator, coreWeb3Authenticator);
         }
+
+
 
         public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)
         {
@@ -251,6 +255,19 @@ namespace Global.Dynamic
 
             return await assetsProvisioner.ProvideMainAssetAsync(reportHandlingSettings, ct, nameof(ReportHandlingSettings));
         }
+    }
+
+    internal class AuthCodeVerificationFeatureFlag : DappWeb3Authenticator.ICodeVerificationFeatureFlag
+    {
+        private readonly ObjectProxy<FeatureFlagsCache> featureFlagsCache;
+
+        public AuthCodeVerificationFeatureFlag(ObjectProxy<FeatureFlagsCache> featureFlagsCache)
+        {
+            this.featureFlagsCache = featureFlagsCache;
+        }
+
+        public bool ShouldWaitForCodeVerificationFromServer =>
+            featureFlagsCache.Object?.Configuration.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION) ?? false;
     }
 
     [Serializable]

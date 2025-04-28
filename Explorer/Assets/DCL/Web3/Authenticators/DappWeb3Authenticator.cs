@@ -39,7 +39,7 @@ namespace DCL.Web3.Authenticators
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
         private readonly DecentralandEnvironment environment;
-        private readonly Func<bool> shouldWaitForCodeVerificationFunc;
+        private readonly ICodeVerificationFeatureFlag codeVerificationFeatureFlag;
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
@@ -65,7 +65,7 @@ namespace DCL.Web3.Authenticators
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             DecentralandEnvironment environment,
-            Func<bool> shouldWaitForCodeVerificationFunc,
+            ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -77,7 +77,7 @@ namespace DCL.Web3.Authenticators
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
             this.environment = environment;
-            this.shouldWaitForCodeVerificationFunc = shouldWaitForCodeVerificationFunc;
+            this.codeVerificationFeatureFlag = codeVerificationFeatureFlag;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -180,7 +180,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                if (shouldWaitForCodeVerificationFunc.Invoke())
+                if (codeVerificationFeatureFlag.ShouldWaitForCodeVerificationFromServer)
                     WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
                 else
                     codeVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
