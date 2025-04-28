@@ -3,16 +3,20 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles.Self;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
+using ECS;
 using MVC;
 using System;
 using System.Threading;
@@ -35,8 +39,13 @@ namespace DCL.UI.Sidebar
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISelfProfile selfProfile;
+        private readonly IRealmData realmData;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
+        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
 
         public event Action? HelpOpened;
 
@@ -54,9 +63,13 @@ namespace DCL.UI.Sidebar
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
+            bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            ISelfProfile selfProfile,
+            IRealmData realmData,
+            FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -71,7 +84,11 @@ namespace DCL.UI.Sidebar
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.selfProfile = selfProfile;
+            this.realmData = realmData;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public override void Dispose()
@@ -79,6 +96,7 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
+            checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -132,6 +150,9 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+
+            checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
+            CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
@@ -181,6 +202,26 @@ namespace DCL.UI.Sidebar
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
+        private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(false);
+
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
+
+            includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
+                includeMarketplaceCredits,
+                ownProfile.UserId,
+                featureFlagsCache,
+                ct);
+
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
+            if (includeMarketplaceCredits)
+                viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
+
         #region Sidebar button handlers
 
         private void OnUnreadMessagesButtonClickedAsync()
@@ -198,16 +239,17 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
+        private async void OnMarketplaceCreditsButtonClickedAsync() =>
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false));
+
         private void OnHelpButtonClicked()
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked()
-        {
+        private void OnControlsButtonClicked() =>
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
-        }
 
         private async void OpenSidebarSettingsAsync()
         {

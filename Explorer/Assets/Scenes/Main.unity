@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 9
+  serializedVersion: 10
   m_Fog: 1
   m_FogColor: {r: 0.8352941, g: 0.29178533, b: 0.48649436, a: 0.16862746}
   m_FogMode: 2
@@ -42,8 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
-  m_GIWorkflowMode: 1
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -66,9 +66,6 @@ LightmapSettings:
     m_LightmapParameters: {fileID: 0}
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
-    m_FinalGather: 0
-    m_FinalGatherFiltering: 1
-    m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
     m_MixedBakeMode: 2
     m_BakeBackend: 1
@@ -155,6 +152,9 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 0}
   m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
 --- !u!4 &46733615
 Transform:
   m_ObjectHideFlags: 0
@@ -323,9 +323,8 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 233166825}
   m_Enabled: 1
-  serializedVersion: 10
+  serializedVersion: 11
   m_Type: 1
-  m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_Range: 10
@@ -375,8 +374,12 @@ Light:
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
 --- !u!4 &233166828
 Transform:
   m_ObjectHideFlags: 0
@@ -494,47 +497,62 @@ MonoBehaviour:
       m_AssetGUID: dbfb7e67a438449f9a887f820f733868
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <DirectionalLight>k__BackingField: {fileID: 233166827}
     <NametagsData>k__BackingField:
       m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <CursorSettings>k__BackingField:
       m_AssetGUID: 7382805fd18299d41925547efbad99f0
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <MainUIView>k__BackingField:
       m_AssetGUID: c7887090193b1ec4c994ad22169b86db
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <GeneralAudioMixer>k__BackingField:
       m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <MultiplayerDebugSettings>k__BackingField:
       m_AssetGUID: d23ca58b5a012ef46a39310b9a2e4e05
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    <AdaptivePhysicsSettings>k__BackingField:
+      m_AssetGUID: b68ba436e63c39949b58b7aac96c291c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <AppVerRedirectionScreenPrefab>k__BackingField:
       m_AssetGUID: f2df2b2c3721c5840b06c8fe73d5d665
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <BlockedScreenPrefab>k__BackingField:
       m_AssetGUID: 36bcbe134ec574902b49db6464414b03
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <MinimumSpecsScreenPrefab>k__BackingField:
       m_AssetGUID: db7da980fc6384f848eeeb3077442864
       m_SubObjectName: 
       m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <UserNameColors>k__BackingField:
     - {r: 0.67138505, g: 0.38714847, b: 0.9433962, a: 1}
@@ -570,6 +588,7 @@ MonoBehaviour:
     m_AssetGUID: b5efcea1481b64193ae5b5029f0c673f
     m_SubObjectName: 
     m_SubObjectType: 
+    m_SubObjectGUID: 
     m_EditorAssetChanged: 0
 --- !u!114 &614279045 stripped
 MonoBehaviour:
@@ -615,6 +634,9 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 2a0aec8d6f95bf34ba66a7d0b5f1f158, type: 3}
   m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
 --- !u!4 &946305964
 Transform:
   m_ObjectHideFlags: 0
@@ -773,6 +795,9 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 0}
   m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
 --- !u!4 &1901323879
 Transform:
   m_ObjectHideFlags: 0

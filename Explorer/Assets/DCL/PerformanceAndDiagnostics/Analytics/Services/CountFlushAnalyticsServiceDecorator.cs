@@ -36,6 +36,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             }
         }
 
+        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        {
+            lock (monitor)
+            {
+                origin.InstantTrackAndFlush(eventName, properties);
+            }
+        }
+
         public void AddPlugin(EventPlugin plugin)
         {
             origin.AddPlugin(plugin);

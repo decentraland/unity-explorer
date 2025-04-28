@@ -210,8 +210,18 @@ namespace Global.Dynamic
 
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
-                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
+                    bootstrapContainer,
+                    staticContainer!,
+                    scenePluginSettingsContainer,
+                    settings,
+                    dynamicSettings,
+                    uiToolkitRoot,
+                    scenesUIRoot,
+                    cursorRoot,
+                    backgroundMusic,
+                    worldInfoTool.EnsureNotNull(),
+                    playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,

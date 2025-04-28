@@ -13,17 +13,15 @@ MonoBehaviour:
   m_Name: Wearables
   m_EditorClassIdentifier: 
   m_GroupName: Wearables
-  m_Data:
-    m_SerializedData: []
   m_GUID: 8180de1f5c609ab4eba3413c504ab316
   m_SerializeEntries:
-  - m_GUID: 81ea8febf47eb484986af220584361dc
-    m_Address: DefaultWearableDefinition
+  - m_GUID: 2d002c6a594460f4cb42100b50e7e53a
+    m_Address: EMPTY_DEFAULT_WEARABLE
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2d002c6a594460f4cb42100b50e7e53a
-    m_Address: EMPTY_DEFAULT_WEARABLE
+  - m_GUID: 81ea8febf47eb484986af220584361dc
+    m_Address: DefaultWearableDefinition
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -40,7 +40,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
 
         private void Update()
         {
-            system.Update(Time.deltaTime);
+            system.Update(UnityEngine.Time.deltaTime);
         }
     }
 }

@@ -15,6 +15,7 @@ using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
@@ -255,7 +256,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(globalWorld),
+                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
@@ -267,7 +268,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.FeatureFlagsCache),
+                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy, container.FeatureFlagsCache),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.FeatureFlagsCache, container.MapPinsEventBus),
@@ -287,6 +288,7 @@ namespace Global
                 assetBundlePlugin,
                 new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
                     container.RealmPartitionSettings),
+                new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,
             };

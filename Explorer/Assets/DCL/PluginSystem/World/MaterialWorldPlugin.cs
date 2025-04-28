@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.World
             CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudget, memoryBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
-            finalizeWorldSystems.Add(CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial));
+            finalizeWorldSystems.Add(CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial, videoTexturePool));
         }
 
         [Serializable]
