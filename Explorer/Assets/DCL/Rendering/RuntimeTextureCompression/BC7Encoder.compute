@@ -1,9 +1,4 @@
-﻿//
-// Copyright (c) 2012 THQ Inc.
-// All rights reserved.
-//
-
-// Define this if you want to pick the best shapes to refine.
+﻿// Define this if you want to pick the best shapes to refine.
 // In my tests, it was better to not cull shapes and use less iterations.
 // You get about the same speed and better quality.
 //#define __CULL_SHAPES
@@ -39,7 +34,7 @@
 // Interpolation constants.
 #define BC7_INTERPOLATION_MAX_WEIGHT			64
 #define BC7_INTERPOLATION_INV_MAX_WEIGHT		0.015625f
-#define BC7_INTERPOLATION_MAX_WEIGHT_SHIFT	6
+#define BC7_INTERPOLATION_MAX_WEIGHT_SHIFT	    6
 #define BC7_INTERPOLATION_ROUND					32
 
 // The delta when calculating the error gradient.
