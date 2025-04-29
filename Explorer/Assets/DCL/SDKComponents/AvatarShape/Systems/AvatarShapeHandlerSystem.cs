@@ -52,11 +52,20 @@ namespace ECS.Unity.AvatarShape.Systems
             // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world
             Transform globalTransform = globalTransformPool.Get();
             globalTransform.SetParent(transformComponent.Transform);
+            // During scene loading, the scene is positioned at MordorConstants.SCENE_MORDOR_POSITION.
+            // We need to reset the local transform values to maintain correct avatar positioning:
+            // 1. CharacterInterpolationMovementComponent works in global space and updates the position on every frame
+            // 2. When the scene root moves from Mordor to its final position, we want the avatar to move with it
+            // 3. By setting local values to identity/zero/one, we ensure proper relative positioning
+            globalTransform.localPosition = Vector3.zero;
+            globalTransform.localRotation = Quaternion.identity;
+            globalTransform.localScale = Vector3.one;
 
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
                 new CharacterTransform(globalTransform),
-                new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
+                // Disabled so we keep the relative position to the scene transform
+                // new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
