@@ -230,8 +230,6 @@ namespace DCL.MarketplaceCredits
 
         public override void Dispose()
         {
-            base.Dispose();
-
             showCreditsUnlockedCts.SafeCancelAndDispose();
             showErrorNotificationCts.SafeCancelAndDispose();
             sidebarButtonStateCts.SafeCancelAndDispose();
