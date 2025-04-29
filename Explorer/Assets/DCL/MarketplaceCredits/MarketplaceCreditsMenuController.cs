@@ -230,20 +230,26 @@ namespace DCL.MarketplaceCredits
 
         public override void Dispose()
         {
+            base.Dispose();
+
             showCreditsUnlockedCts.SafeCancelAndDispose();
             showErrorNotificationCts.SafeCancelAndDispose();
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
-            viewInstance!.OnAnyPlaceClick -= OnAnyPlaceClicked;
-            viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
-            viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenGoShoppingLink);
 
-            marketplaceCreditsWelcomeSubController.Dispose();
-            marketplaceCreditsVerifyEmailSubController.Dispose();
-            marketplaceCreditsGoalsOfTheWeekSubController.Dispose();
-            marketplaceCreditsWeekGoalsCompletedSubController.Dispose();
-            marketplaceCreditsProgramEndedSubController.Dispose();
+            if (viewInstance != null)
+            {
+                viewInstance.OnAnyPlaceClick -= OnAnyPlaceClicked;
+                viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
+                viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenGoShoppingLink);
+            }
+
+            marketplaceCreditsWelcomeSubController?.Dispose();
+            marketplaceCreditsVerifyEmailSubController?.Dispose();
+            marketplaceCreditsGoalsOfTheWeekSubController?.Dispose();
+            marketplaceCreditsWeekGoalsCompletedSubController?.Dispose();
+            marketplaceCreditsProgramEndedSubController?.Dispose();
         }
 
         private void CloseAllSections()
