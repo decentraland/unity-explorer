@@ -111,6 +111,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public void SetupCameraComponentCorrectly()
         {
             world.Remove<MainCameraComponent>(mainCameraEntity);
+            // Queries in SystemUpdate need the state provider's value
             sceneStateProvider.IsCurrent.Returns(true);
             SystemUpdate();
             Assert.IsTrue(world.Has<MainCameraComponent>(mainCameraEntity));
@@ -120,6 +121,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public void NotSetupComponentWhenNotInCurrentScene()
         {
             world.Remove<MainCameraComponent>(mainCameraEntity);
+            // Queries in SystemUpdate need the state provider's value
             sceneStateProvider.IsCurrent.Returns(false);
             SystemUpdate();
             Assert.IsFalse(world.Has<MainCameraComponent>(mainCameraEntity));
@@ -129,11 +131,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         public void SetupComponentWhenEnteringScene()
         {
             world.Remove<MainCameraComponent>(mainCameraEntity);
+            // Queries in SystemUpdate need the state provider's value
             sceneStateProvider.IsCurrent.Returns(false);
             SystemUpdate();
             Assert.IsFalse(world.Has<MainCameraComponent>(mainCameraEntity));
 
-            // "Enter scene"
+            // "Enter scene" by setting state provider
             sceneStateProvider.IsCurrent.Returns(true);
             SystemUpdate();
             Assert.IsTrue(world.Has<MainCameraComponent>(mainCameraEntity));
@@ -144,6 +147,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         {
             world.Remove<MainCameraComponent>(mainCameraEntity);
             var nonCameraEntity = world.Create(new PBMainCamera());
+            // Set state for SystemUpdate queries
+            sceneStateProvider.IsCurrent.Returns(true);
             SystemUpdate();
             Assert.IsFalse(world.Has<MainCameraComponent>(nonCameraEntity));
         }
@@ -151,6 +156,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void UpdateCinemachineCameraCorrectly()
         {
+            sceneStateProvider.IsCurrent.Returns(true);
             SystemUpdate();
             Assert.IsNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.IsFalse(sdkCinemachineCam1.enabled);
@@ -159,6 +165,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsNotNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
@@ -169,6 +176,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbMainCameraComponent.ClearVirtualCameraEntity();
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
@@ -179,6 +187,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbMainCameraComponent.VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity2).Id;
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsTrue(sdkCinemachineCam2.enabled);
@@ -190,6 +199,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbMainCameraComponent.VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id;
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam2.enabled);
             Assert.IsTrue(sdkCinemachineCam1.enabled);
@@ -201,6 +211,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void UpdateGlobalWorldCameraModeCorrectly()
         {
+            sceneStateProvider.IsCurrent.Returns(true);
             SystemUpdate();
             Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
 
@@ -208,6 +219,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.AreEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
 
@@ -215,6 +227,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbMainCameraComponent.ClearVirtualCameraEntity();
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
         }
@@ -222,11 +235,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void UpdateOnVirtualCameraLookAtChangeCorrectly()
         {
+            sceneStateProvider.IsCurrent.Returns(true);
+
             var pbVirtualCamera = new PBVirtualCamera() { DefaultTransition = new CameraTransition() };
             world.Set(virtualCameraEntity1, pbVirtualCamera);
             var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.IsNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachineHardLookAt>());
@@ -239,6 +255,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbVirtualCamera.IsDirty = true;
             world.Set(virtualCameraEntity1, pbVirtualCamera);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.IsNotNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachineHardLookAt>());
@@ -250,18 +267,22 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             pbVirtualCamera.IsDirty = true;
             world.Set(virtualCameraEntity1, pbVirtualCamera);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.IsNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachineHardLookAt>());
             Assert.IsNotNull(sdkCinemachineCam1.GetRig(1).GetCinemachineComponent<CinemachinePOV>());
             Assert.IsNull(sdkCinemachineCam1.m_LookAt);
+            // Releasing LookAt shouldn't switch back to default camera immediately if scene is current
+            Assert.AreSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
         }
 
         [Test]
         public void HandleEnterAndLeaveSceneCorrectly()
         {
-            // Assign vCam while outside scene
-            sceneStateProvider.IsCurrent.Returns(false);
+            // Assign vCam while outside scene (scene not current)
+            system.OnSceneIsCurrentChanged(false);
+            sceneStateProvider.IsCurrent.Returns(false); // Set state for SystemUpdate
             var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
             world.Set(mainCameraEntity, pbMainCameraComponent);
             SystemUpdate();
@@ -270,8 +291,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.AreNotSame(sdkCinemachineCam1.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
             Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
 
-            // "enter scene"
-            sceneStateProvider.IsCurrent.Returns(true);
+            // "enter scene" by setting state provider
+            sceneStateProvider.IsCurrent.Returns(true); // Set state for SystemUpdate
             SystemUpdate();
             Assert.IsTrue(sdkCinemachineCam1.enabled);
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
@@ -280,21 +301,23 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             // change vCam while inside scene
             pbMainCameraComponent.VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity2).Id;
             world.Set(mainCameraEntity, pbMainCameraComponent);
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsTrue(sdkCinemachineCam2.enabled);
             Assert.AreSame(sdkCinemachineCam2, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreSame(sdkCinemachineCam2.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
 
-            // "exit scene"
-            sceneStateProvider.IsCurrent.Returns(false);
+            // "exit scene" by triggering the listener
+            system.OnSceneIsCurrentChanged(false);
+            sceneStateProvider.IsCurrent.Returns(false); // Set state for SystemUpdate
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsFalse(sdkCinemachineCam2.enabled);
             Assert.AreSame(defaultCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject);
 
-            // "re-enter scene"
-            sceneStateProvider.IsCurrent.Returns(true);
+            // "re-enter scene" by setting state provider
+            sceneStateProvider.IsCurrent.Returns(true); // Set state for SystemUpdate
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsTrue(sdkCinemachineCam2.enabled);
@@ -305,10 +328,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void HandleComponentRemoveCorrectly()
         {
+            // Ensure scene is current via state provider only
+            sceneStateProvider.IsCurrent.Returns(true);
+
             // Set virtualCameraEntity1 as active vCam
             var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsNotNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
@@ -318,6 +345,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             // Remove PB component
             world.Remove<PBMainCamera>(mainCameraEntity);
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsFalse(sdkCinemachineCam2.enabled);
@@ -328,10 +356,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         [Test]
         public void HandleEntityDestructionCorrectly()
         {
+            // Ensure scene is current via state provider only
+            sceneStateProvider.IsCurrent.Returns(true);
+
             // Set virtualCameraEntity1 as active vCam
             var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
             world.Set(mainCameraEntity, pbMainCameraComponent);
 
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsNotNull(world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
             Assert.AreSame(sdkCinemachineCam1, world.Get<MainCameraComponent>(mainCameraEntity).virtualCameraInstance);
@@ -341,6 +373,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             // Add DeleteEntityIntention component
             world.Add<DeleteEntityIntention>(mainCameraEntity);
+            sceneStateProvider.IsCurrent.Returns(true); // Keep scene current for update
             SystemUpdate();
             Assert.IsFalse(sdkCinemachineCam1.enabled);
             Assert.IsFalse(sdkCinemachineCam2.enabled);

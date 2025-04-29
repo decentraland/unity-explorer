@@ -1,7 +1,8 @@
-﻿using System.Threading;
+﻿using Arch.Core;
+using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using ECS.SceneLifeCycle;
+using System;
 
 namespace DCL.Chat.Commands
 {
@@ -17,18 +18,38 @@ namespace DCL.Chat.Commands
         public string Description => "<b>/reload </b>\n  Reload the current scene";
 
         private readonly ECSReloadScene reloadScene;
+        private readonly World globalWorld;
+        private readonly Entity playerEntity;
 
-        public ReloadSceneChatCommand(ECSReloadScene reloadScene)
+        private readonly Func<bool> sceneReadyCondition;
+
+        public ReloadSceneChatCommand(ECSReloadScene reloadScene, World globalWorld, Entity playerEntity, IScenesCache scenesCache)
         {
             this.reloadScene = reloadScene;
+            this.globalWorld = globalWorld;
+            this.playerEntity = playerEntity;
+
+            this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
         }
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (await reloadScene.TryReloadSceneAsync(ct))
-                return "🟢 Current scene has been reloaded";
+            globalWorld.Add<SceneReloadComponent>(playerEntity);
 
-            return "🔴 You need to be in a SDK7 scene to reload it.";
+            try
+            {
+                bool isSuccess = await reloadScene.TryReloadSceneAsync(ct);
+                await UniTask.WaitUntil(sceneReadyCondition, cancellationToken: ct);
+                return isSuccess
+                    ? "🟢 Current scene has been reloaded"
+                    : "🔴 You need to be in a SDK7 scene to reload it.";
+            }
+            finally
+            {
+                globalWorld.Remove<SceneReloadComponent>(playerEntity);
+            }
         }
+
+        public struct SceneReloadComponent {}
     }
 }

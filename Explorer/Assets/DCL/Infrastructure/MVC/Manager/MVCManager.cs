@@ -69,6 +69,9 @@ namespace MVC
             // Find the controller
             IController controller = controllers[typeof(IController<TView, TInputData>)];
 
+            if(controller.State != ControllerState.ViewHidden)
+                return;
+
             ct = ct.Equals(default(CancellationToken))
                 ? destructionCancellationTokenSource.Token
                 : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionCancellationTokenSource.Token).Token;
@@ -197,7 +200,8 @@ namespace MVC
 
         private async UniTask WaitForPopupCloserClickAsync(IController currentController, CancellationToken ct)
         {
-            do { await popupCloser.CloseButton.OnClickAsync(ct); }
+            do { await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
+                                        UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused)); }
             while (currentController != windowsStackManager.TopMostPopup);
         }
     }

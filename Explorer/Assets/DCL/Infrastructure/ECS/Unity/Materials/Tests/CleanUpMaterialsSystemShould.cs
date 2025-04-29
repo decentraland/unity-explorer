@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -25,7 +26,7 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
+            system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>(), Substitute.For<IExtendedObjectPool<Texture2D>>());
 
             e = world.Create(new MaterialComponent(new MaterialData()) { AlbedoTexPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("url") }, PartitionComponent.TOP_PRIORITY) }, new DeleteEntityIntention());
         }

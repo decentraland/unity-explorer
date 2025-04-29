@@ -5,13 +5,16 @@ using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -19,8 +22,10 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
+using System.Collections.Generic;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -186,6 +191,116 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
             Assert.That(component.Promise.LoadingIntention, Is.EqualTo(default(GetGltfContainerAssetIntention)));
             Assert.That(component.Promise.Result!.Value.Succeeded, Is.EqualTo(false));
+        }
+
+        [Test]
+        public void SetNeedsColliderBoundsCheckWhenVisibleMeshesCollisionMaskUpdates()
+        {
+            // Set up a component with a successful result
+            var mockRoot = new GameObject("MockRoot");
+            var mockAssetData = Substitute.For<IStreamableRefCountData>();
+            var mockAsset = GltfContainerAsset.Create(mockRoot, mockAssetData);
+            
+            var intent = new GetGltfContainerAssetIntention(
+                GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME,
+                GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, 
+                new CancellationTokenSource());
+                
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                world, intent, PartitionComponent.TOP_PRIORITY);
+                
+            // Add the result to the promise entity
+            var successResult = new StreamableLoadingResult<GltfContainerAsset>(mockAsset);
+            world.Add(promise.Entity, successResult);
+            
+            // Create component with initial state of Finished
+            var component = new GltfContainerComponent(
+                ColliderLayer.ClNone, 
+                ColliderLayer.ClNone,
+                promise);
+            component.State = LoadingState.Finished;
+            
+            // Ensure the result is available
+            bool resultRetrieved = component.Promise.TryGetResult(world, out _);
+            Assert.That(resultRetrieved, Is.True);
+            
+            // Create entity with the component
+            var entity = world.Create(
+                component, 
+                new PBGltfContainer
+                {
+                    Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME,
+                    VisibleMeshesCollisionMask = (uint)ColliderLayer.ClCustom3,
+                    IsDirty = true
+                }, 
+                PartitionComponent.TOP_PRIORITY, 
+                new CRDTEntity());
+            
+            // Update the system which should process the mask change
+            system.Update(0);
+            
+            // Verify the component has been updated
+            component = world.Get<GltfContainerComponent>(entity);
+            Assert.That(component.VisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClCustom3));
+            Assert.That(component.NeedsColliderBoundsCheck, Is.True, "NeedsColliderBoundsCheck should be set to true");
+            
+            // Cleanup
+            UnityObjectUtils.SafeDestroy(mockRoot);
+        }
+        
+        [Test]
+        public void SetNeedsColliderBoundsCheckWhenInvisibleMeshesCollisionMaskUpdates()
+        {
+            // Set up a component with a successful result
+            var mockRoot = new GameObject("MockRoot");
+            var mockAssetData = Substitute.For<IStreamableRefCountData>();
+            var mockAsset = GltfContainerAsset.Create(mockRoot, mockAssetData);
+            
+            var intent = new GetGltfContainerAssetIntention(
+                GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME,
+                GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, 
+                new CancellationTokenSource());
+                
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                world, intent, PartitionComponent.TOP_PRIORITY);
+                
+            // Add the result to the promise entity
+            var successResult = new StreamableLoadingResult<GltfContainerAsset>(mockAsset);
+            world.Add(promise.Entity, successResult);
+            
+            // Create component with initial state of Finished
+            var component = new GltfContainerComponent(
+                ColliderLayer.ClNone, 
+                ColliderLayer.ClNone,
+                promise);
+            component.State = LoadingState.Finished;
+            
+            // Ensure the result is available
+            bool resultRetrieved = component.Promise.TryGetResult(world, out _);
+            Assert.That(resultRetrieved, Is.True);
+            
+            // Create entity with the component
+            var entity = world.Create(
+                component, 
+                new PBGltfContainer
+                {
+                    Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME,
+                    InvisibleMeshesCollisionMask = (uint)ColliderLayer.ClCustom7,
+                    IsDirty = true
+                }, 
+                PartitionComponent.TOP_PRIORITY, 
+                new CRDTEntity());
+            
+            // Update the system which should process the mask change
+            system.Update(0);
+            
+            // Verify the component has been updated
+            component = world.Get<GltfContainerComponent>(entity);
+            Assert.That(component.InvisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClCustom7));
+            Assert.That(component.NeedsColliderBoundsCheck, Is.True, "NeedsColliderBoundsCheck should be set to true");
+            
+            // Cleanup
+            UnityObjectUtils.SafeDestroy(mockRoot);
         }
     }
 }

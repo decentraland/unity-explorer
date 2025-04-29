@@ -55,6 +55,9 @@ namespace DCL.Navmap
         public RectTransform LayoutRoot { get; private set; }
 
         [field: SerializeField]
+        public ScrollRect EventsScrollRect { get; private set; }
+
+        [field: SerializeField]
         public EventScheduleElementAssetReference ScheduleElementRef { get; private set; }
 
         [field: SerializeField]

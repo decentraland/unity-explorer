@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
         private readonly ICursor cursor;
-        private NftPromptController nftPromptController;
+        private NftPromptController? nftPromptController;
 
         public NftPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -57,7 +57,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            nftPromptController.Dispose();
+            nftPromptController?.Dispose();
         }
 
         public class NftPromptSettings : IDCLPluginSettings

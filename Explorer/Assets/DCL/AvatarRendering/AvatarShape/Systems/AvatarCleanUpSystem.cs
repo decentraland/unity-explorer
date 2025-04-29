@@ -83,16 +83,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             AvatarBase avatarBase, ref AvatarCustomSkinningComponent skinningComponent, ref DeleteEntityIntention deleteEntityIntention)
         {
-            // Use frame budget for destruction as well
-            if (!instantiationFrameTimeBudget.TrySpendBudget())
-            {
-                avatarBase.gameObject.SetActive(false);
-                deleteEntityIntention.DeferDeletion = true;
-                return;
-            }
-
-            InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
             deleteEntityIntention.DeferDeletion = false;
+            InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,

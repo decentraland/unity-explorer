@@ -56,7 +56,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
         private const int GRID_POOL_MAX_SIZE = 500;
         private const int ANIMATION_DELAY = 300;
-        private const int MACOS_SCROLL_SENSITIVITY_SCALE_FACTOR = 5;
 
         private static readonly ListObjectPool<CameraReelResponseCompact> CAMERA_REEL_RESPONSES_POOL = new ();
 
@@ -79,8 +78,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private bool isDragging;
         private float previousY = 1f;
         private CancellationTokenSource loadNextPageCts = new ();
-        private CancellationTokenSource showSuccessCts = new ();
-        private CancellationTokenSource showFailureCts = new ();
         private CancellationTokenSource setPublicCts = new ();
         private CancellationTokenSource deleteScreenshotCts = new ();
         private CancellationTokenSource downloadScreenshotCts = new ();
@@ -158,7 +155,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
                     ScreenshotDownloaded?.Invoke();
-                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
+
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.DOWNLOAD,
+                        reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
@@ -167,6 +166,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 }
             }
 
+            downloadScreenshotCts = downloadScreenshotCts.SafeRestart();
             DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
         }
 
@@ -405,6 +405,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void OnScrollRectValueChanged(Vector2 value)
         {
+            //Exclude visibility computation when scrolling over the top or bottom of the scroll rect due to elasticity
+            if (view.scrollRect is { verticalNormalizedPosition: >= 1f, velocity: { y: > 0f } } or { verticalNormalizedPosition: <= 0f, velocity: { y: < 0f } })
+                return;
+
             HandleElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
             CheckNeedsToLoadMore();
 
@@ -515,6 +519,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             ReleaseGridViews();
             monthViews.Clear();
+
+            foreach (KeyValuePair<CameraReelResponseCompact, Texture> row in reelThumbnailCache)
+                GameObject.Destroy(row.Value);
+
             reelThumbnailCache.Clear();
             beginVisible = 0;
             endVisible = 0;

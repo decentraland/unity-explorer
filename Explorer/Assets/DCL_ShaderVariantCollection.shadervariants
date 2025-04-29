@@ -39,13 +39,6 @@ ShaderVariantCollection:
         passType: 11
       - keywords: 
         passType: 13
-  - first: {fileID: 14001, guid: 0000000000000000f000000000000000, type: 0}
-    second:
-      variants:
-      - keywords: DIRECTIONAL
-        passType: 4
-      - keywords: SHADOWS_DEPTH
-        passType: 8
   - first: {fileID: 66, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -134,6 +127,13 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: 14001, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: DIRECTIONAL
+        passType: 4
+      - keywords: SHADOWS_DEPTH
+        passType: 8
   - first: {fileID: 16000, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -163,16 +163,6 @@ ShaderVariantCollection:
         passType: 0
       - keywords: _BLOOM_HQ
         passType: 0
-  - first: {fileID: 4800000, guid: e6e9a19c3678ded42a3bc431ebef7dbd, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: 93446b5c5339d4f00b85c159e1159b7c, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
   - first: {fileID: 4800000, guid: 1121bb4e615ca3c48b214e79e841e823, type: 3}
     second:
       variants:
@@ -184,6 +174,21 @@ ShaderVariantCollection:
       - keywords: 
         passType: 0
       - keywords: _BLOOM_HQ
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP
+        passType: 0
+  - first: {fileID: 4800000, guid: e6e9a19c3678ded42a3bc431ebef7dbd, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 93446b5c5339d4f00b85c159e1159b7c, type: 3}
+    second:
+      variants:
+      - keywords: 
         passType: 0
   - first: {fileID: -6465566751694194690, guid: 9920c1f1781549a46ba081a2a15a16ec, type: 3}
     second:
@@ -373,19 +378,6 @@ ShaderVariantCollection:
         passType: 0
       - keywords: UNITY_UI_CLIP_RECT
         passType: 0
-  - first: {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
-    second:
-      variants:
-      - keywords: ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED
-        passType: 13
-  - first: {fileID: -6465566751694194690, guid: 4c0071f1ad885644bb08c4d69a1de235, type: 3}
-    second:
-      variants:
-      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
-          _SHADOWS_SOFT
-        passType: 13
-      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
-        passType: 13
   - first: {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
     second:
       variants:
@@ -397,25 +389,10 @@ ShaderVariantCollection:
         passType: 13
       - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHTS _ADVANCED_LIGHTING _MAIN_LIGHT_SHADOWS_CASCADE
         passType: 13
-  - first: {fileID: -6465566751694194690, guid: d521bfc19653b9c4f9408f8aba861c7d, type: 3}
+  - first: {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
     second:
       variants:
-      - keywords: 
-        passType: 0
-      - keywords: 
-        passType: 8
-      - keywords: INSTANCING_ON
-        passType: 8
-      - keywords: 
-        passType: 11
-      - keywords: 
-        passType: 13
-      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
-          _SHADOWS_SOFT
-        passType: 13
-      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
-        passType: 13
-      - keywords: INSTANCING_ON
+      - keywords: ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED
         passType: 13
   - first: {fileID: 4800000, guid: 71bfc7caf99844aaf8be12500224136b, type: 3}
     second:
@@ -451,11 +428,6 @@ ShaderVariantCollection:
         passType: 13
       - keywords: INSTANCING_ON
         passType: 13
-  - first: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
-    second:
-      variants:
-      - keywords: FOG_EXP
-        passType: 0
   - first: {fileID: -6465566751694194690, guid: 1f1a6a17110491b47bc8ce03f1009606, type: 3}
     second:
       variants:
@@ -476,23 +448,39 @@ ShaderVariantCollection:
         passType: 11
       - keywords: _EMISSIVE
         passType: 13
-  - first: {fileID: 4800000, guid: 28d453dc10844f4418372200603a88e5, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-      - keywords: 
-        passType: 13
-  - first: {fileID: 4800000, guid: dbdc6e9514eaa5940ac7282b968eb81b, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
   - first: {fileID: 4800000, guid: 36e335017ad71d54fbb10842863188ae, type: 3}
     second:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: -6465566751694194690, guid: 4c0071f1ad885644bb08c4d69a1de235, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+  - first: {fileID: -6465566751694194690, guid: d521bfc19653b9c4f9408f8aba861c7d, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+      - keywords: 
+        passType: 11
+      - keywords: 
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: INSTANCING_ON
+        passType: 13
   - first: {fileID: 4800000, guid: 21322c8b137c66e49b86085d3c8161f6, type: 3}
     second:
       variants:
@@ -524,4 +512,16 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: _TERRAIN_BLEND_HEIGHT
+        passType: 0
+  - first: {fileID: 4800000, guid: 28d453dc10844f4418372200603a88e5, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: 
+        passType: 13
+  - first: {fileID: 4800000, guid: dbdc6e9514eaa5940ac7282b968eb81b, type: 3}
+    second:
+      variants:
+      - keywords: 
         passType: 0

@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -96,8 +96,7 @@ namespace MVC
 
         public async UniTask HideViewAsync(CancellationToken ct)
         {
-            State = ControllerState.ViewHidden;
-
+            State = ControllerState.ViewHiding;
             //Ideally this should never happen but as HideViewAsync can be called at any point it means the controller might not have instantiated the view yet
             if (viewInstance == null) return;
 
@@ -105,7 +104,10 @@ namespace MVC
                 modules[i].OnViewHide();
 
             OnViewClose();
+
             await viewInstance.HideAsync(ct);
+
+            State = ControllerState.ViewHidden;
         }
 
         public void SetViewCanvasActive(bool isActive)

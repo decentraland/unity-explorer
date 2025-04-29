@@ -11,10 +11,10 @@ Material:
   m_Shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _EMISSION
   - _NORMALMAP
-  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -123,6 +123,7 @@ Material:
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _VerticalClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &1712567997072369258
 MonoBehaviour:
   m_ObjectHideFlags: 11

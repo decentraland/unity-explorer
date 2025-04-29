@@ -78,6 +78,19 @@ MonoBehaviour:
       in control of the policies created to determine how the world behaves.
     m_Metadata:
       m_Items: []
+  - m_Id: 161948706800656384
+    m_Localized: '<b><size=26><color #FF531A>COMING SOON</color></size></b>
+
+      <i>Connect
+      in Decentraland, Earn Credits,
+
+      Go Shopping!</i>'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 161948701922680832
+    m_Localized: Marketplace Credits
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

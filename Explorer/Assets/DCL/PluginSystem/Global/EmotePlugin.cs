@@ -16,6 +16,7 @@ using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
 using DCL.UI.MainUI;
+using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -50,13 +51,13 @@ namespace DCL.PluginSystem.Global
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
         private readonly string builderContentURL;
-        private readonly MainUIView mainUIView;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -71,12 +72,12 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             URLDomain assetBundleURL,
-            MainUIView mainUIView,
             ICursor cursor,
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            string builderContentURL)
+            string builderContentURL,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -91,11 +92,11 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;
-            this.mainUIView = mainUIView;
             this.cursor = cursor;
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -141,10 +142,6 @@ namespace DCL.PluginSystem.Global
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
 
-            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIView.SidebarView.PersistentEmoteWheelOpener, mvcManager);
-
-            mvcManager.RegisterController(persistentEmoteWheelOpenerController);
-
             EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
                                                .Value.GetComponent<EmotesWheelView>();
 
@@ -154,7 +151,9 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
-                inputBlock, dclInput, mvcManager, cursor);
+                inputBlock, dclInput, cursor, sharedSpaceManager);
+
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 
             mvcManager.RegisterController(emotesWheelController);
         }

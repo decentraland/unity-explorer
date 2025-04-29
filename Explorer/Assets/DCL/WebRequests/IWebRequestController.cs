@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using Global.Dynamic.LaunchModes;
 using System.Collections.Generic;
 
 namespace DCL.WebRequests
@@ -13,8 +15,7 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
-                ITexturesFuse.NewDefault(),
-                false
+                new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             )
         );
 

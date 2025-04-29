@@ -30,6 +30,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             ReportHub.Log(ReportCategory.ANALYTICS, message.ToString());
         }
 
+        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null) =>
+            Track(eventName, properties);
+
         public void AddPlugin(EventPlugin plugin) { }
 
         public void Flush()

@@ -26,12 +26,12 @@
 .tooltipIcon {
     height: 65%;
     width: 18px;
-    margin-left: 2;
+    margin-left: 2px;
 }
 
 .tooltipHintText {
     max-height: 70%;
-    margin-left: 3;
+    margin-left: 3px;
 }
 
 .alignedTooltipGap {

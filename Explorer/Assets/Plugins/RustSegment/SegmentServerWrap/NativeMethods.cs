@@ -45,6 +45,15 @@ namespace Plugins.RustSegment.SegmentServerWrap
             IntPtr contextJson
         );
 
+        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_instant_track_and_flush")]
+        internal static extern ulong SegmentServerInstantTrackAndFlush(
+            IntPtr usedId,
+            IntPtr anonId,
+            IntPtr eventName,
+            IntPtr propertiesJson,
+            IntPtr contextJson
+        );
+
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_unflushed_batches_count")]
         internal static extern ulong SegmentServerUnFlushedBatchesCount();
 

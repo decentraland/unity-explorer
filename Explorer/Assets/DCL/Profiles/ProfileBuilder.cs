@@ -41,7 +41,6 @@ namespace DCL.Profiles
         private bool hasConnectedWeb3;
         private URLAddress? bodySnapshotUrl;
         private URLAddress? faceSnapshotUrl;
-        private Avatar? avatar;
 
         public ProfileBuilder From(Profile? profile)
         {
@@ -54,7 +53,7 @@ namespace DCL.Profiles
             skinColor = profile.Avatar.SkinColor;
             hairColor = profile.Avatar.HairColor;
             emotes = profile.Avatar.emotes;
-            forceRender = profile.Avatar.forceRender;
+            forceRender = profile.Avatar.forceRender.ToHashSet();
             bodySnapshotUrl = profile.Avatar.BodySnapshotUrl;
             faceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
             blocked = profile.blocked?.ToHashSet();
@@ -87,12 +86,6 @@ namespace DCL.Profiles
         public ProfileBuilder WithWearables(IEnumerable<URN> wearables)
         {
             this.wearables = wearables;
-            return this;
-        }
-
-        public ProfileBuilder WithAvatar(Avatar avatar)
-        {
-            this.avatar = avatar;
             return this;
         }
 
@@ -161,8 +154,7 @@ namespace DCL.Profiles
             profile.HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
 
-
-            var avatar = this.avatar ?? new Avatar();
+            var avatar = new Avatar();
             profile.Avatar = avatar;
 
             if (wearables != null)

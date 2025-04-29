@@ -77,7 +77,7 @@ namespace DCL.WebRequests
                     if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
                         await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
 
-                    if (exception.IsIrrecoverableError(attemptsLeft))
+                    if (exception.IsIrrecoverableError(attemptsLeft) && !envelope.IgnoreIrrecoverableErrors)
                         throw;
                 }
             }

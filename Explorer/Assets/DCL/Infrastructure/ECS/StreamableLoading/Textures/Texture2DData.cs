@@ -1,7 +1,7 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using Unity.Profiling;
 using UnityEngine;
 using Utility;

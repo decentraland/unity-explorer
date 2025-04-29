@@ -3,6 +3,7 @@ using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.Utilities;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -64,6 +65,9 @@ namespace DCL.Chat
         [SerializeField]
         private LoopListView2 loopList;
 
+        [SerializeField]
+        private ScrollRect scrollRect;
+
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
 
@@ -119,6 +123,7 @@ namespace DCL.Chat
         {
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
         /// <summary>

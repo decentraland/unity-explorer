@@ -22,3 +22,11 @@ module.exports.getSceneInformation = function (message) {
         baseUrl: result.baseUrl
     }
 }
+
+module.exports.getExplorerInformation = async function (body) {
+    return {
+        agent: 'unity-explorer',
+        platform: 'desktop',
+        configurations: {}
+    }
+}

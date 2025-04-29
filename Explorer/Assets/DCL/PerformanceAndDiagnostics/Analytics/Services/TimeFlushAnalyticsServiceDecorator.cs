@@ -29,6 +29,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             origin.Track(eventName, properties);
         }
 
+        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        {
+            origin.InstantTrackAndFlush(eventName, properties);
+        }
+
         public void AddPlugin(EventPlugin plugin)
         {
             origin.AddPlugin(plugin);

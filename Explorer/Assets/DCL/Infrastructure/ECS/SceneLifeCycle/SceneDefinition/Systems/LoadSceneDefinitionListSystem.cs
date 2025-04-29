@@ -4,16 +4,19 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Ipfs;
-using System.Collections.Generic;
+using Newtonsoft.Json;
+using System;
+using System.IO;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
@@ -29,6 +32,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // cache
         private readonly StringBuilder bodyBuilder = new ();
+        private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
@@ -60,11 +64,112 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
-            List<SceneEntityDefinition> targetList = await
-                webRequestController.PostAsync(intention.CommonArguments, GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData())
-                                    .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            var adapter = webRequestController.PostAsync(intention.CommonArguments,
+                GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData());
 
-            return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(targetList));
+            using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
+            var nativeData = downloadHandler.nativeData;
+
+            var serializer = JsonSerializer.CreateDefault();
+            serializer.Converters.Add(SCENE_METADATA_CONVERTER);
+
+            unsafe
+            {
+                var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
+
+                serializer.Context = new StreamingContext(0,
+                    new SceneMetadataConverterContext(dataPtr));
+
+                using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
+                    nativeData.Length, FileAccess.Read);
+
+                using var textReader = new StreamReader(stream, Encoding.UTF8);
+                using var jsonReader = new JsonTextReader(textReader);
+
+                serializer.Populate(jsonReader, intention.TargetCollection);
+            }
+
+            return new StreamableLoadingResult<SceneDefinitions>(
+                new SceneDefinitions(intention.TargetCollection));
+        }
+
+        private sealed class SceneMetadataConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) =>
+                typeof(SceneMetadata).IsAssignableFrom(objectType);
+
+            public override object ReadJson(JsonReader reader, Type objectType, object? existingValue,
+                JsonSerializer serializer)
+            {
+                var jsonReader = (JsonTextReader)reader;
+
+                if (jsonReader.LineNumber != 1)
+                    throw new NotImplementedException("Can't parse multi-line json");
+
+                var context = (SceneMetadataConverterContext)serializer.Context.Context;
+                int readerPosition = jsonReader.LinePosition;
+
+                unsafe
+                {
+                    byte* dataPtr = context.DataPtr;
+                    int charPosition = context.CharPosition;
+                    int startByte = context.StartByte;
+
+                    while (charPosition < readerPosition)
+                    {
+                        int charSize = UTF8Utility.UTF8_CHAR_SIZE[dataPtr[startByte]];
+                        startByte += charSize;
+
+                        // Code points that need 4 bytes in UTF-8 need two chars in UTF-16.
+                        charPosition += (charSize >> 2) + 1;
+                    }
+
+                    // Else, Deserialize will call this converter again and so on until we have a
+                    // stack overflow.
+                    serializer.Converters.RemoveAt(0);
+
+                    SceneMetadata metadata;
+                    try { metadata = serializer.Deserialize<SceneMetadata>(jsonReader); }
+                    finally { serializer.Converters.Add(this); }
+
+                    int endByte = startByte;
+                    readerPosition = jsonReader.LinePosition;
+
+                    while (charPosition < readerPosition)
+                    {
+                        int charSize = UTF8Utility.UTF8_CHAR_SIZE[dataPtr[endByte]];
+                        endByte += charSize;
+                        charPosition += (charSize >> 2) + 1;
+                    }
+
+                    // All the complexity here is so that we can obtain this one OriginalJson string
+                    // without excess of allocations. Because the sole purpose of this string is to be
+                    // passed on to JavaScript, it would be even better if we created a V8Value
+                    // directly without decoding the bytes at all.
+                    metadata.OriginalJson = Encoding.UTF8.GetString(dataPtr + startByte - 1,
+                        endByte - startByte + 1);
+
+                    context.CharPosition = charPosition;
+                    context.StartByte = endByte;
+
+                    return metadata;
+                }
+            }
+
+            public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) =>
+                throw new NotImplementedException();
+        }
+
+        private sealed unsafe class SceneMetadataConverterContext
+        {
+            public readonly byte* DataPtr;
+            public int CharPosition;
+            public int StartByte;
+
+            public SceneMetadataConverterContext(byte* dataPtr)
+            {
+                DataPtr = dataPtr;
+            }
         }
     }
 }

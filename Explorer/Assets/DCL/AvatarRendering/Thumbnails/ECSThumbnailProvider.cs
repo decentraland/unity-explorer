@@ -37,21 +37,15 @@ namespace DCL.AvatarRendering.Wearables
             if (avatarAttachment.ThumbnailAssetResult is { IsInitialized: true })
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            bool promiseAlreadyCreated = avatarAttachment.ThumbnailAssetResult != null;
-
-            // Create a new promise bound to the current cancellation token
-            // if the promise was created before, we should not override its cancellation
-            if (!promiseAlreadyCreated)
-            {
-                await LoadThumbnailsUtils.CreateWearableThumbnailABPromiseAsync(
+            LoadThumbnailsUtils.CreateWearableThumbnailABPromiseAsync(
                     requestController,
                     assetBundleURL,
                     realmData,
                     avatarAttachment,
                     world,
                     PartitionComponent.TOP_PRIORITY,
-                    CancellationTokenSource.CreateLinkedTokenSource(ct));
-            }
+                    CancellationTokenSource.CreateLinkedTokenSource(ct))
+                               .Forget();
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment

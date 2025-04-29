@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -16,7 +17,6 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using ECS.Unity.Textures.Utils;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -209,7 +209,8 @@ namespace ECS.Unity.Materials.Systems
                         textureComponentValue.WrapMode,
                         textureComponentValue.FilterMode,
                         textureComponentValue.TextureType,
-                        attemptsCount: attemptsCount
+                        attemptsCount: attemptsCount,
+                        isAvatarTexture: textureComponentValue.IsAvatarTexture
                     ),
                     partitionComponent
                 );

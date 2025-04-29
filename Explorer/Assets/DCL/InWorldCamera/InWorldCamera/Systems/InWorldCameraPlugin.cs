@@ -26,6 +26,8 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Rendering.GPUInstancing;
+using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -76,6 +78,8 @@ namespace DCL.PluginSystem.Global
         private readonly ViewDependencies viewDependencies;
         private readonly GPUInstancingService gpuInstancingBuffers;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -100,7 +104,9 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             ViewDependencies viewDependencies,
             GPUInstancingService gpuInstancingBuffers,
-            ExposedCameraData exposedCameraData)
+            ExposedCameraData exposedCameraData,
+            ISharedSpaceManager sharedSpaceManager,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -130,7 +136,11 @@ namespace DCL.PluginSystem.Global
             this.viewDependencies = viewDependencies;
             this.gpuInstancingBuffers = gpuInstancingBuffers;
             this.exposedCameraData = exposedCameraData;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.web3IdentityCache = web3IdentityCache;
+
             factory = new InWorldCameraFactory();
+            web3IdentityCache.OnIdentityChanged += FetchCameraReelStorage;
         }
 
         public void Dispose()
@@ -180,7 +190,7 @@ namespace DCL.PluginSystem.Global
                 new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
 
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
             mvcManager.RegisterController(inWorldCameraController);
         }
 
@@ -192,6 +202,14 @@ namespace DCL.PluginSystem.Global
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
+        }
+
+        private void FetchCameraReelStorage()
+        {
+            if (web3IdentityCache.Identity == null)
+                return;
+
+            cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, CancellationToken.None).Forget();
         }
 
         [Serializable]

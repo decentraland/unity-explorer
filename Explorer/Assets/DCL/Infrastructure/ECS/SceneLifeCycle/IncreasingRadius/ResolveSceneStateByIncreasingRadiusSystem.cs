@@ -277,7 +277,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             sceneState.VisualSceneState = VisualSceneState.UNINITIALIZED;
             sceneState.PromiseCreated = false;
             sceneState.FullQuality = false;
-            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+
+            //We mark it as Defer because, down the line, the entity wont be deleted.
+            //Either the LOD or the SceneFacade will be removed, but the Entity with the
+            //SceneDefinitionComponent should persist
+            World.Add(entity, new DeleteEntityIntention { DeferDeletion = true });
         }
 
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
@@ -336,9 +340,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             switch (sceneState.VisualSceneState)
             {
                 case VisualSceneState.SHOWING_LOD:
-                    World.Add(entity, SceneLODInfo.Create());
+                    //The SceneLODInfo may still be in the entity, since it remains there until SceneIsReady (Check UnloadSceneLODInfoSystem)
+                    //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
+                    if (!World.Has<SceneLODInfo>(entity))
+                        World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:
+                    //The check is not needed here because the SceneFacade and promise are removed on the same frame that a SceneLODInfo was added
                     World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                         new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
                     break;

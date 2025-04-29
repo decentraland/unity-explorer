@@ -109,7 +109,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 116, y: 0}
+  m_AnchoredPosition: {x: 130, y: 0}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1845710762243862674
@@ -345,8 +345,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000061035156}
-  m_SizeDelta: {x: 0, y: 50}
+  m_AnchoredPosition: {x: 0, y: -0.00012207031}
+  m_SizeDelta: {x: 0, y: 70}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &3117288716719337971
 GameObject:
@@ -943,7 +943,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 25, y: 0}
+  m_AnchoredPosition: {x: 25, y: 4}
   m_SizeDelta: {x: 230.5186, y: 42}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!1 &5357728835287357475
@@ -1074,13 +1074,13 @@ MonoBehaviour:
   tipsParent: {fileID: 6611786482040210992}
   tipViewPrefab: {fileID: 4723243602018727282, guid: 9ea365a23098942cabb11d142f0e178b, type: 3}
   fallbackSprites:
-  - {fileID: 21300000, guid: e4f1395814ee0473e86cb6c06009fc6e, type: 3}
-  - {fileID: 21300000, guid: 9d145b4f22db146a2b25d2a7d5a1f795, type: 3}
-  - {fileID: 21300000, guid: beceeda1295384ef4921493b30d5cf45, type: 3}
-  - {fileID: 21300000, guid: 875491fc8a6c64fe2aa217d9a750e8a3, type: 3}
   - {fileID: 21300000, guid: 6ea398d3ecc4e457baad22c2f43aabfc, type: 3}
   - {fileID: 21300000, guid: f75abfa64274a47fd9b3b14143dd8fa0, type: 3}
+  - {fileID: 21300000, guid: beceeda1295384ef4921493b30d5cf45, type: 3}
+  - {fileID: 21300000, guid: 875491fc8a6c64fe2aa217d9a750e8a3, type: 3}
   - {fileID: 21300000, guid: 2e201c78ef54a4b3bb0edd235bf0ed52, type: 3}
+  - {fileID: 21300000, guid: 9d145b4f22db146a2b25d2a7d5a1f795, type: 3}
+  - {fileID: 21300000, guid: cb536b0cdd6084c87a55b1ff25637eae, type: 3}
   <Background>k__BackingField: {fileID: 8773633707120184609}
   breadcrumbPrefab: {fileID: 2727173850900605172, guid: 888d117b70e6142cab40978c1e26d4d9, type: 3}
   breadcrumbParent: {fileID: 7125623147794855959}
@@ -1303,8 +1303,8 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 4}
-  m_Pivot: {x: 0.5, y: 1}
+  m_SizeDelta: {x: 0, y: 8}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1295332637717067447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1466,7 +1466,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -25, y: 0}
+  m_AnchoredPosition: {x: -25, y: 4}
   m_SizeDelta: {x: 140, y: 22}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &3378370176272424382
@@ -1685,7 +1685,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: -0.000061035156, y: 0}
-  m_SizeDelta: {x: 30, y: 30}
+  m_SizeDelta: {x: 40, y: 40}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &8373132118267618737
 CanvasRenderer:

@@ -8,6 +8,5 @@ namespace DCL.Friends.UI.FriendPanel
         {
             TabToShow = tabToShow;
         }
-
     }
 }

@@ -1,7 +1,6 @@
 ﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities
@@ -41,6 +40,7 @@ namespace DCL.DebugUtilities
                         ? null
                         : new HashSet<string>
                         {
+                            IDebugContainerBuilder.Categories.CURRENT_SCENE,
                             IDebugContainerBuilder.Categories.ROOM_INFO,
                             IDebugContainerBuilder.Categories.ROOM_SCENE,
                             IDebugContainerBuilder.Categories.ROOM_THROUGHPUT,

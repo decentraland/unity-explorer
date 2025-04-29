@@ -22,7 +22,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private readonly IReadOnlyDictionary<TextureArrayKey, Texture>? defaultTextures;
 
+        private readonly string domain;
+
         public TextureArrayHandler(
+            string domain,
             int minArraySize,
             int arrayID,
             int textureID,
@@ -37,6 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.textureFormat = textureFormat;
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
+            this.domain = domain;
 
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(defaultResolutions.Count);
 
@@ -47,6 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
 
         public TextureArrayHandler(
+            string domain,
             IReadOnlyList<TextureArrayResolutionDescriptor> textureArrayResolutionDescriptors,
             int arrayID,
             int textureID,
@@ -56,6 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             int initialCapacityForEachResolution)
         {
             minArraySize = arraySizeForMissingResolutions;
+            this.domain = domain;
             this.arrayID = arrayID;
             this.textureID = textureID;
             this.textureFormat = textureFormat;
@@ -72,7 +78,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         {
             var resolution = new Vector2Int(descriptor.Resolution, descriptor.Resolution);
 
-            var slotHandler = new TextureArraySlotHandler(resolution, descriptor.ArraySize, descriptor.InitialArrayCapacity, textureFormat);
+            var slotHandler = new TextureArraySlotHandler(domain, resolution, descriptor.ArraySize, descriptor.InitialArrayCapacity, textureFormat);
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture
@@ -92,7 +98,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         private TextureArraySlotHandler CreateHandler(Vector2Int resolution)
         {
             //We are creating a considerably smaller array for non square resolutions. Shouldn't be a common case
-            var slotHandler = new TextureArraySlotHandler(resolution, resolution.x == resolution.y ? minArraySize : minArraySize / 10, initialCapacityForEachResolution, textureFormat);
+            var slotHandler = new TextureArraySlotHandler(domain, resolution, resolution.x == resolution.y ? minArraySize : minArraySize / 10, initialCapacityForEachResolution, textureFormat);
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture

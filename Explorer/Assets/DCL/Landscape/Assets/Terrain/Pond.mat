@@ -301,6 +301,7 @@ Material:
     - _WaveDirection: {r: 1, g: 1, b: 1, a: 1}
     - _WaveFadeDistance: {r: 150, g: 300, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &6498140463000427223
 MonoBehaviour:
   m_ObjectHideFlags: 11

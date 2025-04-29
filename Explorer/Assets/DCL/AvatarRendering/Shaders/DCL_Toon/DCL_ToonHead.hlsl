@@ -134,7 +134,7 @@ inline float4 UnityObjectToClipPosInstanced(in float3 pos)
 {
     //    return mul(UNITY_MATRIX_VP, mul(unity_ObjectToWorldArray[unity_InstanceID], float4(pos, 1.0)));
           // todo. right?
-    return mul(UNITY_MATRIX_VP, mul(unity_ObjectToWorld, float4(pos, 1.0)));
+    return mul(UNITY_MATRIX_VP, mul(UNITY_MATRIX_M, float4(pos, 1.0)));
 }
 inline float4 UnityObjectToClipPosInstanced(float4 pos)
 {
@@ -148,7 +148,7 @@ inline float3 UnityObjectToWorldNormal(in float3 norm)
         return UnityObjectToWorldDir(norm);
     #else
         // mul(IT_M, norm) => mul(norm, I_M) => {dot(norm, I_M.col0), dot(norm, I_M.col1), dot(norm, I_M.col2)}
-        return normalize(mul(norm, (float3x3)unity_WorldToObject));
+        return SafeNormalize(mul(norm, (float3x3)GetWorldToObjectMatrix()));
     #endif
 }
 // normal should be normalized, w=1.0

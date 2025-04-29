@@ -26,6 +26,7 @@ namespace DCL.UI.ProfileNames
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
@@ -41,12 +42,14 @@ namespace DCL.UI.ProfileNames
             IWebBrowser webBrowser,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
-            IDecentralandUrlsSource decentralandUrlsSource) : base(viewFactory)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IProfileChangesBus profileChangesBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -120,6 +123,7 @@ namespace DCL.UI.ProfileNames
                 claimedConfig.claimedNameDropdown.value = -1;
                 claimedConfig.dropdownVerifiedIcon.SetActive(false);
                 claimedConfig.saveButtonInteractable = false;
+                claimedConfig.saveLoading.SetActive(false);
                 claimedConfig.NonClaimedNameTabConfig.input.text = string.Empty;
                 claimedConfig.NonClaimedNameTabConfig.saveButtonInteractable = false;
                 claimedConfig.dropdownLoadingSpinner.SetActive(true);
@@ -128,6 +132,7 @@ namespace DCL.UI.ProfileNames
                 ProfileNameEditorView.NonClaimedNameConfig nonClaimedConfig = viewInstance!.NonClaimedNameContainer;
                 nonClaimedConfig.input.text = string.Empty;
                 nonClaimedConfig.saveButtonInteractable = false;
+                nonClaimedConfig.saveLoading.SetActive(false);
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -171,6 +176,7 @@ namespace DCL.UI.ProfileNames
                 config.claimedNameDropdown.value = selectedIndex;
                 // Always start as disabled as it makes no sense save your own current name again..
                 config.saveButtonInteractable = false;
+                config.saveLoading.SetActive(false);
             }
 
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)
@@ -178,6 +184,7 @@ namespace DCL.UI.ProfileNames
                 config.userHashLabel.text = $"#{profile.UserId[^4..]}";
                 config.input.text = string.Empty;
                 config.saveButtonInteractable = false;
+                config.saveLoading.SetActive(false);
             }
         }
 
@@ -226,6 +233,7 @@ namespace DCL.UI.ProfileNames
             async UniTaskVoid SaveAsync(CancellationToken ct)
             {
                 config.saveButtonInteractable = false;
+                config.saveLoading.SetActive(true);
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -236,13 +244,17 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
                 config.saveButtonInteractable = true;
+                config.saveLoading.SetActive(false);
 
                 Close();
             }
@@ -257,6 +269,7 @@ namespace DCL.UI.ProfileNames
             async UniTaskVoid SaveAsync(CancellationToken ct)
             {
                 config.saveButtonInteractable = false;
+                config.saveLoading.SetActive(true);
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -267,13 +280,17 @@ namespace DCL.UI.ProfileNames
 
                     try
                     {
-                        await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
                         NameChanged?.Invoke();
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
                 config.saveButtonInteractable = true;
+                config.saveLoading.SetActive(false);
 
                 Close();
             }

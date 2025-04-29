@@ -2137,11 +2137,13 @@ MonoBehaviour:
     m_AssetGUID: 989cf1173881645c598573447b2b56d8
     m_SubObjectName: 
     m_SubObjectType: 
+    m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   <HideCategory>k__BackingField:
     m_AssetGUID: d20747763091b4fc5a2d5b6d1ba0ea7d
     m_SubObjectName: 
     m_SubObjectType: 
+    m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   <HideCategoryRowsContainer>k__BackingField: {fileID: 7290563264915864590}
 --- !u!1 &7155066370030376101

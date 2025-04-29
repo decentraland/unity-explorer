@@ -21,6 +21,3 @@ MonoBehaviour:
   <UnloadingDistanceToleranceInParcels>k__BackingField: 1
   <ScenesRequestBatchSize>k__BackingField: 6
   <ScenesDefinitionsRequestBatchSize>k__BackingField: 30
-  <MaximumAmountOfScenesThatCanLoad>k__BackingField: 500
-  <MaximumAmountOfLODsThatCanLoad>k__BackingField: 500
-  <MaximumAmountOfReductedLODsThatCanLoad>k__BackingField: 0

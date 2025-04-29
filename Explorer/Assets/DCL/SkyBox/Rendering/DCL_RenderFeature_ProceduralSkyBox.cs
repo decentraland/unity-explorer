@@ -152,7 +152,7 @@ namespace DCL.SkyBox.Rendering
                 desc.stencilFormat = GraphicsFormat.None;
                 desc.useDynamicScale = false;
                 desc.useMipMap = false;
-                desc.volumeDepth = 0;
+                desc.volumeDepth = 1;
                 desc.vrUsage = VRTextureUsage.None;
                 desc.width = nDimensions_StarBox_Array;
 
@@ -179,7 +179,7 @@ namespace DCL.SkyBox.Rendering
                 desc.stencilFormat = GraphicsFormat.None;
                 desc.useDynamicScale = false;
                 desc.useMipMap = false;
-                desc.volumeDepth = 0;
+                desc.volumeDepth = 1;
                 desc.vrUsage = VRTextureUsage.None;
                 desc.width = nDimensions_SkyBox_Cubemap;
 
@@ -233,7 +233,7 @@ namespace DCL.SkyBox.Rendering
                 desc.stencilFormat = GraphicsFormat.None;
                 desc.useDynamicScale = false;
                 desc.useMipMap = false;
-                desc.volumeDepth = 0;
+                desc.volumeDepth = 1;
                 desc.vrUsage = VRTextureUsage.None;
                 desc.width = nDimensions_SkyBox_Cubemap;
 

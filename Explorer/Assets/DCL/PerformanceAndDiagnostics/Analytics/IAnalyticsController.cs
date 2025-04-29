@@ -23,7 +23,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform);
 
-        void Track(string eventName, JsonObject? properties = null);
+        void Track(string eventName, JsonObject? properties = null, bool isInstant = false);
 
         void Identify(IWeb3Identity? identity);
 
@@ -46,7 +46,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache? __, IExposedTransform ___) { }
 
-            public void Track(string _, JsonObject? __ = null) { }
+            public void Track(string _, JsonObject? __ = null, bool ___ = false) { }
 
             public void Identify(IWeb3Identity? _) { }
 

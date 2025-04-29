@@ -37,7 +37,6 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private readonly ClusterController clusterController;
         private readonly INavmapBus navmapBus;
         private readonly IPlacesAPIService placesAPIService;
-
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
         private readonly Dictionary<GameObject, ISceneOfInterestMarker> visibleMarkers = new ();
         private readonly List<Vector2Int> vectorCoords = new ();
@@ -47,6 +46,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private CancellationTokenSource deHighlightCt = new ();
         private ISceneOfInterestMarker? previousMarker;
 
+        private bool isDataInitialized;
         private bool isEnabled;
         private int zoomLevel = 1;
         private float baseZoom = 1;
@@ -72,40 +72,6 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
-            IReadOnlyList<string> pointsOfInterestCoordsAsync =
-                await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken)
-                                      .SuppressAnyExceptionWithFallback(Array.Empty<string>(), ReportCategory.UI);
-            vectorCoords.Clear();
-
-            foreach (var s in pointsOfInterestCoordsAsync)
-            {
-                try { vectorCoords.Add(IpfsHelper.DecodePointer(s)); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
-            }
-
-            using var placesByCoordsListAsync =
-                await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true)
-                                      .SuppressAnyExceptionWithFallback(EMPTY_PLACES, ReportCategory.UI);
-
-            // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
-            foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
-            {
-                if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
-                    continue;
-
-                if (IsEmptyParcel(placeInfo))
-                    continue;
-
-                var marker = builder(objectsPool, mapCullingController, coordsUtils);
-                var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
-                var position = coordsUtils.CoordsToPosition(centerParcel);
-
-                marker.SetData(placeInfo.title, position, placeInfo);
-                markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
-
-                if (isEnabled)
-                    mapCullingController.StartTracking(marker, this);
-            }
         }
 
         protected override void DisposeImpl()
@@ -116,6 +82,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 marker.Dispose();
 
             markers.Clear();
+            isDataInitialized = false;
         }
 
         public void OnMapObjectBecameVisible(ISceneOfInterestMarker marker)
@@ -179,8 +146,14 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return UniTask.CompletedTask;
         }
 
-        public UniTask EnableAsync(CancellationToken cancellationToken)
+        public async UniTask EnableAsync(CancellationToken cancellationToken)
         {
+            if (!isDataInitialized)
+            {
+                await LoadDataAsync();
+                isDataInitialized = true;
+            }
+
             foreach (ISceneOfInterestMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
@@ -192,7 +165,44 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                     mapCullingController.StartTracking(clusterableMarker, this);
             }
 
-            return UniTask.CompletedTask;
+            async UniTask LoadDataAsync()
+            {
+                IReadOnlyList<string> pointsOfInterestCoordsAsync =
+                    await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken)
+                                          .SuppressAnyExceptionWithFallback(Array.Empty<string>(), ReportCategory.UI);
+                vectorCoords.Clear();
+
+                foreach (string? s in pointsOfInterestCoordsAsync)
+                {
+                    try { vectorCoords.Add(IpfsHelper.DecodePointer(s)); }
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+                }
+
+                using var placesByCoordsListAsync =
+                    await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true)
+                                          .SuppressAnyExceptionWithFallback(EMPTY_PLACES, ReportCategory.UI);
+
+                // Should we clear & dispose the markers before filling it?
+                // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
+                foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
+                {
+                    if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
+                        continue;
+
+                    if (IsEmptyParcel(placeInfo))
+                        continue;
+
+                    var marker = builder(objectsPool, mapCullingController, coordsUtils);
+                    var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
+                    var position = coordsUtils.CoordsToPosition(centerParcel);
+
+                    marker.SetData(placeInfo.title, position, placeInfo);
+                    markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
+
+                    if (isEnabled)
+                        mapCullingController.StartTracking(marker, this);
+                }
+            }
         }
 
         public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)

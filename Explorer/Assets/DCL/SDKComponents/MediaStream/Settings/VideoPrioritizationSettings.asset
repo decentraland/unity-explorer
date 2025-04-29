@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdabaecc89a44639a539486656238701, type: 3}
   m_Name: VideoPrioritizationSettings
   m_EditorClassIdentifier: 
-  maximumSimultaneousVideos: 21
+  maximumSimultaneousVideos: 5
   sizeInScreenWeight: 6
   distanceWeight: 4
   angleWeight: 10

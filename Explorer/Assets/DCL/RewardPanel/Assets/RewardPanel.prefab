@@ -1201,6 +1201,7 @@ GameObject:
   - component: {fileID: 2328052917946262358}
   - component: {fileID: 6729207173435531180}
   - component: {fileID: 700331728702390357}
+  - component: {fileID: 2563305905713181386}
   - component: {fileID: 2079914744313306548}
   - component: {fileID: 6884335029334525881}
   m_Layer: 5
@@ -1331,6 +1332,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2563305905713181386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7407608383921590797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 9095110466414761680}
+  <PanelContent>k__BackingField: {fileID: 8006655162828613406}
+  <PanelCanvasGroup>k__BackingField: {fileID: 6884335029334525881}
 --- !u!114 &2079914744313306548
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1347,14 +1363,13 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 2328052917946262358}
   <ContinueButton>k__BackingField: {fileID: 7001186412930914511}
   <PanelCanvasGroup>k__BackingField: {fileID: 6884335029334525881}
-  <RaysGameObject>k__BackingField: {fileID: 9095110466414761680}
   <RaysImage>k__BackingField: {fileID: 3451501390155994175}
-  <PanelContent>k__BackingField: {fileID: 8006655162828613406}
   <ThumbnailImage>k__BackingField: {fileID: 4234129017711829227}
   <RarityBackground>k__BackingField: {fileID: 8126132983699070167}
   <RarityMark>k__BackingField: {fileID: 5125327586862803259}
   <CategoryImage>k__BackingField: {fileID: 6886083881855597611}
   <ItemName>k__BackingField: {fileID: 1043690932249880006}
+  <RewardBackgroundRaysAnimation>k__BackingField: {fileID: 2563305905713181386}
 --- !u!225 &6884335029334525881
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1656,7 +1671,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 57}
-  m_SizeDelta: {x: 1042, y: 1038}
+  m_SizeDelta: {x: 970, y: 970}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6259350965375521495
 CanvasRenderer:
@@ -1679,7 +1694,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.19215687}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.2}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

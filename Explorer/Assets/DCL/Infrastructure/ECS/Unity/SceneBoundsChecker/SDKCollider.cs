@@ -49,7 +49,7 @@ namespace ECS.Unity.SceneBoundsChecker
             {
                 Transform = null;
             }
-            
+
             ResolveColliderActivity();
         }
 
@@ -91,6 +91,6 @@ namespace ECS.Unity.SceneBoundsChecker
 
             return false;
         }
-       
+
     }
 }

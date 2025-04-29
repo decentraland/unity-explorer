@@ -5,8 +5,7 @@ use std::sync::{
 };
 
 use segment::{
-    message::{BatchMessage, User},
-    HttpClient,
+    message::{BatchMessage, User}, Client, HttpClient
 };
 use tokio::sync::Mutex;
 
@@ -14,6 +13,8 @@ use crate::{operations, queue_batcher::QueueBatcher, FfiCallbackFn, OperationHan
 
 pub struct Context {
     pub batcher: QueueBatcher,
+    pub segment_client: segment::HttpClient,
+    pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
 }
 
@@ -126,10 +127,14 @@ impl SegmentServer {
 
     fn new(writer_key: String, callback_fn: FfiCallbackFn) -> Self {
         let client = HttpClient::default();
-        let queue_batcher = QueueBatcher::new(client, writer_key);
+        let queue_batcher = QueueBatcher::new(client, writer_key.clone());
+        
+        let direct_client = HttpClient::default();
 
         let context = Context {
             batcher: queue_batcher,
+            segment_client: direct_client,
+            write_key: writer_key,
             callback_fn: Box::new(move |id, response| unsafe {
                 callback_fn(id, response);
             }),
@@ -139,6 +144,29 @@ impl SegmentServer {
             next_id: AtomicU64::new(1), //0 is invalid,
             unflushed_count_cache: AtomicU64::new(0),
             context: Arc::new(Mutex::new(context)),
+        }
+    }
+
+    pub async fn instant_track_and_flush(
+        instance: Arc<Self>,
+        id: OperationHandleId,
+        user: User,
+        event_name: &str,
+        properties_json: &str,
+        context_json: &str,
+    ) {
+        let msg = operations::new_track(user, event_name, properties_json, context_json);
+        match msg {
+            Some(m) => {
+                let guard = instance.context.lock().await;
+                let key = guard.write_key.clone();
+                let result = guard.segment_client.send(key, m.into()).await;
+                let response = SegmentServer::result_as_response_code(result);
+                guard.call_callback(id, response);
+            },
+            None => {
+                instance.call_callback(id, Response::ErrorDeserialize).await;
+            }
         }
     }
 

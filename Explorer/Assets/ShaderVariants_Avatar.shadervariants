@@ -104,16 +104,6 @@ ShaderVariantCollection:
       variants:
       - keywords: _BLOOM_HQ
         passType: 0
-  - first: {fileID: 4800000, guid: e6e9a19c3678ded42a3bc431ebef7dbd, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: 93446b5c5339d4f00b85c159e1159b7c, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
   - first: {fileID: 4800000, guid: 1121bb4e615ca3c48b214e79e841e823, type: 3}
     second:
       variants:
@@ -130,6 +120,21 @@ ShaderVariantCollection:
       - keywords: 
         passType: 0
       - keywords: _BLOOM_HQ
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP
+        passType: 0
+  - first: {fileID: 4800000, guid: e6e9a19c3678ded42a3bc431ebef7dbd, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 93446b5c5339d4f00b85c159e1159b7c, type: 3}
+    second:
+      variants:
+      - keywords: 
         passType: 0
   - first: {fileID: 4800000, guid: c66b10f85c3065c47bae66386821456a, type: 3}
     second:
@@ -173,11 +178,6 @@ ShaderVariantCollection:
       - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _IS_CLIPPING_TRANSMODE
           _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
         passType: 13
-  - first: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
-    second:
-      variants:
-      - keywords: FOG_EXP
-        passType: 0
   - first: {fileID: -6465566751694194690, guid: 1f1a6a17110491b47bc8ce03f1009606, type: 3}
     second:
       variants:

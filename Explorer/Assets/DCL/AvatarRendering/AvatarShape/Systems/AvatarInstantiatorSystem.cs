@@ -86,7 +86,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
         private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;

@@ -77,14 +77,17 @@ namespace DCL.PluginSystem.World
                 ref builder,
                 virtualCameraPoolRegistry,
                 sharedDependencies.SceneStateProvider));
-            finalizeWorldSystems.Add(MainCameraSystem.InjectToWorld(
+
+            var mainCameraSystem = MainCameraSystem.InjectToWorld(
                 ref builder,
                 persistentEntities.Camera,
                 sharedDependencies.EntitiesMap,
                 sharedDependencies.SceneStateProvider,
                 cameraData,
                 sceneRestrictionBusController,
-                globalWorld));
+                globalWorld);
+            finalizeWorldSystems.Add(mainCameraSystem);
+            sceneIsCurrentListeners.Add(mainCameraSystem);
         }
 
         public void Dispose()

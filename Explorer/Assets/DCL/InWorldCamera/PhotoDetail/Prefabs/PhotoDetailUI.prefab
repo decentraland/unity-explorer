@@ -534,10 +534,10 @@ MonoBehaviour:
   <ownerProfileButton>k__BackingField: {fileID: 5246424950046977907}
   <unusedEquippedWearableViewContainer>k__BackingField: {fileID: 5222409462186444804}
   <visiblePersonContainer>k__BackingField: {fileID: 4974334000674769575}
+  <visiblePersonScrollRect>k__BackingField: {fileID: 4574704848177420657}
   <loadingState>k__BackingField: {fileID: 708128061540631327}
   <visiblePersonViewPrefab>k__BackingField: {fileID: 3983589861785833817, guid: 799192b97bb784b51904a88d728da2ce, type: 3}
   <equippedWearablePrefab>k__BackingField: {fileID: 1014815712935129, guid: 4abbe498c725f46ab9b5cdc798a56734, type: 3}
-  <emptyProfileImage>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
 --- !u!1 &2695727088137606323
 GameObject:
   m_ObjectHideFlags: 0
@@ -574,7 +574,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 26, y: -12}
-  m_SizeDelta: {x: 0, y: 24}
+  m_SizeDelta: {x: 150.12, y: 24}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &1986395142836251286
 CanvasRenderer:

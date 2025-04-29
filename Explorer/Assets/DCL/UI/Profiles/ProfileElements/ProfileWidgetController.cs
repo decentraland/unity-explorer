@@ -14,6 +14,7 @@ namespace DCL.UI.ProfileElements
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ViewDependencies viewDependencies;
+        private readonly IProfileChangesBus profileChangesBus;
 
         private CancellationTokenSource? loadProfileCts;
 
@@ -22,12 +23,26 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            ViewDependencies viewDependencies
+            ViewDependencies viewDependencies,
+            IProfileChangesBus profileChangesBus
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.viewDependencies = viewDependencies;
+            this.profileChangesBus = profileChangesBus;
+        }
+
+        public override void Dispose()
+        {
+            profileChangesBus.UnsubscribeToProfileNameChange(ProfileNameChanged);
+
+            base.Dispose();
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            profileChangesBus.SubscribeToProfileNameChange(ProfileNameChanged);
         }
 
         protected override void OnBeforeViewShow()
@@ -41,19 +56,30 @@ namespace DCL.UI.ProfileElements
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
+        private void ProfileNameChanged(Profile profile)
+        {
+            SetupProfileData(profile);
+            viewInstance!.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+        }
+
         private async UniTaskVoid LoadAsync(CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
             if (profile == null) return;
 
+            SetupProfileData(profile);
+
+            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
+        }
+
+        private void SetupProfileData(Profile profile)
+        {
             if (viewInstance!.NameLabel != null) viewInstance.NameLabel.text = profile.ValidatedName ?? GUEST_NAME;
 
             if (viewInstance.AddressLabel != null)
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
-
-            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
     }
 }

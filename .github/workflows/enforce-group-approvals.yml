@@ -72,8 +72,8 @@ jobs:
           echo "✅ DEV Team Members: ${DEV_MEMBERS:-None}"
 
           echo "🔍 Fetching PR reviews..."
-          PR_REVIEWS_JSON=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.')
-          PR_REVIEWS=$(jq -r '.[] | select(.state == "APPROVED") | .user.login' <<< "$PR_REVIEWS_JSON")
+          PR_REVIEWS_JSON=$(gh pr view "$PR_NUMBER" --repo "$REPO_OWNER/$REPO_NAME" --json reviews -q '.reviews')
+          PR_REVIEWS=$(jq -r '.[] | select(.state == "APPROVED") | .author.login' <<< "$PR_REVIEWS_JSON")
           echo "✅ Approved Reviews (before filtering): ${PR_REVIEWS:-None}"
 
           echo "🔍 Fetching pending review requests..."
@@ -157,4 +157,3 @@ jobs:
           echo "🔁 Triggering re-run via GitHub CLI"
           gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME"
           echo "✅ Re-run triggered successfully!"
-

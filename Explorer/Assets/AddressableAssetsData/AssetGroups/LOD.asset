@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: LOD
   m_EditorClassIdentifier: 
   m_GroupName: LOD
-  m_Data:
-    m_SerializedData: []
   m_GUID: 3f96e21930e98c5489bb8c8c57ed4c94
   m_SerializeEntries:
   - m_GUID: c9870b17ce36346458f07a63c096a16a

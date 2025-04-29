@@ -31,12 +31,12 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         [Query]
         private void CompleteWearableABThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref AssetBundlePromise promise)
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World))
             {
                 wearable.ThumbnailAssetResult = null;
+                World.Destroy(entity);
                 return;
             }
-
 
             if (promise.TryConsume(World, out var result))
             {
@@ -48,9 +48,10 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         [Query]
         private void CompleteWearableThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World))
             {
                 wearable.ThumbnailAssetResult = null;
+                World.Destroy(entity);
                 return;
             }
 

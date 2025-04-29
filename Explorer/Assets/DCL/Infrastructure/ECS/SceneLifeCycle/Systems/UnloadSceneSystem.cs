@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.LOD;
 using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Groups;

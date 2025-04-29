@@ -3,6 +3,7 @@ using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.Landscapes;
 
@@ -20,7 +21,7 @@ namespace Global.Dynamic
 
         public LandscapePlugin CreatePlugin(StaticContainer staticContainer, BootstrapContainer bootstrapContainer, MapRendererContainer mapRendererContainer,
             IDebugContainerBuilder debugBuilder) =>
-            new (staticContainer.RealmData, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
+            new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, landscapeEnabled,
                 bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone));

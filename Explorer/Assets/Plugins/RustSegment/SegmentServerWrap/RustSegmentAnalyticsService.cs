@@ -120,6 +120,37 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
+        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        {
+            lock (afterClean)
+            {
+#if UNITY_EDITOR || DEBUG
+                ReportIfIdentityWasNotCalled();
+#endif
+
+                var list = ListPool<MarshaledString>.Get()!;
+
+                var mUserId = new MarshaledString(cachedUserId);
+                var mAnonId = new MarshaledString(anonId);
+                var mEventName = new MarshaledString(eventName);
+                var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
+                var mContext = new MarshaledString(contextSource.ContextJson());
+
+                ulong operationId = NativeMethods.SegmentServerInstantTrackAndFlush(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+                AlertIfInvalid(operationId);
+
+                list.Add(mUserId);
+                list.Add(mEventName);
+                list.Add(mProperties);
+                list.Add(mContext);
+
+                afterClean.Add(operationId, (Operation.Track, list));
+
+                trackId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
+            }
+        }
+
         public void AddPlugin(EventPlugin plugin)
         {
             contextSource.Register(plugin);

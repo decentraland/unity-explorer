@@ -19,8 +19,6 @@ namespace DCL.Optimization.Pools
 
         public int CountInactive => gameObjectPool.CountInactive;
 
-        public Transform PoolContainerTransform => parentContainer;
-
         public GameObjectPool(Transform rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;

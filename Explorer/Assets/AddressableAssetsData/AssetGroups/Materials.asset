@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Materials
   m_EditorClassIdentifier: 
   m_GroupName: Materials
-  m_Data:
-    m_SerializedData: []
   m_GUID: 2fec862f89f4d0a459a47ad60d35dc5d
   m_SerializeEntries: []
   m_ReadOnly: 0

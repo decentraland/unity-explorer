@@ -6,7 +6,6 @@ using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.SceneLifeCycle.Components;
 using DCL.Diagnostics;
 using ECS.LifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;

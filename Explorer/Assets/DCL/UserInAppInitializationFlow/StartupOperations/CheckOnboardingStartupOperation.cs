@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -22,7 +23,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
 
-        // private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
         private readonly IRealmNavigator realmNavigator;
 
@@ -33,16 +34,14 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             ILoadingStatus loadingStatus,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
-
-            // IDecentralandUrlsSource decentralandUrlsSource,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IAppArgs appParameters,
             IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
             this.featureFlagsCache = featureFlagsCache;
-
-            // this.decentralandUrlsSource = decentralandUrlsSource;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.appParameters = appParameters;
             this.realmNavigator = realmNavigator;
         }
@@ -85,7 +84,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                 // TODO So operations will be called from the operation. Re-consideration required
                 //try
                 //{
-                var realmURL = URLDomain.FromString($"{IRealmNavigator.WORLDS_DOMAIN}/{realm}");
+                string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
+                var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
                 EnumResult<ChangeRealmError> result = await realmNavigator.TryChangeRealmAsync(realmURL, ct);
                 isProfilePendingToBeUpdated = true;
 

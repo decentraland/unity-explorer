@@ -16,5 +16,10 @@
         ///     View is in focus
         /// </summary>
         ViewFocused = 2,
+
+        /// <summary>
+        ///     View is being hidden.
+        /// </summary>
+        ViewHiding = 3,
     }
 }

@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
 using ECS;
@@ -21,32 +23,98 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 {
     public class SignedFetchWrap : IJsApiWrapper
     {
+        private static readonly string[] AUTH_CHAIN_HEADER_NAMES =
+        {
+            // AuthLinkType.SIGNER
+            "x-identity-auth-chain-0",
+            // AuthLinkType.ECDSA_EPHEMERAL
+            "x-identity-auth-chain-1",
+            // AuthLinkType.ECDSA_SIGNED_ENTITY
+            "x-identity-auth-chain-2",
+            // AuthLinkType.ECDSA_EIP_1654_EPHEMERAL
+            "x-identity-auth-chain-3",
+            // AuthLinkType.ECDSA_EIP_1654_SIGNED_ENTITY
+            "x-identity-auth-chain-4",
+        };
+
         private readonly IWebRequestController webController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISceneData sceneData;
         private readonly IRealmData realmData;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public SignedFetchWrap(
             IWebRequestController webController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISceneData sceneData,
-            IRealmData realmData)
+            IRealmData realmData,
+            IWeb3IdentityCache identityCache)
         {
             this.webController = webController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sceneData = sceneData;
             this.realmData = realmData;
+            this.identityCache = identityCache;
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         [UsedImplicitly]
-        public object Headers(SignedFetchRequest signedFetchRequest)
+        public object GetSignedHeaders(string url, string body, string headers, string method)
         {
-            string jsonMetaData = signedFetchRequest.init?.body ?? string.Empty;
+            Dictionary<string, string>? deserializedHeaders = JsonConvert.DeserializeObject<Dictionary<string, string>>(headers);
 
-            return new WebRequestHeadersInfo()
-                  .WithSign(jsonMetaData, DateTime.UtcNow.UnixTimeAsMilliseconds())
-                  .AsMutableDictionary();
+            string response = GetSignedHeaders(new SignedFetchRequest
+            {
+                url = url,
+                init = new FlatFetchInit
+                {
+                    body = body,
+                    headers = deserializedHeaders ?? new Dictionary<string, string>(),
+                    method = string.IsNullOrEmpty(method) ? "get" : method,
+                },
+            });
+
+            return response;
+        }
+
+        private string GetSignedHeaders(SignedFetchRequest request)
+        {
+            string? method = request.init?.method?.ToLower();
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+            string? hashBody = null;
+
+            if (request.init != null)
+                if (!string.IsNullOrEmpty(request.init.body))
+                    hashBody = sha256_hash(request.init.body);
+
+            string signatureMetadata = CreateSignatureMetadata(hashBody);
+
+            var headers = new WebRequestHeadersInfo(request.init?.headers)
+                         .WithSign(signatureMetadata, unixTimestamp)
+                         .AsMutableDictionary();
+
+            var signInfo = WebRequestSignInfo.NewFromRaw(
+                signatureMetadata,
+                request.url,
+                unixTimestamp,
+                method ?? string.Empty
+            );
+
+            using AuthChain authChain = identityCache.EnsuredIdentity().Sign(signInfo.StringToSign);
+            var authChainIndex = 0;
+
+            foreach (AuthLink link in authChain)
+            {
+                headers[AUTH_CHAIN_HEADER_NAMES[authChainIndex]] = link.ToJson();
+                authChainIndex++;
+            }
+
+            return JsonConvert.SerializeObject(headers);
         }
 
         [UsedImplicitly]
@@ -66,18 +134,18 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             });
         }
 
-        private static String sha256_hash(String value) {
-            StringBuilder Sb = new StringBuilder();
+        private static string sha256_hash(string value) {
+            StringBuilder sb = new StringBuilder();
 
-            using (SHA256 hash = SHA256Managed.Create()) {
+            using (SHA256 hash = SHA256.Create()) {
                 Encoding enc = Encoding.UTF8;
-                Byte[] result = hash.ComputeHash(enc.GetBytes(value));
+                byte[] result = hash.ComputeHash(enc.GetBytes(value));
 
-                foreach (Byte b in result)
-                    Sb.Append(b.ToString("x2"));
+                foreach (byte b in result)
+                    sb.Append(b.ToString("x2"));
             }
 
-            return Sb.ToString();
+            return sb.ToString();
         }
 
         private object SignedFetch(SignedFetchRequest request)
@@ -86,7 +154,12 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             string? method = request.init?.method?.ToLower();
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            string hashBody = request.init.body.Length > 0 ? sha256_hash(request.init.body) : null;
+            string? hashBody = null;
+
+            if (request.init != null)
+                if (!string.IsNullOrEmpty(request.init.body))
+                    hashBody = sha256_hash(request.init.body);
+
             string signatureMetadata = CreateSignatureMetadata(hashBody);
 
             var headers = new WebRequestHeadersInfo(request.init?.headers)
@@ -124,8 +197,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                                 cancellationTokenSource.Token,
-                                headersInfo:
-                                headers,
+                                headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
 
@@ -189,11 +261,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
         private ReportData GetReportData() =>
             new (ReportCategory.SCENE_FETCH_REQUEST, sceneShortInfo: sceneData.SceneShortInfo);
-
-        public void Dispose()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
-        }
 
         private string CreateSignatureMetadata(string? hashPayload)
         {

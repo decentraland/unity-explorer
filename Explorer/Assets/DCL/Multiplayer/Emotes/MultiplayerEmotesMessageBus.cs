@@ -94,7 +94,10 @@ namespace DCL.Multiplayer.Emotes
             using (receivedMessage)
             {
                 if (cancellationTokenSource.Token.IsCancellationRequested || IsUserBlocked(receivedMessage.FromWalletId))
+                {
+                    messageDeduplication.RemoveWallet(receivedMessage.FromWalletId);
                     return;
+                }
 
                 Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId);
             }

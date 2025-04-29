@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
         private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref PartitionComponent partition)
+            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed)
@@ -86,7 +86,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 RunOnThreadPoolAsync().Forget();
-                ReportHub.LogProductionInfo($"Scene '{scene.Info}' started");
+                ReportHub.LogProductionInfo($"Scene '{sceneDefinitionComponent.Definition.GetLogSceneName()}' started");
 
                 if (promise.LoadingIntention.DefinitionComponent.IsPortableExperience)
                 {
@@ -103,7 +103,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinition,
+        private void ChangeSceneFPS(ref ISceneFacade sceneFacade,
             ref PartitionComponent partition)
         {
             if (!partition.IsDirty) return;

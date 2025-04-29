@@ -14,10 +14,10 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
-using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Utility;
 
 namespace DCL.SDKComponents.MediaStream
@@ -32,6 +32,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly MediaPlayerCustomPool mediaPlayerPool;
+
         private float worldVolumePercentage = 1f;
         private float masterVolumePercentage = 1f;
 
@@ -41,13 +43,16 @@ namespace DCL.SDKComponents.MediaStream
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
-            WorldVolumeMacBus worldVolumeMacBus) : base(world)
+            WorldVolumeMacBus worldVolumeMacBus,
+            MediaPlayerCustomPool mediaPlayerPool
+        ) : base(world)
         {
             this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.mediaPlayerPool = mediaPlayerPool;
 
             //This following part is a workaround applied for the MacOS platform, the reason
             //is related to the video and audio streams, the MacOS environment does not support
@@ -84,12 +89,11 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateMediaPlayerPosition(ref MediaPlayerComponent mediaPlayer, ref TransformComponent transformComponent)
         {
-            // Needed for positional sound
-            mediaPlayer.MediaPlayer.transform.position = transformComponent.Transform.position;
+            mediaPlayer.MediaPlayer.PlaceAt(transformComponent.Transform.position);
         }
 
         [Query]
-        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent)
+        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -99,12 +103,15 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
-            HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
+            var address = MediaAddress.New(sdkComponent.Url!);
+            if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
+
+            HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
         }
 
         [Query]
-        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
+        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -114,21 +121,66 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
-            HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
+            var address = MediaAddress.New(sdkComponent.Src!);
+            if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
+
+            HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+        }
+
+        private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
+        {
+            if (sdkComponent.IsNotDirty())
+                return false;
+
+            var kind = component.MediaAddress.MediaKind;
+
+            if (kind != address.MediaKind)
+                return PerformRemove(World, ref component, sdkComponent, entity);
+
+            switch (kind)
+            {
+                case MediaAddress.Kind.URL:
+                    if (component.MediaAddress != address
+                        && (!sceneData.TryGetMediaUrl(address.Url, out var localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
+                        return PerformRemove(World, ref component, sdkComponent, entity);
+
+                    break;
+                case MediaAddress.Kind.LIVEKIT:
+                    if (component.MediaAddress != address)
+                        return PerformRemove(World, ref component, sdkComponent, entity);
+
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+
+            return false;
+
+            static bool PerformRemove(World world, ref MediaPlayerComponent component, IDirtyMarker sdkComponent, Entity entity)
+            {
+                component.Dispose();
+                sdkComponent.IsDirty = false;
+                world.Remove<MediaPlayerComponent>(entity);
+                return true;
+            }
         }
 
         [Query]
         [All(typeof(PBVideoPlayer))]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
-            if (!playerComponent.IsPlaying || playerComponent.State == VideoState.VsError || !playerComponent.MediaPlayer.MediaOpened)
+            playerComponent.MediaPlayer.EnsurePlaying();
+
+            if (!playerComponent.IsPlaying
+                || playerComponent.State == VideoState.VsError
+                || !playerComponent.MediaPlayer.MediaOpened
+               )
                 return;
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
 
-            Texture avText = playerComponent.MediaPlayer.TextureProducer.GetTexture();
+            Texture? avText = playerComponent.MediaPlayer.LastTexture();
             if (avText == null) return;
 
             // Handle texture update
@@ -138,21 +190,36 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
-            PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onPlaybackUpdate = null)
+        private void HandleComponentChange(
+            ref MediaPlayerComponent component,
+            IDirtyMarker sdkComponent,
+            MediaAddress mediaAddress,
+            bool hasPlaying,
+            bool isPlaying,
+            PBVideoPlayer? sdkVideoComponent = null,
+            Action<MultiMediaPlayer, PBVideoPlayer>? onPlaybackUpdate = null
+        )
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (component.URL != url && (!sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl) || component.URL != localMediaUrl))
+            bool ShouldUpdateSource(in MediaPlayerComponent component) =>
+                component.MediaAddress.MediaKind switch
+                {
+                    MediaAddress.Kind.URL => !sceneData.TryGetMediaUrl(mediaAddress.Url, out URLAddress localMediaUrl) || component.MediaAddress.Url != localMediaUrl,
+                    MediaAddress.Kind.LIVEKIT => true,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+            if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
             {
                 component.MediaPlayer.CloseCurrentStream();
 
-                UpdateStreamUrl(ref component, url);
+                UpdateStreamUrl(ref component, mediaAddress);
 
                 if (component.State != VideoState.VsError)
                 {
                     component.Cts = component.Cts.SafeRestart();
-                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).Forget();
+                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, GetReportData(), component.Cts.Token).Forget();
                 }
             }
             else if (component.State != VideoState.VsError)
@@ -166,40 +233,55 @@ namespace DCL.SDKComponents.MediaStream
             sdkComponent.IsDirty = false;
         }
 
-        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onOpened = null)
+        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MultiMediaPlayer, PBVideoPlayer>? onOpened = null)
         {
             if (!component.OpenMediaPromise.IsResolved) return;
 
-            if (component.OpenMediaPromise.IsReachableConsume(component.URL))
+            if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
-                //The problem is that video files coming from our content server are flagged as application/octet-stream,
-                //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
-                //This adds a query param for video files from content server to force the correct content type
-                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.IsFromContentServer ? string.Format("{0}?includeMimeType", component.URL) : component.URL, autoPlay);
+                Profiler.BeginSample(component.MediaPlayer.HasControl
+                    ? "MediaPlayer.OpenMedia"
+                    : "MediaPlayer.InitialiseAndOpenMedia");
+
+                try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
+                finally { Profiler.EndSample(); }
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
             }
             else
             {
-                component.SetState(string.IsNullOrEmpty(component.URL) ? VideoState.VsNone : VideoState.VsError);
-                component.MediaPlayer.CloseCurrentStream();
+                component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+                Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
+
+                try { component.MediaPlayer.CloseCurrentStream(); }
+                finally { Profiler.EndSample(); }
             }
         }
 
-        private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
+        private void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)
         {
+            if (component.MediaAddress.MediaKind is MediaAddress.Kind.LIVEKIT)
+            {
+                component.MediaAddress = mediaAddress;
+                return;
+            }
+
+            string url = mediaAddress.Url;
+
             bool isValidStreamUrl = url.IsValidUrl();
             bool isValidLocalPath = false;
+
             if (!isValidStreamUrl)
             {
                 isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
-                if(isValidLocalPath)
-                    url = mediaUrl;
+
+                if (isValidLocalPath)
+                    mediaAddress = MediaAddress.New(mediaUrl.Value);
             }
 
-            component.URL = url;
-            component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
+            component.MediaAddress = mediaAddress;
+            component.SetState(isValidStreamUrl || isValidLocalPath || mediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
         }
 
         protected override void OnDispose()

@@ -1,6 +1,6 @@
 ﻿using AssetManagement;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
@@ -10,16 +10,11 @@ using DCL.WebRequests.RequestsHub;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
-using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
@@ -93,7 +88,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public async Task ParallelABLoadsWithoutCacheShould()
         {
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(ITexturesFuse.NewDefault(), true));
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()));
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 

@@ -2,8 +2,10 @@
     "name": "CameraReelToast",
     "rootNamespace": "",
     "references": [
+        "GUID:212dec3614823496d8f46a506aa5b831",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
     ],
     "includePlatforms": [],

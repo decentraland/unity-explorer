@@ -81,10 +81,17 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void UnregisterPointerCallbacks(this UITransformComponent uiTransformComponent)
         {
-            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerDownCallback);
-            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
-            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerEnterCallback);
-            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerLeaveCallback);
+            if(uiTransformComponent.currentOnPointerDownCallback!=null)
+                uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerDownCallback);
+
+            if(uiTransformComponent.currentOnPointerUpCallback!=null)
+                uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
+
+            if(uiTransformComponent.currentOnPointerEnterCallback!=null)
+                uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerEnterCallback);
+
+            if(uiTransformComponent.currentOnPointerLeaveCallback!=null)
+                uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerLeaveCallback);
         }
 
         public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, IInputBlock inputBlock)
@@ -150,7 +157,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiInputComponent)
         {
-            uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+            if(uiInputComponent.currentOnValueChanged!=null)
+                uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
         }
     }
 }
