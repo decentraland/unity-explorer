@@ -2544,6 +2544,7 @@ MonoBehaviour:
   <PageSelectorView>k__BackingField: {fileID: 3712294798457460945}
   <RegularResults>k__BackingField: {fileID: 4286908778797955625}
   <NoSearchResults>k__BackingField: {fileID: 2670128207509277336}
+  <MarketplaceTextLink>k__BackingField: {fileID: 8916202270401981245}
   <NoCategoryResults>k__BackingField: {fileID: 4883820917948329291}
   <BreadCrumbView>k__BackingField: {fileID: 6956049020834478445}
 --- !u!1 &3190748306234886068
@@ -4651,6 +4652,7 @@ GameObject:
   - component: {fileID: 4984711898986185379}
   - component: {fileID: 3851007865483918846}
   - component: {fileID: 2768975878690625424}
+  - component: {fileID: 6148931348814617546}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -4706,7 +4708,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: You do not have any wearable that meets this category or search criteria.
-    If you want you can find the ideal one for you in the <color=#FF2D55><link="marketplace">Marketplace</link></color>.
+    If you want you can find the ideal one for you in the <color=#FF2D55><link="https://decentraland.org/marketplace">Marketplace</link></color>.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -4777,6 +4779,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6148931348814617546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6441933127628158550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa79a46ad7d14748b3e248214931267e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6473974854937344738
 GameObject:
   m_ObjectHideFlags: 0
@@ -4864,6 +4878,7 @@ GameObject:
   - component: {fileID: 1756632032611501278}
   - component: {fileID: 5293173539392528250}
   - component: {fileID: 4323447657527004265}
+  - component: {fileID: 8916202270401981245}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -4919,7 +4934,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: You do not have any wearable that meets this category or search criteria.
-    If you want you can find the ideal one for you in the <color=#FF2D55><link="marketplace">Marketplace</link></color>.
+    If you want you can find the ideal one for you in the <color=#FF2D55><link="https://decentraland.org/marketplace">Marketplace</link></color>.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -4990,6 +5005,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &8916202270401981245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6816447324940577629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa79a46ad7d14748b3e248214931267e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7162625725267460611
 GameObject:
   m_ObjectHideFlags: 0
@@ -5237,6 +5264,7 @@ MonoBehaviour:
   <PageSelectorView>k__BackingField: {fileID: 9151801607187252162}
   <RegularResults>k__BackingField: {fileID: 2293997709252917235}
   <NoSearchResults>k__BackingField: {fileID: 6292301406972969359}
+  <MarketplaceTextLink>k__BackingField: {fileID: 6148931348814617546}
   <NoCategoryResults>k__BackingField: {fileID: 4373380581338508548}
   <BreadCrumbView>k__BackingField: {fileID: 0}
 --- !u!1 &7825276156756374324

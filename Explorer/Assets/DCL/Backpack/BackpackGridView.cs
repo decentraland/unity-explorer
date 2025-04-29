@@ -26,6 +26,9 @@ namespace DCL.Backpack
         public GameObject NoSearchResults { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text_ClickeableLink MarketplaceTextLink { get; private set; }
+
+        [field: SerializeField]
         public GameObject NoCategoryResults { get; private set; }
 
         [field: SerializeField]

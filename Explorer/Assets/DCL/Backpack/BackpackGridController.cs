@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
+using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.UI;
 using System;
@@ -40,6 +41,7 @@ namespace DCL.Backpack
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
@@ -67,7 +69,8 @@ namespace DCL.Backpack
             ColorPresetsSO hairColors,
             ColorPresetsSO eyesColors,
             ColorPresetsSO bodyshapeColors,
-            IWearablesProvider wearablesProvider)
+            IWearablesProvider wearablesProvider,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -80,6 +83,7 @@ namespace DCL.Backpack
             this.thumbnailProvider = thumbnailProvider;
             this.wearablesProvider = wearablesProvider;
             this.gridItemsPool = gridItemsPool;
+            this.webBrowser = webBrowser;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
@@ -87,6 +91,7 @@ namespace DCL.Backpack
             breadcrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
+            view.MarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
 
         public void Dispose()
@@ -95,6 +100,7 @@ namespace DCL.Backpack
 
             eventBus.EquipWearableEvent -= OnEquip;
             eventBus.UnEquipWearableEvent -= OnUnequip;
+            view.MarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
 
         public void Activate()
@@ -350,5 +356,8 @@ namespace DCL.Backpack
                 itemView.SetEquipButtonsState();
             }
         }
+
+        private void OpenMarketplaceLink(string url) =>
+            webBrowser.OpenUrl(url);
     }
 }

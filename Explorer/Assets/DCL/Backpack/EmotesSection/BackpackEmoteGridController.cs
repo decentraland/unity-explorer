@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Browser;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -44,6 +45,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IEmoteProvider emoteProvider;
         private readonly IReadOnlyCollection<URN> embeddedEmoteIds;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -66,7 +68,8 @@ namespace DCL.Backpack.EmotesSection
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
             IReadOnlyCollection<URN> embeddedEmoteIds,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -81,6 +84,7 @@ namespace DCL.Backpack.EmotesSection
             this.emoteProvider = emoteProvider;
             this.embeddedEmoteIds = embeddedEmoteIds;
             this.thumbnailProvider = thumbnailProvider;
+            this.webBrowser = webBrowser;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
@@ -88,6 +92,7 @@ namespace DCL.Backpack.EmotesSection
             eventBus.EquipEmoteEvent += OnEquip;
             eventBus.EquipWearableEvent += OnWearableEquipped;
             eventBus.UnEquipEmoteEvent += OnUnequip;
+            view.MarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
 
         public void Activate()
@@ -109,6 +114,7 @@ namespace DCL.Backpack.EmotesSection
         public void Dispose()
         {
             loadElementsCancellationToken.SafeCancelAndDispose();
+            view.MarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
 
         public static async UniTask<ObjectPool<BackpackEmoteGridItemView>> InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner,
@@ -373,5 +379,8 @@ namespace DCL.Backpack.EmotesSection
                 return;
             }
         }
+
+        private void OpenMarketplaceLink(string url) =>
+            webBrowser.OpenUrl(url);
     }
 }
