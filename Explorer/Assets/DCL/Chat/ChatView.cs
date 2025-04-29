@@ -384,7 +384,7 @@ namespace DCL.Chat
         public void OnPointerExit(PointerEventData eventData)
         {
             // When hovering a context menu, it considers that the mouse is not on the chat, it's a false positive
-            if(isChatContextMenuOpen || isChatViewerMessageContextMenuOpen || chatInputBox.IsPasteMenuOpen)
+            if(isChatContextMenuOpen || isChatViewerMessageContextMenuOpen || chatInputBox.IsPasteMenuOpen || chatInputBox.IsEmojiPanelVisible)
                 return;
 
             isPointerOverChat = false;
@@ -784,12 +784,25 @@ namespace DCL.Chat
                 if (hasClickedOnPanel)
                 {
                     if (!hasClickedOnEmojiPanel)
+                    {
                         Focus();
+                        chatInputBox.LockSelectedState = true;
+                        chatInputBox.Focus();
+                    }
 
                     chatInputBox.OnClicked(raycastResults);
                 }
-                else if(!isPointerOverChat && !memberListView.IsContextMenuOpen) // This is necessary to avoid blurring while a context menu is open
+                else if (chatInputBox.IsEmojiPanelVisible && !hasClickedOnEmojiPanel)
+                {
                     Blur();
+                    chatInputBox.LockSelectedState = false;
+                    SetBackgroundVisibility(false, true);
+                }
+                else if (!isPointerOverChat && !memberListView.IsContextMenuOpen) // This is necessary to avoid blurring while a context menu is open
+                {
+                    Blur();
+                    SetBackgroundVisibility(false, true);
+                }
             }
         }
 
@@ -848,16 +861,8 @@ namespace DCL.Chat
 
         private void OnEmojiSelectionVisibilityChanged(bool isVisible)
         {
-            // If the user opens the emoji panel by clicking on the button while not focused...
-            if(!isChatFocused)
-                Focus();
-
-            if(!isVisible)
-                chatInputBox.Focus(); // Makes sure that the focus is back on the chat input box
-
-            chatInputBox.LockSelectedState = !isVisible; // Unlocks the selected state to allow the emoji selection panel to get the focus
-
-            EmojiSelectionVisibilityChanged?.Invoke(isVisible);
+            if(isVisible)
+                chatInputBox.LockSelectedState = false;
         }
 
         private void OnInputSubmitted(string messageToSend, string origin)

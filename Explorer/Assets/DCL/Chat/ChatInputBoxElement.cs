@@ -272,7 +272,7 @@ namespace DCL.Chat
 
             if (!clickedOnPanel)
             {
-                if (emojiPanel.gameObject.activeInHierarchy)
+                if (IsEmojiPanelVisible)
                     IsEmojiPanelVisible = false;
 
                 suggestionPanelController.SetPanelVisibility(false);
@@ -301,11 +301,11 @@ namespace DCL.Chat
             Focus();
         }
 
-        private bool IsEmojiPanelVisible
+        public bool IsEmojiPanelVisible
         {
             get => emojiPanel.gameObject.activeInHierarchy;
 
-            set
+            private set
             {
                 if (emojiPanel.gameObject.activeInHierarchy != value)
                 {
