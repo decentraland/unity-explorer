@@ -562,6 +562,9 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
+            var notificationsChannel = new WebSocketNotificationsChannel(notificationsBusController, identityCache);
+            notificationsChannel.StartAsync(ct).SuppressCancellationThrow().Forget();
+
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
 

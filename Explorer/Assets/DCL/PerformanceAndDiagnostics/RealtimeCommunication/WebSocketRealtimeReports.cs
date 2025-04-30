@@ -17,12 +17,27 @@ namespace Assets.DCL.RealtimeCommunication
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webSocket = new ClientWebSocket();
+
+            web3IdentityCache.OnIdentityChanged += ConnectOnChange;
+        }
+
+        ~WebSocketRealtimeReports()
+        {
+            web3IdentityCache.OnIdentityChanged -= ConnectOnChange;
         }
 
         public bool IsConnected => webSocket.State is WebSocketState.Open;
 
+        private void ConnectOnChange()
+        {
+            ConnectAsync(CancellationToken.None).Forget();
+        }
+
         public async UniTask ConnectAsync(CancellationToken ct)
         {
+            if (IsConnected)
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "normal closure", ct);
+
             string? address = web3IdentityCache.Identity?.Address.ToString();
 
             if (address == null)
