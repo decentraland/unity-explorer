@@ -11,7 +11,7 @@ namespace Assets.DCL.RealtimeCommunication
     public class WebSocketRealtimeReports : IRealtimeReports
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ClientWebSocket webSocket;
+        private ClientWebSocket webSocket;
 
         public WebSocketRealtimeReports(IWeb3IdentityCache web3IdentityCache)
         {
@@ -36,7 +36,12 @@ namespace Assets.DCL.RealtimeCommunication
         public async UniTask ConnectAsync(CancellationToken ct)
         {
             if (IsConnected)
+            {
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "normal closure", ct);
+                webSocket.Abort();
+                webSocket.Dispose();
+                webSocket = new ClientWebSocket();
+            }
 
             string? address = web3IdentityCache.Identity?.Address.ToString();
 
