@@ -456,6 +456,7 @@ namespace DCL.Chat
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
+            viewInstance.ClearCurrentConversation();
         }
 
         private void OnViewFoldingChanged(bool isUnfolded)

@@ -586,6 +586,16 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Empties the current conversation removing all messages and hiding associated UI elements.
+        /// </summary>
+        public void ClearCurrentConversation()
+        {
+            chatMessageViewer.ClearMessages();
+            SetScrollToBottomVisibility(false,false);
+            chatMessageViewer.HideSeparator();
+        }
+
+        /// <summary>
         /// Moves the chat so it shows the last created message.
         /// </summary>
         public void ShowLastMessage() =>
