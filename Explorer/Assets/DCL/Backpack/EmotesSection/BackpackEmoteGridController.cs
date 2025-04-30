@@ -92,7 +92,8 @@ namespace DCL.Backpack.EmotesSection
             eventBus.EquipEmoteEvent += OnEquip;
             eventBus.EquipWearableEvent += OnWearableEquipped;
             eventBus.UnEquipEmoteEvent += OnUnequip;
-            view.MarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
+            view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
+            view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
 
         public void Activate()
@@ -114,7 +115,8 @@ namespace DCL.Backpack.EmotesSection
         public void Dispose()
         {
             loadElementsCancellationToken.SafeCancelAndDispose();
-            view.MarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
+            view.NoSearchResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
+            view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
 
         public static async UniTask<ObjectPool<BackpackEmoteGridItemView>> InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner,

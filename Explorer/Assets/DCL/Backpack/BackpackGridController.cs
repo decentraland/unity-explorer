@@ -91,7 +91,8 @@ namespace DCL.Backpack
             breadcrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
-            view.MarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
+            view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
+            view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
 
         public void Dispose()
@@ -100,7 +101,8 @@ namespace DCL.Backpack
 
             eventBus.EquipWearableEvent -= OnEquip;
             eventBus.UnEquipWearableEvent -= OnUnequip;
-            view.MarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
+            view.NoSearchResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
+            view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
 
         public void Activate()
