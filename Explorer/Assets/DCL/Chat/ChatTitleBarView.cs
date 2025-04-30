@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -15,6 +14,7 @@ namespace DCL.Chat
     public class ChatTitleBarView : MonoBehaviour, IViewWithGlobalDependencies
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
+        public delegate void DeleteChatHistoryRequestedDelegate();
 
         public event Action? CloseChatButtonClicked;
         public event Action? CloseMemberListButtonClicked;
@@ -22,6 +22,7 @@ namespace DCL.Chat
         public event Action? ShowMemberListButtonClicked;
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
+        public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
         [SerializeField] private Button closeChatButton;
         [SerializeField] private Button closeMemberListButton;
@@ -44,7 +45,7 @@ namespace DCL.Chat
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
 
-
+        private ViewDependencies viewDependencies;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
@@ -65,6 +66,7 @@ namespace DCL.Chat
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
+            viewDependencies = dependencies;
             profileView.InjectDependencies(dependencies);
         }
 
@@ -124,8 +126,17 @@ namespace DCL.Chat
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
 
-            // TODO: Will be resurrected soon, it should tell ChatView that the context menu is open so it does not hide the background
-            //viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed, contextMenuTask.Task).Forget();
+            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
+        }
+
+        private void OnDeleteChatHistoryButtonClicked()
+        {
+            DeleteChatHistoryRequested?.Invoke();
+        }
+
+        private void OnContextMenuClosed()
+        {
+            ContextMenuVisibilityChanged?.Invoke(false);
         }
 
         private void OnCloseMemberListButtonClicked()

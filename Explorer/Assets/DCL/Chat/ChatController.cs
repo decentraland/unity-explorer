@@ -26,6 +26,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -452,13 +453,6 @@ namespace DCL.Chat
         }
 #endregion
 
-        private void OnClearChatCommandReceived() // Called by a command
-        {
-            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
-            messageCountWhenSeparatorViewed = 0;
-            viewInstance.ClearCurrentConversation();
-        }
-
         private void OnViewFoldingChanged(bool isUnfolded)
         {
             if (!isUnfolded)
@@ -646,7 +640,6 @@ namespace DCL.Chat
         {
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatCommandsBus.ClearChat += OnClearChatCommandReceived;
 
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
@@ -666,6 +659,7 @@ namespace DCL.Chat
                 view.ChannelRemovalRequested += OnViewChannelRemovalRequested;
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
+                view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
@@ -686,12 +680,19 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
+        private void OnViewDeleteChatHistoryRequested()
+        {
+            // Clears the history of the current conversation and updates the UI
+            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
+            messageCountWhenSeparatorViewed = 0;
+            viewInstance.ClearCurrentConversation();
+        }
+
         private void UnsubscribeFromEvents()
         {
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatCommandsBus.ClearChat -= OnClearChatCommandReceived;
             chatEventBus.InsertTextInChat -= OnTextInserted;
 
             if (viewInstance != null)
@@ -708,6 +709,7 @@ namespace DCL.Chat
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.ConversationSelected -= OnSelectConversation;
+                viewInstance.DeleteChatHistoryRequested -= OnViewDeleteChatHistoryRequested;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }
