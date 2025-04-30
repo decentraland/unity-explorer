@@ -3489,6 +3489,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2645819381228160923}
   - component: {fileID: 9055752946258308431}
+  - component: {fileID: 7325889334464004509}
   m_Layer: 0
   m_Name: AvatarBase
   m_TagString: Untagged
@@ -3572,6 +3573,53 @@ MonoBehaviour:
   <RightLegAnchorPoint>k__BackingField: {fileID: 7773640597938076529}
   <RightFootAnchorPoint>k__BackingField: {fileID: 8530642813781257132}
   <RightToeBaseAnchorPoint>k__BackingField: {fileID: 3392771611989602023}
+--- !u!114 &7325889334464004509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8126905407514615045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 939062d7fd664ba1a7b2355f5712d067, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  points:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  avatarPoints: []
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0

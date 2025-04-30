@@ -22,17 +22,7 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
 
     public readonly PoseLandmarkDetectionConfig config = new PoseLandmarkDetectionConfig();
 
-    private GameObject[] points = new GameObject[33];
-    private Vector3[] resultPos = new Vector3[33];
-    public void Awake()
-    {
-        for (int i = 0; i < 33; i++)
-        {
-            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-            points[i] = sphere;
-        }
-    }
+    public Vector3[] resultPos = new Vector3[33];
 
     public override void Stop()
     {
@@ -179,13 +169,7 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
       }
     }
 
-    private void Update()
-    {
-        for (var j = 11; j < 21; j++)
-        {
-            points[j].transform.position = resultPos[j];
-        }
-    }
+
 
     private void OnPoseLandmarkDetectionOutput(PoseLandmarkerResult result, Image image, long timestamp)
     {

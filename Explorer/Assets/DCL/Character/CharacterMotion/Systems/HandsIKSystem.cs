@@ -68,8 +68,9 @@ namespace DCL.CharacterMotion.Systems
             in CharacterEmoteComponent emoteComponent
         )
         {
-            handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
+            handsIKComponent.IsDisabled = false; //!handsIkSystemIsEnabled;
 
+            return;
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled
                              && rigidTransform.IsGrounded
@@ -80,17 +81,17 @@ namespace DCL.CharacterMotion.Systems
 
             if (handsIKComponent.IsDisabled) return;
 
-            ApplyHandIK(avatarBase.LeftHandRaycast, avatarBase.LeftHandSubTarget, avatarBase.LeftHandIK, settings, dt);
-            ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
+            // ApplyHandIK(avatarBase.LeftHandRaycast, avatarBase.LeftHandSubTarget, avatarBase.LeftHandIK, settings, dt);
+            // ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
 
-            Transform leftHint = avatarBase.LeftHandIK.data.hint;
-            Vector3 leftPosition = settings.HandsIKElbowOffset;
-            leftPosition.x = -leftPosition.x;
-            leftHint.localPosition = leftPosition;
-
-            Transform rightHint = avatarBase.RightHandIK.data.hint;
-            Vector3 rightPosition = settings.HandsIKElbowOffset;
-            rightHint.localPosition = rightPosition;
+            // Transform leftHint = avatarBase.LeftHandIK.data.hint;
+            // Vector3 leftPosition = settings.HandsIKElbowOffset;
+            // leftPosition.x = -leftPosition.x;
+            // leftHint.localPosition = leftPosition;
+            //
+            // Transform rightHint = avatarBase.RightHandIK.data.hint;
+            // Vector3 rightPosition = settings.HandsIKElbowOffset;
+            // rightHint.localPosition = rightPosition;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,12 +113,12 @@ namespace DCL.CharacterMotion.Systems
 
             if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
-                handIKTarget.position = Vector3.MoveTowards(handIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
-                handIKTarget.forward = -hitInfo.normal;
+                // handIKTarget.position = Vector3.MoveTowards(handIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
+                // handIKTarget.forward = -hitInfo.normal;
                 targetWeight = 1;
             }
 
-            handIK.weight = Mathf.MoveTowards(handIK.weight, targetWeight, settings.HandsIKWeightSpeed * dt);
+            // handIK.weight = Mathf.MoveTowards(handIK.weight, targetWeight, settings.HandsIKWeightSpeed * dt);
         }
     }
 }
