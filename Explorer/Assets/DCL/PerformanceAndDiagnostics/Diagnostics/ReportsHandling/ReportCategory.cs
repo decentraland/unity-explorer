@@ -191,6 +191,8 @@ namespace DCL.Diagnostics
 
         public const string LOD = nameof(LOD);
 
+        public const string REALTIME_COMMUNICATION = nameof(REALTIME_COMMUNICATION);
+
         /// <summary>
         ///     AvatarAttach SDK component
         /// </summary>
