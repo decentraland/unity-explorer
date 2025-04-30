@@ -54,11 +54,11 @@ namespace DCL.MarketplaceCredits
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly FeatureFlagsCache featureFlagsCache;
 
-        private MarketplaceCreditsWelcomeSubController marketplaceCreditsWelcomeSubController;
-        private MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController;
-        private MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
-        private MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
-        private MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
+        [CanBeNull] private MarketplaceCreditsWelcomeSubController marketplaceCreditsWelcomeSubController;
+        [CanBeNull] private MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController;
+        [CanBeNull] private MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
+        [CanBeNull] private MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
+        [CanBeNull] private MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
 
         private UniTaskCompletionSource closeTaskCompletionSource;
         private CancellationTokenSource showCreditsUnlockedCts;
@@ -186,24 +186,28 @@ namespace DCL.MarketplaceCredits
             {
                 case MarketplaceCreditsSection.WELCOME:
                     viewInstance.SetInfoLinkButtonActive(false);
-                    marketplaceCreditsWelcomeSubController.OpenSection();
+                    marketplaceCreditsWelcomeSubController?.OpenSection();
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
                     haveJustClaimedCredits = false;
-                    marketplaceCreditsVerifyEmailSubController.OpenSection();
+                    marketplaceCreditsVerifyEmailSubController?.OpenSection();
                     break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
-                    marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
-                    marketplaceCreditsGoalsOfTheWeekSubController.OpenSection();
+                    if (marketplaceCreditsGoalsOfTheWeekSubController != null)
+                    {
+                        marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
+                        marketplaceCreditsGoalsOfTheWeekSubController.OpenSection();
+                    }
+
                     break;
                 case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
                     haveJustClaimedCredits = false;
-                    marketplaceCreditsWeekGoalsCompletedSubController.OpenSection();
+                    marketplaceCreditsWeekGoalsCompletedSubController?.OpenSection();
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
                     haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
-                    marketplaceCreditsProgramEndedSubController.OpenSection();
+                    marketplaceCreditsProgramEndedSubController?.OpenSection();
                     break;
             }
 
@@ -252,11 +256,11 @@ namespace DCL.MarketplaceCredits
 
         private void CloseAllSections()
         {
-            marketplaceCreditsWelcomeSubController.CloseSection();
-            marketplaceCreditsVerifyEmailSubController.CloseSection();
-            marketplaceCreditsGoalsOfTheWeekSubController.CloseSection();
-            marketplaceCreditsWeekGoalsCompletedSubController.CloseSection();
-            marketplaceCreditsProgramEndedSubController.CloseSection();
+            marketplaceCreditsWelcomeSubController?.CloseSection();
+            marketplaceCreditsVerifyEmailSubController?.CloseSection();
+            marketplaceCreditsGoalsOfTheWeekSubController?.CloseSection();
+            marketplaceCreditsWeekGoalsCompletedSubController?.CloseSection();
+            marketplaceCreditsProgramEndedSubController?.CloseSection();
         }
 
         private void OnAnyPlaceClicked() =>
