@@ -54,11 +54,11 @@ namespace DCL.MarketplaceCredits
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly FeatureFlagsCache featureFlagsCache;
 
-        [CanBeNull] private MarketplaceCreditsWelcomeSubController marketplaceCreditsWelcomeSubController;
-        [CanBeNull] private MarketplaceCreditsVerifyEmailSubController marketplaceCreditsVerifyEmailSubController;
-        [CanBeNull] private MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
-        [CanBeNull] private MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
-        [CanBeNull] private MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
+        private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
+        private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
+        private MarketplaceCreditsGoalsOfTheWeekSubController? marketplaceCreditsGoalsOfTheWeekSubController;
+        private MarketplaceCreditsWeekGoalsCompletedSubController? marketplaceCreditsWeekGoalsCompletedSubController;
+        private MarketplaceCreditsProgramEndedSubController? marketplaceCreditsProgramEndedSubController;
 
         private UniTaskCompletionSource closeTaskCompletionSource;
         private CancellationTokenSource showCreditsUnlockedCts;
