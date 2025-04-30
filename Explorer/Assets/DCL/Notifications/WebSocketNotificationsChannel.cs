@@ -30,7 +30,7 @@ namespace DCL.Notifications
                 await UniTask.Delay(TimeSpan.FromMilliseconds(200));
 
             var address = identityCache.Identity!.Address.ToString();
-            var url = $"wss://notifications-rpc.decentraland.zone/{address}/notifications";
+            var url = $"wss://notifications-processor-rpc.decentraland.zone/{address}/notifications";
             await webSocket.ConnectAsync(new Uri(url), ct);
 
             while (ct.IsCancellationRequested == false)
