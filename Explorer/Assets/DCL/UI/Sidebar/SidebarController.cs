@@ -120,9 +120,9 @@ namespace DCL.UI.Sidebar
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettingsAsync);
+            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClickedAsync);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
 
@@ -162,7 +162,7 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            // TODO: The sidebar should provide a mechanism to fix the icon of a button, so it can be active while the Chat window is unfolded
+            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? "Active" : "Empty");
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -226,17 +226,22 @@ namespace DCL.UI.Sidebar
 
         private void OnUnreadMessagesButtonClickedAsync()
         {
+            // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
             sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true)).Forget();
         }
 
         private async void OnEmotesWheelButtonClickedAsync()
         {
+            viewInstance.emotesWheelButton.animator.SetTrigger("Active");
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+            viewInstance.emotesWheelButton.animator.SetTrigger("Empty");
         }
 
         private async void OnFriendsButtonClickedAsync()
         {
+            viewInstance.friendsButton.animator.SetTrigger("Active");
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
+            viewInstance.friendsButton.animator.SetTrigger("Empty");
         }
 
         private async void OnMarketplaceCreditsButtonClickedAsync() =>
@@ -248,8 +253,10 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked() =>
-            mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
+        private async void OnControlsButtonClickedAsync()
+        {
+            await mvcManager.ShowAsync(ControlsPanelController.IssueCommand());
+        }
 
         private async void OpenSidebarSettingsAsync()
         {
@@ -277,20 +284,56 @@ namespace DCL.UI.Sidebar
         private async void OpenSkyboxSettingsAsync()
         {
             viewInstance.BlockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger("Active");
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
+            viewInstance.skyboxButton.animator.SetTrigger("Empty");
             viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
             viewInstance.BlockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger("Active");
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
+            viewInstance.notificationsButton.animator.SetTrigger("Empty");
             viewInstance.UnblockSidebar();
         }
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
+            switch (section)
+            {
+                case ExploreSections.Backpack:
+                    viewInstance.backpackButton.animator.SetTrigger("Active");
+                    break;
+                case ExploreSections.Navmap:
+                    viewInstance.mapButton.animator.SetTrigger("Active");
+                    break;
+                case ExploreSections.Settings:
+                    viewInstance.settingsButton.animator.SetTrigger("Active");
+                    break;
+                case ExploreSections.CameraReel:
+                    viewInstance.cameraReelButton.animator.SetTrigger("Active");
+                    break;
+            }
+
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
+
+            switch (section)
+            {
+                case ExploreSections.Backpack:
+                    viewInstance.backpackButton.animator.SetTrigger("Empty");
+                    break;
+                case ExploreSections.Navmap:
+                    viewInstance.mapButton.animator.SetTrigger("Empty");
+                    break;
+                case ExploreSections.Settings:
+                    viewInstance.settingsButton.animator.SetTrigger("Empty");
+                    break;
+                case ExploreSections.CameraReel:
+                    viewInstance.cameraReelButton.animator.SetTrigger("Empty");
+                    break;
+            }
         }
 
         #endregion
