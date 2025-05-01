@@ -2,12 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
 using DCL.SDKComponents.Utils;
 using DCL.Web3.Identities;
@@ -18,6 +19,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
@@ -30,7 +32,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private readonly IWeb3IdentityCache web3IdentityCache;
         private Transform? localAvatarTransform;
 
-        public AvatarModifierAreaHandlerSystem(World world, World globalWorld, ISceneRestrictionBusController sceneRestrictionBusController, IWeb3IdentityCache web3IdentityCache) : base(world)
+        public AvatarModifierAreaHandlerSystem(World world, World globalWorld,
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            IWeb3IdentityCache web3IdentityCache) : base(world)
         {
             this.globalWorld = globalWorld;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
@@ -55,7 +59,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private void ResetAffectedEntities(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform);
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out Entity avatarEntity)) continue;
+
+                ShowAvatar(avatarEntity, avatarTransform);
+                EnableAvatarInteraction(avatarEntity);
+            }
 
             World!.Remove<AvatarModifierAreaComponent>(entity);
         }
@@ -73,8 +82,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea,
+            ref AvatarModifierAreaComponent modifierAreaComponent,
+            ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
+            bool isHideAvatarsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtHideAvatars);
+            bool isHidePassportsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtDisablePassports);
+
             if (pbAvatarModifierArea.IsDirty)
             {
                 pbAvatarModifierArea.IsDirty = false;
@@ -83,55 +97,84 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 // Update effect on now excluded/non-excluded avatars
                 foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                    HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
+                {
+                    if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                    if (isHideAvatarsType)
+                        HideAvatar(entity, avatarTransform, modifierAreaComponent.ExcludedIds);
+
+                    if (isHidePassportsType)
+                        DisableAvatarInteraction(entity, modifierAreaComponent.ExcludedIds);
+                }
             }
 
             foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
-                ShowAvatar(avatarTransform);
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                ShowAvatar(entity, avatarTransform);
+                EnableAvatarInteraction(entity);
+            }
 
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
 
             foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
-                HideAvatar(avatarTransform, modifierAreaComponent.ExcludedIds);
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                if (isHideAvatarsType)
+                    HideAvatar(entity, avatarTransform, modifierAreaComponent.ExcludedIds);
+
+                if (isHidePassportsType)
+                    DisableAvatarInteraction(entity, modifierAreaComponent.ExcludedIds);
+            }
 
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleEntityDestruction(ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleEntityDestruction(ref CharacterTriggerAreaComponent triggerAreaComponent,
+            ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform);
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                ShowAvatar(entity, avatarTransform);
+                EnableAvatarInteraction(entity);
+            }
 
             modifierComponent.Dispose();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleComponentRemoval(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent,
+            ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
-                ShowAvatar(avatarTransform);
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var avatarEntity)) continue;
+
+                ShowAvatar(avatarEntity, avatarTransform);
+                EnableAvatarInteraction(avatarEntity);
+            }
 
             modifierComponent.Dispose();
 
             World!.Remove<AvatarModifierAreaComponent>(entity);
         }
 
-        private void ShowAvatar(Transform avatarTransform)
+        private void ShowAvatar(Entity entity, Transform avatarTransform)
         {
-            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, avatarTransform);
-            if (!result.Success) return;
-
-            var entity = result.Result;
-
             ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
             if (!hasAvatarShape) return;
 
             avatarShape.HiddenByModifierArea = false;
+
             if (avatarTransform == localAvatarTransform)
             {
                 localAvatarTransform = null;
@@ -139,13 +182,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             }
         }
 
-        private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds)
+        private void HideAvatar(Entity entity, Transform avatarTransform, HashSet<string> excludedIds)
         {
-            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, avatarTransform);
-            if (!result.Success) return;
-
-            var entity = result.Result;
-
             if (!globalWorld.TryGet(entity, out Profile? profile)) return;
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
@@ -159,6 +197,31 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 localAvatarTransform = avatarTransform;
                 sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
             }
+        }
+
+        private void DisableAvatarInteraction(Entity entity, HashSet<string> excludedIds)
+        {
+            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
+
+            bool shouldDisable = !excludedIds.Contains(profile!.UserId);
+
+            if (shouldDisable)
+                // Something like TryAdd
+                globalWorld.AddOrGet<IgnoreInteractionComponent>(entity);
+            else
+                globalWorld.TryRemove<IgnoreInteractionComponent>(entity);
+        }
+
+        private void EnableAvatarInteraction(Entity entity) =>
+            globalWorld.TryRemove<IgnoreInteractionComponent>(entity);
+
+        private bool TryGetAvatarEntity(Transform transform, out Entity entity)
+        {
+            entity = Entity.Null;
+            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, transform);
+            if (!result.Success) return false;
+            entity = result.Result;
+            return true;
         }
     }
 }
