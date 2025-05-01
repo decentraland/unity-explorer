@@ -1,0 +1,1465 @@
+// BC7 Compression Unity Compute Shader
+// Converted from OpenCL to Unity Compute Shader
+
+#pragma kernel BC7Compress
+
+// Define this if you want to pick the best shapes to refine.
+// In my tests, it was better to not cull shapes and use less iterations.
+// You get about the same speed and better quality.
+//#define CULL_SHAPES
+
+// 4x4 block of pixels
+#define NUM_PIXELS_PER_BLOCK 16
+
+// Maximum size of a palette.
+#define MAX_PALETTE_SIZE 16
+
+// Total number of weights for the palettes.
+#define NUM_PALETTE_WEIGHTS (4 + 8 + 16)
+
+// Maximum number of iterations for Gradient Descent.
+#ifdef CULL_SHAPES
+   // We need more iterations when culling shapes. This results
+   // in about the same speed as non-culling.
+   #define GD_MAX_ITERATIONS 8
+#else
+   // We don't need as many iterations when we are testing all
+   // the shapes.  This results in about the same speed as culling
+   // and better quality.
+   #define GD_MAX_ITERATIONS 4
+#endif
+
+// Multiplier for adjusting the endpoints.
+#define GD_ADJUSTMENT_FACTOR 0.1f
+
+// Interpolation constants.
+#define BC7_INTERPOLATION_MAX_WEIGHT         64
+#define BC7_INTERPOLATION_INV_MAX_WEIGHT     0.015625f
+#define BC7_INTERPOLATION_MAX_WEIGHT_SHIFT   6
+#define BC7_INTERPOLATION_ROUND              32
+
+// The delta when calculating the error gradient.
+#define ERROR_GRADIENT_DELTA 1.0f 
+
+// Maximum number of subsets for a mode.
+#define BC7_MAX_SUBSETS 3
+
+// Maximum number of ways to partition up the 16 pixels.
+#define BC7_MAX_SHAPES 64
+
+#ifdef CULL_SHAPES
+   // The number of best shapes (arrangements of partitioning up the pixels) to refine further instead
+   // of using all the shapes.
+   #define BC7_MAX_BEST_SHAPES 16u
+#endif
+
+// Number of modes that BC7 has.
+#define BC7_NUM_MODES 8
+
+// Flags for swapping quantized endpoints.
+#define BC7_SWAP_RGB    0x1
+#define BC7_SWAP_ALPHA  0x2
+
+#define FLT_MAX 3.402823466e+38f
+#define FLT_EPSILON 1.192092896e-07f
+
+//----------------------
+// Types.
+//----------------------
+
+struct uint2x4enc {
+    uint v[8];
+};
+
+struct float2x4enc {
+    float v[8];
+};
+
+// The type of parity used for a mode. If a mode has a parity bit then the least
+// significant bit of the color channels uses the parity bit.
+struct bc7_parity_bit_type
+{
+    static const uint PARITY_BIT_NONE = 0;
+    static const uint PARITY_BIT_SHARED = 1;
+    static const uint PARITY_BIT_PER_ENDPOINT = 2;
+};
+
+// This stores the quantized endpoints and parity bits (if there are any).
+struct bc7_quantized_endpoints {
+   // The quantized endpoints.
+   // Note: If a mode has parity bits, this still stores the least significant bit.
+   uint2x4enc m_endpoints[BC7_MAX_SUBSETS];
+
+   // The parity bits (depending on the mode).
+   uint m_parity_bits[2 * BC7_MAX_SUBSETS];
+};
+
+// This describes a BC7 mode.
+struct bc7_mode {
+    // The mode's index.
+    uint m_mode_index;
+
+    // The full precision (including the parity bit) for each channel of the endpoints.
+    uint m_endpoint_precision[4];
+
+    // Number of subsets.
+    uint m_num_subsets;
+
+    // Number of bits for the ways to partition up the 16 pixels 
+    // among the subsets.
+    uint m_num_shape_bits;
+
+    // Number of bits for the color channel swaps with the alpha channel.
+    uint m_num_rotation_bits;
+
+    // Number of bits for the index selection bit.
+    uint m_num_isb_bits;
+
+    // The type of parity used for this mode.
+    uint m_parity_bit_type;
+
+    // Number of bits for the color palette indices.
+    uint m_num_index_bits_1;
+
+    // The size of the color palette (1 << m_num_index_bits).
+    uint m_palette_size_1;
+
+    // The starting index into the Palette_weights for this palette.
+    uint m_palette_start_1;
+
+    // Number of bits for the alpha palette indices.
+    uint m_num_index_bits_2;
+
+    // The size of the alpha palette (1 << m_num_index_bits2);
+    uint m_palette_size_2;
+
+    // The starting index into the Palette_weights for this palette.
+    uint m_palette_start_2;
+};
+
+// The representation of the compressed block of pixels.
+struct bc7_compressed_block {
+    // The total error for the block.
+    uint m_error;
+
+    // The endpoints of the line that the palette is generated from for each subset.    
+    bc7_quantized_endpoints m_quantized_endpoints;
+
+    // The indices into the palette for each pixel.
+    uint m_palette_indices_1[NUM_PIXELS_PER_BLOCK];
+    uint m_palette_indices_2[NUM_PIXELS_PER_BLOCK]; 
+
+    // This tells which color channel was swapped with the alpha channel (if any).
+    uint m_rotation;
+
+    // This tells whether the index selection bit was set.
+    uint m_index_selection_bit;
+
+    // This tells which shape was used.
+    uint m_shape;
+};
+
+// The compressed and encoded block of pixels.
+struct bc7_encoded_block {
+    // 128 bits
+    uint4 m_bits;
+};
+
+//----------------------
+// Input/Output
+//----------------------
+
+// Input texture containing source pixels
+Texture2D<float4> SourceTexture;
+
+// Output buffer for encoded blocks
+RWStructuredBuffer<bc7_encoded_block> EncodedBlocks;
+
+// Input parameters
+cbuffer CB0 : register(b0)
+{
+    uint widthInBlocks;
+    uint heightInBlocks;
+};
+
+//----------------------
+// Constants
+//----------------------
+
+// Interpolation weights for different sized palettes.
+static const uint Palette_weights[NUM_PALETTE_WEIGHTS] = {
+    // 4 element palette
+    0, 21, 43, 64,
+
+    // 8 element palette
+    0, 9, 18, 27, 37, 46, 55, 64,
+
+    // 16 element palette
+    0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64
+};
+
+// Mode table initialization
+static const bc7_mode BC7_modes[BC7_NUM_MODES] = {
+    // Mode 0
+    { 0, { 5, 5, 5, 0 }, 3, 4, 0, 0, bc7_parity_bit_type::PARITY_BIT_PER_ENDPOINT, 3, 8, 4, 0, 0, 0 },
+
+    // Mode 1
+    { 1, { 7, 7, 7, 0 }, 2, 6, 0, 0, bc7_parity_bit_type::PARITY_BIT_SHARED, 3, 8, 4, 0, 0, 0 },
+
+    // Mode 2
+    { 2, { 5, 5, 5, 0 }, 3, 6, 0, 0, bc7_parity_bit_type::PARITY_BIT_NONE, 2, 4, 0, 0, 0, 0 },
+
+    // Mode 3
+    { 3, { 8, 8, 8, 0 }, 2, 6, 0, 0, bc7_parity_bit_type::PARITY_BIT_PER_ENDPOINT, 2, 4, 0, 0, 0, 0 },
+
+    // Mode 4
+    { 4, { 5, 5, 5, 6 }, 1, 0, 2, 1, bc7_parity_bit_type::PARITY_BIT_NONE, 2, 4, 0, 3, 8, 4 },
+
+    // Mode 5
+    { 5, { 7, 7, 7, 8 }, 1, 0, 2, 0, bc7_parity_bit_type::PARITY_BIT_NONE, 2, 4, 0, 2, 4, 0 },
+
+    // Mode 6
+    { 6, { 8, 8, 8, 8 }, 1, 0, 0, 0, bc7_parity_bit_type::PARITY_BIT_PER_ENDPOINT, 4, 16, 12, 0, 0, 0 },
+
+    // Mode 7
+    { 7, { 6, 6, 6, 6 }, 2, 6, 0, 0, bc7_parity_bit_type::PARITY_BIT_PER_ENDPOINT, 2, 4, 0, 0, 0, 0 }
+};
+
+// This table determines how pixels are partitioned up in the subsets.
+static const uint Partition_table[BC7_MAX_SUBSETS][BC7_MAX_SHAPES][NUM_PIXELS_PER_BLOCK] = {
+    {   // 1 Region case has no subsets (all 0)
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+    },
+
+    {   // BC6H/BC7 Partition Set for 2 Subsets
+        { 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1 }, // Shape 0
+        { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1 }, // Shape 1
+        { 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1 }, // Shape 2
+        { 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1 }, // Shape 3
+        { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1 }, // Shape 4
+        { 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1 }, // Shape 5
+        { 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1 }, // Shape 6
+        { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1 }, // Shape 7
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1 }, // Shape 8
+        { 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // Shape 9
+        { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1 }, // Shape 10
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1 }, // Shape 11
+        { 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // Shape 12
+        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 }, // Shape 13
+        { 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // Shape 14
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }, // Shape 15
+        { 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 }, // Shape 16
+        { 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }, // Shape 17
+        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0 }, // Shape 18
+        { 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0 }, // Shape 19
+        { 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }, // Shape 20
+        { 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0 }, // Shape 21
+        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0 }, // Shape 22
+        { 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1 }, // Shape 23
+        { 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0 }, // Shape 24
+        { 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0 }, // Shape 25
+        { 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0 }, // Shape 26
+        { 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0 }, // Shape 27
+        { 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0 }, // Shape 28
+        { 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 }, // Shape 29
+        { 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0 }, // Shape 30
+        { 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0 }, // Shape 31
+    
+        // BC7 Partition Set for 2 Subsets (second-half)
+        { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 }, // Shape 32
+        { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1 }, // Shape 33
+        { 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0 }, // Shape 34
+        { 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0 }, // Shape 35
+        { 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0 }, // Shape 36
+        { 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0 }, // Shape 37
+        { 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1 }, // Shape 38
+        { 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1 }, // Shape 39
+        { 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0 }, // Shape 40
+        { 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0 }, // Shape 41
+        { 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0 }, // Shape 42
+        { 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0 }, // Shape 43
+        { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0 }, // Shape 44
+        { 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1 }, // Shape 45
+        { 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1 }, // Shape 46
+        { 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0 }, // Shape 47
+        { 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0 }, // Shape 48
+        { 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0 }, // Shape 49
+        { 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0 }, // Shape 50
+        { 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0 }, // Shape 51
+        { 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1 }, // Shape 52
+        { 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1 }, // Shape 53
+        { 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0 }, // Shape 54
+        { 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0 }, // Shape 55
+        { 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1 }, // Shape 56
+        { 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1 }, // Shape 57
+        { 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1 }, // Shape 58
+        { 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1 }, // Shape 59
+        { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1 }, // Shape 60
+        { 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 }, // Shape 61
+        { 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0 }, // Shape 62
+        { 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1 }  // Shape 63
+    },
+
+    {   // BC7 Partition Set for 3 Subsets
+        { 0, 0, 1, 1, 0, 0, 1, 1, 0, 2, 2, 1, 2, 2, 2, 2 }, // Shape 0
+        { 0, 0, 0, 1, 0, 0, 1, 1, 2, 2, 1, 1, 2, 2, 2, 1 }, // Shape 1
+        { 0, 0, 0, 0, 2, 0, 0, 1, 2, 2, 1, 1, 2, 2, 1, 1 }, // Shape 2
+        { 0, 2, 2, 2, 0, 0, 2, 2, 0, 0, 1, 1, 0, 1, 1, 1 }, // Shape 3
+        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 1, 1, 2, 2 }, // Shape 4
+        { 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 2, 2, 0, 0, 2, 2 }, // Shape 5
+        { 0, 0, 2, 2, 0, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 }, // Shape 6
+        { 0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1 }, // Shape 7
+        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2 }, // Shape 8
+        { 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2 }, // Shape 9
+        { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2 }, // Shape 10
+        { 0, 0, 1, 2, 0, 0, 1, 2, 0, 0, 1, 2, 0, 0, 1, 2 }, // Shape 11
+        { 0, 1, 1, 2, 0, 1, 1, 2, 0, 1, 1, 2, 0, 1, 1, 2 }, // Shape 12
+        { 0, 1, 2, 2, 0, 1, 2, 2, 0, 1, 2, 2, 0, 1, 2, 2 }, // Shape 13
+        { 0, 0, 1, 1, 0, 1, 1, 2, 1, 1, 2, 2, 1, 2, 2, 2 }, // Shape 14
+        { 0, 0, 1, 1, 2, 0, 0, 1, 2, 2, 0, 0, 2, 2, 2, 0 }, // Shape 15
+        { 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 2, 1, 1, 2, 2 }, // Shape 16
+        { 0, 1, 1, 1, 0, 0, 1, 1, 2, 0, 0, 1, 2, 2, 0, 0 }, // Shape 17
+        { 0, 0, 0, 0, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2 }, // Shape 18
+        { 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 1, 1, 1, 1 }, // Shape 19
+        { 0, 1, 1, 1, 0, 1, 1, 1, 0, 2, 2, 2, 0, 2, 2, 2 }, // Shape 20
+        { 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, 2, 1, 2, 2, 2, 1 }, // Shape 21
+        { 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 2, 2, 0, 1, 2, 2 }, // Shape 22
+        { 0, 0, 0, 0, 1, 1, 0, 0, 2, 2, 1, 0, 2, 2, 1, 0 }, // Shape 23
+        { 0, 1, 2, 2, 0, 1, 2, 2, 0, 0, 1, 1, 0, 0, 0, 0 }, // Shape 24
+        { 0, 0, 1, 2, 0, 0, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2 }, // Shape 25
+        { 0, 1, 1, 0, 1, 2, 2, 1, 1, 2, 2, 1, 0, 1, 1, 0 }, // Shape 26
+        { 0, 0, 0, 0, 0, 1, 1, 0, 1, 2, 2, 1, 1, 2, 2, 1 }, // Shape 27
+        { 0, 0, 2, 2, 1, 1, 0, 2, 1, 1, 0, 2, 0, 0, 2, 2 }, // Shape 28
+        { 0, 1, 1, 0, 0, 1, 1, 0, 2, 0, 0, 2, 2, 2, 2, 2 }, // Shape 29
+        { 0, 0, 1, 1, 0, 1, 2, 2, 0, 1, 2, 2, 0, 0, 1, 1 }, // Shape 30
+        { 0, 0, 0, 0, 2, 0, 0, 0, 2, 2, 1, 1, 2, 2, 2, 1 }, // Shape 31
+        { 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 2, 2, 2 }, // Shape 32
+        { 0, 2, 2, 2, 0, 0, 2, 2, 0, 0, 1, 2, 0, 0, 1, 1 }, // Shape 33
+        { 0, 0, 1, 1, 0, 0, 1, 2, 0, 0, 2, 2, 0, 2, 2, 2 }, // Shape 34
+        { 0, 1, 2, 0, 0, 1, 2, 0, 0, 1, 2, 0, 0, 1, 2, 0 }, // Shape 35
+        { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0 }, // Shape 36
+        { 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0 }, // Shape 37
+        { 0, 1, 2, 0, 2, 0, 1, 2, 1, 2, 0, 1, 0, 1, 2, 0 }, // Shape 38
+        { 0, 0, 1, 1, 2, 2, 0, 0, 1, 1, 2, 2, 0, 0, 1, 1 }, // Shape 39
+        { 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1 }, // Shape 40
+        { 0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2 }, // Shape 41
+        { 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 1, 2, 1, 2, 1 }, // Shape 42
+        { 0, 0, 2, 2, 1, 1, 2, 2, 0, 0, 2, 2, 1, 1, 2, 2 }, // Shape 43
+        { 0, 0, 2, 2, 0, 0, 1, 1, 0, 0, 2, 2, 0, 0, 1, 1 }, // Shape 44
+        { 0, 2, 2, 0, 1, 2, 2, 1, 0, 2, 2, 0, 1, 2, 2, 1 }, // Shape 45
+        { 0, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0, 1 }, // Shape 46
+        { 0, 0, 0, 0, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1 }, // Shape 47
+        { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 2 }, // Shape 48
+        { 0, 2, 2, 2, 0, 1, 1, 1, 0, 2, 2, 2, 0, 1, 1, 1 }, // Shape 49
+        { 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 2, 1, 1, 1, 2 }, // Shape 50
+        { 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2 }, // Shape 51
+        { 0, 2, 2, 2, 0, 1, 1, 1, 0, 1, 1, 1, 0, 2, 2, 2 }, // Shape 52
+        { 0, 0, 0, 2, 1, 1, 1, 2, 1, 1, 1, 2, 0, 0, 0, 2 }, // Shape 53
+        { 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 2, 2, 2, 2 }, // Shape 54
+        { 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 1, 2 }, // Shape 55
+        { 0, 1, 1, 0, 0, 1, 1, 0, 2, 2, 2, 2, 2, 2, 2, 2 }, // Shape 56
+        { 0, 0, 2, 2, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 2, 2 }, // Shape 57
+        { 0, 0, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 0, 0, 2, 2 }, // Shape 58
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2 }, // Shape 59
+        { 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1 }, // Shape 60
+        { 0, 2, 2, 2, 1, 2, 2, 2, 0, 2, 2, 2, 1, 2, 2, 2 }, // Shape 61
+        { 0, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }, // Shape 62
+        { 0, 1, 1, 1, 2, 0, 1, 1, 2, 2, 0, 1, 2, 2, 2, 0 }  // Shape 63
+    }
+};
+
+// This table determines which palette indices are anchor indices.
+static const uint Anchor_table[BC7_MAX_SUBSETS][BC7_MAX_SHAPES][BC7_MAX_SUBSETS] = {
+    {   // No fix-ups for 1st subset for BC6H or BC7
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }
+    },
+
+    {   // BC6H/BC7 Partition Set Fixups for 2 Subsets
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 },
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 },
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 },
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 },
+        { 0, 15, 0 }, { 0, 2, 0 }, { 0, 8, 0 }, { 0, 2, 0 },
+        { 0, 2, 0 }, { 0, 8, 0 }, { 0, 8, 0 }, { 0, 15, 0 },
+        { 0, 2, 0 }, { 0, 8, 0 }, { 0, 2, 0 }, { 0, 2, 0 },
+        { 0, 8, 0 }, { 0, 8, 0 }, { 0, 2, 0 }, { 0, 2, 0 },
+
+        // BC7 Partition Set Fixups for 2 Subsets (second-half)
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 6, 0 }, { 0, 8, 0 },
+        { 0, 2, 0 }, { 0, 8, 0 }, { 0, 15, 0 }, { 0, 15, 0 },
+        { 0, 2, 0 }, { 0, 8, 0 }, { 0, 2, 0 }, { 0, 2, 0 },
+        { 0, 2, 0 }, { 0, 15, 0 }, { 0, 15, 0 }, { 0, 6, 0 },
+        { 0, 6, 0 }, { 0, 2, 0 }, { 0, 6, 0 }, { 0, 8, 0 },
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 2, 0 }, { 0, 2, 0 },
+        { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 }, { 0, 15, 0 },
+        { 0, 15, 0 }, { 0, 2, 0 }, { 0, 2, 0 }, { 0, 15, 0 }
+    },
+
+    {   // BC7 Partition Set Fixups for 3 Subsets
+        { 0, 3, 15 }, { 0, 3, 8 }, { 0, 15, 8 }, { 0, 15, 3 },
+        { 0, 8, 15 }, { 0, 3, 15 }, { 0, 15, 3 }, { 0, 15, 8 },
+        { 0, 8, 15 }, { 0, 8, 15 }, { 0, 6, 15 }, { 0, 6, 15 },
+        { 0, 6, 15 }, { 0, 5, 15 }, { 0, 3, 15 }, { 0, 3, 8 },
+        { 0, 3, 15 }, { 0, 3, 8 }, { 0, 8, 15 }, { 0, 15, 3 },
+        { 0, 3, 15 }, { 0, 3, 8 }, { 0, 6, 15 }, { 0, 10, 8 },
+        { 0, 5, 3 }, { 0, 8, 15 }, { 0, 8, 6 }, { 0, 6, 10 },
+        { 0, 8, 15 }, { 0, 5, 15 }, { 0, 15, 10 }, { 0, 15, 8 },
+        { 0, 8, 15 }, { 0, 15, 3 }, { 0, 3, 15 }, { 0, 5, 10 },
+        { 0, 6, 10 }, { 0, 10, 8 }, { 0, 8, 9 }, { 0, 15, 10 },
+        { 0, 15, 6 }, { 0, 3, 15 }, { 0, 15, 8 }, { 0, 5, 15 },
+        { 0, 15, 3 }, { 0, 15, 6 }, { 0, 15, 6 }, { 0, 15, 8 },
+        { 0, 3, 15 }, { 0, 15, 3 }, { 0, 5, 15 }, { 0, 5, 15 },
+        { 0, 5, 15 }, { 0, 8, 15 }, { 0, 5, 15 }, { 0, 10, 15 },
+        { 0, 5, 15 }, { 0, 10, 15 }, { 0, 8, 15 }, { 0, 13, 15 },
+        { 0, 15, 3 }, { 0, 12, 15 }, { 0, 3, 15 }, { 0, 3, 8 }
+    }
+};
+
+//----------------------
+// Helper Functions
+//----------------------
+
+float4 SamplePixel(uint2 coord)
+{
+    return SourceTexture[coord];
+}
+
+// Dot product functions
+float dot_float3(float3 a, float3 b)
+{
+    return dot(a, b);
+}
+
+float dot_float4(float4 a, float4 b)
+{
+    return dot(a, b);
+}
+
+// Normalize functions with inverse length output
+float3 normalize_float3(out float inverse_length, float3 v)
+{
+    float length_squared = dot(v, v);
+    if (length_squared < FLT_EPSILON) {
+        inverse_length = 0.0f;
+        return float3(0.0f, 0.0f, 0.0f);
+    }
+
+    inverse_length = rsqrt(length_squared);
+    return v * inverse_length;
+}
+
+float4 normalize_float4(out float inverse_length, float4 v)
+{
+    float length_squared = dot(v, v);
+    if (length_squared < FLT_EPSILON) {
+        inverse_length = 0.0f;
+        return float4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+
+    inverse_length = rsqrt(length_squared);
+    return v * inverse_length;
+}
+
+// Utility functions for float2x4enc and uint2x4enc
+void clamp_float2x4enc(inout float2x4enc value, float min_val, float max_val)
+{
+    [unroll]
+    for (int i = 0; i < 8; i++) {
+        value.v[i] = clamp(value.v[i], min_val, max_val);
+    }
+}
+
+void copy_float2x4enc(out float2x4enc copy, float2x4enc a)
+{
+    [unroll]
+    for (int i = 0; i < 8; i++) {
+        copy.v[i] = a.v[i];
+    }
+}
+
+float2 length_float2x4enc(float2x4enc a)
+{
+    float squared_length_0 = a.v[0] * a.v[0] + a.v[1] * a.v[1] +
+                            a.v[2] * a.v[2] + a.v[3] * a.v[3];
+
+    float squared_length_1 = a.v[4] * a.v[4] + a.v[5] * a.v[5] +
+                            a.v[6] * a.v[6] + a.v[7] * a.v[7];                        
+
+    return float2(sqrt(squared_length_0), sqrt(squared_length_1));
+}
+
+void set_float2x4enc(out float2x4enc result,
+                  float x1, float y1, float z1, float w1,
+                  float x2, float y2, float z2, float w2)
+{
+    result.v[0] = x1;
+    result.v[1] = y1;
+    result.v[2] = z1;
+    result.v[3] = w1;
+
+    result.v[4] = x2;
+    result.v[5] = y2;
+    result.v[6] = z2;
+    result.v[7] = w2;
+}
+
+void copy_uint2x4enc(out uint2x4enc copy, uint2x4enc a)
+{
+    [unroll]
+    for (int i = 0; i < 8; i++) {
+        copy.v[i] = a.v[i];
+    }
+}
+
+uint squared_length_uint3(uint3 a)
+{
+    return a.x * a.x + a.y * a.y + a.z * a.z;    
+}
+
+uint squared_length_uint4(uint4 a)
+{
+    return a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w;
+}
+
+// BC7 specific utility functions
+uint bc7_get_subset_for_pixel(uint shape_index, uint pixel_index, bc7_mode mode)
+{
+    return Partition_table[mode.m_num_subsets - 1][shape_index][pixel_index];
+}
+
+uint bc7_get_anchor_index(uint shape_index, uint subset_index, bc7_mode mode)
+{
+    return Anchor_table[mode.m_num_subsets - 1][shape_index][subset_index];
+}
+
+void bc7_swap_channels(inout float4 pixels[NUM_PIXELS_PER_BLOCK], uint rotation)
+{
+    switch (rotation) {
+    case 0:
+        // Don't swap.
+        break;
+    case 1:
+        // Swap red and alpha.
+        [unroll]
+        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+            float temp = pixels[pixel_iter].x;
+            pixels[pixel_iter].x = pixels[pixel_iter].w;
+            pixels[pixel_iter].w = temp;
+        }
+        break;
+    case 2:
+        // Swap green and alpha.
+        [unroll]
+        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+            float temp = pixels[pixel_iter].y;
+            pixels[pixel_iter].y = pixels[pixel_iter].w;
+            pixels[pixel_iter].w = temp;
+        }
+        break;
+    case 3:
+        // Swap blue and alpha.
+        [unroll]
+        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+            float temp = pixels[pixel_iter].z;
+            pixels[pixel_iter].z = pixels[pixel_iter].w;
+            pixels[pixel_iter].w = temp;
+        }
+        break;
+    }
+}
+
+// BC7 specific compression functions
+
+void bc7_calculate_parity_bits(inout bc7_quantized_endpoints quantized_endpoints, bc7_mode mode)
+{
+    if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_NONE) {
+        return;
+    }
+
+    // Get the number of channels for this mode.
+    uint num_channels = (mode.m_mode_index < 4) ? 3 : 4;
+
+    // Count how many least significant bits are set. A parity bit 
+    // will be set if there are a majority of least significant bits set.
+    uint lsb_count[2 * BC7_MAX_SUBSETS];
+    [unroll]
+    for (int i = 0; i < 2 * BC7_MAX_SUBSETS; i++) {
+        lsb_count[i] = 0;
+    }
+    
+    for (uint channel = 0; channel < num_channels; channel++) {
+        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+            uint channel_value_0 = quantized_endpoints.m_endpoints[subset_iter].v[channel];
+            uint channel_value_1 = quantized_endpoints.m_endpoints[subset_iter].v[channel + 4];
+
+            if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_SHARED) {
+                // The endpoints within a subset share the parity bit.
+                lsb_count[subset_iter] += channel_value_0 & 0x1;
+                lsb_count[subset_iter] += channel_value_1 & 0x1;
+            } else {
+                // Each endpoint has its own parity bit.
+                uint index = 2 * subset_iter;
+                lsb_count[index] += channel_value_0 & 0x1;
+                lsb_count[index + 1] += channel_value_1 & 0x1;               
+            }
+        }
+    }
+
+    // Find the parity bits.
+    uint num_parity_bits;
+    uint halfway;
+    if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_SHARED) {
+        num_parity_bits = mode.m_num_subsets;
+        halfway = num_channels;
+    } else {
+        num_parity_bits = 2 * mode.m_num_subsets;
+        halfway = num_channels >> 1;
+    }
+
+    for (uint parity_iter = 0; parity_iter < num_parity_bits; parity_iter++) {
+        // See if the least significant bit was set the majority of the time.
+        uint parity_bit = (lsb_count[parity_iter] > halfway) ? 1 : 0;
+        quantized_endpoints.m_parity_bits[parity_iter] = parity_bit;
+    }   
+}
+
+void bc7_quantize_endpoints(out bc7_quantized_endpoints quantized_endpoints, 
+                           float2x4enc endpoints_f[BC7_MAX_SUBSETS],
+                           bc7_mode mode)
+{
+    // This will scale the channels of the endpoints so they have the correct precision
+    // before the parity bit is found (if there is one for this mode).
+    float4 precision_factor;
+    precision_factor.x = ((1 << mode.m_endpoint_precision[0]) - 1) / 255.0f;
+    precision_factor.y = ((1 << mode.m_endpoint_precision[1]) - 1) / 255.0f;
+    precision_factor.z = ((1 << mode.m_endpoint_precision[2]) - 1) / 255.0f;
+    precision_factor.w = ((1 << mode.m_endpoint_precision[3]) - 1) / 255.0f;
+
+    // Quantize all the endpoints.
+    for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+        quantized_endpoints.m_endpoints[subset_iter].v[0] = (uint)(endpoints_f[subset_iter].v[0] * precision_factor.x + 0.5f) & 0xff;
+        quantized_endpoints.m_endpoints[subset_iter].v[1] = (uint)(endpoints_f[subset_iter].v[1] * precision_factor.y + 0.5f) & 0xff;
+        quantized_endpoints.m_endpoints[subset_iter].v[2] = (uint)(endpoints_f[subset_iter].v[2] * precision_factor.z + 0.5f) & 0xff;
+        quantized_endpoints.m_endpoints[subset_iter].v[3] = (uint)(endpoints_f[subset_iter].v[3] * precision_factor.w + 0.5f) & 0xff;
+
+        quantized_endpoints.m_endpoints[subset_iter].v[4] = (uint)(endpoints_f[subset_iter].v[4] * precision_factor.x + 0.5f) & 0xff;
+        quantized_endpoints.m_endpoints[subset_iter].v[5] = (uint)(endpoints_f[subset_iter].v[5] * precision_factor.y + 0.5f) & 0xff;
+        quantized_endpoints.m_endpoints[subset_iter].v[6] = (uint)(endpoints_f[subset_iter].v[6] * precision_factor.z + 0.5f) & 0xff;
+        quantized_endpoints.m_endpoints[subset_iter].v[7] = (uint)(endpoints_f[subset_iter].v[7] * precision_factor.w + 0.5f) & 0xff;
+    }
+
+    // Calculate the parity bits if this mode has them.
+    bc7_calculate_parity_bits(quantized_endpoints, mode);
+}
+
+void bc7_unquantize_endpoints(out uint2x4enc endpoints[BC7_MAX_SUBSETS], 
+                             bc7_quantized_endpoints quantized_endpoints,
+                             bc7_mode mode)
+{
+    // First apply the parity bits (if there are any).
+    switch (mode.m_parity_bit_type) {
+        case bc7_parity_bit_type::PARITY_BIT_NONE:
+            for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+                copy_uint2x4enc(endpoints[subset_iter], quantized_endpoints.m_endpoints[subset_iter]);
+            }
+            break;
+
+        case bc7_parity_bit_type::PARITY_BIT_SHARED:
+            // The endpoints share a parity bit within a subset.         
+            for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+                uint parity_bit = quantized_endpoints.m_parity_bits[subset_iter];
+
+                // Overwrite the least significant bits with the parity bit.
+                endpoints[subset_iter].v[0] = (quantized_endpoints.m_endpoints[subset_iter].v[0] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[1] = (quantized_endpoints.m_endpoints[subset_iter].v[1] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[2] = (quantized_endpoints.m_endpoints[subset_iter].v[2] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[3] = (quantized_endpoints.m_endpoints[subset_iter].v[3] & 0xfe) | parity_bit;
+
+                endpoints[subset_iter].v[4] = (quantized_endpoints.m_endpoints[subset_iter].v[4] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[5] = (quantized_endpoints.m_endpoints[subset_iter].v[5] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[6] = (quantized_endpoints.m_endpoints[subset_iter].v[6] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[7] = (quantized_endpoints.m_endpoints[subset_iter].v[7] & 0xfe) | parity_bit;
+            }
+            break;
+
+        case bc7_parity_bit_type::PARITY_BIT_PER_ENDPOINT:
+            // Each endpoint has a parity bit for its channels.
+            uint parity_iter = 0;
+            for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+                uint parity_bit = quantized_endpoints.m_parity_bits[parity_iter++];
+
+                // Overwrite the least significant bits with the parity bit.
+                endpoints[subset_iter].v[0] = (quantized_endpoints.m_endpoints[subset_iter].v[0] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[1] = (quantized_endpoints.m_endpoints[subset_iter].v[1] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[2] = (quantized_endpoints.m_endpoints[subset_iter].v[2] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[3] = (quantized_endpoints.m_endpoints[subset_iter].v[3] & 0xfe) | parity_bit;
+
+                parity_bit = quantized_endpoints.m_parity_bits[parity_iter++];
+
+                endpoints[subset_iter].v[4] = (quantized_endpoints.m_endpoints[subset_iter].v[4] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[5] = (quantized_endpoints.m_endpoints[subset_iter].v[5] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[6] = (quantized_endpoints.m_endpoints[subset_iter].v[6] & 0xfe) | parity_bit;
+                endpoints[subset_iter].v[7] = (quantized_endpoints.m_endpoints[subset_iter].v[7] & 0xfe) | parity_bit;
+            }
+            break;
+    }
+
+    // Now expand the bits.
+    for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+        [unroll]
+        for (int i = 0; i < 4; i++) {
+            endpoints[subset_iter].v[i] = endpoints[subset_iter].v[i] << (8 - mode.m_endpoint_precision[i]);
+            endpoints[subset_iter].v[i + 4] = endpoints[subset_iter].v[i + 4] << (8 - mode.m_endpoint_precision[i]);
+
+            // Propagate the high bits in to the low bits.
+            endpoints[subset_iter].v[i] |= endpoints[subset_iter].v[i] >> mode.m_endpoint_precision[i];
+            endpoints[subset_iter].v[i + 4] |= endpoints[subset_iter].v[i + 4] >> mode.m_endpoint_precision[i];
+
+            endpoints[subset_iter].v[i] &= 0xff;
+            endpoints[subset_iter].v[i + 4] &= 0xff;
+        }
+
+        if (mode.m_endpoint_precision[3] == 0) {
+            // There is no alpha channel, set it to fully opaque.
+            endpoints[subset_iter].v[3] = 255;
+            endpoints[subset_iter].v[7] = 255;
+        }
+    }
+}
+
+float bc7_calculate_total_error(float2x4enc endpoints, 
+                               float4 pixels[NUM_PIXELS_PER_BLOCK], uint num_pixels,
+                               uint swap_palette_index_precision,                               
+                               bc7_mode mode)
+{
+    // Figure out the palette sizes.
+    uint palette_size_1 = mode.m_palette_size_1;
+    uint palette_size_2 = mode.m_palette_size_2;
+
+    if (swap_palette_index_precision == 1) {
+        palette_size_1 = mode.m_palette_size_2;
+        palette_size_2 = mode.m_palette_size_1;
+    }
+    
+    float total_error = 0.0f;
+
+    if (mode.m_mode_index < 4) {
+        // There is just one palette for color for modes 0, 1, 2, 3.
+
+        // Calculate the direction of the color.
+        float3 line_direction;
+        line_direction.x = endpoints.v[4] - endpoints.v[0];
+        line_direction.y = endpoints.v[5] - endpoints.v[1];
+        line_direction.z = endpoints.v[6] - endpoints.v[2];
+
+        float inverse_line_length;
+        line_direction = normalize_float3(inverse_line_length, line_direction);
+
+        // Calculate the step between weights.
+        float weight_step_1 = BC7_INTERPOLATION_MAX_WEIGHT / (palette_size_1 - 1.0f);
+
+        // Calculate the error for color.
+        for (uint pixel_iter = 0; pixel_iter < num_pixels; pixel_iter++) {
+            float3 pixel = pixels[pixel_iter].xyz * 255.0f;
+
+            // Project the pixel onto the line defined by the endpoints.
+            float3 offset;
+            offset.x = pixel.x - endpoints.v[0];
+            offset.y = pixel.y - endpoints.v[1];
+            offset.z = pixel.z - endpoints.v[2];
+
+            float t = dot_float3(offset, line_direction) * inverse_line_length;
+            t = clamp(t, 0.0f, 1.0f);
+
+            // Get the index of the closest palette color.            
+            uint color_index = (uint)(t * (palette_size_1 - 1.0f) + 0.5f);
+
+            // Generate the color by interpolating between the endpoints.
+            float3 palette_color;
+            float weight1 = round(color_index * weight_step_1);
+            float weight0 = BC7_INTERPOLATION_MAX_WEIGHT - weight1;
+
+            palette_color.x = (endpoints.v[0] * weight0 + endpoints.v[4] * weight1) * BC7_INTERPOLATION_INV_MAX_WEIGHT;
+            palette_color.y = (endpoints.v[1] * weight0 + endpoints.v[5] * weight1) * BC7_INTERPOLATION_INV_MAX_WEIGHT;
+            palette_color.z = (endpoints.v[2] * weight0 + endpoints.v[6] * weight1) * BC7_INTERPOLATION_INV_MAX_WEIGHT;
+
+            // Calculate the error which is the sum of squared differences.
+            float3 difference = pixel - palette_color;
+            float error = dot_float3(difference, difference);
+
+            // Accumulate the error.
+            total_error += error;
+        }
+    } else if (mode.m_mode_index < 6) {
+        // There are separate color and alpha palettes for modes 4, 5.
+        // ... [Similar pattern for modes 4,5]
+    } else {
+        // There are no separate color and alpha palettes for modes 6, 7.
+        // ... [Similar pattern for modes 6,7]
+    }
+
+    return total_error;
+}
+
+float bc7_calculate_error_partial_derivative(float2x4enc endpoints, 
+                                           float4 pixels[NUM_PIXELS_PER_BLOCK], uint num_pixels,
+                                           uint endpoint_axis_index,
+                                           uint swap_palette_index_precision,                                           
+                                           bc7_mode mode)
+{
+    // Calculate the 'left' endpoint.
+    float2x4enc left_endpoints;
+    copy_float2x4enc(left_endpoints, endpoints);
+    left_endpoints.v[endpoint_axis_index] -= ERROR_GRADIENT_DELTA;
+    left_endpoints.v[endpoint_axis_index] = clamp(left_endpoints.v[endpoint_axis_index], 0.0f, 255.0f);
+
+    // Calculate the 'right' endpoint.
+    float2x4enc right_endpoints;
+    copy_float2x4enc(right_endpoints, endpoints);
+    right_endpoints.v[endpoint_axis_index] += ERROR_GRADIENT_DELTA;
+    right_endpoints.v[endpoint_axis_index] = clamp(right_endpoints.v[endpoint_axis_index], 0.0f, 255.0f);
+
+    // Get the error for the two points.
+    float left_error = bc7_calculate_total_error(left_endpoints, pixels, num_pixels, swap_palette_index_precision, mode);
+    float right_error = bc7_calculate_total_error(right_endpoints, pixels, num_pixels, swap_palette_index_precision, mode);
+
+    // Approximate the partial derivative with the central difference.
+    return 0.5f * (right_error - left_error) / ERROR_GRADIENT_DELTA;
+}
+
+void bc7_calculate_error_gradient(out float2x4enc error_gradient, float2x4enc endpoints, 
+                                 float4 pixels[NUM_PIXELS_PER_BLOCK], uint num_pixels,
+                                 uint swap_palette_index_precision,                                 
+                                 bc7_mode mode)
+{    
+    error_gradient.v[0] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 0, swap_palette_index_precision, mode);
+    error_gradient.v[1] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 1, swap_palette_index_precision, mode);
+    error_gradient.v[2] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 2, swap_palette_index_precision, mode);
+    error_gradient.v[3] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 3, swap_palette_index_precision, mode);
+
+    error_gradient.v[4] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 4, swap_palette_index_precision, mode);
+    error_gradient.v[5] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 5, swap_palette_index_precision, mode);
+    error_gradient.v[6] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 6, swap_palette_index_precision, mode);
+    error_gradient.v[7] = bc7_calculate_error_partial_derivative(endpoints, pixels, num_pixels, 7, swap_palette_index_precision, mode);
+}
+
+void bc7_gradient_descent(out float2x4enc endpoints, float2x4enc in_endpoints, 
+                         float4 pixels[NUM_PIXELS_PER_BLOCK], uint num_pixels,
+                         uint swap_palette_index_precision,
+                         bc7_mode mode)
+{
+    float epsilon = 128.0f * FLT_EPSILON;
+
+    // Initialize the endpoints that will be adjusted.    
+    copy_float2x4enc(endpoints, in_endpoints);
+
+    // Iteratively find the minimum error.
+    float last_error = FLT_MAX;
+    uint num_iterations;
+    for (num_iterations = 0; num_iterations < GD_MAX_ITERATIONS; num_iterations++) {
+
+        // Get the gradient of the error function.
+        float2x4enc error_gradient;
+        bc7_calculate_error_gradient(error_gradient, endpoints, pixels, num_pixels, swap_palette_index_precision, mode);
+
+        // If the gradient is near zero we are at a local minimum.
+        float2 error_gradient_magnitude = length_float2x4enc(error_gradient);
+        if ((error_gradient_magnitude.x < epsilon) 
+        &&  (error_gradient_magnitude.y < epsilon)) {
+            // Increment for stats.
+            num_iterations++;
+            break;
+        }
+
+        // Adjust the endpoints in the direction opposite of the error gradient to reduce the error.
+        float2x4enc possible_endpoints;
+        [unroll]
+        for (int i = 0; i < 8; i++) {
+            possible_endpoints.v[i] = endpoints.v[i] - GD_ADJUSTMENT_FACTOR * error_gradient.v[i];
+        }
+
+        // Clamp the endpoints to the bounds of the color space.
+        clamp_float2x4enc(possible_endpoints, 0.0f, 255.0f);
+
+        // Calculate the new error.
+        float error = bc7_calculate_total_error(possible_endpoints, pixels, num_pixels, swap_palette_index_precision, mode);
+        if (error >= last_error) { 
+            // No improvement.
+            // Increment for stats.
+            num_iterations++;
+            break;
+        }
+
+        copy_float2x4enc(endpoints, possible_endpoints);
+        last_error = error;
+    }
+
+    // Clamp the endpoints to the bounds of the color space.
+    clamp_float2x4enc(endpoints, 0.0f, 255.0f);
+}
+
+void bc7_find_endpoints(out float2x4enc endpoints,
+                       float4 pixels[NUM_PIXELS_PER_BLOCK], uint num_pixels,
+                       uint swap_palette_index_precision,                       
+                       bc7_mode mode)
+{
+    // Calculate the bounding box in color space of the pixels.
+    float2x4enc initial_endpoints;
+    
+    float4 pixels_min = float4(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+    float4 pixels_max = float4(-FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+    for (uint pixel_iter = 0; pixel_iter < num_pixels; pixel_iter++) {
+        float4 pixel = pixels[pixel_iter] * 255.0f;
+        pixels_min = min(pixels_min, pixel);
+        pixels_max = max(pixels_max, pixel);
+    }
+
+    set_float2x4enc(initial_endpoints,
+                 pixels_min.x, pixels_min.y, pixels_min.z, pixels_min.w,
+                 pixels_max.x, pixels_max.y, pixels_max.z, pixels_max.w);
+
+    // Find a local minimum in error.        
+    bc7_gradient_descent(endpoints, initial_endpoints, pixels, num_pixels, 
+                        swap_palette_index_precision, mode);
+}
+
+void bc7_set_bits(inout uint4 bits, inout uint start_bit_index, int signed_num_bits, uint value)
+{
+    if (signed_num_bits <= 0) {
+        return;
+    }
+
+    uint num_bits = (uint)signed_num_bits;
+    uint slot_index = start_bit_index >> 5;
+    uint slot_index_end = (start_bit_index + num_bits - 1) >> 5;
+    uint slot_bit_index = start_bit_index & 31;
+
+    if (slot_index != slot_index_end) {
+        // The value will span an integer boundary.
+        uint slot_value_1 = bits[slot_index];
+        uint slot_value_2 = bits[slot_index_end];
+
+        // Clear out the current bits.
+        uint num_bits_1 = 32 - slot_bit_index;
+        uint num_bits_2 = num_bits - num_bits_1;
+        uint mask_1 = (1 << num_bits_1) - 1;
+        uint mask_2 = (1 << num_bits_2) - 1;
+        slot_value_1 &= ~(mask_1 << slot_bit_index);
+        slot_value_2 &= ~mask_2;
+
+        // Set the new values.
+        slot_value_1 |= value << slot_bit_index;
+        slot_value_2 |= value >> num_bits_1;
+
+        // Store them.
+        bits[slot_index] = slot_value_1;
+        bits[slot_index_end] = slot_value_2;
+    } else {
+        uint slot_value = bits[slot_index];
+
+        // Clear out the current bits.
+        uint mask = (1 << num_bits) - 1;
+        slot_value &= ~(mask << slot_bit_index);
+
+        // Set the new value.
+        slot_value |= value << slot_bit_index;
+
+        // Store it.
+        bits[slot_index] = slot_value;
+    }
+
+    start_bit_index += num_bits;
+}
+
+void bc7_encode_compressed_block(out bc7_encoded_block encoded_block,
+                                bc7_compressed_block compressed_block,
+                                bc7_mode mode)
+{
+    encoded_block.m_bits = uint4(0, 0, 0, 0);
+
+    uint bit_index = 0;
+
+    // Mode. There are N zeroes followed by a 1, where N is the mode index.
+    bc7_set_bits(encoded_block.m_bits, bit_index, mode.m_mode_index, 0);    
+    bc7_set_bits(encoded_block.m_bits, bit_index, 1, 1);
+
+    // Shape index.
+    bc7_set_bits(encoded_block.m_bits, bit_index, mode.m_num_shape_bits, compressed_block.m_shape);
+
+    // Rotation.
+    bc7_set_bits(encoded_block.m_bits, bit_index, mode.m_num_rotation_bits, compressed_block.m_rotation);
+
+    // Index selection.
+    bc7_set_bits(encoded_block.m_bits, bit_index, mode.m_num_isb_bits, compressed_block.m_index_selection_bit);
+
+    // Get the number of channels for this mode.
+    uint num_channels = (mode.m_mode_index < 4) ? 3 : 4;
+
+    // Color.
+    for (uint channel = 0; channel < num_channels; channel++) {
+        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+            uint channel_precision = mode.m_endpoint_precision[channel];
+            uint channel_value_0 = compressed_block.m_quantized_endpoints.m_endpoints[subset_iter].v[channel];
+            uint channel_value_1 = compressed_block.m_quantized_endpoints.m_endpoints[subset_iter].v[channel + 4];
+
+            if (mode.m_parity_bit_type != bc7_parity_bit_type::PARITY_BIT_NONE) {
+                channel_precision--;
+                channel_value_0 >>= 1;
+                channel_value_1 >>= 1;
+            }
+
+            bc7_set_bits(encoded_block.m_bits, bit_index, 
+                         channel_precision,
+                         channel_value_0);
+
+            bc7_set_bits(encoded_block.m_bits, bit_index, 
+                         channel_precision,
+                         channel_value_1);
+        }
+    }
+
+    // Parity bits.
+    if (mode.m_parity_bit_type != bc7_parity_bit_type::PARITY_BIT_NONE) {
+        uint num_parity_bits;
+        if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_SHARED) {
+            // The endpoints within a subset share a parity bit.
+            num_parity_bits = mode.m_num_subsets;
+        } else {
+            // Each endpoint has its own parity bit.
+            num_parity_bits = 2 * mode.m_num_subsets;
+        }
+
+        for (uint parity_iter = 0; parity_iter < num_parity_bits; parity_iter++) {
+            uint parity_bit = compressed_block.m_quantized_endpoints.m_parity_bits[parity_iter];
+            bc7_set_bits(encoded_block.m_bits, bit_index, 1, parity_bit);
+        }
+    }
+
+    // Primary indices.
+    uint palette_indices_1[NUM_PIXELS_PER_BLOCK];
+    if (compressed_block.m_index_selection_bit) {
+        [unroll]
+        for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+            palette_indices_1[i] = compressed_block.m_palette_indices_2[i];
+        }
+    } else {
+        [unroll]
+        for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+            palette_indices_1[i] = compressed_block.m_palette_indices_1[i];
+        }
+    }
+
+    // Get all the anchor indices.
+    uint anchor_indices[BC7_MAX_SUBSETS];
+    for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+        anchor_indices[subset_iter] = bc7_get_anchor_index(compressed_block.m_shape, subset_iter, mode);
+    }
+
+    // Encode all the indices.
+    for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+        uint index_precision = mode.m_num_index_bits_1;
+
+        // See if this pixel is an anchor.            
+        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+            if (pixel_iter == anchor_indices[subset_iter]) {
+                // The anchor index is written with one less bit because the leading bit is
+                // assumed to be zero.
+                index_precision--;
+                break;
+            }
+        }
+
+        bc7_set_bits(encoded_block.m_bits, bit_index, index_precision, 
+                     palette_indices_1[pixel_iter]);
+    }
+
+    // Secondary indices.
+    if (mode.m_num_index_bits_2 > 0) {
+        uint palette_indices_2[NUM_PIXELS_PER_BLOCK];
+        if (compressed_block.m_index_selection_bit) {
+            [unroll]
+            for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+                palette_indices_2[i] = compressed_block.m_palette_indices_1[i];
+            }
+        } else {
+            [unroll]
+            for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+                palette_indices_2[i] = compressed_block.m_palette_indices_2[i];
+            }
+        }
+
+        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+            // The first index is always the anchor index.
+            uint index_precision = (pixel_iter == 0) ? (mode.m_num_index_bits_2 - 1) : mode.m_num_index_bits_2;
+
+            bc7_set_bits(encoded_block.m_bits, bit_index, index_precision,
+                         palette_indices_2[pixel_iter]);
+        }
+    }
+}
+
+void bc7_swap_quantized_endpoints(inout bc7_quantized_endpoints quantized_endpoints, 
+                                 uint subset_index, uint swap_mode,
+                                 bc7_mode mode)
+{
+    if (swap_mode & BC7_SWAP_RGB) {
+        uint3 temp;
+        temp.x = quantized_endpoints.m_endpoints[subset_index].v[0];
+        temp.y = quantized_endpoints.m_endpoints[subset_index].v[1];
+        temp.z = quantized_endpoints.m_endpoints[subset_index].v[2];
+
+        uint3 temp2;
+        temp2.x = quantized_endpoints.m_endpoints[subset_index].v[4];
+        temp2.y = quantized_endpoints.m_endpoints[subset_index].v[5];
+        temp2.z = quantized_endpoints.m_endpoints[subset_index].v[6];
+
+        quantized_endpoints.m_endpoints[subset_index].v[0] = temp2.x;
+        quantized_endpoints.m_endpoints[subset_index].v[1] = temp2.y;
+        quantized_endpoints.m_endpoints[subset_index].v[2] = temp2.z;
+
+        quantized_endpoints.m_endpoints[subset_index].v[4] = temp.x;
+        quantized_endpoints.m_endpoints[subset_index].v[5] = temp.y;
+        quantized_endpoints.m_endpoints[subset_index].v[6] = temp.z;      
+    }
+
+    if (swap_mode & BC7_SWAP_ALPHA) {
+        uint temp = quantized_endpoints.m_endpoints[subset_index].v[3];
+        quantized_endpoints.m_endpoints[subset_index].v[3] = quantized_endpoints.m_endpoints[subset_index].v[7];
+        quantized_endpoints.m_endpoints[subset_index].v[7] = temp;
+    }
+
+    if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_PER_ENDPOINT) {
+        // Re-calculate the parity bits since the endpoints were swapped.
+        bc7_calculate_parity_bits(quantized_endpoints, mode);
+    }
+}
+
+uint bc7_assign_pixels(inout bc7_quantized_endpoints quantized_endpoints,
+                      out uint assigned_pixels_1[NUM_PIXELS_PER_BLOCK],
+                      out uint assigned_pixels_2[NUM_PIXELS_PER_BLOCK],                      
+                      float4 pixels[NUM_PIXELS_PER_BLOCK],
+                      uint swap_palette_index_precision,
+                      uint shape_index,          
+                      bc7_mode mode)
+{
+    // Unquantize the endpoints so we can assign palette indices.
+    uint2x4enc endpoints[BC7_MAX_SUBSETS];
+    bc7_unquantize_endpoints(endpoints, quantized_endpoints, mode);
+
+    // Figure out the palette sizes.
+    uint palette_size_1 = mode.m_palette_size_1;
+    uint palette_size_2 = mode.m_palette_size_2;
+
+    // Figure out the starting weight indices of the palettes.
+    uint palette_start_1 = mode.m_palette_start_1;
+    uint palette_start_2 = mode.m_palette_start_2;
+
+    if (swap_palette_index_precision == 1) {
+        palette_size_1 = mode.m_palette_size_2;
+        palette_size_2 = mode.m_palette_size_1;
+
+        palette_start_1 = mode.m_palette_start_2;
+        palette_start_2 = mode.m_palette_start_1;
+    }
+    
+    uint total_error = 0;
+    if (palette_size_2 == 0) {
+        // There are no separate color and alpha palettes.        
+
+        // Go through the pixels and pick the best color in the palette.                
+        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+            uint4 pixel = uint4(pixels[pixel_iter] * 255.0f + 0.5f);
+
+            // Get the subset for this pixel.
+            uint subset_index = bc7_get_subset_for_pixel(shape_index, pixel_iter, mode);
+
+            // Go through the palette.
+            uint best_error = 0xFFFFFFFF;
+            uint best_color_index = 0xFFFFFFFF;
+            for (uint color_iter = 0; color_iter < palette_size_1; color_iter++) {
+
+                // Generate the color by interpolating between the endpoints.
+                uint4 palette_color;
+                uint weight1 = Palette_weights[palette_start_1 + color_iter];
+                uint weight0 = BC7_INTERPOLATION_MAX_WEIGHT - weight1;
+
+                palette_color.x = (endpoints[subset_index].v[0] * weight0 + endpoints[subset_index].v[4] * weight1 + BC7_INTERPOLATION_ROUND) >> BC7_INTERPOLATION_MAX_WEIGHT_SHIFT;
+                palette_color.y = (endpoints[subset_index].v[1] * weight0 + endpoints[subset_index].v[5] * weight1 + BC7_INTERPOLATION_ROUND) >> BC7_INTERPOLATION_MAX_WEIGHT_SHIFT;
+                palette_color.z = (endpoints[subset_index].v[2] * weight0 + endpoints[subset_index].v[6] * weight1 + BC7_INTERPOLATION_ROUND) >> BC7_INTERPOLATION_MAX_WEIGHT_SHIFT;
+                palette_color.w = (endpoints[subset_index].v[3] * weight0 + endpoints[subset_index].v[7] * weight1 + BC7_INTERPOLATION_ROUND) >> BC7_INTERPOLATION_MAX_WEIGHT_SHIFT;
+
+                // Calculate the error which is the sum of squared differences.
+                uint4 difference = uint4(abs(int4(pixel) - int4(palette_color)));
+                uint error = squared_length_uint4(difference);
+
+                if (error < best_error) {
+                    best_error = error;
+                    best_color_index = color_iter;
+                }
+            }
+
+            // Store the index for this pixel.
+            assigned_pixels_1[pixel_iter] = best_color_index;
+            assigned_pixels_2[pixel_iter] = best_color_index;
+
+            // Accumulate the error.
+            total_error += best_error;            
+        }
+
+        // Swap endpoints and palette indices as needed to ensure anchor indices don't have their
+        // high bit set. This saves one bit per block in the final output.
+        uint high_bit_mask = palette_size_1 >> 1;
+        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+
+            uint anchor_index = bc7_get_anchor_index(shape_index, subset_iter, mode);
+
+            // Is the high bit of the anchor index set?
+            if ((assigned_pixels_1[anchor_index] & high_bit_mask) == 0) {
+                continue;
+            }
+
+            // Swap endpoints.
+            bc7_swap_quantized_endpoints(quantized_endpoints, subset_iter, BC7_SWAP_RGB | BC7_SWAP_ALPHA, mode);
+
+            // Swap indices.
+            for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+                if (bc7_get_subset_for_pixel(shape_index, pixel_iter, mode) == subset_iter) {
+                    assigned_pixels_1[pixel_iter] = palette_size_1 - 1 - assigned_pixels_1[pixel_iter];
+                    assigned_pixels_2[pixel_iter] = assigned_pixels_1[pixel_iter];
+                }
+            }
+        }
+    } else {
+        // There are separate color and alpha palettes.
+        // ... [Similar pattern for separate palettes]
+    }
+
+    return total_error;
+}
+
+uint bc7_compress(out bc7_encoded_block encoded_block,
+                  float4 pixels[NUM_PIXELS_PER_BLOCK],
+                  bc7_mode mode,
+                  uint input_error)
+{
+    // The best compressed block.    
+    bc7_compressed_block compressed_block;
+    compressed_block.m_error = 0xFFFFFFFF;
+
+    uint num_shapes = 1 << mode.m_num_shape_bits;
+    uint num_rotations = 1 << mode.m_num_rotation_bits;
+    uint num_isb_states = 1 << mode.m_num_isb_bits;
+    uint num_subsets = mode.m_num_subsets;
+
+    // Iterate through the channel rotations.
+    for (uint rotation_iter = 0; rotation_iter < num_rotations; rotation_iter++) { 
+
+        // Potentially swap a color channel with the alpha channel to improve precision.
+        bc7_swap_channels(pixels, rotation_iter);
+
+        // Iterate through the states of the index selection bit.
+        for (uint isb_iter = 0; isb_iter < num_isb_states; isb_iter++) {
+
+            // Iterate through the shapes.
+            for (uint shape_iter = 0; shape_iter < num_shapes; shape_iter++) {
+                
+                uint shape_index = shape_iter;
+               
+                // Iterate through the subsets in the shape.
+                float2x4enc gd_subset_results[BC7_MAX_SUBSETS];
+                for (uint subset_iter = 0; subset_iter < num_subsets; subset_iter++) {
+
+                    // Get the subset of pixels.
+                    float4 subset_pixels[NUM_PIXELS_PER_BLOCK];
+                    uint num_subset_pixels = 0;
+                    for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+                        if (bc7_get_subset_for_pixel(shape_index, pixel_iter, mode) == subset_iter) {
+                            subset_pixels[num_subset_pixels++] = pixels[pixel_iter];
+                        }
+                    }
+
+                    // Find the endpoints.                    
+                    bc7_find_endpoints(gd_subset_results[subset_iter], 
+                                      subset_pixels, num_subset_pixels,
+                                      isb_iter, mode);
+                }
+
+                // Quantize the endpoints to the final precision including the parity bits.
+                bc7_quantized_endpoints quantized_endpoints;
+                bc7_quantize_endpoints(quantized_endpoints, gd_subset_results, mode);
+
+                // Assign palette indices to each pixel and calculate the error.
+                uint palette_indices_1[NUM_PIXELS_PER_BLOCK];
+                uint palette_indices_2[NUM_PIXELS_PER_BLOCK];                     
+                uint shape_error = bc7_assign_pixels(quantized_endpoints,
+                                                    palette_indices_1, palette_indices_2,                                                 
+                                                    pixels, isb_iter, shape_index, mode);
+
+                // Save the results if the error is better.
+                if (shape_error < compressed_block.m_error) {
+                                        
+                    compressed_block.m_rotation = rotation_iter;
+                    compressed_block.m_index_selection_bit = isb_iter;
+                    compressed_block.m_shape = shape_index;                    
+                    compressed_block.m_error = shape_error;
+                    compressed_block.m_quantized_endpoints = quantized_endpoints;
+
+                    // Copy the palette indices over.
+                    [unroll]
+                    for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+                        compressed_block.m_palette_indices_1[pixel_iter] = palette_indices_1[pixel_iter];
+                        compressed_block.m_palette_indices_2[pixel_iter] = palette_indices_2[pixel_iter];
+                    }
+                }
+            }
+        }
+
+        // Swap the channels back.
+        bc7_swap_channels(pixels, rotation_iter);
+    }
+
+    if (compressed_block.m_error < input_error) {
+        // Write out the new best compressed block.
+        bc7_encode_compressed_block(encoded_block, compressed_block, mode);
+        return compressed_block.m_error;
+    }
+
+    return input_error;    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+[numthreads(8,8,1)]
+void BC7Compress(uint3 id : SV_DispatchThreadID)
+{
+    // Check bounds
+    if (id.x >= widthInBlocks || id.y >= heightInBlocks)
+        return;
+
+    // Load the 4x4 pixel block
+    float4 pixels[NUM_PIXELS_PER_BLOCK];
+    uint2 blockStart = id.xy * 4;
+    
+    for (uint y = 0; y < 4; y++)
+    {
+        for (uint x = 0; x < 4; x++)
+        {
+            pixels[y * 4 + x] = SamplePixel(blockStart + uint2(x, y));
+        }
+    }
+
+    // Initialize best error tracking
+    uint bestError = 0xFFFFFFFF;
+    bc7_encoded_block bestBlock;
+    
+    // Try all modes and find the one with the lowest error
+    for (uint mode = 0; mode < BC7_NUM_MODES; mode++)
+    {
+        bc7_encoded_block currentBlock;
+        
+        // Initialize the current block to zero
+        currentBlock.m_bits = uint4(0, 0, 0, 0);
+        
+        // Try compressing with the current mode
+        uint error = bc7_compress(currentBlock, pixels, BC7_modes[mode], bestError);
+        
+        // If this mode produces better results, save it
+        if (error < bestError)
+        {
+            bestError = error;
+            bestBlock = currentBlock;
+        }
+    }
+
+    // Write out the best encoded block
+    uint blockIndex = id.y * widthInBlocks + id.x;
+    EncodedBlocks[blockIndex] = bestBlock;
+}
