@@ -12,6 +12,7 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Utilities.Extensions;
@@ -54,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
         private readonly IAppArgs appArgs;
+        private readonly IWebBrowser webBrowser;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -82,7 +84,8 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -107,6 +110,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
+            this.webBrowser = webBrowser;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -177,12 +181,12 @@ namespace DCL.PluginSystem.Global
                 rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                 equippedWearables, sortController, pageButtonView, gridPool,
                 thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
-                wearablesProvider
+                wearablesProvider, webBrowser
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, thumbnailProvider);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, thumbnailProvider, webBrowser);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
