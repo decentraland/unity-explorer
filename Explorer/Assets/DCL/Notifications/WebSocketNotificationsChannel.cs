@@ -50,7 +50,10 @@ namespace DCL.Notifications
 
                         //TODO message generalized parsing with all schemes
                         ReportHub.Log(ReportCategory.REALTIME_COMMUNICATION, $"Received notification: {message}");
-                        notificationsBusController.AddNotification(new MoveToParcelNotification());
+
+                        try { notificationsBusController.AddNotification(new MoveToParcelNotification()); }
+                        catch (Exception e) { ReportHub.LogException(e, ReportCategory.REALTIME_COMMUNICATION); }
+
                         break;
                     default: throw new ArgumentOutOfRangeException();
                 }
