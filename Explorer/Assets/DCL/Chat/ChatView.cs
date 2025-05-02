@@ -781,7 +781,7 @@ namespace DCL.Chat
 
             if (!hasClickedOnCloseButton)
             {
-                if (hasClickedOnPanel)
+                if (hasClickedOnPanel && isPointerOverChat)
                 {
                     if (!hasClickedOnEmojiPanel)
                     {
