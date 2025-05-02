@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.LOD.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -50,6 +50,7 @@ namespace Global.Dynamic
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
         private readonly URLDomain assetBundleRegistry;
         private readonly IAppArgs appArgs;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -85,7 +86,8 @@ namespace Global.Dynamic
             RealmNavigatorDebugView realmNavigatorDebugView,
             bool isLocalSceneDevelopment,
             URLDomain assetBundleRegistry,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -101,6 +103,7 @@ namespace Global.Dynamic
             this.realmNavigatorDebugView = realmNavigatorDebugView;
             this.assetBundleRegistry = assetBundleRegistry;
             this.appArgs = appArgs;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -114,39 +117,48 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+            try
+            {
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-            string hostname = ResolveHostname(realm, result);
+                string hostname = ResolveHostname(realm, result);
 
-            realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
-                result.configurations.realmName.EnsureNotNull("Realm name not found"),
-                result.configurations.networkId,
-                ResolveCommsAdapter(result),
-                result.comms?.protocol ?? "v3",
-                hostname,
-                isLocalSceneDevelopment
-            );
+                realmData.Reconfigure(
+                    new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
+                    result.configurations.realmName.EnsureNotNull("Realm name not found"),
+                    result.configurations.networkId,
+                    ResolveCommsAdapter(result),
+                    result.comms?.protocol ?? "v3",
+                    hostname,
+                    isLocalSceneDevelopment
+                );
 
-            // Add the realm component
-            var realmComp = new RealmComponent(realmData);
+                // Add the realm component
+                var realmComp = new RealmComponent(realmData);
 
-            realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
+                realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
 
-            if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
-                ComplimentWithVolatilePointers(world, realmEntity);
+                if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
+                    ComplimentWithVolatilePointers(world, realmEntity);
 
-            IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
-            sceneProviderStrategy.World = globalWorld.EcsWorld;
+                IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
+                sceneProviderStrategy.World = globalWorld.EcsWorld;
 
-            teleportController.SceneProviderStrategy = sceneProviderStrategy;
-            partitionDataContainer.Restart();
+                teleportController.SceneProviderStrategy = sceneProviderStrategy;
+                partitionDataContainer.Restart();
 
-            CurrentDomain = realm;
+                CurrentDomain = realm;
 
-            realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
-                result.content.publicUrl);
+                realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
+                    result.content.publicUrl);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}'. Redirecting to Genesis City!: {e.Message}");
+                SetRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct).Forget();
+            }
         }
 
         public async UniTask RestartRealmAsync(CancellationToken ct)

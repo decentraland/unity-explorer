@@ -61,7 +61,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             analytics.Track(eventName, new JsonObject
             {
                 { "receiver_id", userId },
-            });
+            }, isInstant: eventName == AnalyticsEvents.Profile.PASSPORT_OPENED);
         }
 
         private void OnNameClaimRequested() =>

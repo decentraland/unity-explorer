@@ -17,6 +17,7 @@ namespace DCL.WebRequests
         public readonly CommonArguments CommonArguments;
         public readonly CancellationToken Ct;
         public readonly bool SuppressErrors;
+        public readonly bool IgnoreIrrecoverableErrors;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
         private readonly TWebRequestArgs args;
         private readonly DownloadHandler? customDownloadHandler;
@@ -35,7 +36,8 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo,
             ISet<long>? responseCodeIgnores = null,
             bool suppressErrors = false,
-            DownloadHandler? customDownloadHandler = null
+            DownloadHandler? customDownloadHandler = null,
+            bool ignoreIrrecoverableErrors = false
         )
         {
             this.initializeRequest = initializeRequest;
@@ -48,6 +50,7 @@ namespace DCL.WebRequests
             SuppressErrors = suppressErrors;
             this.customDownloadHandler = customDownloadHandler;
             this.responseCodeIgnores = responseCodeIgnores;
+            this.IgnoreIrrecoverableErrors = ignoreIrrecoverableErrors;
         }
 
         public override string ToString() =>
