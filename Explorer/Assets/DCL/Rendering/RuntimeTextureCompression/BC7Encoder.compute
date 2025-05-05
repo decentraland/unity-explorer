@@ -1010,7 +1010,8 @@ void bc7_set_bits(inout uint4 bits, inout uint start_bit_index, int signed_num_b
     uint slot_index_end = (start_bit_index + num_bits - 1) >> 5;
     uint slot_bit_index = start_bit_index & 31;
 
-    if (slot_index != slot_index_end) {
+    if (slot_index != slot_index_end)
+    {
         // The value will span an integer boundary.
         uint slot_value_1 = bits[slot_index];
         uint slot_value_2 = bits[slot_index_end];
@@ -1030,7 +1031,9 @@ void bc7_set_bits(inout uint4 bits, inout uint start_bit_index, int signed_num_b
         // Store them.
         bits[slot_index] = slot_value_1;
         bits[slot_index_end] = slot_value_2;
-    } else {
+    }
+    else
+    {
         uint slot_value = bits[slot_index];
 
         // Clear out the current bits.
@@ -1072,13 +1075,16 @@ void bc7_encode_compressed_block(out bc7_encoded_block encoded_block,
     uint num_channels = (mode.m_mode_index < 4) ? 3 : 4;
 
     // Color.
-    for (uint channel = 0; channel < num_channels; channel++) {
-        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+    for (uint channel = 0; channel < num_channels; channel++)
+    {
+        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++)
+        {
             uint channel_precision = mode.m_endpoint_precision[channel];
             uint channel_value_0 = compressed_block.m_quantized_endpoints.m_endpoints[subset_iter].v[channel];
             uint channel_value_1 = compressed_block.m_quantized_endpoints.m_endpoints[subset_iter].v[channel + 4];
 
-            if (mode.m_parity_bit_type != bc7_parity_bit_type::PARITY_BIT_NONE) {
+            if (mode.m_parity_bit_type != bc7_parity_bit_type::PARITY_BIT_NONE)
+            {
                 channel_precision--;
                 channel_value_0 >>= 1;
                 channel_value_1 >>= 1;
@@ -1095,17 +1101,22 @@ void bc7_encode_compressed_block(out bc7_encoded_block encoded_block,
     }
 
     // Parity bits.
-    if (mode.m_parity_bit_type != bc7_parity_bit_type::PARITY_BIT_NONE) {
+    if (mode.m_parity_bit_type != bc7_parity_bit_type::PARITY_BIT_NONE)
+    {
         uint num_parity_bits;
-        if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_SHARED) {
+        if (mode.m_parity_bit_type == bc7_parity_bit_type::PARITY_BIT_SHARED)
+        {
             // The endpoints within a subset share a parity bit.
             num_parity_bits = mode.m_num_subsets;
-        } else {
+        }
+        else
+        {
             // Each endpoint has its own parity bit.
             num_parity_bits = 2 * mode.m_num_subsets;
         }
 
-        for (uint parity_iter = 0; parity_iter < num_parity_bits; parity_iter++) {
+        for (uint parity_iter = 0; parity_iter < num_parity_bits; parity_iter++)
+        {
             uint parity_bit = compressed_block.m_quantized_endpoints.m_parity_bits[parity_iter];
             bc7_set_bits(encoded_block.m_bits, bit_index, 1, parity_bit);
         }
@@ -1113,31 +1124,40 @@ void bc7_encode_compressed_block(out bc7_encoded_block encoded_block,
 
     // Primary indices.
     uint palette_indices_1[NUM_PIXELS_PER_BLOCK];
-    if (compressed_block.m_index_selection_bit) {
+    if (compressed_block.m_index_selection_bit)
+    {
         [unroll]
-        for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+        for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
+        {
             palette_indices_1[i] = compressed_block.m_palette_indices_2[i];
         }
-    } else {
+    }
+    else
+    {
         [unroll]
-        for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+        for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
+        {
             palette_indices_1[i] = compressed_block.m_palette_indices_1[i];
         }
     }
 
     // Get all the anchor indices.
     uint anchor_indices[BC7_MAX_SUBSETS];
-    for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
+    for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++)
+    {
         anchor_indices[subset_iter] = bc7_get_anchor_index(compressed_block.m_shape, subset_iter, mode);
     }
 
     // Encode all the indices.
-    for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+    for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++)
+    {
         uint index_precision = mode.m_num_index_bits_1;
 
         // See if this pixel is an anchor.            
-        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++) {
-            if (pixel_iter == anchor_indices[subset_iter]) {
+        for (uint subset_iter = 0; subset_iter < mode.m_num_subsets; subset_iter++)
+        {
+            if (pixel_iter == anchor_indices[subset_iter])
+            {
                 // The anchor index is written with one less bit because the leading bit is
                 // assumed to be zero.
                 index_precision--;
@@ -1145,31 +1165,36 @@ void bc7_encode_compressed_block(out bc7_encoded_block encoded_block,
             }
         }
 
-        bc7_set_bits(encoded_block.m_bits, bit_index, index_precision, 
-                     palette_indices_1[pixel_iter]);
+        bc7_set_bits(encoded_block.m_bits, bit_index, index_precision, palette_indices_1[pixel_iter]);
     }
 
     // Secondary indices.
-    if (mode.m_num_index_bits_2 > 0) {
+    if (mode.m_num_index_bits_2 > 0)
+    {
         uint palette_indices_2[NUM_PIXELS_PER_BLOCK];
-        if (compressed_block.m_index_selection_bit) {
+        if (compressed_block.m_index_selection_bit)
+        {
             [unroll]
-            for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+            for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
+            {
                 palette_indices_2[i] = compressed_block.m_palette_indices_1[i];
             }
-        } else {
+        }
+        else
+        {
             [unroll]
-            for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++) {
+            for (int i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
+            {
                 palette_indices_2[i] = compressed_block.m_palette_indices_2[i];
             }
         }
 
-        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++) {
+        for (uint pixel_iter = 0; pixel_iter < NUM_PIXELS_PER_BLOCK; pixel_iter++)
+        {
             // The first index is always the anchor index.
             uint index_precision = (pixel_iter == 0) ? (mode.m_num_index_bits_2 - 1) : mode.m_num_index_bits_2;
 
-            bc7_set_bits(encoded_block.m_bits, bit_index, index_precision,
-                         palette_indices_2[pixel_iter]);
+            bc7_set_bits(encoded_block.m_bits, bit_index, index_precision,palette_indices_2[pixel_iter]);
         }
     }
 }

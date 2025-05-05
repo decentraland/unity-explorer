@@ -1,25 +1,24 @@
-﻿#define CONSTANT constant
-#define KERNEL kernel
-#define LOCAL local
-#define GLOBAL global
+﻿#define CONSTANT static const
+#define LOCAL groupshared
+#define GLOBAL 
 
-size_t getGlobalId(	const uint dimindx)
-{
-    return get_global_id(dimindx);
-}
-size_t getGroupId(	const uint dimindx)
-{
-    return get_group_id(dimindx);
-}
-size_t getLocalId(	const uint dimindx)
-{
-    return get_local_id(dimindx);
-}
-
-inline void localMemoryFence()
-{
-    barrier(CLK_LOCAL_MEM_FENCE);
-}
+// size_t getGlobalId(	const uint dimindx)
+// {
+//     return get_global_id(dimindx);
+// }
+// size_t getGroupId(	const uint dimindx)
+// {
+//     return get_group_id(dimindx);
+// }
+// size_t getLocalId(	const uint dimindx)
+// {
+//     return get_local_id(dimindx);
+// }
+//
+// inline void localMemoryFence()
+// {
+//     barrier(CLK_LOCAL_MEM_FENCE);
+// }
 
 //////////////////////////////////////////////////////////////////////////////////////
 CONSTANT float RevU2 = -0.4435068522;       ///< undo 9/7 update 2
@@ -149,8 +148,14 @@ current_U2 = current_U1 + U2*(minusOne_P2 + plusOne_P2)
 // TODO: 
 CONSTANT sampler_t sampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_MIRRORED_REPEAT  | CLK_FILTER_NEAREST;
 
+inline void localMemoryFence()
+{
+    GroupMemoryBarrierWithGroupSync();
+}
+
 inline int getCorrectedGlobalIdX()
 {
+    // id.xyz && groupId.xyz
     return getGlobalId(0) - 2 * BOUNDARY_X * getGroupId(0);
 }
 
@@ -173,7 +178,7 @@ inline void writePixel(float4 pix, LOCAL float*  restrict  dest)
 }
 
 // write column to destination
-void writeColumnToOutput(LOCAL float* restrict currentScratch, __write_only image2d_t odata, int firstY, int inputX, int height, int halfHeight)
+void writeColumnToOutput(LOCAL float* restrict currentScratch, RWTexture2D<float4> odata, int firstY, int inputX, int height, int halfHeight)
 {
 	int2 posOut = {inputX, firstY>>1};
 	for (int j = 0; j < WIN_SIZE_Y; j+=2)
@@ -184,13 +189,13 @@ void writeColumnToOutput(LOCAL float* restrict currentScratch, __write_only imag
 	    if (posOut.y >= halfHeight)
 			break;
 
-		write_imagef(odata, posOut,scale97Div * readPixel(currentScratch));
+	    odata[posOut] = scale97Div * readPixel(currentScratch);
 
 		// odd row
 		currentScratch += VERTICAL_STRIDE ;
 		posOut.y+= halfHeight;
 
-		write_imagef(odata, posOut,scale97Mul * readPixel(currentScratch));
+		odata[posOut] = scale97Mul * readPixel(currentScratch);
 
 		currentScratch += VERTICAL_STRIDE;
 		posOut.y -= (halfHeight - 1);
@@ -200,20 +205,29 @@ void writeColumnToOutput(LOCAL float* restrict currentScratch, __write_only imag
 // initial scratch offset when transforming vertically
 inline int getScratchOffset()
 {
-   return (getLocalId(0)>> 1) + (getLocalId(0)&1) * BUFFER_SIZE;
+    // groupThreadId.xyz
+    eturn (getLocalId(0)>> 1) + (getLocalId(0)&1) * BUFFER_SIZE;
 }
 
 #pragma kernel JPEG2000Decode
 
-__read_only image2d_t idata;
-__write_only image2d_t odata;  
-const unsigned int width;
-const unsigned int height;
-const unsigned int steps;
+Texture2D<float4> idata;
+RWTexture2D<float4> odata;
+SamplerState inputSampler;
+uint width;
+uint height;
+uint steps;
+
+SamplerState inputSampler {
+    Filter = MIN_MAG_MIP_POINT;
+    AddressU = Mirror;
+    AddressV = Mirror;
+};
 
 // assumptions: width and height are both even
 // (we will probably have to relax these assumptions in the future)
-void JPEG2000Decode(uint3 id : SV_DispatchThreadID)
+[numthreads(WIN_SIZE_X, 1, 1)]
+void JPEG2000Decode(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 groupThreadId : SV_GroupThreadID)
 {
 	int inputX = getCorrectedGlobalIdX();
 
@@ -221,38 +235,39 @@ void JPEG2000Decode(uint3 id : SV_DispatchThreadID)
 	outputX = (outputX >> 1) + (outputX & 1) * ( width >> 1);
 
     const unsigned int halfHeight = height >> 1;
-	LOCAL float scratch[PIXEL_BUFFER_SIZE];
+	groupshared float scratch[PIXEL_BUFFER_SIZE];
 	const float yDelta = 1.0/(height-1);
+    // id.xyz
 	int firstY = getGlobalId(1) * (steps * WIN_SIZE_Y);
 	
 	//0. Initialize: fetch first pixel (and 2 top boundary pixels)
 
 	// read -4 point
 	float2 posIn = (float2)(inputX, firstY - 4.0f) /  (float2)(width-1.0f, height-1.0f);	
-	float4 minusFour = read_imagef(idata, sampler, posIn);
+	float4 minusFour = idata.SampleLevel(inputSampler, posIn, 0);
 
 	posIn.y += yDelta;
-	float4 minusThree = read_imagef(idata, sampler, posIn);
+	float4 minusThree = idata.SampleLevel(inputSampler, posIn, 0);
 
 	// read -2 point
 	posIn.y += yDelta;
-	float4 minusTwo = read_imagef(idata, sampler, posIn);
+	float4 minusTwo = idata.SampleLevel(inputSampler, posIn, 0);
 
 	// read -1 point
 	posIn.y += yDelta;
-	float4 minusOne = read_imagef(idata, sampler, posIn);
+	float4 minusOne = idata.SampleLevel(inputSampler, posIn, 0);
 
 	// read 0 point
 	posIn.y += yDelta;
-	float4 current = read_imagef(idata, sampler, posIn);
+	float4 current = idata.SampleLevel(inputSampler, posIn, 0);
 
 	// +1 point
 	posIn.y += yDelta;
-	float4 plusOne = read_imagef(idata, sampler, posIn);
+	float4 plusOne = idata.SampleLevel(inputSampler, posIn, 0);
 
 	// +2 point
 	posIn.y += yDelta;
-	float4 plusTwo = read_imagef(idata, sampler, posIn);
+	float4 plusTwo = idata.SampleLevel(inputSampler, posIn, 0);
 
 	float4 minusThree_P1 = minusThree + P1*(minusFour + minusTwo);
 	float4 minusOne_P1   = minusOne   + P1*(minusTwo + current);
@@ -272,13 +287,13 @@ void JPEG2000Decode(uint3 id : SV_DispatchThreadID)
 
 			// +3 point
 			posIn.y += yDelta;
-			float4 plusThree = read_imagef(idata, sampler, posIn);
+			float4 plusThree = idata.SampleLevel(inputSampler, posIn, 0);
 	   
 	   		// +4 point
 			posIn.y += yDelta;
 	   		if (posIn.y > 1 + 3*yDelta)
 				break;
-			float4 plusFour = read_imagef(idata, sampler, posIn);
+			float4 plusFour = idata.SampleLevel(inputSampler, posIn, 0);
 
 			float4 plusThree_P1    = plusThree  + P1*(plusTwo + plusFour);
 			float4 plusTwo_U1      = plusTwo + U1*(plusOne_P1 + plusThree_P1);
@@ -323,6 +338,7 @@ void JPEG2000Decode(uint3 id : SV_DispatchThreadID)
 		
 		localMemoryFence();
 		// P2 - predict odd columns (skip left three boundary columns and all right boundary columns)
+	    // groupThreadId.xyz
 		if ( (getLocalId(0)&1) && (getLocalId(0) >= BOUNDARY_X-1) && (getLocalId(0) < WIN_SIZE_X-BOUNDARY_X) )
 		{
 			for (int j = 0; j < WIN_SIZE_Y; j++)
@@ -375,6 +391,7 @@ void JPEG2000Decode(uint3 id : SV_DispatchThreadID)
 		currentScratch = scratch + getScratchOffset();	
 		localMemoryFence();
 		//U2 - update even columns (skip left and right boundary columns)
+	    // groupThreadId.xyz
 		if ( !(getLocalId(0)&1) && (getLocalId(0) >= BOUNDARY_X) && (getLocalId(0) < WIN_SIZE_X-BOUNDARY_X)  )
 		{
 			for (int j = 0; j < WIN_SIZE_Y; j++)
@@ -411,6 +428,7 @@ void JPEG2000Decode(uint3 id : SV_DispatchThreadID)
 	    
 		//5. write local buffer column to destination image
 		// (only write non-boundary columns that are within the image bounds)
+	    // groupThreadId.xyz
 		if ((getLocalId(0) >= BOUNDARY_X) && ( getLocalId(0) < WIN_SIZE_X - BOUNDARY_X) && (inputX < width) && inputX >= 0)
 		{
 			writeColumnToOutput(scratch + getScratchOffset(), odata, firstY, outputX, height, halfHeight);
