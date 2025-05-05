@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
+using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
@@ -20,6 +21,7 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -145,6 +147,8 @@ namespace DCL.UI.Sidebar
 
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
@@ -155,6 +159,34 @@ namespace DCL.UI.Sidebar
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
         }
 
+        private void OnMvcManagerViewClosed(IController closedController)
+        {
+            // Panels that are controllers and can be opened using shortcuts
+            if (closedController is EmotesWheelController)
+            {
+                viewInstance.emotesWheelButton.animator.SetTrigger("Empty");
+            }
+            else if (closedController is FriendsPanelController)
+            {
+                viewInstance.friendsButton.animator.SetTrigger("Empty");
+                OnChatViewFoldingChanged(chatView.IsUnfolded);
+            }
+        }
+
+        private void OnMvcManagerViewShowed(IController showedController)
+        {
+            // Panels that are controllers and can be opened using shortcuts
+            if (showedController is EmotesWheelController)
+            {
+                viewInstance.emotesWheelButton.animator.SetTrigger("Active");
+            }
+            else if (showedController is FriendsPanelController)
+            {
+                viewInstance.friendsButton.animator.SetTrigger("Active");
+                OnChatViewFoldingChanged(false);
+            }
+        }
+
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
@@ -162,6 +194,7 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
+            viewInstance.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? "Active" : "Empty");
             viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? "Active" : "Empty");
         }
 
@@ -232,16 +265,12 @@ namespace DCL.UI.Sidebar
 
         private async void OnEmotesWheelButtonClickedAsync()
         {
-            viewInstance.emotesWheelButton.animator.SetTrigger("Active");
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
-            viewInstance.emotesWheelButton.animator.SetTrigger("Empty");
         }
 
         private async void OnFriendsButtonClickedAsync()
         {
-            viewInstance.friendsButton.animator.SetTrigger("Active");
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
-            viewInstance.friendsButton.animator.SetTrigger("Empty");
         }
 
         private async void OnMarketplaceCreditsButtonClickedAsync() =>
@@ -301,39 +330,8 @@ namespace DCL.UI.Sidebar
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
-            switch (section)
-            {
-                case ExploreSections.Backpack:
-                    viewInstance.backpackButton.animator.SetTrigger("Active");
-                    break;
-                case ExploreSections.Navmap:
-                    viewInstance.mapButton.animator.SetTrigger("Active");
-                    break;
-                case ExploreSections.Settings:
-                    viewInstance.settingsButton.animator.SetTrigger("Active");
-                    break;
-                case ExploreSections.CameraReel:
-                    viewInstance.cameraReelButton.animator.SetTrigger("Active");
-                    break;
-            }
-
+            // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
-
-            switch (section)
-            {
-                case ExploreSections.Backpack:
-                    viewInstance.backpackButton.animator.SetTrigger("Empty");
-                    break;
-                case ExploreSections.Navmap:
-                    viewInstance.mapButton.animator.SetTrigger("Empty");
-                    break;
-                case ExploreSections.Settings:
-                    viewInstance.settingsButton.animator.SetTrigger("Empty");
-                    break;
-                case ExploreSections.CameraReel:
-                    viewInstance.cameraReelButton.animator.SetTrigger("Empty");
-                    break;
-            }
         }
 
         #endregion
