@@ -169,14 +169,12 @@ namespace DCL.UserInAppInitializationFlow
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
-            await roomHub.StopPrivateConversationsRoomAsync().Timeout(TimeSpan.FromSeconds(5));
         }
 
         // TODO should be an operation
         private async UniTask DoRecoveryOperationsAsync()
         {
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
-            await roomHub.StopPrivateConversationsRoomAsync().Timeout(TimeSpan.FromSeconds(5));
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)

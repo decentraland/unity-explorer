@@ -323,7 +323,7 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string CHAT_HISTORY = nameof(CHAT_HISTORY);
 
-        public const string CHAT_PRIVATE_MESSAGES = nameof(CHAT_PRIVATE_MESSAGES);
+        public const string CHAT_MESSAGES = nameof(CHAT_MESSAGES);
 
     }
 }

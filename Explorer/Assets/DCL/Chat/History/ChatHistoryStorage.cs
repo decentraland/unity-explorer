@@ -111,7 +111,7 @@ namespace DCL.Chat.History
         /// If the file is not present or is corrupt, all stored conversations will be considered as open and a new file will
         /// be stored.
         /// </remarks>
-        public async UniTask LoadAllChannelsWithoutMessagesAsync()
+        public void LoadAllChannelsWithoutMessages()
         {
             ReportHub.Log(reportData, $"Loading all open conversations (not their messages).");
 

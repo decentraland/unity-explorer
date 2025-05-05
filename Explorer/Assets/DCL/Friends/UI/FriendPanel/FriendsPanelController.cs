@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;

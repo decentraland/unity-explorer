@@ -161,7 +161,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Unsubscribe(IRoom previous)
         {
-             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+            previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
