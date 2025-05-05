@@ -37,6 +37,9 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>,
         IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
+        public delegate void ConversationOpenedDelegate(bool wasAlreadyOpen);
+        public delegate void ConversationClosedDelegate();
+
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
         private readonly IChatMessagesBus chatMessagesBus;
@@ -73,6 +76,9 @@ namespace DCL.Chat
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
+
+        public event ConversationOpenedDelegate? ConversationOpened;
+        public event ConversationClosedDelegate? ConversationClosed;
 
         public bool TryGetView(out ChatView view)
         {
@@ -319,6 +325,8 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
+            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
+
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
@@ -457,6 +465,8 @@ namespace DCL.Chat
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
         {
+            ConversationClosed?.Invoke();
+
             chatHistory.RemoveChannel(channelId);
         }
 #endregion
