@@ -39,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         }
 
         [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
+        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention), typeof(StreamableLoadingResult<AssetBundleData>))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache

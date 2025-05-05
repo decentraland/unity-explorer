@@ -60,7 +60,8 @@ namespace DCL.UserInAppInitializationFlow
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
                 teleportStartupOperation,
-                ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
+
+                //ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
                 sentryDiagnostics
             };
 

@@ -11,6 +11,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
+using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Transforms.Components;
 using System;
 using UnityEngine;
@@ -79,7 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT || !LoadGltfContainerSystem.bigFileLoaded)
             {
                 eventsBuffer.ForEach(forEachEvent);
             }
@@ -163,8 +164,10 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 concluded = true;
                 sceneData.SceneLoadingConcluded = true;
+                sceneData.StopStopWatch();
                 World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
                     sceneData.Geometry.BaseParcelPosition;
+
             }
         }
 

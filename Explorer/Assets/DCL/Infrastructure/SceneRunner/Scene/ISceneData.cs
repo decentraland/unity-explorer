@@ -121,6 +121,15 @@ namespace SceneRunner.Scene
 
             public bool IsPortableExperience() =>
                 false;
+
+            public void StartStopWatch() { }
+
+            public void StopStopWatch() { }
         }
+
+        void StartStopWatch();
+
+        void StopStopWatch();
+
     }
 }

@@ -39,6 +39,7 @@ namespace SceneRunner
         {
             this.deps = deps;
             SceneData = sceneData;
+            SceneData.StartStopWatch();
         }
 
         public void Initialize()

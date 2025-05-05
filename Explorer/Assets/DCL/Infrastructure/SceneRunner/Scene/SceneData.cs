@@ -3,13 +3,17 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Utility;
+using Debug = UnityEngine.Debug;
 
 namespace SceneRunner.Scene
 {
     public class SceneData : ISceneData
     {
+        private readonly Stopwatch stopwatch = new ();
+
         /// <summary>
         ///     https://github.com/decentraland/unity-renderer/pull/5844
         /// </summary>
@@ -127,6 +131,17 @@ namespace SceneRunner.Scene
 
         public bool IsPortableExperience() =>
             SceneEntityDefinition.metadata.isPortableExperience;
+
+        public void StartStopWatch()
+        {
+            stopwatch.Start();
+        }
+
+        public void StopStopWatch()
+        {
+            stopwatch.Stop();
+            Debug.Log($"JUANI SCENE TOOK {stopwatch.ElapsedMilliseconds} s");
+        }
 
         public bool IsSdk7() =>
             SceneEntityDefinition.metadata.runtimeVersion == "7";
