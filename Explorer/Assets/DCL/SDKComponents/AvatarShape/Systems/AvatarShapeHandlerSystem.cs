@@ -77,7 +77,7 @@ namespace ECS.Unity.AvatarShape.Systems
         }
 
         [Query]
-        [All(typeof(SDKAvatarShapeComponent), typeof(PBAvatarShape))]
+        [All(typeof(PBAvatarShape))]
         [None(typeof(DeleteEntityIntention))]
         private void LoadCharacterInterpolation(ref SDKAvatarShapeComponent sdkAvatarShapeComponent,
             ref TransformComponent transformComponent)
