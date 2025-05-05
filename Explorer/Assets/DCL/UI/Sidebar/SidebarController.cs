@@ -48,6 +48,8 @@ namespace DCL.UI.Sidebar
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private const string IDLE_ICON_ANIMATOR = "Empty";
+        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
         public event Action? HelpOpened;
 
@@ -164,11 +166,11 @@ namespace DCL.UI.Sidebar
             // Panels that are controllers and can be opened using shortcuts
             if (closedController is EmotesWheelController)
             {
-                viewInstance.emotesWheelButton.animator.SetTrigger("Empty");
+                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             }
             else if (closedController is FriendsPanelController)
             {
-                viewInstance.friendsButton.animator.SetTrigger("Empty");
+                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
                 OnChatViewFoldingChanged(chatView.IsUnfolded);
             }
         }
@@ -178,11 +180,11 @@ namespace DCL.UI.Sidebar
             // Panels that are controllers and can be opened using shortcuts
             if (showedController is EmotesWheelController)
             {
-                viewInstance.emotesWheelButton.animator.SetTrigger("Active");
+                viewInstance.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             }
             else if (showedController is FriendsPanelController)
             {
-                viewInstance.friendsButton.animator.SetTrigger("Active");
+                viewInstance.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
                 OnChatViewFoldingChanged(false);
             }
         }
@@ -194,8 +196,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            viewInstance.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? "Active" : "Empty");
-            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? "Active" : "Empty");
+            viewInstance.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -313,18 +315,18 @@ namespace DCL.UI.Sidebar
         private async void OpenSkyboxSettingsAsync()
         {
             viewInstance.BlockSidebar();
-            viewInstance.skyboxButton.animator.SetTrigger("Active");
+            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance.skyboxButton.animator.SetTrigger("Empty");
+            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
             viewInstance.BlockSidebar();
-            viewInstance.notificationsButton.animator.SetTrigger("Active");
+            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance.notificationsButton.animator.SetTrigger("Empty");
+            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             viewInstance.UnblockSidebar();
         }
 
