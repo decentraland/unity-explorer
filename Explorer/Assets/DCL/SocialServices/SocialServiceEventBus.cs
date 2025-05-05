@@ -7,9 +7,9 @@ namespace DCL.SocialService
         event Action TransportClosed;
         event Action RPCClientReconnected;
 
-        void OnTransportClosed();
+        void SendTransportClosedNotification();
 
-        void OnTransportReconnected();
+        void SendTransportReconnectedNotification();
     }
 
     public class SocialServiceEventBus : ISocialServiceEventBus
@@ -17,12 +17,12 @@ namespace DCL.SocialService
         public event Action TransportClosed;
         public event Action RPCClientReconnected;
 
-        public void OnTransportClosed()
+        public void SendTransportClosedNotification()
         {
             TransportClosed?.Invoke();
         }
 
-        public void OnTransportReconnected()
+        public void SendTransportReconnectedNotification()
         {
             RPCClientReconnected?.Invoke();
         }

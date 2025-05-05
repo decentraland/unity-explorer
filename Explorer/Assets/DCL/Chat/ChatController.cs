@@ -266,7 +266,7 @@ namespace DCL.Chat
         private async UniTaskVoid InitializeChannelsAndConversationsAsync()
         {
             if (chatStorage != null)
-                await chatStorage.LoadAllChannelsWithoutMessagesAsync();
+                chatStorage.LoadAllChannelsWithoutMessages();
 
             var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
 
@@ -461,7 +461,7 @@ namespace DCL.Chat
         }
 #endregion
 
-        private void OnClearChatCommandReceived() // Called by a command
+        private void OnChatClearedCommandReceived() // Called by a command
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
@@ -654,7 +654,7 @@ namespace DCL.Chat
         {
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatCommandsBus.ClearChat += OnClearChatCommandReceived;
+            chatCommandsBus.ChatCleared += OnChatClearedCommandReceived;
 
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
@@ -699,7 +699,7 @@ namespace DCL.Chat
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatCommandsBus.ClearChat -= OnClearChatCommandReceived;
+            chatCommandsBus.ChatCleared -= OnChatClearedCommandReceived;
             chatEventBus.InsertTextInChat -= OnTextInserted;
 
             if (viewInstance != null)
