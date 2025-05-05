@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
+using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -46,6 +47,7 @@ namespace DCL.Chat.MessageBus
 
         private void OnPrivateMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
             OnChatAsync(receivedMessage, true).Forget();
         }
 
@@ -80,11 +82,11 @@ namespace DCL.Chat.MessageBus
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             switch (channel.ChannelType)
             {
-                case ChatChannel.ChatChannelType.Nearby:
+                case ChatChannel.ChatChannelType.NEARBY:
                     SendTo(message, timestamp, messagePipesHub.IslandPipe());
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
-                case ChatChannel.ChatChannelType.User:
+                case ChatChannel.ChatChannelType.USER:
                     SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 default:

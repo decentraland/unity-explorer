@@ -98,7 +98,6 @@ namespace DCL.Chat.History
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ChannelCleared += OnChatHistoryChannelCleared;
-            chatHistory.AllChannelsRemoved += OnChatHistoryAllChannelsRemoved;
 
             UniTask.RunOnThreadPool(() => ProcessQueueAsync(cts.Token)).Forget();
             UniTask.RunOnThreadPool(() => CheckChannelFileTimeoutsAsync(cts.Token)).Forget();
@@ -158,7 +157,7 @@ namespace DCL.Chat.History
                             channelFiles.Add(fileChannelId, newFile);
                         }
 
-                        chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.User);
+                        chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.USER);
 
                         // All stored conversations will be added to the settings file, when it is not present
                         if(!isConversationSettingsPresent)
@@ -349,7 +348,7 @@ namespace DCL.Chat.History
             if(!areAllChannelsLoaded) // Avoids reacting to itself
                 return;
 
-            if (addedChannel.ChannelType == ChatChannel.ChatChannelType.User)
+            if (addedChannel.ChannelType == ChatChannel.ChatChannelType.USER)
             {
                 conversationSettings.ConversationFilePaths.Add(userFilesFolder + chatEncryptor.StringToFileName(addedChannel.Id.Id));
                 StoreConversationSettings();
@@ -359,7 +358,7 @@ namespace DCL.Chat.History
 
         private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
-            if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.User)
+            if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.USER)
             {
                 if (!IsChannelInitialized(destinationChannel.Id))
                 {
@@ -369,7 +368,7 @@ namespace DCL.Chat.History
 
                 lock (queueLocker)
                 {
-                    if(destinationChannel.ChannelType == ChatChannel.ChatChannelType.User)
+                    if(destinationChannel.ChannelType == ChatChannel.ChatChannelType.USER)
                         messagesToProcess.Enqueue(new MessageToProcess(){ DestinationChannelId = destinationChannel.Id, Message = addedMessage});
                 }
             }
@@ -510,7 +509,7 @@ namespace DCL.Chat.History
             ChannelFile channelFile = OpenChannelFileForWriting(channelId);
             channelFile.LastMessageTime = Time.realtimeSinceStartup;
 
-            if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.User)
+            if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
                 chatSerializer.AppendPrivateConversationMessage(messageToAppend, channelFile.Content);
 
             channelFile.IsInitialized = true; // It could be the first message to be written to the file, so it makes sure the channel is marked as initialized
@@ -527,7 +526,7 @@ namespace DCL.Chat.History
 
             if (fileSize > 0)
             {
-                if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.User)
+                if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
                     await chatSerializer.ReadAllPrivateConversationMessagesAsync(channelFile.Content, localUserWalletAddress, channelId.Id, messages, cts.Token);
 
                 channelFile.IsInitialized = true;
@@ -639,11 +638,6 @@ namespace DCL.Chat.History
             channelFile.Path = null;
             channelFile.Content?.Dispose();
             channelFile.Content = null;
-        }
-
-        private void OnChatHistoryAllChannelsRemoved()
-        {
-            UnloadAllFiles();
         }
     }
 }

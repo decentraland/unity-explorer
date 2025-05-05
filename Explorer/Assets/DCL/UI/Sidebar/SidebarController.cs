@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
@@ -185,7 +186,7 @@ namespace DCL.UI.Sidebar
 
         private void OnUnreadMessagesButtonClickedAsync()
         {
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true)).Forget();
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true)).Forget();
         }
 
         private async void OnEmotesWheelButtonClickedAsync()

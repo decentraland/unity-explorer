@@ -10,13 +10,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     {
         IRoom IslandRoom();
         IGateKeeperSceneRoom SceneRoom();
-
-        IRoom SharedPrivateConversationsRoom();
+        IRoom ChatRoom();
 
         UniTask<bool> StartAsync();
         UniTask StopAsync();
+        UniTask StopLocalRoomsAsync();
 
-        IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities();
+        IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities();
     }
 
     public static class RoomHubExtensions
@@ -26,6 +26,6 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             roomHub.SceneRoom().Room().Info.ConnectionState == ConnectionState.ConnConnected;
 
         public static int ParticipantsCount(this IRoomHub roomHub) =>
-            roomHub.AllRoomsRemoteParticipantIdentities().Count;
+            roomHub.AllLocalRoomsRemoteParticipantIdentities().Count;
     }
 }

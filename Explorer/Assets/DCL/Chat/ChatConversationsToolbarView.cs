@@ -80,16 +80,16 @@ namespace DCL.Chat
 
             switch (channel.ChannelType)
             {
-                case ChatChannel.ChatChannelType.Nearby:
+                case ChatChannel.ChatChannelType.NEARBY:
                     newItem.SetConversationIcon(icon);
                     newItem.SetConversationName("Nearby"); // TODO: Localization
                     newItem.SetClaimedNameIconVisibility(false);
                     newItem.SetConversationType(false);
                     break;
-                case ChatChannel.ChatChannelType.User:
+                case ChatChannel.ChatChannelType.USER:
                     SetupUserConversationItemAsync(newItem).Forget();
                     break;
-                case ChatChannel.ChatChannelType.Community:
+                case ChatChannel.ChatChannelType.COMMUNITY:
                     // TODO in future shapes
                     newItem.SetConversationIcon(/*TODO*/icon);
                     newItem.SetConversationName("TODO");
@@ -98,7 +98,7 @@ namespace DCL.Chat
                     break;
             }
 
-            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.User);
+            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
 
             items.Add(channel.Id, newItem);
 
@@ -147,7 +147,8 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(ChatChannel.ChannelId destinationChannel, OnlineStatus connectionStatus)
         {
-            items[destinationChannel].SetConnectionStatus(connectionStatus);
+            if (items[destinationChannel] != null)
+                items[destinationChannel].SetConnectionStatus(connectionStatus);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
@@ -218,12 +219,12 @@ namespace DCL.Chat
 
         private void OnScrollDownButtonClicked()
         {
-            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y - scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 20.0f);
+            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y - scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 50.0f);
         }
 
         private void OnScrollUpButtonClicked()
         {
-            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y + scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 20.0f);
+            scrollView.normalizedPosition = new Vector2(0.0f, scrollView.normalizedPosition.y + scrollView.scrollSensitivity / scrollView.content.sizeDelta.y * 50.0f);
         }
 
         private void UpdateScrollButtonsVisibility()

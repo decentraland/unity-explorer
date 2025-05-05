@@ -7,6 +7,7 @@ using DCL.UI;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -28,7 +29,7 @@ namespace DCL.Chat
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputBoxSelectionChangedDelegate(bool isSelected);
         public delegate void InputChangedDelegate(string input);
-        public delegate void InputSubmittedDelegate(string message, string origin);
+        public delegate void InputSubmittedDelegate(string messageToSend, string origin);
 
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
@@ -73,7 +74,7 @@ namespace DCL.Chat
         private bool isInputSelected;
         private Match lastMatch = Match.Empty;
         private int wordMatchIndex;
-        private ChatAudioSettingsAsset chatAudioSettings;
+        private ChatSettingsAsset chatSettings;
         private CancellationTokenSource popupCts;
 
         private GetParticipantProfilesDelegate GetParticipantProfiles;
@@ -112,10 +113,10 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate? InputChanged;
 
-        public void Initialize(ChatAudioSettingsAsset chatAudioSettings, GetParticipantProfilesDelegate getParticipantProfiles)
+        public void Initialize(ChatSettingsAsset chatSettings, GetParticipantProfilesDelegate getParticipantProfiles)
         {
             device = InputSystem.GetDevice<Mouse>();
-            this.chatAudioSettings = chatAudioSettings;
+            this.chatSettings = chatSettings;
             this.GetParticipantProfiles = getParticipantProfiles;
 
             InitializeEmojiPanelController();
@@ -146,7 +147,6 @@ namespace DCL.Chat
 
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
-            inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
             inputField.DeactivateInputField();
         }
 
@@ -155,7 +155,6 @@ namespace DCL.Chat
             if(isInputSubmissionEnabled) return;
             isInputSubmissionEnabled = true;
 
-            inputField.onSubmit.AddListener(OnInputFieldSubmitted);
             viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
         }
@@ -355,14 +354,10 @@ namespace DCL.Chat
             inputField.OnDeselect(null);
         }
 
-        private void OnInputFieldSubmitted(string submittedText)
+        public bool TrySubmitInputField()
         {
             if (suggestionPanel.IsActive)
-            {
-                suggestionPanelController!.SetPanelVisibility(false);
-                lastMatch = Match.Empty;
-                return;
-            }
+                return true;
 
             if (emojiPanel.gameObject.activeInHierarchy)
             {
@@ -371,19 +366,23 @@ namespace DCL.Chat
                 EmojiSelectionVisibilityChanged?.Invoke(false);
             }
 
+            string submittedText = inputField.text;
+
             if (string.IsNullOrWhiteSpace(submittedText))
             {
                 inputField.DeactivateInputField();
                 inputField.OnDeselect(null);
-                return;
+                return false;
             }
 
-            if (chatAudioSettings.chatAudioSettings == ChatAudioSettings.ALL)
+            //TODO FRAN: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
+            if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
 
             inputField.ResetInputField();
 
             InputSubmitted?.Invoke(submittedText, ORIGIN);
+            return true;
         }
 
         public void Dispose()
