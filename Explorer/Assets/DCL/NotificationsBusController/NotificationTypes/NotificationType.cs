@@ -30,8 +30,16 @@ namespace DCL.NotificationsBusController.NotificationTypes
         BADGE_GRANTED,
         SOCIAL_SERVICE_FRIENDSHIP_REQUEST,
         SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED,
+
         //Internal notification types
         INTERNAL_ARRIVED_TO_DESTINATION,
         CREDITS_GOAL_COMPLETED,
+
+        //Streaming feature notification types,
+        STREAMING_KEY_RESET,
+        STREAMING_KEY_REVOKE,
+        STREAMING_KEY_EXPIRED,
+        STREAMING_TIME_EXCEEDED,
+        STREAMING_PLACE_UPDATED,
     }
 }

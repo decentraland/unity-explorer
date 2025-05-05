@@ -54,7 +54,7 @@ namespace DCL.MarketplaceCredits
         public static string FormatCreditsExpireIn(uint timeLeftInSeconds)
         {
             uint days = timeLeftInSeconds / (60 * 60 * 24);
-            return $"Expires in {days} days";
+            return $"Expire in {days} days";
         }
 
         /// <summary>
