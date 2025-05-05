@@ -8,9 +8,11 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
+using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,11 +25,15 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
+        private readonly InteriorVideoStreams videoStreams = new ();
+        private readonly InteriorAudioStreams audioStreams = new ();
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
+        public IVideoStreams VideoStreams => videoStreams;
+        public IAudioStreams AudioStreams => audioStreams;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
@@ -143,6 +149,8 @@ namespace DCL.Multiplayer.Connections.Rooms
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
+            videoStreams.Assign(room.VideoStreams);
+            audioStreams.Assign(room.AudioStreams);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;

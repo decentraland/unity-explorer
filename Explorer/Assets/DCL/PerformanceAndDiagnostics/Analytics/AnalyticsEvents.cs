@@ -102,5 +102,10 @@
             public const string BLOCK_USER = "block_user";
             public const string UNBLOCK_USER = "unblock_user";
         }
+
+        public static class MarketplaceCredits
+        {
+            public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
+        }
     }
 }

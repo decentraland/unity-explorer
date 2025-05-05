@@ -18,6 +18,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         /// </summary>
         void Track(string eventName, JsonObject? properties = null);
 
+        void InstantTrackAndFlush(string eventName, JsonObject? properties = null);
+
         void AddPlugin(EventPlugin plugin);
 
         void Flush();

@@ -316,6 +316,7 @@ namespace DCL.Diagnostics
         public const string LIGHT_SOURCE = nameof(LIGHT_SOURCE);
 
         public const string ALWAYS = nameof(ALWAYS);
+
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
 
         /// <summary>
@@ -325,5 +326,8 @@ namespace DCL.Diagnostics
 
         public const string CHAT_MESSAGES = nameof(CHAT_MESSAGES);
 
+        public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
+
+        public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
     }
 }

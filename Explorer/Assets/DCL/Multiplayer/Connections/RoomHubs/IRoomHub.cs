@@ -27,5 +27,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public static int ParticipantsCount(this IRoomHub roomHub) =>
             roomHub.AllLocalRoomsRemoteParticipantIdentities().Count;
+
+        /// <summary>
+        /// Room used for the video streaming
+        /// </summary>
+        public static IRoom StreamingRoom(this IRoomHub roomHub) =>
+            roomHub.SceneRoom().Room();
     }
 }

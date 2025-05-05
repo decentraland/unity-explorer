@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             var mainUIController = new MainUIController(
                 () =>
@@ -48,6 +48,7 @@ namespace DCL.PluginSystem.Global
             );
 
             mvcManager.RegisterController(mainUIController);
+            return UniTask.CompletedTask;
         }
 
         public class Settings : IDCLPluginSettings { }

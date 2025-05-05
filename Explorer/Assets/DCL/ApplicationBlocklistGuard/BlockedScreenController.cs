@@ -18,8 +18,11 @@ namespace DCL.ApplicationBlocklistGuard
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.CloseButton.onClick.AddListener(OnExitClicked);
-            viewInstance.SupportButton.onClick.AddListener(OnSupportClicked);
+            if (viewInstance != null)
+            {
+                viewInstance.CloseButton.onClick.AddListener(OnExitClicked);
+                viewInstance.SupportButton.onClick.AddListener(OnSupportClicked);
+            }
         }
 
         public override void Dispose()

@@ -10,7 +10,7 @@ namespace MVC
         internal IController fullscreenController { get; private set; }
         internal IController topController { get; private set; }
 
-        public IController TopMostPopup => popupStack.LastOrDefault();
+        public IController? TopMostPopup => popupStack.LastOrDefault();
         public IController CurrentFullscreenController => fullscreenController;
 
         public PopupPushInfo PushPopup(IController controller)
@@ -51,6 +51,11 @@ namespace MVC
             return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, -20));
         }
 
+        public void RemovePersistent(IController controller)
+        {
+            persistentStack.Remove(controller);
+        }
+
         public OverlayPushInfo PushOverlay(IController controller)
         {
             topController = controller;
@@ -73,9 +78,9 @@ namespace MVC
     {
         public readonly CanvasOrdering ControllerOrdering;
         public readonly CanvasOrdering PopupCloserOrdering;
-        public readonly IController PreviousController;
+        public readonly IController? PreviousController;
 
-        public PopupPushInfo(CanvasOrdering controllerOrdering, CanvasOrdering popupCloserOrdering, IController previousController)
+        public PopupPushInfo(CanvasOrdering controllerOrdering, CanvasOrdering popupCloserOrdering, IController? previousController)
         {
             this.ControllerOrdering = controllerOrdering;
             this.PopupCloserOrdering = popupCloserOrdering;
@@ -86,9 +91,9 @@ namespace MVC
     public readonly struct PopupPopInfo
     {
         public readonly CanvasOrdering PopupCloserOrdering;
-        public readonly IController NewTopMostController;
+        public readonly IController? NewTopMostController;
 
-        public PopupPopInfo(CanvasOrdering popupCloserOrdering, IController newTopMostController)
+        public PopupPopInfo(CanvasOrdering popupCloserOrdering, IController? newTopMostController)
         {
             this.PopupCloserOrdering = popupCloserOrdering;
             this.NewTopMostController = newTopMostController;

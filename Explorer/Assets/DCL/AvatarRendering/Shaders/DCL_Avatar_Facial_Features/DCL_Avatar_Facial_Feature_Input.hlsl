@@ -36,18 +36,50 @@ CBUFFER_END
         UNITY_DOTS_INSTANCED_PROP(float, _FadeDistance)
     UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
-    #define _BaseColor              UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4 , _BaseColor)
-    #define _SpecColor              UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4 , _SpecColor)
-    #define _EmissionColor          UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4 , _EmissionColor)
-    #define _Cutoff                 UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float  , _Cutoff)
-    #define _Surface                UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float  , _Surface)
-    #define _lastWearableVertCount  UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastWearableVertCount)
-    #define _lastAvatarVertCount    UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastAvatarVertCount)
-    #define _MainTexArr_ID          UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MainTexArr_ID)
-    #define _MaskTexArr_ID          UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MaskTexArr_ID)
-    #define _EndFadeDistance        UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _EndFadeDistance)
-    #define _StartFadeDistance      UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _StartFadeDistance)
-    #define _FadeDistance           UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _FadeDistance)
+    static float4 unity_DOTS_Sampled_BaseColor;
+    static float4 unity_DOTS_Sampled_SpecColor;
+    static float4 unity_DOTS_Sampled_EmissionColor;
+    static float unity_DOTS_Sampled_Cutoff;
+    static float unity_DOTS_Sampled_Surface;
+    static int unity_DOTS_Sampled_lastWearableVertCount;
+    static int unity_DOTS_Sampled_lastAvatarVertCount;
+    static int unity_DOTS_Sampled_MainTexArr_ID;
+    static int unity_DOTS_Sampled_MaskTexArr_ID;
+    static float unity_DOTS_Sampled_EndFadeDistance;
+    static float unity_DOTS_Sampled_StartFadeDistance;
+    static float unity_DOTS_Sampled_FadeDistance;
+
+    void SetupDOTSFacialFeaturesMaterialPropertyCaches()
+    {
+        unity_DOTS_Sampled_BaseColor                = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _BaseColor);
+        unity_DOTS_Sampled_SpecColor                = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _SpecColor);
+        unity_DOTS_Sampled_EmissionColor            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _EmissionColor);
+        unity_DOTS_Sampled_Cutoff                   = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _Cutoff);
+        unity_DOTS_Sampled_Surface                  = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _Surface);
+        unity_DOTS_Sampled_lastWearableVertCount    = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastWearableVertCount);
+        unity_DOTS_Sampled_lastAvatarVertCount      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastAvatarVertCount);
+        unity_DOTS_Sampled_MainTexArr_ID            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MainTexArr_ID);
+        unity_DOTS_Sampled_MaskTexArr_ID            = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MaskTexArr_ID);
+        unity_DOTS_Sampled_EndFadeDistance          = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _EndFadeDistance);
+        unity_DOTS_Sampled_StartFadeDistance        = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _StartFadeDistance);
+        unity_DOTS_Sampled_FadeDistance             = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float, _FadeDistance);
+    }
+
+    #undef UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES
+    #define UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES() SetupDOTSFacialFeaturesMaterialPropertyCaches()
+
+    #define _BaseColor              unity_DOTS_Sampled_BaseColor
+    #define _SpecColor              unity_DOTS_Sampled_SpecColor
+    #define _EmissionColor          unity_DOTS_Sampled_EmissionColor
+    #define _Cutoff                 unity_DOTS_Sampled_Cutoff
+    #define _Surface                unity_DOTS_Sampled_Surface
+    #define _lastWearableVertCount  unity_DOTS_Sampled_lastWearableVertCount
+    #define _lastAvatarVertCount    unity_DOTS_Sampled_lastAvatarVertCount
+    #define _MainTexArr_ID          unity_DOTS_Sampled_MainTexArr_ID
+    #define _MaskTexArr_ID          unity_DOTS_Sampled_MaskTexArr_ID
+    #define _EndFadeDistance        unity_DOTS_Sampled_EndFadeDistance
+    #define _StartFadeDistance      unity_DOTS_Sampled_StartFadeDistance
+    #define _FadeDistance           unity_DOTS_Sampled_FadeDistance
 #endif
 
 #ifdef _DCL_TEXTURE_ARRAYS

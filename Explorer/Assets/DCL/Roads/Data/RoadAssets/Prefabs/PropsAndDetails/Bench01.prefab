@@ -53,7 +53,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8057814367171604393, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: d03e211acd6882f4e95e7d3c1ae94a23, type: 2}
     - target: {fileID: -5817331119131203719, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
@@ -403,8 +403,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 10.610686
-  m_MeshMetrics[1]: 1
+  'm_MeshMetrics[0]': 10.610686
+  'm_MeshMetrics[1]': 1
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
