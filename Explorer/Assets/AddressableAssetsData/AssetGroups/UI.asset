@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: UI
   m_EditorClassIdentifier: 
   m_GroupName: UI
-  m_Data:
-    m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
   - m_GUID: 028bf9eb42404424bbd1df5cd802720e
@@ -74,6 +72,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5af318126b38647fea34ff22fba4ef17
     m_Address: Assets/DCL/UI/ColorPicker/BodyShapeColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ef9c85ff80df42e88f2946a299f1102
+    m_Address: GenericContextMenu
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
