@@ -8,12 +8,10 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
-using DCL.Passport;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -30,7 +28,6 @@ namespace DCL.Interaction.Systems
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
-        private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         //TODO FRAN: we must add a new type of InputAction to show the right click here,
         //but we cant as these are SDK input actions, so we need to override this
@@ -44,16 +41,13 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             DCLInput dclInput,
-            IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
-            this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
 
             dclInput.Player.RightPointer!.performed += OpenContextMenu;
-            dclInput.Player.Pointer!.performed += CloseContextMenu;
         }
 
         protected override void Update(float t)
@@ -64,7 +58,6 @@ namespace DCL.Interaction.Systems
         protected override void OnDispose()
         {
             dclInput.Player.RightPointer!.performed -= OpenContextMenu;
-            dclInput.Player.Pointer!.performed -= CloseContextMenu;
         }
 
         [Query]
@@ -107,11 +100,6 @@ namespace DCL.Interaction.Systems
             contextMenuTask = new UniTaskCompletionSource();
 
             menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, Vector2.zero, CancellationToken.None, contextMenuTask.Task);
-        }
-
-        private void CloseContextMenu(UnityEngine.InputSystem.InputAction.CallbackContext obj)
-        {
-            contextMenuTask.TrySetResult();
-        }
+        } 
     }
 }
