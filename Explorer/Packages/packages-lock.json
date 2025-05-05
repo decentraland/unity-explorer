@@ -402,6 +402,13 @@
       "dependencies": {},
       "hash": "0c01b5df1448ac3c5f888a31303e5a247d4b795c"
     },
+    "decentraland.renderfeatures": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c5f6a3916e8aa32674386ed2726724cce5c9ebbc"
+    },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
       "depth": 0,
