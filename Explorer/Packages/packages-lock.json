@@ -432,15 +432,6 @@
       },
       "hash": "4d02af4b7063c3d20ccbda56e6ed7029cc3e1197"
     },
-    "sc.stylizedwater2": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.render-pipelines.universal": "10.3.2"
-      },
-      "hash": "5726daa968873a05722b051a4637f55806feb5fd"
-    },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
       "depth": 0,
