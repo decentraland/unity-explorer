@@ -3,10 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.Chat.Commands;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
-using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -35,8 +35,11 @@ using Utility.Arch;
 namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>,
-        IControllerInSharedSpace<ChatView, ChatControllerShowParams>, IChatController
+        IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
+        public delegate void ConversationOpenedDelegate(bool wasAlreadyOpen);
+        public delegate void ConversationClosedDelegate();
+
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
         private readonly IChatMessagesBus chatMessagesBus;
@@ -55,26 +58,27 @@ namespace DCL.Chat
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
-        private readonly ChatUsersStateCache chatUsersStateCache;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
+        private readonly IRoomHub roomHub;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
-        private readonly IRoomHub roomHub;
-        private CancellationTokenSource chatUsersUpdateCts = new();
 
         private SingleInstanceEntity cameraEntity;
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
-        // We use this to avoid doing null checks after the viewInstance was created
         private bool viewInstanceCreated;
+        private CancellationTokenSource chatUsersUpdateCts = new();
 
-        string IChatController.IslandRoomSid => islandRoom.Info.Sid;
-        string IChatController.PreviousRoomSid { get; set; } = string.Empty;
+        public string IslandRoomSid => islandRoom.Info.Sid;
+        public string PreviousRoomSid { get; set; } = string.Empty;
+
+        public event ConversationOpenedDelegate? ConversationOpened;
+        public event ConversationClosedDelegate? ConversationClosed;
 
         public bool TryGetView(out ChatView view)
         {
@@ -123,17 +127,15 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
 
-            chatUsersStateCache = new ChatUsersStateCache();
             chatUserStateEventBus = new ChatUserStateEventBus();
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
-                roomHub.PrivateConversationsRoom().Participants,
+                roomHub.ChatRoom().Participants,
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
-                chatUsersStateCache,
                 friendsEventBus,
-                roomHub.PrivateConversationsRoom(),
+                roomHub.ChatRoom(),
                 friendsService);
 
             chatBubblesHelper = new ChatControllerChatBubblesHelper(
@@ -164,7 +166,7 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => viewInstanceCreated && viewInstance!.IsUnfolded;
+            get => viewInstanceCreated && viewInstance.IsUnfolded;
 
             set
             {
@@ -228,7 +230,6 @@ namespace DCL.Chat
         public override void Dispose()
         {
             chatStorage?.UnloadAllFiles();
-            chatUsersStateCache.ClearAll();
             chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
@@ -240,8 +241,6 @@ namespace DCL.Chat
 
         protected override void OnViewShow()
         {
-
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "OnViewShow");
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -271,10 +270,11 @@ namespace DCL.Chat
         private async UniTaskVoid InitializeChannelsAndConversationsAsync()
         {
             if (chatStorage != null)
-                await chatStorage.LoadAllChannelsWithoutMessagesAsync();
+                chatStorage.LoadAllChannelsWithoutMessages();
 
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, "InitializeChannelsAndConversations");
             var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+
+            await UniTask.SwitchToMainThread();
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
         }
 
@@ -282,7 +282,6 @@ namespace DCL.Chat
         {
             Blur();
             UnsubscribeFromEvents();
-            memberListHelper.StopUpdating();
             Dispose();
         }
 
@@ -309,6 +308,8 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
+            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
+
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
@@ -320,27 +321,28 @@ namespace DCL.Chat
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        private void OnSelectConversation(ChatChannel.ChannelId channelId)
+        public void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             chatUserStateUpdater.CurrentConversation = channelId.Id;
-            viewInstance!.CurrentChannelId = channelId;
+            if (TryGetView(out var view))
+            {
+                view.CurrentChannelId = channelId;
 
-            if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-            {
-                viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+                {
+                    view.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                    return;
+                }
             }
-            else
-            {
-                chatUserStateUpdater.AddConversation(channelId.Id);
-                chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
-                UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
-            }
+
+            chatUserStateUpdater.AddConversation(channelId.Id);
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+            UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
             var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
-
             if (TryGetView(out var view))
             {
                 view.SetInputWithUserState(userState);
@@ -448,11 +450,13 @@ namespace DCL.Chat
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
         {
+            ConversationClosed?.Invoke();
+
             chatHistory.RemoveChannel(channelId);
         }
 #endregion
 
-        private void OnClearChatCommandReceived() // Called by a command
+        private void OnChatClearedCommandReceived() // Called by a command
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
             messageCountWhenSeparatorViewed = 0;
@@ -565,7 +569,7 @@ namespace DCL.Chat
         {
             outProfiles.Clear();
 
-            foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
+            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
             {
                 // TODO: Use new endpoint to get a bunch of profile info
                 if (profileCache.TryGet(identity, out var profile))
@@ -645,7 +649,7 @@ namespace DCL.Chat
         {
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatCommandsBus.ClearChat += OnClearChatCommandReceived;
+            chatCommandsBus.ChatCleared += OnChatClearedCommandReceived;
 
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
@@ -690,7 +694,7 @@ namespace DCL.Chat
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatCommandsBus.ClearChat -= OnClearChatCommandReceived;
+            chatCommandsBus.ChatCleared -= OnChatClearedCommandReceived;
             chatEventBus.InsertTextInChat -= OnTextInserted;
 
             if (viewInstance != null)

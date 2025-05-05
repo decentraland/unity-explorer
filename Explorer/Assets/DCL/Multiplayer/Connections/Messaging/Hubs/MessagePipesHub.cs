@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
                .WithLog("Scene"),
             new MessagePipe(roomHub.IslandRoom().DataPipe.WithThroughputMeasure(islandBufferBunch), sendingMultiPool, receivingMultiPool, memoryPool, RoomSource.ISLAND)
                .WithLog("Island"),
-            new MessagePipe(roomHub.PrivateConversationsRoom().DataPipe.WithThroughputMeasure(chatBufferBunch), sendingMultiPool, receivingMultiPool, memoryPool, RoomSource.CHAT)
+            new MessagePipe(roomHub.ChatRoom().DataPipe.WithThroughputMeasure(chatBufferBunch), sendingMultiPool, receivingMultiPool, memoryPool, RoomSource.CHAT)
                .WithLog("Chat")
         ) { }
 

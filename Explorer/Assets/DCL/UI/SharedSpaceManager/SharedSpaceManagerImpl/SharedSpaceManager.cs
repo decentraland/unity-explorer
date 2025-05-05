@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;

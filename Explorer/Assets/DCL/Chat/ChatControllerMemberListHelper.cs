@@ -15,7 +15,7 @@ namespace DCL.Chat
         private readonly IProfileCache profileCache;
         private readonly List<ChatMemberListView.MemberData> membersBuffer;
         private readonly List<Profile> participantProfileBuffer;
-        private readonly IChatController controller;
+        private readonly ChatController controller;
         private CancellationTokenSource memberListCts = new();
 
         public ChatControllerMemberListHelper(
@@ -23,7 +23,7 @@ namespace DCL.Chat
             IProfileCache profileCache,
             List<ChatMemberListView.MemberData> membersBuffer,
             List<Profile> participantProfileBuffer,
-            IChatController controller)
+            ChatController controller)
         {
             this.roomHub = roomHub;
             this.profileCache = profileCache;
@@ -88,7 +88,7 @@ namespace DCL.Chat
         private void GetProfilesFromParticipants(List<Profile> outProfiles)
         {
             outProfiles.Clear();
-            foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
+            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
             {
                 // TODO: Use new endpoint to get a bunch of profile info
                 if (profileCache.TryGet(identity, out var profile))

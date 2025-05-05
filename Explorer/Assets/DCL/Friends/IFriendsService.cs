@@ -6,7 +6,7 @@ using UnityEngine.Pool;
 
 namespace DCL.Friends
 {
-    public interface IFriendsService
+    public interface IFriendsService : IDisposable
     {
         UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
 

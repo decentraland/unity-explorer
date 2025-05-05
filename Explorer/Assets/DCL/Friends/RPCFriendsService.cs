@@ -700,5 +700,9 @@ namespace DCL.Friends
         private void OnTransportClosed() =>
             subscriptionCancellationToken = subscriptionCancellationToken.SafeRestart();
 
+        public void Dispose()
+        {
+            subscriptionCancellationToken.Dispose();
+        }
     }
 }

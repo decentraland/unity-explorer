@@ -15,10 +15,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             this.analytics = analytics;
             this.chatController = chatController;
+            chatController.ConversationOpened += OnConversationOpened;
+            chatController.ConversationClosed += OnConversationClosed;
         }
 
         public void Dispose()
+        { }
+
+        private void OnConversationClosed()
         {
+            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_CLOSED);
+        }
+
+        private void OnConversationOpened(bool wasAlreadyOpen)
+        {
+            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JsonObject
+            {
+                { "was_already_open", wasAlreadyOpen },
+            });
         }
     }
 }

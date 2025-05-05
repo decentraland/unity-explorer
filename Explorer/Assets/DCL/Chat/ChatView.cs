@@ -313,18 +313,20 @@ namespace DCL.Chat
 
         public void UpdateConversationToolbarStatusIconForUser(string userId, OnlineStatus status)
         {
-            foreach (var channelId in channels!.Keys)
-            {
-                if (channelId.Id.Equals(userId))
-                    conversationsToolbar.UpdateConnectionStatusIcon(channelId, status);
-            }
+            UpdateStatusIconForChannelAsync(new ChatChannel.ChannelId(userId), status).Forget();
+        }
+
+        private async UniTaskVoid UpdateStatusIconForChannelAsync(ChatChannel.ChannelId channelId, OnlineStatus status)
+        {
+            await UniTask.SwitchToMainThread();
+            conversationsToolbar.SetConnectionStatus(channelId, status);
         }
 
         public void SetupInitialConversationToolbarStatusIconForUsers(HashSet<string> userIds)
         {
             foreach (var channelId in channels!.Keys)
             {
-                conversationsToolbar.UpdateConnectionStatusIcon(channelId,
+                conversationsToolbar.SetConnectionStatus(channelId,
                     userIds.Contains(channelId.Id) ?
                     OnlineStatus.ONLINE :
                     OnlineStatus.OFFLINE);
@@ -718,9 +720,15 @@ namespace DCL.Chat
         public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
-            chatInputBoxGameObject.SetActive(isOtherUserConnected);
-
             IsMaskActive = !isOtherUserConnected;
+            SetInputWithUserStateAsync(userState, isOtherUserConnected).Forget();
+        }
+
+        private async UniTaskVoid SetInputWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
+        {
+            await UniTask.SwitchToMainThread();
+
+            chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
             if (!isOtherUserConnected)

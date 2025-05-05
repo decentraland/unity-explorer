@@ -16,13 +16,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IGateKeeperSceneRoom SceneRoom() =>
             new IGateKeeperSceneRoom.Fake();
 
-        public IRoom PrivateConversationsRoom() =>
+        public IRoom ChatRoom() =>
             NullRoom.INSTANCE;
 
-        public UniTask StopPrivateConversationsRoomAsync() =>
+        public UniTask StopLocalRoomsAsync() =>
             UniTask.CompletedTask;
 
-        public IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities() =>
+        public IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities() =>
             new List<string>();
 
         public UniTask<bool> StartAsync() => UniTask.FromResult(true);

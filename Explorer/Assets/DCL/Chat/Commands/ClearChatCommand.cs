@@ -23,7 +23,7 @@ namespace DCL.Chat.Commands
 
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            chatCommandsBus.OnClearChat();
+            chatCommandsBus.SendChatClearedNotification();
             return UniTask.FromResult(string.Empty);
         }
     }

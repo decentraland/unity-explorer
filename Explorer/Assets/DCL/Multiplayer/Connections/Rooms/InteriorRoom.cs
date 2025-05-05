@@ -70,6 +70,21 @@ namespace DCL.Multiplayer.Connections.Rooms
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
             SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
+
+        /// <summary>
+        ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
+        /// </summary>
+        public async UniTask ResetRoomAsync(CancellationToken ct)
+        {
+            try { await assigned.DisconnectAsync(ct); }
+            finally
+            {
+                Unsubscribe(assigned);
+                assigned = NullRoom.INSTANCE;
+            }
+        }
+
+
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
         {
             switch (roomSelection)
@@ -87,7 +102,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                             roomsPool.Release(previous);
 
                         Subscribe(newRoom);
-                        ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Assigned a new room {assigned.Info.Name} ");
 
                         // During the connection we skipped the connection callback, so we need to notify the subscribers
                         if (newRoom is not NullRoom)
@@ -116,8 +130,8 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
+
                                                 };
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Simulate Connection State Changed {connectionUpdate} {assigned.Info.Name}");
 
             // TODO check the order of these messages
             ConnectionUpdated?.Invoke(assigned, connectionUpdate);
@@ -126,7 +140,6 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Subscribe(IRoom room)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Subscribed to room events {room.Info.Name}");
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
@@ -148,8 +161,6 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         private void Unsubscribe(IRoom previous)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"Unsubscribed to room events {previous}");
-
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
@@ -163,18 +174,16 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"RoomOnConnectionUpdated {room.Info.Name} {connectionupdate}");
-
             ConnectionUpdated?.Invoke(room, connectionupdate);
         }
 
         private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
         {
-            ReportHub.LogError(ReportCategory.CHAT_CONVERSATIONS, $"RoomOnConnectionStateChanged {connectionstate}");
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 
