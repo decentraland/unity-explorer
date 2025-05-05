@@ -181,4 +181,4 @@ MonoBehaviour:
     originalMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
     dimensions: 256
     executeInEditMode: 0
-    assignAsReflectionProbe: 0
+    assignAsReflectionProbe: 1
