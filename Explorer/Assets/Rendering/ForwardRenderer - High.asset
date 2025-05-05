@@ -33,6 +33,39 @@ MonoBehaviour:
     enable: 0
     range: 500
     cellSize: 0.25
+--- !u!114 &-4061656716891564487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e55c940029bd334090aa23984102ddb, type: 3}
+  m_Name: RendererFeature_Ocean
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  screenSpaceReflectionSettings:
+    enable: 0
+  directionalCaustics: 0
+  displacementPrePassSettings:
+    enable: 0
+    range: 500
+    cellSize: 0.25
+--- !u!114 &-45786123811880791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f09f39579534653887b8ee087826266, type: 3}
+  m_Name: RendererFeature_AvatarOutline
+  m_EditorClassIdentifier: 
+  m_Active: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,14 +91,15 @@ MonoBehaviour:
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
+  - {fileID: 1757973802043764545}
   - {fileID: 4908790961291395409}
-  - {fileID: 4312290808093364463}
-  - {fileID: -8939752313310421623}
-  - {fileID: 6169469917084136134}
-  - {fileID: -8572553750624777057}
-  m_RendererFeatureMap: 51016c145f871f44ef509678a455d83b89dd27c9a29eef83c63242cc335c9e559f4c117cc82b0889
+  - {fileID: -45786123811880791}
+  - {fileID: 8407763759742182732}
+  - {fileID: 3187128916680698165}
+  - {fileID: -4061656716891564487}
+  m_RendererFeatureMap: 41ef42dbdb93651851016c145f871f44a9008d52c3555dff4ce5d5de9760ae7435e92014ddf43a2c3956194ebc18a2c7
   m_UseNativeRenderPass: 0
-  xrSystemData: {fileID: 0}
+  xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   m_AssetVersion: 2
   m_OpaqueLayerMask:
@@ -89,6 +123,67 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &1757973802043764545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
+  m_Name: RenderNameTags
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    passTag: RenderNameTags
+    Event: 500
+    filterSettings:
+      RenderQueueType: 1
+      LayerMask:
+        serializedVersion: 2
+        m_Bits: 32
+      PassNames: []
+    overrideMaterial: {fileID: 0}
+    overrideMaterialPassIndex: 0
+    overrideShader: {fileID: 0}
+    overrideShaderPassIndex: 0
+    overrideMode: 0
+    overrideDepthState: 0
+    depthCompareFunction: 4
+    enableWrite: 1
+    stencilSettings:
+      overrideStencilState: 0
+      stencilReference: 0
+      stencilCompareFunction: 8
+      passOperation: 0
+      failOperation: 0
+      zFailOperation: 0
+    cameraSettings:
+      overrideCamera: 0
+      restoreCamera: 1
+      offset: {x: 0, y: 0, z: 0, w: 0}
+      cameraFieldOfView: 60
+--- !u!114 &3187128916680698165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30879dfb2cdd44058f252cf309b7eb59, type: 3}
+  m_Name: RendererFeature_SkyboxEnvironmentProbe
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
+    originalMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
+    dimensions: 256
+    executeInEditMode: 0
+    assignAsReflectionProbe: 0
 --- !u!114 &4312290808093364463
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,3 +234,19 @@ MonoBehaviour:
     dimensions: 256
     executeInEditMode: 0
     assignAsReflectionProbe: 1
+--- !u!114 &8407763759742182732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bd5c64af15e426a932a23d627f2d07f, type: 3}
+  m_Name: RenderFeature_ObjectHighlight
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  highlightInputMaterial: {fileID: 2100000, guid: 55a3f55bb348e95418783121e0b8ce1e, type: 2}
+  highlightInputBlurMaterial: {fileID: 2100000, guid: c7d4b82b1c0428c4d815890b615064eb, type: 2}
+  highlightOutputMaterial: {fileID: 2100000, guid: 1015f0654e3a1524aa9c0f38ed24692b, type: 2}
