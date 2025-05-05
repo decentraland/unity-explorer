@@ -5,13 +5,12 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -176,7 +175,8 @@ namespace DCL.Passport
             bool enableFriendshipInteractions,
             bool includeUserBlocking,
             bool isNameEditorEnabled,
-            IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -279,7 +279,7 @@ namespace DCL.Passport
 
         private async UniTaskVoid OnOpenConversationAsync()
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             chatEventBus.OpenConversationUsingUserId(inputData.UserId);
         }
 
@@ -320,7 +320,7 @@ namespace DCL.Passport
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
             //We disable the buttons, they will be enabled further down if they meet the requisites
             viewInstance!.JumpInButton.gameObject.SetActive(false);
             viewInstance.ChatButton.gameObject.SetActive(false);
@@ -340,7 +340,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
             characterPreviewController!.OnHide();
 

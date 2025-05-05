@@ -16,29 +16,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.analytics = analytics;
             this.chatController = chatController;
 
-            chatController.ChatBubbleVisibilityChanged += OnChatBubbleVisibilityChanged;
             chatController.ConversationOpened += OnConversationOpened;
             chatController.ConversationClosed += OnConversationClosed;
         }
 
         public void Dispose()
         {
-            chatController.ChatBubbleVisibilityChanged -= OnChatBubbleVisibilityChanged;
-        }
-
-        private void OnChatBubbleVisibilityChanged(bool isVisible)
-        {
-            // Skip initialization setup of chat bubble visibility
-            if (isInitChatBubble)
-            {
-                isInitChatBubble = false;
-                return;
-            }
-
-            analytics.Track(AnalyticsEvents.UI.BUBBLE_SWITCHED, new JsonObject
-            {
-                { "is_visible", isVisible },
-            });
         }
 
         private void OnConversationClosed()

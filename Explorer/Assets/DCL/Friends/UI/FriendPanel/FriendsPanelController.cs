@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
@@ -180,7 +180,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             chatEventBus.OpenConversationUsingUserId(web3Address);
         }
 

@@ -4,9 +4,12 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
 using DCL.Chat.Commands;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Friends;
+using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -15,10 +18,12 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
+using DCL.SocialService;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
+using DCL.Utilities;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -50,6 +55,11 @@ namespace DCL.PluginSystem.Global
         private readonly ChatMessageFactory chatMessageFactory;
         private readonly FeatureFlagsCache featureFlagsCache;
         private ChatHistoryStorage? chatStorage;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
+        private readonly IFriendsEventBus friendsEventBus;
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
         private ChatController chatController;
 
@@ -73,8 +83,12 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ObjectProxy<IRPCSocialServices> socialServiceProxy,
+            IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            ObjectProxy<IFriendsService> friendsServiceProxy)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -98,6 +112,10 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
             this.featureFlagsCache = featureFlagsCache;
+            this.friendsServiceProxy = friendsServiceProxy;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
         }
 
         public void Dispose()
@@ -109,13 +127,13 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
+            ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
-
-            ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             chatController = new ChatController(
                 () =>
@@ -140,7 +158,11 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 web3IdentityCache,
                 loadingStatus,
-                chatStorage
+                userBlockingCacheProxy,
+                privacySettings,
+                friendsEventBus,
+                chatStorage,
+                friendsServiceProxy
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
@@ -154,17 +176,21 @@ namespace DCL.PluginSystem.Global
 
         private void OnIdentityCleared()
         {
-            chatController.HideViewAsync(CancellationToken.None).Forget();
+            if (chatController.IsVisibleInSharedSpace)
+                chatController.HideViewAsync(CancellationToken.None).Forget();
         }
 
         private void OnIdentityChanged()
         {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
+            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
+            //Once from here and once from the MainUIController. We need to account for this.
+
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceT<ChatAudioSettingsAsset> ChatSettingsAsset { get; private set; }
+        [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
     }
 }

@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.Multiplayer.Connections.Systems.Throughput;
@@ -63,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly ThroughputBufferBunch islandThroughputBufferBunch;
         private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
+        private readonly IActivatableConnectiveRoom chatRoom;
 
         private IObjectPool<DebugRoomIndicatorView>? debugRoomIndicatorPool;
 
@@ -70,6 +72,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IActivatableConnectiveRoom chatRoom,
             IRoomHub roomHub,
             RoomsStatus roomsStatus,
             IProfileRepository profileRepository,
@@ -93,6 +96,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.chatRoom = chatRoom;
             this.roomHub = roomHub;
             this.roomsStatus = roomsStatus;
             this.profileRepository = profileRepository;
@@ -132,7 +136,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
                 debugRoomIndicatorPool);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 

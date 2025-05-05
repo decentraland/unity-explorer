@@ -64,7 +64,7 @@ namespace DCL.UI.ConnectionStatusPanel
         {
             currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
             currentSceneInfo.SceneAssetBundleStatus.OnUpdate += AssetBundleSceneStatusOnUpdate;
-            chatCommandsBus.OnSetConnectionStatusPanelVisibility += SetVisibility;
+            chatCommandsBus.ConnectionStatusPanelVisibilityChanged += VisibilityChanged;
 
             SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
             AssetBundleSceneStatusOnUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
@@ -84,9 +84,9 @@ namespace DCL.UI.ConnectionStatusPanel
         }
 
         protected override void OnViewShow() =>
-            SetVisibility(debugBuilder.IsVisible);
+            VisibilityChanged(debugBuilder.IsVisible);
 
-        public void SetVisibility(bool isVisible) =>
+        public void VisibilityChanged(bool isVisible) =>
             viewInstance?.gameObject.SetActive(isVisible);
 
         private void SceneStatusOnUpdate(ICurrentSceneInfo.RunningStatus? obj)
@@ -161,7 +161,7 @@ namespace DCL.UI.ConnectionStatusPanel
             subscriptions.Clear();
 
             currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
-            chatCommandsBus.OnSetConnectionStatusPanelVisibility -= SetVisibility;
+            chatCommandsBus.ConnectionStatusPanelVisibilityChanged -= VisibilityChanged;
             base.Dispose();
 
             cancellationTokenSource.SafeCancelAndDispose();

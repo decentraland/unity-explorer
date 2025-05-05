@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,8 +14,8 @@ namespace DCL.Profiles
     {
         private struct RequestAttempts
         {
+            public const int MAX_ATTEMPTS = 5;
             private const int ATTEMPT_SECONDS_UNIT = 30;
-            private const int MAX_ATTEMPTS = 5;
 
             private int attempts;
             private DateTime nextAvailableAttempt;
@@ -81,13 +80,13 @@ namespace DCL.Profiles
 
             if (URLAddress.EMPTY.Equals(thumbnailUrl))
             {
-                tcs.TrySetResult(result);
+                FinalizeTask(tcs, result, userId);
                 return;
             }
 
             if (unsolvableThumbnails.Contains(userId) || !TestCooldownCondition(userId))
             {
-                tcs.TrySetResult(result);
+                FinalizeTask(tcs, result, userId);
                 return;
             }
 
@@ -98,7 +97,8 @@ namespace DCL.Profiles
                     new GetTextureArguments(TextureType.Albedo),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
-                    ReportCategory.UI
+                    ReportCategory.UI,
+                    suppressErrors: true
                 );
 
                 var texture = ownedTexture.Texture;
@@ -110,19 +110,21 @@ namespace DCL.Profiles
                 SetThumbnailIntoCache(userId, result);
                 failedThumbnails.Remove(userId);
             }
-            catch (OperationCanceledException){}
-            catch (Exception e)
+            catch (OperationCanceledException) { }
+            catch (Exception e) { HandleCooldownOnException(userId, e); }
+            finally
             {
-                ReportHub.LogException(e, new ReportData(ReportCategory.PROFILE));
-
-                HandleCooldown(userId);
+                FinalizeTask(tcs, result, userId);
             }
+        }
 
+        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string userId)
+        {
             currentThumbnailTasks.Remove(userId);
             tcs.TrySetResult(result);
         }
 
-        private void HandleCooldown(string userId)
+        private void HandleCooldownOnException(string userId, Exception e)
         {
             if (failedThumbnails.TryGetValue(userId, out RequestAttempts requestAttempts))
                 if (requestAttempts.CanIncreaseCooldown())
@@ -132,6 +134,10 @@ namespace DCL.Profiles
                 }
                 else
                 {
+                    ReportData reportData = new ReportData(ReportCategory.PROFILE);
+                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for wallet {userId}");
+                    ReportHub.LogException(e, reportData);
+
                     unsolvableThumbnails.Add(userId);
                     failedThumbnails.Remove(userId);
                 }

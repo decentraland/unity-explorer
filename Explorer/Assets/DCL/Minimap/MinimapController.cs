@@ -118,6 +118,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
+            viewInstance.sdk6Label.gameObject.SetActive(false);
         }
 
         private void ExpandMinimap()
@@ -222,9 +223,10 @@ namespace DCL.Minimap
             placesApiCts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
 
-            bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
-            bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
-            viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+            // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
+            // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
+            // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
+            // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
 
             return;
 

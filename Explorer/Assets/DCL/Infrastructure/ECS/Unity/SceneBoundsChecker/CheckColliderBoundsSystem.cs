@@ -48,7 +48,6 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             int tick = physicsTickEntity.Tick;
             if (tick == lastFixedFrameChecked) return;
-
             lastFixedFrameChecked = tick;
 
             CheckPrimitives();
@@ -94,14 +93,18 @@ namespace ECS.Unity.SceneBoundsChecker
 
             // Process all colliders
 
-            // Visible meshes colliders are created on demand
+            // Updates on the PBGltfContainer may reconfigure its colliders and they will need to be
+            // processed again here even when the Transform didn't change
             if (asset.DecodedVisibleSDKColliders != null)
-                ProcessColliders(asset.DecodedVisibleSDKColliders);
+                ProcessColliders(asset.DecodedVisibleSDKColliders, force: component.NeedsColliderBoundsCheck);
 
-            ProcessColliders(asset.InvisibleColliders);
+            ProcessColliders(asset.InvisibleColliders, force: component.NeedsColliderBoundsCheck);
+
+            component.NeedsColliderBoundsCheck = false;
+
             return;
 
-            void ProcessColliders(List<SDKCollider> colliders)
+            void ProcessColliders(List<SDKCollider> colliders, bool force = false)
             {
                 for (var i = 0; i < colliders.Count; i++)
                 {
@@ -112,7 +115,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
-                    if (!sdkCollider.HasMoved())
+                    if (!sdkCollider.HasMoved() && !force)
                         continue;
 
                     // We use an auxiliary bounds object as Unity physics may take at least an extra frame to

@@ -41,9 +41,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         private void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World!))
             {
                 wearable.ResetManifest();
+                World.Destroy(entity);
                 return;
             }
 

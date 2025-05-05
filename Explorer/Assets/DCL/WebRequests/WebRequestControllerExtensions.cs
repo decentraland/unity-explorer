@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.CustomDownloadHandlers;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -187,9 +186,10 @@ namespace DCL.WebRequests
             CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false
         ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D> =>
-            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, IOwnedTexture2D>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, IOwnedTexture2D>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo, suppressErrors: suppressErrors);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip

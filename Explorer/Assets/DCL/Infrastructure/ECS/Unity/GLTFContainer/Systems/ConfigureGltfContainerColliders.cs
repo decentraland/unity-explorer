@@ -26,6 +26,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                 EnableColliders(asset.InvisibleColliders, component.InvisibleMeshesCollisionMask);
             else
                 DisableColliders(asset.InvisibleColliders);
+
+            component.NeedsColliderBoundsCheck = true;
         }
 
         internal static void SetupVisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
@@ -37,6 +39,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             }
             else if (asset.DecodedVisibleSDKColliders != null)
                 DisableColliders(asset.DecodedVisibleSDKColliders);
+
+            component.NeedsColliderBoundsCheck = true;
         }
 
         private static void EnableColliders(List<SDKCollider> colliders, ColliderLayer colliderLayer)

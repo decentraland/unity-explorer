@@ -70,6 +70,21 @@ namespace DCL.Multiplayer.Connections.Rooms
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
             SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
+
+        /// <summary>
+        ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
+        /// </summary>
+        public async UniTask ResetRoomAsync(CancellationToken ct)
+        {
+            try { await assigned.DisconnectAsync(ct); }
+            finally
+            {
+                Unsubscribe(assigned);
+                assigned = NullRoom.INSTANCE;
+            }
+        }
+
+
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
         {
             switch (roomSelection)
@@ -115,6 +130,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
+
                                                 };
 
             // TODO check the order of these messages
@@ -158,6 +174,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)

@@ -43,6 +43,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         NotificationRead,
 
         Help,
+        MinimumSpecs,
 
         FeatureFlags,
 
@@ -64,6 +65,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         BuilderApiDtos,
         BuilderApiContent,
 
-        Blocklist
+        Blocklist,
+
+        Servers,
+        MediaConverter,
     }
 }

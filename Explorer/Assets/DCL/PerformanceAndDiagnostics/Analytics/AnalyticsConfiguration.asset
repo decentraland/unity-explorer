@@ -77,6 +77,10 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: profile_name_changed
       isEnabled: 1
+    - eventName: name_claim_requested
+      isEnabled: 1
+    - eventName: profile_name_changed
+      isEnabled: 1
   - groupName: CameraReel
     events:
     - eventName: photo_jump_to

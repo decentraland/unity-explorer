@@ -9,6 +9,7 @@ using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Profiles;
+using DCL.UI.Utilities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -92,6 +93,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             this.view.jumpInButton.onClick.AddListener(JumpInClicked);
             this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);
+            this.view.visiblePersonScrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Dispose()

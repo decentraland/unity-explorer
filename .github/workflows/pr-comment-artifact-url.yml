@@ -77,7 +77,8 @@ jobs:
             merge_group) BUILD_PREFIX="mg" ;;
             workflow_dispatch) BUILD_PREFIX="wd" ;;
             workflow_call) BUILD_PREFIX="wc" ;;
-            *) BUILD_PREFIX="gen" ;;
+            schedule) BUILD_PREFIX="sc" ;;
+            *) BUILD_PREFIX="gn" ;;
           esac
           echo "Build Prefix: $BUILD_PREFIX"
 
