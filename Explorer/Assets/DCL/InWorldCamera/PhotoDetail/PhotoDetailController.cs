@@ -147,7 +147,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
-            
+
             if (viewInstance.mainImage.texture != null)
                 GameObject.Destroy(viewInstance.mainImage.texture);
 
@@ -172,7 +172,10 @@ namespace DCL.InWorldCamera.PhotoDetail
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
                     ScreenshotDownloaded?.Invoke();
-                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
+
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(
+                        CameraReelToastMessageType.DOWNLOAD,
+                        photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {

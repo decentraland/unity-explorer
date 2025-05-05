@@ -23,12 +23,12 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -67,8 +67,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, 1000, false),
-                ITexturesFuse.NewTestInstance(),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, 1000, 1000, false),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -84,6 +83,7 @@ namespace Global.Tests.PlayMode
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
+                new ObjectProxy<IProfileRepository>(),
                 ct,
                 enableGPUInstancing: false
             );

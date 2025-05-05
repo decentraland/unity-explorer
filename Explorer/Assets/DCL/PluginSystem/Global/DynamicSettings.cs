@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,10 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }
+        [field: SerializeField] public AssetReferenceT<AdaptivePhysicsSettings> AdaptivePhysicsSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject AppVerRedirectionScreenPrefab { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject BlockedScreenPrefab { get; private set; }
+        [field: SerializeField] public AssetReferenceGameObject MinimumSpecsScreenPrefab { get; private set; }
 
         [field:SerializeField] public List<Color> UserNameColors { get; private set; }
     }

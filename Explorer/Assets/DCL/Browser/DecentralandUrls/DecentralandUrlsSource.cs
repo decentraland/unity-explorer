@@ -73,6 +73,9 @@ namespace DCL.Browser.DecentralandUrls
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
+                DecentralandUrl.TwitterLink => "https://x.com/decentraland",
+                DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
+                DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
@@ -98,6 +101,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
+                DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => ASSET_BUNDLE_URL,
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
@@ -113,6 +117,12 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
+                DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
+                DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
+                DecentralandUrl.MediaConverter => $"https://media-opticonverter.decentraland.{ENV}/convert?ktx2=true&fileUrl={{0}}",
+                DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
+                DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
+                DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

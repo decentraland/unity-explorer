@@ -4,7 +4,6 @@ using DCL.Clipboard;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.IO;
-using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -14,6 +13,7 @@ namespace DCL.InWorldCamera.ReelActions
     public static class ReelCommonActions
     {
         private const string DECENTRALAND_REELS_HOME_FOLDER = "Downloads";
+        private static string reelsPath;
 
         /// <summary>
         ///     Opens a browser tab on x.com with a tweet ready to be posted containing the reel url.
@@ -52,23 +52,29 @@ namespace DCL.InWorldCamera.ReelActions
                     throw new Exception($"Error while downloading reel: {webRequest.error}");
 
                 Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
-                StringBuilder absolutePathBuilder = new StringBuilder();
                 byte[] imageBytes = texture.EncodeToPNG();
-
-                absolutePathBuilder.Append(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                                   .Append("/")
-                                   .Append(DECENTRALAND_REELS_HOME_FOLDER)
-                                   .Append("/")
-                                   .Append(Path.GetFileName(uri.LocalPath))
-                                   .Replace(" ", "\\ ");
-
-                string absolutePath = absolutePathBuilder.ToString();
-                string directoryPath = Path.GetDirectoryName(absolutePath);
+                string directoryPath = ReelsPath;
+                string absolutePath = Path.Combine(ReelsPath, Path.GetFileName(uri.LocalPath));
 
                 if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
                     Directory.CreateDirectory(directoryPath);
 
                 await File.WriteAllBytesAsync(absolutePath, imageBytes, ct);
+            }
+        }
+
+        public static string ReelsPath
+        {
+            get
+            {
+                if (reelsPath == null)
+                {
+                    reelsPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        DECENTRALAND_REELS_HOME_FOLDER);
+                }
+
+                return reelsPath;
             }
         }
     }

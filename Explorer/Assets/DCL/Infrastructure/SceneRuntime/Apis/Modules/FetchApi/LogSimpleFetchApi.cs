@@ -34,11 +34,13 @@ namespace SceneRuntime.Apis.Modules.FetchApi
                 ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, $"SimpleFetchApi, Fetch request successes with: {args}");
                 return result;
             }
-            catch (Exception e)
+            catch (Exception ex) when (ex is not OperationCanceledException operationCancelled
+                                       || operationCancelled.CancellationToken != ct)
             {
-                var exception = new Exception($"SimpleFetchApi, cannot make request: {args}", e);
-                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
-                throw exception;
+                ReportHub.LogError(ReportCategory.GENERIC_WEB_REQUEST,
+                    $"SimpleFetchApi, cannot make request:  {args}");
+
+                throw;
             }
         }
 

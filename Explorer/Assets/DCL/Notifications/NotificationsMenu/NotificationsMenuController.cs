@@ -6,17 +6,18 @@ using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
+using DCL.UI.Utilities;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
@@ -77,6 +78,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
             CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Dispose()
@@ -204,6 +206,7 @@ namespace DCL.Notifications.NotificationsMenu
             ManageNotificationReadStatus(notificationData, view.gameObject.activeSelf);
             UpdateUnreadNotificationRender();
 
+            notificationView.NotificationImage.SetImage(null);
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
@@ -223,6 +226,10 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
+            var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
+            if (iconBackground.backgroundSprite != null)
+                notificationView.NotificationImageBackground.sprite = iconBackground.backgroundSprite;
+            notificationView.NotificationImageBackground.color = iconBackground.backgroundColor;
 
             ProcessCustomMetadata(notificationData, notificationView);
 
@@ -236,6 +243,10 @@ namespace DCL.Notifications.NotificationsMenu
                 case RewardAssignedNotification rewardAssignedNotification:
                     NotificationView nView = (NotificationView)notificationView;
                     nView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+                case RewardInProgressNotification rewardInProgress:
+                    NotificationView rewardInProgressView = (NotificationView)notificationView;
+                    rewardInProgressView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardInProgress.Metadata.Rarity);
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;

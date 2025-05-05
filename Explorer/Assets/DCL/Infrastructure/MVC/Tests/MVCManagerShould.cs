@@ -2,7 +2,7 @@ using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,6 +18,7 @@ namespace MVC.Tests
         public void Setup()
         {
             windowsStackManager = Substitute.For<IWindowsStackManager>();
+            windowsStackManager.PushFullscreen(Arg.Any<IController>()).Returns(new FullscreenPushInfo(new List<IController>(), new CanvasOrdering()));
             popupCloserView = Substitute.For<IPopupCloserView>();
             mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), popupCloserView);
         }

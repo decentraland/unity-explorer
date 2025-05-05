@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
 using UnityEngine;
