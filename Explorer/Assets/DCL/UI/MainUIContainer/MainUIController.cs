@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;

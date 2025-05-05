@@ -1,4 +1,4 @@
-namespace DCL.UI.SharedSpaceManager
+namespace DCL.Chat.ControllerShowParams
 {
     public struct ChatControllerShowParams
     {
