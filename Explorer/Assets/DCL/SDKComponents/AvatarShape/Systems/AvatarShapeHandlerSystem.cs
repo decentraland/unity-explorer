@@ -16,6 +16,7 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Arch;
 
@@ -28,16 +29,20 @@ namespace ECS.Unity.AvatarShape.Systems
     {
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> globalTransformPool;
+        private readonly ISceneData sceneData;
 
-        public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool) : base(world)
+        public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool,
+            ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalTransformPool = globalTransformPool;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
             LoadAvatarShapeQuery(World);
+            LoadCharacterInterpolationQuery(World);
             UpdateAvatarShapeQuery(World);
 
             HandleComponentRemovalQuery(World);
@@ -54,9 +59,8 @@ namespace ECS.Unity.AvatarShape.Systems
             globalTransform.SetParent(transformComponent.Transform);
             // During scene loading, the scene is positioned at MordorConstants.SCENE_MORDOR_POSITION.
             // We need to reset the local transform values to maintain correct avatar positioning:
-            // 1. CharacterInterpolationMovementComponent works in global space and updates the position on every frame
-            // 2. When the scene root moves from Mordor to its final position, we want the avatar to move with it
-            // 3. By setting local values to identity/zero/one, we ensure proper relative positioning
+            // 1. When the scene root moves from Mordor to its final position, we want the avatar to move with it
+            // 2. By setting local values to identity/zero/one, we ensure proper relative positioning
             globalTransform.localPosition = Vector3.zero;
             globalTransform.localRotation = Quaternion.identity;
             globalTransform.localScale = Vector3.one;
@@ -64,14 +68,34 @@ namespace ECS.Unity.AvatarShape.Systems
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
                 new CharacterTransform(globalTransform),
-                // Disabled so we keep the relative position to the scene transform
-                // new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
 
             if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
                 globalWorld.Add(globalWorldEntity, new CharacterEmoteIntent() { EmoteId = pbAvatarShape.ExpressionTriggerId });
+        }
+
+        [Query]
+        [All(typeof(SDKAvatarShapeComponent), typeof(PBAvatarShape))]
+        [None(typeof(DeleteEntityIntention))]
+        private void LoadCharacterInterpolation(ref SDKAvatarShapeComponent sdkAvatarShapeComponent,
+            ref TransformComponent transformComponent)
+        {
+            // We need to wait until the scene restores its original position (from MordorConstants.SCENE_MORDOR_POSITION)
+            // to keep the correct global position on which the avatar should be
+            if (!sceneData.SceneLoadingConcluded) return;
+
+            Entity globalEntity = sdkAvatarShapeComponent.globalWorldEntity;
+
+            if (globalWorld.Has<CharacterInterpolationMovementComponent>(globalEntity)) return;
+
+            var interpolationComponent = new CharacterInterpolationMovementComponent(
+                transformComponent.Transform.position,
+                transformComponent.Transform.position,
+                transformComponent.Transform.rotation);
+
+            globalWorld.Add(globalEntity, interpolationComponent);
         }
 
         [Query]
