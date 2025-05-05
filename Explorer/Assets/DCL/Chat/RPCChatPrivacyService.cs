@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Settings.Settings;
 using DCL.SocialService;
 using DCL.Utilities;
-using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
@@ -17,20 +16,15 @@ namespace DCL.Chat
         private readonly ObjectProxy<IRPCSocialServices> socialServiceRPCProxy;
         private readonly ChatSettingsAsset settingsAsset;
 
-        private readonly HashSet<string>[] participants;
-
         public RPCChatPrivacyService(
             ObjectProxy<IRPCSocialServices> socialServiceRPCProxy,
             ChatSettingsAsset settingsAsset)
         {
             this.socialServiceRPCProxy = socialServiceRPCProxy;
             this.settingsAsset = settingsAsset;
-            participants = new HashSet<string>[2];
-            participants[0] = new HashSet<string>();
-            participants[1] = new HashSet<string>();
         }
 
-        private const int TIMEOUT_SECONDS = 30;
+        private const double TIMEOUT_SECONDS = 30;
 
         public async UniTaskVoid UpsertSocialSettingsAsync(bool receiveAllMessages, CancellationToken ct)
         {

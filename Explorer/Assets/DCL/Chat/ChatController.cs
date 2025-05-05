@@ -35,7 +35,7 @@ using Utility.Arch;
 namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>,
-        IControllerInSharedSpace<ChatView, ChatControllerShowParams>, IChatController
+        IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
@@ -71,8 +71,8 @@ namespace DCL.Chat
         private bool viewInstanceCreated;
         private CancellationTokenSource chatUsersUpdateCts = new();
 
-        string IChatController.IslandRoomSid => islandRoom.Info.Sid;
-        string IChatController.PreviousRoomSid { get; set; } = string.Empty;
+        public string IslandRoomSid => islandRoom.Info.Sid;
+        public string PreviousRoomSid { get; set; } = string.Empty;
 
         public bool TryGetView(out ChatView view)
         {
@@ -124,12 +124,12 @@ namespace DCL.Chat
             chatUserStateEventBus = new ChatUserStateEventBus();
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
-                roomHub.PrivateConversationsRoom().Participants,
+                roomHub.ChatRoom().Participants,
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
                 friendsEventBus,
-                roomHub.PrivateConversationsRoom(),
+                roomHub.ChatRoom(),
                 friendsService);
 
             chatBubblesHelper = new ChatControllerChatBubblesHelper(
@@ -575,7 +575,7 @@ namespace DCL.Chat
         {
             outProfiles.Clear();
 
-            foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
+            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
             {
                 // TODO: Use new endpoint to get a bunch of profile info
                 if (profileCache.TryGet(identity, out var profile))

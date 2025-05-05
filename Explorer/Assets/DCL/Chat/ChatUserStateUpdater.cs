@@ -84,7 +84,7 @@ namespace DCL.Chat
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ReportHub.LogError(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Error during initialization: {e.Message}");
+                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}");
             }
 
             return conversationParticipants;
@@ -197,7 +197,7 @@ namespace DCL.Chat
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
-            ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Update From Participant {update.ToString()}");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
             var userId = participant.Identity;
 
             switch (update)
@@ -221,13 +221,13 @@ namespace DCL.Chat
                     }
                     break;
                 case UpdateFromParticipant.MetadataChanged:
-                    ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Metadata Changed {participant.Metadata}");
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Metadata Changed {participant.Metadata}");
 
                     if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS) return;
                     if (CurrentConversation != userId) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(userId)) return;
 
-                    ReportHub.Log(ReportCategory.CHAT_PRIVATE_MESSAGES, $"Metadata Changed - Passed all checks");
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Metadata Changed - Passed all checks");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
 
