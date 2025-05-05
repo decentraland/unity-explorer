@@ -19,5 +19,6 @@ namespace DCL.Notifications.NotificationEntry
         GameObject UnreadImage { get; set; }
         Image NotificationTypeImage { get; set; }
         ImageView NotificationImage { get; set; }
+        Image NotificationImageBackground { get; set; }
     }
 }

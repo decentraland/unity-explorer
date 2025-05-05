@@ -268,7 +268,8 @@ namespace DCL.PluginSystem.Global
                 emoteProvider,
                 world,
                 playerEntity,
-                appArgs
+                appArgs,
+                webBrowser
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly RoomSource roomId;
         private readonly CancellationTokenSource cts;
 
-        private readonly Dictionary<Packet.MessageOneofCase, List<Action<(Packet, Participant)>>> subscribers = new ();
+        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
 
         private bool isDisposed;
 
@@ -90,11 +90,19 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, Participant participant, CancellationToken ctsToken)
         {
-            await UniTask.SwitchToMainThread();
-
             try
             {
-                foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
+                var receiver = SubscribersListOrNull(name);
+
+                if (receiver.HasValue == false)
+                    return;
+
+                var r = receiver.Value;
+
+                if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
+                    await UniTask.SwitchToMainThread();
+
+                foreach (Action<(Packet, Participant)>? action in r.list)
                 {
                     ctsToken.ThrowIfCancellationRequested();
                     action((packet, participant));
@@ -107,14 +115,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
             new (dataPipe, sendingMultiPool, memoryPool, supportedVersion);
 
-        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()
         {
-            var list = SubscribersList(ofCase);
+            var item = SubscribersList(ofCase, threadStrict);
 
-            if (list.Count > 0)
+            if (item.list.Count > 0)
                 throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {ofCase}");
 
-            list
+            item.list
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
@@ -157,12 +165,20 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 );
         }
 
-        private List<Action<(Packet, Participant)>> SubscribersList(Packet.MessageOneofCase typeName)
+        private (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
         {
-            if (subscribers.TryGetValue(typeName, out List<Action<(Packet, Participant)>>? list) == false)
-                subscribers[typeName] = list = new List<Action<(Packet, Participant)>>();
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+                subscribers[typeName] = item = (new List<Action<(Packet, Participant)>>(), threadStrict);
 
-            return list!;
+            return item;
+        }
+
+        private (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
+        {
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+                return null;
+
+            return item;
         }
 
         private static T? Payload<T>(Packet packet) where T: class =>
