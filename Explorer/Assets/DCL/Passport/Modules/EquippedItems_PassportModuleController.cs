@@ -180,7 +180,8 @@ namespace DCL.Passport.Modules
                 if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
                     continue;
 
-                if (hidesList.Contains(wearable.GetCategory()) && !forceRenderList.Contains(wearable.GetCategory()))
+                string wearableCategory = wearable.GetCategory();
+                if (hidesList.Contains(wearableCategory) && !forceRenderList.Contains(wearableCategory))
                     continue;
 
                 string rarityName = wearable.GetRarity();
