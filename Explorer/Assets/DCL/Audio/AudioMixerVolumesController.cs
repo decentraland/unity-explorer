@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Audio;
@@ -61,7 +62,11 @@ namespace DCL.Audio
 
                 if (mutedGroups.Contains(groupParamString))
                 {
-                    audioMixer.SetFloat(groupParamString, originalVolumes[groupParamString]);
+                    if (originalVolumes.TryGetValue(groupParamString, out float originalVolume))
+                        audioMixer.SetFloat(groupParamString, originalVolume);
+                    else
+                        ReportHub.LogError(ReportCategory.AUDIO, "Cannot unmute audio mixer group: missing original volume. Probably the group was not previously muted..");
+
                     mutedGroups.Remove(groupParamString);
                 }
                 break;

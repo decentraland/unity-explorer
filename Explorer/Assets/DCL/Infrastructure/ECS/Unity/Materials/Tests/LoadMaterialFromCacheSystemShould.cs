@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
+using DCL.WebRequests;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using Utility.Primitives;
 

@@ -19,8 +19,8 @@ namespace DCL.Profiling
 
         public int SamplesAmount { get; private set; }
         public float Avg => SamplesAmount == 0 ? 0 : totalRecordedTime / (float)SamplesAmount;
-        public ulong Min => samples[0];
-        public ulong Max => SamplesAmount == 0 ? samples[0] : samples[SamplesAmount - 1];
+        public ulong Min => SamplesAmount == 0 ? 0 : samples[0];
+        public ulong Max => SamplesAmount == 0 ? 0 : samples[SamplesAmount - 1];
 
         public FrameTimesRecorder(int capacity)
         {

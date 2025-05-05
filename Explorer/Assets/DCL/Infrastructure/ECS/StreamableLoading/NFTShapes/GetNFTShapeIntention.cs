@@ -14,6 +14,7 @@ namespace ECS.StreamableLoading.NFTShapes
 
         public readonly string URN;
 
+        public bool DisableDiskCache => true;
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public readonly CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;

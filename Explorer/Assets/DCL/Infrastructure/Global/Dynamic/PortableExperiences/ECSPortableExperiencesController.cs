@@ -25,10 +25,6 @@ namespace PortableExperiences.Controller
 {
     public class ECSPortableExperiencesController : IPortableExperiencesController
     {
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
-                                                                                          SceneDefinitionComponent, EmptySceneComponent>()
-                                                                                     .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
-
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
@@ -182,9 +178,6 @@ namespace PortableExperiences.Controller
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
                 world.Add<DeleteEntityIntention>(portableExperienceEntity);
-
-                for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
                 PortableExperienceEntities.Remove(ens);
 

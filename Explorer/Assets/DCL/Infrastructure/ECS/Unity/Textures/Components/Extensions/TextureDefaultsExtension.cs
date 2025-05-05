@@ -25,7 +25,10 @@ namespace ECS.Unity.Textures.Components.Extensions
             self.TryGetTextureFileHash(data, out string fileHash);
 
             return success
-                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode(), textureOffset: self.GetOffset(), textureTiling: self.GetTiling())
+                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode(),
+                    textureOffset: self.GetOffset(),
+                    textureTiling: self.GetTiling(),
+                    isAvatarTexture: self.TexCase == TextureUnion.TexOneofCase.AvatarTexture)
                 : null;
         }
 
@@ -135,8 +138,15 @@ namespace ECS.Unity.Textures.Components.Extensions
 
         public static bool TryGetTextureUrl(this AvatarTexture self, out URLAddress url)
         {
-            // Not implemented
-            url = URLAddress.EMPTY;
+            if (!string.IsNullOrEmpty(self.UserId))
+            {
+                // The user id will be later used to determine the real url of the texture
+                // We cannot do it here, since we need to fetch the profile and then solve the face256 picture
+                url = URLAddress.FromString(self.UserId);
+                return true;
+            }
+
+            url = new URLAddress();
             return false;
         }
 

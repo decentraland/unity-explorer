@@ -553,6 +553,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8919628233407399618, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_Maskable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9177864993776066132, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
       propertyPath: m_Name
       value: BlockedUser
@@ -620,8 +624,6 @@ MonoBehaviour:
   <UserName>k__BackingField: {fileID: 8766517600456461327}
   <UserNameTag>k__BackingField: {fileID: 4439377754047818784}
   <VerifiedIcon>k__BackingField: {fileID: 8218420186549764868}
-  <ThumbnailBackground>k__BackingField: {fileID: 0}
-  <ProfileImageView>k__BackingField: {fileID: 0}
   <ProfilePicture>k__BackingField: {fileID: 1033530974263179573}
   <UnblockButton>k__BackingField: {fileID: 5048879491243901675}
   <ContextMenuButton>k__BackingField: {fileID: 5471597906867111241}

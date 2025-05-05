@@ -11,9 +11,11 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -26,8 +28,6 @@ using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
-using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
@@ -46,12 +46,12 @@ namespace Global.Dynamic
         private readonly IRealmUrls realmUrls;
         private readonly IAppArgs appArgs;
         private readonly ISplashScreen splashScreen;
-        private readonly ICompressShaders compressShaders;
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
+        private readonly ObjectProxy<IProfileRepository> profileRepositoryProxy = new ();
 
         private URLDomain? startingRealm;
         private Vector2Int startingParcel;
@@ -63,7 +63,6 @@ namespace Global.Dynamic
             IDebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
-            ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
@@ -75,7 +74,6 @@ namespace Global.Dynamic
             this.realmUrls = realmUrls;
             this.appArgs = appArgs;
             this.splashScreen = splashScreen;
-            this.compressShaders = compressShaders;
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
@@ -88,7 +86,6 @@ namespace Global.Dynamic
             CancellationToken token)
         {
             splashScreen.Show();
-            await compressShaders.WarmUpIfRequiredAsync(token);
 
             cursorRoot.EnsureNotNull();
 
@@ -108,7 +105,6 @@ namespace Global.Dynamic
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
-            ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
             CancellationToken ct
@@ -119,7 +115,6 @@ namespace Global.Dynamic
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
                 webRequestsContainer,
-                texturesFuse,
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
@@ -135,10 +130,12 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 sceneUIRoot,
+                profileRepositoryProxy,
                 ct
             );
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
+            BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
@@ -174,7 +171,7 @@ namespace Global.Dynamic
             string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
-            return await DynamicWorldContainer.CreateAsync(
+            (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
                 new DynamicWorldParams
@@ -198,6 +195,11 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 ct);
+
+            if (tuple.container != null)
+                profileRepositoryProxy.SetObject(tuple.container.ProfileRepository);
+
+            return tuple;
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
@@ -284,6 +286,7 @@ namespace Global.Dynamic
         public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
         {
             realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
+            webRequestsContainer.SetKTXEnabled(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,

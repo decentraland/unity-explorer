@@ -1,10 +1,9 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -84,6 +83,13 @@ namespace ECS.SceneLifeCycle
             //We wait until scene is fully disposed
             await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Equals(SceneState.Disposed), cancellationToken: ct);
 
+            if (world.IsAlive(entity))
+            {
+                SceneLoadingState sceneLoadingState = world.Get<SceneLoadingState>(entity);
+                sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+                sceneLoadingState.PromiseCreated = false;
+            }
+
             if (localSceneDevelopment)
             {
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
@@ -91,13 +97,7 @@ namespace ECS.SceneLifeCycle
                     {
                         staticScenePointers.Promise = null;
                     });
-
                 Resources.UnloadUnusedAssets();
-            }
-            else
-            {
-                // Forcing a fake IsDirty to force a reload of the scene at ResolveVisualSceneStateSystem.AddSceneVisualStateQuery()
-                world.Get<PartitionComponent>(entity).IsDirty = true;
             }
         }
     }

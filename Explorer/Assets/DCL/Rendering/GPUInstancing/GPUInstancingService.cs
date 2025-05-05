@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Rendering.GPUInstancing
@@ -139,7 +140,7 @@ namespace DCL.Rendering.GPUInstancing
 
         public void RenderIndirect()
         {
-            if (renderCamera == null)
+            if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender)
                 return;
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)

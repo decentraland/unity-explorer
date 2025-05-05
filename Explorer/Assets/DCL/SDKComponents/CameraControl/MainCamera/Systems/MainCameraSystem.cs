@@ -6,16 +6,15 @@ using Cinemachine;
 using CRDT;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
-using DCL.InWorldCamera;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
-using DCL.SDKComponents.CameraModeArea.Systems;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,7 +22,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
     [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
     [LogCategory(ReportCategory.SDK_CAMERA)]
-    public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class MainCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem, ISceneIsCurrentListener
     {
         private readonly IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap;
         private readonly Entity cameraEntity;
@@ -56,7 +55,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             HandleActiveVirtualCameraLookAtChangeQuery(World);
             HandleVirtualCameraChangeQuery(World);
-            DisableVirtualCameraOnSceneLeaveQuery(World);
 
             HandleMainCameraRemovalQuery(World);
             HandleMainCameraEntityDestructionQuery(World);
@@ -120,14 +118,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         }
 
         [Query]
-        private void DisableVirtualCameraOnSceneLeave(in MainCameraComponent mainCameraComponent)
-        {
-            if (sceneStateProvider.IsCurrent) return;
-
-            DisableActiveVirtualCamera(mainCameraComponent);
-        }
-
-        [Query]
         [All(typeof(PBMainCamera))]
         [None(typeof(MainCameraComponent), typeof(DeleteEntityIntention))]
         private void SetupMainCamera(Entity entity)
@@ -150,18 +140,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void HandleMainCameraEntityDestruction(in MainCameraComponent component)
         {
             DisableActiveVirtualCamera(component);
-        }
-
-        [Query]
-        private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
-        {
-            DisableActiveVirtualCamera(mainCameraComponent);
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeMainCameraComponentQuery(World);
         }
 
         private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, CRDTEntity virtualCamCRDTEntity, Vector3? previousCameraPosition)
@@ -207,10 +185,41 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
         {
-            if (mainCameraComponent.virtualCameraInstance != null && mainCameraComponent.virtualCameraInstance.enabled)
-                mainCameraComponent.virtualCameraInstance.enabled = false;
+            if (mainCameraComponent.virtualCameraInstance == null
+                || !mainCameraComponent.virtualCameraInstance.enabled
+                || !VirtualCameraUtils.VirtualCameraExistsInEntitiesMap(entitiesMap, mainCameraComponent.virtualCameraCRDTEntity))
+                return;
+
+            mainCameraComponent.virtualCameraInstance.enabled = false;
 
             UpdateGlobalWorldCameraMode(false);
+        }
+
+        // Scene is unloaded
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeMainCameraComponentQuery(World);
+        }
+
+        [Query]
+        private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
+        {
+            DisableActiveVirtualCamera(mainCameraComponent);
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+        }
+
+        // User leaves the scene
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if (value) return;
+
+            DisableVirtualCameraOnSceneLeaveQuery(World);
+        }
+
+        [Query]
+        private void DisableVirtualCameraOnSceneLeave(in MainCameraComponent mainCameraComponent)
+        {
+            DisableActiveVirtualCamera(mainCameraComponent);
         }
     }
 }

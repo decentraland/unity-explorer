@@ -32,11 +32,13 @@ MonoBehaviour:
           m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         VideoPrioritizationSettings:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 758312634468794373
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
@@ -45,6 +47,7 @@ MonoBehaviour:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 857448817791336450
       type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
@@ -63,6 +66,7 @@ MonoBehaviour:
           m_AssetGUID: ea1f7da7c78c3d74bac70064dcc265a7
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RaycastBucketThreshold>k__BackingField: 3
         <RaycastFrameBudgetMs>k__BackingField: 3
@@ -75,19 +79,16 @@ MonoBehaviour:
           m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 4753057106328551425
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <Canvas>k__BackingField:
-          m_AssetGUID: e0f5a4ab5d8f74640ae94adb6824bd45
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         <StyleSheet>k__BackingField:
           m_AssetGUID: 295cf8ad8d171d849863eccaf581c9e7
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6784895267130048516
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
@@ -104,4 +105,5 @@ MonoBehaviour:
           m_AssetGUID: 4f24a591312ba473ab5ac65d6658cb94
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0

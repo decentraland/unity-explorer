@@ -155,7 +155,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
                     ScreenshotDownloaded?.Invoke();
-                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
+
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.DOWNLOAD,
+                        reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
@@ -517,6 +519,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             ReleaseGridViews();
             monthViews.Clear();
+
+            foreach (KeyValuePair<CameraReelResponseCompact, Texture> row in reelThumbnailCache)
+                GameObject.Destroy(row.Value);
+
             reelThumbnailCache.Clear();
             beginVisible = 0;
             endVisible = 0;

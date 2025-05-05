@@ -16,5 +16,10 @@ namespace DCL.WebRequests
         ///     Switch back to MainThread after deserialization
         /// </summary>
         SwitchBackToMainThread = 1 << 1,
+
+        /// <summary>
+        ///     Switch to the thread pool and back
+        /// </summary>
+        SwitchToThreadPoolAndBack = SwitchToThreadPool | SwitchBackToMainThread
     }
 }

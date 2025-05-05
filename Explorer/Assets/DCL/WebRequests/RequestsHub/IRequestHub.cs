@@ -5,5 +5,7 @@ namespace DCL.WebRequests.RequestsHub
         InitializeRequest<T, TWebRequest> RequestDelegateFor<T, TWebRequest>()
             where T: struct
             where TWebRequest: struct, ITypedWebRequest;
+
+        public void SetKTXEnabled(bool enabled);
     }
 }

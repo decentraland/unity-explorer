@@ -31,24 +31,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         {
             HandleEntityDestructionQuery(World);
             HandleUIInputRemovalQuery(World);
-            World.Remove<UIInputComponent>(in HandleUIInputRemoval_QueryDescription);
         }
 
         [Query]
         [None(typeof(PBUiInput), typeof(DeleteEntityIntention))]
-        private void HandleUIInputRemoval(ref UIInputComponent uiInputComponent) =>
-            RemoveTextField(uiInputComponent);
+        private void HandleUIInputRemoval(in Entity entity, ref UIInputComponent uiInputComponent) =>
+            RemoveTextField(entity, uiInputComponent);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UIInputComponent uiInputComponent) =>
-            RemoveTextField(uiInputComponent);
+        private void HandleEntityDestruction(in Entity entity, ref UIInputComponent uiInputComponent) =>
+            RemoveTextField(entity, uiInputComponent);
 
-        private void RemoveTextField(UIInputComponent uiInputComponent)
+        private void RemoveTextField(Entity entity, UIInputComponent uiInputComponent)
         {
-            if (componentPool != null)
-                componentPool.Release(uiInputComponent);
+            componentPool.Release(uiInputComponent);
 
+            //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
+            World.Remove<UIInputComponent>(entity);
             uiInputComponent.UnregisterInputCallbacks();
         }
     }

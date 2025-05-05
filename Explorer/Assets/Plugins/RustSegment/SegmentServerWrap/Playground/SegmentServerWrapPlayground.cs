@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using Segment.Serialization;
 using System;
 using UnityEngine;
@@ -11,7 +10,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [SerializeField] private bool fillMode;
         [SerializeField] private long unFlushedBatches;
 
-        private IAnalyticsService service = null!;
+        private RustSegmentAnalyticsService service = null!;
 
         private void Start()
         {
@@ -69,6 +68,22 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             );
 
             ReportHub.Log(ReportData.UNSPECIFIED, $"Curly {curly}, Bracket {bracket}");
+        }
+
+        [ContextMenu(nameof(InstantTrackAndFlush))]
+        public void InstantTrackAndFlush()
+        {
+            var curly = new JsonObject
+            {
+                { "works", "yes" },
+            };
+
+            service.InstantTrackAndFlush(
+                "TEST_SHARP_INSTANT",
+                curly
+            );
+
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Curly {curly}");
         }
 
         [ContextMenu(nameof(Flush))]

@@ -101,10 +101,7 @@ namespace DCL.UI.SharedSpaceManager
 
             try
             {
-                if (panel == PanelsSharingSpace.Chat)
-                    await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
-                else
-                    await HideAllAsync();
+                await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
 
                 PanelRegistration<TParams> registration = registrations[panel].GetByParams<TParams>();
                 IPanelInSharedSpace<TParams> panelInSharedSpace = registration.instance;
@@ -157,6 +154,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.EmotesWheel:
                     case PanelsSharingSpace.Explore:
                     case PanelsSharingSpace.SidebarProfile:
+                    case PanelsSharingSpace.MarketplaceCredits:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {

@@ -74,8 +74,6 @@ namespace DCL.PluginSystem.Global
 
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
-        private readonly RemoteEntities remoteEntities;
-        private readonly ExposedTransform playerTransform;
         private readonly IWearableStorage wearableStorage;
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
@@ -98,8 +96,6 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
-            RemoteEntities remoteEntities,
-            ExposedTransform playerTransform,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy
         )
         {
@@ -114,8 +110,6 @@ namespace DCL.PluginSystem.Global
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
-            this.remoteEntities = remoteEntities;
-            this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             componentPoolsRegistry = poolsRegistry;
