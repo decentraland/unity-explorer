@@ -103,9 +103,10 @@ namespace DCL.Rendering.Highlight
 
 
 
+
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, ProfilingSampler sampler)
             {
-                CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName)!;
+                CommandBuffer commandBuffer = CommandBufferPool.Get()!;
 
                 using (new ProfilingScope(commandBuffer, sampler))
                 {
@@ -159,7 +160,7 @@ namespace DCL.Rendering.Highlight
                 if (_nBlurCount == 0)
                     return nOutputTexture;
 
-                CommandBuffer cmd = CommandBufferPool.Get(bufferName)!;
+                CommandBuffer cmd = CommandBufferPool.Get()!;
                 using (new ProfilingScope(cmd, profilingSampler))
                 {
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
@@ -179,7 +180,7 @@ namespace DCL.Rendering.Highlight
 
             private void ExecuteCommandCopy(ScriptableRenderContext context, RenderingData renderingData, RTHandle sourceRT, RTHandle destinationRT, string bufferName, ProfilingSampler profilingSampler)
             {
-                CommandBuffer cmd = CommandBufferPool.Get(bufferName);
+                CommandBuffer cmd = CommandBufferPool.Get();
                 using (new ProfilingScope(cmd, profilingSampler))
                 {
                     Blit(cmd, sourceRT, destinationRT);
