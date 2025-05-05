@@ -6,16 +6,20 @@ namespace DCL.SocialService
     {
         event Action TransportClosed;
         event Action RPCClientReconnected;
+        event Action WebSocketConnectionEstablished;
 
         void SendTransportClosedNotification();
 
         void SendTransportReconnectedNotification();
+
+        void SendWebSocketConnectionEstablishedNotification();
     }
 
     public class SocialServiceEventBus : ISocialServiceEventBus
     {
         public event Action TransportClosed;
         public event Action RPCClientReconnected;
+        public event Action WebSocketConnectionEstablished;
 
         public void SendTransportClosedNotification()
         {
@@ -25,6 +29,11 @@ namespace DCL.SocialService
         public void SendTransportReconnectedNotification()
         {
             RPCClientReconnected?.Invoke();
+        }
+
+        public void SendWebSocketConnectionEstablishedNotification()
+        {
+            WebSocketConnectionEstablished?.Invoke();
         }
     }
 }

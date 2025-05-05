@@ -47,8 +47,10 @@ namespace DCL.Friends
         private readonly List<FriendProfile> friendProfileBuffer = new ();
         private readonly List<BlockedProfile> blockedProfileBuffer = new ();
 
-        private CancellationTokenSource subscriptionCancellationToken = new ();
+        public event Action? WebSocketConnectionEstablished;
 
+
+        private CancellationTokenSource subscriptionCancellationToken = new ();
 
         public RPCFriendsService(
             IFriendsEventBus eventBus,
@@ -62,6 +64,7 @@ namespace DCL.Friends
             this.selfProfile = selfProfile;
             this.socialServiceRPCProxy = socialServiceRPCProxy;
             socialServiceEventBus.TransportClosed += OnTransportClosed;
+            socialServiceEventBus.WebSocketConnectionEstablished += OnWebSocketConnectionEstablished;
         }
 
         public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
@@ -625,6 +628,11 @@ namespace DCL.Friends
             return fr;
         }
 
+        public void Dispose()
+        {
+            subscriptionCancellationToken.Dispose();
+        }
+
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
@@ -700,9 +708,6 @@ namespace DCL.Friends
         private void OnTransportClosed() =>
             subscriptionCancellationToken = subscriptionCancellationToken.SafeRestart();
 
-        public void Dispose()
-        {
-            subscriptionCancellationToken.Dispose();
-        }
+        private void OnWebSocketConnectionEstablished() => WebSocketConnectionEstablished?.Invoke();
     }
 }

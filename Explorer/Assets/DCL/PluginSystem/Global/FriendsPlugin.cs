@@ -282,16 +282,6 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private URLAddress GetApiUrl()
-        {
-            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
-
-            if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
-                url = urlFromArgs!;
-
-            return URLAddress.FromString(url);
-        }
-
         private bool IsConnectivityStatusEnabled() =>
             appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
                 || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
@@ -312,20 +302,14 @@ namespace DCL.PluginSystem.Global
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
                 if (includeUserBlocking && userBlockingCache != null)
+                {
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
-
                     UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
                     userBlockingCache!.Reset(blockingStatus);
-                }
+                }                }
 
-                friendsPanelController?.Reset();
-            }
+            friendsPanelController?.Reset();
         }
-
-
-        private bool IsConnectivityStatusEnabled() =>
-            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-                || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
     }
 
     public class FriendsPluginSettings : IDCLPluginSettings

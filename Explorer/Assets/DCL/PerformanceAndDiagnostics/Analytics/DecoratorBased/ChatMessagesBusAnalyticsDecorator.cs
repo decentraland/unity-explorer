@@ -46,7 +46,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "is_command", message[0] == '/' },
                 { "origin", origin },
                 { "is_mention", CheckIfIsMention(message)},
-                { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.User},
+                { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
 
                 //TODO FRAN: Add here array of mentioned players.
                 // { "emoji_count", emoji_count },

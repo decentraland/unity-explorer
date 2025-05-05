@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -13,8 +14,10 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
+using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -48,18 +51,26 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
+            var hub = new ParticipantsHub();
+
+            var videoStreams = new VideoStreams(hub);
+
+            var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+            var audioStreams = new AudioStreams(hub, audioRemixConveyor);
 
             roomInstance = new LogRoom(
                 new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
-                    new ParticipantsHub(),
+                    hub,
                     new TracksFactory(),
                     new FfiHandleFactory(),
                     new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
-                    new MemoryRoomInfo()
+                    new MemoryRoomInfo(),
+                    videoStreams,
+                    audioStreams
                 )
             );
         }

@@ -174,6 +174,8 @@ namespace DCL.SocialService
 
             port = await client.CreatePort(RPC_PORT_NAME);
             module = await port!.LoadModule(RPC_SERVICE_NAME);
+
+            socialServiceEventBus.SendWebSocketConnectionEstablishedNotification();
         }
 
         private string BuildAuthChain()
