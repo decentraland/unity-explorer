@@ -60,6 +60,10 @@ namespace ECS.Unity.AvatarShape.Systems
             // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world
             Transform globalTransform = globalTransformPool.Get();
             globalTransform.SetParent(transformComponent.Transform);
+            // We ensure that the avatar's transform initializes on the sdk location if the scene applies any offset
+            globalTransform.localPosition = Vector3.zero;
+            globalTransform.localRotation = Quaternion.identity;
+            globalTransform.localScale = Vector3.one;
 
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
