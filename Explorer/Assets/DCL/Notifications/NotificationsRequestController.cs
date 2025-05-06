@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Infrastructure.Utility.Types;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.Serialization;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -132,7 +133,7 @@ namespace DCL.Notifications
                         ReportHub.LogException(e, ReportCategory.UI);
                     }
 
-                await SetNotificationAsReadAsync(list, ct);
+                await SetNotificationAsReadAsync(list.AsReadOnlyList(), ct);
             }
             while (ct.IsCancellationRequested == false);
         }
@@ -141,12 +142,14 @@ namespace DCL.Notifications
         {
             using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
             list.Add(notificationId);
-            await SetNotificationAsReadAsync(list, ct);
+            await SetNotificationAsReadAsync(list.AsReadOnlyList(), ct);
         }
 
-        private async UniTask SetNotificationAsReadAsync(IReadOnlyCollection<string> notificationIds, CancellationToken ct)
+        private async UniTask SetNotificationAsReadAsync(ReadOnlyList<string> notificationIds, CancellationToken ct)
         {
             if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired) return;
+
+            if (notificationIds.Count == 0) return;
 
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"notificationIds\":[");
