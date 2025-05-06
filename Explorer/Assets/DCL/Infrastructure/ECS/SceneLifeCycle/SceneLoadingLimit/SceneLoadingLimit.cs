@@ -94,15 +94,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         public void UpdateMemoryCap()
         {
-            if (isEnabled)
+            if (!isEnabled)
             {
-                if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.LOW_MEMORY_RIG_THRESHOLD)
-                    initialKey = SceneLimitsKey.LOW_MEMORY;
-                else if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.MEDIUM_MEMORY_RIGH_THRESHOLD)
-                    initialKey = SceneLimitsKey.MEDIUM_MEMORY;
-                else
-                    initialKey = SceneLimitsKey.MAX_MEMORY;
+                initialKey = SceneLimitsKey.MAX_MEMORY;
+                return;
             }
+
+            if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.LOW_MEMORY_RIG_THRESHOLD)
+                initialKey = SceneLimitsKey.LOW_MEMORY;
+            else if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.MEDIUM_MEMORY_RIGH_THRESHOLD)
+                initialKey = SceneLimitsKey.MEDIUM_MEMORY;
             else
                 initialKey = SceneLimitsKey.MAX_MEMORY;
 
