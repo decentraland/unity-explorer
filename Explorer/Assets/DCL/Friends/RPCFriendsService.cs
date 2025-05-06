@@ -28,7 +28,6 @@ namespace DCL.Friends
         private const string SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME = "SubscribeToFriendshipUpdates";
         private const string GET_MUTUAL_FRIENDS_PROCEDURE_NAME = "GetMutualFriends";
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToFriendConnectivityUpdates";
-
         private const string SUBSCRIBE_TO_BLOCK_STATUS_UPDATES = "SubscribeToBlockUpdates";
         private const string GET_BLOCKED_USERS = "GetBlockedUsers";
         private const string GET_BLOCKING_STATUS = "GetBlockingStatus";
@@ -47,8 +46,10 @@ namespace DCL.Friends
         private readonly List<FriendProfile> friendProfileBuffer = new ();
         private readonly List<BlockedProfile> blockedProfileBuffer = new ();
 
-        private CancellationTokenSource subscriptionCancellationToken = new ();
+        public event Action? WebSocketConnectionEstablished;
 
+
+        private CancellationTokenSource subscriptionCancellationToken = new ();
 
         public RPCFriendsService(
             IFriendsEventBus eventBus,
@@ -62,6 +63,7 @@ namespace DCL.Friends
             this.selfProfile = selfProfile;
             this.socialServiceRPCProxy = socialServiceRPCProxy;
             socialServiceEventBus.TransportClosed += OnTransportClosed;
+            socialServiceEventBus.WebSocketConnectionEstablished += OnWebSocketConnectionEstablished;
         }
 
         public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
@@ -240,7 +242,6 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct)
         {
-
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetBlockedUsersPayload
@@ -625,6 +626,11 @@ namespace DCL.Friends
             return fr;
         }
 
+        public void Dispose()
+        {
+            subscriptionCancellationToken.SafeCancelAndDispose();
+        }
+
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
@@ -700,5 +706,6 @@ namespace DCL.Friends
         private void OnTransportClosed() =>
             subscriptionCancellationToken = subscriptionCancellationToken.SafeRestart();
 
+        private void OnWebSocketConnectionEstablished() => WebSocketConnectionEstablished?.Invoke();
     }
 }

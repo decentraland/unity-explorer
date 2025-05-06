@@ -63,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IProfileChangesBus profileChangesBus;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
@@ -100,6 +101,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
+            IProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
             bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager)
@@ -132,6 +134,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.viewDependencies = viewDependencies;
             this.nftNamesProvider = nftNamesProvider;
+            this.profileChangesBus = profileChangesBus;
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
@@ -205,7 +208,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource));
+                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource, profileChangesBus));
         }
 
         public class PassportSettings : IDCLPluginSettings

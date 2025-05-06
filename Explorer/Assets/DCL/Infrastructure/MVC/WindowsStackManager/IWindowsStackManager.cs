@@ -17,6 +17,11 @@
 
         PersistentPushInfo PushPersistent(IController controller);
 
+        /// <summary>
+        ///     Persistent view should be removed on emergency only
+        /// </summary>
+        void RemovePersistent(IController controller);
+
         OverlayPushInfo PushOverlay(IController controller);
 
         void PopOverlay(IController controller);

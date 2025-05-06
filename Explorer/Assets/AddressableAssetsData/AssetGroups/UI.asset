@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: UI
   m_EditorClassIdentifier: 
   m_GroupName: UI
-  m_Data:
-    m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
   - m_GUID: 028bf9eb42404424bbd1df5cd802720e
@@ -77,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ef9c85ff80df42e88f2946a299f1102
+    m_Address: GenericContextMenu
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 67c43eeeaf9c34744807086742498bf8
     m_Address: BackpackAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -132,6 +135,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: adccb7c4aa6e2424c95ac85e0d3f0a35
+    m_Address: MarketplaceCreditsUnlockedPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bc2f6e2e838c8114e89c2f3157c0ab47
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTextAndImage.prefab
     m_ReadOnly: 0
@@ -144,11 +152,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bf1104b23d6ed8f4ab84e9a0da93e10d
     m_Address: Passport
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
-    m_Address: PersistentEmoteWheelOpener.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -206,6 +206,7 @@ namespace DCL.Notifications.NotificationsMenu
             ManageNotificationReadStatus(notificationData, view.gameObject.activeSelf);
             UpdateUnreadNotificationRender();
 
+            notificationView.NotificationImage.SetImage(null);
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
@@ -225,6 +226,10 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
+            var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
+            if (iconBackground.backgroundSprite != null)
+                notificationView.NotificationImageBackground.sprite = iconBackground.backgroundSprite;
+            notificationView.NotificationImageBackground.color = iconBackground.backgroundColor;
 
             ProcessCustomMetadata(notificationData, notificationView);
 
@@ -238,6 +243,10 @@ namespace DCL.Notifications.NotificationsMenu
                 case RewardAssignedNotification rewardAssignedNotification:
                     NotificationView nView = (NotificationView)notificationView;
                     nView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+                case RewardInProgressNotification rewardInProgress:
+                    NotificationView rewardInProgressView = (NotificationView)notificationView;
+                    rewardInProgressView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardInProgress.Metadata.Rarity);
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;

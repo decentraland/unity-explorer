@@ -88,13 +88,13 @@ namespace DCL.Chat.History
 
         public void ClearChannel(ChatChannel.ChannelId channelId)
         {
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+
             if (channels.TryGetValue(channelId, out ChatChannel channel))
             {
                 channel.Clear();
             }
-
-            isReadMessagesDirty = true;
-            isTotalMessagesDirty = true;
         }
 
         public void DeleteAllChannels()

@@ -50,6 +50,8 @@ MonoBehaviour:
   - rid: 2168772563850493955
   - rid: 7621844642437005314
   - rid: 7621844642437005315
+  - rid: 8449516130764587014
+  - rid: 8813103964372074592
   references:
     version: 2
     RefIds:
@@ -60,16 +62,19 @@ MonoBehaviour:
           m_AssetGUID: 81289e85b8c13dc4b8ea68b7940e76a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <UIAudioPlaybackControllerReference>k__BackingField:
           m_AssetGUID: df3decac75a242f4689cb445dc93eb06
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <WorldAudioPlaybackControllerReference>k__BackingField:
           m_AssetGUID: d9a7adc162dc338449107a4654a26d50
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -78,6 +83,7 @@ MonoBehaviour:
           m_AssetGUID: 08d42937d0bc54b48baaa23c8c520175
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 1268264176566403074
@@ -88,6 +94,7 @@ MonoBehaviour:
             m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <InputButtons>k__BackingField:
           - InputAction: 0
@@ -139,52 +146,62 @@ MonoBehaviour:
           m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BackpackSettings>k__BackingField:
           <CategoryIconsMapping>k__BackingField:
             m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <RarityBackgroundsMapping>k__BackingField:
             m_AssetGUID: 04a7ffcd277754f7c91237894604f522
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <RarityInfoPanelBackgroundsMapping>k__BackingField:
             m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <RarityColorMappings>k__BackingField:
             m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <HairColors>k__BackingField:
             m_AssetGUID: 2668240d360264034b2ee70e645aab92
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <EyesColors>k__BackingField:
             m_AssetGUID: a00387527d7ddda41b9eb524b4a8662c
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <BodyshapeColors>k__BackingField:
             m_AssetGUID: 5af318126b38647fea34ff22fba4ef17
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <PageButtonView>k__BackingField:
             m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <ColorToggle>k__BackingField:
             m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
         <EmbeddedEmotes>k__BackingField:
         - wave
@@ -212,46 +229,55 @@ MonoBehaviour:
           m_AssetGUID: b47b66eab8da46b4cbcc30100e4194e0
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <VideoPrioritizationSettings>k__BackingField:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <QualitySettingsAsset>k__BackingField:
           m_AssetGUID: 58ab8549017bacb42b310dbb452a2f6e
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ControlsSettingsAsset>k__BackingField:
           m_AssetGUID: 26489687fb2f3419886df8e49f34b006
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ChatSettingsAsset>k__BackingField:
           m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <CategoryMappingSO>k__BackingField:
           m_AssetGUID: bda7566751d4243fb842e1a272cb9f83
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
           in @decentraland right now and join me!
@@ -273,6 +299,7 @@ MonoBehaviour:
           m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
@@ -286,16 +313,19 @@ MonoBehaviour:
           m_AssetGUID: dcc6085d51c3e443f82d4d58e0087519
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <UnfriendConfirmationPrefab>k__BackingField:
           m_AssetGUID: a341d15dd51544eb9985664704a7c43a
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BlockUserPromptPrefab>k__BackingField:
           m_AssetGUID: 93a86930ad6d44ebd85b46f9c6ebad72
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
@@ -305,21 +335,25 @@ MonoBehaviour:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <VideoPrioritizationSettings>k__BackingField:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
@@ -328,16 +362,19 @@ MonoBehaviour:
           m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ReportHandlingSettingsDevelopment>k__BackingField:
           m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ReportHandlingSettingsProduction>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 2799748226177040387
@@ -350,6 +387,7 @@ MonoBehaviour:
           m_AssetGUID: 0fce4c1a785b1495bbf861787a9a3224
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 2872862648882692098
       type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -358,26 +396,31 @@ MonoBehaviour:
           m_AssetGUID: bf1104b23d6ed8f4ab84e9a0da93e10d
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <CategoryIconsMapping>k__BackingField:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         <RarityBackgroundsMapping>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityInfoPanelBackgroundsMapping>k__BackingField:
           m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <GridLayoutFixedColumnCount>k__BackingField: 4
         <ThumbnailHeight>k__BackingField: 201
@@ -386,6 +429,7 @@ MonoBehaviour:
           m_AssetGUID: 4362b43091b0d462db2641f8c866e9b9
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -394,11 +438,13 @@ MonoBehaviour:
           m_AssetGUID: 9c4c0e79124f01744a5f969e08ad0370
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         DebugRoomIndicator:
           m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -407,16 +453,19 @@ MonoBehaviour:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         landscapeData:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -425,16 +474,19 @@ MonoBehaviour:
           m_AssetGUID: a1d5d4f99234041159f0c215eef3eff3
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <NotificationIconTypesSO>k__BackingField:
           m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3601422141625466883
       type: {class: RewardPanelPlugin/RewardPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -443,21 +495,25 @@ MonoBehaviour:
           m_AssetGUID: 70c6f2eab01fc462a9a2cac0d661417e
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityBackgroundsMapping>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <CategoryIconsMapping>k__BackingField:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3601422469352914946
       type: {class: MainUIPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -469,17 +525,20 @@ MonoBehaviour:
           m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
         ControlsPanelPrefab:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -488,6 +547,7 @@ MonoBehaviour:
           m_AssetGUID: d504e2da7abe71a4582c8c2e08e3c285
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 4107643854440628226
       type: {class: LoadingScreenPlugin/LoadingScreenPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -496,11 +556,13 @@ MonoBehaviour:
           m_AssetGUID: 605506dac7ec04ed09953980478e93d4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <FallbackTipsConfiguration>k__BackingField:
           m_AssetGUID: dc412497f06504faeb6e30b848c0842d
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
@@ -513,18 +575,21 @@ MonoBehaviour:
           m_AssetGUID: bf82184de91c3944b8de02d57d7dd151
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <CrossHairNormal>k__BackingField:
           m_AssetGUID: 98d75b092dc90bb49a14cf7e80096e01
           m_SubObjectName: Crosshair
           m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         <CrossHairInteraction>k__BackingField:
           m_AssetGUID: 26fa4ad5e35df464b8cc4bd887c2a6d9
           m_SubObjectName: CrosshairInteractive
           m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -533,6 +598,7 @@ MonoBehaviour:
           m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 4340256782807990272
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.StylizedSkybox.Scripts.Plugin, asm: DCL.Plugins}
@@ -545,36 +611,43 @@ MonoBehaviour:
           m_AssetGUID: 5ef9c85ff80df42e88f2946a299f1102
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuSeparatorPrefab:
           m_AssetGUID: 52bc5c5fe83f743cdba8dab60b247e96
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuButtonPrefab:
           m_AssetGUID: 3c3c8d365c6ef4acfa3665168b5737a9
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuTogglePrefab:
           m_AssetGUID: 60ec312971597448e978368a5382c0f1
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuUserProfilePrefab:
           m_AssetGUID: fe90941e720314adfb13574446732ea7
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuButtonWithStringDelegatePrefab:
           m_AssetGUID: 688aa1f59829ea64fb0887ed7bb87d26
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuToggleWithIconPrefab:
           m_AssetGUID: bc2f6e2e838c8114e89c2f3157c0ab47
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -583,38 +656,46 @@ MonoBehaviour:
           m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         nametagView:
           m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         celShadingMaterial:
           m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         faceFeatureMaterial:
           m_AssetGUID: 00657accebbe6c348b5208e385e5ec73
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         startFadeDistanceDithering: 2
+        endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <AvatarRandomizerSettingsRef>k__BackingField:
           m_AssetGUID: e18034962a56eac40ab5df62e159c314
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 5215741520409264129
       type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
@@ -623,11 +704,13 @@ MonoBehaviour:
           m_AssetGUID: 81ea8febf47eb484986af220584361dc
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         defaultEmptyWearable:
           m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -636,6 +719,7 @@ MonoBehaviour:
           m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6697045322133929986
       type: {class: EmotePlugin/EmoteSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -644,26 +728,25 @@ MonoBehaviour:
           m_AssetGUID: 2a58c49334237a24781cae8b1e3fa351
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <EmoteAudioSource>k__BackingField:
           m_AssetGUID: 62f68ba25f6c905428b36a081b072566
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <EmotesWheelPrefab>k__BackingField:
           m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
           m_SubObjectName: 
           m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
-          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
-          m_SubObjectName: 
-          m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <EmoteWheelRarityBackgrounds>k__BackingField:
           m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -672,11 +755,13 @@ MonoBehaviour:
           m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
@@ -691,16 +776,19 @@ MonoBehaviour:
           m_AssetGUID: 654e496ed12f12e4f80243ab9f1d97c7
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <cinemachineCameraAudioSettingsReference>k__BackingField:
           m_AssetGUID: 86a5a8acd91f6994788c37e301d06c56
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <controlsSettingsAsset>k__BackingField:
           m_AssetGUID: 26489687fb2f3419886df8e49f34b006
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6784895265412481027
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -709,6 +797,7 @@ MonoBehaviour:
           m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -721,6 +810,7 @@ MonoBehaviour:
           m_AssetGUID: 26a5616becdfd49b4abfbee07ba3cbf2
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
           right now and join me!
@@ -730,21 +820,25 @@ MonoBehaviour:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityBackgroundsMapping>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ChatEntryConfiguration>k__BackingField:
           m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 7162477498503790594
       type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -753,6 +847,7 @@ MonoBehaviour:
           m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 7162477752737071106
       type: {class: TeleportPromptPlugin/TeleportPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -761,6 +856,7 @@ MonoBehaviour:
           m_AssetGUID: 37b740e9dd5ba324c91cd05632ea002c
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 7162477796324278274
       type: {class: ChangeRealmPromptPlugin/ChangeRealmPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -769,6 +865,7 @@ MonoBehaviour:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 7621844642437005314
       type: {class: ChatPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -777,6 +874,7 @@ MonoBehaviour:
           m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -785,9 +883,29 @@ MonoBehaviour:
           m_AssetGUID: d67c9347412c7d04aa84f48952e986fc
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         ChatEntryMenuPopupPrefab:
           m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 8449516130764587014
+      type: {class: AdaptivePerformanceSettings, ns: DCL.Optimization.AdaptivePerformance.Systems, asm: DCL.Plugins}
+      data:
+        <phyiscsSettings>k__BackingField:
+          m_AssetGUID: b68ba436e63c39949b58b7aac96c291c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 8813103964372074592
+      type: {class: MarketplaceCreditsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CreditsUnlockedPrefab>k__BackingField:
+          m_AssetGUID: adccb7c4aa6e2424c95ac85e0d3f0a35
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0

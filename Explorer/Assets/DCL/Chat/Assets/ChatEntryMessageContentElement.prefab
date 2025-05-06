@@ -182,4 +182,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textComponent: {fileID: 2681651048344826938}
-  styleSheet: {fileID: 11400000, guid: 3675d28be476ed544a0b350da26e2d70, type: 2}

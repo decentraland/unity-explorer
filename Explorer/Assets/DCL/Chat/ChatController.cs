@@ -26,6 +26,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -37,6 +38,9 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>,
         IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
+        public delegate void ConversationOpenedDelegate(bool wasAlreadyOpen);
+        public delegate void ConversationClosedDelegate();
+
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
 
         private readonly IChatMessagesBus chatMessagesBus;
@@ -73,6 +77,9 @@ namespace DCL.Chat
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
+
+        public event ConversationOpenedDelegate? ConversationOpened;
+        public event ConversationClosedDelegate? ConversationClosed;
 
         public bool TryGetView(out ChatView view)
         {
@@ -149,6 +156,7 @@ namespace DCL.Chat
         }
 
 #region Panel Visibility
+
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
@@ -163,8 +171,13 @@ namespace DCL.Chat
 
             set
             {
-                if (TryGetView(out var view))
-                    view.IsUnfolded = value;
+                if (!viewInstanceCreated) return;
+
+                viewInstance!.IsUnfolded = value;
+
+                // When opened from outside, it should show the unread messages
+                if (value)
+                    viewInstance.ShowNewMessages();
             }
         }
 
@@ -172,25 +185,18 @@ namespace DCL.Chat
         {
             if (State != ControllerState.ViewHidden)
             {
-                if (!viewInstanceCreated) return;
+                if (!viewInstanceCreated)
+                    return;
 
-                //If the view is disabled, we re-enable it
+                // If the view is disabled, we re-enable it
                 if(!GetViewVisibility())
                     SetViewVisibility(true);
 
-                //TODO FRAN: here we must restore the state of the chat when returning to it from anywhere, unless overwritten for some reason.
-                //This should be the only way to open the chat, params should adjust to these possibilities.
+                if(showParams.Unfold)
+                    IsUnfolded = true;
 
-                //if(showParams.ShowUnfolded)
-                IsUnfolded = true;//showParams.ShowUnfolded;
-
-                if(showParams.HasToFocusInputBox)
-                    viewInstance!.FocusInputBox();
-
-                if (showParams.ShowLastState)
-                {
-                    //IsUnfolded = !viewInstance!.LastChatState.HasFlag(ChatView.ChatState.FOLDED);
-                }
+                if(showParams.Focus)
+                    viewInstance!.Focus();
 
                 ViewShowingComplete?.Invoke(this);
             }
@@ -200,8 +206,6 @@ namespace DCL.Chat
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            // TODO FRAN: We only need to minimize the chat when the sidebar chat button is pressed or the enter key is pressed,
-            // in the other cases, we want to preserve their last state, how to do it??
             IsUnfolded = false;
             await UniTask.CompletedTask;
         }
@@ -235,6 +239,7 @@ namespace DCL.Chat
         }
 
 #region View Show and Close
+
         protected override void OnViewShow()
         {
             cameraEntity = world.CacheCamera();
@@ -251,8 +256,8 @@ namespace DCL.Chat
 
             InitializeChannelsAndConversationsAsync().Forget();
 
-            OnFocus();
-            IsUnfolded = inputData.ShowUnfolded;
+            IsUnfolded = inputData.Unfold;
+            viewInstance.Blur();
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
@@ -276,6 +281,7 @@ namespace DCL.Chat
 
         protected override void OnViewClose()
         {
+            Blur();
             UnsubscribeFromEvents();
             Dispose();
         }
@@ -292,22 +298,6 @@ namespace DCL.Chat
             viewInstanceCreated = true;
         }
 
-        protected override void OnBlur()
-        {
-            //TODO FRAN: Check what is this doing if its doing anything
-            viewInstance!.IsChatSelected = false;
-            //viewInstance!.DisableInputBoxSubmissions();
-        }
-
-        protected override void OnFocus()
-        {
-            //TODO FRAN: Check what is this doing
-            if (viewInstance!.IsFocused) return;
-
-            IsUnfolded = true;
-            //viewInstance.EnableInputBoxSubmissions();
-        }
-
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             ViewShowingComplete?.Invoke(this);
@@ -319,13 +309,14 @@ namespace DCL.Chat
 
         private void OnOpenConversation(string userId)
         {
+            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
+
             ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
+
             if (TryGetView(out var view))
-            {
                 view.CurrentChannelId = channel.Id;
-            }
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
@@ -365,9 +356,11 @@ namespace DCL.Chat
                 view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
             }
         }
+
 #endregion
 
 #region Chat History Events
+
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
@@ -444,6 +437,7 @@ namespace DCL.Chat
 #endregion
 
 #region Channel Events
+
         private async void OnViewCurrentChannelChangedAsync()
         {
             if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER &&
@@ -457,19 +451,14 @@ namespace DCL.Chat
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
         {
+            ConversationClosed?.Invoke();
+
             chatHistory.RemoveChannel(channelId);
         }
 #endregion
 
-        private void OnChatClearedCommandReceived() // Called by a command
-        {
-            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
-            messageCountWhenSeparatorViewed = 0;
-        }
-
         private void OnViewFoldingChanged(bool isUnfolded)
         {
-            //TODO FRAN: Check what is this doing
             if (!isUnfolded)
                 MarkCurrentChannelAsRead();
         }
@@ -515,9 +504,9 @@ namespace DCL.Chat
                 EnableUnwantedInputs();
         }
 
-        private void OnViewChatSelectStateChanged(bool isChatSelected)
+        private void OnViewFocusChanged(bool isFocused)
         {
-            if (isChatSelected)
+            if (isFocused)
                 DisableUnwantedInputs();
             else
                 EnableUnwantedInputs();
@@ -532,7 +521,7 @@ namespace DCL.Chat
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
             //TODO FRAN: This should take us to the nearby channel and send the command there
-            viewInstance!.FocusInputBoxWithText("/");
+            viewInstance!.Focus("/");
         }
 
         //This comes from the paste option or mention, we check if it's possible to do it as if there is a mask we cannot
@@ -540,7 +529,7 @@ namespace DCL.Chat
         {
             if (viewInstance!.IsMaskActive) return;
 
-            viewInstance.FocusInputBox();
+            viewInstance.Focus();
             viewInstance.InsertTextInInputBox(text);
         }
 
@@ -584,6 +573,7 @@ namespace DCL.Chat
         }
 
 #region Chat History Channel Events
+
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
             chatUserStateUpdater.RemoveConversation(removedChannel.Id);
@@ -654,7 +644,6 @@ namespace DCL.Chat
         {
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatCommandsBus.ChatCleared += OnChatClearedCommandReceived;
 
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
@@ -664,7 +653,7 @@ namespace DCL.Chat
                 view.PointerEnter += OnViewPointerEnter;
                 view.PointerExit += OnViewPointerExit;
 
-                view.ChatSelectStateChanged += OnViewChatSelectStateChanged;
+                view.FocusChanged += OnViewFocusChanged;
                 view.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
                 view.InputSubmitted += OnViewInputSubmitted;
                 view.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
@@ -674,6 +663,7 @@ namespace DCL.Chat
                 view.ChannelRemovalRequested += OnViewChannelRemovalRequested;
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
+                view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
@@ -694,19 +684,26 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
+        private void OnViewDeleteChatHistoryRequested()
+        {
+            // Clears the history of the current conversation and updates the UI
+            chatHistory.ClearChannel(viewInstance!.CurrentChannelId);
+            messageCountWhenSeparatorViewed = 0;
+            viewInstance.ClearCurrentConversation();
+        }
+
         private void UnsubscribeFromEvents()
         {
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatCommandsBus.ChatCleared -= OnChatClearedCommandReceived;
             chatEventBus.InsertTextInChat -= OnTextInserted;
 
             if (viewInstance != null)
             {
                 viewInstance.PointerEnter -= OnViewPointerEnter;
                 viewInstance.PointerExit -= OnViewPointerExit;
-                viewInstance.ChatSelectStateChanged -= OnViewChatSelectStateChanged;
+                viewInstance.FocusChanged -= OnViewFocusChanged;
                 viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
                 viewInstance.InputSubmitted -= OnViewInputSubmitted;
                 viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
@@ -716,6 +713,7 @@ namespace DCL.Chat
                 viewInstance.ChannelRemovalRequested -= OnViewChannelRemovalRequested;
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.ConversationSelected -= OnSelectConversation;
+                viewInstance.DeleteChatHistoryRequested -= OnViewDeleteChatHistoryRequested;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }

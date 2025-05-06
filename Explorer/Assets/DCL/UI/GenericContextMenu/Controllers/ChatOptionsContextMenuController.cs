@@ -19,40 +19,32 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private readonly IMVCManager mvcManager;
         private readonly Controls.Configs.GenericContextMenu contextMenu;
-        private readonly ToggleWithIconContextMenuControlSettings toggleWithIconContextMenuControlSettings;
-        public Action<bool> ChatBubblesVisibilityChanged;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
 
-        public ChatOptionsContextMenuController(IMVCManager mvcManager, Sprite chatBubblesToggleIcon, string chatBubblesToggleText, Sprite pinChatToggleTextIcon, string pinChatToggleText)
+        public ChatOptionsContextMenuController(IMVCManager mvcManager, Sprite deleteChatHistoryIcon, string deleteChatHistoryText, Action onDeleteChatHistoryClicked)
         {
             this.mvcManager = mvcManager;
-            toggleWithIconContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(chatBubblesToggleIcon, chatBubblesToggleText, OnChatBubbleToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING);
+            ButtonContextMenuControlSettings deleteChatHistoryButton = new ButtonContextMenuControlSettings(deleteChatHistoryText, deleteChatHistoryIcon, onDeleteChatHistoryClicked);
 
             contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.TOP_LEFT)
-               .AddControl(toggleWithIconContextMenuControlSettings);
+               .AddControl(deleteChatHistoryButton);
 
             //Disabled until we got multiple channels working
             //.AddControl(new SeparatorContextMenuControlSettings())
             //.AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnPinChatToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING));
         }
 
-        public async UniTask ShowContextMenuAsync(bool chatBubblesToggleValue, Vector2 position, UniTask closeMenuTask, Action onContextMenuHide = null)
+        public async UniTask ShowContextMenuAsync(Vector2 position, UniTask closeMenuTask, Action onContextMenuHide = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeMenuTask, closeContextMenuTask.Task);
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            toggleWithIconContextMenuControlSettings.SetInitialValue(chatBubblesToggleValue);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), cancellationTokenSource.Token);
-        }
-
-        private void OnChatBubbleToggle(bool value)
-        {
-            ChatBubblesVisibilityChanged?.Invoke(value);
         }
 
         private void OnPinChatToggle(bool value)

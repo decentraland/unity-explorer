@@ -144,7 +144,7 @@ namespace DCL.UI.SharedSpaceManager
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false, true));
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false, false));
                         }
                         else
                             isTransitioning = false;
@@ -155,6 +155,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.EmotesWheel:
                     case PanelsSharingSpace.Explore:
                     case PanelsSharingSpace.SidebarProfile:
+                    case PanelsSharingSpace.MarketplaceCredits:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {
@@ -253,7 +254,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
             if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false, true));
+                await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
         }
 
 #region Registration
@@ -390,7 +391,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
             if (!isExplorePanelVisible && !isTransitioning)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
+                await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)

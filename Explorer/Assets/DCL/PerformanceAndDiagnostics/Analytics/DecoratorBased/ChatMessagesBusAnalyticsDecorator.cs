@@ -45,13 +45,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { "is_command", message[0] == '/' },
                 { "origin", origin },
-                { "is_mention", CheckIfIsMention(message)}
+                { "is_mention", CheckIfIsMention(message)},
+                { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
 
                 //TODO FRAN: Add here array of mentioned players.
                 // { "emoji_count", emoji_count },
-                // { "message", message },
-                // { "channel_mame", "nearby"}, // temporally hardcoded
-                // { "receiver_id", string.Empty} // temporal mock
             });
         }
 

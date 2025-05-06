@@ -68,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private FriendsPanelController? friendsPanelController;
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
         private CancellationTokenSource? prewarmFriendsCancellationToken;
+        private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
         private UserBlockingCache? userBlockingCache;
 
         public FriendsPlugin(
@@ -135,6 +136,7 @@ namespace DCL.PluginSystem.Global
             friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
             prewarmFriendsCancellationToken.SafeCancelAndDispose();
             socialServiceEventBus.RPCClientReconnected -= OnRPCClientReconnected;
+            syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -159,6 +161,8 @@ namespace DCL.PluginSystem.Global
             {
                 userBlockingCache = new UserBlockingCache(friendsEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
+
+                friendsService.WebSocketConnectionEstablished += SyncBlockingStatus;
             }
 
             friendsPanelController = new FriendsPanelController(() =>
@@ -183,7 +187,7 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager
-                );
+            );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
 
@@ -243,6 +247,7 @@ namespace DCL.PluginSystem.Global
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
             friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
+
             // Fire and forget as this task will never finish
             friendsService!.SubscribeToIncomingFriendshipEventsAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
 
@@ -261,23 +266,34 @@ namespace DCL.PluginSystem.Global
                 if (friendsPanelController != null)
                     await friendsPanelController.InitAsync(ct);
 
-                if (includeUserBlocking)
-                {
-                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                    userBlockingCache.Reset(blockingStatus);
-                }
-
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
             }
         }
 
+        private void SyncBlockingStatus()
+        {
+            syncBlockingStatusOnRpcConnectionCts = syncBlockingStatusOnRpcConnectionCts.SafeRestart();
+            SyncBlockingStatusAsync(syncBlockingStatusOnRpcConnectionCts.Token).Forget();
+            return;
+
+            async UniTask SyncBlockingStatusAsync(CancellationToken ct)
+            {
+                UserBlockingStatus blockingStatus = await friendsService!.GetUserBlockingStatusAsync(ct);
+                userBlockingCache!.Reset(blockingStatus);
+            }
+        }
+
+        private bool IsConnectivityStatusEnabled() =>
+            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
+            || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
+
         private void OnRPCClientReconnected()
         {
             friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
-            ReconnectFriendServiceAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+            ReconnectFriendServiceAsync(friendServiceSubscriptionCancellationToken.Token);
             return;
 
-            async UniTaskVoid ReconnectFriendServiceAsync(CancellationToken ct)
+            void ReconnectFriendServiceAsync(CancellationToken ct)
             {
                 if (!socialServicesRPCProxy.Configured || friendsService == null) return;
 
@@ -286,22 +302,12 @@ namespace DCL.PluginSystem.Global
                 if (IsConnectivityStatusEnabled())
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
-                if (includeUserBlocking)
-                {
+                if (includeUserBlocking && userBlockingCache != null)
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
-
-                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                    userBlockingCache!.Reset(blockingStatus);
-                }
 
                 friendsPanelController?.Reset();
             }
         }
-
-
-        private bool IsConnectivityStatusEnabled() =>
-            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-                || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
     }
 
     public class FriendsPluginSettings : IDCLPluginSettings

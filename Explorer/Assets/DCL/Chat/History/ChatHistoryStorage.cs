@@ -611,6 +611,10 @@ namespace DCL.Chat.History
                 File.Exists(channelFile.Path))
             {
                 ReportHub.Log(reportData, $"Clearing channel file at " + channelFile.Path);
+
+                if(channelFile.Content != null)
+                    CloseChannelFile(clearedChannel.Id);
+
                 File.Create(channelFile.Path).Dispose();
                 ReportHub.Log(reportData, $"Channel file cleared at " + channelFile.Path);
             }

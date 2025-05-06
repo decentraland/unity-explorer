@@ -31,7 +31,7 @@ namespace DCL.AvatarAnimation
                 movement.Kind = MovementAnimation;
                 movement.Axes = new Vector2(0.0f, Forward);
 
-                cachedCharacterControllerTransform.rotation *= Quaternion.AngleAxis(-Rotation * Time.deltaTime, Vector3.up);
+                cachedCharacterControllerTransform.rotation *= Quaternion.AngleAxis(-Rotation * UnityEngine.Time.deltaTime, Vector3.up);
             }
         }
 

@@ -185,3 +185,4 @@ Material:
     - _watercolor: {r: 0.23985049, g: 0.39756644, b: 0.7433963, a: 1}
     - _watercolor2: {r: 0.16470586, g: 0.7058824, b: 0.50797063, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -25,7 +25,7 @@ namespace DCL.SocialService
         private const string RPC_PORT_NAME = "social_service";
         private const string RPC_SERVICE_NAME = "SocialService";
         private const int CONNECTION_TIMEOUT_SECS = 10;
-        private const int CONNECTION_RETRIES = 10;
+        private const int CONNECTION_RETRIES = 3;
         private const double RETRY_BACKOFF_MULTIPLIER = 1.5;
 
         private readonly SemaphoreSlim handshakeMutex = new (1, 1);
@@ -123,7 +123,7 @@ namespace DCL.SocialService
 
         private async UniTask StartHandshakeAsync(CancellationToken ct, bool test = false)
         {
-            bool acquired = false;
+            var acquired = false;
             try
             {
                 await handshakeMutex.WaitAsync(ct);
@@ -174,6 +174,8 @@ namespace DCL.SocialService
 
             port = await client.CreatePort(RPC_PORT_NAME);
             module = await port!.LoadModule(RPC_SERVICE_NAME);
+
+            socialServiceEventBus.SendWebSocketConnectionEstablishedNotification();
         }
 
         private string BuildAuthChain()
