@@ -137,7 +137,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
-            if (isMemoryNormal && isAbundance)
+            if (isAbundance)
             {
                 if (sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED)
                 {

@@ -44,6 +44,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                    {
                        _ when usedMemory > totalSystemMemory * memoryThreshold[FULL] => FULL,
                        _ when usedMemory > totalSystemMemory * memoryThreshold[WARNING] => WARNING,
+                       _ when usedMemory < totalSystemMemory * memoryThreshold[ABUNDANCE] => ABUNDANCE,
                        _ => NORMAL,
                    };
         }
@@ -79,13 +80,14 @@ namespace DCL.Optimization.PerformanceBudgeting
             if (SimulateLackOfAbundance)
                 return false;
 
-            long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
-            long totalSystemMemory = GetTotalSystemMemoryInMB();
-            return usedMemory < totalSystemMemory * memoryThreshold[ABUNDANCE];
+            return GetMemoryUsageStatus() == ABUNDANCE;
         }
 
-        public bool IsMemoryNormal() =>
-            GetMemoryUsageStatus() == NORMAL;
+        public bool IsMemoryNormal()
+        {
+            MemoryUsageStatus status = GetMemoryUsageStatus();
+            return status is NORMAL or ABUNDANCE;
+        }
 
         public bool IsMemoryFull() =>
             GetMemoryUsageStatus() == FULL;
