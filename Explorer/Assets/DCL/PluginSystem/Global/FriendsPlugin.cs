@@ -289,10 +289,10 @@ namespace DCL.PluginSystem.Global
         private void OnRPCClientReconnected()
         {
             friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
-            ReconnectFriendServiceAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+            ReconnectFriendServiceAsync(friendServiceSubscriptionCancellationToken.Token);
             return;
 
-            async UniTaskVoid ReconnectFriendServiceAsync(CancellationToken ct)
+            void ReconnectFriendServiceAsync(CancellationToken ct)
             {
                 if (!socialServicesRPCProxy.Configured || friendsService == null) return;
 
@@ -302,13 +302,9 @@ namespace DCL.PluginSystem.Global
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
                 if (includeUserBlocking && userBlockingCache != null)
-                {
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
-                    UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
-                    userBlockingCache!.Reset(blockingStatus);
-                }                }
 
-            friendsPanelController?.Reset();
+                friendsPanelController?.Reset();
         }
     }
 
