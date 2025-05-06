@@ -38,8 +38,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             WorldVolumeMacBus worldVolumeMacBus,
             IExposedCameraData exposedCameraData,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            ObjectProxy<IRoomHub> roomHub,
-            FeatureFlagsCache featureFlagsCache)
+            ObjectProxy<IRoomHub> roomHub)
         {
             this.exposedCameraData = exposedCameraData;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
