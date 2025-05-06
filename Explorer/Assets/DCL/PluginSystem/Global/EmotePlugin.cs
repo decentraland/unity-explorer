@@ -164,7 +164,6 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
-            [field: SerializeField] public AssetReferenceGameObject PersistentEmoteWheelOpenerPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
 
             [Serializable]

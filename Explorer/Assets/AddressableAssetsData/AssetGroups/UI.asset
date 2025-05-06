@@ -155,11 +155,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
-    m_Address: PersistentEmoteWheelOpener.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c77c82b7631304e47a8c0ba64982cebb
     m_Address: M_ChargeBarV2.mat
     m_ReadOnly: 0
