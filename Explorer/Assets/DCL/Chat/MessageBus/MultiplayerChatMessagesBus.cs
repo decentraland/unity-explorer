@@ -47,6 +47,7 @@ namespace DCL.Chat.MessageBus
 
         private void OnPrivateMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
             OnChatAsync(receivedMessage, true).Forget();
         }
 
@@ -64,7 +65,6 @@ namespace DCL.Chat.MessageBus
                     return;
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
-                ReportHub.LogWarning(ReportCategory.CHAT_CONVERSATIONS, $"Received message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
                 ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);

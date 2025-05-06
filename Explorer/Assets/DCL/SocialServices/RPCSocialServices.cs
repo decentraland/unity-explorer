@@ -197,6 +197,6 @@ namespace DCL.SocialService
         }
 
         private void OnTransportClosed() =>
-            socialServiceEventBus.OnTransportClosed();
+            socialServiceEventBus.SendTransportClosedNotification();
     }
 }

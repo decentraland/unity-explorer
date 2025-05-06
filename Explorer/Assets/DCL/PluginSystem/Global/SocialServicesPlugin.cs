@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.Global
                 }
                 catch (Exception e) when (e is not OperationCanceledException) { }
 
-                socialServiceEventBus.OnTransportReconnected();
+                socialServiceEventBus.SendTransportReconnectedNotification();
             }
         }
 

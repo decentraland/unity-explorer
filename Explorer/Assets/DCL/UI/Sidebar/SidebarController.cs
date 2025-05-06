@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;

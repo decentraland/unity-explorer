@@ -8,18 +8,18 @@ namespace DCL.Chat.Commands
     /// </summary>
     public interface IChatCommandsBus
     {
-        event Action<bool> SetConnectionStatusPanelVisibility;
+        event Action<bool> ConnectionStatusPanelVisibilityChanged;
 
-        void OnSetConnectionStatusPanelVisibility(bool isVisible);
+        void SendConnectionStatusPanelChangedNotification(bool isVisible);
     }
 
     public class ChatCommandsBus : IChatCommandsBus
     {
-        public event Action<bool> SetConnectionStatusPanelVisibility;
+        public event Action<bool> ConnectionStatusPanelVisibilityChanged;
 
-        public void OnSetConnectionStatusPanelVisibility(bool isVisible)
+        public void SendConnectionStatusPanelChangedNotification(bool isVisible)
         {
-            SetConnectionStatusPanelVisibility?.Invoke(isVisible);
+            ConnectionStatusPanelVisibilityChanged?.Invoke(isVisible);
         }
     }
 }

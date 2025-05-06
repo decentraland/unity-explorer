@@ -108,5 +108,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct) =>
             core.GetUserBlockingStatusAsync(ct);
+
+        public void Dispose()
+        {
+            core?.Dispose();
+        }
     }
 }

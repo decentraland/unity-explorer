@@ -170,7 +170,6 @@ namespace DCL.Chat
 
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
-            //inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
             inputField.DeactivateInputField();
         }
 
@@ -180,7 +179,6 @@ namespace DCL.Chat
                 return;
             isInputSubmissionEnabled = true;
 
-            //inputField.onSubmit.AddListener(OnInputFieldSubmitted);
             viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
         }
@@ -392,11 +390,7 @@ namespace DCL.Chat
         public void SubmitInputField()
         {
             if (suggestionPanel.IsActive)
-            {
-                //suggestionPanelController!.SetPanelVisibility(false);
-                //lastMatch = Match.Empty;
                 return;
-            }
 
             if (emojiPanel.gameObject.activeInHierarchy)
             {
