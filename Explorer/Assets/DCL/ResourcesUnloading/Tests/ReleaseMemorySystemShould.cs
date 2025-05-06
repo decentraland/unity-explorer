@@ -78,7 +78,8 @@ namespace DCL.ResourcesUnloading.Tests
         public void ResetUnloadStrategyIndexWhenMemoryUsageIsNormal()
         {
             // Arrange
-            memoryBudgetProvider.IsMemoryNormal().Returns(true);
+            memoryBudgetProvider.IsMemoryNormal().Returns(false);
+            memoryBudgetProvider.IsInAbundance().Returns(false);
 
             // Act
             releaseMemorySystem.Update(0);
@@ -96,6 +97,8 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Act
             memoryBudgetProvider.IsMemoryNormal().Returns(true);
+            memoryBudgetProvider.IsInAbundance().Returns(true);
+
             releaseMemorySystem.Update(0);
 
             // Assert

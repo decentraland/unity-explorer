@@ -25,7 +25,6 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 
         private void TryUnload()
         {
-            Debug.Log("JUANI RUNNING STRATEGY");
             for (var i = unloadStrategies.Length - 1; i >= 0; i--)
             {
                 if (i == 0 || unloadStrategies[i - 1].FaillingOverThreshold())
