@@ -28,7 +28,6 @@ namespace DCL.Friends
         private const string SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME = "SubscribeToFriendshipUpdates";
         private const string GET_MUTUAL_FRIENDS_PROCEDURE_NAME = "GetMutualFriends";
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToFriendConnectivityUpdates";
-
         private const string SUBSCRIBE_TO_BLOCK_STATUS_UPDATES = "SubscribeToBlockUpdates";
         private const string GET_BLOCKED_USERS = "GetBlockedUsers";
         private const string GET_BLOCKING_STATUS = "GetBlockingStatus";
@@ -243,7 +242,6 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct)
         {
-
             await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetBlockedUsersPayload
@@ -630,7 +628,7 @@ namespace DCL.Friends
 
         public void Dispose()
         {
-            subscriptionCancellationToken.Dispose();
+            subscriptionCancellationToken.SafeCancelAndDispose();
         }
 
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
