@@ -37,6 +37,7 @@ namespace DCL.Chat
         public delegate void CurrentChannelChangedDelegate();
         public delegate void ChannelRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
+        public delegate void DeleteChatHistoryRequestedDelegate();
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -168,7 +169,15 @@ namespace DCL.Chat
         /// </summary>
         public event ChannelRemovalRequestedDelegate ChannelRemovalRequested;
 
+        /// <summary>
+        /// Raised when trying to open an existing conversation.
+        /// </summary>
         public event ConversationSelectedDelegate ConversationSelected;
+
+        /// <summary>
+        /// Raised when the user wants to delete the chat history of the current conversation.
+        /// </summary>
+        public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
         private ViewDependencies viewDependencies;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
@@ -407,6 +416,7 @@ namespace DCL.Chat
             chatTitleBar.ShowMemberListButtonClicked -= OnMemberListOpeningButtonClicked;
             chatTitleBar.HideMemberListButtonClicked -= OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
+            chatTitleBar.DeleteChatHistoryRequested -= OnDeleteChatHistoryRequested;
 
             chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClickedAsync;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged -= OnChatMessageViewerScrollPositionChanged;
@@ -451,6 +461,7 @@ namespace DCL.Chat
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
+            chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
 
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
@@ -479,6 +490,11 @@ namespace DCL.Chat
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
                 AddConversation(channelPair.Value);
+        }
+
+        private void OnDeleteChatHistoryRequested()
+        {
+            DeleteChatHistoryRequested?.Invoke();
         }
 
         private void SetInputFieldInteractable(LoadingStatus.LoadingStage status)
@@ -585,6 +601,16 @@ namespace DCL.Chat
                 scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
 
             RefreshUnreadMessages(CurrentChannelId);
+        }
+
+        /// <summary>
+        /// Empties the current conversation removing all messages and hiding associated UI elements.
+        /// </summary>
+        public void ClearCurrentConversation()
+        {
+            chatMessageViewer.ClearMessages();
+            SetScrollToBottomVisibility(false,false);
+            chatMessageViewer.HideSeparator();
         }
 
         /// <summary>

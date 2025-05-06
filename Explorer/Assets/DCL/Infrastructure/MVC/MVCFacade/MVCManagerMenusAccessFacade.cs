@@ -91,12 +91,10 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask);
         }
 
-        public async UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility, Action onContextMenuHide, UniTask closeMenuTask)
+        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
         {
-            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.ChatBubblesToggleIcon, data.ChatBubblesToggleText, data.PinChatToggleTextIcon, data.PinChatToggleText);
-            chatOptionsContextMenuController.ChatBubblesVisibilityChanged = null;
-            chatOptionsContextMenuController.ChatBubblesVisibilityChanged += onToggleChatBubblesVisibility;
-            await chatOptionsContextMenuController.ShowContextMenuAsync(chatBubblesVisibility, transformPosition, closeMenuTask, onContextMenuHide);
+            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
+            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
         }
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
