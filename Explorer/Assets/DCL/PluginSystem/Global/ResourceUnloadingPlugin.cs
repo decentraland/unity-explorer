@@ -2,7 +2,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 
 namespace DCL.PluginSystem.Global

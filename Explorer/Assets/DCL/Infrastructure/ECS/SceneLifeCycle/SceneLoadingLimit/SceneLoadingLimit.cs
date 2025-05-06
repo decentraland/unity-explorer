@@ -1,12 +1,7 @@
-using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utilities;
 using ECS.SceneLifeCycle.SceneDefinition;
-using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
@@ -30,15 +25,21 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             { SceneLimitsKey.WARNING, new SceneLimits(1, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
         };
 
+        //Initial setup
+        private bool isEnabled;
+        private readonly ISystemMemoryCap systemMemoryCap;
+        private SceneLimitsKey initialKey;
 
+        //Runtime evaluation usage
+        private float sceneCurrentMemoryUsageInMB;
+        private float qualityReductedLODCurrentMemoryUsageInMB;
         public SceneLimits currentSceneLimits { get; private set; }
 
-        private float SceneCurrentMemoryUsageInMB;
-        private float QualityReductedLODCurrentMemoryUsageInMB;
-        private SceneLimitsKey initialKey;
+        //Transition helpers
         private SceneTransitionState sceneTransitionState;
-        private readonly ISystemMemoryCap systemMemoryCap;
-        private bool isEnabled;
+        private SceneLimits transitionStartSceneLimits;
+        private int currentTransitionFrames;
+        private readonly float totalFramesToComplete = 500;
 
 
         public SceneLoadingLimit(ISystemMemoryCap memoryCap)
@@ -51,16 +52,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         public void ResetCurrentUsage()
         {
-            SceneCurrentMemoryUsageInMB = 0;
-            QualityReductedLODCurrentMemoryUsageInMB = 0;
+            sceneCurrentMemoryUsageInMB = 0;
+            qualityReductedLODCurrentMemoryUsageInMB = 0;
         }
 
         public bool CanLoadScene(SceneDefinitionComponent sceneDefinitionComponent)
         {
             //We will let it overflow, only once. Avoid deadlock
-            if (SceneCurrentMemoryUsageInMB < currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB)
+            if (sceneCurrentMemoryUsageInMB < currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB)
             {
-                SceneCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageInMB;
+                sceneCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageInMB;
                 return true;
             }
 
@@ -70,9 +71,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public bool CanLoadLOD(SceneDefinitionComponent sceneDefinitionComponent)
         {
             //We will let it overflow, only once. Avoid deadlock
-            if (SceneCurrentMemoryUsageInMB < currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB)
+            if (sceneCurrentMemoryUsageInMB < currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB)
             {
-                SceneCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageForLODMB;
+                sceneCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageForLODMB;
                 return true;
             }
 
@@ -82,9 +83,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public bool CanLoadQualityReductedLOD(SceneDefinitionComponent sceneDefinitionComponent)
         {
             //We will let it overflow, only once. Avoid deadlock
-            if (QualityReductedLODCurrentMemoryUsageInMB < currentSceneLimits.QualityReductedLODMaxAmountOfUsableMemoryInMB)
+            if (qualityReductedLODCurrentMemoryUsageInMB < currentSceneLimits.QualityReductedLODMaxAmountOfUsableMemoryInMB)
             {
-                QualityReductedLODCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageForQualityReductedLODMB;
+                qualityReductedLODCurrentMemoryUsageInMB += sceneDefinitionComponent.EstimatedMemoryUsageForQualityReductedLODMB;
                 return true;
             }
 
@@ -105,7 +106,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             else
                 initialKey = SceneLimitsKey.MAX_MEMORY;
 
-            currentSceneLimits = constantSceneLimits[initialKey];
+            //If we are not transitioning, set the values immediately
+            if (sceneTransitionState != SceneTransitionState.TRANSITIONING_TO_NORMAL && sceneTransitionState != SceneTransitionState.TRANSITIONING_TO_REDUCED)
+                currentSceneLimits = constantSceneLimits[initialKey];
         }
 
 
@@ -114,46 +117,47 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (!isEnabled)
                 return;
 
-            if (!isMemoryNormal && sceneTransitionState is SceneTransitionState.NORMAL or SceneTransitionState.TRANSITIONING_TO_NORMAL)
+            if (!isMemoryNormal)
             {
-                easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EaseSceneLimitsAsync(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], SceneTransitionState.REDUCED).Forget();
-                sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_REDUCED;
+                if (sceneTransitionState is SceneTransitionState.NORMAL or SceneTransitionState.TRANSITIONING_TO_NORMAL)
+                {
+                    currentTransitionFrames = 0;
+                    sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_REDUCED;
+                    transitionStartSceneLimits = currentSceneLimits;
+                }
+
+                if (sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_REDUCED)
+                {
+                    currentTransitionFrames++;
+                    float interpolationProgress = Mathf.Lerp(0, 1, currentTransitionFrames / totalFramesToComplete);
+                    currentSceneLimits = SceneLimits.Lerp(transitionStartSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], interpolationProgress);
+
+                    if (currentTransitionFrames >= totalFramesToComplete)
+                        sceneTransitionState = SceneTransitionState.REDUCED;
+                }
             }
 
-            if (isMemoryNormal && sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_REDUCED)
-                easingCancellationTokenSource.Cancel();
-
-            if (isMemoryNormal && isAbundance && sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED or SceneTransitionState.TRANSITIONING_TO_NORMAL)
+            if (isMemoryNormal && isAbundance)
             {
-                easingCancellationTokenSource = easingCancellationTokenSource.SafeRestart();
-                EaseSceneLimitsAsync(easingCancellationTokenSource.Token, currentSceneLimits, constantSceneLimits[initialKey], SceneTransitionState.NORMAL).Forget();
-                sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_NORMAL;
-            }
+                if (sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED)
+                {
+                    currentTransitionFrames = 0;
+                    sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_NORMAL;
+                    transitionStartSceneLimits = currentSceneLimits;
+                }
 
-            if (isMemoryNormal && !isAbundance && sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_NORMAL)
-                easingCancellationTokenSource.Cancel();
+                if (sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_NORMAL)
+                {
+                    currentTransitionFrames++;
+                    float interpolationProgress = Mathf.Lerp(0, 1, currentTransitionFrames / totalFramesToComplete);
+                    currentSceneLimits = SceneLimits.Lerp(transitionStartSceneLimits, constantSceneLimits[initialKey], interpolationProgress);
+
+                    if (currentTransitionFrames >= totalFramesToComplete)
+                        sceneTransitionState = SceneTransitionState.NORMAL;
+                }
+            }
         }
 
-
-        private CancellationTokenSource easingCancellationTokenSource;
-        private readonly float totalFramesToComplete = 500;
-
-        private async UniTask EaseSceneLimitsAsync(CancellationToken cancellationToken, SceneLimits start, SceneLimits end, SceneTransitionState finalState)
-        {
-            float currentFrames = 0;
-            while (!cancellationToken.IsCancellationRequested)
-            {
-
-                float interpolationProgress = Mathf.Lerp(0, 1, currentFrames / totalFramesToComplete);
-                currentSceneLimits = SceneLimits.Lerp(start, end, interpolationProgress);
-                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-                currentFrames++;
-                if (currentFrames / totalFramesToComplete >= 1f)
-                    break;
-            }
-            sceneTransitionState = finalState;
-        }
 
         public void SetEnabled(bool isEnabled)
         {

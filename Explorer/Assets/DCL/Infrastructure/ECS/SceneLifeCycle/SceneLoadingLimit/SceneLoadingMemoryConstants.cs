@@ -13,15 +13,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     // Since all scenes dont take do the worst scenario, more will be loaded. This just ensures the upper limit
     public class SceneLoadingMemoryConstants
     {
-        private static readonly float RUNTIME_MEMORY_COEFFICENT = 1.1f;
-        public static float LOD_REDUCTION = 3;
-        public static float QUALITY_REDUCTED_LOD_REDUCTION = 30;
+        private const float RUNTIME_MEMORY_COEFFICENT = 1.1f;
+        public const float LOD_REDUCTION = 3;
+        public const float QUALITY_REDUCTED_LOD_REDUCTION = 30;
 
-        public static float MAX_SCENE_SIZE = 300 * RUNTIME_MEMORY_COEFFICENT;
-        public static float MAX_SCENE_LOD = (MAX_SCENE_SIZE / LOD_REDUCTION) + (MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION);
-        public static float MAX_SCENE_LOWQUALITY_LOD = MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION;
+        public const float MAX_SCENE_SIZE = 300 * RUNTIME_MEMORY_COEFFICENT;
+        public const float MAX_SCENE_LOD = (MAX_SCENE_SIZE / LOD_REDUCTION) + (MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION);
+        public const float MAX_SCENE_LOWQUALITY_LOD = MAX_SCENE_SIZE / QUALITY_REDUCTED_LOD_REDUCTION;
 
-        public static int LOW_MEMORY_RIG_THRESHOLD = 10_000;
-        public static int MEDIUM_MEMORY_RIGH_THRESHOLD = 17_000;
+        public const int LOW_MEMORY_RIG_THRESHOLD = 10_000;
+        public const int MEDIUM_MEMORY_RIGH_THRESHOLD = 17_000;
     }
 }
