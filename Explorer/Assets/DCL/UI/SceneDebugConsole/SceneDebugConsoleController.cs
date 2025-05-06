@@ -15,11 +15,11 @@ namespace DCL.UI.SceneDebugConsole
     {
         public delegate void ConsoleVisibilityChangedDelegate(bool isVisible);
 
-        private readonly ISceneDebugConsoleMessageBus logMessagesBus;
-        private readonly ISceneDebugConsoleLogHistory logHistory;
+        private readonly SceneDebugConsoleMessageBus logMessagesBus;
+        private readonly SceneDebugConsoleLogHistory logHistory;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
-        private readonly ISceneDebugConsoleCommandsBus consoleCommandsBus;
+        private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
         private readonly SceneDebugConsoleSettings consoleSettings;
 
         private bool isInputSelected;
@@ -47,11 +47,11 @@ namespace DCL.UI.SceneDebugConsole
 
         public SceneDebugConsoleController(
             ViewFactoryMethod viewFactory,
-            ISceneDebugConsoleMessageBus logMessagesBus,
-            ISceneDebugConsoleLogHistory logHistory,
+            SceneDebugConsoleMessageBus logMessagesBus,
+            SceneDebugConsoleLogHistory logHistory,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            ISceneDebugConsoleCommandsBus consoleCommandsBus,
+            SceneDebugConsoleCommandsBus consoleCommandsBus,
             SceneDebugConsoleSettings consoleSettings) : base(viewFactory)
         {
             this.logMessagesBus = logMessagesBus;

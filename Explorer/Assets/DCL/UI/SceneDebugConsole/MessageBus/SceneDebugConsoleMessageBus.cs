@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.UI.SceneDebugConsole.MessageBus
 {
-    public class SceneDebugConsoleMessageBus : ISceneDebugConsoleMessageBus
+    public class SceneDebugConsoleMessageBus
     {
         public event Action<SceneDebugConsoleLogMessage> MessageAdded;
 

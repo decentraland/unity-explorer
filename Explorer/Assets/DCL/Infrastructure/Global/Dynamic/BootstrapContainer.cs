@@ -56,7 +56,7 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-        public ISceneDebugConsoleMessageBus? SceneDebugConsoleMessageBus { get; private set; }
+        public SceneDebugConsoleMessageBus? SceneDebugConsoleMessageBus { get; private set; }
 
         public DecentralandEnvironment Environment { get; private set; }
 

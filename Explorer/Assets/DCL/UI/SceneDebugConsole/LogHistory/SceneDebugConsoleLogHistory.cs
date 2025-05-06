@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DCL.UI.SceneDebugConsole.LogHistory
 {
-    public class SceneDebugConsoleLogHistory : ISceneDebugConsoleLogHistory
+    public class SceneDebugConsoleLogHistory
     {
         private readonly List<SceneDebugConsoleLogMessage> logMessages = new();
         private readonly int maxLogMessages;

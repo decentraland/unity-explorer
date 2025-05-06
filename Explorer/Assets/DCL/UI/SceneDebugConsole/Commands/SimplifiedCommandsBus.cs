@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace DCL.UI.SceneDebugConsole.Commands
 {
-    public class SimplifiedCommandsBus : ISceneDebugConsoleCommandsBus
+    public class SimplifiedCommandsBus
     {
         private readonly Dictionary<string, Func<string[], string>> commands = new();
 

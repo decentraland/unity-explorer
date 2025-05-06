@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.UI.SceneDebugConsole.Commands
 {
-    public class SceneDebugConsoleCommandsBus : ISceneDebugConsoleCommandsBus
+    public class SceneDebugConsoleCommandsBus
     {
         private readonly Dictionary<string, CommandInfo> commands = new Dictionary<string, CommandInfo>();
 

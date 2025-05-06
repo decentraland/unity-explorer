@@ -1,5 +1,4 @@
-﻿using CommandTerminal;
-using System;
+﻿using System;
 using DCL.UI.SceneDebugConsole.MessageBus;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -8,9 +7,9 @@ namespace DCL.Diagnostics
 {
     public class SceneDebugConsoleReportHandler : ReportHandlerBase
     {
-        private readonly ISceneDebugConsoleMessageBus sceneDebugConsoleMessageBus;
+        private readonly SceneDebugConsoleMessageBus sceneDebugConsoleMessageBus;
 
-        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, ISceneDebugConsoleMessageBus sceneDebugConsoleMessageBus, bool debounceEnabled) : base(matrix, debounceEnabled)
+        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, SceneDebugConsoleMessageBus sceneDebugConsoleMessageBus, bool debounceEnabled) : base(matrix, debounceEnabled)
         {
             this.sceneDebugConsoleMessageBus = sceneDebugConsoleMessageBus;
         }

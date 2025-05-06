@@ -29,7 +29,7 @@ namespace DCL.Diagnostics
             Sentry?.AddScopeConfigurator(configureScope);
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, ISceneDebugConsoleMessageBus? sceneDebugConsoleMessageBus = null, params (ReportHandler, IReportHandler)[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, SceneDebugConsoleMessageBus? sceneDebugConsoleMessageBus = null, params (ReportHandler, IReportHandler)[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
@@ -62,7 +62,7 @@ namespace DCL.Diagnostics
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler };
         }
 
-        private static void AddSceneDebugConsoleReportHandler(List<(ReportHandler, IReportHandler)> handlers, ISceneDebugConsoleMessageBus sceneDebugConsoleMessageBus)
+        private static void AddSceneDebugConsoleReportHandler(List<(ReportHandler, IReportHandler)> handlers, SceneDebugConsoleMessageBus sceneDebugConsoleMessageBus)
         {
             var jsOnlyMatrix = new CategorySeverityMatrix();
 
