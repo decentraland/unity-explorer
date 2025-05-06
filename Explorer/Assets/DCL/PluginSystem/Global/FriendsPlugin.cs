@@ -187,7 +187,7 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager
-                );
+            );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
 
@@ -247,6 +247,7 @@ namespace DCL.PluginSystem.Global
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
             friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
+
             // Fire and forget as this task will never finish
             friendsService!.SubscribeToIncomingFriendshipEventsAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
 
@@ -284,7 +285,7 @@ namespace DCL.PluginSystem.Global
 
         private bool IsConnectivityStatusEnabled() =>
             appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-                || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
+            || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
 
         private void OnRPCClientReconnected()
         {
@@ -305,6 +306,7 @@ namespace DCL.PluginSystem.Global
                     friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
 
                 friendsPanelController?.Reset();
+            }
         }
     }
 
