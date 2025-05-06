@@ -2918,6 +2918,26 @@
             <param name="archetype">Its new <see cref="F:Arch.Core.EntityData.Archetype"/>.</param>
             <param name="slot">Its new <see cref="F:Arch.Core.EntityData.Slot"/>.</param>
         </member>
+        <member name="M:Arch.Core.EntityData.Equals(Arch.Core.EntityData)">
+            <summary>
+                Returns true if its equal to the passed instance.
+            </summary>
+            <param name="other">The other instance.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.Core.EntityData.Equals(System.Object)">
+            <summary>
+                Returns true if its equal to the passed instance.
+            </summary>
+            <param name="obj">The other instance.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.Core.EntityData.GetHashCode">
+            <summary>
+                Returns the hashcode of this instance.
+            </summary>
+            <returns>The hashcode.</returns>
+        </member>
         <member name="T:Arch.Core.EntityInfoStorage">
             <summary>
                 The <see cref="T:Arch.Core.EntityInfoStorage"/> class
