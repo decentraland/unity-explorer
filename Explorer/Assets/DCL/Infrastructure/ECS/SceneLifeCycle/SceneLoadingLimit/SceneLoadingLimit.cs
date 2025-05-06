@@ -106,6 +106,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 initialKey = SceneLimitsKey.MEDIUM_MEMORY;
             else
                 initialKey = SceneLimitsKey.MAX_MEMORY;
+
+            //We reset any possible transition and let it reacomodate again
+            currentSceneLimits = constantSceneLimits[initialKey];
+            sceneTransitionState = SceneTransitionState.NORMAL;
+            currentTransitionFrames = 0;
         }
 
 
