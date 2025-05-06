@@ -506,22 +506,12 @@ MonoBehaviour:
       Severity: 1
     - Category: WEARABLE
       Severity: 1
-    - Category: CHAT_HISTORY
+    - Category: MARKETPLACE_CREDITS
       Severity: 0
-    - Category: CHAT_HISTORY
+    - Category: MARKETPLACE_CREDITS
       Severity: 4
-    - Category: CHAT_HISTORY
+    - Category: MARKETPLACE_CREDITS
       Severity: 1
-    - Category: CHAT_CONVERSATIONS
-      Severity: 0
-    - Category: CHAT_CONVERSATIONS
-      Severity: 4
-    - Category: CHAT_CONVERSATIONS
-      Severity: 1
-    - Category: CHAT_CONVERSATIONS
-      Severity: 2
-    - Category: CHAT_CONVERSATIONS
-      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1

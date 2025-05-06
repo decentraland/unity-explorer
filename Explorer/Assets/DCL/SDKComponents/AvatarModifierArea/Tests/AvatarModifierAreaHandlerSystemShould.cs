@@ -102,6 +102,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             {
                 Area = areaSize,
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, component);
@@ -142,6 +146,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 Area = areaSize,
                 ExcludeIds = { excludedId },
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, component);
@@ -169,6 +177,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             {
                 Area = areaSize,
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, component);
@@ -217,6 +229,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                     Z = 8.66f,
                 },
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, pbComponent);
@@ -302,6 +318,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 },
                 ExcludeIds = { avatar1ExcludedId },
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, pbComponent);
@@ -335,6 +355,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 },
                 ExcludeIds = { avatar2ExcludedId },
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Set(triggerAreaEntity, pbComponent);
@@ -371,6 +395,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                     Z = 8.66f,
                 },
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, pbComponent);
@@ -419,6 +447,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                     Z = 8.66f,
                 },
                 IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                },
             };
 
             world.Add(triggerAreaEntity, pbComponent);

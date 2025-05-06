@@ -3,16 +3,20 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
-using ECS.SceneLifeCycle.CurrentScene;
 using Global.Versioning;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
+using UnityEngine.UIElements;
+using Utility.Types;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -26,7 +30,6 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
-
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
         private DebugWidgetVisibilityBinding performanceVisibilityBinding;
@@ -39,6 +42,8 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> gpuFrameTime;
         private ElementBinding<string> cpuFrameTime;
+        private ElementBinding<string> physicsDeltaTime;
+        private ElementBinding<string> physicsSimulate;
         private ElementBinding<string> cpuMainThreadFrameTime;
         private ElementBinding<string> cpuMainThreadPresentWaitTime;
         private ElementBinding<string> cpuRenderThreadFrameTime;
@@ -63,7 +68,7 @@ namespace DCL.Profiling.ECS
         private bool sceneMetricsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
-            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion)
+            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings)
             : base(world)
         {
             this.realmData = realmData;
@@ -84,6 +89,11 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Max FPS last 1k frames:", maxfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty))
+
+                            .AddControl(new DebugDropdownDef(CreatePhysicsModeBinding(adaptivePhysicsSettings), "Physics Mode"), null)
+                            .AddCustomMarker("Physics deltaTime:", physicsDeltaTime = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Physics Simulations in 10 frames", physicsSimulate = new ElementBinding<string>(string.Empty))
+
                             .AddToggleField("Enable Bottleneck detector", evt => frameTimingsEnabled = evt.newValue, frameTimingsEnabled)
                             .AddCustomMarker("GPU:", gpuFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU:", cpuFrameTime = new ElementBinding<string>(string.Empty))
@@ -91,6 +101,7 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
+
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -118,6 +129,34 @@ namespace DCL.Profiling.ECS
             }
         }
 
+        private static IndexedElementBinding CreatePhysicsModeBinding(AdaptivePhysicsSettings adpativePhysicsSettings)
+        {
+            const float UNITY_DEFAULT_FIXED_DELTA_TIME = 0.02f;
+
+            return new IndexedElementBinding(
+                Enum.GetNames(typeof(PhysSimulationMode)).ToList(),
+                adpativePhysicsSettings.Mode.ToString(),
+                evt =>
+                {
+                    if (Enum.TryParse(evt.value, out PhysSimulationMode mode))
+                        switch (mode)
+                        {
+                            case PhysSimulationMode.DEFAULT:
+                            case PhysSimulationMode.ADAPTIVE:
+                                adpativePhysicsSettings.Mode = mode;
+                                Physics.simulationMode = SimulationMode.FixedUpdate;
+                                UnityEngine.Time.fixedDeltaTime = UNITY_DEFAULT_FIXED_DELTA_TIME;
+                                break;
+                            case PhysSimulationMode.MANUAL:
+                                adpativePhysicsSettings.Mode = mode;
+                                Physics.simulationMode = SimulationMode.Script;
+                                break;
+                            default: throw new ArgumentOutOfRangeException();
+                        }
+                }
+            );
+        }
+
         protected override void Update(float t)
         {
             if (!realmData.Configured) return;
@@ -133,6 +172,9 @@ namespace DCL.Profiling.ECS
             if (performanceVisibilityBinding.IsExpanded)
             {
                 SetFPS(fps, (long)profiler.LastFrameTimeValueNs);
+
+                physicsDeltaTime.Value = (UnityEngine.Time.fixedDeltaTime / MILISEC_TO_SEC).ToString("F2", CultureInfo.InvariantCulture);
+                physicsSimulate.Value = profiler.PhysicsSimulationsAvgInTenFrames.ToString("F2", CultureInfo.InvariantCulture);
 
                 if (framesSinceMetricsUpdate > FRAME_STATS_COOLDOWN)
                 {

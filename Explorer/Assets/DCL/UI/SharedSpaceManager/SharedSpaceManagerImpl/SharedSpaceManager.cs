@@ -155,6 +155,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.EmotesWheel:
                     case PanelsSharingSpace.Explore:
                     case PanelsSharingSpace.SidebarProfile:
+                    case PanelsSharingSpace.MarketplaceCredits:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {

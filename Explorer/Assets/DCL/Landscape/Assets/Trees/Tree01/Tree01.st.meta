@@ -37,14 +37,23 @@ SpeedTreeImporter:
       assembly: UnityEngine.CoreModule
       name: Trunk_LOD2
     second: {fileID: 2100000, guid: 8336fb9305a3c064088d0ef2283f9984, type: 2}
-  serializedVersion: 6
+  serializedVersion: 7
   mainColor: {r: 1, g: 1, b: 1, a: 1}
   hueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}
   alphaTestRef: 0.33
+  enableHueVariation: 0
+  enableBumpMapping: 1
+  enableSubsurfaceScattering: 1
   bestWindQuality: 4
+  selectedWindQuality: 4
+  enableShadowCasting: 1
+  enableShadowReceiving: 1
+  enableLightProbes: 1
+  reflectionProbeEnumValue: 1
   hasBillboard: 1
   lODSettings:
-  - height: 0.24701981
+  - enableSettingOverride: 1
+    height: 0.24701981
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
@@ -53,7 +62,8 @@ SpeedTreeImporter:
     enableHue: 1
     enableSubsurface: 1
     windQuality: 4
-  - height: 0.09737358
+  - enableSettingOverride: 1
+    height: 0.09737358
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
@@ -62,7 +72,8 @@ SpeedTreeImporter:
     enableHue: 1
     enableSubsurface: 1
     windQuality: 4
-  - height: 0.03185618
+  - enableSettingOverride: 1
+    height: 0.03185618
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
@@ -71,7 +82,8 @@ SpeedTreeImporter:
     enableHue: 1
     enableSubsurface: 1
     windQuality: 4
-  - height: 0.0043757865
+  - enableSettingOverride: 1
+    height: 0.0043757865
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 0
@@ -85,6 +97,10 @@ SpeedTreeImporter:
   billboardTransitionCrossFadeWidth: 0.25
   fadeOutWidth: 0.25
   scaleFactor: 0.3048
+  unitConversionEnumValue: 1
+  motionVectorModeEnumValue: 1
+  generateColliders: 1
+  generateRigidbody: 1
   materialVersion: 3
   materialLocation: 1
   fileIDType: 2

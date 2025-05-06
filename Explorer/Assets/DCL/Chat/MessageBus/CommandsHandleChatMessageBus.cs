@@ -52,7 +52,7 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, string message)
         {
-            string[] split = message.Split(' ');
+            string[] split = message.Replace(", ", ",").Split(' '); // Split by space but keep commas
             string userCommand = split[0][1..];
             string[] parameters = new ArraySegment<string>(split, 1, split.Length - 1).ToArray()!;
 

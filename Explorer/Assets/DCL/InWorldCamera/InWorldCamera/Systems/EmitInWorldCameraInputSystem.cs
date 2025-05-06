@@ -12,13 +12,13 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class EmitInWorldCameraInputSystem : BaseUnityLoopSystem
     {
-        public const string SOURCE_SHORTCUT = "Shortcut";
+        private const string SOURCE_SHORTCUT = "Shortcut";
 
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
 
-        public EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
+        private EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
             this.inputSchema = inputSchema;
         }
