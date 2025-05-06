@@ -67,7 +67,8 @@ namespace DCL.RealmNavigation
                 realmNavigatorDebugView,
                 localSceneDevelopment,
                 assetBundleRegistry,
-                appArgs
+                appArgs,
+                urlsSource
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);

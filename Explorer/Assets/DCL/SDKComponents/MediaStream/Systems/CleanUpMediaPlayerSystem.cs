@@ -40,6 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
+        [All(typeof(VideoTextureConsumer))]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
         private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {

@@ -29,13 +29,6 @@ namespace DCL.SDKComponents.AudioSources
                 audioSource.spatialBlend = pbAudioSource.Global ? 0 : 1;
             else
                 audioSource.spatialBlend = 1;
-
-            if (audioSource.clip == null) return;
-
-            audioSource.Stop();
-
-            if (pbAudioSource.HasPlaying && pbAudioSource.Playing)
-                audioSource.Play();
         }
 
         public static float GetVolume(this PBAudioSource pbAudioSource) =>
