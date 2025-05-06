@@ -108,6 +108,7 @@ namespace DCL.Notifications
 
                 unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
+                // TODO remove allocation of List on serialization
                 List<INotification> notifications =
                     await webRequestController.GetAsync(
                                                    commonArguments,
@@ -117,8 +118,10 @@ namespace DCL.Notifications
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
-                if (notifications.Count > 0)
-                    lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+                if (notifications.Count == 0)
+                    continue;
+
+                lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
 
                 using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
