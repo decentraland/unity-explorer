@@ -207,7 +207,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(friendRequestController);
 
             var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
-                friendsConnectivityStatusTracker, viewDependencies);
+                friendsConnectivityStatusTracker, viewDependencies, loadingStatus);
 
             mvcManager.RegisterController(friendPushNotificationController);
 
