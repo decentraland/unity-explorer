@@ -248,7 +248,7 @@ namespace DCL.UI.SceneDebugConsole
         {
             /*Canvas.ForceUpdateCanvases();
             logScrollRect.normalizedPosition = new Vector2(0, 0);*/
-            logMessageViewer.ShowLastMessage();
+            // logMessageViewer.ShowLastMessage();
         }
 
         public void OnPointerEnter(PointerEventData eventData)

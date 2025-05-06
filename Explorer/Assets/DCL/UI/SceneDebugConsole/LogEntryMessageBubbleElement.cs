@@ -34,7 +34,7 @@ namespace DCL.UI.SceneDebugConsole
         /// <param name="data"> a SceneDebugConsoleLogMessage </param>
         public void SetMessageData(SceneDebugConsoleLogMessage data)
         {
-            messageContentElement.SetMessageContent(data.Message);
+            messageContentElement.SetMessageContent(data);
         }
     }
 }

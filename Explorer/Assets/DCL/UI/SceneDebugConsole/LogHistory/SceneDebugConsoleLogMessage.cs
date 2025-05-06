@@ -12,6 +12,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         CommandResponse
     }
 
+    // TODO: Maybe better if it's a struct??
     public class SceneDebugConsoleLogMessage
     {
         /// <summary>
@@ -34,31 +35,35 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         /// </summary>
         public DateTime Timestamp { get; }
 
+        /// <summary>
+        /// Color based on LogMessageType
+        /// </summary>
+        public Color Color { get; }
+
         public SceneDebugConsoleLogMessage(LogMessageType type, string message, string stackTrace = "")
         {
             Type = type;
             StackTrace = stackTrace;
             Timestamp = DateTime.Now;
 
-            // Set color based on message type
-            /*switch (logMessage.Type)
+            switch (type)
             {
-                case LogMessageType.Log:
-                    entryView.SetTextColor(consoleSettings.LogColor);
-                    break;
                 case LogMessageType.Warning:
-                    entryView.SetTextColor(consoleSettings.WarningColor);
+                    Color = Color.yellow;
                     break;
                 case LogMessageType.Error:
-                    entryView.SetTextColor(consoleSettings.ErrorColor);
+                    Color = Color.red;
                     break;
                 case LogMessageType.Command:
-                    entryView.SetTextColor(consoleSettings.CommandColor);
+                    Color = Color.cyan;
                     break;
                 case LogMessageType.CommandResponse:
-                    entryView.SetTextColor(consoleSettings.CommandResponseColor);
+                    Color = Color.green;
                     break;
-            }*/
+                default: // Log
+                    Color = Color.white;
+                    break;
+            }
 
             Message = $"[{Timestamp:HH:mm:ss}] [{type}] {message}";
         }

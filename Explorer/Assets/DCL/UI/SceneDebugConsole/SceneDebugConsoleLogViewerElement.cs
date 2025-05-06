@@ -56,11 +56,7 @@ namespace DCL.UI.SceneDebugConsole
         /// <summary>
         /// Gets or sets whether the UI is visible.
         /// </summary>
-        public bool IsVisible
-        {
-            get => loopList.gameObject.activeInHierarchy;
-            set => loopList.gameObject.SetActive(value);
-        }
+        public bool IsVisible;
 
         /// <summary>
         /// Initializes the UI element.
@@ -82,7 +78,7 @@ namespace DCL.UI.SceneDebugConsole
             logMessages = messages;
 
             // Only update the list count if the view is active, otherwise RefreshLogs on enable/toggle will handle it
-            if (loopList.gameObject.activeInHierarchy)
+            if (IsVisible)
             {
                 int currentCount = loopList.ItemTotalCount >= 0 ? loopList.ItemTotalCount : 0;
                 bool resetScroll = messages.Count < currentCount; // Reset scroll if source shrank
@@ -118,7 +114,7 @@ namespace DCL.UI.SceneDebugConsole
         /// </summary>
         public void RefreshLogs()
         {
-            if (logMessages == null || !loopList.gameObject.activeInHierarchy) return; // Don't refresh if data is not set or list not ready/visible
+            if (logMessages == null || !IsVisible) return; // Don't refresh if data is not set or list not ready/visible
 
             int logMessagesCount = logMessages.Count;
             int currentItemTotalCount = loopList.ItemTotalCount;
