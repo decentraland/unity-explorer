@@ -81,8 +81,7 @@ namespace DCL.PluginSystem.World
                 worldVolumeMacBus,
                 exposedCameraData,
                 videoPrioritizationSettings,
-                roomHub,
-                featureFlagsCache
+                roomHub
             );
         }
 
