@@ -178,6 +178,7 @@ namespace DCL.Chat
         private bool isMemberListCountDirty;
         private int memberListCount;
         private ILoadingStatus loadingStatus;
+        private bool isChatUnfolded;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -269,16 +270,18 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => panelBackgroundCanvasGroup.gameObject.activeInHierarchy;
+            get => isChatUnfolded;
 
             set
             {
-                if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
+                if (value == isChatUnfolded)
                     return;
 
                 memberListView.IsVisible = false;
                 panelBackgroundCanvasGroup.gameObject.SetActive(value);
                 chatMessageViewer.IsVisible = value;
+
+                isChatUnfolded = value;
 
                 if (!value)
                 {
