@@ -171,8 +171,7 @@ namespace DCL.Passport.Modules
         {
             ClearLoadingItems();
 
-            HashSet<string> hidesList = Wearable.ComposeHiddenCategories(currentProfile.Avatar.BodyShape, gridWearables);
-            HashSet<string> forceRenderList = new HashSet<string>(currentProfile.Avatar.ForceRender);
+            HashSet<string> hidesList = Wearable.ComposeHiddenCategories(currentProfile.Avatar.BodyShape, gridWearables, currentProfile.Avatar.ForceRender);
             var elementsAddedInTheGird = 0;
 
             foreach (IWearable wearable in gridWearables)
@@ -181,7 +180,7 @@ namespace DCL.Passport.Modules
                     continue;
 
                 string wearableCategory = wearable.GetCategory();
-                if (hidesList.Contains(wearableCategory) && !forceRenderList.Contains(wearableCategory))
+                if (hidesList.Contains(wearableCategory))
                     continue;
 
                 string rarityName = wearable.GetRarity();
