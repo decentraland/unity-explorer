@@ -43,7 +43,7 @@ namespace DCL.UI.SceneDebugConsole
         private Button clearButton;
 
         [SerializeField]
-        private GameObject consolePanel;
+        private CanvasGroup consolePanelCanvasGroup;
 
         [SerializeField]
         private Button scrollToBottomButton;
@@ -101,14 +101,16 @@ namespace DCL.UI.SceneDebugConsole
         /// </summary>
         public bool IsUnfolded
         {
-            get => consolePanel.activeSelf;
+            get => consolePanelCanvasGroup.alpha.Equals(1f);
 
             set
             {
-                if (value == consolePanel.activeSelf)
+                if (consolePanelCanvasGroup.alpha.Equals(value ? 1f : 0f))
                     return;
 
-                consolePanel.SetActive(value);
+                consolePanelCanvasGroup.alpha = value ? 1f : 0f;
+                consolePanelCanvasGroup.interactable = value;
+                consolePanelCanvasGroup.blocksRaycasts = value;
                 logMessageViewer.IsVisible = value;
 
                 if (value)
@@ -196,7 +198,8 @@ namespace DCL.UI.SceneDebugConsole
 
         public void RefreshLogs()
         {
-            logMessageViewer.RefreshMessages();
+            UnityEngine.Debug.Log($"PRAVS - View.RefreshLogs()");
+            logMessageViewer.RefreshLogs();
             // SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
         }
 

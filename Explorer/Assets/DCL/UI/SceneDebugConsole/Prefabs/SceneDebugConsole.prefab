@@ -624,13 +624,14 @@ GameObject:
   - component: {fileID: 7595064321916154549}
   - component: {fileID: 7035679524717394722}
   - component: {fileID: 4768138888778769248}
+  - component: {fileID: 5372491217721492551}
   m_Layer: 5
   m_Name: LayoutGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7595064321916154549
 RectTransform:
   m_ObjectHideFlags: 0
@@ -686,6 +687,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2005259943882826106}
   m_CullTransparentMesh: 1
+--- !u!225 &5372491217721492551
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2005259943882826106}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &2015152358153684158
 GameObject:
   m_ObjectHideFlags: 0
@@ -1058,10 +1071,10 @@ RectTransform:
   - {fileID: 8211434791048164212}
   m_Father: {fileID: 7595064321916154549}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 5, y: -805}
-  m_SizeDelta: {x: 1540, y: 800}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &2476352842357418747
 CanvasRenderer:
@@ -1229,7 +1242,7 @@ RectTransform:
   m_Father: {fileID: 2790960427151685269}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1312,7 +1325,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 1}
-  m_SizeDelta: {x: 0, y: 40}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &1598492517005031006
 CanvasRenderer:
@@ -1524,7 +1537,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: -795}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!225 &4191034874546973006
 CanvasGroup:
@@ -1860,10 +1873,10 @@ RectTransform:
   - {fileID: 6069510417010297823}
   m_Father: {fileID: 7595064321916154549}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 5, y: -851}
-  m_SizeDelta: {x: 1540, y: 46}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &7174269600272249469
 CanvasRenderer:
@@ -2071,15 +2084,7 @@ MonoBehaviour:
     mPadding: 4
     mInitCreateCount: 3
     mStartPosOffset: 0
-  - mItemPrefab: {fileID: 3875157040883307976}
-    mPadding: 4
-    mInitCreateCount: 2
-    mStartPosOffset: 0
-  - mItemPrefab: {fileID: 1823520394044014357, guid: 1b4c7601aebf5ee4a93458e183292915, type: 3}
-    mPadding: 8
-    mInitCreateCount: 1
-    mStartPosOffset: 0
-  mArrangeType: 0
+  mArrangeType: 1
   mSupportScrollBar: 1
   mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
@@ -2096,10 +2101,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4668935e1d0d47dc86f3493687310d1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logEntriesFadeTime: 3
-  logEntriesWaitBeforeFading: 10000
-  scrollbarCanvasGroup: {fileID: 3440437672233669333}
-  logEntriesCanvasGroup: {fileID: 4191034874546973006}
   loopList: {fileID: 6671003195211882300}
   scrollRect: {fileID: 3397229834474510796}
 --- !u!1 &8242090098976053527
@@ -2290,11 +2291,8 @@ MonoBehaviour:
   inputField: {fileID: 3303684574617829340}
   togglePanelButton: {fileID: 7533817777533828581}
   logMessageViewer: {fileID: 1318046728020079166}
-  logScrollRect: {fileID: 3397229834474510796}
-  logContentTransform: {fileID: 6334738306198345799}
-  logEntryPrefab: {fileID: 7324587687337436852, guid: 32d1a44a8af8d4251b59127dc5d4ef29, type: 3}
   clearButton: {fileID: 0}
-  consolePanel: {fileID: 2005259943882826106}
+  consolePanelCanvasGroup: {fileID: 5372491217721492551}
   scrollToBottomButton: {fileID: 905818817793794684}
   scrollToBottomNumberText: {fileID: 1163320548587618039}
   scrollToBottomCanvasGroup: {fileID: 1816663618216097524}
