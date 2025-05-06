@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -15,13 +14,15 @@ namespace DCL.Chat
     public class ChatTitleBarView : MonoBehaviour, IViewWithGlobalDependencies
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
+        public delegate void DeleteChatHistoryRequestedDelegate();
 
         public event Action? CloseChatButtonClicked;
         public event Action? CloseMemberListButtonClicked;
         public event Action? HideMemberListButtonClicked;
         public event Action? ShowMemberListButtonClicked;
-        public event VisibilityChangedDelegate? ChatBubblesVisibilityChanged;
+
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
+        public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
         [SerializeField] private Button closeChatButton;
         [SerializeField] private Button closeMemberListButton;
@@ -44,11 +45,24 @@ namespace DCL.Chat
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
 
-
         private ViewDependencies viewDependencies;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
+
+        /// <summary>
+        /// Gets the button that is currently available for folding the chat panel. The titlebar may change depending on whether the Member List is visible or not.
+        /// </summary>
+        public Button CurrentTitleBarCloseButton
+        {
+            get
+            {
+                if (closeChatButton.gameObject.activeInHierarchy)
+                    return closeChatButton;
+                else
+                    return closeMemberListButton;
+            }
+        }
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -112,8 +126,17 @@ namespace DCL.Chat
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
 
-            // TODO: Will be resurrected soon
-            //viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(chatBubblesVisibility, openContextMenuButton.transform.position, chatOptionsContextMenuData, OnToggleChatBubblesValueChanged, OnContextMenuClosed, contextMenuTask.Task).Forget();
+            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
+        }
+
+        private void OnDeleteChatHistoryButtonClicked()
+        {
+            DeleteChatHistoryRequested?.Invoke();
+        }
+
+        private void OnContextMenuClosed()
+        {
+            ContextMenuVisibilityChanged?.Invoke(false);
         }
 
         private void OnCloseMemberListButtonClicked()

@@ -24,16 +24,14 @@ namespace MVC
 
         UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null);
 
-        UniTaskVoid ShowChatContextMenuAsync(bool chatBubblesVisibility, Vector3 transformPosition, ChatOptionsContextMenuData data, Action<bool> onToggleChatBubblesVisibility, Action onContextMenuHide, UniTask closeMenuTask);
+        UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask);
     }
 
     [Serializable]
     public struct ChatOptionsContextMenuData
     {
-        public string ChatBubblesToggleText;
-        public Sprite ChatBubblesToggleIcon;
-        public string PinChatToggleText;
-        public Sprite PinChatToggleTextIcon;
+        public string DeleteChatHistoryText;
+        public Sprite DeleteChatHistoryIcon;
     }
 
     public enum MenuAnchorPoint

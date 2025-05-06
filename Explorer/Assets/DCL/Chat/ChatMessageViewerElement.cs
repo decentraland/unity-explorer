@@ -226,6 +226,14 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Removes the visual representation of all the messages.
+        /// </summary>
+        public void ClearMessages()
+        {
+            loopList.SetListItemCount(0);
+        }
+
+        /// <summary>
         /// Plays an animation that makes all chat entries opaque.
         /// </summary>
         public void StopChatEntriesFadeout()

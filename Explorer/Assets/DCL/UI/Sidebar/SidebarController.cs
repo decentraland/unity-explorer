@@ -106,7 +106,7 @@ namespace DCL.UI.Sidebar
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
-            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClickedAsync);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
 
             if (includeCameraReel)
@@ -184,9 +184,9 @@ namespace DCL.UI.Sidebar
 
         #region Sidebar button handlers
 
-        private void OnUnreadMessagesButtonClickedAsync()
+        private void OnUnreadMessagesButtonClicked()
         {
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true)).Forget();
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true)).Forget();
         }
 
         private async void OnEmotesWheelButtonClickedAsync()
