@@ -26,7 +26,7 @@ namespace DCL.Interaction.Utility
             World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             Vector3 sceneRootPos, in TransformComponent entityTransform, out Ray ray)
         {
-            Vector3 rayOrigin = entityTransform.Cached.WorldPosition + sdkRaycast.OriginOffset;
+            Vector3 rayOrigin = entityTransform.Transform.position + sdkRaycast.OriginOffset;
             Vector3 rayDirection;
 
             switch (sdkRaycast.DirectionCase)
