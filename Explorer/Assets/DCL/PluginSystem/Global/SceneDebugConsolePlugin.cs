@@ -17,23 +17,23 @@ namespace DCL.PluginSystem.Global
     public class SceneDebugConsolePlugin : IDCLGlobalPlugin<SceneDebugConsolePluginSettings>
     {
         private readonly IMVCManager mvcManager;
-        private readonly ISceneDebugConsoleLogHistory logHistory;
-        private readonly ISceneDebugConsoleMessageBus logMessagesBus;
+        private readonly SceneDebugConsoleLogHistory logHistory;
+        private readonly SceneDebugConsoleMessageBus logMessagesBus;
         private readonly IInputBlock inputBlock;
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
-        private readonly ISceneDebugConsoleCommandsBus consoleCommandsBus;
+        private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
 
         private SceneDebugConsoleController sceneDebugConsoleController;
 
         public SceneDebugConsolePlugin(
             IMVCManager mvcManager,
-            ISceneDebugConsoleMessageBus logMessagesBus,
-            ISceneDebugConsoleLogHistory logHistory,
+            SceneDebugConsoleMessageBus logMessagesBus,
+            SceneDebugConsoleLogHistory logHistory,
             MainUIView mainUIView,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            ISceneDebugConsoleCommandsBus consoleCommandsBus)
+            SceneDebugConsoleCommandsBus consoleCommandsBus)
         {
             this.mvcManager = mvcManager;
             this.logHistory = logHistory;
