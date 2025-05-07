@@ -212,7 +212,7 @@ namespace DCL.Chat
             HideScrollButtons(true);
         }
 
-        private void OnScrollViewValueChanged(Vector2 arg0)
+        private void OnScrollViewValueChanged(Vector2 _)
         {
             UpdateScrollButtonsVisibility();
         }
