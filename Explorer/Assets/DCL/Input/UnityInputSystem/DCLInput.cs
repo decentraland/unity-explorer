@@ -122,7 +122,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Sprint"",
                     ""type"": ""Button"",
                     ""id"": ""b97def14-0c7a-4e22-b282-22cba6574905"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -231,6 +231,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""type"": ""Button"",
                     ""id"": ""a3ed5c0d-172e-4ab9-a535-f8e98033e3e9"",
                     ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Any"",
+                    ""type"": ""Button"",
+                    ""id"": ""8b77b21d-efa3-4349-9296-665bb829d784"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3753,6 +3762,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionBackward = m_Player.FindAction("ActionBackward", throwIfNotFound: true);
         m_Player_ActionRight = m_Player.FindAction("ActionRight", throwIfNotFound: true);
         m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
+        m_Player_Any = m_Player.FindAction("Any", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -3953,6 +3963,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionBackward;
     private readonly InputAction m_Player_ActionRight;
     private readonly InputAction m_Player_ActionLeft;
+    private readonly InputAction m_Player_Any;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -4029,6 +4040,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @ActionLeft => m_Wrapper.m_Player_ActionLeft;
         /// <summary>
+        /// Provides access to the underlying input action "Player/Any".
+        /// </summary>
+        public InputAction @Any => m_Wrapper.m_Player_Any;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -4102,6 +4117,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionLeft.started += instance.OnActionLeft;
             @ActionLeft.performed += instance.OnActionLeft;
             @ActionLeft.canceled += instance.OnActionLeft;
+            @Any.started += instance.OnAny;
+            @Any.performed += instance.OnAny;
+            @Any.canceled += instance.OnAny;
         }
 
         /// <summary>
@@ -4161,6 +4179,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionLeft.started -= instance.OnActionLeft;
             @ActionLeft.performed -= instance.OnActionLeft;
             @ActionLeft.canceled -= instance.OnActionLeft;
+            @Any.started -= instance.OnAny;
+            @Any.performed -= instance.OnAny;
+            @Any.canceled -= instance.OnAny;
         }
 
         /// <summary>
@@ -5834,6 +5855,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnActionLeft(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Any" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAny(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

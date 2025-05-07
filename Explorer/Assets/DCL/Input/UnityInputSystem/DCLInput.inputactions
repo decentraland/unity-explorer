@@ -36,7 +36,7 @@
                     "name": "Sprint",
                     "type": "Button",
                     "id": "b97def14-0c7a-4e22-b282-22cba6574905",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -145,6 +145,15 @@
                     "type": "Button",
                     "id": "a3ed5c0d-172e-4ab9-a535-f8e98033e3e9",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Any",
+                    "type": "Button",
+                    "id": "8b77b21d-efa3-4349-9296-665bb829d784",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false

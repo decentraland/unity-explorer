@@ -29,10 +29,7 @@ namespace DCL.Interaction.Systems
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
-        //TODO FRAN: we must add a new type of InputAction to show the right click here,
-        //but we cant as these are SDK input actions, so we need to override this
-        // FUN
-        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip = new (HOVER_TOOLTIP, InputAction.IaRight);
+        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private Profile? currentProfileHovered;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
@@ -46,6 +43,7 @@ namespace DCL.Interaction.Systems
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
             this.menusAccessFacade = menusAccessFacade;
+            viewProfileTooltip = new (HOVER_TOOLTIP, dclInput.Player.RightPointer);
 
             dclInput.Player.RightPointer!.performed += OpenContextMenu;
         }
@@ -99,10 +97,10 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            contextMenuTask?.TrySetResult();
+            contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
 
             menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, Vector2.zero, CancellationToken.None, contextMenuTask.Task);
-        } 
+        }
     }
 }

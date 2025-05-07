@@ -47,6 +47,9 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             // Down tooltips should be shown only if a key of interest is not down yet
             // Up tooltips should be shown only if a key of interest is down
 
+            if (!sdkInputActionsMap.TryGetValue(pointerEventEntry.EventInfo.Button, out UnityEngine.InputSystem.InputAction unityInputAction))
+                return false;
+
             if (pointerEventEntry.EventInfo.Button == InputAction.IaAny)
             {
                 switch (anyButtonIsDown)
@@ -56,8 +59,6 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                         return false;
                 }
             }
-            else if (!sdkInputActionsMap.TryGetValue(pointerEventEntry.EventInfo.Button, out UnityEngine.InputSystem.InputAction unityInputAction))
-                return false;
             else
             {
                 switch (unityInputAction.IsPressed())
@@ -66,10 +67,10 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                     case false when pointerEventEntry.EventType != PointerEventType.PetDown:
                         return false;
                 }
+
             }
 
-            // Add the tooltip
-            hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, pointerEventEntry.EventInfo.Button));
+            hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, unityInputAction));
             return true;
         }
     }

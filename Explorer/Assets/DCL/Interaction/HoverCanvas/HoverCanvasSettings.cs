@@ -1,7 +1,8 @@
 ﻿using DCL.AssetsProvision;
-using DCL.ECSComponents;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using InputAction = DCL.ECSComponents.InputAction;
 
 namespace DCL.Interaction.HoverCanvas
 {
@@ -17,7 +18,7 @@ namespace DCL.Interaction.HoverCanvas
         [Serializable]
         public struct InputButtonSettings
         {
-            public InputAction InputAction;
+            public InputActionReference  PlayerInputAction;
 
             /// <summary>
             ///     TODO in the future it will be used as a localization key

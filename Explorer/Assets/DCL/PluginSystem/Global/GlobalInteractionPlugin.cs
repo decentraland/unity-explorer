@@ -100,6 +100,7 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaAction4, playerInput.ActionButton4 },
                 { InputAction.IaAction5, playerInput.ActionButton5 },
                 { InputAction.IaAction6, playerInput.ActionButton6 },
+                { InputAction.IaAny, playerInput.Any },
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);

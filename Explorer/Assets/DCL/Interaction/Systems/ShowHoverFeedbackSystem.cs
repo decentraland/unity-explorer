@@ -18,7 +18,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
     public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
-        private readonly Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
+        private readonly Dictionary<UnityEngine.InputSystem.InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
         private Vector2 cursorPositionPercent;
 
         internal ShowHoverFeedbackSystem(World world, UI.HoverCanvas hoverCanvasInstance,
@@ -26,10 +26,10 @@ namespace DCL.Interaction.HoverCanvas.Systems
         {
             this.hoverCanvasInstance = hoverCanvasInstance;
 
-            inputButtonSettingsMap = new Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings>(settings.Count);
+            inputButtonSettingsMap = new Dictionary<UnityEngine.InputSystem.InputAction, HoverCanvasSettings.InputButtonSettings>(settings.Count);
 
             foreach (HoverCanvasSettings.InputButtonSettings inputButtonSettings in settings)
-                inputButtonSettingsMap.Add(inputButtonSettings.InputAction, inputButtonSettings);
+                inputButtonSettingsMap.Add(inputButtonSettings.PlayerInputAction, inputButtonSettings);
         }
 
         protected override void Update(float t)
