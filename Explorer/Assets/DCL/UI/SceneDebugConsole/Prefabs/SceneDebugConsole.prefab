@@ -1325,7 +1325,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 1}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 40}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &1598492517005031006
 CanvasRenderer:
@@ -1856,7 +1856,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1115583169272015923
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1873,10 +1873,10 @@ RectTransform:
   - {fileID: 6069510417010297823}
   m_Father: {fileID: 7595064321916154549}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 5, y: -851}
+  m_SizeDelta: {x: 1540, y: 46}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &7174269600272249469
 CanvasRenderer:
@@ -2103,6 +2103,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   loopList: {fileID: 6671003195211882300}
   scrollRect: {fileID: 3397229834474510796}
+  IsVisible: 0
 --- !u!1 &8242090098976053527
 GameObject:
   m_ObjectHideFlags: 0
