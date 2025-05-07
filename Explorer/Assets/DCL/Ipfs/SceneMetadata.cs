@@ -17,6 +17,13 @@ namespace DCL.Ipfs
         public bool isPortableExperience;
         public WorldConfiguration? worldConfiguration;
         
+        /// <summary>
+        /// Is time set to be fixed in this scene?
+        /// </summary>
+        [JsonIgnore]
+        public bool IsTimeFixed
+            => worldConfiguration?.SkyboxConfig?.FixedTime.HasValue == true;
+        
         [JsonIgnore]
         public string OriginalJson { get; set; }
 

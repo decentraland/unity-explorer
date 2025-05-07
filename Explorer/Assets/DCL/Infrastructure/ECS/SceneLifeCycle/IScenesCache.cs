@@ -1,4 +1,5 @@
-﻿using DCL.Optimization.Pools;
+﻿using System;
+using DCL.Optimization.Pools;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,10 +8,10 @@ namespace ECS.SceneLifeCycle
 {
     public interface IScenesCache
     {
+        event Action<ISceneFacade?>? OnCurrentSceneChanged;
+        ISceneFacade? CurrentScene { get; }
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
-        ISceneFacade? CurrentScene { get; }
-
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
         void AddNonRealScene(IReadOnlyList<Vector2Int> parcels);
@@ -40,15 +41,27 @@ namespace ECS.SceneLifeCycle
 
     public class ScenesCache : IScenesCache
     {
+        public event Action<ISceneFacade?>? OnCurrentSceneChanged;
+        private ISceneFacade? currentScene;
+
+        public ISceneFacade? CurrentScene
+        {
+            get => currentScene;
+            private set
+            {
+                if (currentScene == value) return;
+                currentScene = value;
+                OnCurrentSceneChanged?.Invoke(currentScene);
+            }
+        }
+
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
         private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
-
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
-
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
-        public ISceneFacade? CurrentScene { get; private set; }
+        
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {

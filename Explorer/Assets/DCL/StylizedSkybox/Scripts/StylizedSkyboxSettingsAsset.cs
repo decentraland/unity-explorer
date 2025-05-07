@@ -15,6 +15,7 @@ namespace DCL.StylizedSkybox.Scripts
         public event Action<float> NormalizedTimeChanged;
         public event Action<bool> UseDynamicTimeChanged;
 
+        public float FixedTime { get; set; }
         private float normalizedTime;
 
         public float NormalizedTime
