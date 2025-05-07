@@ -12,6 +12,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 
         public IReadOnlyList<SceneDebugConsoleLogMessage> LogMessages => logMessages;
 
+        // TODO: Connect max log messages to existent setting
         public SceneDebugConsoleLogHistory(int maxLogMessages = 1000)
         {
             this.maxLogMessages = maxLogMessages;

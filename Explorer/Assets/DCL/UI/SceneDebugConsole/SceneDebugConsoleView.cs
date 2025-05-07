@@ -148,16 +148,16 @@ namespace DCL.UI.SceneDebugConsole
             this.consoleSettings = settings;
 
             togglePanelButton.onClick.AddListener(OnTogglePanelButtonClicked);
+
             // clearButton.onClick.AddListener(OnClearButtonClicked);
-            //
             // inputField.onSelect.AddListener(OnInputFieldSelected);
             // inputField.onDeselect.AddListener(OnInputFieldDeselected);
             // inputField.onSubmit.AddListener(OnInputFieldSubmit);
+
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
 
             logMessageViewer.Initialize();
             logMessageViewer.SetData(logMessages);
-            RefreshLogs();
         }
 
         private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
@@ -198,8 +198,9 @@ namespace DCL.UI.SceneDebugConsole
 
         public void RefreshLogs()
         {
-            UnityEngine.Debug.Log($"PRAVS - View.RefreshLogs()");
+            // UnityEngine.Debug.Log($"PRAVS - View.RefreshLogs()");
             logMessageViewer.RefreshLogs();
+
             // SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
         }
 
@@ -248,7 +249,7 @@ namespace DCL.UI.SceneDebugConsole
         {
             /*Canvas.ForceUpdateCanvases();
             logScrollRect.normalizedPosition = new Vector2(0, 0);*/
-            // logMessageViewer.ShowLastMessage();
+            logMessageViewer.ShowLastMessage();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
