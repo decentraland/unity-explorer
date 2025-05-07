@@ -107,5 +107,10 @@
         {
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
         }
+
+        public static class Settings
+        {
+            public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
+        }
     }
 }

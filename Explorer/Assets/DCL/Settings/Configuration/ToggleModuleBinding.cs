@@ -36,6 +36,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ISettingsModuleEventListener settingsEventListener,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
