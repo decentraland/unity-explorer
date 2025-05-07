@@ -13,6 +13,7 @@ namespace DCL.Minimap
         private const float TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER = 0.75f;
 
         private readonly ISceneRestrictionsView restrictionsView;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Dictionary<SceneRestrictions, int> restrictionsRegistry = new();
         private readonly Dictionary<SceneRestrictions, GameObject> restrictionsGameObjects = new();
         private readonly Dictionary<SceneRestrictions, string> restrictionsTexts = new()
@@ -27,6 +28,7 @@ namespace DCL.Minimap
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.restrictionsView = restrictionsView;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
 
             restrictionsView.OnPointerEnterEvent += OnMouseEnter;
             restrictionsView.OnPointerExitEvent += OnMouseExit;
@@ -48,6 +50,7 @@ namespace DCL.Minimap
         {
             restrictionsView.OnPointerEnterEvent -= OnMouseEnter;
             restrictionsView.OnPointerExitEvent -= OnMouseExit;
+            sceneRestrictionBusController.UnsubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         private void OnMouseEnter()
@@ -71,7 +74,7 @@ namespace DCL.Minimap
 
             restrictionsRegistry[sceneRestriction.Type] = currentRestrictionCounter;
 
-            restrictionsGameObjects[sceneRestriction.Type]?.SetActive(currentRestrictionCounter > 0);
+            restrictionsGameObjects[sceneRestriction.Type].SetActive(currentRestrictionCounter > 0);
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.SceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);

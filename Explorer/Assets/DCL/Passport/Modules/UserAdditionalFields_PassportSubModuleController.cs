@@ -12,7 +12,7 @@ namespace DCL.Passport.Modules
     public class UserAdditionalFields_PassportSubModuleController
     {
         private const int ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY = 11;
-        private const string EDITION_DROPDOWN_DEFAULT_OPTION = "-Select an option-";
+        private const string EDITION_DROPDOWN_DEFAULT_OPTION = "Select";
         private const string EDITION_PLACE_HOLDER = "Write here";
         private const string EDITION_PLACE_HOLDER_FOR_DATES = "DD/MM/YYYY";
 

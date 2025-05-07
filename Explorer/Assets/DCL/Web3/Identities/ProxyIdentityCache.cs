@@ -42,7 +42,21 @@ namespace DCL.Web3.Identities
                 IWeb3Identity? storedIdentity = storage.Identity;
 
                 if (storedIdentity != null)
+                {
+                    // Since an expired identity is like non having one at all
+                    // we return an invalid one to force the systems to not use it
+                    // as not all of them are validating its expiration
+                    if (storedIdentity.IsExpired)
+                    {
+                        // We also need to clear it, otherwise it produces inconsistencies
+                        // After re-login it was using an old identity
+                        storage.Clear();
+
+                        return null;
+                    }
+
                     memory.Identity = storedIdentity;
+                }
 
                 return memory.Identity;
             }

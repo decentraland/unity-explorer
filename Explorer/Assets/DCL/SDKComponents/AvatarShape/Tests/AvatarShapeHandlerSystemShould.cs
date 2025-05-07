@@ -7,6 +7,10 @@ using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.AvatarShape.Systems;
 using NUnit.Framework;
 using DCL.Character.Components;
+using DCL.Optimization.Pools;
+using NSubstitute;
+using SceneRunner.Scene;
+using UnityEngine;
 
 namespace ECS.Unity.AvatarShape.Tests
 {
@@ -17,7 +21,11 @@ namespace ECS.Unity.AvatarShape.Tests
         public void SetUp()
         {
             globalWorld = World.Create();
-            system = new AvatarShapeHandlerSystem(world, globalWorld);
+            IComponentPool<Transform> pool = Substitute.For<IComponentPool<Transform>>();
+            pool.Get().Returns(new GameObject().transform);
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);

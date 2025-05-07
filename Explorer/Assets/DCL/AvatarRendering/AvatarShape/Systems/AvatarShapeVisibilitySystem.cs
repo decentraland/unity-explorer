@@ -6,11 +6,14 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using DCL.Rendering.Avatar;
+using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -21,15 +24,26 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private SingleInstanceEntity camera;
         private Plane[] planes;
 
-        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature) : base(world)
+        private GameObject playerCamera;
+
+        private readonly float startFadeDithering;
+        private readonly float endFadeDithering;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+
+        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering) : base(world)
         {
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
             planes = new Plane[6];
+
+            this.startFadeDithering = startFadeDithering;
+            this.endFadeDithering = endFadeDithering;
         }
 
         public override void Initialize()
         {
             camera = World.CacheCamera();
+            playerCamera = camera.GetCameraComponent(World).Camera.gameObject;
         }
 
         protected override void Update(float t)
@@ -39,6 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
+            BlockAvatarsQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
             GetAvatarsVisibleWithOutlineQuery(World);
         }
@@ -86,22 +101,55 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
+        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent, ref AvatarCachedVisibilityComponent avatarCachedVisibility, ref AvatarShapeComponent avatarShapeComponent)
         {
-            skinningComponent.SetFadingDistance((playerComponent.CameraFocus.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+            if (avatarShapeComponent.IsDirty)
+            {
+                avatarCachedVisibility.ResetDitherState();
+                return;
+            }
+
+            float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
+
+            if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
+                skinningComponent.SetFadingDistance(currentDistance);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
+        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase, ref AvatarCachedVisibilityComponent avatarCachedVisibility, ref AvatarShapeComponent avatarShapeComponent)
         {
-            skinningComponent.SetFadingDistance((avatarBase.HeadAnchorPoint.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+            if (avatarShapeComponent.IsDirty)
+            {
+                avatarCachedVisibility.ResetDitherState();
+                return;
+            }
+
+            float currentDistance = (avatarBase.HeadAnchorPoint.position - playerCamera.transform.position).magnitude;
+
+            if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
+                skinningComponent.SetFadingDistance(currentDistance);
         }
 
         [Query]
-        private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea;
+            if (!userBlockingCacheProxy.Configured) return;
+
+            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
+
+            bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
+
+            if (isBlocked && !World.Has<BlockedPlayerComponent>(entity))
+                World.Add(entity, new BlockedPlayerComponent());
+            else if (!isBlocked)
+                World.TryRemove<BlockedPlayerComponent>(entity);
+        }
+
+        [Query]
+        private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        {
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<BlockedPlayerComponent>(entity);
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 

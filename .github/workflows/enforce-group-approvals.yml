@@ -3,78 +3,100 @@ name: Enforce QA and DEV Approvals
 on:
   pull_request:
     branches: [dev]
-    types: [labeled, unlabeled]
+    types:
+      - labeled
+      - unlabeled
+      - synchronize
+      - review_requested
+      - review_request_removed
   pull_request_review:
-    types: [submitted]
+    types:
+      - submitted
+      - dismissed
 
 jobs:
   enforce-approvals:
     if: >
       github.event.pull_request.draft == false &&
       github.event.review.state != 'changes_requested' &&
-      github.event.review.state != 'commented' &&
       github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
 
     steps:
-      - name: Set PR number and repo details
+      - name: Fetch PR Metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT_PAYLOAD: ${{ toJSON(github.event) }}
         run: |
-          echo "Fetching context details..."
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          if [ -z "$PR_NUMBER" ]; then
-            echo "::error::PR number is missing from the event context."
-            exit 1
-          fi
+          echo "🔍 Extracting PR details..."
 
-          REPO_OWNER=${{ github.repository_owner }}
-          REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
+          PR_NUMBER=$(jq -r '.pull_request.number' <<< "$EVENT_PAYLOAD")
+          REPO_OWNER=$(jq -r '.repository.owner.login' <<< "$EVENT_PAYLOAD")
+          REPO_NAME=$(jq -r '.repository.name' <<< "$EVENT_PAYLOAD")
+          HEAD_SHA=$(jq -r '.pull_request.head.sha' <<< "$EVENT_PAYLOAD")
+
+          echo "✅ PR Number: $PR_NUMBER"
+          echo "✅ Repository: $REPO_OWNER/$REPO_NAME"
+          echo "✅ Head SHA: $HEAD_SHA"
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "REPO_OWNER=$REPO_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "HEAD_SHA=$HEAD_SHA" >> $GITHUB_ENV
 
       - name: Validate Group Approvals
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
-          # Check if the label "auto-pr" is set
-          LABELS=$(gh api \
-            "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.[].name')
+          echo "🔍 Checking PR labels..."
+          LABELS_JSON=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.')
 
-          if echo "$LABELS" | grep -q "auto-pr"; then
-            echo ">>> Skipping approval validation as 'auto-pr' label is set."
+          if jq -r '.[].name' <<< "$LABELS_JSON" | grep -q "auto-pr"; then
+            echo "✅ Skipping approval validation due to 'auto-pr' label."
             exit 0
           fi
 
-          # Define the teams
+          echo "🔍 Fetching team members..."
           QA_TEAM="qa"
           DEV_TEAM="explorer-devs"
 
-          # Fetch team members
           fetch_team_members() {
             local team_slug=$1
-            echo "Fetching team members for team: $team_slug"
             gh api "/orgs/$REPO_OWNER/teams/$team_slug/members" --jq '.[].login'
           }
 
           QA_MEMBERS=$(fetch_team_members "$QA_TEAM")
           DEV_MEMBERS=$(fetch_team_members "$DEV_TEAM")
 
-          echo ">>> QA Team Members: $QA_MEMBERS"
-          echo ">>> DEV Team Members: $DEV_MEMBERS"
+          echo "✅ QA Team Members: ${QA_MEMBERS:-None}"
+          echo "✅ DEV Team Members: ${DEV_MEMBERS:-None}"
 
-          # Fetch PR reviews
-          echo ">>> Fetching PR reviews for PR #$PR_NUMBER"
-          PR_REVIEWS=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.[] | select(.state == "APPROVED") | .user.login')
+          echo "🔍 Fetching PR reviews..."
+          PR_REVIEWS_JSON=$(gh pr view "$PR_NUMBER" --repo "$REPO_OWNER/$REPO_NAME" --json reviews -q '.reviews')
+          PR_REVIEWS=$(jq -r '.[] | select(.state == "APPROVED") | .author.login' <<< "$PR_REVIEWS_JSON")
+          echo "✅ Approved Reviews (before filtering): ${PR_REVIEWS:-None}"
 
-          echo "Approved Reviews:"
-          echo "$PR_REVIEWS"
+          echo "🔍 Fetching pending review requests..."
+          PENDING_REVIEWERS_JSON=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/requested_reviewers" --jq '.')
+          PENDING_REVIEWERS=$(jq -r '.users[].login' <<< "$PENDING_REVIEWERS_JSON" || echo "")
+          echo "🔸 Pending Reviewers: ${PENDING_REVIEWERS:-None}"
 
-          # Validate approvals
+          # Ensure reviewers who have a pending review request are removed
+          FILTERED_REVIEWS=()
+          for reviewer in $PR_REVIEWS; do
+            if echo "$PENDING_REVIEWERS" | grep -q "^$reviewer$"; then
+              echo "❌ Removing $reviewer from approvals due to pending review request."
+              continue
+            fi
+            FILTERED_REVIEWS+=("$reviewer")
+          done
+
+          echo "✅ Approved Reviews (after removing pending reviewers): ${FILTERED_REVIEWS[*]:-None}"
+
           HAS_QA_APPROVAL=false
           HAS_DEV_APPROVAL=false
 
-          for reviewer in $PR_REVIEWS; do
+          for reviewer in "${FILTERED_REVIEWS[@]}"; do
             if echo "$QA_MEMBERS" | grep -q "^$reviewer$"; then
               HAS_QA_APPROVAL=true
             fi
@@ -89,8 +111,49 @@ jobs:
             [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
             [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
             MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
-            echo "::error::PR must have at least 1: $MISSING_MSG."
+            echo "❌ PR must have at least 1: $MISSING_MSG."
+            echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
             exit 1
           fi
 
-          echo ">>> PR has the required approvals."
+          echo "✅ PR has the required approvals."
+          echo "APPROVAL_CHECK=passed" >> $GITHUB_ENV
+
+      - name: Search Failed "Enforce QA and DEV Approvals" Run
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        if: env.APPROVAL_CHECK == 'passed' && github.event_name == 'pull_request_review'
+        run: |
+          echo "📦 Searching 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
+          gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 1000 \
+            --repo "$REPO_OWNER/$REPO_NAME" \
+            --json databaseId,headSha,event,conclusion,status,createdAt \
+            | jq --arg HEAD_SHA "$HEAD_SHA" '
+                .[] | select(.headSha == $HEAD_SHA)
+              '
+
+          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
+          WORKFLOW_RUN_ID=$(gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 1000 \
+            --repo "$REPO_OWNER/$REPO_NAME" \
+            --json databaseId,event,headSha,conclusion \
+            | jq -r --arg HEAD_SHA "$HEAD_SHA" '
+                .[] |
+                select(.event == "pull_request") |
+                select(.headSha == $HEAD_SHA) |
+                select(.conclusion == "failure") |
+                .databaseId
+            ' | head -n 1)
+
+          if [ -z "$WORKFLOW_RUN_ID" ]; then
+            echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
+            exit 0
+          fi
+
+          echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
+          echo "🔁 Triggering re-run via GitHub CLI"
+          gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME"
+          echo "✅ Re-run triggered successfully!"

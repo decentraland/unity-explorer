@@ -12,10 +12,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarker : IPinMarker
     {
-        private const float NAVMAP_PIN_DEFAULT_SCALE = 22;
-        private const float MINIMAP_MIN_SIZE_FOR_PIN = 35;
-        private const float ANIMATION_DURATION = 0.5f;
-        private static readonly Vector2 TARGET_ANIMATION_SCALE = new (1.5f, 1.5f);
+        private const float NAVMAP_PIN_DEFAULT_SCALE = 35;
+        private const float MINIMAP_MIN_SIZE_FOR_PIN = 45;
+        private const float ANIMATION_DURATION = 0.4f;
+        private static readonly Vector2 TARGET_ANIMATION_SCALE = new (1.2f, 1.2f);
 
         private readonly IMapCullingController cullingController;
 

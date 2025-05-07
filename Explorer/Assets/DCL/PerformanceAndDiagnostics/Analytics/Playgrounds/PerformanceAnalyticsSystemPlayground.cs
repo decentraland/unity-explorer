@@ -1,14 +1,13 @@
 using Arch.Core;
 using DCL.Analytics.Systems;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.Profiling;
+using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
 using ECS;
-using ECS.SceneLifeCycle;
 using Global.AppArgs;
 using Global.Versioning;
-using SceneRuntime;
-using Segment.Serialization;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
@@ -31,17 +30,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     new BuildData(),
                     DCLVersion.Mock()
                 ),
+                new LoadingStatus(),
                 new RealmData(),
                 new Profiler(),
-                new V8ActiveEngines(),
-                new ScenesCache(),
+                new EntityParticipantTable(),
                 new Utility.Json.JsonObjectBuilder()
             );
         }
 
         private void Update()
         {
-            system.Update(Time.deltaTime);
+            system.Update(UnityEngine.Time.deltaTime);
         }
     }
 }

@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace DCL.Chat.MessageBus
@@ -12,8 +14,9 @@ namespace DCL.Chat.MessageBus
         private readonly MultiplayerChatMessagesBus origin;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
+        private readonly StringBuilder sb = new ();
 
-        public event Action<ChatMessage>? MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
         public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository)
         {
@@ -25,7 +28,7 @@ namespace DCL.Chat.MessageBus
 
         ~SelfResendChatMessageBus()
         {
-            this.origin.MessageAdded -= OriginOnOnMessageAdded;
+            origin.MessageAdded -= OriginOnOnMessageAdded;
         }
 
         public void Dispose()
@@ -33,20 +36,20 @@ namespace DCL.Chat.MessageBus
             origin.Dispose();
         }
 
-        private void OriginOnOnMessageAdded(ChatMessage obj)
+        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatMessage message)
         {
-            MessageAdded?.Invoke(obj);
+            MessageAdded?.Invoke(channelId, message);
         }
 
-        public void Send(string message, string origin)
+        public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {
-            this.origin.Send(message, origin);
-            SendSelfAsync(message).Forget();
+            this.origin.Send(channelId, message, origin);
+            SendSelfAsync(channelId, message).Forget();
         }
 
-        private async UniTaskVoid SendSelfAsync(string message)
+        private async UniTaskVoid SendSelfAsync(ChatChannel.ChannelId channelId, string chatMessage)
         {
-            var identity = web3IdentityCache.Identity;
+            IWeb3Identity? identity = web3IdentityCache.Identity;
 
             if (identity == null)
             {
@@ -54,17 +57,20 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            Profile? profile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
+            Profile? ownProfile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
             MessageAdded?.Invoke(
+                channelId,
                 new ChatMessage(
-                    message,
-                    profile?.DisplayName ?? string.Empty,
+                    chatMessage,
+                    ownProfile?.ValidatedName ?? string.Empty,
                     identity.Address,
                     true,
-                    true
+                    ownProfile?.WalletId ?? null,
+                    isMention: false
                 )
             );
         }
+
     }
 }

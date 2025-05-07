@@ -1,7 +1,6 @@
 ﻿using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers.UsersMarker;
-using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;

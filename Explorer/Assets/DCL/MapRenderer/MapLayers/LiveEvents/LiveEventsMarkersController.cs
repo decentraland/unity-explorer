@@ -19,24 +19,24 @@ namespace DCL.MapRenderer.MapLayers.Categories
         public bool ZoomBlocked { get; set; }
 
         private static readonly TimeSpan LIVE_EVENTS_POLLING_TIME = TimeSpan.FromMinutes(5);
-        private readonly MapLayer mapLayer;
 
         internal delegate ICategoryMarker CategoryMarkerBuilder(
             IObjectPool<CategoryMarkerObject> objectsPool,
             IMapCullingController cullingController,
             ICoordsUtils coordsUtils);
 
+        private readonly MapLayer mapLayer;
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IEventsApiService eventsApiService;
         private readonly ClusterController clusterController;
         private readonly INavmapBus navmapBus;
-
-        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
+        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
         private readonly Dictionary<GameObject, ICategoryMarker> visibleMarkers = new ();
 
         private Vector2Int decodePointer;
+        private CancellationTokenSource? pollDataCancellationToken;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
         private ICategoryMarker? previousMarker;
@@ -68,46 +68,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.navmapBus = navmapBus;
         }
 
-        public UniTask InitializeAsync(CancellationToken cancellationToken)
+        public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
-            LoadEventsPlacesAsync(cancellationToken).Forget();
-            return UniTask.CompletedTask;
-        }
-
-        private async UniTaskVoid LoadEventsPlacesAsync(CancellationToken ct)
-        {
-            do
-            {
-                foreach (ICategoryMarker marker in markers.Values)
-                {
-                    mapCullingController.StopTracking(marker);
-                    marker.OnBecameInvisible();
-                }
-                markers.Clear();
-                clusterController.Disable();
-
-                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true);
-                foreach (EventDTO eventDto in events)
-                {
-                    Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
-                    if (markers.ContainsKey(coords))
-                        continue;
-
-                    ICategoryMarker marker = builder(objectsPool, mapCullingController, coordsUtils);
-                    marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
-                    marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
-                    markers.Add(coords, marker);
-
-                    if(isEnabled)
-                        mapCullingController.StartTracking(marker, this);
-                }
-
-                if(isEnabled && !ZoomBlocked)
-                    foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                        mapCullingController.StartTracking(clusterableMarker, this);
-                await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
-            }
-            while (ct.IsCancellationRequested == false);
         }
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
@@ -145,16 +107,21 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public UniTask EnableAsync(CancellationToken cancellationToken)
         {
+            if (!arePlacesLoaded)
+            {
+                pollDataCancellationToken = pollDataCancellationToken.SafeRestart();
+                PollEventsAndPlacesOverTimeAsync(pollDataCancellationToken.Token).Forget();
+                arePlacesLoaded = true;
+            }
+
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
 
             if (!ZoomBlocked)
-            {
                 foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                     mapCullingController.StartTracking(clusterableMarker, this);
-            }
 
             return UniTask.CompletedTask;
         }
@@ -175,6 +142,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 marker.Dispose();
 
             markers.Clear();
+            pollDataCancellationToken.SafeCancelAndDispose();
+            arePlacesLoaded = false;
         }
 
         public void OnMapObjectBecameVisible(ICategoryMarker marker)
@@ -244,6 +213,42 @@ namespace DCL.MapRenderer.MapLayers.Categories
             }
 
             return false;
+        }
+
+        private async UniTask PollEventsAndPlacesOverTimeAsync(CancellationToken ct)
+        {
+            do
+            {
+                foreach (ICategoryMarker marker in markers.Values)
+                {
+                    mapCullingController.StopTracking(marker);
+                    marker.OnBecameInvisible();
+                }
+                markers.Clear();
+                clusterController.Disable();
+
+                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true);
+                foreach (EventDTO eventDto in events)
+                {
+                    Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
+                    if (markers.ContainsKey(coords))
+                        continue;
+
+                    ICategoryMarker marker = builder(objectsPool, mapCullingController, coordsUtils);
+                    marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
+                    marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
+                    markers.Add(coords, marker);
+
+                    if(isEnabled)
+                        mapCullingController.StartTracking(marker, this);
+                }
+
+                if(isEnabled && !ZoomBlocked)
+                    foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                        mapCullingController.StartTracking(clusterableMarker, this);
+                await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
+            }
+            while (ct.IsCancellationRequested == false);
         }
     }
 }

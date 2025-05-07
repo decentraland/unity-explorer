@@ -5,11 +5,11 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -63,17 +63,10 @@ namespace DCL.ApplicationVersionGuard
             }
             else
             {
-                ProcessStartInfo startInfo = PrepareLauncherStartInfo(launcherPath);
-                startInfo.UseShellExecute = true; // Ensure the process runs independently
-
-                await UniTask.Delay(1000, cancellationToken: ct);
-
                 try
                 {
-                    Process process = Process.Start(startInfo);
-
-                    if (process == null)
-                        ReportHub.Log("Failed to start launcher process.", ReportCategory.VERSION_CONTROL);
+                    await UniTask.Delay(1000, cancellationToken: ct);
+                    PlatformUtils.ShellExecute(launcherPath);
                 }
                 catch (Exception e)
                 {
@@ -133,30 +126,6 @@ namespace DCL.ApplicationVersionGuard
                        RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => SystemInfo.processorType.ToLower().Contains("arm") ? DECENTRALAND_LAUNCHER_MAC_ARM_64DMG : DECENTRALAND_LAUNCHER_MAC_X_64DMG,
                        _ => throw new NotSupportedException("Unsupported platform for launcher download."),
                    };
-        }
-
-        private static ProcessStartInfo PrepareLauncherStartInfo(string launcherPath)
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                UseShellExecute = true,
-            };
-
-            switch (Application.platform)
-            {
-                case RuntimePlatform.WindowsEditor:
-                case RuntimePlatform.WindowsPlayer:
-                    startInfo.FileName = launcherPath;
-                    return startInfo;
-                case RuntimePlatform.OSXEditor:
-                case RuntimePlatform.OSXPlayer:
-                    startInfo.FileName = "open";
-                    startInfo.Arguments = $"-n \"{launcherPath}\"";
-                    return startInfo;
-                default:
-                    ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Unsupported platform for launching the application.");
-                    return startInfo;
-            }
         }
 
         private static string? GetLauncherPath()

@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
@@ -27,7 +28,8 @@ namespace DCL.Profiles
         // Otherwise it will fail when the profile is published
         private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
 
-        public RealmProfileRepository(IWebRequestController webRequestController,
+        public RealmProfileRepository(
+            IWebRequestController webRequestController,
             IRealmData realm,
             IProfileCache profileCache)
         {
@@ -117,6 +119,7 @@ namespace DCL.Profiles
                 // the check always fails. So its necessary to get a new instance each time
                 Profile profile = Profile.Create();
                 profileDto.CopyTo(profile);
+                profile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
 
                 profileCache.Set(id, profile);
 

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
@@ -23,8 +24,10 @@ namespace DCL.PluginSystem.Global
         private readonly ECSReloadScene ecsReloadScene;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private ConnectionStatusPanelController connectionStatusPanelController;
         private readonly IDebugContainerBuilder debugBuilder;
+        private readonly IChatCommandsBus chatCommandsBus;
+
+        private ConnectionStatusPanelController connectionStatusPanelController;
 
         public ConnectionStatusPanelPlugin(
             IUserInAppInitializationFlow userInAppInitializationFlow,
@@ -35,7 +38,8 @@ namespace DCL.PluginSystem.Global
             ECSReloadScene ecsReloadScene,
             Arch.Core.World world,
             Entity playerEntity,
-            IDebugContainerBuilder debugBuilder
+            IDebugContainerBuilder debugBuilder,
+            IChatCommandsBus chatCommandsBus
         )
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -47,14 +51,12 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.debugBuilder = debugBuilder;
+            this.chatCommandsBus = chatCommandsBus;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
-
-        public void SetVisibility(bool visibility) =>
-            connectionStatusPanelController?.SetVisibility(visibility);
 
         public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
@@ -71,7 +73,8 @@ namespace DCL.PluginSystem.Global
                 roomsStatus,
                 world,
                 playerEntity,
-                debugBuilder
+                debugBuilder,
+                chatCommandsBus
             );
             mvcManager.RegisterController(connectionStatusPanelController);
         }

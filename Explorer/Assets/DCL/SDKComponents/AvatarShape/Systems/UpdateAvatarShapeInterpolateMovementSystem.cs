@@ -10,6 +10,8 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Transforms.Systems;
+using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.AvatarShape.Systems
 {
@@ -19,10 +21,12 @@ namespace DCL.SDKComponents.AvatarShape.Systems
     public partial class UpdateAvatarShapeInterpolateMovementSystem : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
+        private readonly Vector2Int sceneBaseParcel;
 
-        private UpdateAvatarShapeInterpolateMovementSystem(World world, World globalWorld) : base(world)
+        private UpdateAvatarShapeInterpolateMovementSystem(World world, World globalWorld, Vector2Int sceneBaseParcel) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.sceneBaseParcel = sceneBaseParcel;
         }
 
         protected override void Update(float t)
@@ -71,8 +75,8 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             if (!hasCharacterInterpolationMovement)
                 return;
 
-            characterInterpolationMovementComponent.TargetPosition = sdkTransform.Position;
-            characterInterpolationMovementComponent.TargetRotation = sdkTransform.Rotation;
+            characterInterpolationMovementComponent.TargetPosition = sdkTransform.Position.Value.FromSceneRelativeToGlobalPosition(sceneBaseParcel);
+            characterInterpolationMovementComponent.TargetRotation = sdkTransform.Rotation.Value;
             characterInterpolationMovementComponent.IsPositionManagedByTween = isPositionManagedByTween;
             characterInterpolationMovementComponent.IsRotationManagedByTween = isRotationManagedByTween;
         }

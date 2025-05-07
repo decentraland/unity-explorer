@@ -321,6 +321,8 @@ namespace DCL.AuthenticationScreenFlow
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
+            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
+            profile.HasConnectedWeb3 = true;
             profileNameLabel!.Value = profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
         }

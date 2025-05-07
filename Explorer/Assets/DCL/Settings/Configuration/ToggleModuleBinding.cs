@@ -1,10 +1,12 @@
-﻿using DCL.Landscape.Settings;
+﻿using DCL.Friends.UserBlocking;
+using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.Utilities;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
@@ -19,6 +21,7 @@ namespace DCL.Settings.Configuration
         {
             CHAT_SOUNDS_FEATURE,
             GRAPHICS_VSYNC_TOGGLE_FEATURE,
+            HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE,
             // add other features...
         }
 
@@ -30,7 +33,9 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
+            ChatAudioSettingsAsset chatAudioSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
@@ -38,8 +43,8 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
                                                    {
-                                                       ToggleFeatures.CHAT_SOUNDS_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer),
                                                        ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
+                                                       ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };

@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -24,6 +25,9 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Rendering.GPUInstancing;
+using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -68,10 +72,14 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
-        private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
+        private readonly ViewDependencies viewDependencies;
+        private readonly GPUInstancingService gpuInstancingBuffers;
+        private readonly ExposedCameraData exposedCameraData;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -91,10 +99,14 @@ namespace DCL.PluginSystem.Global
             URLDomain assetBundleURL,
             ICursor cursor,
             Button sidebarButton,
-            UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
-            NametagsData nametagsData)
+            NametagsData nametagsData,
+            ViewDependencies viewDependencies,
+            GPUInstancingService gpuInstancingBuffers,
+            ExposedCameraData exposedCameraData,
+            ISharedSpaceManager sharedSpaceManager,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -118,12 +130,17 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
-            this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
+            this.viewDependencies = viewDependencies;
+            this.gpuInstancingBuffers = gpuInstancingBuffers;
+            this.exposedCameraData = exposedCameraData;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.web3IdentityCache = web3IdentityCache;
 
             factory = new InWorldCameraFactory();
+            web3IdentityCache.OnIdentityChanged += FetchCameraReelStorage;
         }
 
         public void Dispose()
@@ -138,22 +155,20 @@ namespace DCL.PluginSystem.Global
             hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
             followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
-            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
+            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>(), gpuInstancingBuffers);
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, ChatEntryConfigurationSO chatEntryConfiguration) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.ChatEntryConfiguration, ct));
-
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct))
+                ;
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
                     cameraReelStorageService,
-                    webRequestController,
                     profileRepository,
                     mvcManager,
                     webBrowser,
@@ -166,7 +181,8 @@ namespace DCL.PluginSystem.Global
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
-                    chatEntryConfiguration),
+                    viewDependencies
+                    ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,
@@ -174,18 +190,26 @@ namespace DCL.PluginSystem.Global
                 new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
 
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
             mvcManager.RegisterController(inWorldCameraController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera, rootUIDocument, nametagsData);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
+        }
+
+        private void FetchCameraReelStorage()
+        {
+            if (web3IdentityCache.Identity == null)
+                return;
+
+            cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, CancellationToken.None).Forget();
         }
 
         [Serializable]

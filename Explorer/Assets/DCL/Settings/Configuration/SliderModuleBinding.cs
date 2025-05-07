@@ -1,10 +1,12 @@
-﻿using DCL.Landscape.Settings;
+﻿using DCL.Friends.UserBlocking;
+using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.Utilities;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
@@ -37,7 +39,9 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
+            ChatAudioSettingsAsset chatAudioSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);

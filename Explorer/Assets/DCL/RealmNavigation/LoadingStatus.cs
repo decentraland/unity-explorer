@@ -1,4 +1,5 @@
-﻿using DCL.Utilities;
+﻿using DCL.Diagnostics;
+using DCL.Utilities;
 using System.Collections.Generic;
 using Utility;
 
@@ -53,6 +54,7 @@ namespace DCL.RealmNavigation
 
         public float SetCurrentStage(LoadingStage stage)
         {
+            ReportHub.LogProductionInfo($"Current loading stage: {stage}");
             CurrentStage.Value = stage;
             return PROGRESS[stage];
         }

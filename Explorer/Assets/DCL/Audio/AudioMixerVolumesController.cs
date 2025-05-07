@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Audio;
@@ -20,6 +21,7 @@ namespace DCL.Audio
         private readonly AudioMixer audioMixer;
         private readonly string[] allExposedParams;
         private readonly Dictionary<string, float> originalVolumes = new ();
+        private readonly HashSet<string> mutedGroups = new ();
 
         public AudioMixerVolumesController(AudioMixer audioMixer)
         {
@@ -36,8 +38,14 @@ namespace DCL.Audio
                 if (exposedParam != groupParamString)
                     continue;
 
-                audioMixer.GetFloat(groupParamString, out float originalVolume);
-                originalVolumes[groupParamString] = originalVolume;
+                // Only store the original volume if this group hasn't been muted before
+                if (!mutedGroups.Contains(groupParamString))
+                {
+                    audioMixer.GetFloat(groupParamString, out float originalVolume);
+                    originalVolumes[groupParamString] = originalVolume;
+                    mutedGroups.Add(groupParamString);
+                }
+
                 audioMixer.SetFloat(groupParamString, MUTE_VALUE);
                 break;
             }
@@ -52,7 +60,15 @@ namespace DCL.Audio
                 if (exposedParam != groupParamString)
                     continue;
 
-                audioMixer.SetFloat(groupParamString, originalVolumes[groupParamString]);
+                if (mutedGroups.Contains(groupParamString))
+                {
+                    if (originalVolumes.TryGetValue(groupParamString, out float originalVolume))
+                        audioMixer.SetFloat(groupParamString, originalVolume);
+                    else
+                        ReportHub.LogError(ReportCategory.AUDIO, "Cannot unmute audio mixer group: missing original volume. Probably the group was not previously muted..");
+
+                    mutedGroups.Remove(groupParamString);
+                }
                 break;
             }
         }

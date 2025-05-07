@@ -6,6 +6,8 @@ namespace DCL.Profiles
     {
         Profile? Get(string id);
 
+        Profile? GetByUserName(string userName);
+
         void Set(string id, Profile profile);
 
         void Remove(string id);

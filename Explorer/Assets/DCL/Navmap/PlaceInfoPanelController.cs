@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -11,6 +12,7 @@ using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -19,6 +21,7 @@ using System.Globalization;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Navmap
@@ -121,6 +124,10 @@ namespace DCL.Navmap
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
+
+            view.OverviewTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            //Photos scroll view is already handled by the camera reel gallery controller
+            view.EventsTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -272,7 +279,7 @@ namespace DCL.Navmap
                 mapPathEventBus.ArrivedToDestination();
 
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {currentBaseParcel?.x},{currentBaseParcel?.y}", "jump in");
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {currentBaseParcel?.x},{currentBaseParcel?.y}", "jump in");
         }
 
         private void Share()

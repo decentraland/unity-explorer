@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using Segment.Serialization;
 using System;
 using UnityEngine;
@@ -8,11 +7,23 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 {
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
-        private IAnalyticsService service = null!;
+        [SerializeField] private bool fillMode;
+        [SerializeField] private long unFlushedBatches;
+
+        private RustSegmentAnalyticsService service = null!;
 
         private void Start()
         {
             Initialize();
+            Identify();
+        }
+
+        public void Update()
+        {
+            if (fillMode)
+                Track();
+
+            unFlushedBatches = (long) NativeMethods.SegmentServerUnFlushedBatchesCount();
         }
 
         [ContextMenu(nameof(Initialize))]
@@ -23,7 +34,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             if (string.IsNullOrWhiteSpace(key))
                 throw new Exception("Segment Write Key is not set.");
 
-            service = new RustSegmentAnalyticsService(key);
+            service = new RustSegmentAnalyticsService(key, null);
         }
 
         [ContextMenu(nameof(Identify))]
@@ -57,6 +68,22 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             );
 
             ReportHub.Log(ReportData.UNSPECIFIED, $"Curly {curly}, Bracket {bracket}");
+        }
+
+        [ContextMenu(nameof(InstantTrackAndFlush))]
+        public void InstantTrackAndFlush()
+        {
+            var curly = new JsonObject
+            {
+                { "works", "yes" },
+            };
+
+            service.InstantTrackAndFlush(
+                "TEST_SHARP_INSTANT",
+                curly
+            );
+
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Curly {curly}");
         }
 
         [ContextMenu(nameof(Flush))]

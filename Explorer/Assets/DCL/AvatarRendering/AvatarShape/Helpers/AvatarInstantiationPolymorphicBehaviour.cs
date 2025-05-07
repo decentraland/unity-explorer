@@ -55,10 +55,6 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
-                    if (!avatarShapeComponent.IsVisible)
-                        foreach (Renderer renderer in instantiatedWearable.Renderers)
-                            renderer.enabled = false;
-
                     usedCategories.Add(category);
 
                     return instantiatedWearable;

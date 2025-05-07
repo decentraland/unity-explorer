@@ -1,112 +1,93 @@
-# unity-explorer
+# Unity Explorer for Decentraland 2.0
 
-Explorer renderer 
+![Decentraland Logo](https://decentraland.org/images/logo.png)
 
-## Submodule installation required
+Unity Explorer is the official desktop client implementation for Decentraland 2.0, allowing users to explore and interact with the Decentraland metaverse using Unity. This desktop client delivers a smoother, more immersive experience compared to the previous web-based version, setting the foundation for Decentraland's future expansion!
 
-After checking out, remember to install and update the submodules by doing (git submodule update --init and git submodule update .)
+## 🌟 Features
 
-# Protocol Generation
-## Update protocol
+### Improved Performance
+- Significantly faster load times and increased frame rates
+- Smoother experience in crowded scenes
+- Refined multiplayer gameplay.
+- Cross-platform compatibility (Windows & Mac)
 
-To update the protocol to the last version of the protocol, you can execute the following commands:
-```
-cd scripts
-npm install @dcl/protocol@next
-npm run build-protocol
-```
+### Immersive Environment
+- Enhanced graphics with extended draw distance.
+- Dual sun/moon system matching Decentraland's iconic logo.
+- Procedurally-generated landscapes for undeveloped parcels.
+- Detailed environmental effects (ocean, trees, ambience)
+- Support for worlds.
 
-## SDK7 Integration Progress
+### Enhanced Avatars & Social Interactions
+- More natural avatar movements and environmental interactions
+- In-world chat bubbles with emoji support
+- Integration with Decentraland's NFT wearables
 
-### Components
+### Gameplay & Engagement
+- Badge system to track and showcase achievements
+- Daily quests and challenge system
+- Integration with mini-games throughout Decentraland
+- Daily rewards (Wearables and Emotes)
 
-## In Progress
-- [ ] `Animator`
-- [ ] `PointerLock`
-- [ ] `AvatarAttach`
-- [ ] `AvatarModifierArea`
-- [ ] `CameraMode`
-- [ ] `CameraModeArea`
+### Developer-Friendly
+- Unity-based development environment
+- Support for decentralized content creation and deployment
+- Integration with Creator Hub resources
 
-## Completed
-- [x] `AudioSource`
-- [x] `AudioStream`
-- [x] `AvatarShape`
-- [x] `Billboard`
+## 📋 Requirements
 
-- [x] `EngineInfo`
-- [x] `GltfContainer`
-- [x] `GltfContainerLoadingState`
-- [x] `Material`
-- [x] `MeshCollider`
-- [x] `MeshRenderer`
-- [x] `Name`
-- [x] `NftShape`
-- [x] `PointerEvents`
-- [x] `PointerEventsResult`
-- [x] `Raycast`
-- [x] `RaycastResult`
-- [x] `TextShape`
-- [x] `Transform`
-- [x] `Tween`
-- [x] `TweenSequence`
-- [x] `TweenState`
-- [x] `UiBackground`
-- [x] `UiCanvasInformation`
-- [x] `UiDropdown`
-- [x] `UiDropdownResult`
-- [x] `UiInput`
-- [x] `UiInputResult`
-- [x] `UiText`
-- [x] `UiTransform`
-- [x] `VideoEvent`
-- [x] `VideoPlayer`
-- [x] `VisibilityComponent`
+- Unity 6000.0.43f1
 
-## Runtime API
+## 🚀 Installation & Setup
 
-## In Progress
-- [ ] `CommsApi`
-- [ ] `CommunicationsController`
-- [ ] `EnvironmentApi`
-- [ ] `Players`
-- [ ] `PortableExperiences`
-- [ ] `RestrictedActions`
-- [ ] `Scene`
-- [ ] `Testing`
-- [ ] `UserActionModule`
-- [ ] `UserIdentity`
+1. Clone the repository:
+   ```
+   git clone https://github.com/decentraland/unity-explorer.git
+   ```
 
-## Completed
+2. Install and update the submodules:
+   ```
+   git submodule update --init
+   git submodule update .
+   ```
 
-- [x] `SignedFetch`
-- [x] `Runtime`
-- [x] `EngineApi`
-- [x] `EthereumController`
+3. Open the project in Unity
 
-## Regenerate protocol
 
-Just run:
-```
-cd scripts
-npm run build-protocol
-```
+## 🎮 Quick Start
 
-# Test scenes
-## Add a new scene
-To be able to select the scene at runtime
-- Place it to the "StreamingAssets\Scenes" directory.
-- Add its name without an extension to the "Scenes" list on the `EntryPoint` component.
+- After installation, open Unity-Explorer via Unity.
+- Authenticate via MetaMask
 
-![img.png](ReadmeResources/img.png)
+## 📚 Documentation
 
-## Control scene lifecycle
+For detailed information about the project, please visit our [Wiki](https://github.com/decentraland/unity-explorer/wiki).
 
-![img_1.png](ReadmeResources/img_1.png)
+### Architecture
 
-At the moment one scene can be active at a time. By default at startup no scene is launched.
+The Unity Explorer follows a component-based architecture designed for flexibility and scalability. Learn more in our [Architecture Overview](https://github.com/decentraland/unity-explorer/wiki/Architecture-Overview).
 
-- When a new scene is selected, the old scene is unloaded releasing its components to the pool. 
-- "Stop" just disposes the scene
-- You can easily notice if the resources are not properly disposed by looking at the Unity hierarchy.
-- Setting the framerate can be useful for a stress test.
+### Development Guides
+
+Find specific guidance on development topics in our [How To Guide](https://github.com/decentraland/unity-explorer/wiki/How-To).
+
+## 🔧 Troubleshooting
+
+## 🛣️ Roadmap
+
+See our [Whitepaper](https://decentraland.org/blog/announcements/decentralands-white-paper-2-0)
+
+## 👥 Contributing
+
+Please follow our coding standards and guidelines outlined in our [How To Guide](https://github.com/decentraland/unity-explorer/wiki/How-To).
+
+## 🤝 Community and Support
+
+- [Discord Server](https://discord.gg/decentraland)
+- [Forum](https://forum.decentraland.org/)
+- [Twitter](https://twitter.com/decentraland)
+
+## 📜 License
+
+This project is licensed under the [Apache 2.0 License](LICENSE.md) - see the LICENSE file for details.

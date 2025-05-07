@@ -45,7 +45,6 @@ namespace DCL.GlobalPartitioning
         private readonly IScenesCache scenesCache;
         private readonly Entity playerEntity;
 
-
         static GlobalDeferredLoadingSystem()
         {
             COMPONENT_HANDLERS_SCENES_ASSETS = new[]
@@ -61,13 +60,13 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetTextureIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
-                CreateQuery<GetAudioClipIntention, AudioClipData>(), 
+                CreateQuery<GetAudioClipIntention, AudioClipData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>()
             };
 
             COMPONENT_HANDLERS_SCENES = new[]
             {
-                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(), 
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>()
             };
         }
@@ -90,11 +89,13 @@ namespace DCL.GlobalPartitioning
             bool downloadOnlySceneMetadata = false;
             //We check if the player is teleporting, and if the scene we want to teleport to has started.
             //If so, only scene metadata will be allowed to de downloaded
-            if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
+            TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
+            if (teleportParcel.IsTeleporting)
             {
-                if (scenesCache.Contains(playerTeleportIntent.Parcel))
+                if (scenesCache.Contains(teleportParcel.Parcel))
                     downloadOnlySceneMetadata = true;
             }
+
             sameBoatQueries = downloadOnlySceneMetadata ? COMPONENT_HANDLERS_SCENES : COMPONENT_HANDLERS_SCENES_ASSETS;
         }
     }

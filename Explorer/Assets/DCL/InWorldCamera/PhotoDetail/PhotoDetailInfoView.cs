@@ -13,11 +13,11 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal Button ownerProfileButton { get; private set; }
         [field: SerializeField] internal GameObject unusedEquippedWearableViewContainer { get; private set; }
         [field: SerializeField] internal RectTransform visiblePersonContainer { get; private set; }
+        [field: SerializeField] internal ScrollRect visiblePersonScrollRect { get; private set; }
         [field: SerializeField] internal InfoSidePanelLoadingView loadingState { get; private set; }
 
         [field: Header("Prefabs")]
         [field: SerializeField] internal VisiblePersonView visiblePersonViewPrefab { get; private set; }
         [field: SerializeField] internal EquippedWearableView equippedWearablePrefab { get; private set; }
-        [field: SerializeField] internal Sprite emptyProfileImage { get; private set; }
     }
 }

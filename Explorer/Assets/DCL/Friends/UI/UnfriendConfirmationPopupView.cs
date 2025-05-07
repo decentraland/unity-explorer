@@ -1,12 +1,13 @@
-using DCL.UI;
+using DCL.UI.ProfileElements;
 using MVC;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.Friends.UI
 {
-    public class UnfriendConfirmationPopupView : PopupViewBase, IView
+    public class UnfriendConfirmationPopupView : PopupViewBase, IView, IViewWithGlobalDependencies
     {
         [field: SerializeField]
         public Button CancelButton { get; private set; }
@@ -18,6 +19,9 @@ namespace DCL.Friends.UI
         public TMP_Text DescriptionLabel { get; private set; }
 
         [field: SerializeField]
-        public ImageView ProfileImage { get; private set; }
+        public ProfilePictureView ProfilePicture { get; private set; }
+
+        public void InjectDependencies(ViewDependencies dependencies) =>
+            ProfilePicture.InjectDependencies(dependencies);
     }
 }

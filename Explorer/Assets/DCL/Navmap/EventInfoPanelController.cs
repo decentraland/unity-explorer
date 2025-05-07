@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Utilities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -56,6 +58,7 @@ namespace DCL.Navmap
             interestedButtonController.OnButtonClicked += SetInterested;
             view.ShareButton.onClick.AddListener(Share);
             view.JumpInButton.onClick.AddListener(JumpIn);
+            view.EventsScrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Show()
@@ -192,7 +195,7 @@ namespace DCL.Navmap
         private void JumpIn()
         {
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", "jump in");
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", "jump in");
         }
     }
 }

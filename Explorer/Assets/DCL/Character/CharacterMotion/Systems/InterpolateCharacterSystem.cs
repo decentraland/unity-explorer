@@ -2,10 +2,10 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.CharacterMotion.Components;
-using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
+using DCL.Chat.Commands;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
@@ -34,7 +34,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
+        [None(typeof(ReloadSceneChatCommand.SceneReloadComponent), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
@@ -61,11 +61,17 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
+            if (platformComponent.IsMovingPlatform && platformComponent.PlatformCollider != null)
+            {
+                // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
+                characterController.transform.position += rigidTransform.PlatformDelta;
+                Physics.SyncTransforms();
+            }
+
             CollisionFlags collisionFlags = characterController.Move(
                 movementDelta
                 + gravityDelta
-                + slopeModifier
-                + rigidTransform.PlatformDelta);
+                + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
             bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);

@@ -83,7 +83,7 @@ namespace DCL.Interaction.Utility
             target.MeshName = colliderName;
             target.Length = unityHit.distance;
             target.GlobalOrigin.Set(globalOrigin);
-            target.Position.Set(ParcelMathHelper.GetSceneRelativePosition(unityHit.point, sceneRootPosition));
+            target.Position.Set(unityHit.point.FromGlobalToSceneRelativePosition(sceneRootPosition));
             target.NormalHit.Set(unityHit.normal);
             target.Direction.Set(direction);
         }

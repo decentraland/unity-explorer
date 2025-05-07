@@ -7,6 +7,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.Playground;
 using DCL.UI;
+using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using MVC;
 using System.Diagnostics;
@@ -29,6 +30,7 @@ namespace DCL.InWorldCamera.UI
         private readonly World world;
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private SingleInstanceEntity? cameraInternal;
 
@@ -41,15 +43,18 @@ namespace DCL.InWorldCamera.UI
 
         public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
 
+        private UniTaskCompletionSource? closeViewTask;
 
-        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
+        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.world = world;
             this.mvcManager = mvcManager;
             this.storageService = storageService;
             this.sidebarButton = sidebarButton;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             ctx = new CancellationTokenSource();
+            closeViewTask = new UniTaskCompletionSource();
 
             storageService.ScreenshotUploaded += OnScreenshotUploaded;
             sidebarButton.onClick.AddListener(ToggleInWorldCamera);
@@ -59,7 +64,7 @@ namespace DCL.InWorldCamera.UI
         {
             viewInstance!.CloseButton.onClick.AddListener(RequestDisableInWorldCamera);
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
-            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
+            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGalleryAsync);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
         }
 
@@ -69,7 +74,7 @@ namespace DCL.InWorldCamera.UI
             {
                 viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
                 viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
-                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
+                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGalleryAsync);
                 viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
             }
 
@@ -105,16 +110,25 @@ namespace DCL.InWorldCamera.UI
 
         public void Hide(bool isInstant = false)
         {
-            ToggleShortcutsInfo(toOpen: false);
+            ToggleShortcutsInfoAsync(toOpen: false);
 
             sidebarButton.OnDeselect(null);
             viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(
-                viewInstance!.CloseButton.OnClickAsync(ct),
-                viewInstance.CameraReelButton.OnClickAsync(ct));
+        public void Close()
+        {
+            // Effectively hides the controller in the MVC system (otherwise it waits forever in WaitForCloseIntentAsync when it has not been closed using the UI buttons)
+            closeViewTask?.TrySetResult();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            closeViewTask?.TrySetCanceled(ct);
+            closeViewTask = new UniTaskCompletionSource();
+
+            return closeViewTask.Task;
+        }
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
@@ -122,12 +136,13 @@ namespace DCL.InWorldCamera.UI
             viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
-        private void OpenCameraReelGallery()
+        private async void OpenCameraReelGalleryAsync()
         {
             RequestDisableInWorldCamera();
 
-            mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden);
+
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
         }
 
         private void RequestTakeScreenshot()
@@ -138,33 +153,44 @@ namespace DCL.InWorldCamera.UI
 
         private void RequestDisableInWorldCamera()
         {
-            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
                 world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = false });
         }
 
         private void ToggleInWorldCamera()
         {
-            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
                 world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 
         private void ToggleShortcutsInfo() =>
-            ToggleShortcutsInfo(!shortcutPanelIsOpen);
+            ToggleShortcutsInfoAsync(!shortcutPanelIsOpen);
 
-        private void ToggleShortcutsInfo(bool toOpen)
+        private void ToggleShortcutsInfoAsync(bool toOpen)
         {
             if (toOpen)
             {
-                viewInstance?.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
-                viewInstance?.ShortcutsInfoButton.OnSelect(null);
+                viewInstance!.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
+                viewInstance.ShortcutsInfoPanel.Closed += OnShortcutsInfoPanelClosed;
+                viewInstance.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
-                viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
-                viewInstance?.ShortcutsInfoButton.OnDeselect(null);
+                if (viewInstance != null)
+                {
+                    viewInstance.ShortcutsInfoPanel.Closed -= OnShortcutsInfoPanelClosed;
+                    viewInstance.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
+                    viewInstance.ShortcutsInfoButton.OnDeselect(null);
+                }
+
                 shortcutPanelIsOpen = false;
             }
+        }
+
+        private void OnShortcutsInfoPanelClosed()
+        {
+            ToggleShortcutsInfoAsync(false);
         }
 
         private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage, string __) =>

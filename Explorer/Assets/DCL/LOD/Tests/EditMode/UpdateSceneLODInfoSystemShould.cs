@@ -6,6 +6,7 @@ using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
@@ -59,7 +60,7 @@ namespace DCL.LOD.Tests
 
             sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
-            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY));
+            system = new UpdateSceneLODInfoSystem(world, lodSettings, new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY));
         }
 
         [Test]
@@ -76,7 +77,7 @@ namespace DCL.LOD.Tests
             //Arrange
             partitionComponent.IsDirty = true;
             partitionComponent.Bucket = bucket;
-            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent);
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene());
 
             //Act
             system.Update(0);

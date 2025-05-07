@@ -1,0 +1,29 @@
+{
+    "name": "DCL.UI.SharedSpaceManager",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:ead265f036164eb7899edc341131f4d5",
+        "GUID:766b242fb43af451aaa331f39872177d",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:9cce9838ccdc58d46b673e02f1058718",
+        "GUID:9ca29a7d75ab84bab806a20bbd350fd8",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:887770ff22b647ac864047b3c1af9a8b",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

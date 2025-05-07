@@ -7,7 +7,7 @@ namespace DCL.Landscape
     {
         // Note: [units] = Unity units (1 unit = 1 meter)
 
-        private const int MAX_CHUNK_SIZE = 512; // Maximum size of a chunk in Unity [units]
+        private const int MAX_CHUNK_SIZE = 1024; // Maximum size of a chunk in Unity [units]
         private const int MIN_CHUNKS_PER_SIDE = 2; // Minimum number of chunks along one side of terrain, ensuring at least a 2x2 grid
 
         public readonly int2 MinParcel;
@@ -23,16 +23,15 @@ namespace DCL.Landscape
 
         public int ChunkSizeInUnits; //  in [units]
 
-        private int chunkSizeInParcels; //  in [parcels]
-        private int sizeInChunks; // Number of chunks along one side of the square terrain
+        public readonly int ChunkSizeInParcels; //  in [parcels]
+        public readonly int SizeInChunks; // Number of chunks along one side of the square terrain
 
         public TerrainModel(int parcelSize, WorldModel world, int paddingInParcels)
         {
             this.parcelSize = parcelSize;
 
             ChunkSizeInUnits = 0;
-            chunkSizeInParcels = 0;
-            sizeInChunks = 0;
+            ChunkSizeInParcels = 0;
 
             int2 sizeInParcels = world.SizeInParcels + (2 * paddingInParcels);
             int2 centerInParcels = world.CenterInParcels;
@@ -43,23 +42,23 @@ namespace DCL.Landscape
             MinInUnits = MinParcel * parcelSize;
             MaxInUnits = MinInUnits + SizeInUnits;
 
-            CalculateChunkSizeAndCount();
+            (SizeInChunks, ChunkSizeInParcels) = CalculateChunkSizeAndCount();
 
             // Generate chunk models
             {
-                ChunkModels = new ChunkModel[sizeInChunks * sizeInChunks];
+                ChunkModels = new ChunkModel[SizeInChunks * SizeInChunks];
 
-                for (var x = 0; x < sizeInChunks; x++)
-                for (var y = 0; y < sizeInChunks; y++)
+                for (var x = 0; x < SizeInChunks; x++)
+                for (var y = 0; y < SizeInChunks; y++)
                 {
-                    int2 minChunkParcel = MinParcel + new int2(x * chunkSizeInParcels, y * chunkSizeInParcels);
-                    int2 maxParcelPosition = minChunkParcel + new int2(chunkSizeInParcels, chunkSizeInParcels) - new int2(1, 1);
+                    int2 minChunkParcel = MinParcel + new int2(x * ChunkSizeInParcels, y * ChunkSizeInParcels);
+                    int2 maxParcelPosition = minChunkParcel + new int2(ChunkSizeInParcels, ChunkSizeInParcels) - new int2(1, 1);
                     var model = new ChunkModel(minChunkParcel, maxParcelPosition);
 
                     if (TryOverlap(model, out int2 overlap))
                         model.ProcessOverlap(overlap);
 
-                    ChunkModels[x + (y * sizeInChunks)] = model;
+                    ChunkModels[x + (y * SizeInChunks)] = model;
                 }
 
                 foreach (int2 parcel in world.OwnedParcels)
@@ -75,26 +74,28 @@ namespace DCL.Landscape
         public bool IsInsideBounds(Vector2Int parcel) =>
             parcel.x >= MinParcel.x && parcel.x <= MaxParcel.x && parcel.y >= MinParcel.y && parcel.y <= MaxParcel.y;
 
-        private void CalculateChunkSizeAndCount()
+        private (int size, int count) CalculateChunkSizeAndCount()
         {
             int maxSideLengthInUnits = Mathf.Max(SizeInUnits.x, SizeInUnits.y);
 
             // Determine the number of chunks needed along one side to cover the largest dimension of the terrain
-            sizeInChunks = Mathf.Max(MIN_CHUNKS_PER_SIDE, Mathf.CeilToInt((float)maxSideLengthInUnits / MAX_CHUNK_SIZE));
+            int sizeInChunks = Mathf.Max(MIN_CHUNKS_PER_SIDE, Mathf.CeilToInt((float)maxSideLengthInUnits / MAX_CHUNK_SIZE));
 
             ChunkSizeInUnits = Mathf.ClosestPowerOfTwo(maxSideLengthInUnits / sizeInChunks);
             ChunkSizeInUnits = Mathf.Min(ChunkSizeInUnits, MAX_CHUNK_SIZE); // Ensure it doesn't exceed the max size
-            chunkSizeInParcels = ChunkSizeInUnits / parcelSize;
+            int chunkSizeInParcels = ChunkSizeInUnits / parcelSize;
 
             if (maxSideLengthInUnits > ChunkSizeInUnits * sizeInChunks)
                 sizeInChunks = Mathf.CeilToInt((float)maxSideLengthInUnits / ChunkSizeInUnits);
+
+            return (sizeInChunks, chunkSizeInParcels);
         }
 
         private bool ChunkContains(ChunkModel chunk, int2 parcel) =>
             parcel.x >= chunk.MinParcel.x &&
-            parcel.x < chunk.MinParcel.x + chunkSizeInParcels &&
+            parcel.x < chunk.MinParcel.x + ChunkSizeInParcels &&
             parcel.y >= chunk.MinParcel.y &&
-            parcel.y < chunk.MinParcel.y + chunkSizeInParcels;
+            parcel.y < chunk.MinParcel.y + ChunkSizeInParcels;
 
         private bool TryOverlap(in ChunkModel chunk, out int2 overlap)
         {

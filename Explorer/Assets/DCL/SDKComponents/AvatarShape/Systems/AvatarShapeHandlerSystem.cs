@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
@@ -15,6 +16,8 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
+using UnityEngine;
 using Utility.Arch;
 
 namespace ECS.Unity.AvatarShape.Systems
@@ -25,14 +28,23 @@ namespace ECS.Unity.AvatarShape.Systems
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly World globalWorld;
+        private readonly IComponentPool<Transform> globalTransformPool;
+        private readonly ISceneData sceneData;
 
-        public AvatarShapeHandlerSystem(World world, World globalWorld) : base(world)
+        public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool,
+            ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.globalTransformPool = globalTransformPool;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
+            // We need to wait until the scene restores its original position (from MordorConstants.SCENE_MORDOR_POSITION)
+            // to keep the correct global position on which the avatar should be
+            if (!sceneData.SceneLoadingConcluded) return;
+
             LoadAvatarShapeQuery(World);
             UpdateAvatarShapeQuery(World);
 
@@ -44,10 +56,22 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
+            // We have to create a global transform to hold the CharacterTransform. Using the Transform from the TransformComponent
+            // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world
+            Transform globalTransform = globalTransformPool.Get();
+            globalTransform.SetParent(transformComponent.Transform);
+            // We ensure that the avatar's transform initializes on the sdk location if the scene applies any offset
+            globalTransform.localPosition = Vector3.zero;
+            globalTransform.localRotation = Quaternion.identity;
+            globalTransform.localScale = Vector3.one;
+
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
-                new CharacterTransform(transformComponent.Transform),
-                new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
+                new CharacterTransform(globalTransform),
+                new CharacterInterpolationMovementComponent(
+                    transformComponent.Transform.position,
+                    transformComponent.Transform.position,
+                    transformComponent.Transform.rotation),
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
@@ -95,8 +119,8 @@ namespace ECS.Unity.AvatarShape.Systems
 
         public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
-            // Has to be removed, otherwise scene loading may break after teleportation (no error anywhere to know why)
-            globalWorld.Remove<CharacterTransform>(globalEntity);
+            // Need to remove parenting, since it may unintenionally deleted when
+            globalWorld.Get<CharacterTransform>(globalEntity).Transform.SetParent(null);
 
             // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
             // AvatarCleanUpSystem.Update() and BEFORE the DestroyEntitiesSystem.Update(), probably has to do with

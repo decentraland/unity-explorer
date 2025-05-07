@@ -5,7 +5,7 @@ namespace DCL.Friends
     public class FriendRequest
     {
         protected bool Equals(FriendRequest other) =>
-            FriendRequestId == other.FriendRequestId && Timestamp == other.Timestamp && From == other.From && To == other.To && MessageBody == other.MessageBody;
+            FriendRequestId == other.FriendRequestId && Timestamp == other.Timestamp && From.Equals(other.From) && To.Equals(other.To) && MessageBody == other.MessageBody;
 
         public override bool Equals(object obj)
         {

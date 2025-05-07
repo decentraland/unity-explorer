@@ -12,6 +12,7 @@ namespace DCL.Settings.Configuration
         [field: SerializeField] internal SettingsSectionConfig GraphicsSectionConfig { get; set; }
         [field: SerializeField] internal SettingsSectionConfig SoundSectionConfig { get; set; }
         [field: SerializeField] internal SettingsSectionConfig ControlsSectionConfig { get; set; }
+        [field: SerializeField] internal SettingsSectionConfig ChatSectionConfig { get; set; }
     }
 
     [Serializable]

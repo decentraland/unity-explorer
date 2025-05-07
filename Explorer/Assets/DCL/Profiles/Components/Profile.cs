@@ -7,6 +7,7 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.Profiles
 {
@@ -23,46 +24,74 @@ namespace DCL.Profiles
 
         private string userId;
         private string name;
+        private string mentionName;
         private bool hasClaimedName;
+
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
+        /// <summary>
+        /// Is the complete wallet address of the user
+        /// </summary>
         public string UserId
         {
             get => userId;
-
             internal set
             {
                 userId = value;
-                DisplayName = GenerateDisplayName();
+                GenerateAndValidateName();
             }
         }
 
         public string Name
         {
             get => name;
-
-            internal set
+            set
             {
                 name = value;
-                DisplayName = GenerateDisplayName();
+                GenerateAndValidateName();
             }
         }
 
+        /// <summary>
+        ///     The color calculated for this username
+        /// </summary>
+        public Color UserNameColor { get; internal set; } = Color.white;
+
+        /// <summary>
+        ///     The name of the user after passing character validation, without the # part
+        ///     For users with claimed names would be the same as DisplayName
+        /// </summary>
+        public string ValidatedName { get; private set; }
+
+        /// <summary>
+        ///     The # part of the name for users without claimed name, otherwise null, includes the # character at the beginning
+        /// </summary>
+        public string? WalletId { get; private set; }
+
+        /// <summary>
+        ///     The name of the user after passing character validation, including the
+        ///     Wallet Id (if the user doesnt have a claimed name)
+        /// </summary>
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
+
+        /// <summary>
+        /// The Display Name with @ before it. Cached here to avoid further allocations.
+        /// </summary>
+        public string MentionName => string.IsNullOrEmpty(mentionName) ? mentionName = "@" + DisplayName : mentionName;
 
         public bool HasClaimedName
         {
             get => hasClaimedName;
 
-            internal set
+            set
             {
                 hasClaimedName = value;
-                DisplayName = GenerateDisplayName();
+                GenerateAndValidateName();
             }
         }
 
-        public bool HasConnectedWeb3 { get; internal set; }
+        public bool HasConnectedWeb3 { get; set; }
         public string? Description { get; set; }
         public int TutorialStep { get; set; }
         public string? Email { get; internal set; }
@@ -87,10 +116,26 @@ namespace DCL.Profiles
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
+
         public List<LinkJsonDto>? Links
         {
             get => links;
             set => links = value;
+        }
+
+        internal Profile() { }
+
+        internal Profile(string userId, string name, Avatar avatar)
+        {
+            UserId = userId;
+            Name = name;
+            Avatar = avatar;
+        }
+
+        public void Dispose()
+        {
+            ProfilePicture.TryDereference();
+            POOL.Release(this);
         }
 
         public static Profile Create() =>
@@ -105,39 +150,30 @@ namespace DCL.Profiles
             return profile;
         }
 
-        internal Profile() { }
-
-        internal Profile(string userId, string name, Avatar avatar)
-        {
-            UserId = userId;
-            Name = name;
-            Avatar = avatar;
-        }
-
         public void Clear()
         {
-            this.blocked?.Clear();
-            this.interests?.Clear();
-            this.links?.Clear();
-            this.Birthdate = null;
-            this.Avatar.Clear();
-            this.Country = default(string?);
-            this.Email = default(string?);
-            this.Gender = default(string?);
-            this.Description = default(string?);
-            this.Hobbies = default(string?);
-            this.Language = default(string?);
-            this.Profession = default(string?);
-            this.Pronouns = default(string?);
-            this.Version = default(int);
-            this.HasClaimedName = default(bool);
-            this.EmploymentStatus = default(string?);
-            this.UserId = "";
-            this.Name = "";
-            this.TutorialStep = default(int);
-            this.HasConnectedWeb3 = default(bool);
+            blocked?.Clear();
+            interests?.Clear();
+            links?.Clear();
+            Birthdate = null;
+            Avatar.Clear();
+            Country = default(string?);
+            Email = default(string?);
+            Gender = default(string?);
+            Description = default(string?);
+            Hobbies = default(string?);
+            Language = default(string?);
+            Profession = default(string?);
+            Pronouns = default(string?);
+            Version = default(int);
+            HasClaimedName = default(bool);
+            EmploymentStatus = default(string?);
+            UserId = "";
+            Name = "";
+            TutorialStep = default(int);
+            HasConnectedWeb3 = default(bool);
             ProfilePicture = null;
-            this.IsDirty = false;
+            IsDirty = false;
         }
 
         public static Profile NewRandomProfile(string? userId) =>
@@ -160,15 +196,13 @@ namespace DCL.Profiles
                 avatar
             );
 
-        public void Dispose()
+        private void GenerateAndValidateName()
         {
-            ProfilePicture.TryDereference();
-            POOL.Release(this);
-        }
+            ValidatedName = "";
+            DisplayName = "";
+            WalletId = null;
 
-        private string GenerateDisplayName()
-        {
-            if (string.IsNullOrEmpty(Name)) return "";
+            if (string.IsNullOrEmpty(Name)) return;
 
             var result = "";
             MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
@@ -176,10 +210,16 @@ namespace DCL.Profiles
             foreach (Match match in matches)
                 result += match.Value;
 
-            if (HasClaimedName)
-                return result;
+            ValidatedName = result;
+            DisplayName = result;
 
-            return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
+            if (HasClaimedName) return;
+
+            if (!string.IsNullOrEmpty(UserId) && UserId.Length > 4)
+            {
+                WalletId = $"#{UserId[^4..]}";
+                DisplayName = $"{result}{WalletId}";
+            }
         }
 
         public void ClearLinks()

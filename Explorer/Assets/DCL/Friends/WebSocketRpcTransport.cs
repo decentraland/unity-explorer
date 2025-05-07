@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using rpc_csharp.transport;
 using System;
 using System.Net.WebSockets;
@@ -81,6 +82,9 @@ namespace DCL.Friends
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
+                            if (!string.IsNullOrEmpty(result.CloseStatusDescription))
+                                ReportHub.LogError(ReportCategory.FRIENDS, $"Friends web socket disconnected. {result.CloseStatusDescription}");
+
                             await CloseAsync(ct);
                             break;
                         }
@@ -92,7 +96,13 @@ namespace DCL.Friends
 
         public void SendMessage(byte[] data)
         {
-            SendMessageAsync(data, lifeCycleCancellationToken.Token).Forget();
+            CancellationToken ct;
+
+            // The cancellation source could be disposed before the token is obtained.
+            try { ct = lifeCycleCancellationToken.Token; }
+            catch (ObjectDisposedException) { return; }
+
+            SendMessageAsync(data, ct).Forget();
         }
 
         public async UniTask SendMessageAsync(byte[] data, CancellationToken ct)

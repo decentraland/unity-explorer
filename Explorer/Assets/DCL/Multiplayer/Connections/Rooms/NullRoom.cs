@@ -4,8 +4,9 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.Tracks.Hub;
-using System;
+using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IParticipantsHub Participants => NullParticipantsHub.INSTANCE;
         public IDataPipe DataPipe => NullDataPipe.INSTANCE;
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
+        public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
+        public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -32,6 +35,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event ConnectionStateChangeDelegate? ConnectionStateChanged;
         public event ConnectionDelegate? ConnectionUpdated;
         public event Room.MetaDelegate? RoomMetadataChanged;
+        public event Room.SidDelegate? RoomSidChanged;
 
         public void UpdateLocalMetadata(string metadata)
         {

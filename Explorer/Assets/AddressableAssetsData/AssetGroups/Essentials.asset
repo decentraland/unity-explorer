@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Essentials
   m_EditorClassIdentifier: 
   m_GroupName: Essentials
-  m_Data:
-    m_SerializedData: []
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
   - m_GUID: 04a7ffcd277754f7c91237894604f522
@@ -69,6 +67,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1f557ed079be146f9aeb090104c115c9
     m_Address: Assets/DCL/MapRenderer/Addressables/SceneOfInterest.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2308a593e7fee41dbad5a6b14f89e0e7
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/BlockUserButton.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -129,6 +132,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3efe8a48fc3905f47a0648abd6859394
     m_Address: MapCameraObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4362b43091b0d462db2641f8c866e9b9
+    m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -317,6 +325,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 93a86930ad6d44ebd85b46f9c6ebad72
+    m_Address: Assets/DCL/Friends/UI/Prefabs/BlockUserPrompt.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-SemiBold SDF.asset
     m_ReadOnly: 0
@@ -372,6 +385,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5efcea1481b64193ae5b5029f0c673f
+    m_Address: UntrustedRealmConfirmationPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b785183905d534b788d41dbce8ef7b4e
+    m_Address: MVFWImg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bd64e7058e4a44a1eafef49d75c5f0d0
     m_Address: LoadingRainbowGradient
     m_ReadOnly: 0
@@ -387,6 +410,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb536b0cdd6084c87a55b1ff25637eae
+    m_Address: Assets/DCL/SceneLoadingScreens/Textures/CreditsImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d20747763091b4fc5a2d5b6d1ba0ea7d
     m_Address: HideCategory
     m_ReadOnly: 0
@@ -394,6 +422,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d65049d6f7a244863b39c4dda5ba538e
     m_Address: NametagsData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: db7da980fc6384f848eeeb3077442864
+    m_Address: MinimumSpecsScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -409,11 +442,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e052984ad30813240bd28c945f4cab60
     m_Address: DottedLineRenderer
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e4f1395814ee0473e86cb6c06009fc6e
-    m_Address: BuilderImg
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

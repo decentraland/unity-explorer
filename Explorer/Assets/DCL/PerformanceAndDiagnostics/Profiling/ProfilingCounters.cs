@@ -23,6 +23,13 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> GltfInCacheAmount =
             new (MEMORY, "GLTF Assets in Cache", ProfilerMarkerDataUnit.Count);
 
+        // GLTF Data counters
+        public static ProfilerCounterValue<int> GltfDataAmount =
+            new (MEMORY, "GLTF Data Amount", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> GltfReferencedAmount =
+            new (MEMORY, "GLTF Referenced Amount", ProfilerMarkerDataUnit.Count);
+
         // Wearables cache
         public static ProfilerCounterValue<int> WearablesAssetsAmount =
             new (MEMORY, "Wearables Assets", ProfilerMarkerDataUnit.Count);
@@ -88,6 +95,9 @@ namespace DCL.Profiling
 
             GltfContainerAssetsAmount.Value = 0;
             GltfInCacheAmount.Value = 0;
+
+            GltfDataAmount.Value = 0;
+            GltfReferencedAmount.Value = 0;
 
             GetWearablesIntentionAmount.Value = 0;
             WearablesAssetsAmount.Value = 0;

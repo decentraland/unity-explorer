@@ -10,13 +10,15 @@ namespace DCL.InWorldCamera.CameraReelToast
     public enum CameraReelToastMessageType
     {
         FAILURE,
-        SUCCESS
+        SUCCESS,
+        DOWNLOAD
     }
 
     public class CameraReelToastMessage : MonoBehaviour
     {
         [field: SerializeField] public WarningNotificationView SuccessToastView { get; private set; }
         [field: SerializeField] public WarningNotificationView FailureToastView { get; private set; }
+        [field: SerializeField] public DownloadNotificationView DownloadToastView { get; private set; }
         [field: SerializeField] public float SuccessToastDuration { get; private set; } = 3f;
         [field: SerializeField] public float FailureToastDuration { get; private set; } = 3f;
         [field: SerializeField] public string FailureToastDefaultMessage { get; private set; } = "There was an error while trying to process your request. Please try again!";
@@ -24,6 +26,7 @@ namespace DCL.InWorldCamera.CameraReelToast
 
         private CancellationTokenSource showSuccessCts = new ();
         private CancellationTokenSource showFailureCts = new ();
+        private CancellationTokenSource showDownloadCts = new ();
 
         private void HideSuccessNotification()
         {
@@ -39,10 +42,19 @@ namespace DCL.InWorldCamera.CameraReelToast
             FailureToastView.CanvasGroup.alpha = 0f;
         }
 
+        private void HideDownloadNotification()
+        {
+            showDownloadCts = showDownloadCts.SafeRestart();
+            var canvasGroup = DownloadToastView.NotificationView.CanvasGroup;
+            canvasGroup.DOKill();
+            canvasGroup.alpha = 0f;
+        }
+
         public void ShowToastMessage(CameraReelToastMessageType type, string? message = null)
         {
             HideSuccessNotification();
             HideFailureNotification();
+            HideDownloadNotification();
 
             switch (type)
             {
@@ -51,6 +63,15 @@ namespace DCL.InWorldCamera.CameraReelToast
                     break;
                 case CameraReelToastMessageType.FAILURE:
                     ShowNotificationAsync(message, FailureToastDefaultMessage, FailureToastView, FailureToastDuration, showFailureCts.Token).Forget();
+                    break;
+                case CameraReelToastMessageType.DOWNLOAD:
+                    DownloadToastView.PrepareToBeClicked();
+
+                    ShowNotificationAsync(message, SuccessToastDefaultMessage,
+                            DownloadToastView.NotificationView, FailureToastDuration,
+                            showFailureCts.Token)
+                       .Forget();
+
                     break;
             }
         }
@@ -67,6 +88,7 @@ namespace DCL.InWorldCamera.CameraReelToast
         {
             HideSuccessNotification();
             HideFailureNotification();
+            HideDownloadNotification();
         }
     }
 }

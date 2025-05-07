@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DG.Tweening;
 using MVC;
 using System;

@@ -11,7 +11,7 @@ namespace DCL.Friends.UI
     {
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly ViewDependencies viewDependencies;
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? unfriendCancellationToken;
         private CancellationTokenSource? fetchProfileCancellationToken;
@@ -21,11 +21,11 @@ namespace DCL.Friends.UI
         public UnfriendConfirmationPopupController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService,
             IProfileRepository profileRepository,
-            IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
+            ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
-            this.profileThumbnailCache = profileThumbnailCache;
+            this.viewDependencies = viewDependencies;
         }
 
         public override void Dispose()
@@ -46,6 +46,7 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
+            viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.CancelButton.onClick.AddListener(Close);
             viewInstance.ConfirmButton.onClick.AddListener(Unfriend);
         }
@@ -60,7 +61,7 @@ namespace DCL.Friends.UI
 
             async UniTaskVoid FetchProfileAndFillDescriptionAsync(CancellationToken ct)
             {
-                viewInstance!.ProfileImage.IsLoading = true;
+                viewInstance!.ProfilePicture.SetLoadingState(true);
                 viewInstance!.DescriptionLabel.text = "Are you sure you want to unfriend?";
 
                 Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
@@ -68,8 +69,7 @@ namespace DCL.Friends.UI
                 if (profile == null) return;
 
                 viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Name}?";
-
-                await viewInstance!.ProfileImage.LoadThumbnailSafeAsync(profileThumbnailCache, inputData.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+                viewInstance!.ProfilePicture.Setup(profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, inputData.UserId);
             }
         }
 

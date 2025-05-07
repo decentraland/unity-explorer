@@ -4,7 +4,6 @@ using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
-using DCL.CharacterCamera.Systems;
 using DCL.Input;
 using DCL.Input.Component;
 using ECS.Abstract;
@@ -227,6 +226,185 @@ namespace DCL.CharacterCamera.Tests
             system.Update(1);
 
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(freeCameraData.Camera));
+        }
+
+        [Test]
+        public void SwitchFromSDKCameraToThirdPerson()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.SDKCamera;
+            world.Set(entity, component);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.SDKCamera));
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            component.Mode = CameraMode.ThirdPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+            Assert.That(thirdPersonCameraData.Camera.m_Transitions.m_InheritPosition, Is.False,
+                "When coming from SDKCamera, the ThirdPerson camera should not inherit position");
+        }
+
+        [Test]
+        public void InheritPositionWhenSwitchingFromThirdPersonToFirstPerson()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.ThirdPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            component.Mode = CameraMode.FirstPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.FirstPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
+            Assert.That(firstPersonCameraData.Camera.m_Transitions.m_InheritPosition, Is.True,
+                "When coming from ThirdPerson, the FirstPerson camera should inherit position");
+        }
+
+        [Test]
+        public void InheritPositionWhenSwitchingFromThirdPersonToDroneView()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.ThirdPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            component.Mode = CameraMode.DroneView;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.DroneView));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(droneViewData.Camera));
+            Assert.That(droneViewData.Camera.m_Transitions.m_InheritPosition, Is.True,
+                "When coming from ThirdPerson, the DroneView camera should inherit position");
+        }
+
+        [Test]
+        public void DoNotInheritPositionWhenSwitchingFromFirstPersonToThirdPerson()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.FirstPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.FirstPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
+
+            component.Mode = CameraMode.ThirdPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+            Assert.That(thirdPersonCameraData.Camera.m_Transitions.m_InheritPosition, Is.False,
+                "When coming from FirstPerson, the ThirdPerson camera should not inherit position");
+            Assert.That(thirdPersonCameraData.Camera.m_XAxis.Value, Is.EqualTo(firstPersonCameraData.POV.m_HorizontalAxis.Value),
+                "The ThirdPerson camera should copy the horizontal axis value from FirstPerson");
+        }
+
+        [Test]
+        public void PreservePreviousModeWhenSwitchingCameras()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.FirstPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.FirstPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
+
+            component.Mode = CameraMode.ThirdPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(component.PreviousMode, Is.EqualTo(CameraMode.FirstPerson),
+                "PreviousMode should be set to FirstPerson after switching from FirstPerson to ThirdPerson");
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+        }
+
+        [Test]
+        public void SkipProcessingWhenInWorldCameraComponentExists()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.ThirdPerson;
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            world.Add(entity, new DCL.InWorldCamera.InWorldCameraComponent());
+            world.Set(entity, new CameraInput { ZoomIn = true });
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            world.Remove<DCL.InWorldCamera.InWorldCameraComponent>(entity);
+
+            system.Update(1);
+
+            component = world.Get<CameraComponent>(entity);
+            cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.FirstPerson));
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
         }
     }
 }

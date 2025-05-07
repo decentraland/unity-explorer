@@ -8,7 +8,9 @@ namespace DCL.Emoji
 {
     public class EmojiPanelView : MonoBehaviour
     {
-        public event Action<float, bool> OnSectionSelected;
+        public event Action<float, bool> SectionSelected;
+
+        public event Action EmojiFirstOpen;
 
         [field: SerializeField]
         public List<EmojiSectionToggle> EmojiSections { get; private set; }
@@ -31,14 +33,12 @@ namespace DCL.Emoji
         [field: SerializeField]
         public SearchBarView SearchPanelView { get; private set; }
 
-        public event Action OnEmojiFirstOpen;
-
         private void Start()
         {
-            OnEmojiFirstOpen?.Invoke();
+            EmojiFirstOpen?.Invoke();
 
             foreach (EmojiSectionToggle emojiSectionToggle in EmojiSections)
-                emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => OnSectionSelected?.Invoke(emojiSectionToggle.SectionPosition, isOn));
+                emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => SectionSelected?.Invoke(emojiSectionToggle.SectionPosition, isOn));
         }
     }
 }

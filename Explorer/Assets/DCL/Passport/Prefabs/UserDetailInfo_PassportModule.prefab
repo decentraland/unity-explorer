@@ -618,7 +618,7 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 200, y: 50}
+  m_CellSize: {x: 240, y: 50}
   m_Spacing: {x: 5, y: 16}
   m_Constraint: 0
   m_ConstraintCount: 2
@@ -1333,8 +1333,8 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 200, y: 64}
-  m_Spacing: {x: 5, y: 16}
+  m_CellSize: {x: 240, y: 70}
+  m_Spacing: {x: 20, y: 16}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &3850859010532144877
@@ -1372,8 +1372,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 40, y: -135.74}
-  m_SizeDelta: {x: 1020, y: 19.37}
+  m_AnchoredPosition: {x: 40, y: -97}
+  m_SizeDelta: {x: 1020, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &7777468601207380978
 CanvasRenderer:
@@ -1403,8 +1403,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: You can extend your profile information using this fields. Those which
-    are not completed will not be displayed.
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -1489,7 +1488,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 19.37
+  m_MinHeight: 0
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1

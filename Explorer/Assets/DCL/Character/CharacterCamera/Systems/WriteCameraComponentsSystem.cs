@@ -59,12 +59,22 @@ namespace DCL.CharacterCamera.Systems
             }
 
             // Initialize SDK Main Camera component
-            PBMainCamera pbMainCamera = mainCameraPool.Get();
+            // The instance used in PutMessage() will automatically return to the pool.
+            PBMainCamera pbMainCameraForCRDT = mainCameraPool.Get();
+            ecsToCrdtWriter.PutMessage<PBMainCamera, PBMainCamera>(
+                static (dataToWrite, ecsInstance) =>
+                {
+                    dataToWrite.VirtualCameraEntity = ecsInstance.VirtualCameraEntity;
+                },
+                SpecialEntitiesID.CAMERA_ENTITY,
+                pbMainCameraForCRDT);
 
-            // you can't put the same instance as it will be returned to the pool after writing to the JS
-            ecsToCrdtWriter.PutMessage<PBMainCamera, PBMainCamera>(static (dataToWrite, ecsInstance) => { dataToWrite.VirtualCameraEntity = ecsInstance.VirtualCameraEntity; }, SpecialEntitiesID.CAMERA_ENTITY, pbMainCamera);
-
-            World.Add(cameraEntity, pbMainCamera);
+            // Add for our world as well; The same properties set in PutMessage() have to be
+            // initialized so that later CRDT synchronization detects both versions of the component as
+            // the same, otherwise horrible duplicated component on same entity problems arise on builds
+            PBMainCamera pbMainCameraForWorld = mainCameraPool.Get();
+            pbMainCameraForWorld.VirtualCameraEntity = 0;
+            World.Add(cameraEntity, pbMainCameraForWorld);
 
             PropagateCameraData(false);
         }

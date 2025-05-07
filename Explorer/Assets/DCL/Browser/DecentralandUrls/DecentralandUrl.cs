@@ -10,6 +10,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ArchipelagoHotScenes,
 
         DiscordLink,
+        TwitterLink,
+        NewsletterSubscriptionLink,
+        MarketplaceLink,
 
         PrivacyPolicy,
         TermsOfUse,
@@ -24,7 +27,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ApiEvents,
 
         ApiAuth,
-        AuthSignature,
+        AuthSignatureWebApp,
+        ApiRpc,
 
         GateKeeperSceneAdapter,
         LocalGateKeeperSceneAdapter,
@@ -33,6 +37,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PeerAbout,
         RemotePeers,
+        RemotePeersWorld,
 
         DAO,
 
@@ -40,10 +45,12 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         NotificationRead,
 
         Help,
+        MinimumSpecs,
 
         FeatureFlags,
 
         Market,
+        MarketplaceClaimName,
 
         AssetBundlesCDN,
 
@@ -59,5 +66,17 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BuilderApiDtos,
         BuilderApiContent,
+
+        Blocklist,
+
+        WorldContentServer,
+
+        Servers,
+
+        MediaConverter,
+
+        MarketplaceCredits,
+        GoShoppingWithMarketplaceCredits,
+        EmailSubscriptions,
     }
 }

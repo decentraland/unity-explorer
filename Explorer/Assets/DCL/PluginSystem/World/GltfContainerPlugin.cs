@@ -92,8 +92,6 @@ namespace DCL.PluginSystem.World
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
                 persistentEntities.SceneContainer);
 
-            ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
-
             var cleanUpGltfContainerSystem =
                 CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
 

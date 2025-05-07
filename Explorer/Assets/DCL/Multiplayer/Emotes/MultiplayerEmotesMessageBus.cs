@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -9,6 +10,7 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
@@ -23,6 +25,7 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly ProvidedAsset<MultiplayerDebugSettings> settings;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesDeduplication messageDeduplication;
@@ -31,10 +34,13 @@ namespace DCL.Multiplayer.Emotes
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MutexSync sync = new();
 
-        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, ProvidedAsset<MultiplayerDebugSettings> settings)
+        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
+            ProvidedAsset<MultiplayerDebugSettings> settings,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             this.messagePipesHub = messagePipesHub;
             this.settings = settings;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
 
             messageDeduplication = new EmotesDeduplication();
 
@@ -87,12 +93,18 @@ namespace DCL.Multiplayer.Emotes
         {
             using (receivedMessage)
             {
-                if (cancellationTokenSource.Token.IsCancellationRequested)
+                if (cancellationTokenSource.Token.IsCancellationRequested || IsUserBlocked(receivedMessage.FromWalletId))
+                {
+                    messageDeduplication.RemoveWallet(receivedMessage.FromWalletId);
                     return;
+                }
 
                 Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId);
             }
         }
+
+        private bool IsUserBlocked(string userAddress) =>
+            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
         private void Inbox(string walletId, URN emoteURN, uint incrementalId)
         {

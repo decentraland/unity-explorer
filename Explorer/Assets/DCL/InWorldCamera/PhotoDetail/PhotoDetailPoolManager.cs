@@ -2,11 +2,9 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.WebRequests;
 using MVC;
 using System;
 using UnityEngine;
@@ -25,10 +23,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         public PhotoDetailPoolManager(
             VisiblePersonView visiblePersonPrefab,
             EquippedWearableView equippedWearablePrefab,
-            Sprite emptyProfileImage,
             RectTransform visiblePersonParent,
             GameObject unusedEquippedWearablePoolObjectParent,
-            IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
@@ -40,17 +36,17 @@ namespace DCL.InWorldCamera.PhotoDetail
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
             int equippedWearableMaxSize,
-            Action wearableMarketClicked)
+            Action wearableMarketClicked,
+            ViewDependencies viewDependencies)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
-                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, chatEntryConfiguration, passportBridge),
+                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, viewDependencies),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
-                actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson, emptyProfileImage),
+                actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson),
                 actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
                 collectionCheck: true,
                 visiblePersonDefaultCapacity,
@@ -101,25 +97,24 @@ namespace DCL.InWorldCamera.PhotoDetail
             return controller;
         }
 
-        private void VisiblePersonRelease(VisiblePersonController visiblePerson, Sprite emptyProfileImage)
+        private void VisiblePersonRelease(VisiblePersonController visiblePerson)
         {
-            visiblePerson.view.profileImage.SetImage(emptyProfileImage);
+            visiblePerson.view.profilePictureView.SetDefaultThumbnail();
             visiblePerson.view.gameObject.SetActive(false);
         }
 
         private VisiblePersonController CreateVisiblePerson(
             VisiblePersonView visiblePersonPrefab,
             RectTransform visiblePersonParent,
-            IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            ChatEntryConfigurationSO chatEntryConfiguration,
-            IPassportBridge passportBridge)
+            IPassportBridge passportBridge,
+            ViewDependencies viewDependencies)
         {
             VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab, visiblePersonParent);
-            return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, chatEntryConfiguration);
+            return new VisiblePersonController(view, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, viewDependencies);
         }
 
         public VisiblePersonController GetVisiblePerson() =>

@@ -1,118 +1,236 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Emoji;
-using DCL.Friends.Chat;
+using DCL.Chat.InputBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
+using DCL.RealmNavigation;
+using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
+using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
+using LiveKit.Rooms;
 using MVC;
-using SuperScrollView;
-using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView, ChatController.ShowParams>, IControllerInSharedSpace<ChatView, ChatController.ShowParams>
     {
-        private const int MAX_MESSAGE_LENGTH = 250;
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
-        private const string EMOJI_TAG = "[emoji]";
-        private const string HASH_CHARACTER = "#";
-        private const string ORIGIN = "chat";
-        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
+        public struct ShowParams
+        {
+            /// <summary>
+            /// Indicates whether the chat panel should be unfolded. If it is False, no action will be performed.
+            /// </summary>
+            public readonly bool Unfold;
+
+            /// <summary>
+            /// Indicates whether the input box of the chat panel should gain the focus after showing.
+            /// </summary>
+            public readonly bool HasToFocusInputBox;
+
+            /// <summary>
+            /// Constructor with all fields.
+            /// </summary>
+            /// <param name="unfold">Indicates whether the chat panel should be unfolded. If it is False, no action will be performed.</param>
+            /// <param name="hasToFocusInputBox">Indicates whether the input box of the chat panel should gain the focus after showing</param>
+            public ShowParams(bool unfold, bool hasToFocusInputBox = false)
+            {
+                Unfold = unfold;
+                HasToFocusInputBox = hasToFocusInputBox;
+            }
+        }
+
+        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private EmojiPanelController? emojiPanelController;
-        private EmojiSuggestionPanel? emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
-        private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
-        private readonly TextAsset emojiMappingJson;
-        private readonly EmojiSectionView emojiSectionViewPrefab;
-        private readonly EmojiButton emojiButtonPrefab;
-        private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly IChatHistory chatHistory;
-        private readonly List<EmojiData> keysWithPrefix = new ();
-        private readonly IEventSystem eventSystem;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly Mouse device;
-        private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
+        private readonly ViewDependencies viewDependencies;
+        private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IRoom islandRoom;
+        private readonly IProfileCache profileCache;
+        private readonly ITextFormatter hyperlinkTextFormatter;
+        private readonly ChatAudioSettingsAsset chatAudioSettings;
+        private readonly IChatInputBus chatInputBus;
+        private readonly ILoadingStatus loadingStatus;
 
-        private CancellationTokenSource cts;
-        private CancellationTokenSource emojiPanelCts;
         private SingleInstanceEntity cameraEntity;
-        private (IChatCommand command, Match param) chatCommand;
-        private bool isChatClosed;
-        private bool isInputSelected;
-        private IReadOnlyList<RaycastResult> raycastResults;
+        private CancellationTokenSource memberListCts;
+        private string previousRoomSid = string.Empty;
+        private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
+        private readonly List<Profile> participantProfileBuffer = new ();
+
+        // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
+        private int messageCountWhenSeparatorViewed;
+        private bool hasToResetUnreadMessagesWhenNewMessageArrive;
+        private readonly IRoomHub roomHub;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        public event Action<bool>? ChatBubbleVisibilityChanged;
+        public bool IsUnfolded
+        {
+            get => viewInstance.IsUnfolded;
+
+            set
+            {
+                viewInstance.IsUnfolded = value;
+
+                // When opened from outside, it should show the unread messages
+                if (value)
+                    viewInstance.ShowNewMessages();
+
+                if (value)
+                    viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
+                else
+                    viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
+            }
+
+        }
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
+
+        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            EmojiPanelConfigurationSO emojiPanelConfiguration,
-            TextAsset emojiMappingJson,
-            EmojiSectionView emojiSectionViewPrefab,
-            EmojiButton emojiButtonPrefab,
-            EmojiSuggestionView emojiSuggestionViewPrefab,
             World world,
             Entity playerEntity,
-            DCLInput dclInput,
-            IEventSystem eventSystem,
             IInputBlock inputBlock,
-            IChatLifecycleBusController chatLifecycleBusController
-        ) : base(viewFactory)
+            ViewDependencies viewDependencies,
+            IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub,
+            ChatAudioSettingsAsset chatAudioSettings,
+            ITextFormatter hyperlinkTextFormatter,
+            IProfileCache profileCache,
+            IChatInputBus chatInputBus,
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
-            this.emojiPanelConfiguration = emojiPanelConfiguration;
-            this.emojiMappingJson = emojiMappingJson;
-            this.emojiSectionViewPrefab = emojiSectionViewPrefab;
-            this.emojiButtonPrefab = emojiButtonPrefab;
-            this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.dclInput = dclInput;
-            this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
-
-            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
-
-            device = InputSystem.GetDevice<Mouse>();
-
+            this.viewDependencies = viewDependencies;
+            this.chatCommandsBus = chatCommandsBus;
+            this.islandRoom = roomHub.IslandRoom();
+            this.roomHub = roomHub;
+            this.chatAudioSettings = chatAudioSettings;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            this.profileCache = profileCache;
+            this.chatInputBus = chatInputBus;
+            this.loadingStatus = loadingStatus;
         }
 
-        private void HideBusCommandReceived()
+        public void Clear() // Called by a command
         {
-            HideViewAsync(CancellationToken.None).Forget();
+            chatHistory.ClearChannel(viewInstance!.CurrentChannel);
+            messageCountWhenSeparatorViewed = 0;
+        }
+
+        public override void Dispose()
+        {
+            chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
+            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
+            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
+            chatCommandsBus.OnClearChat -= Clear;
+            chatInputBus.InsertTextInChat -= OnInputTextInserted;
+
+            if (viewInstance != null)
+            {
+                viewInstance.PointerEnter -= OnChatViewPointerEnter;
+                viewInstance.PointerExit -= OnChatViewPointerExit;
+                viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
+                viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
+                viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
+                viewInstance.InputSubmitted -= OnViewInputSubmitted;
+                viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
+                viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
+                viewInstance.FoldingChanged -= OnViewFoldingChanged;
+                viewInstance.MemberListVisibilityChanged -= OnMemberListVisibilityChanged;
+                viewInstance.Dispose();
+            }
+
+            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
+
+            memberListCts.SafeCancelAndDispose();
+        }
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ShowParams showParams)
+        {
+            if(State != ControllerState.ViewHidden)
+            {
+                if(!GetViewVisibility())
+                    SetViewVisibility(true);
+
+                if(showParams.Unfold)
+                    IsUnfolded = true;
+
+                if(showParams.HasToFocusInputBox)
+                    FocusInputBox();
+
+                ViewShowingComplete?.Invoke(this);
+            }
+
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            IsUnfolded = false;
+            await UniTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// Makes the input box gain the focus so the user can start typing.
+        /// </summary>
+        public void FocusInputBox()
+        {
+            viewInstance.FocusInputBox();
+        }
+
+        /// <summary>
+        /// Makes the chat panel (including the input box) invisible or visible (it does not hide the view).
+        /// </summary>
+        /// <param name="visibility">Whether to make the panel visible.</param>
+        public void SetViewVisibility(bool visibility)
+        {
+            viewInstance.gameObject.SetActive(visibility);
+        }
+
+        /// <summary>
+        /// Indicates whether the panel is invisible or not (the view is never hidden as it is a Persistent panel).
+        /// </summary>
+        /// <returns>True if the panel is visible; False otherwise.</returns>
+        public bool GetViewVisibility()
+        {
+            return viewInstance.gameObject.activeInHierarchy;
         }
 
         protected override void OnViewInstantiated()
@@ -120,189 +238,184 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             //We start processing messages once the view is ready
-            chatMessagesBus.MessageAdded += OnMessageAdded;
-            chatHistory.OnMessageAdded += CreateChatEntry;
-            chatHistory.OnCleared += ChatHistoryOnOnCleared;
+            chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatCommandsBus.OnClearChat += Clear;
+            chatInputBus.InsertTextInChat += OnInputTextInserted;
 
-            viewInstance!.OnChatViewPointerEnter += OnChatViewPointerEnter;
-            viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
-            viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
-            viewInstance.CharacterCounter.gameObject.SetActive(false);
-            viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
-            viewInstance.InputField.onSelect.AddListener(OnInputSelected);
-            viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
-            viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
-            viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
-            emojiPanelController.OnEmojiSelected += AddEmojiToInput;
+            viewInstance!.InjectDependencies(viewDependencies);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants, loadingStatus);
 
-            emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
-            emojiSuggestionPanelController.OnEmojiSelected += AddEmojiFromSuggestion;
+            viewInstance.PointerEnter += OnChatViewPointerEnter;
+            viewInstance.PointerExit += OnChatViewPointerExit;
 
-            viewInstance.EmojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
+            viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
+            viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
+            viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
+            viewInstance.InputSubmitted += OnViewInputSubmitted;
+            viewInstance.MemberListVisibilityChanged += OnMemberListVisibilityChanged;
+            viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
+            viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
+            viewInstance.FoldingChanged += OnViewFoldingChanged;
 
-            viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
-            viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
-            OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
             OnFocus();
 
             // Intro message
-            chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
+            // TODO: Use localization systems here:
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
+            chatHistory.Channels[ChatChannel.NEARBY_CHANNEL].MarkAllMessagesAsRead();
+
+            memberListCts = new CancellationTokenSource();
+            UniTask.RunOnThreadPool(UpdateMembersDataAsync);
+        }
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        {
+            bool isSentByOwnUser = addedMessage is { SystemMessage: false, SentByOwnUser: true };
+
+            CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
+
+            // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
+            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
+                MarkCurrentChannelAsRead();
+
+            if (isSentByOwnUser)
+            {
+                MarkCurrentChannelAsRead();
+                viewInstance.RefreshMessages();
+                viewInstance.ShowLastMessage();
+            }
+            else
+            {
+                // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
+                //       Once a new message arrives, the separator moves to the position of that new message and the count of
+                //       unread messages is set to 1.
+                if (hasToResetUnreadMessagesWhenNewMessageArrive)
+                {
+                    hasToResetUnreadMessagesWhenNewMessageArrive = false;
+                    destinationChannel.ReadMessages = messageCountWhenSeparatorViewed;
+                }
+
+                viewInstance.RefreshMessages();
+            }
+        }
+
+        private void OnViewFoldingChanged(bool isUnfolded)
+        {
+            if (!isUnfolded)
+                MarkCurrentChannelAsRead();
+        }
+
+        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
+        {
+            viewInstance!.RefreshMessages();
+        }
+
+        private void OnViewUnreadMessagesSeparatorViewed()
+        {
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannel].Messages.Count;
+            hasToResetUnreadMessagesWhenNewMessageArrive = true;
+        }
+
+        private void OnViewScrollBottomReached()
+        {
+            MarkCurrentChannelAsRead();
+        }
+
+        private async UniTask UpdateMembersDataAsync()
+        {
+            const int WAIT_TIME_IN_BETWEEN_UPDATES = 500;
+
+            while (!memberListCts.IsCancellationRequested)
+            {
+                // If the player jumps to another island room (like a world) while the member list is visible, it must refresh
+                if (previousRoomSid != islandRoom.Info.Sid && viewInstance!.IsMemberListVisible)
+                {
+                    previousRoomSid = islandRoom.Info.Sid;
+                    RefreshMemberList();
+                }
+
+                // Updates the amount of members
+                int participantsCount = roomHub.ParticipantsCount();
+                if(roomHub.HasAnyRoomConnected() && participantsCount != viewInstance!.MemberCount)
+                    viewInstance!.MemberCount = participantsCount;
+
+                await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
+            }
+        }
+
+        protected override void OnBlur()
+        {
+            viewInstance!.DisableInputBoxSubmissions();
+        }
+
+        protected override void OnFocus()
+        {
+            if (viewInstance!.IsFocused) return;
+
+            viewInstance.EnableInputBoxSubmissions();
         }
 
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            dclInput.UI.Click.performed += OnClick;
-            dclInput.Shortcuts.ToggleNametags.performed += ToggleNametagsFromShortcut;
-            dclInput.Shortcuts.OpenChat.performed += OnOpenChat;
-            dclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommand;
+            viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
 
-            viewInstance!.LoopList.RefreshAllShownItem();
-            OnFocus();
+            viewInstance.IsUnfolded = inputData.Unfold;
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            dclInput.UI.Click.performed -= OnClick;
-            dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
-            dclInput.Shortcuts.OpenChat.performed -= OnOpenChat;
-            dclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommand;
-            OnBlur();
+            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+
+            MarkCurrentChannelAsRead();
         }
 
-        private void OnClick(InputAction.CallbackContext obj)
+        private void MarkCurrentChannelAsRead()
         {
-            CheckIfClickedOnEmojiPanel();
+            chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
+        }
 
-            void CheckIfClickedOnEmojiPanel()
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.Never(ct);
+        }
+
+        private void CreateChatBubble(ChatChannel _, ChatMessage chatMessage, bool isSentByOwnUser)
+        {
+            // Chat bubble over the avatars
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                if (!(viewInstance!.EmojiPanel.gameObject.activeInHierarchy ||
-                      viewInstance.EmojiSuggestionPanel.gameObject.activeInHierarchy)) return;
+                Entity entity = entry.Entity;
+                GenerateChatBubbleComponent(entity, chatMessage);
 
-                raycastResults = eventSystem.RaycastAll(device.position.value);
-                var clickedOnPanel = false;
-
-                foreach (RaycastResult result in raycastResults)
+                switch (chatAudioSettings.chatAudioSettings)
                 {
-                    if (result.gameObject == viewInstance!.EmojiPanel.gameObject ||
-                        result.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject ||
-                        result.gameObject == viewInstance.EmojiPanelButton.gameObject) { clickedOnPanel = true; }
-                }
-
-                if (!clickedOnPanel)
-                {
-                    if (viewInstance!.EmojiPanel.gameObject.activeInHierarchy)
-                    {
-                        viewInstance!.EmojiPanelButton.SetState(false);
-                        viewInstance.EmojiPanel.gameObject.SetActive(false);
-                        EnableUnwantedInputs();
-                    }
-
-                    emojiSuggestionPanelController!.SetPanelVisibility(false);
+                    case ChatAudioSettings.NONE:
+                        return;
+                    case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
+                    case ChatAudioSettings.ALL:
+                        viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
+                        break;
                 }
             }
+            else if (isSentByOwnUser)
+                GenerateChatBubbleComponent(playerEntity, chatMessage);
         }
 
-        private void OnOpenChat(InputAction.CallbackContext obj)
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
-            TryFocusInputFieldWithText(string.Empty);
-        }
-
-        private void OnOpenChatCommand(InputAction.CallbackContext obj)
-        {
-            TryFocusInputFieldWithText("/");
-        }
-
-        private void TryFocusInputFieldWithText(string text)
-        {
-            if (viewInstance!.gameObject.activeInHierarchy && viewInstance.InputField.isFocused == false)
-            {
-                var inputField = viewInstance.InputField;
-                inputField.text = text;
-                inputField.ActivateInputField();
-                inputField.caretPosition = inputField.text.Length;
-            }
-        }
-
-        private void OnChatViewPointerExit() =>
-            world.TryRemove<CameraBlockerComponent>(cameraEntity);
-
-        private void OnChatViewPointerEnter() =>
-            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-
-        private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
-        {
-            if (viewInstance!.InputField.text.Length >= MAX_MESSAGE_LENGTH)
-                return;
-
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
-            viewInstance.InputField.SetTextWithoutNotify(viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode));
-            viewInstance.InputField.stringPosition += emojiCode.Length;
-            viewInstance.InputField.ActivateInputField();
-
-            if (shouldClose)
-                emojiSuggestionPanelController!.SetPanelVisibility(false);
-        }
-
-        private void ToggleNametagsFromShortcut(InputAction.CallbackContext obj)
-        {
-            nametagsData.showNameTags = !nametagsData.showNameTags;
-
-            if (!nametagsData.showNameTags)
-            {
-                viewInstance!.ChatBubblesToggle.OffImage.gameObject.SetActive(true);
-                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(false);
-            }
-            else
-            {
-                viewInstance!.ChatBubblesToggle.OffImage.gameObject.SetActive(!nametagsData.showChatBubbles);
-                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(nametagsData.showChatBubbles);
-            }
-        }
-
-        private void OnToggleChatBubblesValueChanged(bool isToggled)
-        {
-            if (!nametagsData.showNameTags)
-                return;
-
-            viewInstance!.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
-            viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
-            nametagsData.showChatBubbles = isToggled;
-
-            ChatBubbleVisibilityChanged?.Invoke(isToggled);
-        }
-
-        private void AddEmojiToInput(string emoji)
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.AddEmojiAudio);
-
-            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
-                return;
-
-            int caretPosition = viewInstance.InputField.stringPosition;
-            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, EMOJI_TAG);
-            viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_TAG, emoji);
-            viewInstance.InputField.stringPosition += emoji.Length;
-
-            viewInstance.InputField.ActivateInputField();
-        }
-
-        private void ToggleEmojiPanel()
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.OpenEmojiPanelAudio);
-
-            emojiPanelCts = emojiPanelCts.SafeRestart();
-            bool toggle = !viewInstance.EmojiPanel.gameObject.activeInHierarchy;
-            viewInstance.EmojiPanel.gameObject.SetActive(toggle);
-            viewInstance.EmojiPanelButton.SetState(toggle);
-            emojiSuggestionPanelController!.SetPanelVisibility(false);
-            viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(toggle);
-            viewInstance.InputField.ActivateInputField();
-
-            if (toggle) DisableUnwantedInputs();
-            else EnableUnwantedInputs();
+            if (nametagsData is { showChatBubbles: true, showNameTags: true })
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention));
         }
 
         private void DisableUnwantedInputs()
@@ -317,240 +430,138 @@ namespace DCL.Chat
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
-        private void OnSubmitAction(InputAction.CallbackContext obj)
+        private void OnViewChatBubbleVisibilityChanged(bool isVisible)
         {
-            if (emojiSuggestionPanelController is { IsActive: true }) return;
-            if (viewInstance!.InputField.isFocused) return;
+            nametagsData.showChatBubbles = isVisible;
 
-            viewInstance.InputField.OnSelect(null);
+            ChatBubbleVisibilityChanged?.Invoke(isVisible);
         }
 
-        private void OnSubmit(string _)
+        private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
         {
-            if (emojiSuggestionPanelController is { IsActive: true })
-            {
-                emojiSuggestionPanelController.SetPanelVisibility(false);
-                return;
-            }
+            chatMessagesBus.Send(channel.Id, message, origin);
+        }
 
-            if (viewInstance!.EmojiPanel.gameObject.activeInHierarchy)
-            {
-                viewInstance!.EmojiPanelButton.SetState(false);
-                emojiPanelController!.SetPanelVisibility(false);
+        private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)
+        {
+            if (isVisible)
+                DisableUnwantedInputs();
+            else
                 EnableUnwantedInputs();
-            }
-
-            if (string.IsNullOrWhiteSpace(viewInstance!.InputField.text))
-            {
-                viewInstance.InputField.DeactivateInputField();
-                viewInstance.InputField.OnDeselect(null);
-                return;
-            }
-
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatSendMessageAudio);
-            string messageToSend = viewInstance.InputField.text;
-
-            viewInstance.InputField.text = string.Empty;
-            viewInstance.InputField.ActivateInputField();
-
-            chatMessagesBus.Send(messageToSend, ORIGIN);
         }
 
-        private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
+        private void OnViewInputBoxFocusChanged(bool hasFocus)
         {
-            if (index < 0 || index >= chatHistory.Messages.Count)
-                return null;
-
-            ChatMessage itemData = chatHistory.Messages[index];
-            LoopListViewItem2 item;
-
-            if (itemData.IsPaddingElement)
-                item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
+            if (hasFocus)
+                DisableUnwantedInputs();
             else
-            {
-                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name :
-                    itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
+                EnableUnwantedInputs();
+        }
 
-                ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-                SetItemData(index, itemData, itemScript);
+        private void OnChatViewPointerExit() =>
+            world.TryRemove<CameraBlockerComponent>(cameraEntity);
+
+        private void OnChatViewPointerEnter() =>
+            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+
+        private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            viewInstance!.FocusInputBoxWithText("/");
+        }
+
+        private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            nametagsData.showNameTags = !nametagsData.showNameTags;
+            viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
+        }
+
+        private void OnUIClickPerformed(InputAction.CallbackContext obj)
+        {
+            viewInstance!.Click();
+        }
+
+        private void OnSubmitShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            viewInstance!.FocusInputBox();
+        }
+
+        private void OnInputTextInserted(string text)
+        {
+            viewInstance!.FocusInputBox();
+            viewInstance.InsertTextInInputBox(text);
+        }
+
+        private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
+        {
+            if (!chatMessage.SystemMessage)
+            {
+                string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
+                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
+                chatHistory.AddMessage(channelId, newChatMessage);
+            }
+            else
+                chatHistory.AddMessage(channelId, chatMessage);
+        }
+
+        private void OnMemberListVisibilityChanged(bool isVisible)
+        {
+            if (isVisible && roomHub.HasAnyRoomConnected())
+                RefreshMemberList();
+        }
+
+        private List<ChatMemberListView.MemberData> GenerateMemberList()
+        {
+            membersBuffer.Clear();
+
+            GetProfilesFromParticipants(participantProfileBuffer);
+
+            for (int i = 0; i < participantProfileBuffer.Count; ++i)
+            {
+                ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(participantProfileBuffer[i]);
+
+                if (!string.IsNullOrEmpty(newMember.Name))
+                    membersBuffer.Add(newMember);
             }
 
-            return item;
+            return membersBuffer;
         }
 
-        private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemScript)
+        private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(Profile profile)
         {
-            //temporary approach to extract the username without the walledId, will be refactored
-            //once we have the proper integration of the profile retrieval
-            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains(HASH_CHARACTER)
-                ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf(HASH_CHARACTER, StringComparison.Ordinal))}"
-                : itemData.Sender);
-
-            itemScript.playerName.color = playerNameColor;
-
-            if (!itemData.SystemMessage)
-            {
-                itemScript.ProfileBackground.color = playerNameColor;
-                playerNameColor.r += 0.3f;
-                playerNameColor.g += 0.3f;
-                playerNameColor.b += 0.3f;
-                itemScript.ProfileOutline.color = playerNameColor;
-            }
-
-            itemScript.SetItemData(itemData);
-
-            //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
-            if (itemData.HasToAnimate)
-            {
-                itemScript.AnimateChatEntry();
-                chatHistory.ForceUpdateMessage(index, new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false));
-            }
-        }
-
-        private void CloseChat()
-        {
-            isChatClosed = true;
-            viewInstance!.ToggleChat(false);
-        }
-
-        private void OnInputDeselected(string inputText)
-        {
-            isInputSelected = false;
-            viewInstance!.EmojiPanelButton.SetColor(false);
-            viewInstance.CharacterCounter.gameObject.SetActive(false);
-            viewInstance.StartChatEntriesFadeout();
-            EnableUnwantedInputs();
-        }
-
-        private void OnInputSelected(string inputText)
-        {
-            if (isChatClosed)
-            {
-                isChatClosed = false;
-                viewInstance!.ToggleChat(true);
-                viewInstance.LoopList.MovePanelToItemIndex(0, 0);
-            }
-
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.EnterInputAudio);
-
-            if (isInputSelected) return;
-
-            isInputSelected = true;
-            viewInstance.EmojiPanelButton.SetColor(true);
-            viewInstance.CharacterCounter.gameObject.SetActive(true);
-            viewInstance.StopChatEntriesFadeout();
-            DisableUnwantedInputs();
-        }
-
-        private void OnInputChanged(string inputText)
-        {
-            HandleEmojiSearch(inputText);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatInputTextAudio);
-
-            viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
-            viewInstance.StopChatEntriesFadeout();
-        }
-
-        protected override void OnBlur()
-        {
-            viewInstance!.InputField.onSubmit.RemoveAllListeners();
-            dclInput.UI.Submit.performed -= OnSubmitAction;
-            viewInstance.InputField.DeactivateInputField();
-        }
-
-        protected override void OnFocus()
-        {
-            viewInstance!.InputField.onSubmit.AddListener(OnSubmit);
-            dclInput.UI.Submit.performed += OnSubmitAction;
-        }
-
-        private void HandleEmojiSearch(string inputText)
-        {
-            Match match = EMOJI_PATTERN_REGEX.Match(inputText);
-
-            if (match.Success)
-            {
-                if (match.Value.Length < 2)
+            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData
                 {
-                    emojiSuggestionPanelController!.SetPanelVisibility(false);
-                    return;
-                }
+                    Id = profile.UserId,
+                };
 
-                cts.SafeCancelAndDispose();
-                cts = new CancellationTokenSource();
-
-                SearchAndSetEmojiSuggestionsAsync(match.Value, cts.Token).Forget();
-            }
-            else
+            if (profile != null)
             {
-                if (emojiSuggestionPanelController is { IsActive: true })
-                    emojiSuggestionPanelController!.SetPanelVisibility(false);
+                newMemberData.Name = profile.ValidatedName;
+                newMemberData.FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
+                newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
+                newMemberData.WalletId = profile.WalletId;
+                newMemberData.ProfileColor = profile.UserNameColor;
             }
+
+            return newMemberData;
         }
 
-        private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
+        private void RefreshMemberList()
         {
-            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
-
-            emojiSuggestionPanelController!.SetValues(keysWithPrefix);
-            emojiSuggestionPanelController.SetPanelVisibility(true);
+            List<ChatMemberListView.MemberData> members = GenerateMemberList();
+            viewInstance!.SetMemberData(members);
         }
 
-        private void OnMessageAdded(ChatMessage chatMessage)
+        private void GetProfilesFromParticipants(List<Profile> outProfiles)
         {
-            chatHistory.AddMessage(chatMessage);
-        }
+            outProfiles.Clear();
 
-        private void CreateChatEntry(ChatMessage chatMessage)
-        {
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
+            foreach (string? identity in roomHub.AllRoomsRemoteParticipantIdentities())
             {
-                Entity entity = entry.Entity;
-                GenerateChatBubbleComponent(entity, chatMessage);
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
+                Profile profile = profileCache.Get(identity);
+
+                if (profile != null)
+                    outProfiles.Add(profile);
             }
-            else if (chatMessage is { SystemMessage: false, SentByOwnUser: true })
-                GenerateChatBubbleComponent(playerEntity, chatMessage);
-
-            viewInstance!.ResetChatEntriesFadeout();
-
-            viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count, false);
-            viewInstance.LoopList.MovePanelToItemIndex(0, 0);
         }
-
-        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
-        {
-            if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
-        }
-
-        private void ChatHistoryOnOnCleared()
-        {
-            viewInstance!.ResetChatEntriesFadeout();
-            viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count);
-            viewInstance.LoopList.MovePanelToItemIndex(0, 0);
-        }
-
-        public override void Dispose()
-        {
-            chatMessagesBus.MessageAdded -= CreateChatEntry;
-            chatHistory.OnMessageAdded -= CreateChatEntry;
-            chatHistory.OnCleared -= ChatHistoryOnOnCleared;
-
-            if (emojiPanelController != null)
-            {
-                emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
-                emojiPanelController.Dispose();
-            }
-
-            if (emojiSuggestionPanelController != null)
-                emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
-
-            dclInput.UI.Submit.performed -= OnSubmitAction;
-            cts.SafeCancelAndDispose();
-        }
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
     }
 }

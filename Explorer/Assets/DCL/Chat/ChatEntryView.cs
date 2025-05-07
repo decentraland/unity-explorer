@@ -1,6 +1,7 @@
+using DCL.Chat.History;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,67 +9,31 @@ namespace DCL.Chat
 {
     public class ChatEntryView : MonoBehaviour
     {
-        private const float BACKGROUND_HEIGHT_OFFSET = 56;
-        private const float BACKGROUND_WIDTH_OFFSET = 56;
-        private const float MAX_ENTRY_WIDTH = 246;
+        public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
-        [field: SerializeField]
-        internal RectTransform backgroundRectTransform { get; private set; }
+        public ChatEntryClickedDelegate? ChatEntryClicked;
 
-        [field: SerializeField]
-        internal RectTransform textRectTransform { get; private set; }
+        [field: SerializeField] internal RectTransform rectTransform { get; private set; }
+        [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
-        [field: SerializeField]
-        internal RectTransform rectTransform { get; private set; }
+        [field: Header("Elements")]
+        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
+        [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
-        [field: SerializeField]
-        internal ContentSizeFitter contentSizeFitter { get; private set; }
+        [field: Header("Avatar Profile")]
+        [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
+        [field: SerializeField] internal Button profileButton { get; private set; }
 
-        [field: SerializeField]
-        internal TMP_Text playerName { get; private set; }
+        private ChatMessage chatMessage;
 
-        [field: SerializeField]
-        internal TMP_Text walletIdText { get; private set; }
-
-        [field: SerializeField]
-        internal Image playerIcon { get; private set; }
-
-        [field: SerializeField]
-        internal TMP_Text entryText { get; private set; }
-
-        [field: SerializeField]
-        internal Image verifiedIcon { get; private set; }
-
-        [field: SerializeField]
-        internal Image ProfileBackground { get; private set; }
-
-        [field: SerializeField]
-        internal Image ProfileOutline { get; private set; }
-
-        [field: SerializeField]
-        internal CanvasGroup chatEntryCanvasGroup { get; private set; }
-
-        private Vector2 backgroundSize;
-
-        public void SetUsername(string username, string walletId)
+        private void Awake()
         {
-            if (string.IsNullOrEmpty(walletId))
-            {
-                playerName.text = username;
-                walletIdText.gameObject.SetActive(false);
-                verifiedIcon.gameObject.SetActive(false);
-                return;
-            }
+            profileButton.onClick.AddListener(OpenContextMenu);
+        }
 
-            int walletIdIndexOf = username.IndexOf("#", StringComparison.Ordinal);
-
-            playerName.text = username.Contains("#")
-                ? $"{username.Substring(0, walletIdIndexOf)}"
-                : username;
-
-            walletIdText.text = walletIdIndexOf == -1 ? string.Empty : $"#{walletId.Substring(walletId.Length - 4)}";
-            walletIdText.gameObject.SetActive(walletIdIndexOf != -1);
-            verifiedIcon.gameObject.SetActive(walletIdIndexOf == -1);
+        private void OpenContextMenu()
+        {
+            ChatEntryClicked?.Invoke(chatMessage.WalletAddress, profileButton.transform.position);
         }
 
         public void AnimateChatEntry()
@@ -79,33 +44,10 @@ namespace DCL.Chat
 
         public void SetItemData(ChatMessage data)
         {
-            SetUsername(data.Sender, data.WalletAddress);
-            entryText.SetText(data.Message);
-
-            //Force mesh is needed otherwise entryText.GetParsedText() in CalculatePreferredWidth will return the original text
-            //of the previous frame
-            entryText.ForceMeshUpdate();
-
-            contentSizeFitter.SetLayoutVertical();
-            backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + BACKGROUND_HEIGHT_OFFSET);
-            backgroundSize.x = CalculatePreferredWidth(data.Message);
-            backgroundRectTransform.sizeDelta = backgroundSize;
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, backgroundSize.y);
+            chatMessage = data;
+            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
+            messageBubbleElement.SetMessageData(data);
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
         }
-
-        private float CalculatePreferredWidth(string messageContent)
-        {
-            if (playerName.text.Length + walletIdText.text.Length > (GetEmojisCount(messageContent) > 0 ? entryText.GetParsedText().Length + GetEmojisCount(messageContent) : entryText.GetParsedText().Length))
-                return playerName.preferredWidth + walletIdText.preferredWidth + BACKGROUND_WIDTH_OFFSET;
-
-            if(entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x < MAX_ENTRY_WIDTH - BACKGROUND_WIDTH_OFFSET)
-                return entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x + BACKGROUND_WIDTH_OFFSET;
-
-            return MAX_ENTRY_WIDTH;
-        }
-
-        private int GetEmojisCount(string message) =>
-            message.Split("\\U0").Length - 1;
     }
 }

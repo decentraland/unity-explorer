@@ -89,3 +89,4 @@ Material:
     - _SunColor: {r: 2.1421235, g: 1.3647059, b: 2.9960785, a: 1}
     - _ZenitColor: {r: 0.09803922, g: 0.07450981, b: 0.19215687, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -21,7 +21,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [SerializeField] private float delayBetweenFlushes = 5f;
         [SerializeField] private int brakesMilliseconds = 100;
 
-        private SegmentAnalyticsService net = null!;
         private RustSegmentAnalyticsService rust = null!;
 
         private void Start()
@@ -38,11 +37,9 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         private void SetUp(string key)
         {
             if (mode is Mode.Net)
-#pragma warning disable CS0618
-                net = new SegmentAnalyticsService(new Configuration(key));
 #pragma warning restore CS0618
             if (mode is Mode.Rust)
-                rust = new RustSegmentAnalyticsService(key);
+                rust = new RustSegmentAnalyticsService(key, null);
         }
 
         private async UniTaskVoid TrackAsync(CancellationToken token)
@@ -68,7 +65,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         private IAnalyticsService CurrentService() =>
             mode switch
             {
-                Mode.Net => net,
                 Mode.Rust => rust,
                 _ => throw new ArgumentOutOfRangeException()
             };

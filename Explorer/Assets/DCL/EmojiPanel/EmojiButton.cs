@@ -8,7 +8,7 @@ namespace DCL.Emoji
 {
     public class EmojiButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action<string> OnEmojiSelected;
+        public event Action<string> EmojiSelected;
 
         [field: SerializeField]
         public GameObject Tooltip { get; private set; }
@@ -30,7 +30,7 @@ namespace DCL.Emoji
 
         private void HandleButtonClick()
         {
-            OnEmojiSelected?.Invoke(EmojiImage.text);
+            EmojiSelected?.Invoke(EmojiImage.text);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

@@ -4,8 +4,10 @@ using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.MarketplaceCredits;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
+using DCL.UI.ProfileNames;
 using DCL.UI.Sidebar;
 using MVC;
 using System;
@@ -40,6 +42,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(FriendsPanelController), CreateAnalytics<FriendsPanelController>(c => new FriendsPanelAnalytics(analytics, c)) },
                 { typeof(PersistentFriendPanelOpenerController), CreateAnalytics<PersistentFriendPanelOpenerController>(c => new PersistentFriendPanelOpenerAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new ExplorePanelAnalytics(analytics, c)) },
+                { typeof(ProfileNameEditorController), CreateAnalytics<ProfileNameEditorController>(c => new ProfileNameEditorAnalytics(analytics, c)) },
+                { typeof(MarketplaceCreditsMenuController), CreateAnalytics<MarketplaceCreditsMenuController>(c => new MarketplaceCreditsAnalytics(analytics, c)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>

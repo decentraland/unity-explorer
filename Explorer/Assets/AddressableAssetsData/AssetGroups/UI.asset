@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: UI
   m_EditorClassIdentifier: 
   m_GroupName: UI
-  m_Data:
-    m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
   - m_GUID: 028bf9eb42404424bbd1df5cd802720e
@@ -44,6 +42,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 295cf8ad8d171d849863eccaf581c9e7
     m_Address: ScenesUIStyleSheet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 36bcbe134ec574902b49db6464414b03
+    m_Address: BlockedScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -82,6 +85,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 734732fb25eed5944b9c5a5814249f81
+    m_Address: MentionUserButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
     m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
     m_ReadOnly: 0
@@ -117,6 +125,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: adccb7c4aa6e2424c95ac85e0d3f0a35
+    m_Address: MarketplaceCreditsUnlockedPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bdd6d1e45d38dbc44b593240a7768188
     m_Address: EmoteIconPressedSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -127,8 +140,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
-    m_Address: PersistentEmoteWheelOpener.prefab
+  - m_GUID: c325bf3c176cc034d83115896fd851da
+    m_Address: OpenUserProfileButton.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -149,6 +162,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d504e2da7abe71a4582c8c2e08e3c285
     m_Address: NftPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d67c9347412c7d04aa84f48952e986fc
+    m_Address: Assets/DCL/UI/Assets/PastePopupToastView.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -72,13 +72,23 @@ namespace DCL.UI.SystemMenu
             viewInstance.ExitAppButton.onClick.AddListener(ExitApp);
             viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
             viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
-            viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
+            // viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
 
             viewInstance!.LogoutButton.onClick.AddListener(CloseView);
             viewInstance.ExitAppButton.onClick.AddListener(CloseView);
             viewInstance.PrivacyPolicyButton.onClick.AddListener(CloseView);
             viewInstance.TermsOfServiceButton.onClick.AddListener(CloseView);
-            viewInstance.PreviewProfileButton.onClick.AddListener(CloseView);
+            viewInstance.PreviewProfileButton.onClick.AddListener(OnPreviewProfileButtonClickedAsync);
+        }
+
+        private async void OnPreviewProfileButtonClickedAsync()
+        {
+            // Closing the popup provokes inconsistencies in the popup chain: system menu->passport->name editor
+            // Making the name editor be behind the passport
+            // The delay is dirty, but it forces the sorting to be correct
+            CloseView();
+            await UniTask.Delay(500);
+            ShowPassport();
         }
 
         private void CloseView()

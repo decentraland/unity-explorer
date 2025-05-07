@@ -1,5 +1,7 @@
 using CRDT;
 using DCL.ECSComponents;
+using ECS.Unity.ColorComponent;
+using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Defaults
 {
@@ -19,5 +21,17 @@ namespace DCL.SDKComponents.SceneUI.Defaults
 
         public static YGWrap GetFlexWrap(this PBUiTransform self) =>
             self.HasFlexWrap ? self.FlexWrap : YGWrap.YgwNoWrap;
+
+        public static Color GetBorderBottomColor(this PBUiTransform self) =>
+            self.BorderBottomColor?.ToUnityColor() ?? Color.clear;
+
+        public static Color GetBorderTopColor(this PBUiTransform self) =>
+            self.BorderTopColor?.ToUnityColor() ?? Color.clear;
+
+        public static Color GetBorderLeftColor(this PBUiTransform self) =>
+            self.BorderLeftColor?.ToUnityColor() ?? Color.clear;
+
+        public static Color GetBorderRightColor(this PBUiTransform self) =>
+            self.BorderRightColor?.ToUnityColor() ?? Color.clear;
     }
 }

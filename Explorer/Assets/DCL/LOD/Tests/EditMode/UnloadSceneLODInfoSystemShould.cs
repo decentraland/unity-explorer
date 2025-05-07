@@ -69,7 +69,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
             sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
-            var createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, new VisualSceneState());
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
             //One empty update to allow creation
             system.Update(0);
 
@@ -79,7 +79,7 @@ namespace DCL.LOD.Tests
             system.Update(0);
 
             //Assert
-            Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention, VisualSceneState>(createdEntity));
+            Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention>(createdEntity));
             Assert.AreEqual(((LODCache)lodCache).lodCache.Count, 1);
             Assert.AreEqual(((LODCache)lodCache).lodsGroupsPool.CountInactive, LOD_PREWARM_VALUE - 1);
         }
@@ -92,7 +92,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.id = CachedSceneID;
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
 
-            var createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, new VisualSceneState());
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
             //One empty update to allow creation
             system.Update(0);
 
@@ -101,7 +101,7 @@ namespace DCL.LOD.Tests
             system.Update(0);
 
             //Assert
-            Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention, VisualSceneState>(createdEntity));
+            Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention>(createdEntity));
             Assert.AreEqual(((LODCache)lodCache).lodCache.Count, 0);
             Assert.AreEqual(((LODCache)lodCache).lodsGroupsPool.CountInactive, LOD_PREWARM_VALUE);
         }

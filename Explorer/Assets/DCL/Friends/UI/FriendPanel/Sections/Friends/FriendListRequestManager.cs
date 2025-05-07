@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
-        private readonly LoopListView2 loopListView;
         private readonly List<FriendProfile> friends = new ();
         private readonly CancellationTokenSource addFriendProfileCts = new ();
 
@@ -26,20 +25,20 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
             LoopListView2 loopListView,
+            ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
+            int elementsMissingThreshold) : base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.profileRepository = profileRepository;
-            this.loopListView = loopListView;
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
             this.friendEventBus.OnYouRemovedFriend += RemoveFriend;
+            this.friendEventBus.OnYouBlockedByUser += RemoveFriend;
+            this.friendEventBus.OnYouBlockedProfile += RemoveFriend;
             this.friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
         }
 
@@ -51,6 +50,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserAcceptedYourRequest -= FriendRequestAccepted;
             friendEventBus.OnYouRemovedFriend -= RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
+            friendEventBus.OnYouBlockedByUser -= RemoveFriend;
+            friendEventBus.OnYouBlockedProfile -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
         }
 
@@ -79,16 +80,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             }
         }
 
+        private void RemoveFriend(BlockedProfile profile) =>
+            RemoveFriend(profile.Address);
+
         private void RemoveFriend(string userid)
         {
-            friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
-            RefreshLoopList();
-        }
-
-        private void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetCollectionCount(), false);
-            loopListView.RefreshAllShownItem();
+            if (friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid)) > 0)
+                RefreshLoopList();
         }
 
         public override int GetCollectionCount() =>
