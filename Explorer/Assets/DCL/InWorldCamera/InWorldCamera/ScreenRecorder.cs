@@ -65,13 +65,17 @@ namespace DCL.InWorldCamera
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
 
-            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(1); // upscaled Screen Frame resolution
+            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(); // upscaled Screen Frame resolution
 
-            screenshotTexture = UpscaleTexture2D(screenshotTexture, roundedUpscale);
-            screenshotTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
-            ResizeTexture2D(screenshotTexture);
+            var newScreenShot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            newScreenShot.SetPixels(screenshotTexture.GetPixels());
+            newScreenShot.Apply();
 
-            Object.Destroy(screenshotTexture);
+            newScreenShot = UpscaleTexture2D(newScreenShot, roundedUpscale);
+            newScreenShot = CropTexture2D(newScreenShot, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
+            ResizeTexture2D(newScreenShot);
+
+            Object.Destroy(newScreenShot);
 
 
             State = RecordingState.SCREENSHOT_READY;
