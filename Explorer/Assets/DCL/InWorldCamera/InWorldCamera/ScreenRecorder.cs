@@ -86,10 +86,12 @@ namespace DCL.InWorldCamera
             if (upscaleFactor <= 1)
                 return sourceTexture;
 
+            sourceTexture.filterMode = FilterMode.Bilinear;
             int targetWidth = sourceTexture.width * upscaleFactor;
             int targetHeight = sourceTexture.height * upscaleFactor;
 
             var rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
+            rt.filterMode = FilterMode.Bilinear;
             RenderTexture.active = rt;
 
             // Graphics.Blit uses the source texture's filterMode. Ensure it's Bilinear for smooth scaling (default for Texture2D).
