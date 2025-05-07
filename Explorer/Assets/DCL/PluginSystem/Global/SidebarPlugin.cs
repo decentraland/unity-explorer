@@ -5,10 +5,12 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
@@ -21,6 +23,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -47,10 +50,14 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ViewDependencies viewDependencies;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IProfileChangesBus profileChangesBus;
+        private readonly ISelfProfile selfProfile;
+        private readonly IRealmData realmData;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -70,10 +77,14 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool includeCameraReel,
             bool includeFriends,
+            bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
-            IProfileChangesBus profileChangesBus)
+            IProfileChangesBus profileChangesBus,
+            ISelfProfile selfProfile,
+            IRealmData realmData,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -92,10 +103,14 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
             this.viewDependencies = viewDependencies;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
+            this.selfProfile = selfProfile;
+            this.realmData = realmData;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
@@ -126,9 +141,13 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
+                includeMarketplaceCredits,
                 mainUIView.ChatView,
                 chatHistory,
-                sharedSpaceManager
+                sharedSpaceManager,
+                selfProfile,
+                realmData,
+                featureFlagsCache
             ));
         }
 

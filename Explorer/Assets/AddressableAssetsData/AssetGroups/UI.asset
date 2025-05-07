@@ -125,6 +125,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: adccb7c4aa6e2424c95ac85e0d3f0a35
+    m_Address: MarketplaceCreditsUnlockedPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bdd6d1e45d38dbc44b593240a7768188
     m_Address: EmoteIconPressedSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -137,11 +142,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c325bf3c176cc034d83115896fd851da
     m_Address: OpenUserProfileButton.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
-    m_Address: PersistentEmoteWheelOpener.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

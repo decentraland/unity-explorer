@@ -50,7 +50,7 @@ namespace DCL.StylizedSkybox.Scripts
             // Copy properties from the original material as it is being constantly modified
             material.CopyPropertiesFromMaterial(originalMaterial);
 
-            CommandBuffer cmd = CommandBufferPool.Get("SkyBoxToCubemapPass");
+            CommandBuffer cmd = CommandBufferPool.Get();
 
             using (new ProfilingScope(cmd, profilingSampler))
             {
