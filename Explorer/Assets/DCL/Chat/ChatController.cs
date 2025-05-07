@@ -129,14 +129,15 @@ namespace DCL.Chat
             this.chatStorage = chatStorage;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
+            var chatRoom = roomHub.ChatRoom();
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
-                roomHub.ChatRoom().Participants,
+                chatRoom.Participants,
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
                 friendsEventBus,
-                roomHub.ChatRoom(),
+                chatRoom,
                 friendsService);
 
             chatBubblesHelper = new ChatControllerChatBubblesHelper(
