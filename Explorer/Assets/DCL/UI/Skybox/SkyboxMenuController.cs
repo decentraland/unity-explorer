@@ -40,17 +40,28 @@ namespace DCL.UI.Skybox
         {
             base.OnViewInstantiated();
 
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
-
-            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
             skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
-            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
-
-            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
             skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
 
-            SetTimeEnabled(!skyboxSettings.UseDynamicTime);
+            if (viewInstance != null)
+            {
+                // Hook into ToggleView (handles its own graphics & audio)
+                var tv = viewInstance.ToggleView;
+                tv.Toggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+                
+                viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
+                viewInstance.CloseButton.onClick.AddListener(OnClose);
+
+                tv.Toggle.SetIsOnWithoutNotify(skyboxSettings.UseDynamicTime);
+                if (tv.autoToggleImagesOnToggle)
+                    tv.SetToggleGraphics(skyboxSettings.UseDynamicTime);
+                
+                viewInstance.TimeSlider.SetValueWithoutNotify(skyboxSettings.NormalizedTime);
+                viewInstance.TimeText.text = GetFormatedTime(skyboxSettings.NormalizedTime);
+            }
+
+            OnUseDynamicTimeChanged(skyboxSettings.UseDynamicTime);
+            OnNormalizedTimeChanged(skyboxSettings.NormalizedTime);
         }
 
         protected override void OnBeforeViewShow()
@@ -62,7 +73,14 @@ namespace DCL.UI.Skybox
         private void OnUseDynamicTimeChanged(bool dynamic)
         {
             SetTimeEnabled(!dynamic);
-            viewInstance!.DynamicToggle.isOn = dynamic;
+            
+            if (viewInstance != null)
+            {
+                var tv = viewInstance.ToggleView;
+                tv.Toggle.SetIsOnWithoutNotify(dynamic);
+                if (tv.autoToggleImagesOnToggle)
+                    tv.SetToggleGraphics(dynamic);
+            }
         }
 
         private void OnDynamicToggleValueChanged(bool dynamic)
@@ -72,7 +90,9 @@ namespace DCL.UI.Skybox
 
         private void OnNormalizedTimeChanged(float time)
         {
-            viewInstance!.TimeSlider.SetValueWithoutNotify(time);
+            if (viewInstance == null) return;
+            
+            viewInstance.TimeSlider.SetValueWithoutNotify(time);
             viewInstance.TimeText.text = GetFormatedTime(time);
         }
 
@@ -84,8 +104,12 @@ namespace DCL.UI.Skybox
 
         private void SetTimeEnabled(bool enabled)
         {
-            viewInstance!.TopSliderGroup.enabled = !enabled;
-            viewInstance!.TextSliderGroup.enabled = !enabled;
+            // viewInstance!.TopSliderGroup.enabled = !enabled;
+            // viewInstance!.TextSliderGroup.enabled = !enabled;
+            
+            // enabled=true → slider & text are interactable (manual mode)
+            viewInstance!.TopSliderGroup.enabled  = enabled;
+            viewInstance!.TextSliderGroup.enabled = enabled;
         }
 
         private string GetFormatedTime(float time)
@@ -106,8 +130,18 @@ namespace DCL.UI.Skybox
         {
             base.Dispose();
             skyboxMenuCts.SafeCancelAndDispose();
-            skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
-            skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
+            
+            skyboxSettings.UseDynamicTimeChanged  -= OnUseDynamicTimeChanged;
+            skyboxSettings.NormalizedTimeChanged  -= OnNormalizedTimeChanged;
+
+            if (viewInstance != null)
+            {
+                var tv = viewInstance.ToggleView;
+                tv.Toggle.onValueChanged.RemoveListener(OnDynamicToggleValueChanged);
+                
+                viewInstance.TimeSlider.onValueChanged.RemoveListener(OnTimeSliderValueChanged);
+                viewInstance.CloseButton.onClick.RemoveListener(OnClose);
+            }
         }
     }
 }

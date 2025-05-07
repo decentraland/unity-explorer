@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.StylizedSkybox.Scripts;
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -98,9 +97,17 @@ public class SkyboxController : MonoBehaviour
                 sinceLastRefresh = 0;
             }
         }
+        else
+        {
+            UpdateSkybox();
+        }
     }
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset)
+    public void Initialize(Material skyboxMat, 
+        Light dirLight, 
+        AnimationClip skyboxAnimationClip, 
+        FeatureFlagsCache featureFlagsCache, 
+        StylizedSkyboxSettingsAsset settingsAsset)
     {
         this.settingsAsset = settingsAsset;
 
@@ -160,14 +167,33 @@ public class SkyboxController : MonoBehaviour
         }
         else { DynamicTimeNormalized = DEFAULT_TIME; }
 
-        settingsAsset.NormalizedTime =DynamicTimeNormalized;
+        settingsAsset.NormalizedTime = DynamicTimeNormalized;
         settingsAsset.NormalizedTimeChanged += OnNormalizedTimeChanged;
         settingsAsset.UseDynamicTime = UseDynamicTime;
         settingsAsset.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-
+        //settingsAsset.UseFixedTime = UseFixedTime;
         isInitialized = true;
     }
 
+    /// <summary>
+    /// Switches off dynamic cycling and jumps straight to the given fixed time (in seconds).
+    /// </summary>
+    public void SetFixedTimeSeconds(float seconds)
+    {
+        float normalized = seconds / SECONDS_IN_DAY;
+        SetTimeOverride(normalized);
+    }
+    
+    /// <summary>
+    /// Switches off dynamic cycling and jumps straight to the given normalized time (0–1).
+    /// </summary>
+    public void SetFixedTimeNormalized(float normalized)
+    {
+        UseDynamicTime = false;
+        SetTimeOverride(normalized);
+    }
+
+    
     private void OnSkyboxUpdated()
     {
         // When skybox gets dynamically updated we refresh the
@@ -185,6 +211,8 @@ public class SkyboxController : MonoBehaviour
 
         if (dynamic)
             settingsAsset!.NormalizedTime = DynamicTimeNormalized;
+        else
+            SetFixedTimeSeconds(settingsAsset.FixedTime);
     }
 
     private void OnNormalizedTimeChanged(float tod)
