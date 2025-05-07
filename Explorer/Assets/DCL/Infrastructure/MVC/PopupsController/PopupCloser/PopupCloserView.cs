@@ -1,11 +1,10 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace MVC.PopupsController.PopupCloser
 {
     public class PopupCloserView : ViewBase, IPopupCloserView
     {
         [field: SerializeField]
-        public Button CloseButton { get; private set; }
+        public ButtonWithRightClickHandler CloseButton { get; private set; }
     }
 }

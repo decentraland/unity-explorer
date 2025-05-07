@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 4392543827313620798}
   - component: {fileID: 8235211841819826033}
   - component: {fileID: 2313145025586561420}
+  - component: {fileID: 5615177983576306000}
   m_Layer: 5
   m_Name: PopupCloser
   m_TagString: Untagged
@@ -237,4 +238,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 1647044090541485172}
   <raycaster>k__BackingField: {fileID: 8235211841819826033}
-  <CloseButton>k__BackingField: {fileID: 4259832855745683082}
+  <CloseButton>k__BackingField: {fileID: 5615177983576306000}
+--- !u!114 &5615177983576306000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8178171541332435676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8481921f07df4d3b998c437e0d4d537b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4259832855745683082}

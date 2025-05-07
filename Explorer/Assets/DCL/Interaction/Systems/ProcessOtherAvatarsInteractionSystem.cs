@@ -56,6 +56,7 @@ namespace DCL.Interaction.Systems
         protected override void OnDispose()
         {
             dclInput.Player.RightPointer!.performed -= OpenContextMenu;
+            contextMenuTask.TrySetResult();
         }
 
         [Query]
