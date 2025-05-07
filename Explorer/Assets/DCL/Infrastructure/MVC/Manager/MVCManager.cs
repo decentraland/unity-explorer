@@ -69,7 +69,7 @@ namespace MVC
             // Find the controller
             IController controller = controllers[typeof(IController<TView, TInputData>)];
 
-            if(controller.State != ControllerState.ViewHidden)
+            if (controller.State != ControllerState.ViewHidden)
                 return;
 
             ct = ct.Equals(default(CancellationToken))
@@ -138,10 +138,20 @@ namespace MVC
         private async UniTask ShowPersistentAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
-            // Push new fullscreen controller
+            // Push a new fullscreen controller
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
 
-            await command.Execute(controller, persistentPushInfo.ControllerOrdering, ct);
+            try { await command.Execute(controller, persistentPushInfo.ControllerOrdering, ct); }
+            finally
+            {
+                // If an exception occured in the life cycle of the persistent view, we must remove it from the stack
+                // Otherwise, it will be in an indefinite state upon calling Focus/Blur
+
+                ReportHub.LogWarning(ReportCategory.MVC, $"Emergency occured in the persistent controller {controller.GetType().Name}\n"
+                                                         + "It will be removed from the stack");
+
+                windowsStackManager.RemovePersistent(controller);
+            }
         }
 
         private async UniTask ShowFullScreenAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
@@ -153,22 +163,23 @@ namespace MVC
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 
-            // Hide all popups in the stack and clear it
-            if (fullscreenPushInfo.PopupControllers != null)
+            try
             {
+                // Hide all popups in the stack and clear it
+
                 foreach (IController popupController in fullscreenPushInfo.PopupControllers)
                     popupController.HideViewAsync(ct).Forget();
 
                 fullscreenPushInfo.PopupControllers.Clear();
+
+                // Hide the popup closer
+                popupCloser.HideAsync(ct).Forget();
+
+                await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
+
+                await controller.HideViewAsync(ct);
             }
-
-            // Hide the popup closer
-            popupCloser.HideAsync(ct).Forget();
-
-            await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
-
-            await controller.HideViewAsync(ct);
-            windowsStackManager.PopFullscreen(controller);
+            finally { windowsStackManager.PopFullscreen(controller); }
         }
 
         private async UniTask ShowPopupAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
@@ -178,30 +189,38 @@ namespace MVC
 
             popupCloser.SetDrawOrder(pushPopupPush.PopupCloserOrdering);
 
-            pushPopupPush.PreviousController?.Blur();
-
-            await UniTask.WhenAny(
-                UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
-                WaitForPopupCloserClickAsync(controller, ct));
-
-            // "Close" command has been received
-            await controller.HideViewAsync(ct);
-
-            // Pop the stack
-            PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller);
-
-            if (popupPopInfo.NewTopMostController != null)
+            try
             {
-                popupCloser.SetDrawOrder(popupPopInfo.PopupCloserOrdering);
-                popupPopInfo.NewTopMostController.Focus();
+                pushPopupPush.PreviousController?.Blur();
+
+                await UniTask.WhenAny(
+                    UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
+                    WaitForPopupCloserClickAsync(controller, ct));
+
+                // "Close" command has been received
+                await controller.HideViewAsync(ct);
             }
-            else { popupCloser.HideAsync(ct).Forget(); }
+            finally
+            {
+                // Pop the stack
+                PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller);
+
+                if (popupPopInfo.NewTopMostController != null)
+                {
+                    popupCloser.SetDrawOrder(popupPopInfo.PopupCloserOrdering);
+                    popupPopInfo.NewTopMostController.Focus();
+                }
+                else { popupCloser.HideAsync(ct).Forget(); }
+            }
         }
 
         private async UniTask WaitForPopupCloserClickAsync(IController currentController, CancellationToken ct)
         {
-            do { await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
-                                        UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused)); }
+            do
+            {
+                await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
+                    UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused));
+            }
             while (currentController != windowsStackManager.TopMostPopup);
         }
     }

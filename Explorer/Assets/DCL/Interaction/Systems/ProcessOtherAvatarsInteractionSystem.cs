@@ -67,8 +67,10 @@ namespace DCL.Interaction.Systems
 
             Entity entityRef = entityInfo.Value.EntityReference;
 
-            if (!World.IsAlive(entityRef) || !World!.TryGet(entityRef, out Profile? profile)
-                                          || World.Has<BlockedPlayerComponent>(entityRef))
+            if (!World.IsAlive(entityRef)
+                || !World!.TryGet(entityRef, out Profile? profile)
+                || World.Has<BlockedPlayerComponent>(entityRef)
+                || World.Has<IgnoreInteractionComponent>(entityRef))
                 return;
 
             currentProfileHovered = profile;
@@ -82,6 +84,7 @@ namespace DCL.Interaction.Systems
                 return;
 
             string userId = currentProfileHovered.UserId;
+
             if (string.IsNullOrEmpty(userId))
                 return;
 
