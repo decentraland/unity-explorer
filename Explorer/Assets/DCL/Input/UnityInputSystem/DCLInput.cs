@@ -137,10 +137,19 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""RightPointer"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""c7b8c650-9d0b-480b-9849-051eb5b511e4"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Primary"",
                     ""type"": ""Button"",
                     ""id"": ""38147d5e-c8e9-481f-b640-a485a6c6b6ae"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -176,7 +185,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ActionButton5"",
                     ""type"": ""Button"",
                     ""id"": ""3ee343b7-e0ac-4862-8538-435bff12a50b"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -533,6 +542,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Pointer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c5833e7e-047c-4d46-af04-cbbe7a3d67b0"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightPointer"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -3722,6 +3742,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_Walk = m_Player.FindAction("Walk", throwIfNotFound: true);
         m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
         m_Player_Pointer = m_Player.FindAction("Pointer", throwIfNotFound: true);
+        m_Player_RightPointer = m_Player.FindAction("RightPointer", throwIfNotFound: true);
         m_Player_Primary = m_Player.FindAction("Primary", throwIfNotFound: true);
         m_Player_Secondary = m_Player.FindAction("Secondary", throwIfNotFound: true);
         m_Player_ActionButton3 = m_Player.FindAction("ActionButton3", throwIfNotFound: true);
@@ -3921,6 +3942,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Walk;
     private readonly InputAction m_Player_Sprint;
     private readonly InputAction m_Player_Pointer;
+    private readonly InputAction m_Player_RightPointer;
     private readonly InputAction m_Player_Primary;
     private readonly InputAction m_Player_Secondary;
     private readonly InputAction m_Player_ActionButton3;
@@ -3962,6 +3984,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Pointer".
         /// </summary>
         public InputAction @Pointer => m_Wrapper.m_Player_Pointer;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/RightPointer".
+        /// </summary>
+        public InputAction @RightPointer => m_Wrapper.m_Player_RightPointer;
         /// <summary>
         /// Provides access to the underlying input action "Player/Primary".
         /// </summary>
@@ -4043,6 +4069,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Pointer.started += instance.OnPointer;
             @Pointer.performed += instance.OnPointer;
             @Pointer.canceled += instance.OnPointer;
+            @RightPointer.started += instance.OnRightPointer;
+            @RightPointer.performed += instance.OnRightPointer;
+            @RightPointer.canceled += instance.OnRightPointer;
             @Primary.started += instance.OnPrimary;
             @Primary.performed += instance.OnPrimary;
             @Primary.canceled += instance.OnPrimary;
@@ -4099,6 +4128,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Pointer.started -= instance.OnPointer;
             @Pointer.performed -= instance.OnPointer;
             @Pointer.canceled -= instance.OnPointer;
+            @RightPointer.started -= instance.OnRightPointer;
+            @RightPointer.performed -= instance.OnRightPointer;
+            @RightPointer.canceled -= instance.OnRightPointer;
             @Primary.started -= instance.OnPrimary;
             @Primary.performed -= instance.OnPrimary;
             @Primary.canceled -= instance.OnPrimary;
@@ -5725,6 +5757,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPointer(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "RightPointer" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRightPointer(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Primary" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

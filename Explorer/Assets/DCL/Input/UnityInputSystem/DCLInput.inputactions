@@ -53,7 +53,7 @@
                 {
                     "name": "RightPointer",
                     "type": "PassThrough",
-                    "id": "ffb2d944-3abc-49b9-affe-67921fcd212c",
+                    "id": "c7b8c650-9d0b-480b-9849-051eb5b511e4",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -461,7 +461,7 @@
                 },
                 {
                     "name": "",
-                    "id": "5b8a5bf8-448c-435f-9e1e-8a64d83395d8",
+                    "id": "c5833e7e-047c-4d46-af04-cbbe7a3d67b0",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
