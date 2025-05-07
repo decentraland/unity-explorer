@@ -141,11 +141,11 @@ namespace DCL.Chat
 
             chatBubblesHelper = new ChatControllerChatBubblesHelper(
                 world,
-            playerEntity,
-            entityParticipantTable,
-            profileCache,
-            nametagsData,
-            chatSettings);
+                playerEntity,
+                entityParticipantTable,
+                profileCache,
+                nametagsData,
+                chatSettings);
 
             memberListHelper = new ChatControllerMemberListHelper(
                 roomHub,
