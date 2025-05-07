@@ -1,5 +1,3 @@
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.Utilities;
 using MVC;
@@ -25,11 +23,6 @@ namespace DCL.UI.SceneDebugConsole
         {
             LogEntry,
         }
-
-        /// <summary>
-        /// Raised every time the scroll position of the messages viewer changes.
-        /// </summary>
-        public LogMessageViewerScrollPositionChangedDelegate? LogMessageViewerScrollPositionChanged;
 
         [SerializeField]
         private LoopListView2 loopList = null!; // Ensure this is assigned in the inspector
@@ -61,8 +54,6 @@ namespace DCL.UI.SceneDebugConsole
         public void Initialize()
         {
             loopList.InitListView(0, OnGetItemByIndex);
-            // loopList.InitListView(-1, OnGetItemByIndex);
-            // loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
@@ -74,15 +65,6 @@ namespace DCL.UI.SceneDebugConsole
         {
             logMessages = messages;
             RefreshLogs();
-
-            // Only update the list count if the view is active, otherwise RefreshLogs will handle it
-            /*if (IsVisible)
-            {
-                int currentCount = loopList.ItemTotalCount;
-                bool resetScroll = messages.Count < currentCount; // Reset scroll if source shrank
-                loopList.SetListItemCount(messages.Count, resetScroll);
-                loopList.RefreshAllShownItem(); // Ensure visible items update if data content changed without count changing
-            }*/
         }
 
         /// <summary>
@@ -90,9 +72,9 @@ namespace DCL.UI.SceneDebugConsole
         /// </summary>
         public void ShowLastMessage()
         {
-            /*if (loopList.ItemTotalCount == 0) return;
+            if (loopList.ItemTotalCount == 0) return;
 
-            ShowItem(loopList.ItemTotalCount - 1);*/
+            ShowItem(loopList.ItemTotalCount - 1);
         }
 
         /// <summary>
@@ -127,32 +109,13 @@ namespace DCL.UI.SceneDebugConsole
                 loopList.RefreshAllShownItem();
                 return;
             }
-
-            bool wasAtBottom = IsScrollAtBottom; // Check scroll position BEFORE changing item count
-            bool listShrank = logMessagesCount < currentItemTotalCount;
-
             // Set the correct total item count.
-            // resetPos: true if list shrank to avoid potential index issues, false otherwise to maintain scroll position.
-            loopList.SetListItemCount(logMessagesCount, listShrank);
+            loopList.SetListItemCount(logMessagesCount, resetPos: true);
 
             // After changing the count, ensure visible items are updated.
             // This helps if SetListItemCount doesn't immediately trigger all necessary OnGetItemByIndex calls.
-            // loopList.RefreshAllShownItem();
-
-            // If we were at the bottom before adding new items, scroll to the new bottom.
-            // We need to wait for the UI to potentially update layout after SetListItemCount.
-            /*if (wasAtBottom && logMessagesCount > currentItemTotalCount)
-                ScrollToBottomAfterFrameUpdate().Forget();*/
+            loopList.RefreshAllShownItem();
         }
-
-        /*private async UniTaskVoid ScrollToBottomAfterFrameUpdate()
-        {
-            // Wait until the end of the frame to allow UI layout to update
-            // Using Yield might be sufficient if LateUpdate isn't strictly needed
-            await UniTask.Yield();
-
-            // ShowLastMessage();
-        }*/
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -161,7 +124,6 @@ namespace DCL.UI.SceneDebugConsole
 
         public void Dispose()
         {
-             // loopList.ScrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
         }
 
         // Called by the LoopListView when the number of items change
@@ -174,7 +136,7 @@ namespace DCL.UI.SceneDebugConsole
             }
 
             SceneDebugConsoleLogMessage itemData = logMessages[index];
-            Debug.Log($"PRAVS - LogViewerElement.OnGetItemByIndex() - index: {index} / message: {itemData.Message}");
+            // Debug.Log($"PRAVS - LogViewerElement.OnGetItemByIndex() - index: {index} / message: {itemData.Message}");
 
             LoopListViewItem2 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
             LogEntryView itemScript = item.GetComponent<LogEntryView>();
@@ -184,16 +146,6 @@ namespace DCL.UI.SceneDebugConsole
             listView.OnItemSizeChanged(index);
 
             return item;
-        }
-
-        /*private void OnScrollRectValueChanged(Vector2 scrollPosition)
-        {
-            LogMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
-        }*/
-
-        private void OnEnable()
-        {
-            // loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
         }
     }
 }

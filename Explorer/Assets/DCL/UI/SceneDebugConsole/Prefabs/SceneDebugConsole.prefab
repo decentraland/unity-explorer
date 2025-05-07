@@ -2009,7 +2009,7 @@ MonoBehaviour:
     mInitCreateCount: 50
     mStartPosOffset: 0
   mArrangeType: 0
-  mSupportScrollBar: 0
+  mSupportScrollBar: 1
   mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
   mItemSnapPivot: {x: 0, y: 0}
