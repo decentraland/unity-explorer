@@ -65,24 +65,46 @@ namespace DCL.InWorldCamera
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
 
-            // Workaround to fix roads appearance on the screenshot (since they are rendered indirectly).
-            // TODO (Vit): Remove this workaround when GPU Instancing is moved to the RenderFeature approach.
-            RenderTexture rt = RenderTexture.GetTemporary((int)rescaledScreenFrame.ScreenWidth, (int)currentScreenFrame.ScreenHeight, 24, RenderTextureFormat.ARGB32);
-            RenderTexture previousCamRT = camera.targetTexture;
-            camera.targetTexture = rt;
+            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(1); // upscaled Screen Frame resolution
 
-            gpuInstancingService.RenderIndirect();
-            camera.Render();
-
-            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(roundedUpscale); // upscaled Screen Frame resolution
+            screenshotTexture = UpscaleTexture2D(screenshotTexture, roundedUpscale);
             screenshotTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
             ResizeTexture2D(screenshotTexture);
 
             Object.Destroy(screenshotTexture);
-            RenderTexture.ReleaseTemporary(rt);
-            camera.targetTexture = previousCamRT;
+
 
             State = RecordingState.SCREENSHOT_READY;
+        }
+
+        private Texture2D UpscaleTexture2D(Texture2D sourceTexture, int upscaleFactor)
+        {
+            if (upscaleFactor <= 1)
+                return sourceTexture;
+
+            int targetWidth = sourceTexture.width * upscaleFactor;
+            int targetHeight = sourceTexture.height * upscaleFactor;
+
+            var rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
+            RenderTexture.active = rt;
+
+            // Graphics.Blit uses the source texture's filterMode. Ensure it's Bilinear for smooth scaling (default for Texture2D).
+            Graphics.Blit(sourceTexture, rt);
+
+            // Create the result texture: no mipmaps, and ensure it's sRGB (linear=false).
+            // Use the source format for consistency.
+            var result = new Texture2D(targetWidth, targetHeight, sourceTexture.format, /*mipChain:*/ false, /*linear:*/ false);
+            result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+            result.Apply( /*updateMipmaps:*/ false);
+
+            // Cleanup
+            RenderTexture.active = null;
+            RenderTexture.ReleaseTemporary(rt);
+
+            // Destroy the original source texture as we are returning a new one
+            Object.Destroy(sourceTexture);
+
+            return result;
         }
 
         public Texture2D GetScreenshotAndReset()
@@ -107,7 +129,7 @@ namespace DCL.InWorldCamera
 
         private void ResizeTexture2D(Texture originalTexture)
         {
-            var renderTexture = RenderTexture.GetTemporary(TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, 0);
+            var renderTexture = RenderTexture.GetTemporary(TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, 0, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
             RenderTexture.active = renderTexture;
 
             // Copy and scale the original texture into the RenderTexture
