@@ -214,7 +214,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             return representation.Value.overrideReplaces;
         }
 
-        public static HashSet<string> ComposeHiddenCategories(string bodyShapeId, List<IWearable> wearables)
+        public static HashSet<string> ComposeHiddenCategories(string bodyShapeId, List<IWearable> wearables, IReadOnlyCollection<string> forceRender)
         {
             HashSet<string> result = new HashSet<string>();
 
@@ -231,6 +231,10 @@ namespace DCL.AvatarRendering.Wearables.Components
 
                 result.UnionWith(wearableHidesList);
             }
+
+            // Remove the categories that are forced to be rendered
+            foreach (string forceRenderCategory in forceRender)
+                result.Remove(forceRenderCategory);
 
             return result;
         }
