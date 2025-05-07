@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.AudioSources
         private readonly IComponentPool<AudioSource> audioSourcesPool;
         private readonly World world;
         private readonly ISceneData sceneData;
-        private readonly AudioMixerGroup[] worldGroup;
+        private readonly AudioMixerGroup[]? worldGroup;
         private readonly ISceneStateProvider sceneStateProvider;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IComponentPoolsRegistry poolsRegistry,
@@ -66,12 +66,23 @@ namespace DCL.SDKComponents.AudioSources
             if (audioSourceComponent.AudioSourceAssigned == false)
                 audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, (worldGroup is { Length: > 0 } ? worldGroup[0] : null)!);
 
-            audioSourceComponent.AudioSource!.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
+            AudioSource? audioSource = audioSourceComponent.AudioSource;
+
+            if (audioSource != null)
+            {
+                audioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset!);
+
+                audioSource.Stop();
+
+                if (audioSource.clip != null)
+                    if (sdkAudioSource is {HasPlaying: true, Playing: true })
+                        audioSource.Play();
+            }
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
             sdkAudioSource.IsDirty = false;
 
-            Transform transform = audioSourceComponent.AudioSource!.transform;
+            Transform transform = audioSource!.transform;
             transform.SetParent(entityTransform.Transform, false);
             transform.ResetLocalTRS();
 
@@ -136,6 +147,7 @@ namespace DCL.SDKComponents.AudioSources
             if (component.AudioSourceAssigned)
                 component.AudioSource!.ApplyPBAudioSource(sdkComponent);
 
+            // Don't play if the audio clip needs to change
             if (component.AudioClipUrl != sdkComponent.AudioClipUrl)
             {
                 component.CleanUp(world);
@@ -143,6 +155,21 @@ namespace DCL.SDKComponents.AudioSources
 
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl!, partitionComponent, out Promise? clipPromise))
                     component.ClipPromise = clipPromise!.Value;
+            }
+            else
+            {
+                AudioSource? audioSource = component.AudioSource;
+
+                if (audioSource?.clip != null)
+                {
+                    if (sdkComponent is {HasPlaying: true, Playing: true })
+                    {
+                        if (!audioSource.isPlaying)
+                            audioSource.Play();
+                    }
+                    else
+                        audioSource.Stop();
+                }
             }
 
             sdkComponent.IsDirty = false;

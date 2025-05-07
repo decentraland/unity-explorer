@@ -17,8 +17,8 @@ namespace DCL.Chat.Commands
                 {
                     RuntimePlatform.WindowsPlayer => $@"file://{Environment.GetEnvironmentVariable("USERPROFILE")}\AppData\LocalLow\Decentraland\Explorer\",
                     RuntimePlatform.WindowsEditor => $@"file://{Environment.GetEnvironmentVariable("LOCALAPPDATA")}\Unity\Editor\",
-                    RuntimePlatform.OSXPlayer => "file://~/Library/Logs/Decentraland/Explorer/",
-                    RuntimePlatform.OSXEditor => "file://~/Library/Logs/Unity/",
+                    RuntimePlatform.OSXPlayer => $"file://{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/Library/Logs/Decentraland/Explorer/",
+                    RuntimePlatform.OSXEditor => $"file://{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/Library/Logs/Unity/",
                     _ => throw new NotSupportedException("Platform not supported."),
                 };
 
