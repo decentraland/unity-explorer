@@ -83,7 +83,11 @@ namespace DCL.MarketplaceCreditsAPIService
         public async UniTask SubscribeEmailAsync(string email, CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/set-email";
-            string jsonBody = JsonUtility.ToJson(new EmailSubscriptionBody { email = email });
+            string jsonBody = JsonUtility.ToJson(new EmailSubscriptionBody
+            {
+                email = email,
+                isCreditsWorkflow = true,
+            });
 
             await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
                                       .WithNoOpAsync();
