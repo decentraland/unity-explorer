@@ -205,7 +205,7 @@ namespace DCL.UI.GenericContextMenu
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             UniTask inputCloseTask = inputData.CloseTask ?? UniTask.Never(ct);
-            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.OnClickAsync(ct));
+            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.Button.OnClickAsync(ct));
         }
     }
 }
