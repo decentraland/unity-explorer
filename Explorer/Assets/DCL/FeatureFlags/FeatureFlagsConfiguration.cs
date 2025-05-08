@@ -2,12 +2,15 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace DCL.FeatureFlags
 {
     public class FeatureFlagsConfiguration
     {
         private readonly FeatureFlagsResultDto result;
+
+        public IEnumerable<string> AllEnabledFlags => result.flags.Where(pair => pair.Value).Select(pair => pair.Key);
 
         public FeatureFlagsConfiguration(FeatureFlagsResultDto result)
         {

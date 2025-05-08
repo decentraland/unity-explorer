@@ -105,5 +105,10 @@
         {
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
         }
+
+        public static class FeatureFlags
+        {
+            public const string ENABLED_FEATURES = "feature_flags";
+        }
     }
 }

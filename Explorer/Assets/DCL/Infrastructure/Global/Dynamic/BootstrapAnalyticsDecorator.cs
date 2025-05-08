@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -9,11 +10,10 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
 using Global.AppArgs;
+using Global.Versioning;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
-using DCL.FeatureFlags;
-using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -92,16 +92,26 @@ namespace Global.Dynamic
             return result;
         }
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            UniTask result = core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
+            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
+
+            FeatureFlagsConfiguration configuration = staticContainer.FeatureFlagsCache.Configuration;
+
+            var enabledFeatureFlags = new JsonArray();
+
+            foreach (string flag in configuration.AllEnabledFlags)
+                enabledFeatureFlags.Add(flag);
+
+            analytics.Track(FeatureFlags.ENABLED_FEATURES, new JsonObject
+            {
+                { "featureFlags", enabledFeatureFlags },
+            });
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "2 - feature flag initialized" },
             });
-
-            return result;
         }
 
         public void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity) =>
