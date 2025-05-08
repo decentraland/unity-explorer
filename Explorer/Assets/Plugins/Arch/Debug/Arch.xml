@@ -5050,11 +5050,6 @@
             </summary>
             <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
         </member>
-        <member name="T:System.Collections.Generic.ListSpanExtensions">
-            <summary>
-            Defines extensions for System.Collections.Generic's List&lt;T&gt; collection
-            </summary>
-        </member>
         <member name="M:System.Runtime.CompilerServices.CollectionBuilderAttribute.#ctor(System.Type,System.String)">
             <summary>Initialize the attribute to refer to the <paramref name="methodName"/> method on the <paramref name="builderType"/> type.</summary>
             <param name="builderType">The type of the builder to use to construct the collection.</param>
