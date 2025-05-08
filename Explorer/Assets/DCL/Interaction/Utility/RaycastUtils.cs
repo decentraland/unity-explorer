@@ -26,27 +26,29 @@ namespace DCL.Interaction.Utility
             World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             Vector3 sceneRootPos, in TransformComponent entityTransform, out Ray ray)
         {
-            Vector3 rayOrigin = entityTransform.Transform.position + sdkRaycast.OriginOffset;
+            Vector3 entityPosition = entityTransform.Transform.position;
+            Quaternion entityRotation = entityTransform.Transform.rotation;
+            Vector3 rayOrigin = entityPosition + sdkRaycast.OriginOffset;
             Vector3 rayDirection;
 
             switch (sdkRaycast.DirectionCase)
             {
                 case PBRaycast.DirectionOneofCase.LocalDirection:
-                    rayDirection = entityTransform.Cached.WorldRotation * sdkRaycast.LocalDirection;
+                    rayDirection = entityRotation * sdkRaycast.LocalDirection;
                     break;
                 case PBRaycast.DirectionOneofCase.GlobalTarget:
-                    rayDirection = sceneRootPos + sdkRaycast.GlobalTarget - entityTransform.Cached.WorldPosition;
+                    rayDirection = sceneRootPos + sdkRaycast.GlobalTarget - entityPosition;
                     break;
                 case PBRaycast.DirectionOneofCase.TargetEntity:
                     if (entitiesMap.TryGetValue((int)sdkRaycast.TargetEntity, out Entity targetEntity))
                     {
                         TransformComponent targetTransform = world.Get<TransformComponent>(targetEntity);
-                        rayDirection = targetTransform.Cached.WorldPosition - entityTransform.Cached.WorldPosition;
+                        rayDirection = targetTransform.Transform.position - entityPosition;
                     }
                     else
                     {
                         // Use Scene Root Position (why?)
-                        rayDirection = sceneRootPos - entityTransform.Cached.WorldPosition;
+                        rayDirection = sceneRootPos - entityPosition;
                     }
 
                     break;
