@@ -8,6 +8,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.VideoStreaming;
 using System;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream
@@ -125,6 +126,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (playerState is not PlayerState.PLAYING)
                 return null;
+
+            // retry to fetch the stream if it's not presented yet
+            if (playingAddress != null && currentStream?.video == null)
+                OpenMedia(playingAddress.Value);
 
             return currentStream?.video?.TryGetTarget(out var videoStream) ?? false
                 ? videoStream.DecodeLastFrame()
