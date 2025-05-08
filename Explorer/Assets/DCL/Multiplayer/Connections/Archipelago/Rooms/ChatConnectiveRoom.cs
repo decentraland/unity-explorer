@@ -146,10 +146,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private async UniTaskVoid SendConnectionStatusAsync(CancellationToken ct)
         {
-            if (CurrentState() == IConnectiveRoom.State.Running)
-                room.SimulateConnectionStateChanged();
+            while (ct.IsCancellationRequested == false)
+            {
+                if (CurrentState() == IConnectiveRoom.State.Running)
+                    room.SimulateConnectionStateChanged();
 
-            await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
+                await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
+            }
         }
 
         private async UniTask ExecuteWithRecoveryAsync(CancellationToken ct)
