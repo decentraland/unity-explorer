@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
-            var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld, globalTransformPool);
+            var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld, globalTransformPool, sharedDependencies.SceneData);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
             UpdateAvatarShapeInterpolateMovementSystem.InjectToWorld(ref builder, globalWorld, sharedDependencies.SceneData.SceneShortInfo.BaseParcel);
         }
