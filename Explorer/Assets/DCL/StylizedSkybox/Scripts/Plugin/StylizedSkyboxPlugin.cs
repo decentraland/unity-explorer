@@ -9,7 +9,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using System;
 using System.Threading;
-using DCL.Utilities;
 using ECS;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
@@ -37,8 +36,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             Light directionalLight,
             IDebugContainerBuilder debugContainerBuilder,
             FeatureFlagsCache featureFlagsCache,
-            IScenesCache scenesCache,
-            IRealmData? realmData)
+            IScenesCache scenesCache)
         {
             timeOfDay = new ElementBinding<float>(0);
             this.assetsProvisioner = assetsProvisioner;
@@ -46,7 +44,6 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             this.debugContainerBuilder = debugContainerBuilder;
             this.featureFlagsCache = featureFlagsCache;
             this.scenesCache = scenesCache;
-            this.realmData = realmData;
         }
         
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments) { }
@@ -71,9 +68,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
                 featureFlagsCache,
                 settingsAsset);
 
-            if (realmData != null)
-                onRealmTypeUpdateSubscription = realmData.RealmType.Subscribe(OnRealmUpdate);
-            
+            scenesCache.OnCurrentSceneChanged += HandleSceneChanged;
             
             debugContainerBuilder.TryAddWidget("Skybox")
                                 ?.AddSingleButton("Play", () => skyboxController.UseDynamicTime = true)
@@ -81,32 +76,28 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
                                  .AddFloatSliderField("Time", timeOfDay, 0, 1)
                                  .AddSingleButton("SetTime", () => skyboxController.SetTimeOverride(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
-
-        private void OnRealmUpdate(RealmKind kind)
-        {
-            Debug.Log("Realm updated to " + kind);
-            // NOTE: only use fixedTime if the realm is world
-            // NOTE or a local scene it can be world and local scene at the same time?
-            if (realmData?.RealmType.Value is 
-                RealmKind.World or
-                RealmKind.LocalScene)
-                
-                scenesCache.OnCurrentSceneChanged += HandleSceneChanged;
-        }
         
         private void HandleSceneChanged(ISceneFacade? scene)
         {
-            if (scene == null) return;
+            if (scene == null || settingsAsset == null)
+                return;
             
-            var meta = scene.SceneData.SceneEntityDefinition.metadata;
+            var meta = scene.SceneData
+                .SceneEntityDefinition
+                .metadata;
+
             if (meta.IsTimeFixed)
             {
-                float secs = meta.worldConfiguration!.SkyboxConfig!.FixedTime!.Value;
-                if (settingsAsset != null)
-                {
-                    settingsAsset.FixedTime = secs;
-                    settingsAsset.UseDynamicTime = false;
-                }
+                var secs = meta.worldConfiguration!
+                    .SkyboxConfig!
+                    .FixedTime!
+                    .Value;
+                
+                settingsAsset.ApplyFixedTime(secs);
+            }
+            else
+            {
+                settingsAsset.ApplyDynamicTime();
             }
         }
         

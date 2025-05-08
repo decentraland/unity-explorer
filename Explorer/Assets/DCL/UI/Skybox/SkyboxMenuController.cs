@@ -9,8 +9,6 @@ namespace DCL.UI.Skybox
 {
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
-        private const int SECONDS_IN_DAY = 86400;
-
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -18,7 +16,9 @@ namespace DCL.UI.Skybox
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
+        public SkyboxMenuController(
+            ViewFactoryMethod viewFactory, 
+            StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
         }
@@ -27,7 +27,8 @@ namespace DCL.UI.Skybox
         {
             skyboxMenuCts.Cancel();
 
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+            await UniTask
+                .WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -39,48 +40,22 @@ namespace DCL.UI.Skybox
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-
-            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
-            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-
-            if (viewInstance != null)
-            {
-                // Hook into ToggleView (handles its own graphics & audio)
-                var tv = viewInstance.ToggleView;
-                tv.Toggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
-                
-                viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
-                viewInstance.CloseButton.onClick.AddListener(OnClose);
-
-                tv.Toggle.SetIsOnWithoutNotify(skyboxSettings.UseDynamicTime);
-                if (tv.autoToggleImagesOnToggle)
-                    tv.SetToggleGraphics(skyboxSettings.UseDynamicTime);
-                
-                viewInstance.TimeSlider.SetValueWithoutNotify(skyboxSettings.NormalizedTime);
-                viewInstance.TimeText.text = GetFormatedTime(skyboxSettings.NormalizedTime);
-            }
-
-            OnUseDynamicTimeChanged(skyboxSettings.UseDynamicTime);
-            OnNormalizedTimeChanged(skyboxSettings.NormalizedTime);
+            
+            BindUIElements();
         }
 
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+            
+            SetupUIElements();
             skyboxMenuCts = skyboxMenuCts.SafeRestart();
         }
 
         private void OnUseDynamicTimeChanged(bool dynamic)
         {
             SetTimeEnabled(!dynamic);
-            
-            if (viewInstance != null)
-            {
-                var tv = viewInstance.ToggleView;
-                tv.Toggle.SetIsOnWithoutNotify(dynamic);
-                if (tv.autoToggleImagesOnToggle)
-                    tv.SetToggleGraphics(dynamic);
-            }
+            viewInstance!.DynamicToggle.isOn = dynamic;
         }
 
         private void OnDynamicToggleValueChanged(bool dynamic)
@@ -90,9 +65,7 @@ namespace DCL.UI.Skybox
 
         private void OnNormalizedTimeChanged(float time)
         {
-            if (viewInstance == null) return;
-            
-            viewInstance.TimeSlider.SetValueWithoutNotify(time);
+            viewInstance!.TimeSlider.SetValueWithoutNotify(time);
             viewInstance.TimeText.text = GetFormatedTime(time);
         }
 
@@ -104,17 +77,13 @@ namespace DCL.UI.Skybox
 
         private void SetTimeEnabled(bool enabled)
         {
-            // viewInstance!.TopSliderGroup.enabled = !enabled;
-            // viewInstance!.TextSliderGroup.enabled = !enabled;
-            
-            // enabled=true → slider & text are interactable (manual mode)
-            viewInstance!.TopSliderGroup.enabled  = enabled;
-            viewInstance!.TextSliderGroup.enabled = enabled;
+            viewInstance!.TopSliderGroup.enabled = !enabled;
+            viewInstance!.TextSliderGroup.enabled = !enabled;
         }
 
         private string GetFormatedTime(float time)
         {
-            var totalSec = (int)(time * SECONDS_IN_DAY);
+            var totalSec = (int)(time * skyboxSettings.SECONDS_IN_DAY);
 
             int hours = totalSec / 3600;
             int minutes = totalSec % 3600 / 60;
@@ -130,17 +99,36 @@ namespace DCL.UI.Skybox
         {
             base.Dispose();
             skyboxMenuCts.SafeCancelAndDispose();
-            
-            skyboxSettings.UseDynamicTimeChanged  -= OnUseDynamicTimeChanged;
-            skyboxSettings.NormalizedTimeChanged  -= OnNormalizedTimeChanged;
+            skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
+            skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
+        }
 
-            if (viewInstance != null)
+        private void BindUIElements()
+        {
+            if (viewInstance == null) return;
+            
+            viewInstance.CloseButton.onClick.AddListener(OnClose);
+            
+            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
+            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
+            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
+            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+            
+            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
+            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
+        }
+
+        private void SetupUIElements()
+        {
+            if (skyboxSettings.IsFixedTime)
             {
-                var tv = viewInstance.ToggleView;
-                tv.Toggle.onValueChanged.RemoveListener(OnDynamicToggleValueChanged);
-                
-                viewInstance.TimeSlider.onValueChanged.RemoveListener(OnTimeSliderValueChanged);
-                viewInstance.CloseButton.onClick.RemoveListener(OnClose);
+                SetTimeEnabled(false);
+                viewInstance!.DynamicToggle.interactable = false;
+            }
+            else
+            {
+                viewInstance!.DynamicToggle.interactable = true;
+                SetTimeEnabled(!skyboxSettings.UseDynamicTime);
             }
         }
     }
