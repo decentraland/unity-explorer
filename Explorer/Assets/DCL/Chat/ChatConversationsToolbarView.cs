@@ -9,7 +9,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utility;
 using Button = UnityEngine.UI.Button;
 
 namespace DCL.Chat
