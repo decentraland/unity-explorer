@@ -2,6 +2,8 @@
 {
     public interface IMemoryUsageProvider
     {
-        MemoryUsageStatus GetMemoryUsageStatus();
+        bool IsInAbundance();
+        bool IsMemoryNormal();
+        bool IsMemoryFull();
     }
 }

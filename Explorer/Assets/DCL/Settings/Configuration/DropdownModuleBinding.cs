@@ -8,9 +8,11 @@ using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -40,10 +42,11 @@ namespace DCL.Settings.Configuration
             ControlsSettingsAsset controlsSettingsAsset,
             ChatAudioSettingsAsset chatAudioSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
-            var viewInstance = UnityEngine.Object.Instantiate(View, parent);
+            var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
@@ -54,7 +57,7 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
                                                        DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                                                        DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
-                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
+                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),
                                                        DropdownFeatures.CHAT_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatAudioSettingsAsset),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))

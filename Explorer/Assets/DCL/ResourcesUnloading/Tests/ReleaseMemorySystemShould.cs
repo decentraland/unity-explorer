@@ -1,7 +1,7 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading.UnloadStrategies;
-using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -23,8 +23,8 @@ namespace DCL.ResourcesUnloading.Tests
             {
             }
         }
-        
-        
+
+
         private ReleaseMemorySystem releaseMemorySystem;
 
         // Subs
@@ -52,22 +52,22 @@ namespace DCL.ResourcesUnloading.Tests
                 aggresiveStrategy
             };
 
-
-            var partitionSettings = Substitute.For<IRealmPartitionSettings>();
-
-            unloadStrategyHandler = new UnloadStrategyHandler(partitionSettings, cacheCleaner);
+            unloadStrategyHandler = new UnloadStrategyHandler(cacheCleaner);
             unloadStrategyHandler.unloadStrategies = unloadStrategies;
 
-            releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler);
+            ISystemMemoryCap systemMemoryCap = Substitute.For<ISystemMemoryCap>();
+            var sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap);
+
+            releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler, sceneLoadingLimit);
         }
 
-        [TestCase(MemoryUsageStatus.NORMAL, 0)]
-        [TestCase(MemoryUsageStatus.WARNING, 1)]
-        [TestCase(MemoryUsageStatus.FULL, 1)]
-        public void UnloadCacheWhenMemoryUsageIsNotNormal(MemoryUsageStatus memoryUsageStatus, int callsAmount)
+        [TestCase(true, 0)]
+        [TestCase(false, 1)]
+        [TestCase(false, 1)]
+        public void UnloadCacheWhenMemoryUsageIsNotNormal(bool isMemoryNormal, int callsAmount)
         {
             // Act
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(memoryUsageStatus);
+            memoryBudgetProvider.IsMemoryNormal().Returns(isMemoryNormal);
             releaseMemorySystem.Update(0);
 
             // Assert
@@ -78,24 +78,27 @@ namespace DCL.ResourcesUnloading.Tests
         public void ResetUnloadStrategyIndexWhenMemoryUsageIsNormal()
         {
             // Arrange
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
+            memoryBudgetProvider.IsMemoryNormal().Returns(false);
+            memoryBudgetProvider.IsInAbundance().Returns(false);
 
             // Act
             releaseMemorySystem.Update(0);
 
             // Assert
             Assert.AreEqual(1, standardStrategy.strategyRunCount);
-            
+
             // Act
             releaseMemorySystem.Update(0);
-            
+
             // Assert
             Assert.AreEqual(2, standardStrategy.strategyRunCount);
             Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
 
 
             // Act
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.NORMAL);
+            memoryBudgetProvider.IsMemoryNormal().Returns(true);
+            memoryBudgetProvider.IsInAbundance().Returns(true);
+
             releaseMemorySystem.Update(0);
 
             // Assert
@@ -103,12 +106,12 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.AreEqual(0, aggresiveStrategy.currentFailureCount);
             Assert.IsFalse(standardStrategy.FaillingOverThreshold());
         }
-        
+
         [Test]
         public void IncreaseTierAggresiveness()
         {
             // Arrange
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
+            memoryBudgetProvider.IsMemoryNormal().Returns(false);
             // Act
             releaseMemorySystem.Update(0);
 
@@ -117,7 +120,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Act
             releaseMemorySystem.Update(0);
-            
+
             // Assert
             Assert.AreEqual(2, standardStrategy.strategyRunCount);
             Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
@@ -127,7 +130,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void SkipAggressiveStrategyIfPreviousDidNotFail()
         {
             // Arrange
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
+            memoryBudgetProvider.IsMemoryNormal().Returns(false);
             standardStrategy.failureThreshold = 5;
 
             // Act
@@ -141,7 +144,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.AreEqual(0, aggresiveStrategy.strategyRunCount);
         }
 
-        
+
     }
 
 }
