@@ -65,52 +65,43 @@ namespace DCL.InWorldCamera
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
 
-            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(); // upscaled Screen Frame resolution
+            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture();
 
+            // All the following is necessary due to a Unity bug when working in Linear color space:
             var newScreenShot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
             newScreenShot.SetPixels(screenshotTexture.GetPixels());
             newScreenShot.Apply();
 
-            newScreenShot = UpscaleTexture2D(newScreenShot, roundedUpscale);
-            newScreenShot = CropTexture2D(newScreenShot, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
+            UpscaleTexture2D(newScreenShot, roundedUpscale); // upscaled Screen Frame resolution
+            CropTexture2D(newScreenShot, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
             ResizeTexture2D(newScreenShot);
 
+            Object.Destroy(screenshotTexture);
             Object.Destroy(newScreenShot);
-
 
             State = RecordingState.SCREENSHOT_READY;
         }
 
-        private Texture2D UpscaleTexture2D(Texture2D sourceTexture, int upscaleFactor)
+        private void UpscaleTexture2D(Texture2D sourceTexture, int upscaleFactor)
         {
             if (upscaleFactor <= 1)
-                return sourceTexture;
+                return;
 
-            sourceTexture.filterMode = FilterMode.Bilinear;
             int targetWidth = sourceTexture.width * upscaleFactor;
             int targetHeight = sourceTexture.height * upscaleFactor;
 
             var rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
-            rt.filterMode = FilterMode.Bilinear;
             RenderTexture.active = rt;
 
-            // Graphics.Blit uses the source texture's filterMode. Ensure it's Bilinear for smooth scaling (default for Texture2D).
             Graphics.Blit(sourceTexture, rt);
 
-            // Create the result texture: no mipmaps, and ensure it's sRGB (linear=false).
-            // Use the source format for consistency.
-            var result = new Texture2D(targetWidth, targetHeight, sourceTexture.format, /*mipChain:*/ false, /*linear:*/ false);
-            result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
-            result.Apply( /*updateMipmaps:*/ false);
+            sourceTexture.Reinitialize(targetWidth, targetHeight, sourceTexture.graphicsFormat, false);
+            sourceTexture.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+            sourceTexture.Apply();
 
-            // Cleanup
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(rt);
 
-            // Destroy the original source texture as we are returning a new one
-            Object.Destroy(sourceTexture);
-
-            return result;
         }
 
         public Texture2D GetScreenshotAndReset()
@@ -122,15 +113,13 @@ namespace DCL.InWorldCamera
             return screenshot;
         }
 
-        private static Texture2D CropTexture2D(Texture2D texture, Vector2Int startCorner, int width, int height)
+        private void CropTexture2D(Texture2D texture, Vector2Int startCorner, int width, int height)
         {
             Color[] pixels = texture.GetPixels(startCorner.x, startCorner.y, width, height);
 
-            var result = new Texture2D(width, height, TextureFormat.RGB24, false);
-            result.SetPixels(pixels);
-            result.Apply();
-
-            return result;
+            texture.Reinitialize(width, height, texture.graphicsFormat, false);
+            texture.SetPixels(pixels);
+            texture.Apply();
         }
 
         private void ResizeTexture2D(Texture originalTexture)
