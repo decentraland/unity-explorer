@@ -1,4 +1,6 @@
 ﻿using Arch.SystemGroups;
+using Assets.DCL.RealtimeCommunication;
+using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.DebugUtilities;
@@ -12,6 +14,7 @@ using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using System.Threading;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
@@ -30,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
+        private readonly IRealtimeReports realtimeReports;
 
         public AnalyticsPlugin(
             IAnalyticsController analytics,
@@ -56,13 +60,17 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
 
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
+            realtimeReports = new WebSocketRealtimeReports(identityCache);
         }
+
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
+            realtimeReports.ConnectAsync(ct);
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             walkedDistanceAnalytics.Initialize();
 
-            PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
+            PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, realtimeReports, arguments.PlayerEntity);
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);

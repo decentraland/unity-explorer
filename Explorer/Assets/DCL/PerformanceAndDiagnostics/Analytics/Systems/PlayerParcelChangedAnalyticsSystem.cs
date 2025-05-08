@@ -11,6 +11,7 @@ using SceneRunner.Scene;
 using Segment.Serialization;
 using UnityEngine;
 using Utility;
+using Assets.DCL.RealtimeCommunication;
 
 namespace DCL.Analytics.Systems
 {
@@ -23,17 +24,26 @@ namespace DCL.Analytics.Systems
         private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
+        private readonly IRealtimeReports realtimeReports;
 
         private readonly Entity playerEntity;
 
         private Vector2Int oldParcel;
         private ISceneFacade lastScene;
 
-        public PlayerParcelChangedAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IScenesCache scenesCache, in Entity playerEntity) : base(world)
+        public PlayerParcelChangedAnalyticsSystem(
+            World world,
+            IAnalyticsController analytics,
+            IRealmData realmData,
+            IScenesCache scenesCache,
+            IRealtimeReports realtimeReports,
+            Entity playerEntity
+        ) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+            this.realtimeReports = realtimeReports;
             this.playerEntity = playerEntity;
 
             ResetOldParcel();
@@ -58,13 +68,18 @@ namespace DCL.Analytics.Systems
             {
                 bool sceneIsDefined = scenesCache.TryGetByParcel(newParcel, out ISceneFacade? currentScene);
 
-                analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JsonObject
+                var json = new JsonObject
                 {
                     { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
                     { "new_parcel", newParcel.ToString() },
                     { "scene_hash", sceneIsDefined ? currentScene.Info.Name : IAnalyticsController.UNDEFINED },
                     { "is_empty_scene", sceneIsDefined ? currentScene.IsEmpty : IAnalyticsController.UNDEFINED },
-                });
+                };
+
+                string jsonContent = json.ToString();
+
+                analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, json);
+                realtimeReports.Report(jsonContent);
 
                 oldParcel = newParcel;
             }
