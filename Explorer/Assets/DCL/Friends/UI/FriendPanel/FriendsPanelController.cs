@@ -139,8 +139,12 @@ namespace DCL.Friends.UI.FriendPanel
         private void OnlineFriendClick(string targetAddress) =>
             OnlineFriendClicked?.Invoke(targetAddress);
 
-        private void JumpToFriendClick(string targetAddress, Vector2Int parcel) =>
+        private void JumpToFriendClick(string targetAddress, Vector2Int parcel)
+        {
+            closeTaskCompletionSource.TrySetResult();
             JumpToFriendClicked?.Invoke(targetAddress, parcel);
+        }
+
 
         public UniTask InitAsync(CancellationToken ct) =>
             requestsSectionController.InitAsync(ct);
