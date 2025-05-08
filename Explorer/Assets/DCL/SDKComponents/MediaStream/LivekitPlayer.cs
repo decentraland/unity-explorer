@@ -8,7 +8,6 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.VideoStreaming;
 using System;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream
