@@ -63,11 +63,6 @@ namespace DCL.Navmap.FilterPanel
             parcelButton.onValueChanged.AddListener(ToggleParcelMap);
         }
 
-        private void OnEnable()
-        {
-            ToggleSatelliteMap(true);
-        }
-
         public void ToggleFilterPanel(bool isOn)
         {
             canvasGroup.alpha = isOn ? 1 : 0;

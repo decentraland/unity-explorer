@@ -52,6 +52,7 @@ namespace DCL.Navmap
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
         private MapRenderImage.ParcelClickData lastParcelClicked;
+        private NavmapFilterPanelController navmapFilterPanelController;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
@@ -101,7 +102,7 @@ namespace DCL.Navmap
 
             navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
-            NavmapFilterPanelController navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
+            navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus);
         }
 
@@ -188,8 +189,13 @@ namespace DCL.Navmap
                     navmapView.zoomView.zoomVerticalRange
                 ));
 
-            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
-            mapRenderer.SetSharedLayer(MapLayer.LiveEvents, true);
+            mapRenderer.SetSharedLayer(MapLayer.LiveEvents, navmapFilterPanelController.IsFilterActivated(MapLayer.LiveEvents));
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, navmapFilterPanelController.IsFilterActivated(MapLayer.ScenesOfInterest));
+            mapRenderer.SetSharedLayer(MapLayer.Pins, navmapFilterPanelController.IsFilterActivated(MapLayer.Pins));
+            mapRenderer.SetSharedLayer(MapLayer.HotUsersMarkers, navmapFilterPanelController.IsFilterActivated(MapLayer.HotUsersMarkers));
+            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.SatelliteAtlas));
+            mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, navmapFilterPanelController.IsFilterActivated(MapLayer.ParcelsAtlas));
+
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
             satelliteController.Activate();
