@@ -136,7 +136,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             while (ct.IsCancellationRequested == false)
             {
-                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - RunAsync");
                 await ExecuteWithRecoveryAsync(ct);
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: ct);
             }
@@ -161,7 +160,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             {
                 try
                 {
-                    ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync Running");
                     connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Running);
                     await CycleStepAsync(ct);
                 }
