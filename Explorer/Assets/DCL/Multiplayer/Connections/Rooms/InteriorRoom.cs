@@ -125,7 +125,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             }
         }
 
-        private void SimulateConnectionStateChanged()
+        public void SimulateConnectionStateChanged()
         {
             // It's not clear why LiveKit has two different events for the same thing
             ConnectionState currentState = assigned.Info.ConnectionState;

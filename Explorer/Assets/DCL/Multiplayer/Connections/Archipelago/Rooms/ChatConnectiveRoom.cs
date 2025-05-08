@@ -29,6 +29,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
     public class ChatConnectiveRoom : IActivatableConnectiveRoom
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private readonly IWebRequestController webRequests;
@@ -131,13 +132,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
+            SendConnectionStatusAsync(ct).Forget();
+
             while (ct.IsCancellationRequested == false)
             {
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - RunAsync");
                 await ExecuteWithRecoveryAsync(ct);
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: ct);
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+        }
+
+        private async UniTaskVoid SendConnectionStatusAsync(CancellationToken ct)
+        {
+            if (CurrentState() == IConnectiveRoom.State.Running)
+                room.SimulateConnectionStateChanged();
+
+            await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
         }
 
         private async UniTask ExecuteWithRecoveryAsync(CancellationToken ct)
@@ -146,12 +158,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             {
                 try
                 {
+                    ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync Running");
                     connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Running);
                     await CycleStepAsync(ct);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    ReportHub.LogError(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync failed: {e}");
+                    ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync failed: {e}");
                     connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.CycleFailed);
                     await RecoveryDelayAsync(ct);
                 }
@@ -183,42 +196,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            bool connectResult = await ConnectToRoomAsync(credentials, token);
+            bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult == false)
+            if (connectResult)
             {
-                return connectResult;
+                room.Assign(roomInstance, out IRoom _);
+                roomState.Set(IConnectiveRoom.State.Running);
             }
 
-            roomState.Set(IConnectiveRoom.State.Running);
             return connectResult;
-        }
-
-        private async UniTask<bool> ConnectToRoomAsync<T>(T credentials, CancellationToken ct)
-            where T: ICredentials
-        {
-            bool connectResult;
-
-            try
-            {
-                connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
-
-            if (connectResult == false)
-            {
-                return (connectResult);
-            }
-
-            room.Assign(roomInstance, out IRoom _);
-
-            return (connectResult);
         }
 
         [Serializable]
