@@ -17,7 +17,6 @@ namespace DCL.Nametags
     {
         private static NativeArray<Keyframe> alphaCurveKeysNative;
         private static AnimationCurveEvaluator curveEvaluator;
-        private static bool isInitialized;
         private static float verifiedIconWidth;
         private static float privateMessageIconWidth;
         private static Material? opaqueMaterial;
@@ -73,6 +72,7 @@ namespace DCL.Nametags
         private bool isTransparent;
         private bool isPrivateMessage;
         private bool showPrivateMessageRecipient;
+        private bool isInitialized;
 
         private float previousDistance;
         private Material sharedMaterial;
@@ -319,6 +319,7 @@ namespace DCL.Nametags
             privateMessageText.gameObject.SetActive(false);
             privateMessageText.SetText(string.Empty);
             cachedUsernameWidth = 0;
+            additionalHeight = 0;
         }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string messageText, CancellationToken ct)
@@ -383,6 +384,7 @@ namespace DCL.Nametags
 
             preferredSize = CalculatePreferredSize(out float availableWidthForPrivateMessage);
             messageContentRectTransform.sizeDelta = preferredSize;
+            messageContent.ForceMeshUpdate();
 
             textContentInitialPosition = CalculateMessageContentPosition(preferredSize.x, preferredSize.y);
             messageContentRectTransform.anchoredPosition = textContentInitialPosition;
@@ -434,6 +436,7 @@ namespace DCL.Nametags
                     }
                     tempSizeDelta.y = NametagViewConstants.DEFAULT_HEIGHT;
                     privateMessageText.rectTransform.sizeDelta = tempSizeDelta;
+                    messageContent.ForceMeshUpdate();
 
                     privateMessageTextFinalPosition = CalculatePrivateMessageTextPosition(
                         privateMessageFinalPosition.x,
