@@ -7,7 +7,6 @@ namespace DCL.UI.Skybox
 {
     public class SkyboxMenuView: ViewBaseWithAnimationElement, IView
     {
-        [field: SerializeField] public ToggleView ToggleView { get; private set; } = null!;
         [field: SerializeField] public Toggle DynamicToggle { get; private set; } = null!;
         [field: SerializeField] public Slider TimeSlider { get; private set; } = null!;
         [field: SerializeField] public TMP_Text TimeText { get; private set; } = null!;
