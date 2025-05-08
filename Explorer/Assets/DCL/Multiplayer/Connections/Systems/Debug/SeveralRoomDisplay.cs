@@ -16,8 +16,8 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         public void Update()
         {
-            foreach (IRoomDisplay roomDisplay in list)
-                roomDisplay.Update();
+            for (var i = 0; i < list.Count; i++)
+                list[i].Update();
         }
     }
 }
