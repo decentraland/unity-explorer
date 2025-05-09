@@ -37,6 +37,7 @@ namespace DCL.UI.HyperlinkHandler
         private string originalText;
         private TMP_LinkInfo lastLink;
         private CancellationTokenSource cancellationTokenSource;
+        private UniTaskCompletionSource closeContextMenuTask;
 
         private void Awake()
         {
@@ -152,7 +153,9 @@ namespace DCL.UI.HyperlinkHandler
 
         private async UniTaskVoid OpenUserProfileContextMenuAsync(string userName)
         {
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
+            closeContextMenuTask?.TrySetResult();
+            closeContextMenuTask = new UniTaskCompletionSource();
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), default(Vector2), cancellationTokenSource.Token, closeContextMenuTask.Task);
         }
 
         private async UniTaskVoid OpenUrlAsync(URLAddress url, CancellationToken ct) =>
@@ -203,8 +206,15 @@ namespace DCL.UI.HyperlinkHandler
             originalText = null;
         }
 
+        private void OnDisable()
+        {
+            closeContextMenuTask?.TrySetResult();
+            cancellationTokenSource.SafeCancelAndDispose();
+        }
+
         private void OnDestroy()
         {
+            closeContextMenuTask?.TrySetResult();
             cancellationTokenSource.SafeCancelAndDispose();
         }
     }
