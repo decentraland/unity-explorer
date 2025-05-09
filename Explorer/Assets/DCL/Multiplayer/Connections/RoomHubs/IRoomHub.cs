@@ -9,14 +9,14 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     public interface IRoomHub
     {
         IRoom IslandRoom();
-
         IGateKeeperSceneRoom SceneRoom();
+        IRoom ChatRoom();
 
         UniTask<bool> StartAsync();
-
         UniTask StopAsync();
+        UniTask StopLocalRoomsAsync();
 
-        IReadOnlyCollection<string> AllRoomsRemoteParticipantIdentities();
+        IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities();
     }
 
     public static class RoomHubExtensions
@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             roomHub.SceneRoom().Room().Info.ConnectionState == ConnectionState.ConnConnected;
 
         public static int ParticipantsCount(this IRoomHub roomHub) =>
-            roomHub.AllRoomsRemoteParticipantIdentities().Count;
+            roomHub.AllLocalRoomsRemoteParticipantIdentities().Count;
 
         /// <summary>
         /// Room used for the video streaming
