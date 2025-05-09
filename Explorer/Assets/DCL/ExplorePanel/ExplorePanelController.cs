@@ -25,7 +25,6 @@ namespace DCL.ExplorePanel
 {
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>
     {
-        private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
@@ -47,6 +46,7 @@ namespace DCL.ExplorePanel
 
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
+        public SettingsController SettingsController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -68,7 +68,7 @@ namespace DCL.ExplorePanel
             : base(viewFactory)
         {
             NavmapController = navmapController;
-            this.settingsController = settingsController;
+            SettingsController = settingsController;
             this.backpackController = backpackController;
             CameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
@@ -109,7 +109,7 @@ namespace DCL.ExplorePanel
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
                 { ExploreSections.Navmap, NavmapController },
-                { ExploreSections.Settings, settingsController },
+                { ExploreSections.Settings, SettingsController },
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
             };

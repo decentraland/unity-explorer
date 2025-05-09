@@ -21,7 +21,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             float finalizationProgress =
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitStopping);
 
-            await roomHub.StopAsync().Timeout(livekitTimeout);
+            await roomHub.StopLocalRoomsAsync().Timeout(livekitTimeout);
             teleportParams.Report.SetProgress(finalizationProgress);
         }
     }

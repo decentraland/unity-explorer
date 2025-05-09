@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.WebRequests;
 using MVC;
 using SuperScrollView;
