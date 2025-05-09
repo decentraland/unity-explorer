@@ -24,6 +24,8 @@ namespace DCL.UI.GenericContextMenu
 
     public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter>, IDisposable
     {
+        private const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ControlsPoolManager controlsPoolManager;
@@ -39,6 +41,8 @@ namespace DCL.UI.GenericContextMenu
         private UniTaskCompletionSource internalCloseTask;
         private bool isNativeArrayInitialized;
 
+        private Vector3[] cornersArray;
+
         public GenericContextMenuController(ViewFactoryMethod viewFactory,
             ControlsPoolManager controlsPoolManager) : base(viewFactory)
         {
@@ -53,6 +57,7 @@ namespace DCL.UI.GenericContextMenu
             worldRectCorners = new NativeArray<float3>(4, Allocator.Persistent);
             fallbackDirectionsCache = new NativeArray<ContextMenuOpenDirection>(6, Allocator.Persistent);
             tempPositionCache = new NativeArray<float3>(2, Allocator.Persistent);
+            cornersArray = new Vector3[4];
             isNativeArrayInitialized = true;
         }
 
@@ -71,6 +76,7 @@ namespace DCL.UI.GenericContextMenu
             if (worldRectCorners.IsCreated) worldRectCorners.Dispose();
             if (fallbackDirectionsCache.IsCreated) fallbackDirectionsCache.Dispose();
             if (tempPositionCache.IsCreated) tempPositionCache.Dispose();
+            cornersArray = null;
             isNativeArrayInitialized = false;
         }
 
@@ -138,15 +144,16 @@ namespace DCL.UI.GenericContextMenu
         private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, ContextMenuOpenDirection initialDirection = ContextMenuOpenDirection.TOP_LEFT, bool exactPosition = false)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
+            float3 float3Position = new float3(position.x, position.y, position.z);
 
-            tempPositionCache[0] = GetPositionForDirection(initialDirection, position);
+            tempPositionCache[0] = GetPositionForDirection(initialDirection, float3Position);
             Vector2 offsetByDirection = GetOffsetByDirection(initialDirection, offsetFromTarget);
             var tempPos = tempPositionCache[0];
             tempPos.x += offsetByDirection.x;
             tempPos.y += offsetByDirection.y;
             tempPositionCache[0] = tempPos;
 
-            Vector3 adjustedInitialPosition = ApplyContainerAdjustments(tempPositionCache[0], initialDirection);
+            float3 adjustedInitialPosition = ApplyContainerAdjustments(tempPositionCache[0], initialDirection);
 
             float4 boundaryRect = overlapRect.HasValue ?
                 BurstRectUtils.RectToFloat4(overlapRect.Value) :
@@ -155,7 +162,7 @@ namespace DCL.UI.GenericContextMenu
             float menuWidth = viewInstance!.ControlsContainer.rect.width;
             float menuHeight = viewInstance!.ControlsContainer.rect.height;
 
-            float4 menuRect = GetProjectedRect(adjustedInitialPosition);
+            float4 menuRect = GetProjectedRect(new Vector3(adjustedInitialPosition.x, adjustedInitialPosition.y, adjustedInitialPosition.z));
 
             float outOfBoundsPercentTop = 0;
             float outOfBoundsPercentBottom = 0;
@@ -176,7 +183,7 @@ namespace DCL.UI.GenericContextMenu
 
             if (totalOutOfBoundsPercent < MINIMAL_ADJUSTMENT_THRESHOLD)
             {
-                return adjustedInitialPosition;
+                return new Vector3(adjustedInitialPosition.x, adjustedInitialPosition.y, adjustedInitialPosition.z);
             }
 
             bool outOfBoundsOnRight = outOfBoundsPercentRight > 0;
@@ -196,40 +203,40 @@ namespace DCL.UI.GenericContextMenu
                 outOfBoundsOnTop,
                 outOfBoundsOnBottom);
 
-            tempPositionCache[1] = GetPositionForDirection(smartDirection, position);
+            tempPositionCache[1] = GetPositionForDirection(smartDirection, float3Position);
             Vector2 offsetBySmartDirection = GetOffsetByDirection(smartDirection, offsetFromTarget);
             var tempSmartPos = tempPositionCache[1];
             tempSmartPos.x += offsetBySmartDirection.x;
             tempSmartPos.y += offsetBySmartDirection.y;
             tempPositionCache[1] = tempSmartPos;
 
-            Vector3 adjustedBasePosition = ApplyContainerAdjustments(tempPositionCache[1], smartDirection);
+            float3 adjustedBasePosition = ApplyContainerAdjustments(tempPositionCache[1], smartDirection);
 
-            float4 smartMenuRect = GetProjectedRect(adjustedBasePosition);
+            float4 smartMenuRect = GetProjectedRect(new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z));
 
             bool isWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, smartMenuRect);
 
             if (isWithinBounds)
             {
-                return adjustedBasePosition;
+                return new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z);
             }
 
             float smartOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, smartMenuRect);
 
-            Vector3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
-            float4 adjustedMenuRect = GetProjectedRect(adjustedPosition);
+            float3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
+            float4 adjustedMenuRect = GetProjectedRect(new Vector3(adjustedPosition.x, adjustedPosition.y, adjustedPosition.z));
             bool adjustedIsWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, adjustedMenuRect);
             float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, adjustedMenuRect);
 
             if (adjustedIsWithinBounds)
             {
-                return adjustedPosition;
+                return new Vector3(adjustedPosition.x, adjustedPosition.y, adjustedPosition.z);
             }
 
             GetFallbackDirections(smartDirection);
 
             float bestOutOfBoundsPercent = adjustedOutOfBoundsPercent;
-            Vector3 bestPosition = adjustedPosition;
+            float3 bestPosition = adjustedPosition;
             bool foundPerfectPosition = false;
 
             for (int i = 0; i < fallbackDirectionsCount; i++)
@@ -239,7 +246,7 @@ namespace DCL.UI.GenericContextMenu
                 if (currentDirection == smartDirection)
                     continue;
 
-                Vector3 currentAnchoredPosition = GetPositionForDirection(currentDirection, position);
+                float3 currentAnchoredPosition = GetPositionForDirection(currentDirection, float3Position);
 
                 for (int j = 0; j < openDirections.Length; j++)
                 {
@@ -252,15 +259,15 @@ namespace DCL.UI.GenericContextMenu
                     tempPosForLoop.z = currentAnchoredPosition.z;
                     tempPositionCache[0] = tempPosForLoop;
 
-                    Vector3 adjustedCurrentPosition = ApplyContainerAdjustments(tempPositionCache[0], offsetDirection);
+                    float3 adjustedCurrentPosition = ApplyContainerAdjustments(tempPositionCache[0], offsetDirection);
 
-                    Vector3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);
-                    float4 currentMenuRect = GetProjectedRect(boundaryAdjustedPosition);
+                    float3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);
+                    float4 currentMenuRect = GetProjectedRect(new Vector3(boundaryAdjustedPosition.x, boundaryAdjustedPosition.y, boundaryAdjustedPosition.z));
                     bool currentIsWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, currentMenuRect);
 
                     if (currentIsWithinBounds)
                     {
-                        return boundaryAdjustedPosition;
+                        return new Vector3(boundaryAdjustedPosition.x, boundaryAdjustedPosition.y, boundaryAdjustedPosition.z);
                     }
 
                     float currentOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, currentMenuRect);
@@ -272,7 +279,7 @@ namespace DCL.UI.GenericContextMenu
                 }
             }
 
-            return bestPosition;
+            return new Vector3(bestPosition.x, bestPosition.y, bestPosition.z);
         }
 
         [BurstCompile]
@@ -309,10 +316,10 @@ namespace DCL.UI.GenericContextMenu
         }
 
         [BurstCompile]
-        private Vector3 AdjustPositionToFitBounds(Vector3 position, float4 boundaryRect)
+        private float3 AdjustPositionToFitBounds(float3 position, float4 boundaryRect)
         {
-            Vector3 adjustedPosition = position;
-            float4 menuRect = GetProjectedRect(position);
+            float3 adjustedPosition = position;
+            float4 menuRect = GetProjectedRect(new Vector3(position.x, position.y, position.z));
 
             if (menuRect.x < boundaryRect.x)
             {
@@ -360,9 +367,14 @@ namespace DCL.UI.GenericContextMenu
                 BurstRectUtils.RectToFloat4(inputData.OverlapRect.Value) :
                 backgroundWorldRect;
 
-            Vector3 menuPosition = GetPositionForDirection(initialDirection, viewRectTransform.InverseTransformPoint(anchorPosition));
-            menuPosition = ApplyContainerAdjustments(menuPosition, initialDirection);
-            float4 menuRect = GetProjectedRect(menuPosition);
+            float3 transformedPosition = new float3(
+                viewRectTransform.InverseTransformPoint(anchorPosition).x,
+                viewRectTransform.InverseTransformPoint(anchorPosition).y,
+                viewRectTransform.InverseTransformPoint(anchorPosition).z);
+                
+            float3 menuPosition = GetPositionForDirection(initialDirection, transformedPosition);
+            float3 adjustedMenuPosition = ApplyContainerAdjustments(menuPosition, initialDirection);
+            float4 menuRect = GetProjectedRect(new Vector3(adjustedMenuPosition.x, adjustedMenuPosition.y, adjustedMenuPosition.z));
 
             BurstRectUtils.CalculateOutOfBoundsPercentages(
                 ref outOfBoundsPercentTop,
@@ -370,8 +382,6 @@ namespace DCL.UI.GenericContextMenu
                 ref outOfBoundsPercentRight,
                 ref outOfBoundsPercentLeft,
                 menuRect, boundaryRect, menuWidth, menuHeight);
-
-            const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
 
             bool avoidTop = outOfBoundsPercentTop > 0;
             bool avoidBottom = outOfBoundsPercentBottom > 0;
@@ -688,18 +698,17 @@ namespace DCL.UI.GenericContextMenu
 
         private float4 GetWorldRect(RectTransform rectTransform)
         {
-            Vector3[] corners = new Vector3[4];
-            rectTransform.GetWorldCorners(corners);
-
+            rectTransform.GetWorldCorners(cornersArray);
+            
             for (var i = 0; i < 4; i++)
             {
-                worldRectCorners[i] = new float3(corners[i].x, corners[i].y, corners[i].z);
+                worldRectCorners[i] = new float3(cornersArray[i].x, cornersArray[i].y, cornersArray[i].z);
             }
 
-            float minX = corners[0].x;
-            float minY = corners[0].y;
-            float maxX = corners[2].x;
-            float maxY = corners[2].y;
+            float minX = worldRectCorners[0].x;
+            float minY = worldRectCorners[0].y;
+            float maxX = worldRectCorners[2].x;
+            float maxY = worldRectCorners[2].y;
 
             return new float4(minX, minY, maxX - minX, maxY - minY);
         }
@@ -719,8 +728,8 @@ namespace DCL.UI.GenericContextMenu
         }
 
         [BurstCompile]
-        private static Vector3 ApplyContainerAdjustments(float3 position, ContextMenuOpenDirection direction) =>
-            new (position.x, position.y, position.z);
+        private static float3 ApplyContainerAdjustments(float3 position, ContextMenuOpenDirection direction) =>
+            position;
 
         [BurstCompile]
         private static ContextMenuOpenDirection GetOppositeHorizontalDirection(ContextMenuOpenDirection direction)
