@@ -51,24 +51,19 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                 return false;
 
             if (pointerEventEntry.EventInfo.Button == InputAction.IaAny)
-            {
                 switch (anyButtonIsDown)
                 {
                     case false when pointerEventEntry.EventType != PointerEventType.PetDown:
                     case true when pointerEventEntry.EventType != PointerEventType.PetUp:
                         return false;
                 }
-            }
             else
-            {
                 switch (unityInputAction.IsPressed())
                 {
                     case true when pointerEventEntry.EventType != PointerEventType.PetUp:
                     case false when pointerEventEntry.EventType != PointerEventType.PetDown:
                         return false;
                 }
-
-            }
 
             hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, unityInputAction));
             return true;

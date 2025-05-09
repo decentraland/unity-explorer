@@ -43,7 +43,7 @@ namespace DCL.Interaction.Systems
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
             this.menusAccessFacade = menusAccessFacade;
-            viewProfileTooltip = new (HOVER_TOOLTIP, dclInput.Player.RightPointer);
+            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.RightPointer);
 
             dclInput.Player.RightPointer!.performed += OpenContextMenu;
         }
@@ -70,7 +70,6 @@ namespace DCL.Interaction.Systems
             bool canHover = !eventSystem.IsPointerOverGameObject();
             GlobalColliderGlobalEntityInfo? entityInfo = raycastResultForGlobalEntities.GetEntityInfo();
 
-
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
                 return;
 
@@ -84,7 +83,7 @@ namespace DCL.Interaction.Systems
 
             currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
-            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, isAtDistance: true);
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 
@@ -101,7 +100,7 @@ namespace DCL.Interaction.Systems
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
 
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, offset: new Vector2(10,0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }

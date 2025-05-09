@@ -117,6 +117,7 @@ namespace DCL.UI.GenericContextMenu
 
             viewInstance!.ControlsLayoutGroup.spacing = inputData.Config.elementsSpacing;
             viewInstance!.ControlsLayoutGroup.padding = inputData.Config.verticalLayoutPadding;
+
             viewInstance.ControlsContainer.sizeDelta = new Vector2(inputData.Config.width,
                 totalHeight
                 + viewInstance!.ControlsLayoutGroup.padding.bottom
@@ -130,34 +131,32 @@ namespace DCL.UI.GenericContextMenu
         private static Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)
         {
             return direction switch
-            {
-                ContextMenuOpenDirection.BOTTOM_RIGHT => offsetFromTarget,
-                ContextMenuOpenDirection.BOTTOM_LEFT => new Vector2(-offsetFromTarget.x, offsetFromTarget.y),
-                ContextMenuOpenDirection.TOP_RIGHT => new Vector2(offsetFromTarget.x, -offsetFromTarget.y),
-                ContextMenuOpenDirection.TOP_LEFT => new Vector2(-offsetFromTarget.x, -offsetFromTarget.y),
-                ContextMenuOpenDirection.CENTER_RIGHT => new Vector2(offsetFromTarget.x, 0),
-                ContextMenuOpenDirection.CENTER_LEFT => new Vector2(-offsetFromTarget.x, 0),
-                _ => Vector2.zero
-            };
+                   {
+                       ContextMenuOpenDirection.BOTTOM_RIGHT => offsetFromTarget,
+                       ContextMenuOpenDirection.BOTTOM_LEFT => new Vector2(-offsetFromTarget.x, offsetFromTarget.y),
+                       ContextMenuOpenDirection.TOP_RIGHT => new Vector2(offsetFromTarget.x, -offsetFromTarget.y),
+                       ContextMenuOpenDirection.TOP_LEFT => new Vector2(-offsetFromTarget.x, -offsetFromTarget.y),
+                       ContextMenuOpenDirection.CENTER_RIGHT => new Vector2(offsetFromTarget.x, 0),
+                       ContextMenuOpenDirection.CENTER_LEFT => new Vector2(-offsetFromTarget.x, 0),
+                       _ => Vector2.zero,
+                   };
         }
 
         private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, ContextMenuOpenDirection initialDirection = ContextMenuOpenDirection.TOP_LEFT, bool exactPosition = false)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
-            float3 float3Position = new float3(position.x, position.y, position.z);
+            var float3Position = new float3(position.x, position.y, position.z);
 
             tempPositionCache[0] = GetPositionForDirection(initialDirection, float3Position);
             Vector2 offsetByDirection = GetOffsetByDirection(initialDirection, offsetFromTarget);
-            var tempPos = tempPositionCache[0];
+            float3 tempPos = tempPositionCache[0];
             tempPos.x += offsetByDirection.x;
             tempPos.y += offsetByDirection.y;
             tempPositionCache[0] = tempPos;
 
             float3 adjustedInitialPosition = ApplyContainerAdjustments(tempPositionCache[0], initialDirection);
 
-            float4 boundaryRect = overlapRect.HasValue ?
-                BurstRectUtils.RectToFloat4(overlapRect.Value) :
-                backgroundWorldRect;
+            float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
 
             float menuWidth = viewInstance!.ControlsContainer.rect.width;
             float menuHeight = viewInstance!.ControlsContainer.rect.height;
@@ -177,14 +176,12 @@ namespace DCL.UI.GenericContextMenu
                 ref menuRect, ref boundaryRect, menuWidth, menuHeight);
 
             float totalOutOfBoundsPercent = outOfBoundsPercentTop + outOfBoundsPercentBottom +
-                                           outOfBoundsPercentRight + outOfBoundsPercentLeft;
+                                            outOfBoundsPercentRight + outOfBoundsPercentLeft;
 
             const float MINIMAL_ADJUSTMENT_THRESHOLD = 0.01f;
 
             if (totalOutOfBoundsPercent < MINIMAL_ADJUSTMENT_THRESHOLD)
-            {
                 return new Vector3(adjustedInitialPosition.x, adjustedInitialPosition.y, adjustedInitialPosition.z);
-            }
 
             bool outOfBoundsOnRight = outOfBoundsPercentRight > 0;
             bool outOfBoundsOnLeft = outOfBoundsPercentLeft > 0;
@@ -205,7 +202,7 @@ namespace DCL.UI.GenericContextMenu
 
             tempPositionCache[1] = GetPositionForDirection(smartDirection, float3Position);
             Vector2 offsetBySmartDirection = GetOffsetByDirection(smartDirection, offsetFromTarget);
-            var tempSmartPos = tempPositionCache[1];
+            float3 tempSmartPos = tempPositionCache[1];
             tempSmartPos.x += offsetBySmartDirection.x;
             tempSmartPos.y += offsetBySmartDirection.y;
             tempPositionCache[1] = tempSmartPos;
@@ -217,9 +214,7 @@ namespace DCL.UI.GenericContextMenu
             bool isWithinBounds = BurstRectUtils.IsRectContained(ref boundaryRect, ref smartMenuRect);
 
             if (isWithinBounds)
-            {
                 return new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z);
-            }
 
             float3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
             float4 adjustedMenuRect = GetProjectedRect(new Vector3(adjustedPosition.x, adjustedPosition.y, adjustedPosition.z));
@@ -227,17 +222,15 @@ namespace DCL.UI.GenericContextMenu
             float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : BurstRectUtils.CalculateOutOfBoundsPercent(ref boundaryRect, ref adjustedMenuRect);
 
             if (adjustedIsWithinBounds)
-            {
                 return new Vector3(adjustedPosition.x, adjustedPosition.y, adjustedPosition.z);
-            }
 
             GetFallbackDirections(smartDirection);
 
             float bestOutOfBoundsPercent = adjustedOutOfBoundsPercent;
             float3 bestPosition = adjustedPosition;
-            bool foundPerfectPosition = false;
+            var foundPerfectPosition = false;
 
-            for (int i = 0; i < fallbackDirectionsCount; i++)
+            for (var i = 0; i < fallbackDirectionsCount; i++)
             {
                 ContextMenuOpenDirection currentDirection = fallbackDirectionsCache[i];
 
@@ -246,12 +239,12 @@ namespace DCL.UI.GenericContextMenu
 
                 float3 currentAnchoredPosition = GetPositionForDirection(currentDirection, float3Position);
 
-                for (int j = 0; j < openDirections.Length; j++)
+                for (var j = 0; j < openDirections.Length; j++)
                 {
                     ContextMenuOpenDirection offsetDirection = openDirections[j];
                     Vector2 currentOffsetByDirection = GetOffsetByDirection(offsetDirection, offsetFromTarget);
 
-                    var tempPosForLoop = tempPositionCache[0];
+                    float3 tempPosForLoop = tempPositionCache[0];
                     tempPosForLoop.x = currentAnchoredPosition.x + currentOffsetByDirection.x;
                     tempPosForLoop.y = currentAnchoredPosition.y + currentOffsetByDirection.y;
                     tempPosForLoop.z = currentAnchoredPosition.z;
@@ -264,11 +257,10 @@ namespace DCL.UI.GenericContextMenu
                     bool currentIsWithinBounds = BurstRectUtils.IsRectContained(ref boundaryRect, ref currentMenuRect);
 
                     if (currentIsWithinBounds)
-                    {
                         return new Vector3(boundaryAdjustedPosition.x, boundaryAdjustedPosition.y, boundaryAdjustedPosition.z);
-                    }
 
                     float currentOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(ref boundaryRect, ref currentMenuRect);
+
                     if (currentOutOfBoundsPercent < bestOutOfBoundsPercent)
                     {
                         bestPosition = boundaryAdjustedPosition;
@@ -293,22 +285,14 @@ namespace DCL.UI.GenericContextMenu
             ContextMenuOpenDirection smartDirection = initialDirection;
 
             if (initialHorizontal == HorizontalPosition.RIGHT && outOfBoundsOnRight)
-            {
                 smartDirection = GetOppositeHorizontalDirection(initialDirection);
-            }
             else if (initialHorizontal == HorizontalPosition.LEFT && outOfBoundsOnLeft)
-            {
                 smartDirection = GetOppositeHorizontalDirection(initialDirection);
-            }
 
             if (initialVertical == VerticalPosition.TOP && outOfBoundsOnTop)
-            {
                 smartDirection = GetOppositeVerticalDirection(smartDirection);
-            }
             else if (initialVertical == VerticalPosition.BOTTOM && outOfBoundsOnBottom)
-            {
                 smartDirection = GetOppositeVerticalDirection(smartDirection);
-            }
 
             return smartDirection;
         }
@@ -326,7 +310,7 @@ namespace DCL.UI.GenericContextMenu
             }
             else if (menuRect.x + menuRect.z > boundaryRect.x + boundaryRect.z)
             {
-                float adjustment = (menuRect.x + menuRect.z) - (boundaryRect.x + boundaryRect.z);
+                float adjustment = menuRect.x + menuRect.z - (boundaryRect.x + boundaryRect.z);
                 adjustedPosition.x -= adjustment;
             }
 
@@ -337,7 +321,7 @@ namespace DCL.UI.GenericContextMenu
             }
             else if (menuRect.y + menuRect.w > boundaryRect.y + boundaryRect.w)
             {
-                float adjustment = (menuRect.y + menuRect.w) - (boundaryRect.y + boundaryRect.w);
+                float adjustment = menuRect.y + menuRect.w - (boundaryRect.y + boundaryRect.w);
                 adjustedPosition.y -= adjustment;
             }
 
@@ -361,15 +345,13 @@ namespace DCL.UI.GenericContextMenu
 
             Vector2 anchorPosition = inputData.AnchorPosition;
 
-            float4 boundaryRect = inputData.OverlapRect.HasValue ?
-                BurstRectUtils.RectToFloat4(inputData.OverlapRect.Value) :
-                backgroundWorldRect;
+            float4 boundaryRect = inputData.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(inputData.OverlapRect.Value) : backgroundWorldRect;
 
-            float3 transformedPosition = new float3(
+            var transformedPosition = new float3(
                 viewRectTransform.InverseTransformPoint(anchorPosition).x,
                 viewRectTransform.InverseTransformPoint(anchorPosition).y,
                 viewRectTransform.InverseTransformPoint(anchorPosition).z);
-                
+
             float3 menuPosition = GetPositionForDirection(initialDirection, transformedPosition);
             float3 adjustedMenuPosition = ApplyContainerAdjustments(menuPosition, initialDirection);
             float4 menuRect = GetProjectedRect(new Vector3(adjustedMenuPosition.x, adjustedMenuPosition.y, adjustedMenuPosition.z));
@@ -383,20 +365,19 @@ namespace DCL.UI.GenericContextMenu
 
             bool avoidTop = outOfBoundsPercentTop > 0;
             bool avoidBottom = outOfBoundsPercentBottom > 0;
+
             bool skipCenter = outOfBoundsPercentTop > SEVERE_BOUNDARY_VIOLATION_THRESHOLD ||
-                               outOfBoundsPercentBottom > SEVERE_BOUNDARY_VIOLATION_THRESHOLD;
+                              outOfBoundsPercentBottom > SEVERE_BOUNDARY_VIOLATION_THRESHOLD;
 
             bool avoidRight = outOfBoundsPercentRight > 0;
             bool avoidLeft = outOfBoundsPercentLeft > 0;
 
             if ((initialVertical == VerticalPosition.TOP && !avoidTop) ||
                 (initialVertical == VerticalPosition.BOTTOM && !avoidBottom) ||
-                (initialVertical == VerticalPosition.CENTER) ||
+                initialVertical == VerticalPosition.CENTER ||
                 (initialHorizontal == HorizontalPosition.LEFT && !avoidLeft) ||
                 (initialHorizontal == HorizontalPosition.RIGHT && !avoidRight))
-            {
                 AddToFallbackDirections(initialDirection);
-            }
 
             ProcessTopBoundaryViolation(
                 outOfBoundsPercentTop,
@@ -440,12 +421,14 @@ namespace DCL.UI.GenericContextMenu
             if (initialHorizontal == HorizontalPosition.LEFT)
             {
                 AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+
                 if (!skipCenter && !avoidBottom)
                     AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
 
                 if (!avoidRight)
                 {
                     AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+
                     if (!skipCenter && !avoidBottom)
                         AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
                 }
@@ -453,12 +436,14 @@ namespace DCL.UI.GenericContextMenu
             else
             {
                 AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+
                 if (!skipCenter && !avoidBottom)
                     AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
 
                 if (!avoidLeft)
                 {
                     AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+
                     if (!skipCenter && !avoidBottom)
                         AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
                 }
@@ -466,6 +451,7 @@ namespace DCL.UI.GenericContextMenu
 
             if (!ContainsDirection(ContextMenuOpenDirection.TOP_LEFT) && !avoidLeft)
                 AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+
             if (!ContainsDirection(ContextMenuOpenDirection.TOP_RIGHT) && !avoidRight)
                 AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
         }
@@ -483,12 +469,14 @@ namespace DCL.UI.GenericContextMenu
             if (initialHorizontal == HorizontalPosition.LEFT)
             {
                 AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+
                 if (!skipCenter && !avoidTop)
                     AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
 
                 if (!avoidRight)
                 {
                     AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+
                     if (!skipCenter && !avoidTop)
                         AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
                 }
@@ -496,12 +484,14 @@ namespace DCL.UI.GenericContextMenu
             else
             {
                 AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+
                 if (!skipCenter && !avoidTop)
                     AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
 
                 if (!avoidLeft)
                 {
                     AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+
                     if (!skipCenter && !avoidTop)
                         AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
                 }
@@ -509,6 +499,7 @@ namespace DCL.UI.GenericContextMenu
 
             if (!ContainsDirection(ContextMenuOpenDirection.BOTTOM_LEFT) && !avoidLeft)
                 AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+
             if (!ContainsDirection(ContextMenuOpenDirection.BOTTOM_RIGHT) && !avoidRight)
                 AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
         }
@@ -574,33 +565,30 @@ namespace DCL.UI.GenericContextMenu
         private void AddToFallbackDirections(ContextMenuOpenDirection direction)
         {
             if (fallbackDirectionsCount < fallbackDirectionsCache.Length)
-            {
                 fallbackDirectionsCache[fallbackDirectionsCount++] = direction;
-            }
         }
 
         [BurstCompile]
         private bool ContainsDirection(ContextMenuOpenDirection direction)
         {
-            for (int i = 0; i < fallbackDirectionsCount; i++)
-            {
+            for (var i = 0; i < fallbackDirectionsCount; i++)
                 if (fallbackDirectionsCache[i] == direction)
                     return true;
-            }
+
             return false;
         }
 
         private enum HorizontalPosition
         {
             LEFT,
-            RIGHT
+            RIGHT,
         }
 
         private enum VerticalPosition
         {
             TOP,
             CENTER,
-            BOTTOM
+            BOTTOM,
         }
 
         [BurstCompile]
@@ -650,7 +638,7 @@ namespace DCL.UI.GenericContextMenu
         {
             float halfWidth = viewInstance!.ControlsContainer.rect.width / 2;
             float halfHeight = viewInstance!.ControlsContainer.rect.height / 2;
-            float3 result = new float3(position.x, position.y, position.z);
+            var result = new float3(position.x, position.y, position.z);
 
             switch (direction)
             {
@@ -697,11 +685,9 @@ namespace DCL.UI.GenericContextMenu
         private float4 GetWorldRect(RectTransform rectTransform)
         {
             rectTransform.GetWorldCorners(cornersArray);
-            
+
             for (var i = 0; i < 4; i++)
-            {
                 worldRectCorners[i] = new float3(cornersArray[i].x, cornersArray[i].y, cornersArray[i].z);
-            }
 
             float minX = worldRectCorners[0].x;
             float minY = worldRectCorners[0].y;
@@ -717,7 +703,8 @@ namespace DCL.UI.GenericContextMenu
             inputData.ActionOnHide?.Invoke();
         }
 
-        private void TriggerContextMenuClose() => internalCloseTask.TrySetResult();
+        private void TriggerContextMenuClose() =>
+            internalCloseTask.TrySetResult();
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
@@ -733,30 +720,28 @@ namespace DCL.UI.GenericContextMenu
         private static ContextMenuOpenDirection GetOppositeHorizontalDirection(ContextMenuOpenDirection direction)
         {
             return direction switch
-            {
-                ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.TOP_RIGHT,
-                ContextMenuOpenDirection.CENTER_LEFT => ContextMenuOpenDirection.CENTER_RIGHT,
-                ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.BOTTOM_RIGHT,
-                ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.TOP_LEFT,
-                ContextMenuOpenDirection.CENTER_RIGHT => ContextMenuOpenDirection.CENTER_LEFT,
-                ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.BOTTOM_LEFT,
-                _ => direction
-            };
+                   {
+                       ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.TOP_RIGHT,
+                       ContextMenuOpenDirection.CENTER_LEFT => ContextMenuOpenDirection.CENTER_RIGHT,
+                       ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.BOTTOM_RIGHT,
+                       ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.TOP_LEFT,
+                       ContextMenuOpenDirection.CENTER_RIGHT => ContextMenuOpenDirection.CENTER_LEFT,
+                       ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.BOTTOM_LEFT,
+                       _ => direction,
+                   };
         }
 
         [BurstCompile]
         private static ContextMenuOpenDirection GetOppositeVerticalDirection(ContextMenuOpenDirection direction)
         {
             return direction switch
-            {
-                ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.BOTTOM_LEFT,
-                ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.BOTTOM_RIGHT,
-                ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.TOP_LEFT,
-                ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.TOP_RIGHT,
-                _ => direction
-            };
+                   {
+                       ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.BOTTOM_LEFT,
+                       ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.BOTTOM_RIGHT,
+                       ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.TOP_LEFT,
+                       ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.TOP_RIGHT,
+                       _ => direction,
+                   };
         }
     }
 }
-
-
