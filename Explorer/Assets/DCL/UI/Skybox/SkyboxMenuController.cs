@@ -9,8 +9,6 @@ namespace DCL.UI.Skybox
 {
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
-        private const int SECONDS_IN_DAY = 86400;
-
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -18,7 +16,9 @@ namespace DCL.UI.Skybox
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
+        public SkyboxMenuController(
+            ViewFactoryMethod viewFactory, 
+            StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
         }
@@ -27,7 +27,8 @@ namespace DCL.UI.Skybox
         {
             skyboxMenuCts.Cancel();
 
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+            await UniTask
+                .WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -39,23 +40,15 @@ namespace DCL.UI.Skybox
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
-
-            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
-            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
-            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
-
-            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
-            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
-
-            SetTimeEnabled(!skyboxSettings.UseDynamicTime);
+            
+            BindUIElements();
         }
 
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+            
+            SetupUIElements();
             skyboxMenuCts = skyboxMenuCts.SafeRestart();
         }
 
@@ -90,7 +83,7 @@ namespace DCL.UI.Skybox
 
         private string GetFormatedTime(float time)
         {
-            var totalSec = (int)(time * SECONDS_IN_DAY);
+            var totalSec = (int)(time * skyboxSettings.SECONDS_IN_DAY);
 
             int hours = totalSec / 3600;
             int minutes = totalSec % 3600 / 60;
@@ -108,6 +101,35 @@ namespace DCL.UI.Skybox
             skyboxMenuCts.SafeCancelAndDispose();
             skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
             skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
+        }
+
+        private void BindUIElements()
+        {
+            if (viewInstance == null) return;
+            
+            viewInstance.CloseButton.onClick.AddListener(OnClose);
+            
+            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
+            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
+            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
+            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+            
+            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
+            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
+        }
+
+        private void SetupUIElements()
+        {
+            if (skyboxSettings.IsFixedTime)
+            {
+                SetTimeEnabled(false);
+                viewInstance!.DynamicToggle.interactable = false;
+            }
+            else
+            {
+                viewInstance!.DynamicToggle.interactable = true;
+                SetTimeEnabled(!skyboxSettings.UseDynamicTime);
+            }
         }
     }
 }
