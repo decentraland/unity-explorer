@@ -110,70 +110,172 @@ namespace DCL.UI.GenericContextMenu
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
             Debug.Log($"[ContextMenu] Initial position: {position}, Requested direction: {initialDirection}");
 
+            // Get base position for initial direction
+            Vector3 anchoredPosition = GetPositionForDirection(initialDirection, position);
+            Vector2 offsetByDirection = GetOffsetByDirection(initialDirection, offsetFromTarget);
+            Vector3 basePosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
+            
+            // Apply container adjustments
+            Vector3 adjustedBasePosition = ApplyContainerAdjustments(basePosition, initialDirection);
+            
+            // Get boundary rect we need to stay within
+            Rect boundaryRect = overlapRect ?? backgroundWorldRect;
+            
+            // Check if menu is within bounds with the initial direction
+            Rect menuRect = GetProjectedRect(adjustedBasePosition);
+            
+            // Check if menu is fully contained within boundary
+            bool isWithinBounds = IsRectContained(boundaryRect, menuRect);
+            Debug.Log($"[ContextMenu] Initial position is within bounds: {isWithinBounds}");
+            
+            if (isWithinBounds)
+            {
+                Debug.Log($"[ContextMenu] Using initial position as it's within bounds: {adjustedBasePosition}");
+                return adjustedBasePosition;
+            }
+            
+            // Try to adjust the position to fit within bounds while maintaining the original direction
+            Vector3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
+            Rect adjustedMenuRect = GetProjectedRect(adjustedPosition);
+            bool adjustedIsWithinBounds = IsRectContained(boundaryRect, adjustedMenuRect);
+            
+            Debug.Log($"[ContextMenu] After boundary adjustment: position={adjustedPosition}, within bounds: {adjustedIsWithinBounds}");
+            
+            if (adjustedIsWithinBounds)
+            {
+                Debug.Log($"[ContextMenu] Using adjusted position: {adjustedPosition}");
+                return adjustedPosition;
+            }
+            
+            // If we couldn't adjust the position to fit, try different directions
+            Debug.Log($"[ContextMenu] Could not adjust to fit within bounds, trying alternative directions...");
+            
             // Define fallback directions by category
             ContextMenuOpenDirection[] fallbackOrder = GetFallbackDirections(initialDirection);
             Debug.Log($"[ContextMenu] Fallback order: {string.Join(", ", fallbackOrder)}");
 
-            Vector3 bestPosition = Vector3.zero;
-            float bestNonOverlappingArea = float.MaxValue;
+            // Track the best position (one with least amount outside bounds)
+            float bestOutOfBoundsArea = CalculateOutOfBoundsArea(boundaryRect, adjustedMenuRect);
+            Vector3 bestPosition = adjustedPosition; // Start with our adjusted position as fallback
 
             // Try each direction in the fallback sequence
             foreach (var currentDirection in fallbackOrder)
             {
-                Vector3 anchoredPosition = GetPositionForDirection(currentDirection, position);
-                Debug.Log($"[ContextMenu] Trying direction: {currentDirection}, Position after direction adjustment: {anchoredPosition}");
+                // Skip the initial direction as we already tried it
+                if (currentDirection == initialDirection)
+                    continue;
+                    
+                Vector3 currentAnchoredPosition = GetPositionForDirection(currentDirection, position);
+                Debug.Log($"[ContextMenu] Trying direction: {currentDirection}, Position after direction adjustment: {currentAnchoredPosition}");
 
                 // Try each offset direction with the current anchor direction
                 foreach (ContextMenuOpenDirection offsetDirection in openDirections)
                 {
-                    Vector2 offsetByDirection = GetOffsetByDirection(offsetDirection, offsetFromTarget);
-                    Vector3 currentPosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
+                    Vector2 currentOffsetByDirection = GetOffsetByDirection(offsetDirection, offsetFromTarget);
+                    Vector3 currentPosition = currentAnchoredPosition + new Vector3(currentOffsetByDirection.x, currentOffsetByDirection.y, 0);
                     Debug.Log($"[ContextMenu] Trying offset direction: {offsetDirection}, Position after offset: {currentPosition}");
 
-                    // Apply container width adjustment based on direction
-                    if (offsetDirection == ContextMenuOpenDirection.BOTTOM_LEFT || 
-                        offsetDirection == ContextMenuOpenDirection.TOP_LEFT ||
-                        offsetDirection == ContextMenuOpenDirection.CENTER_LEFT)
+                    // Apply container adjustments
+                    currentPosition = ApplyContainerAdjustments(currentPosition, offsetDirection);
+
+                    // Try to adjust this position to fit bounds
+                    Vector3 adjustedCurrentPosition = AdjustPositionToFitBounds(currentPosition, boundaryRect);
+                    Rect currentMenuRect = GetProjectedRect(adjustedCurrentPosition);
+                    bool currentIsWithinBounds = IsRectContained(boundaryRect, currentMenuRect);
+                    
+                    Debug.Log($"[ContextMenu] Position after adjustment: {adjustedCurrentPosition}, within bounds: {currentIsWithinBounds}");
+
+                    // If this position is within bounds, use it immediately
+                    if (currentIsWithinBounds)
                     {
-                        currentPosition.x -= viewInstance!.ControlsContainer.rect.width;
+                        Debug.Log($"[ContextMenu] Found position within bounds! Using: {adjustedCurrentPosition}");
+                        return adjustedCurrentPosition;
                     }
-
-                    // Apply container height adjustment based on direction
-                    if (offsetDirection == ContextMenuOpenDirection.TOP_RIGHT || 
-                        offsetDirection == ContextMenuOpenDirection.TOP_LEFT)
+                    
+                    // Otherwise, track the position with least area outside bounds
+                    float currentOutOfBoundsArea = CalculateOutOfBoundsArea(boundaryRect, currentMenuRect);
+                    if (currentOutOfBoundsArea < bestOutOfBoundsArea)
                     {
-                        currentPosition.y += viewInstance!.ControlsContainer.rect.height;
-                    }
-                    // CENTER positions need half height adjustment
-                    else if (offsetDirection == ContextMenuOpenDirection.CENTER_RIGHT ||
-                             offsetDirection == ContextMenuOpenDirection.CENTER_LEFT)
-                    {
-                        currentPosition.y += viewInstance!.ControlsContainer.rect.height / 2;
-                    }
-
-                    Debug.Log($"[ContextMenu] Position after container size adjustments: {currentPosition}");
-
-                    float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? backgroundWorldRect, GetProjectedRect(currentPosition));
-                    Debug.Log($"[ContextMenu] Non-overlapping area: {nonOverlappingArea}");
-
-                    if (nonOverlappingArea < bestNonOverlappingArea)
-                    {
-                        bestPosition = currentPosition;
-                        bestNonOverlappingArea = nonOverlappingArea;
-                        Debug.Log($"[ContextMenu] New best position found: {bestPosition} with area: {bestNonOverlappingArea}");
-                    }
-
-                    // If we found a position with very minimal overlap, we can return early
-                    if (nonOverlappingArea < 0.1f)
-                    {
-                        Debug.Log($"[ContextMenu] Found excellent position with minimal overlap! Early exit with position: {currentPosition}");
-                        return currentPosition;
+                        bestPosition = adjustedCurrentPosition;
+                        bestOutOfBoundsArea = currentOutOfBoundsArea;
+                        Debug.Log($"[ContextMenu] New best position found: {bestPosition} with out-of-bounds area: {bestOutOfBoundsArea}");
                     }
                 }
             }
 
-            Debug.Log($"[ContextMenu] Final best position: {bestPosition} with non-overlapping area: {bestNonOverlappingArea}");
+            Debug.Log($"[ContextMenu] Final best position: {bestPosition} with out-of-bounds area: {bestOutOfBoundsArea}");
             return bestPosition;
+        }
+        
+        private bool IsRectContained(Rect container, Rect rect)
+        {
+            // Check if rect is completely inside container
+            return rect.xMin >= container.xMin && 
+                   rect.xMax <= container.xMax && 
+                   rect.yMin >= container.yMin && 
+                   rect.yMax <= container.yMax;
+        }
+        
+        private float CalculateOutOfBoundsArea(Rect container, Rect rect)
+        {
+            // Calculate how much of the rect is outside the container
+            float outOfBoundsWidth = 0;
+            float outOfBoundsHeight = 0;
+            
+            // Check horizontal overflow
+            if (rect.xMin < container.xMin)
+                outOfBoundsWidth += container.xMin - rect.xMin;
+            if (rect.xMax > container.xMax)
+                outOfBoundsWidth += rect.xMax - container.xMax;
+                
+            // Check vertical overflow
+            if (rect.yMin < container.yMin)
+                outOfBoundsHeight += container.yMin - rect.yMin;
+            if (rect.yMax > container.yMax)
+                outOfBoundsHeight += rect.yMax - container.yMax;
+                
+            // Calculate total area outside bounds
+            return outOfBoundsWidth * rect.height + outOfBoundsHeight * rect.width - (outOfBoundsWidth * outOfBoundsHeight);
+        }
+        
+        private Vector3 AdjustPositionToFitBounds(Vector3 position, Rect boundaryRect)
+        {
+            Vector3 adjustedPosition = position;
+            Rect menuRect = GetProjectedRect(position);
+            
+            // Adjust horizontal position to fit within bounds
+            if (menuRect.xMin < boundaryRect.xMin)
+            {
+                // Move right to fit left edge
+                float adjustment = boundaryRect.xMin - menuRect.xMin;
+                adjustedPosition.x += adjustment;
+                Debug.Log($"[ContextMenu] Adjusting right by {adjustment} to fit left boundary");
+            }
+            else if (menuRect.xMax > boundaryRect.xMax)
+            {
+                // Move left to fit right edge
+                float adjustment = menuRect.xMax - boundaryRect.xMax;
+                adjustedPosition.x -= adjustment;
+                Debug.Log($"[ContextMenu] Adjusting left by {adjustment} to fit right boundary");
+            }
+            
+            // Adjust vertical position to fit within bounds
+            if (menuRect.yMin < boundaryRect.yMin)
+            {
+                // Move up to fit bottom edge
+                float adjustment = boundaryRect.yMin - menuRect.yMin;
+                adjustedPosition.y += adjustment;
+                Debug.Log($"[ContextMenu] Adjusting up by {adjustment} to fit bottom boundary");
+            }
+            else if (menuRect.yMax > boundaryRect.yMax)
+            {
+                // Move down to fit top edge
+                float adjustment = menuRect.yMax - boundaryRect.yMax;
+                adjustedPosition.y -= adjustment;
+                Debug.Log($"[ContextMenu] Adjusting down by {adjustment} to fit top boundary");
+            }
+            
+            return adjustedPosition;
         }
 
         private ContextMenuOpenDirection[] GetFallbackDirections(ContextMenuOpenDirection initialDirection)
@@ -258,33 +360,17 @@ namespace DCL.UI.GenericContextMenu
             return position;
         }
 
-        private float CalculateNonOverlappingArea(Rect rect1, Rect rect2)
+        private float CalculateIntersectionArea(Rect rect1, Rect rect2)
         {
-            float area1 = rect1.width * rect1.height;
-            float area2 = rect2.width * rect2.height;
-
-            Rect intersection = Rect.MinMaxRect(
-                Mathf.Max(rect1.xMin, rect2.xMin),
-                Mathf.Max(rect1.yMin, rect2.yMin),
-                Mathf.Min(rect1.xMax, rect2.xMax),
-                Mathf.Min(rect1.yMax, rect2.yMax)
-            );
-
-            Debug.Log($"[ContextMenu] Rect1: ({rect1.xMin},{rect1.yMin},{rect1.xMax},{rect1.yMax}), Rect2: ({rect2.xMin},{rect2.yMin},{rect2.xMax},{rect2.yMax})");
-
-            float intersectionArea = 0;
-
-            if (intersection is { width: > 0, height: > 0 })
-            {
-                intersectionArea = intersection.width * intersection.height;
-                Debug.Log($"[ContextMenu] Intersection: ({intersection.xMin},{intersection.yMin},{intersection.xMax},{intersection.yMax}), Area: {intersectionArea}");
-            }
-            else
-            {
-                Debug.Log("[ContextMenu] No intersection between rects");
-            }
-
-            return area1 + area2 - intersectionArea;
+            // Calculate the intersection
+            Rect intersection = CalculateIntersection(rect1, rect2);
+            
+            // If there's no intersection, return 0
+            if (intersection.width <= 0 || intersection.height <= 0)
+                return 0;
+                
+            // Return the intersection area in square pixels
+            return intersection.width * intersection.height;
         }
 
         private Rect GetProjectedRect(Vector3 newPosition)
@@ -318,6 +404,42 @@ namespace DCL.UI.GenericContextMenu
         {
             UniTask inputCloseTask = inputData.CloseTask ?? UniTask.Never(ct);
             return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.Button.OnClickAsync(ct));
+        }
+
+        private Rect CalculateIntersection(Rect rect1, Rect rect2)
+        {
+            return Rect.MinMaxRect(
+                Mathf.Max(rect1.xMin, rect2.xMin),
+                Mathf.Max(rect1.yMin, rect2.yMin),
+                Mathf.Min(rect1.xMax, rect2.xMax),
+                Mathf.Min(rect1.yMax, rect2.yMax)
+            );
+        }
+        
+        private Vector3 ApplyContainerAdjustments(Vector3 position, ContextMenuOpenDirection direction)
+        {
+            // Apply container width adjustment based on direction
+            if (direction == ContextMenuOpenDirection.BOTTOM_LEFT || 
+                direction == ContextMenuOpenDirection.TOP_LEFT ||
+                direction == ContextMenuOpenDirection.CENTER_LEFT)
+            {
+                position.x -= viewInstance!.ControlsContainer.rect.width;
+            }
+
+            // Apply container height adjustment based on direction
+            if (direction == ContextMenuOpenDirection.TOP_RIGHT || 
+                direction == ContextMenuOpenDirection.TOP_LEFT)
+            {
+                position.y += viewInstance!.ControlsContainer.rect.height;
+            }
+            // CENTER positions need half height adjustment
+            else if (direction == ContextMenuOpenDirection.CENTER_RIGHT ||
+                     direction == ContextMenuOpenDirection.CENTER_LEFT)
+            {
+                position.y += viewInstance!.ControlsContainer.rect.height / 2;
+            }
+            
+            return position;
         }
     }
 }
