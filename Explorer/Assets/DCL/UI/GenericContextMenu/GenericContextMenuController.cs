@@ -110,36 +110,84 @@ namespace DCL.UI.GenericContextMenu
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
             Debug.Log($"[ContextMenu] Initial position: {position}, Requested direction: {initialDirection}");
 
-            // Get base position for initial direction
-            Vector3 anchoredPosition = GetPositionForDirection(initialDirection, position);
-            Vector2 offsetByDirection = GetOffsetByDirection(initialDirection, offsetFromTarget);
-            Vector3 basePosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
-            
-            // Apply container adjustments
-            Vector3 adjustedBasePosition = ApplyContainerAdjustments(basePosition, initialDirection);
-            
-            // For debugging all directions
-            Debug.Log($"[ContextMenu] Direction {initialDirection}: anchoredPosition={anchoredPosition}, " +
-                     $"offsetByDirection={offsetByDirection}, basePosition={basePosition}, " +
-                     $"adjustedBasePosition={adjustedBasePosition}");
-            
             // Get boundary rect we need to stay within
             Rect boundaryRect = overlapRect ?? backgroundWorldRect;
             
-            // Check if menu is within bounds with the initial direction
+            // Calculate menu dimensions
+            float menuWidth = viewInstance!.ControlsContainer.rect.width;
+            float menuHeight = viewInstance!.ControlsContainer.rect.height;
+            
+            // Check if the menu would go out of bounds in different directions
+            bool outOfBoundsOnRight = anchorPosition.x + menuWidth > boundaryRect.xMax;
+            bool outOfBoundsOnLeft = anchorPosition.x - menuWidth < boundaryRect.xMin;
+            bool outOfBoundsOnTop = anchorPosition.y + menuHeight > boundaryRect.yMax;
+            bool outOfBoundsOnBottom = anchorPosition.y - menuHeight < boundaryRect.yMin;
+            
+            Debug.Log($"[ContextMenu] Boundary checks: Right={outOfBoundsOnRight}, Left={outOfBoundsOnLeft}, " +
+                      $"Top={outOfBoundsOnTop}, Bottom={outOfBoundsOnBottom}");
+            
+            // Determine if we need to switch sides based on boundary checks
+            HorizontalPosition initialHorizontal = GetHorizontalPosition(initialDirection);
+            VerticalPosition initialVertical = GetVerticalPosition(initialDirection);
+            
+            // If we would go out of bounds, try the opposite side immediately
+            ContextMenuOpenDirection smartDirection = initialDirection;
+            
+            // Check horizontal constraints
+            if (initialHorizontal == HorizontalPosition.RIGHT && outOfBoundsOnRight)
+            {
+                // Switch to LEFT if it would go out of bounds on the RIGHT
+                smartDirection = GetOppositeHorizontalDirection(initialDirection);
+                Debug.Log($"[ContextMenu] Would go out of bounds on right, switching from {initialDirection} to {smartDirection}");
+            }
+            else if (initialHorizontal == HorizontalPosition.LEFT && outOfBoundsOnLeft)
+            {
+                // Switch to RIGHT if it would go out of bounds on the LEFT
+                smartDirection = GetOppositeHorizontalDirection(initialDirection);
+                Debug.Log($"[ContextMenu] Would go out of bounds on left, switching from {initialDirection} to {smartDirection}");
+            }
+            
+            // Check vertical constraints - apply to potentially already horizontally adjusted direction
+            if (initialVertical == VerticalPosition.TOP && outOfBoundsOnTop)
+            {
+                // Switch to BOTTOM if it would go out of bounds on the TOP
+                smartDirection = GetOppositeVerticalDirection(smartDirection);
+                Debug.Log($"[ContextMenu] Would go out of bounds on top, switching to {smartDirection}");
+            }
+            else if (initialVertical == VerticalPosition.BOTTOM && outOfBoundsOnBottom)
+            {
+                // Switch to TOP if it would go out of bounds on the BOTTOM
+                smartDirection = GetOppositeVerticalDirection(smartDirection);
+                Debug.Log($"[ContextMenu] Would go out of bounds on bottom, switching to {smartDirection}");
+            }
+            
+            // Proceed with the smart direction (either original or adjusted)
+            // Get base position for the smart direction
+            Vector3 anchoredPosition = GetPositionForDirection(smartDirection, position);
+            Vector2 offsetByDirection = GetOffsetByDirection(smartDirection, offsetFromTarget);
+            Vector3 basePosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
+            
+            // For debugging all directions
+            Debug.Log($"[ContextMenu] Using direction {smartDirection}: anchoredPosition={anchoredPosition}, " +
+                     $"offsetByDirection={offsetByDirection}, basePosition={basePosition}");
+            
+            // Apply container adjustments
+            Vector3 adjustedBasePosition = ApplyContainerAdjustments(basePosition, smartDirection);
+            
+            // Check if menu is within bounds with the smart direction
             Rect menuRect = GetProjectedRect(adjustedBasePosition);
             
             // Check if menu is fully contained within boundary
             bool isWithinBounds = IsRectContained(boundaryRect, menuRect);
-            Debug.Log($"[ContextMenu] Initial position is within bounds: {isWithinBounds}");
+            Debug.Log($"[ContextMenu] Smart position is within bounds: {isWithinBounds}");
             
             if (isWithinBounds)
             {
-                Debug.Log($"[ContextMenu] Using initial position as it's within bounds: {adjustedBasePosition}");
+                Debug.Log($"[ContextMenu] Using smart position as it's within bounds: {adjustedBasePosition}");
                 return adjustedBasePosition;
             }
             
-            // Try to adjust the position to fit within bounds while maintaining the original direction
+            // Try to adjust the position to fit within bounds while maintaining the smart direction
             Vector3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
             Rect adjustedMenuRect = GetProjectedRect(adjustedPosition);
             bool adjustedIsWithinBounds = IsRectContained(boundaryRect, adjustedMenuRect);
@@ -152,11 +200,11 @@ namespace DCL.UI.GenericContextMenu
                 return adjustedPosition;
             }
             
-            // If we couldn't adjust the position to fit, try different directions
+            // If we still couldn't adjust the position to fit, try different directions
             Debug.Log($"[ContextMenu] Could not adjust to fit within bounds, trying alternative directions...");
             
-            // Define fallback directions by category
-            ContextMenuOpenDirection[] fallbackOrder = GetFallbackDirections(initialDirection);
+            // Define fallback directions, starting with the smart direction
+            ContextMenuOpenDirection[] fallbackOrder = GetFallbackDirections(smartDirection);
             Debug.Log($"[ContextMenu] Fallback order: {string.Join(", ", fallbackOrder)}");
 
             // Track the best position (one with least amount outside bounds)
@@ -166,8 +214,8 @@ namespace DCL.UI.GenericContextMenu
             // Try each direction in the fallback sequence
             foreach (var currentDirection in fallbackOrder)
             {
-                // Skip the initial direction as we already tried it
-                if (currentDirection == initialDirection)
+                // Skip the smart direction as we already tried it
+                if (currentDirection == smartDirection)
                     continue;
                     
                 Vector3 currentAnchoredPosition = GetPositionForDirection(currentDirection, position);
@@ -286,53 +334,123 @@ namespace DCL.UI.GenericContextMenu
 
         private ContextMenuOpenDirection[] GetFallbackDirections(ContextMenuOpenDirection initialDirection)
         {
-            // Group directions by vertical position
-            ContextMenuOpenDirection[] topPoints = {
-                ContextMenuOpenDirection.TOP_LEFT,
-                ContextMenuOpenDirection.TOP_RIGHT
-            };
-
-            ContextMenuOpenDirection[] centerPoints = {
-                ContextMenuOpenDirection.CENTER_LEFT,
-                ContextMenuOpenDirection.CENTER_RIGHT
-            };
-
-            ContextMenuOpenDirection[] bottomPoints = {
-                ContextMenuOpenDirection.BOTTOM_LEFT,
-                ContextMenuOpenDirection.BOTTOM_RIGHT
-            };
-
-            // Start with the initial direction
-            var result = new ContextMenuOpenDirection[5];
-            result[0] = initialDirection;
-
-            // Determine fallback sequence based on the initial direction
-            if (Array.IndexOf(topPoints, initialDirection) >= 0)
+            // Split direction into horizontal and vertical components
+            HorizontalPosition initialHorizontal = GetHorizontalPosition(initialDirection);
+            VerticalPosition initialVertical = GetVerticalPosition(initialDirection);
+            
+            // Create result array for all 6 directions with priority order
+            var result = new ContextMenuOpenDirection[6];
+            int index = 0;
+            
+            // Always start with the initial direction
+            result[index++] = initialDirection;
+            
+            // First: Add all other directions with the SAME horizontal position
+            // Try to maintain vertical order based on initial position
+            if (initialHorizontal == HorizontalPosition.LEFT)
             {
-                // If we started with a TOP point, try CENTER then BOTTOM
-                result[1] = ContextMenuOpenDirection.CENTER_LEFT;
-                result[2] = ContextMenuOpenDirection.CENTER_RIGHT;
-                result[3] = ContextMenuOpenDirection.BOTTOM_LEFT;
-                result[4] = ContextMenuOpenDirection.BOTTOM_RIGHT;
+                // We're starting with a LEFT direction, add other LEFT directions
+                // If starting with TOP, the order is: TOP -> CENTER -> BOTTOM
+                // If starting with CENTER, the order is: CENTER -> TOP -> BOTTOM
+                // If starting with BOTTOM, the order is: BOTTOM -> CENTER -> TOP
+                
+                // Add other vertical positions while keeping the same (LEFT) horizontal position
+                if (initialVertical != VerticalPosition.TOP)
+                    result[index++] = ContextMenuOpenDirection.TOP_LEFT;
+                    
+                if (initialVertical != VerticalPosition.CENTER)
+                    result[index++] = ContextMenuOpenDirection.CENTER_LEFT;
+                    
+                if (initialVertical != VerticalPosition.BOTTOM)
+                    result[index++] = ContextMenuOpenDirection.BOTTOM_LEFT;
+                
+                // Then add all RIGHT positions, maintaining the same vertical order
+                result[index++] = ContextMenuOpenDirection.TOP_RIGHT;
+                result[index++] = ContextMenuOpenDirection.CENTER_RIGHT;
+                result[index++] = ContextMenuOpenDirection.BOTTOM_RIGHT;
             }
-            else if (Array.IndexOf(centerPoints, initialDirection) >= 0)
+            else // HorizontalPosition.RIGHT
             {
-                // If we started with a CENTER point, try TOP then BOTTOM
-                result[1] = ContextMenuOpenDirection.TOP_LEFT;
-                result[2] = ContextMenuOpenDirection.TOP_RIGHT;
-                result[3] = ContextMenuOpenDirection.BOTTOM_LEFT;
-                result[4] = ContextMenuOpenDirection.BOTTOM_RIGHT;
+                // We're starting with a RIGHT direction, add other RIGHT directions
+                
+                // Add other vertical positions while keeping the same (RIGHT) horizontal position
+                if (initialVertical != VerticalPosition.TOP)
+                    result[index++] = ContextMenuOpenDirection.TOP_RIGHT;
+                    
+                if (initialVertical != VerticalPosition.CENTER)
+                    result[index++] = ContextMenuOpenDirection.CENTER_RIGHT;
+                    
+                if (initialVertical != VerticalPosition.BOTTOM)
+                    result[index++] = ContextMenuOpenDirection.BOTTOM_RIGHT;
+                
+                // Then add all LEFT positions
+                result[index++] = ContextMenuOpenDirection.TOP_LEFT;
+                result[index++] = ContextMenuOpenDirection.CENTER_LEFT;
+                result[index++] = ContextMenuOpenDirection.BOTTOM_LEFT;
             }
-            else
+            
+            // Create a new array with only the non-null values
+            var trimmedResult = new ContextMenuOpenDirection[index];
+            Array.Copy(result, trimmedResult, index);
+            
+            return trimmedResult;
+        }
+        
+        // Enum to represent horizontal position
+        private enum HorizontalPosition
+        {
+            LEFT,
+            RIGHT
+        }
+        
+        // Enum to represent vertical position
+        private enum VerticalPosition
+        {
+            TOP,
+            CENTER,
+            BOTTOM
+        }
+        
+        // Helper method to extract horizontal position from direction
+        private HorizontalPosition GetHorizontalPosition(ContextMenuOpenDirection direction)
+        {
+            switch (direction)
             {
-                // If we started with a BOTTOM point, try CENTER then TOP
-                result[1] = ContextMenuOpenDirection.CENTER_LEFT;
-                result[2] = ContextMenuOpenDirection.CENTER_RIGHT;
-                result[3] = ContextMenuOpenDirection.TOP_LEFT;
-                result[4] = ContextMenuOpenDirection.TOP_RIGHT;
+                case ContextMenuOpenDirection.TOP_LEFT:
+                case ContextMenuOpenDirection.CENTER_LEFT:
+                case ContextMenuOpenDirection.BOTTOM_LEFT:
+                    return HorizontalPosition.LEFT;
+                    
+                case ContextMenuOpenDirection.TOP_RIGHT:
+                case ContextMenuOpenDirection.CENTER_RIGHT:
+                case ContextMenuOpenDirection.BOTTOM_RIGHT:
+                    return HorizontalPosition.RIGHT;
+                    
+                default:
+                    return HorizontalPosition.LEFT; // Default to LEFT if unknown
             }
-
-            return result;
+        }
+        
+        // Helper method to extract vertical position from direction
+        private VerticalPosition GetVerticalPosition(ContextMenuOpenDirection direction)
+        {
+            switch (direction)
+            {
+                case ContextMenuOpenDirection.TOP_LEFT:
+                case ContextMenuOpenDirection.TOP_RIGHT:
+                    return VerticalPosition.TOP;
+                
+                case ContextMenuOpenDirection.CENTER_LEFT:
+                case ContextMenuOpenDirection.CENTER_RIGHT:
+                    return VerticalPosition.CENTER;
+                
+                case ContextMenuOpenDirection.BOTTOM_LEFT:
+                case ContextMenuOpenDirection.BOTTOM_RIGHT:
+                    return VerticalPosition.BOTTOM;
+                
+                default:
+                    return VerticalPosition.CENTER; // Default to CENTER if unknown
+            }
         }
 
         private Vector3 GetPositionForDirection(ContextMenuOpenDirection direction, Vector3 position)
@@ -447,6 +565,32 @@ namespace DCL.UI.GenericContextMenu
             // We already did the positioning in GetPositionForDirection, so we don't need any further adjustments
             // This method is kept for compatibility
             return position;
+        }
+
+        private ContextMenuOpenDirection GetOppositeHorizontalDirection(ContextMenuOpenDirection direction)
+        {
+            return direction switch
+            {
+                ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.TOP_RIGHT,
+                ContextMenuOpenDirection.CENTER_LEFT => ContextMenuOpenDirection.CENTER_RIGHT,
+                ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.BOTTOM_RIGHT,
+                ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.TOP_LEFT,
+                ContextMenuOpenDirection.CENTER_RIGHT => ContextMenuOpenDirection.CENTER_LEFT,
+                ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.BOTTOM_LEFT,
+                _ => direction
+            };
+        }
+        
+        private ContextMenuOpenDirection GetOppositeVerticalDirection(ContextMenuOpenDirection direction)
+        {
+            return direction switch
+            {
+                ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.BOTTOM_LEFT,
+                ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.BOTTOM_RIGHT,
+                ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.TOP_LEFT,
+                ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.TOP_RIGHT,
+                _ => direction // Keep CENTER positions as is
+            };
         }
     }
 }
