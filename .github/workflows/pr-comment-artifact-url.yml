@@ -23,10 +23,12 @@ jobs:
     steps:
       - name: Check if PR number exists
         id: check-pr
+        env:
+          WORKFLOW_RUN_EVENT_OBJ: ${{ toJSON(github.event.workflow_run) }}
         run: |
-          PR_NUMBER=$(jq -r '.pull_requests[0].number' <<< "${{ toJSON(github.event.workflow_run) }}")
+          PR_NUMBER=$(jq -r '.pull_requests[0].number' <<< "$WORKFLOW_RUN_EVENT_OBJ")
           echo "Pull request Number: $PR_NUMBER"
-          if [[ -z "$PR_NUMBER" ]]; then
+          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
             echo "PR_NUMBER is not set, skipping comment update."
             exit 0
           fi
