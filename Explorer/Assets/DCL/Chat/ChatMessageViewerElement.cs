@@ -24,7 +24,6 @@ namespace DCL.Chat
     {
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
-        public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
 
         /// <summary>
         /// The prefab to use when instantiating a new item.
@@ -79,6 +78,8 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private CancellationTokenSource popupCts;
+        private UniTaskCompletionSource contextMenuTask = new ();
+        private bool isInitialized;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -112,7 +113,10 @@ namespace DCL.Chat
                 loopList.gameObject.SetActive(value);
 
                 if (!value) // Note: This is necessary to avoid items animating when re-opening the chat window
+                {
                     entriesPendingToAnimate = 0;
+                    contextMenuTask.TrySetResult();
+                }
             }
         }
 
@@ -121,9 +125,13 @@ namespace DCL.Chat
         /// </summary>
         public void Initialize()
         {
+            if(isInitialized)
+                return;
+
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+            isInitialized = true;
         }
 
         /// <summary>
@@ -218,6 +226,14 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Removes the visual representation of all the messages.
+        /// </summary>
+        public void ClearMessages()
+        {
+            loopList.SetListItemCount(0);
+        }
+
+        /// <summary>
         /// Plays an animation that makes all chat entries opaque.
         /// </summary>
         public void StopChatEntriesFadeout()
@@ -283,6 +299,7 @@ namespace DCL.Chat
 
         public void Dispose()
         {
+            contextMenuTask.TrySetResult();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
         }
@@ -323,12 +340,13 @@ namespace DCL.Chat
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
-                else if (IsUserBlocked(itemData.WalletAddress))
-                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
+                //For now, we show blocked users messages that are stored in the cache normally, as messages received after blocking are not stored
+                //else if (IsUserBlocked(itemData.SenderWalletAddress))
+                  //  item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
-                    item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                    item = listView.NewListViewItem(itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
+                        itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
@@ -338,7 +356,7 @@ namespace DCL.Chat
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
-                    if (itemData is { SentByOwnUser: false, SystemMessage: false })
+                    if (itemData is { IsSentByOwnUser: false, IsSystemMessage: false })
                         itemScript.ChatEntryClicked += OnChatEntryClicked;
 
                     messageOptionsButton?.onClick.AddListener(() =>
@@ -355,7 +373,9 @@ namespace DCL.Chat
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
             popupCts = popupCts.SafeRestart();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, popupCts.Token).Forget();
+            contextMenuTask?.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
@@ -365,10 +385,11 @@ namespace DCL.Chat
 
         private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
         {
-            if (itemData.SystemMessage) itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
+            if (itemData.IsSystemMessage)
+                itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {
-                Profile? profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
+                Profile? profile = await viewDependencies.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {

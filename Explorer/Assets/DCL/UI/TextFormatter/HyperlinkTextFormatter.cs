@@ -2,6 +2,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Utilities;
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Utility;
@@ -14,43 +15,54 @@ namespace DCL.UI.InputFieldFormatting
         private const string LINK_CLOSING_STYLE = "</link></color>";
         private const string OWN_PROFILE_OPENING_STYLE = "<#00B2FF>";
         private const string OWN_PROFILE_CLOSING_STYLE = "</color>";
+        private const int ESTIMATED_LINK_TAG_LENGTH = 32; // Average length of a link tag including opening and closing styles
+        private const int INITIAL_STRING_BUILDER_CAPACITY = 256;
+        private const int TEMP_STRING_BUILDER_CAPACITY = 128;
+        private const int ESTIMATED_CAPACITY_PER_CHAR = 3;
 
-        private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
-        private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
-            RegexOptions.Compiled);
-        private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
-        // This Regex will detect any pattern of format @username#1234 being the part with the "#" optional. This requires the username to start and/or end with an empty space or start/end of line.
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
+        private const string URL_GROUP_NAME = "url";
+        private const string SCENE_GROUP_NAME = "scene";
+        private const string WORLD_GROUP_NAME = "world";
+        private const string USERNAME_FULL_GROUP_NAME = "username";
+        private const string USERNAME_NAME_GROUP_NAME = "name";
+        private const string RICHTEXT_GROUP_NAME = "richtext";
+        private const string X_COORD_GROUP_NAME = "x";
+        private const string Y_COORD_GROUP_NAME = "y";
 
-        private readonly StringBuilder mainStringBuilder = new ();
-        private readonly StringBuilder tempStringBuilder = new ();
+        private static readonly string URL_PATTERN = $@"(?<{URL_GROUP_NAME}>(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{{2,}}(\/[^\s]*)?(?=\s|$))";
+        private static readonly string SCENE_PATTERN = $@"(?<{SCENE_GROUP_NAME}>(?<=^|\s)(?<{X_COORD_GROUP_NAME}>-?\d{{1,3}}),(?<{Y_COORD_GROUP_NAME}>-?\d{{1,3}})(?=\s|!|\?|\.|,|$))";
+        private static readonly string WORLD_PATTERN = $@"(?<{WORLD_GROUP_NAME}>(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
+        private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{3,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
+        private static readonly string RICH_TEXT_PATTERN = $@"(?<{RICHTEXT_GROUP_NAME}><(?!\/?(b|i)(>|\s))[^>]+>)";
+
+        private static readonly Regex COMBINED_LINK_REGEX = new (
+            $"{URL_PATTERN}|{SCENE_PATTERN}|{WORLD_PATTERN}|{USERNAME_PATTERN}|{RICH_TEXT_PATTERN}",
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+
+        private readonly StringBuilder mainStringBuilder;
+        private readonly StringBuilder tempStringBuilder;
         private readonly IProfileCache profileCache;
         private readonly SelfProfile selfProfile;
-        private readonly Func<Match, StringBuilder> replaceRichTextTags;
-        private readonly Func<Match, StringBuilder> wrapWithUrlLink;
-        private readonly Func<Match, StringBuilder> wrapWithSceneLink;
-        private readonly Func<Match, StringBuilder> wrapWithWorldLink;
-        private readonly Func<Match, StringBuilder> wrapWithUsernameLink;
+        private readonly Match match;
 
         public HyperlinkTextFormatter(IProfileCache profileCache, SelfProfile selfProfile)
         {
             this.profileCache = profileCache;
             this.selfProfile = selfProfile;
-            this.wrapWithUrlLink = WrapWithUrlLink;
-            this.replaceRichTextTags = ReplaceRichTextTags;
-            this.wrapWithUsernameLink = WrapWithUsernameLink;
-            this.wrapWithSceneLink = WrapWithSceneLink;
-            this.wrapWithWorldLink = WrapWithWorldLink;
+
+            mainStringBuilder = new StringBuilder(INITIAL_STRING_BUILDER_CAPACITY);
+            tempStringBuilder = new StringBuilder(TEMP_STRING_BUILDER_CAPACITY);
+            match = COMBINED_LINK_REGEX.Match(string.Empty);
         }
 
-        public string FormatText(string text)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string FormatText(ReadOnlySpan<char> text)
         {
             if (text.Length == 0)
-                return text;
+                return string.Empty;
 
             if (text.StartsWith("/"))
-                return text;
+                return text.ToString();
 
             mainStringBuilder.Clear();
             mainStringBuilder.Append(text);
@@ -60,128 +72,154 @@ namespace DCL.UI.InputFieldFormatting
             return mainStringBuilder.ToString();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ProcessMainStringBuilder()
         {
-            ReplaceMatches(RICH_TEXT_TAG_REGEX, mainStringBuilder, replaceRichTextTags);
-            ReplaceMatches(WEBSITE_REGEX, mainStringBuilder, wrapWithUrlLink);
-            ReplaceMatches(SCENE_REGEX, mainStringBuilder, wrapWithSceneLink);
-            ReplaceMatches(WORLD_REGEX, mainStringBuilder, wrapWithWorldLink);
-            ReplaceMatches(USERNAME_REGEX, mainStringBuilder, wrapWithUsernameLink);
+            var text = mainStringBuilder.ToString();
+            int estimatedCapacity = text.Length + (text.Length * ESTIMATED_CAPACITY_PER_CHAR);
+            mainStringBuilder.Clear();
+            mainStringBuilder.EnsureCapacity(estimatedCapacity);
+
+            int lastIndex = 0;
+            var currentMatch = COMBINED_LINK_REGEX.Match(text);
+
+            while (currentMatch.Success)
+            {
+                if (currentMatch.Index > lastIndex)
+                {
+                    mainStringBuilder.Append(text.AsSpan(lastIndex, currentMatch.Index - lastIndex));
+                }
+
+                if (currentMatch.Groups[URL_GROUP_NAME].Success)
+                    ProcessUrlMatch(currentMatch);
+                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success)
+                    ProcessSceneMatch(currentMatch);
+                else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
+                    ProcessWorldMatch(currentMatch);
+                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success)
+                    ProcessUsernameMatch(currentMatch);
+                else if (currentMatch.Groups[RICHTEXT_GROUP_NAME].Success)
+                    ProcessRichTextMatch(currentMatch);
+
+                lastIndex = currentMatch.Index + currentMatch.Length;
+                currentMatch = currentMatch.NextMatch();
+            }
+
+            if (lastIndex < text.Length)
+            {
+                mainStringBuilder.Append(text.AsSpan(lastIndex));
+            }
         }
 
-        private StringBuilder ReplaceRichTextTags(Match match)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ProcessUrlMatch(Match match)
         {
             tempStringBuilder.Clear();
+            tempStringBuilder.EnsureCapacity(match.Length + ESTIMATED_LINK_TAG_LENGTH);
+            tempStringBuilder.Append(LINK_OPENING_STYLE)
+                           .Append(HyperlinkConstants.URL)
+                           .Append(">")
+                           .Append(match.Value)
+                           .Append(LINK_CLOSING_STYLE);
+            mainStringBuilder.Append(tempStringBuilder);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ProcessSceneMatch(Match match)
+        {
+            if (!AreCoordsValid(
+                int.Parse(match.Groups[X_COORD_GROUP_NAME].Value),
+                int.Parse(match.Groups[Y_COORD_GROUP_NAME].Value)))
+            {
+                mainStringBuilder.Append(match.Value);
+                return;
+            }
+
+            tempStringBuilder.Clear();
+            tempStringBuilder.EnsureCapacity(match.Length + ESTIMATED_LINK_TAG_LENGTH);
+            tempStringBuilder.Append(LINK_OPENING_STYLE)
+                           .Append(HyperlinkConstants.SCENE)
+                           .Append(">")
+                           .Append(match.Value)
+                           .Append(LINK_CLOSING_STYLE);
+            mainStringBuilder.Append(tempStringBuilder);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ProcessWorldMatch(Match match)
+        {
+            tempStringBuilder.Clear();
+            tempStringBuilder.EnsureCapacity(match.Length + ESTIMATED_LINK_TAG_LENGTH);
+            tempStringBuilder.Append(LINK_OPENING_STYLE)
+                           .Append(HyperlinkConstants.WORLD)
+                           .Append(">")
+                           .Append(match.Value)
+                           .Append(LINK_CLOSING_STYLE);
+            mainStringBuilder.Append(tempStringBuilder);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ProcessUsernameMatch(Match match)
+        {
+            string username = match.Groups[USERNAME_NAME_GROUP_NAME].Value;
+            if (IsOwnUsername(username))
+            {
+                tempStringBuilder.Clear();
+                tempStringBuilder.EnsureCapacity(match.Length + ESTIMATED_LINK_TAG_LENGTH);
+                tempStringBuilder.Append(OWN_PROFILE_OPENING_STYLE)
+                               .Append(match.Value)
+                               .Append(OWN_PROFILE_CLOSING_STYLE);
+                mainStringBuilder.Append(tempStringBuilder);
+                return;
+            }
+
+            if (!IsUserNameValid(username))
+            {
+                mainStringBuilder.Append(match.Value);
+                return;
+            }
+
+            tempStringBuilder.Clear();
+            tempStringBuilder.EnsureCapacity(match.Length + ESTIMATED_LINK_TAG_LENGTH);
+            tempStringBuilder.Append(LINK_OPENING_STYLE)
+                           .Append(HyperlinkConstants.PROFILE)
+                           .Append(">")
+                           .Append(match.Value)
+                           .Append(LINK_CLOSING_STYLE);
+            mainStringBuilder.Append(tempStringBuilder);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ProcessRichTextMatch(Match match)
+        {
+            tempStringBuilder.Clear();
+            tempStringBuilder.EnsureCapacity(match.Value.Length);
 
             for (var i = 0; i < match.Value.Length; i++)
             {
                 char c = match.Value[i];
-
                 tempStringBuilder.Append(c == '<' ? '‹' : c == '>' ? '›' : c);
             }
 
-            return tempStringBuilder;
+            mainStringBuilder.Append(tempStringBuilder);
         }
 
-        private void ReplaceMatches(Regex regex, StringBuilder stringBuilder, Func<Match, StringBuilder> evaluator)
-        {
-            var text = stringBuilder.ToString();
-            MatchCollection matches = regex.Matches(text);
-
-            if (matches.Count == 0)
-                return;
-
-            stringBuilder.Clear();
-            stringBuilder.Append(text.AsSpan(0, matches[0].Index));
-
-            for (var i = 0; i < matches.Count; i++)
-            {
-                Match match = matches[i];
-                stringBuilder.Append(evaluator(match));
-
-                if (i < matches.Count - 1)
-                {
-                    int nextStart = matches[i + 1].Index;
-                    stringBuilder.Append(text.AsSpan(match.Index + match.Length, nextStart - (match.Index + match.Length)));
-                }
-            }
-
-            stringBuilder.Append(text.AsSpan(matches[^1].Index + matches[^1].Length));
-        }
-
-        private StringBuilder WrapWithUrlLink(Match match) =>
-            WrapWithLink(match, LinkType.URL);
-
-        private StringBuilder WrapWithSceneLink(Match match) =>
-            WrapWithLink(match, LinkType.SCENE);
-
-        private StringBuilder WrapWithWorldLink(Match match) =>
-            WrapWithLink(match, LinkType.WORLD);
-
-        private StringBuilder WrapWithUsernameLink(Match match) =>
-            WrapWithLink(match, LinkType.PROFILE);
-
-        private StringBuilder WrapWithLink(Match match, LinkType linkType)
-        {
-            tempStringBuilder.Clear();
-
-            string linkTypeString = null;
-
-            switch (linkType)
-            {
-                case LinkType.SCENE:
-                    if (!AreCoordsValid(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)))
-                        return tempStringBuilder.Append(match);
-
-                    linkTypeString = HyperlinkConstants.SCENE;
-                    break;
-                case LinkType.WORLD:
-                    linkTypeString = HyperlinkConstants.WORLD;
-                    break;
-                case LinkType.URL:
-                    linkTypeString = HyperlinkConstants.URL;
-                    break;
-                case LinkType.PROFILE:
-                    string username = match.Groups[1].Value;
-                    if (IsOwnUsername(username))
-                    {
-                        tempStringBuilder.Append(OWN_PROFILE_OPENING_STYLE)
-                                         .Append(match)
-                                         .Append(OWN_PROFILE_CLOSING_STYLE);
-                        return tempStringBuilder;
-                    }
-
-                    if (!IsUserNameValid(username))
-                        return tempStringBuilder.Append(match);
-
-                    linkTypeString = HyperlinkConstants.PROFILE;
-                    break;
-            }
-
-            tempStringBuilder.Append(LINK_OPENING_STYLE)
-                             .Append(linkTypeString)
-                             .Append(">")
-                             .Append(match)
-                             .Append(LINK_CLOSING_STYLE);
-
-            return tempStringBuilder;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool AreCoordsValid(int x, int y) =>
             GenesisCityData.IsInsideBounds(x, y);
 
-        private bool IsOwnUsername(string username) =>
-            selfProfile.OwnProfile?.DisplayName == username;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsOwnUsername(ReadOnlySpan<char> username)
+        {
+            ReadOnlySpan<char> displayName = selfProfile.OwnProfile!.DisplayName;
 
+            if (displayName.Length != username.Length) return false;
+
+            return displayName.SequenceEqual(username);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsUserNameValid(string username) =>
             profileCache.GetByUserName(username) != null;
-
-        private enum LinkType
-        {
-            SCENE,
-            WORLD,
-            URL,
-            PROFILE,
-        }
     }
 }

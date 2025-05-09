@@ -8,6 +8,7 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.EventBus;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -19,6 +20,7 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -65,6 +67,8 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
+        private readonly IChatEventBus chatEventBus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private PassportController? passportController;
 
@@ -100,8 +104,7 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
-            bool isNameEditorEnabled
-        )
+            bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -135,6 +138,8 @@ namespace DCL.PluginSystem.Global
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
+            this.chatEventBus = chatEventBus;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose()
@@ -192,7 +197,9 @@ namespace DCL.PluginSystem.Global
                 enableCameraReel,
                 enableFriends,
                 includeUserBlocking,
-                isNameEditorEnabled
+                isNameEditorEnabled,
+                chatEventBus,
+                sharedSpaceManager
             );
 
             mvcManager.RegisterController(passportController);

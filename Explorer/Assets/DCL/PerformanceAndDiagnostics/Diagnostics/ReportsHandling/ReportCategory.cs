@@ -70,6 +70,12 @@ namespace DCL.Diagnostics
         public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
 
         /// <summary>
+        ///     Chat livekit requests
+        /// </summary>
+        public const string COMMS_CHAT_HANDLER = nameof(COMMS_CHAT_HANDLER);
+
+
+        /// <summary>
         ///     Unspecified ECS World Exceptions
         /// </summary>
         public const string ECS = nameof(ECS);
@@ -312,6 +318,13 @@ namespace DCL.Diagnostics
         public const string ALWAYS = nameof(ALWAYS);
 
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
+
+        /// <summary>
+        /// Used for debugging the chat history storage.
+        /// </summary>
+        public const string CHAT_HISTORY = nameof(CHAT_HISTORY);
+
+        public const string CHAT_MESSAGES = nameof(CHAT_MESSAGES);
 
         public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
 
