@@ -13,6 +13,7 @@ using Global.AppArgs;
 using Global.Versioning;
 using SceneRunner.Debugging;
 using Segment.Serialization;
+using System;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
@@ -105,7 +106,8 @@ namespace Global.Dynamic
                 string name = flag;
 
                 if (configuration.TryGetVariant(flag, out FeatureFlagVariantDto variant))
-                    name += $":{variant.name}";
+                    if (!string.Equals(variant.name, "disabled", StringComparison.OrdinalIgnoreCase))
+                        name += $":{variant.name}";
 
                 enabledFeatureFlags.Add(name);
             }
