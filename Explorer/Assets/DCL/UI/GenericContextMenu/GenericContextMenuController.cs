@@ -4,6 +4,9 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;
 using System;
 using System.Threading;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
@@ -19,22 +22,38 @@ namespace DCL.UI.GenericContextMenu
         CENTER_LEFT,
     }
 
-    public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter>
+    public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter>, IDisposable
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ControlsPoolManager controlsPoolManager;
-        private readonly Vector3[] worldRectCorners = new Vector3[4];
+        private NativeArray<float3> worldRectCorners;
         private readonly ContextMenuOpenDirection[] openDirections = EnumUtils.Values<ContextMenuOpenDirection>();
 
+        private NativeArray<ContextMenuOpenDirection> fallbackDirectionsCache;
+        private int fallbackDirectionsCount;
+        private NativeArray<float3> tempPositionCache;
+
         private RectTransform viewRectTransform;
-        private Rect backgroundWorldRect;
+        private float4 backgroundWorldRect;
         private UniTaskCompletionSource internalCloseTask;
+        private bool isNativeArrayInitialized;
 
         public GenericContextMenuController(ViewFactoryMethod viewFactory,
             ControlsPoolManager controlsPoolManager) : base(viewFactory)
         {
             this.controlsPoolManager = controlsPoolManager;
+            InitializeNativeArrays();
+        }
+
+        private void InitializeNativeArrays()
+        {
+            if (isNativeArrayInitialized) return;
+
+            worldRectCorners = new NativeArray<float3>(4, Allocator.Persistent);
+            fallbackDirectionsCache = new NativeArray<ContextMenuOpenDirection>(6, Allocator.Persistent);
+            tempPositionCache = new NativeArray<float3>(2, Allocator.Persistent);
+            isNativeArrayInitialized = true;
         }
 
         public override void Dispose()
@@ -42,6 +61,17 @@ namespace DCL.UI.GenericContextMenu
             base.Dispose();
 
             controlsPoolManager.Dispose();
+            DisposeNativeArrays();
+        }
+
+        private void DisposeNativeArrays()
+        {
+            if (!isNativeArrayInitialized) return;
+
+            if (worldRectCorners.IsCreated) worldRectCorners.Dispose();
+            if (fallbackDirectionsCache.IsCreated) fallbackDirectionsCache.Dispose();
+            if (tempPositionCache.IsCreated) tempPositionCache.Dispose();
+            isNativeArrayInitialized = false;
         }
 
         protected override void OnViewInstantiated()
@@ -53,7 +83,6 @@ namespace DCL.UI.GenericContextMenu
         protected override void OnBeforeViewShow()
         {
             internalCloseTask = new UniTaskCompletionSource();
-
             ConfigureContextMenu();
         }
 
@@ -91,7 +120,8 @@ namespace DCL.UI.GenericContextMenu
             viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.offsetFromTarget, inputData.OverlapRect, inputData.Config.anchorPoint);
         }
 
-        private Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)
+        [BurstCompile]
+        private static Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)
         {
             return direction switch
             {
@@ -109,142 +139,131 @@ namespace DCL.UI.GenericContextMenu
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
 
-            Vector3 basePosition = GetPositionForDirection(initialDirection, position);
+            tempPositionCache[0] = GetPositionForDirection(initialDirection, position);
             Vector2 offsetByDirection = GetOffsetByDirection(initialDirection, offsetFromTarget);
-            Vector3 initialPosition = basePosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
-            Vector3 adjustedInitialPosition = ApplyContainerAdjustments(initialPosition, initialDirection);
-            
-            Rect boundaryRect = overlapRect ?? backgroundWorldRect;
-            
+            var tempPos = tempPositionCache[0];
+            tempPos.x += offsetByDirection.x;
+            tempPos.y += offsetByDirection.y;
+            tempPositionCache[0] = tempPos;
+
+            Vector3 adjustedInitialPosition = ApplyContainerAdjustments(tempPositionCache[0], initialDirection);
+
+            float4 boundaryRect = overlapRect.HasValue ?
+                BurstRectUtils.RectToFloat4(overlapRect.Value) :
+                backgroundWorldRect;
+
             float menuWidth = viewInstance!.ControlsContainer.rect.width;
             float menuHeight = viewInstance!.ControlsContainer.rect.height;
-            
-            Rect menuRect = GetProjectedRect(adjustedInitialPosition);
-            
+
+            float4 menuRect = GetProjectedRect(adjustedInitialPosition);
+
             float outOfBoundsPercentTop = 0;
             float outOfBoundsPercentBottom = 0;
             float outOfBoundsPercentRight = 0;
             float outOfBoundsPercentLeft = 0;
-            
-            if (menuRect.yMax > boundaryRect.yMax)
-            {
-                float overflow = menuRect.yMax - boundaryRect.yMax;
-                outOfBoundsPercentTop = overflow / menuHeight;
-            }
-            
-            if (menuRect.yMin < boundaryRect.yMin)
-            {
-                float overflow = boundaryRect.yMin - menuRect.yMin;
-                outOfBoundsPercentBottom = overflow / menuHeight;
-            }
-            
-            if (menuRect.xMax > boundaryRect.xMax)
-            {
-                float overflow = menuRect.xMax - boundaryRect.xMax;
-                outOfBoundsPercentRight = overflow / menuWidth;
-            }
-            
-            if (menuRect.xMin < boundaryRect.xMin)
-            {
-                float overflow = boundaryRect.xMin - menuRect.xMin;
-                outOfBoundsPercentLeft = overflow / menuWidth;
-            }
-            
-            float totalOutOfBoundsPercent = outOfBoundsPercentTop + outOfBoundsPercentBottom + 
+
+            BurstRectUtils.CalculateOutOfBoundsPercentages(
+                ref outOfBoundsPercentTop,
+                ref outOfBoundsPercentBottom,
+                ref outOfBoundsPercentRight,
+                ref outOfBoundsPercentLeft,
+                menuRect, boundaryRect, menuWidth, menuHeight);
+
+            float totalOutOfBoundsPercent = outOfBoundsPercentTop + outOfBoundsPercentBottom +
                                            outOfBoundsPercentRight + outOfBoundsPercentLeft;
-            
+
             const float MINIMAL_ADJUSTMENT_THRESHOLD = 0.01f;
-            
+
             if (totalOutOfBoundsPercent < MINIMAL_ADJUSTMENT_THRESHOLD)
             {
                 return adjustedInitialPosition;
             }
-            
+
             bool outOfBoundsOnRight = outOfBoundsPercentRight > 0;
             bool outOfBoundsOnLeft = outOfBoundsPercentLeft > 0;
             bool outOfBoundsOnTop = outOfBoundsPercentTop > 0;
             bool outOfBoundsOnBottom = outOfBoundsPercentBottom > 0;
-            
+
             HorizontalPosition initialHorizontal = GetHorizontalPosition(initialDirection);
             VerticalPosition initialVertical = GetVerticalPosition(initialDirection);
-            
-            ContextMenuOpenDirection smartDirection = initialDirection;
-            
-            if (initialHorizontal == HorizontalPosition.RIGHT && outOfBoundsOnRight)
-            {
-                smartDirection = GetOppositeHorizontalDirection(initialDirection);
-            }
-            else if (initialHorizontal == HorizontalPosition.LEFT && outOfBoundsOnLeft)
-            {
-                smartDirection = GetOppositeHorizontalDirection(initialDirection);
-            }
-            
-            if (initialVertical == VerticalPosition.TOP && outOfBoundsOnTop)
-            {
-                smartDirection = GetOppositeVerticalDirection(smartDirection);
-            }
-            else if (initialVertical == VerticalPosition.BOTTOM && outOfBoundsOnBottom)
-            {
-                smartDirection = GetOppositeVerticalDirection(smartDirection);
-            }
-            
-            Vector3 anchoredPosition = GetPositionForDirection(smartDirection, position);
+
+            ContextMenuOpenDirection smartDirection = GetSmartDirection(
+                initialDirection,
+                initialHorizontal,
+                initialVertical,
+                outOfBoundsOnRight,
+                outOfBoundsOnLeft,
+                outOfBoundsOnTop,
+                outOfBoundsOnBottom);
+
+            tempPositionCache[1] = GetPositionForDirection(smartDirection, position);
             Vector2 offsetBySmartDirection = GetOffsetByDirection(smartDirection, offsetFromTarget);
-            Vector3 baseSmartPosition = anchoredPosition + new Vector3(offsetBySmartDirection.x, offsetBySmartDirection.y, 0);
-            
-            Vector3 adjustedBasePosition = ApplyContainerAdjustments(baseSmartPosition, smartDirection);
-            
-            Rect smartMenuRect = GetProjectedRect(adjustedBasePosition);
-            
-            bool isWithinBounds = IsRectContained(boundaryRect, smartMenuRect);
-            
+            var tempSmartPos = tempPositionCache[1];
+            tempSmartPos.x += offsetBySmartDirection.x;
+            tempSmartPos.y += offsetBySmartDirection.y;
+            tempPositionCache[1] = tempSmartPos;
+
+            Vector3 adjustedBasePosition = ApplyContainerAdjustments(tempPositionCache[1], smartDirection);
+
+            float4 smartMenuRect = GetProjectedRect(adjustedBasePosition);
+
+            bool isWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, smartMenuRect);
+
             if (isWithinBounds)
             {
                 return adjustedBasePosition;
             }
-            
-            float smartOutOfBoundsPercent = CalculateOutOfBoundsPercent(boundaryRect, smartMenuRect);
-            
+
+            float smartOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, smartMenuRect);
+
             Vector3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
-            Rect adjustedMenuRect = GetProjectedRect(adjustedPosition);
-            bool adjustedIsWithinBounds = IsRectContained(boundaryRect, adjustedMenuRect);
-            float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : CalculateOutOfBoundsPercent(boundaryRect, adjustedMenuRect);
-            
+            float4 adjustedMenuRect = GetProjectedRect(adjustedPosition);
+            bool adjustedIsWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, adjustedMenuRect);
+            float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, adjustedMenuRect);
+
             if (adjustedIsWithinBounds)
             {
                 return adjustedPosition;
             }
-            
-            ContextMenuOpenDirection[] fallbackOrder = GetFallbackDirections(smartDirection);
+
+            GetFallbackDirections(smartDirection);
 
             float bestOutOfBoundsPercent = adjustedOutOfBoundsPercent;
             Vector3 bestPosition = adjustedPosition;
             bool foundPerfectPosition = false;
 
-            foreach (var currentDirection in fallbackOrder)
+            for (int i = 0; i < fallbackDirectionsCount; i++)
             {
+                ContextMenuOpenDirection currentDirection = fallbackDirectionsCache[i];
+
                 if (currentDirection == smartDirection)
                     continue;
-                    
+
                 Vector3 currentAnchoredPosition = GetPositionForDirection(currentDirection, position);
 
-                foreach (ContextMenuOpenDirection offsetDirection in openDirections)
+                for (int j = 0; j < openDirections.Length; j++)
                 {
+                    ContextMenuOpenDirection offsetDirection = openDirections[j];
                     Vector2 currentOffsetByDirection = GetOffsetByDirection(offsetDirection, offsetFromTarget);
-                    Vector3 currentPosition = currentAnchoredPosition + new Vector3(currentOffsetByDirection.x, currentOffsetByDirection.y, 0);
-                    
-                    Vector3 adjustedCurrentPosition = ApplyContainerAdjustments(currentPosition, offsetDirection);
-                    
+
+                    var tempPosForLoop = tempPositionCache[0];
+                    tempPosForLoop.x = currentAnchoredPosition.x + currentOffsetByDirection.x;
+                    tempPosForLoop.y = currentAnchoredPosition.y + currentOffsetByDirection.y;
+                    tempPosForLoop.z = currentAnchoredPosition.z;
+                    tempPositionCache[0] = tempPosForLoop;
+
+                    Vector3 adjustedCurrentPosition = ApplyContainerAdjustments(tempPositionCache[0], offsetDirection);
+
                     Vector3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);
-                    Rect currentMenuRect = GetProjectedRect(boundaryAdjustedPosition);
-                    bool currentIsWithinBounds = IsRectContained(boundaryRect, currentMenuRect);
-                    
+                    float4 currentMenuRect = GetProjectedRect(boundaryAdjustedPosition);
+                    bool currentIsWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, currentMenuRect);
+
                     if (currentIsWithinBounds)
                     {
                         return boundaryAdjustedPosition;
                     }
-                    
-                    float currentOutOfBoundsPercent = CalculateOutOfBoundsPercent(boundaryRect, currentMenuRect);
+
+                    float currentOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, currentMenuRect);
                     if (currentOutOfBoundsPercent < bestOutOfBoundsPercent)
                     {
                         bestPosition = boundaryAdjustedPosition;
@@ -256,256 +275,328 @@ namespace DCL.UI.GenericContextMenu
             return bestPosition;
         }
 
-        private bool IsRectContained(Rect container, Rect rect)
+        [BurstCompile]
+        private static ContextMenuOpenDirection GetSmartDirection(
+            ContextMenuOpenDirection initialDirection,
+            HorizontalPosition initialHorizontal,
+            VerticalPosition initialVertical,
+            bool outOfBoundsOnRight,
+            bool outOfBoundsOnLeft,
+            bool outOfBoundsOnTop,
+            bool outOfBoundsOnBottom)
         {
-            return rect.xMin >= container.xMin && 
-                   rect.xMax <= container.xMax && 
-                   rect.yMin >= container.yMin && 
-                   rect.yMax <= container.yMax;
+            ContextMenuOpenDirection smartDirection = initialDirection;
+
+            if (initialHorizontal == HorizontalPosition.RIGHT && outOfBoundsOnRight)
+            {
+                smartDirection = GetOppositeHorizontalDirection(initialDirection);
+            }
+            else if (initialHorizontal == HorizontalPosition.LEFT && outOfBoundsOnLeft)
+            {
+                smartDirection = GetOppositeHorizontalDirection(initialDirection);
+            }
+
+            if (initialVertical == VerticalPosition.TOP && outOfBoundsOnTop)
+            {
+                smartDirection = GetOppositeVerticalDirection(smartDirection);
+            }
+            else if (initialVertical == VerticalPosition.BOTTOM && outOfBoundsOnBottom)
+            {
+                smartDirection = GetOppositeVerticalDirection(smartDirection);
+            }
+
+            return smartDirection;
         }
-        
-        private float CalculateOutOfBoundsArea(Rect container, Rect rect)
-        {
-            float outOfBoundsWidth = 0;
-            float outOfBoundsHeight = 0;
-            
-            if (rect.xMin < container.xMin)
-                outOfBoundsWidth += container.xMin - rect.xMin;
-            if (rect.xMax > container.xMax)
-                outOfBoundsWidth += rect.xMax - container.xMax;
-                
-            if (rect.yMin < container.yMin)
-                outOfBoundsHeight += container.yMin - rect.yMin;
-            if (rect.yMax > container.yMax)
-                outOfBoundsHeight += rect.yMax - container.yMax;
-                
-            return outOfBoundsWidth * rect.height + outOfBoundsHeight * rect.width - (outOfBoundsWidth * outOfBoundsHeight);
-        }
-        
-        private Vector3 AdjustPositionToFitBounds(Vector3 position, Rect boundaryRect)
+
+        [BurstCompile]
+        private Vector3 AdjustPositionToFitBounds(Vector3 position, float4 boundaryRect)
         {
             Vector3 adjustedPosition = position;
-            Rect menuRect = GetProjectedRect(position);
-            
-            if (menuRect.xMin < boundaryRect.xMin)
+            float4 menuRect = GetProjectedRect(position);
+
+            if (menuRect.x < boundaryRect.x)
             {
-                float adjustment = boundaryRect.xMin - menuRect.xMin;
+                float adjustment = boundaryRect.x - menuRect.x;
                 adjustedPosition.x += adjustment;
             }
-            else if (menuRect.xMax > boundaryRect.xMax)
+            else if (menuRect.x + menuRect.z > boundaryRect.x + boundaryRect.z)
             {
-                float adjustment = menuRect.xMax - boundaryRect.xMax;
+                float adjustment = (menuRect.x + menuRect.z) - (boundaryRect.x + boundaryRect.z);
                 adjustedPosition.x -= adjustment;
             }
-            
-            if (menuRect.yMin < boundaryRect.yMin)
+
+            if (menuRect.y < boundaryRect.y)
             {
-                float adjustment = boundaryRect.yMin - menuRect.yMin;
+                float adjustment = boundaryRect.y - menuRect.y;
                 adjustedPosition.y += adjustment;
             }
-            else if (menuRect.yMax > boundaryRect.yMax)
+            else if (menuRect.y + menuRect.w > boundaryRect.y + boundaryRect.w)
             {
-                float adjustment = menuRect.yMax - boundaryRect.yMax;
+                float adjustment = (menuRect.y + menuRect.w) - (boundaryRect.y + boundaryRect.w);
                 adjustedPosition.y -= adjustment;
             }
-            
+
             return adjustedPosition;
         }
 
-        private ContextMenuOpenDirection[] GetFallbackDirections(ContextMenuOpenDirection initialDirection)
+        private void GetFallbackDirections(ContextMenuOpenDirection initialDirection)
         {
+            fallbackDirectionsCount = 0;
+
             HorizontalPosition initialHorizontal = GetHorizontalPosition(initialDirection);
             VerticalPosition initialVertical = GetVerticalPosition(initialDirection);
-            
+
             float outOfBoundsPercentTop = 0;
             float outOfBoundsPercentBottom = 0;
             float outOfBoundsPercentRight = 0;
             float outOfBoundsPercentLeft = 0;
-            
+
             float menuHeight = viewInstance!.ControlsContainer.rect.height;
             float menuWidth = viewInstance!.ControlsContainer.rect.width;
-            
+
             Vector2 anchorPosition = inputData.AnchorPosition;
-            
-            Rect boundaryRect = inputData.OverlapRect ?? backgroundWorldRect;
-            
+
+            float4 boundaryRect = inputData.OverlapRect.HasValue ?
+                BurstRectUtils.RectToFloat4(inputData.OverlapRect.Value) :
+                backgroundWorldRect;
+
             Vector3 menuPosition = GetPositionForDirection(initialDirection, viewRectTransform.InverseTransformPoint(anchorPosition));
             menuPosition = ApplyContainerAdjustments(menuPosition, initialDirection);
-            Rect menuRect = GetProjectedRect(menuPosition);
-            
-            if (menuRect.yMax > boundaryRect.yMax)
-            {
-                float overflow = menuRect.yMax - boundaryRect.yMax;
-                outOfBoundsPercentTop = overflow / menuHeight;
-            }
-            
-            if (menuRect.yMin < boundaryRect.yMin)
-            {
-                float overflow = boundaryRect.yMin - menuRect.yMin;
-                outOfBoundsPercentBottom = overflow / menuHeight;
-            }
-            
-            if (menuRect.xMax > boundaryRect.xMax)
-            {
-                float overflow = menuRect.xMax - boundaryRect.xMax;
-                outOfBoundsPercentRight = overflow / menuWidth;
-            }
-            
-            if (menuRect.xMin < boundaryRect.xMin)
-            {
-                float overflow = boundaryRect.xMin - menuRect.xMin;
-                outOfBoundsPercentLeft = overflow / menuWidth;
-            }
-            
+            float4 menuRect = GetProjectedRect(menuPosition);
+
+            BurstRectUtils.CalculateOutOfBoundsPercentages(
+                ref outOfBoundsPercentTop,
+                ref outOfBoundsPercentBottom,
+                ref outOfBoundsPercentRight,
+                ref outOfBoundsPercentLeft,
+                menuRect, boundaryRect, menuWidth, menuHeight);
+
             const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
-            
+
             bool avoidTop = outOfBoundsPercentTop > 0;
             bool avoidBottom = outOfBoundsPercentBottom > 0;
-            bool skipCenter = outOfBoundsPercentTop > SEVERE_BOUNDARY_VIOLATION_THRESHOLD || 
+            bool skipCenter = outOfBoundsPercentTop > SEVERE_BOUNDARY_VIOLATION_THRESHOLD ||
                                outOfBoundsPercentBottom > SEVERE_BOUNDARY_VIOLATION_THRESHOLD;
-            
+
             bool avoidRight = outOfBoundsPercentRight > 0;
             bool avoidLeft = outOfBoundsPercentLeft > 0;
-            
-            var resultList = new System.Collections.Generic.List<ContextMenuOpenDirection>(6);
-            
+
             if ((initialVertical == VerticalPosition.TOP && !avoidTop) ||
                 (initialVertical == VerticalPosition.BOTTOM && !avoidBottom) ||
                 (initialVertical == VerticalPosition.CENTER) ||
                 (initialHorizontal == HorizontalPosition.LEFT && !avoidLeft) ||
                 (initialHorizontal == HorizontalPosition.RIGHT && !avoidRight))
             {
-                resultList.Add(initialDirection);
+                AddToFallbackDirections(initialDirection);
             }
-            
-            if (outOfBoundsPercentTop > outOfBoundsPercentBottom && outOfBoundsPercentTop > 0)
+
+            ProcessTopBoundaryViolation(
+                outOfBoundsPercentTop,
+                outOfBoundsPercentBottom,
+                initialHorizontal,
+                skipCenter,
+                avoidBottom,
+                avoidRight,
+                avoidLeft);
+
+            ProcessBottomBoundaryViolation(
+                outOfBoundsPercentBottom,
+                initialHorizontal,
+                skipCenter,
+                avoidTop,
+                avoidRight,
+                avoidLeft);
+
+            ProcessHorizontalBoundaryViolation(
+                avoidLeft,
+                avoidRight);
+
+            ProcessNoBoundaryViolation(
+                initialHorizontal,
+                initialVertical,
+                outOfBoundsPercentTop,
+                outOfBoundsPercentBottom);
+        }
+
+        private void ProcessTopBoundaryViolation(
+            float outOfBoundsPercentTop,
+            float outOfBoundsPercentBottom,
+            HorizontalPosition initialHorizontal,
+            bool skipCenter,
+            bool avoidBottom,
+            bool avoidRight,
+            bool avoidLeft)
+        {
+            if (outOfBoundsPercentTop <= outOfBoundsPercentBottom || outOfBoundsPercentTop <= 0) return;
+
+            if (initialHorizontal == HorizontalPosition.LEFT)
             {
-                if (initialHorizontal == HorizontalPosition.LEFT)
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                if (!skipCenter && !avoidBottom)
+                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+
+                if (!avoidRight)
                 {
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
-                    if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                    
-                    if (!avoidRight)
-                    {
-                        resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
-                        if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                    }
-                }
-                else
-                {
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
-                    if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                    
-                    if (!avoidLeft)
-                    {
-                        resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
-                        if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                    }
-                }
-                
-                if (!resultList.Contains(ContextMenuOpenDirection.TOP_LEFT) && !avoidLeft) 
-                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
-                if (!resultList.Contains(ContextMenuOpenDirection.TOP_RIGHT) && !avoidRight) 
-                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
-            }
-            else if (outOfBoundsPercentBottom > 0)
-            {
-                if (initialHorizontal == HorizontalPosition.LEFT)
-                {
-                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
-                    if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                    
-                    if (!avoidRight)
-                    {
-                        resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
-                        if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                    }
-                }
-                else
-                {
-                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
-                    if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                    
-                    if (!avoidLeft)
-                    {
-                        resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
-                        if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                    }
-                }
-                
-                if (!resultList.Contains(ContextMenuOpenDirection.BOTTOM_LEFT) && !avoidLeft) 
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
-                if (!resultList.Contains(ContextMenuOpenDirection.BOTTOM_RIGHT) && !avoidRight) 
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
-            }
-            else if (avoidLeft || avoidRight)
-            {
-                if (avoidLeft)
-                {
-                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
-                    resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
-                }
-                else if (avoidRight)
-                {
-                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
-                    resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                    if (!skipCenter && !avoidBottom)
+                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
                 }
             }
             else
             {
-                if (initialHorizontal == HorizontalPosition.LEFT)
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                if (!skipCenter && !avoidBottom)
+                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+
+                if (!avoidLeft)
                 {
-                    if (initialVertical != VerticalPosition.TOP && !resultList.Contains(ContextMenuOpenDirection.TOP_LEFT))
-                        resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
-                        
-                    if (initialVertical != VerticalPosition.CENTER && !resultList.Contains(ContextMenuOpenDirection.CENTER_LEFT))
-                        resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                        
-                    if (initialVertical != VerticalPosition.BOTTOM && !resultList.Contains(ContextMenuOpenDirection.BOTTOM_LEFT))
-                        resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
-                    
-                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
-                    resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
-                }
-                else
-                {
-                    if (initialVertical != VerticalPosition.TOP && !resultList.Contains(ContextMenuOpenDirection.TOP_RIGHT))
-                        resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
-                        
-                    if (initialVertical != VerticalPosition.CENTER && !resultList.Contains(ContextMenuOpenDirection.CENTER_RIGHT))
-                        resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
-                        
-                    if (initialVertical != VerticalPosition.BOTTOM && !resultList.Contains(ContextMenuOpenDirection.BOTTOM_RIGHT))
-                        resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
-                    
-                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
-                    resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
-                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                    if (!skipCenter && !avoidBottom)
+                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
                 }
             }
-            
-            var result = resultList.ToArray();
-            
-            return result;
+
+            if (!ContainsDirection(ContextMenuOpenDirection.TOP_LEFT) && !avoidLeft)
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+            if (!ContainsDirection(ContextMenuOpenDirection.TOP_RIGHT) && !avoidRight)
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
         }
-        
+
+        private void ProcessBottomBoundaryViolation(
+            float outOfBoundsPercentBottom,
+            HorizontalPosition initialHorizontal,
+            bool skipCenter,
+            bool avoidTop,
+            bool avoidRight,
+            bool avoidLeft)
+        {
+            if (outOfBoundsPercentBottom <= 0) return;
+
+            if (initialHorizontal == HorizontalPosition.LEFT)
+            {
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                if (!skipCenter && !avoidTop)
+                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+
+                if (!avoidRight)
+                {
+                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                    if (!skipCenter && !avoidTop)
+                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                }
+            }
+            else
+            {
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                if (!skipCenter && !avoidTop)
+                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+
+                if (!avoidLeft)
+                {
+                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                    if (!skipCenter && !avoidTop)
+                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                }
+            }
+
+            if (!ContainsDirection(ContextMenuOpenDirection.BOTTOM_LEFT) && !avoidLeft)
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+            if (!ContainsDirection(ContextMenuOpenDirection.BOTTOM_RIGHT) && !avoidRight)
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+        }
+
+        private void ProcessHorizontalBoundaryViolation(bool avoidLeft, bool avoidRight)
+        {
+            if (!avoidLeft && !avoidRight) return;
+
+            if (avoidLeft)
+            {
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+            }
+            else if (avoidRight)
+            {
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+            }
+        }
+
+        private void ProcessNoBoundaryViolation(
+            HorizontalPosition initialHorizontal,
+            VerticalPosition initialVertical,
+            float outOfBoundsPercentTop,
+            float outOfBoundsPercentBottom)
+        {
+            if (outOfBoundsPercentTop > 0 || outOfBoundsPercentBottom > 0) return;
+
+            if (initialHorizontal == HorizontalPosition.LEFT)
+            {
+                if (initialVertical != VerticalPosition.TOP && !ContainsDirection(ContextMenuOpenDirection.TOP_LEFT))
+                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+
+                if (initialVertical != VerticalPosition.CENTER && !ContainsDirection(ContextMenuOpenDirection.CENTER_LEFT))
+                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+
+                if (initialVertical != VerticalPosition.BOTTOM && !ContainsDirection(ContextMenuOpenDirection.BOTTOM_LEFT))
+                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+            }
+            else
+            {
+                if (initialVertical != VerticalPosition.TOP && !ContainsDirection(ContextMenuOpenDirection.TOP_RIGHT))
+                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+
+                if (initialVertical != VerticalPosition.CENTER && !ContainsDirection(ContextMenuOpenDirection.CENTER_RIGHT))
+                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+
+                if (initialVertical != VerticalPosition.BOTTOM && !ContainsDirection(ContextMenuOpenDirection.BOTTOM_RIGHT))
+                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+
+                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+            }
+        }
+
+        private void AddToFallbackDirections(ContextMenuOpenDirection direction)
+        {
+            if (fallbackDirectionsCount < fallbackDirectionsCache.Length)
+            {
+                fallbackDirectionsCache[fallbackDirectionsCount++] = direction;
+            }
+        }
+
+        [BurstCompile]
+        private bool ContainsDirection(ContextMenuOpenDirection direction)
+        {
+            for (int i = 0; i < fallbackDirectionsCount; i++)
+            {
+                if (fallbackDirectionsCache[i] == direction)
+                    return true;
+            }
+            return false;
+        }
+
         private enum HorizontalPosition
         {
             LEFT,
             RIGHT
         }
-        
+
         private enum VerticalPosition
         {
             TOP,
             CENTER,
             BOTTOM
         }
-        
-        private HorizontalPosition GetHorizontalPosition(ContextMenuOpenDirection direction)
+
+        [BurstCompile]
+        private static HorizontalPosition GetHorizontalPosition(ContextMenuOpenDirection direction)
         {
             switch (direction)
             {
@@ -513,44 +604,46 @@ namespace DCL.UI.GenericContextMenu
                 case ContextMenuOpenDirection.CENTER_LEFT:
                 case ContextMenuOpenDirection.BOTTOM_LEFT:
                     return HorizontalPosition.LEFT;
-                    
+
                 case ContextMenuOpenDirection.TOP_RIGHT:
                 case ContextMenuOpenDirection.CENTER_RIGHT:
                 case ContextMenuOpenDirection.BOTTOM_RIGHT:
                     return HorizontalPosition.RIGHT;
-                    
+
                 default:
                     return HorizontalPosition.LEFT;
             }
         }
-        
-        private VerticalPosition GetVerticalPosition(ContextMenuOpenDirection direction)
+
+        [BurstCompile]
+        private static VerticalPosition GetVerticalPosition(ContextMenuOpenDirection direction)
         {
             switch (direction)
             {
                 case ContextMenuOpenDirection.TOP_LEFT:
                 case ContextMenuOpenDirection.TOP_RIGHT:
                     return VerticalPosition.TOP;
-                
+
                 case ContextMenuOpenDirection.CENTER_LEFT:
                 case ContextMenuOpenDirection.CENTER_RIGHT:
                     return VerticalPosition.CENTER;
-                
+
                 case ContextMenuOpenDirection.BOTTOM_LEFT:
                 case ContextMenuOpenDirection.BOTTOM_RIGHT:
                     return VerticalPosition.BOTTOM;
-                
+
                 default:
                     return VerticalPosition.CENTER;
             }
         }
 
-        private Vector3 GetPositionForDirection(ContextMenuOpenDirection direction, Vector3 position)
+        [BurstCompile]
+        private float3 GetPositionForDirection(ContextMenuOpenDirection direction, Vector3 position)
         {
             float halfWidth = viewInstance!.ControlsContainer.rect.width / 2;
             float halfHeight = viewInstance!.ControlsContainer.rect.height / 2;
-            Vector3 result = position;
-            
+            float3 result = new float3(position.x, position.y, position.z);
+
             switch (direction)
             {
                 case ContextMenuOpenDirection.TOP_LEFT:
@@ -564,7 +657,7 @@ namespace DCL.UI.GenericContextMenu
                     result.x += halfWidth;
                     break;
             }
-            
+
             switch (direction)
             {
                 case ContextMenuOpenDirection.TOP_LEFT:
@@ -583,33 +676,32 @@ namespace DCL.UI.GenericContextMenu
             return result;
         }
 
-        private float CalculateIntersectionArea(Rect rect1, Rect rect2)
-        {
-            Rect intersection = CalculateIntersection(rect1, rect2);
-            
-            if (intersection.width <= 0 || intersection.height <= 0)
-                return 0;
-                
-            return intersection.width * intersection.height;
-        }
-
-        private Rect GetProjectedRect(Vector3 newPosition)
+        private float4 GetProjectedRect(Vector3 newPosition)
         {
             Vector3 originalPosition = viewInstance!.ControlsContainer.localPosition;
             viewInstance!.ControlsContainer.localPosition = newPosition;
-            Rect rect = GetWorldRect(viewInstance!.ControlsContainer);
+            float4 rect = GetWorldRect(viewInstance!.ControlsContainer);
             viewInstance!.ControlsContainer.localPosition = originalPosition;
 
             return rect;
         }
 
-        private Rect GetWorldRect(RectTransform rectTransform)
+        private float4 GetWorldRect(RectTransform rectTransform)
         {
-            rectTransform.GetWorldCorners(worldRectCorners);
-            Vector2 min = worldRectCorners[0];
-            Vector2 max = worldRectCorners[2];
-            Vector2 size = max - min;
-            return new Rect(min, size);
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+
+            for (var i = 0; i < 4; i++)
+            {
+                worldRectCorners[i] = new float3(corners[i].x, corners[i].y, corners[i].z);
+            }
+
+            float minX = corners[0].x;
+            float minY = corners[0].y;
+            float maxX = corners[2].x;
+            float maxY = corners[2].y;
+
+            return new float4(minX, minY, maxX - minX, maxY - minY);
         }
 
         protected override void OnViewClose()
@@ -626,22 +718,12 @@ namespace DCL.UI.GenericContextMenu
             return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.Button.OnClickAsync(ct));
         }
 
-        private Rect CalculateIntersection(Rect rect1, Rect rect2)
-        {
-            return Rect.MinMaxRect(
-                Mathf.Max(rect1.xMin, rect2.xMin),
-                Mathf.Max(rect1.yMin, rect2.yMin),
-                Mathf.Min(rect1.xMax, rect2.xMax),
-                Mathf.Min(rect1.yMax, rect2.yMax)
-            );
-        }
-        
-        private Vector3 ApplyContainerAdjustments(Vector3 position, ContextMenuOpenDirection direction)
-        {
-            return position;
-        }
+        [BurstCompile]
+        private static Vector3 ApplyContainerAdjustments(float3 position, ContextMenuOpenDirection direction) =>
+            new (position.x, position.y, position.z);
 
-        private ContextMenuOpenDirection GetOppositeHorizontalDirection(ContextMenuOpenDirection direction)
+        [BurstCompile]
+        private static ContextMenuOpenDirection GetOppositeHorizontalDirection(ContextMenuOpenDirection direction)
         {
             return direction switch
             {
@@ -654,8 +736,9 @@ namespace DCL.UI.GenericContextMenu
                 _ => direction
             };
         }
-        
-        private ContextMenuOpenDirection GetOppositeVerticalDirection(ContextMenuOpenDirection direction)
+
+        [BurstCompile]
+        private static ContextMenuOpenDirection GetOppositeVerticalDirection(ContextMenuOpenDirection direction)
         {
             return direction switch
             {
@@ -665,15 +748,6 @@ namespace DCL.UI.GenericContextMenu
                 ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.TOP_RIGHT,
                 _ => direction
             };
-        }
-        
-        private float CalculateOutOfBoundsPercent(Rect container, Rect rect)
-        {
-            float menuArea = rect.width * rect.height;
-            if (menuArea <= 0) return 0;
-            
-            float outOfBoundsArea = CalculateOutOfBoundsArea(container, rect);
-            return outOfBoundsArea / menuArea;
         }
     }
 }
