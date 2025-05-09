@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.Utilities;
 using DCL.Web3;
 using MVC;
@@ -41,7 +42,7 @@ namespace DCL.Chat
         private ViewDependencies viewDependencies;
         private bool isInitialized;
         private bool isVisible;
-
+        private UniTaskCompletionSource contextMenuTask = new ();
         private CancellationTokenSource contextMenuCts = new ();
 
         public bool IsVisible
@@ -58,6 +59,11 @@ namespace DCL.Chat
                 }
             }
         }
+
+        /// <summary>
+        /// Gets whether any of the context menus of any member of the list is open.
+        /// </summary>
+        public bool IsContextMenuOpen { get; private set; }
 
         private void Awake()
         {
@@ -108,8 +114,17 @@ namespace DCL.Chat
 
         private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition, Action onMenuHide)
         {
+            contextMenuTask?.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, contextMenuCts.Token, onMenuHide);
+            IsContextMenuOpen = true;
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
+            IsContextMenuOpen = false;
+        }
+
+        private void OnDisable()
+        {
+            contextMenuTask?.TrySetResult();
         }
     }
 }

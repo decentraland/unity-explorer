@@ -1,8 +1,7 @@
-using DCL.AssetsProvision;
-using DCL.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
+using DCL.UI.GenericContextMenu.Controllers;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -10,7 +9,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
-using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem.Global
 {
@@ -21,6 +19,7 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public Light DirectionalLight { get; private set; }
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
+        [field: SerializeField] public AssetReferenceT<GenericUserProfileContextMenuSettings> GenericUserProfileContextMenuSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }

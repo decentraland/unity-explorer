@@ -1,6 +1,8 @@
 ﻿using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
+using DCL.Settings;
+using DCL.Settings.Settings;
 using Segment.Serialization;
 using System;
 using UnityEngine;
@@ -13,6 +15,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private readonly NavmapController navmapController;
         private readonly CameraReelController cameraReelController;
         private readonly CameraReelGalleryController cameraReelGalleryController;
+        private readonly SettingsController settingsController;
 
         public ExplorePanelAnalytics(IAnalyticsController analytics, ExplorePanelController controller)
         {
@@ -20,11 +23,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.navmapController = controller.NavmapController;
             this.cameraReelController = controller.CameraReelController;
             this.cameraReelGalleryController = this.cameraReelController.CameraReelGalleryController;
+            this.settingsController = controller.SettingsController;
 
             cameraReelController.Activated += TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;
             cameraReelGalleryController.ScreenshotDownloaded += TrackScreenshotDownloaded;
             cameraReelGalleryController.ScreenshotShared += TrackScreenshotShared;
+            settingsController.ChatBubblesVisibilityChanged += OnChatBubblesVisibilityChanged;
         }
 
         public void Dispose()
@@ -33,6 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             cameraReelGalleryController.ScreenshotDeleted -= TrackScreenshotDeleted;
             cameraReelGalleryController.ScreenshotDownloaded -= TrackScreenshotDownloaded;
             cameraReelGalleryController.ScreenshotShared -= TrackScreenshotShared;
+            settingsController.ChatBubblesVisibilityChanged -= OnChatBubblesVisibilityChanged;
         }
 
         private void TrackScreenshotDownloaded() =>
@@ -54,5 +60,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void TrackScreenshotDeleted() =>
             analytics.Track(AnalyticsEvents.CameraReel.DELETE_PHOTO);
+
+        private void OnChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings visibility)
+        {
+            analytics.Track(AnalyticsEvents.Settings.CHAT_BUBBLES_VISIBILITY_CHANGED, new JsonObject
+            {
+                { "visibility",  visibility == ChatBubbleVisibilitySettings.NONE ? "none" : visibility == ChatBubbleVisibilitySettings.NEARBY_ONLY ? "nearby" : "all"},
+            });
+        }
     }
 }
