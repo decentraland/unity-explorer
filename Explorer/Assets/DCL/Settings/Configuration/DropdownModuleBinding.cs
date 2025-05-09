@@ -26,7 +26,11 @@ namespace DCL.Settings.Configuration
             WINDOW_MODE_FEATURE,
             FPS_LIMIT_FEATURE,
             MEMORY_LIMIT_FEATURE,
-            CHAT_AUDIO_MODES_FEATURE,
+            CHAT_NEARBY_AUDIO_MODES_FEATURE,
+            CHAT_DMS_AUDIO_MODES_FEATURE,
+            CHAT_DMS_MODES_FEATURE,
+            CHAT_BUBBLES_MODES_FEATURE,
+
             // add other features...
         }
 
@@ -38,9 +42,10 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ChatAudioSettingsAsset chatAudioSettingsAsset,
+            ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ISettingsModuleEventListener settingsEventListener,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
@@ -55,7 +60,9 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                                                        DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
                                                        DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
-                                                       DropdownFeatures.CHAT_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatAudioSettingsAsset),
+                                                       DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatSettingsAsset),
+                                                       DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
+                                                       DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };

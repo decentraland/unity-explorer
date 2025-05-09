@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connectivity;
+using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3;
@@ -14,6 +15,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
+        private const float DELAY_BETWEEN_CLICKS = 0.5f;
+
         private readonly IPassportBridge passportBridge;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -25,9 +28,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private FriendProfile contextMenuFriendProfile;
+        private CancellationTokenSource openPassportCts = new ();
+        private bool elementClicked;
 
         internal event Action<string>? OnlineFriendClicked;
         internal event Action<string, Vector2Int>? JumpInClicked;
+        internal event Action<Web3Address> OpenConversationClicked;
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
@@ -101,11 +107,34 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         protected override void ElementClicked(FriendProfile profile)
         {
-            passportBridge.ShowAsync(profile.Address).Forget();
+            if (elementClicked)
+            {
+                OpenConversationClicked?.Invoke(profile.Address);
+                openPassportCts.Cancel();
+                elementClicked = false;
+            }
+            else
+            {
+                openPassportCts = openPassportCts.SafeRestart();
+                WaitAndOpenPassportAsync(profile, openPassportCts.Token).Forget();
+            }
 
+        }
+
+        private async UniTaskVoid WaitAndOpenPassportAsync(FriendProfile profile, CancellationToken ct)
+        {
+            elementClicked = true;
             if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.OFFLINE)
                 OnlineFriendClicked?.Invoke(profile.Address);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BETWEEN_CLICKS), cancellationToken: ct);
+            elementClicked = false;
+
+
+            await passportBridge.ShowAsync(profile.Address);
         }
+
+
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {

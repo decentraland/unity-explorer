@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
+using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
@@ -20,6 +22,7 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -46,6 +49,8 @@ namespace DCL.UI.Sidebar
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private const string IDLE_ICON_ANIMATOR = "Empty";
+        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
         public event Action? HelpOpened;
 
@@ -120,10 +125,10 @@ namespace DCL.UI.Sidebar
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettingsAsync);
+            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
-            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClickedAsync);
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
 
             if (includeCameraReel)
@@ -145,6 +150,8 @@ namespace DCL.UI.Sidebar
 
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
@@ -155,6 +162,34 @@ namespace DCL.UI.Sidebar
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
         }
 
+        private void OnMvcManagerViewClosed(IController closedController)
+        {
+            // Panels that are controllers and can be opened using shortcuts
+            if (closedController is EmotesWheelController)
+            {
+                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            }
+            else if (closedController is FriendsPanelController)
+            {
+                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                OnChatViewFoldingChanged(chatView.IsUnfolded);
+            }
+        }
+
+        private void OnMvcManagerViewShowed(IController showedController)
+        {
+            // Panels that are controllers and can be opened using shortcuts
+            if (showedController is EmotesWheelController)
+            {
+                viewInstance.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            }
+            else if (showedController is FriendsPanelController)
+            {
+                viewInstance.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                OnChatViewFoldingChanged(false);
+            }
+        }
+
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
@@ -162,7 +197,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            // TODO: The sidebar should provide a mechanism to fix the icon of a button, so it can be active while the Chat window is unfolded
+            viewInstance.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -224,9 +260,10 @@ namespace DCL.UI.Sidebar
 
         #region Sidebar button handlers
 
-        private void OnUnreadMessagesButtonClickedAsync()
+        private void OnUnreadMessagesButtonClicked()
         {
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true)).Forget();
+            // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true)).Forget();
         }
 
         private async void OnEmotesWheelButtonClickedAsync()
@@ -248,8 +285,10 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked() =>
-            mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
+        private async void OnControlsButtonClickedAsync()
+        {
+            await mvcManager.ShowAsync(ControlsPanelController.IssueCommand());
+        }
 
         private async void OpenSidebarSettingsAsync()
         {
@@ -277,19 +316,24 @@ namespace DCL.UI.Sidebar
         private async void OpenSkyboxSettingsAsync()
         {
             viewInstance.BlockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
+            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
             viewInstance.BlockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
+            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             viewInstance.UnblockSidebar();
         }
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
+            // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
 

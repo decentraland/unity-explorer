@@ -16,6 +16,7 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Arch;
 
@@ -28,15 +29,22 @@ namespace ECS.Unity.AvatarShape.Systems
     {
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> globalTransformPool;
+        private readonly ISceneData sceneData;
 
-        public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool) : base(world)
+        public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool,
+            ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalTransformPool = globalTransformPool;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
+            // We need to wait until the scene restores its original position (from MordorConstants.SCENE_MORDOR_POSITION)
+            // to keep the correct global position on which the avatar should be
+            if (!sceneData.SceneLoadingConcluded) return;
+
             LoadAvatarShapeQuery(World);
             UpdateAvatarShapeQuery(World);
 
@@ -52,11 +60,18 @@ namespace ECS.Unity.AvatarShape.Systems
             // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world
             Transform globalTransform = globalTransformPool.Get();
             globalTransform.SetParent(transformComponent.Transform);
+            // We ensure that the avatar's transform initializes on the sdk location if the scene applies any offset
+            globalTransform.localPosition = Vector3.zero;
+            globalTransform.localRotation = Quaternion.identity;
+            globalTransform.localScale = Vector3.one;
 
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
                 new CharacterTransform(globalTransform),
-                new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
+                new CharacterInterpolationMovementComponent(
+                    transformComponent.Transform.position,
+                    transformComponent.Transform.position,
+                    transformComponent.Transform.rotation),
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));

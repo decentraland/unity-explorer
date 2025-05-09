@@ -31,7 +31,8 @@ namespace MVC
             fullscreenController = controller;
 
             foreach (IController persistentController in persistentStack)
-                persistentController.Blur();
+                if(persistentController.State == ControllerState.ViewFocused)
+                    persistentController.Blur();
 
             return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0));
         }
