@@ -9,16 +9,18 @@ using Utility;
 
 namespace DCL.UI.GenericContextMenu
 {
+    public enum ContextMenuOpenDirection
+    {
+        BOTTOM_RIGHT,
+        TOP_RIGHT,
+        CENTER_RIGHT,
+        BOTTOM_LEFT,
+        TOP_LEFT,
+        CENTER_LEFT,
+    }
+
     public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter>
     {
-        private enum ContextMenuOpenDirection
-        {
-            BOTTOM_RIGHT,
-            TOP_RIGHT,
-            BOTTOM_LEFT,
-            TOP_LEFT,
-        }
-
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ControlsPoolManager controlsPoolManager;
@@ -97,45 +99,56 @@ namespace DCL.UI.GenericContextMenu
                 ContextMenuOpenDirection.BOTTOM_LEFT => new Vector2(-offsetFromTarget.x, offsetFromTarget.y),
                 ContextMenuOpenDirection.TOP_RIGHT => new Vector2(offsetFromTarget.x, -offsetFromTarget.y),
                 ContextMenuOpenDirection.TOP_LEFT => new Vector2(-offsetFromTarget.x, -offsetFromTarget.y),
+                ContextMenuOpenDirection.CENTER_RIGHT => new Vector2(offsetFromTarget.x, 0),
+                ContextMenuOpenDirection.CENTER_LEFT => new Vector2(-offsetFromTarget.x, 0),
                 _ => Vector2.zero
             };
         }
 
-        private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.TOP_LEFT, bool exactPosition = false)
+        private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, ContextMenuOpenDirection initialDirection = ContextMenuOpenDirection.TOP_LEFT, bool exactPosition = false)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
-            Debug.Log($"[ContextMenu] Initial position: {position}, Requested anchor point: {anchorPoint}");
+            Debug.Log($"[ContextMenu] Initial position: {position}, Requested direction: {initialDirection}");
 
-            // Define fallback anchor points by category
-            GenericContextMenuAnchorPoint[] fallbackOrder = GetFallbackAnchorPoints(anchorPoint);
+            // Define fallback directions by category
+            ContextMenuOpenDirection[] fallbackOrder = GetFallbackDirections(initialDirection);
             Debug.Log($"[ContextMenu] Fallback order: {string.Join(", ", fallbackOrder)}");
 
             Vector3 bestPosition = Vector3.zero;
             float bestNonOverlappingArea = float.MaxValue;
 
-            // Try each anchor point in the fallback sequence
-            foreach (var currentAnchorPoint in fallbackOrder)
+            // Try each direction in the fallback sequence
+            foreach (var currentDirection in fallbackOrder)
             {
-                Vector3 anchoredPosition = GetPositionForAnchorPoint(currentAnchorPoint, position);
-                Debug.Log($"[ContextMenu] Trying anchor point: {currentAnchorPoint}, Position after anchor adjustment: {anchoredPosition}");
+                Vector3 anchoredPosition = GetPositionForDirection(currentDirection, position);
+                Debug.Log($"[ContextMenu] Trying direction: {currentDirection}, Position after direction adjustment: {anchoredPosition}");
 
-                // Try each direction with the current anchor point
-                foreach (ContextMenuOpenDirection openDirection in openDirections)
+                // Try each offset direction with the current anchor direction
+                foreach (ContextMenuOpenDirection offsetDirection in openDirections)
                 {
-                    Vector2 offsetByDirection = GetOffsetByDirection(openDirection, offsetFromTarget);
+                    Vector2 offsetByDirection = GetOffsetByDirection(offsetDirection, offsetFromTarget);
                     Vector3 currentPosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
-                    Debug.Log($"[ContextMenu] Trying direction: {openDirection}, Position after offset: {currentPosition}");
+                    Debug.Log($"[ContextMenu] Trying offset direction: {offsetDirection}, Position after offset: {currentPosition}");
 
                     // Apply container width adjustment based on direction
-                    if (openDirection == ContextMenuOpenDirection.BOTTOM_LEFT || openDirection == ContextMenuOpenDirection.TOP_LEFT)
+                    if (offsetDirection == ContextMenuOpenDirection.BOTTOM_LEFT || 
+                        offsetDirection == ContextMenuOpenDirection.TOP_LEFT ||
+                        offsetDirection == ContextMenuOpenDirection.CENTER_LEFT)
                     {
                         currentPosition.x -= viewInstance!.ControlsContainer.rect.width;
                     }
 
                     // Apply container height adjustment based on direction
-                    if (openDirection == ContextMenuOpenDirection.TOP_RIGHT || openDirection == ContextMenuOpenDirection.TOP_LEFT)
+                    if (offsetDirection == ContextMenuOpenDirection.TOP_RIGHT || 
+                        offsetDirection == ContextMenuOpenDirection.TOP_LEFT)
                     {
                         currentPosition.y += viewInstance!.ControlsContainer.rect.height;
+                    }
+                    // CENTER positions need half height adjustment
+                    else if (offsetDirection == ContextMenuOpenDirection.CENTER_RIGHT ||
+                             offsetDirection == ContextMenuOpenDirection.CENTER_LEFT)
+                    {
+                        currentPosition.y += viewInstance!.ControlsContainer.rect.height / 2;
                     }
 
                     Debug.Log($"[ContextMenu] Position after container size adjustments: {currentPosition}");
@@ -163,81 +176,81 @@ namespace DCL.UI.GenericContextMenu
             return bestPosition;
         }
 
-        private GenericContextMenuAnchorPoint[] GetFallbackAnchorPoints(GenericContextMenuAnchorPoint initialAnchorPoint)
+        private ContextMenuOpenDirection[] GetFallbackDirections(ContextMenuOpenDirection initialDirection)
         {
-            // Group anchor points by vertical position
-            GenericContextMenuAnchorPoint[] topPoints = {
-                GenericContextMenuAnchorPoint.TOP_LEFT,
-                GenericContextMenuAnchorPoint.TOP_RIGHT
+            // Group directions by vertical position
+            ContextMenuOpenDirection[] topPoints = {
+                ContextMenuOpenDirection.TOP_LEFT,
+                ContextMenuOpenDirection.TOP_RIGHT
             };
 
-            GenericContextMenuAnchorPoint[] centerPoints = {
-                GenericContextMenuAnchorPoint.CENTER_LEFT,
-                GenericContextMenuAnchorPoint.CENTER_RIGHT
+            ContextMenuOpenDirection[] centerPoints = {
+                ContextMenuOpenDirection.CENTER_LEFT,
+                ContextMenuOpenDirection.CENTER_RIGHT
             };
 
-            GenericContextMenuAnchorPoint[] bottomPoints = {
-                GenericContextMenuAnchorPoint.BOTTOM_LEFT,
-                GenericContextMenuAnchorPoint.BOTTOM_RIGHT
+            ContextMenuOpenDirection[] bottomPoints = {
+                ContextMenuOpenDirection.BOTTOM_LEFT,
+                ContextMenuOpenDirection.BOTTOM_RIGHT
             };
 
-            // Start with the initial anchor point
-            var result = new GenericContextMenuAnchorPoint[5];
-            result[0] = initialAnchorPoint;
+            // Start with the initial direction
+            var result = new ContextMenuOpenDirection[5];
+            result[0] = initialDirection;
 
-            // Determine fallback sequence based on the initial anchor point
-            if (Array.IndexOf(topPoints, initialAnchorPoint) >= 0)
+            // Determine fallback sequence based on the initial direction
+            if (Array.IndexOf(topPoints, initialDirection) >= 0)
             {
                 // If we started with a TOP point, try CENTER then BOTTOM
-                result[1] = GenericContextMenuAnchorPoint.CENTER_LEFT;
-                result[2] = GenericContextMenuAnchorPoint.CENTER_RIGHT;
-                result[3] = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
-                result[4] = GenericContextMenuAnchorPoint.BOTTOM_RIGHT;
+                result[1] = ContextMenuOpenDirection.CENTER_LEFT;
+                result[2] = ContextMenuOpenDirection.CENTER_RIGHT;
+                result[3] = ContextMenuOpenDirection.BOTTOM_LEFT;
+                result[4] = ContextMenuOpenDirection.BOTTOM_RIGHT;
             }
-            else if (Array.IndexOf(centerPoints, initialAnchorPoint) >= 0)
+            else if (Array.IndexOf(centerPoints, initialDirection) >= 0)
             {
                 // If we started with a CENTER point, try TOP then BOTTOM
-                result[1] = GenericContextMenuAnchorPoint.TOP_LEFT;
-                result[2] = GenericContextMenuAnchorPoint.TOP_RIGHT;
-                result[3] = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
-                result[4] = GenericContextMenuAnchorPoint.BOTTOM_RIGHT;
+                result[1] = ContextMenuOpenDirection.TOP_LEFT;
+                result[2] = ContextMenuOpenDirection.TOP_RIGHT;
+                result[3] = ContextMenuOpenDirection.BOTTOM_LEFT;
+                result[4] = ContextMenuOpenDirection.BOTTOM_RIGHT;
             }
             else
             {
                 // If we started with a BOTTOM point, try CENTER then TOP
-                result[1] = GenericContextMenuAnchorPoint.CENTER_LEFT;
-                result[2] = GenericContextMenuAnchorPoint.CENTER_RIGHT;
-                result[3] = GenericContextMenuAnchorPoint.TOP_LEFT;
-                result[4] = GenericContextMenuAnchorPoint.TOP_RIGHT;
+                result[1] = ContextMenuOpenDirection.CENTER_LEFT;
+                result[2] = ContextMenuOpenDirection.CENTER_RIGHT;
+                result[3] = ContextMenuOpenDirection.TOP_LEFT;
+                result[4] = ContextMenuOpenDirection.TOP_RIGHT;
             }
 
             return result;
         }
 
-        private Vector3 GetPositionForAnchorPoint(GenericContextMenuAnchorPoint anchorPoint, Vector3 position)
+        private Vector3 GetPositionForDirection(ContextMenuOpenDirection direction, Vector3 position)
         {
-            switch (anchorPoint)
+            switch (direction)
             {
-                case GenericContextMenuAnchorPoint.TOP_LEFT:
+                case ContextMenuOpenDirection.TOP_LEFT:
                     position.y -= viewInstance!.ControlsContainer.rect.height / 2;
                     position.x += viewInstance!.ControlsContainer.rect.width / 2;
                     break;
-                case GenericContextMenuAnchorPoint.TOP_RIGHT:
+                case ContextMenuOpenDirection.TOP_RIGHT:
                     position.y -= viewInstance!.ControlsContainer.rect.height / 2;
                     position.x -= viewInstance!.ControlsContainer.rect.width / 2;
                     break;
-                case GenericContextMenuAnchorPoint.BOTTOM_LEFT:
+                case ContextMenuOpenDirection.BOTTOM_LEFT:
                     position.y += viewInstance!.ControlsContainer.rect.height / 2;
                     position.x += viewInstance!.ControlsContainer.rect.width / 2;
                     break;
-                case GenericContextMenuAnchorPoint.BOTTOM_RIGHT:
+                case ContextMenuOpenDirection.BOTTOM_RIGHT:
                     position.y += viewInstance!.ControlsContainer.rect.height / 2;
                     position.x -= viewInstance!.ControlsContainer.rect.width / 2;
                     break;
-                case GenericContextMenuAnchorPoint.CENTER_LEFT:
+                case ContextMenuOpenDirection.CENTER_LEFT:
                     position.x += viewInstance!.ControlsContainer.rect.width / 2;
                     break;
-                case GenericContextMenuAnchorPoint.CENTER_RIGHT:
+                case ContextMenuOpenDirection.CENTER_RIGHT:
                     position.x -= viewInstance!.ControlsContainer.rect.width / 2;
                     break;
             }
