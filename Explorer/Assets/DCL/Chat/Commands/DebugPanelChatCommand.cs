@@ -37,7 +37,7 @@ namespace DCL.Chat.Commands
             {
                 bool visible = !debugContainerBuilder.IsVisible;
                 debugContainerBuilder.IsVisible = visible;
-                chatCommandsBus.SetConnectionStatusPanelVisibility(visible);
+                chatCommandsBus.SendConnectionStatusPanelChangedNotification(visible);
                 return UniTask.FromResult(string.Empty);
             }
 
