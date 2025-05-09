@@ -9,7 +9,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utility;
 using Button = UnityEngine.UI.Button;
 
 namespace DCL.Chat
@@ -212,7 +211,7 @@ namespace DCL.Chat
             HideScrollButtons(true);
         }
 
-        private void OnScrollViewValueChanged(Vector2 arg0)
+        private void OnScrollViewValueChanged(Vector2 _)
         {
             UpdateScrollButtonsVisibility();
         }

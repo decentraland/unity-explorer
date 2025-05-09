@@ -80,6 +80,7 @@ namespace DCL.Chat
 
         public event ConversationOpenedDelegate? ConversationOpened;
         public event ConversationClosedDelegate? ConversationClosed;
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public bool TryGetView(out ChatView view)
         {
@@ -129,23 +130,24 @@ namespace DCL.Chat
             this.chatStorage = chatStorage;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
+            var chatRoom = roomHub.ChatRoom();
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
-                roomHub.ChatRoom().Participants,
+                chatRoom.Participants,
                 chatSettings,
                 chatPrivacyService,
                 chatUserStateEventBus,
                 friendsEventBus,
-                roomHub.ChatRoom(),
+                chatRoom,
                 friendsService);
 
             chatBubblesHelper = new ChatControllerChatBubblesHelper(
                 world,
-            playerEntity,
-            entityParticipantTable,
-            profileCache,
-            nametagsData,
-            chatSettings);
+                playerEntity,
+                entityParticipantTable,
+                profileCache,
+                nametagsData,
+                chatSettings);
 
             memberListHelper = new ChatControllerMemberListHelper(
                 roomHub,
@@ -156,8 +158,6 @@ namespace DCL.Chat
         }
 
 #region Panel Visibility
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
@@ -228,16 +228,6 @@ namespace DCL.Chat
 
 #endregion
 
-        public override void Dispose()
-        {
-            chatStorage?.UnloadAllFiles();
-            chatUserStateUpdater.Dispose();
-            chatHistory.DeleteAllChannels();
-            viewInstance?.RemoveAllConversations();
-            memberListHelper.StopUpdating();
-            chatUsersUpdateCts.SafeCancelAndDispose();
-        }
-
 #region View Show and Close
 
         protected override void OnViewShow()
@@ -288,7 +278,7 @@ namespace DCL.Chat
 
 #endregion
 
-#region Other Controller Methods
+#region Other Controller-inherited Methods
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -303,6 +293,17 @@ namespace DCL.Chat
             ViewShowingComplete?.Invoke(this);
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
+
+        public override void Dispose()
+        {
+            chatStorage?.UnloadAllFiles();
+            chatUserStateUpdater.Dispose();
+            chatHistory.DeleteAllChannels();
+            viewInstance?.RemoveAllConversations();
+            memberListHelper.StopUpdating();
+            chatUsersUpdateCts.SafeCancelAndDispose();
+        }
+
 #endregion
 
 #region Conversation Events
@@ -434,6 +435,7 @@ namespace DCL.Chat
             else
                 viewInstance.RefreshUnreadMessages(changedChannel.Id);
         }
+
 #endregion
 
 #region Channel Events
@@ -455,7 +457,10 @@ namespace DCL.Chat
 
             chatHistory.RemoveChannel(channelId);
         }
+
 #endregion
+
+#region View state changes event handling
 
         private void OnViewFoldingChanged(bool isUnfolded)
         {
@@ -467,28 +472,6 @@ namespace DCL.Chat
         {
             messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannelId].Messages.Count;
             hasToResetUnreadMessagesWhenNewMessageArrive = true;
-        }
-
-        private void OnViewScrollBottomReached()
-        {
-            MarkCurrentChannelAsRead();
-        }
-
-        private void MarkCurrentChannelAsRead()
-        {
-            chatHistory.Channels[viewInstance!.CurrentChannelId].MarkAllMessagesAsRead();
-            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannelId].ReadMessages;
-        }
-        private void DisableUnwantedInputs()
-        {
-            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void EnableUnwantedInputs()
-        {
-            world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
@@ -517,6 +500,26 @@ namespace DCL.Chat
 
         private void OnViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+
+        private void OnViewScrollBottomReached()
+        {
+            MarkCurrentChannelAsRead();
+        }
+
+        private void OnViewMemberListVisibilityChanged(bool isVisible)
+        {
+            if (isVisible && roomHub.HasAnyRoomConnected())
+                RefreshMemberList();
+        }
+
+        private void RefreshMemberList()
+        {
+            memberListHelper.RefreshMemberList();
+        }
+
+#endregion
+
+#region External components event handling
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
@@ -549,28 +552,8 @@ namespace DCL.Chat
             else
                 chatHistory.AddMessage(channelId, chatMessage);
         }
-        private void OnViewMemberListVisibilityChanged(bool isVisible)
-        {
-            if (isVisible && roomHub.HasAnyRoomConnected())
-                RefreshMemberList();
-        }
 
-        private void RefreshMemberList()
-        {
-            memberListHelper.RefreshMemberList();
-        }
-
-        private void GetProfilesFromParticipants(List<Profile> outProfiles)
-        {
-            outProfiles.Clear();
-
-            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
-            {
-                // TODO: Use new endpoint to get a bunch of profile info
-                if (profileCache.TryGet(identity, out var profile))
-                    outProfiles.Add(profile);
-            }
-        }
+#endregion
 
 #region Chat History Channel Events
 
@@ -639,6 +622,36 @@ namespace DCL.Chat
         }
 
         #endregion
+
+        private void MarkCurrentChannelAsRead()
+        {
+            chatHistory.Channels[viewInstance!.CurrentChannelId].MarkAllMessagesAsRead();
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannelId].ReadMessages;
+        }
+
+        private void DisableUnwantedInputs()
+        {
+            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
+        private void EnableUnwantedInputs()
+        {
+            world.TryRemove<CameraBlockerComponent>(cameraEntity);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
+        private void GetProfilesFromParticipants(List<Profile> outProfiles)
+        {
+            outProfiles.Clear();
+
+            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
+            {
+                // TODO: Use new endpoint to get a bunch of profile info
+                if (profileCache.TryGet(identity, out var profile))
+                    outProfiles.Add(profile);
+            }
+        }
 
         private void SubscribeToEvents()
         {
