@@ -1,7 +1,6 @@
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.DebugUtilities;
-using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Web3.Identities;
 using System;
@@ -13,13 +12,13 @@ namespace DCL.Chat.MessageBus
     public interface IChatMessagesBus : IDisposable
     {
         public event Action<ChatChannel.ChannelId, ChatMessage> MessageAdded;
-        public void Send(ChatChannel.ChannelId channelId, string message, string origin);
+        public void Send(ChatChannel channel, string message, string origin);
     }
 
     public static class ChatMessageBusExtensions
     {
-        public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository) =>
-            new SelfResendChatMessageBus(messagesBus, web3IdentityCache, profileRepository);
+        public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
+            new SelfResendChatMessageBus(messagesBus, web3IdentityCache, messageFactory);
 
         public static IChatMessagesBus WithDebugPanel(this IChatMessagesBus messagesBus, IDebugContainerBuilder debugContainerBuilder)
         {
