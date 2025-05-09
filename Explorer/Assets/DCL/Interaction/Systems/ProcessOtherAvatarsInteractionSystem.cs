@@ -101,7 +101,7 @@ namespace DCL.Interaction.Systems
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
 
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, Vector2.zero, CancellationToken.None, contextMenuTask.Task);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(-10,0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }

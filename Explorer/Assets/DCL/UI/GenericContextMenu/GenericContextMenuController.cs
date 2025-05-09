@@ -94,34 +94,124 @@ namespace DCL.UI.GenericContextMenu
             return direction switch
             {
                 ContextMenuOpenDirection.BOTTOM_RIGHT => offsetFromTarget,
-                ContextMenuOpenDirection.BOTTOM_LEFT => new Vector2(-offsetFromTarget.x - viewInstance!.ControlsContainer.rect.width, offsetFromTarget.y),
-                ContextMenuOpenDirection.TOP_RIGHT => new Vector2(offsetFromTarget.x, -offsetFromTarget.y + viewInstance!.ControlsContainer.rect.height),
-                ContextMenuOpenDirection.TOP_LEFT => new Vector2(-offsetFromTarget.x - viewInstance!.ControlsContainer.rect.width, -offsetFromTarget.y + viewInstance!.ControlsContainer.rect.height),
-                _ => Vector3.zero
+                ContextMenuOpenDirection.BOTTOM_LEFT => new Vector2(-offsetFromTarget.x, offsetFromTarget.y),
+                ContextMenuOpenDirection.TOP_RIGHT => new Vector2(offsetFromTarget.x, -offsetFromTarget.y),
+                ContextMenuOpenDirection.TOP_LEFT => new Vector2(-offsetFromTarget.x, -offsetFromTarget.y),
+                _ => Vector2.zero
             };
         }
 
         private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.TOP_LEFT, bool exactPosition = false)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
+            Debug.Log($"[ContextMenu] Initial position: {position}, Requested anchor point: {anchorPoint}");
 
-            position = GetPositionForAnchorPoint(anchorPoint, position);
+            // Define fallback anchor points by category
+            GenericContextMenuAnchorPoint[] fallbackOrder = GetFallbackAnchorPoints(anchorPoint);
+            Debug.Log($"[ContextMenu] Fallback order: {string.Join(", ", fallbackOrder)}");
 
-            Vector3 newPosition = Vector3.zero;
-            float minNonOverlappingArea = float.MaxValue;
-            foreach (ContextMenuOpenDirection openDirection in openDirections)
+            Vector3 bestPosition = Vector3.zero;
+            float bestNonOverlappingArea = float.MaxValue;
+
+            // Try each anchor point in the fallback sequence
+            foreach (var currentAnchorPoint in fallbackOrder)
             {
-                Vector2 offsetByDirection = GetOffsetByDirection(openDirection, offsetFromTarget);
-                Vector3 currentPosition = position + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
-                float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? backgroundWorldRect, GetProjectedRect(currentPosition));
-                if (nonOverlappingArea < minNonOverlappingArea)
+                Vector3 anchoredPosition = GetPositionForAnchorPoint(currentAnchorPoint, position);
+                Debug.Log($"[ContextMenu] Trying anchor point: {currentAnchorPoint}, Position after anchor adjustment: {anchoredPosition}");
+
+                // Try each direction with the current anchor point
+                foreach (ContextMenuOpenDirection openDirection in openDirections)
                 {
-                    newPosition = currentPosition;
-                    minNonOverlappingArea = nonOverlappingArea;
+                    Vector2 offsetByDirection = GetOffsetByDirection(openDirection, offsetFromTarget);
+                    Vector3 currentPosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
+                    Debug.Log($"[ContextMenu] Trying direction: {openDirection}, Position after offset: {currentPosition}");
+
+                    // Apply container width adjustment based on direction
+                    if (openDirection == ContextMenuOpenDirection.BOTTOM_LEFT || openDirection == ContextMenuOpenDirection.TOP_LEFT)
+                    {
+                        currentPosition.x -= viewInstance!.ControlsContainer.rect.width;
+                    }
+
+                    // Apply container height adjustment based on direction
+                    if (openDirection == ContextMenuOpenDirection.TOP_RIGHT || openDirection == ContextMenuOpenDirection.TOP_LEFT)
+                    {
+                        currentPosition.y += viewInstance!.ControlsContainer.rect.height;
+                    }
+
+                    Debug.Log($"[ContextMenu] Position after container size adjustments: {currentPosition}");
+
+                    float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? backgroundWorldRect, GetProjectedRect(currentPosition));
+                    Debug.Log($"[ContextMenu] Non-overlapping area: {nonOverlappingArea}");
+
+                    if (nonOverlappingArea < bestNonOverlappingArea)
+                    {
+                        bestPosition = currentPosition;
+                        bestNonOverlappingArea = nonOverlappingArea;
+                        Debug.Log($"[ContextMenu] New best position found: {bestPosition} with area: {bestNonOverlappingArea}");
+                    }
+
+                    // If we found a position with very minimal overlap, we can return early
+                    if (nonOverlappingArea < 0.1f)
+                    {
+                        Debug.Log($"[ContextMenu] Found excellent position with minimal overlap! Early exit with position: {currentPosition}");
+                        return currentPosition;
+                    }
                 }
             }
 
-            return newPosition;
+            Debug.Log($"[ContextMenu] Final best position: {bestPosition} with non-overlapping area: {bestNonOverlappingArea}");
+            return bestPosition;
+        }
+
+        private GenericContextMenuAnchorPoint[] GetFallbackAnchorPoints(GenericContextMenuAnchorPoint initialAnchorPoint)
+        {
+            // Group anchor points by vertical position
+            GenericContextMenuAnchorPoint[] topPoints = {
+                GenericContextMenuAnchorPoint.TOP_LEFT,
+                GenericContextMenuAnchorPoint.TOP_RIGHT
+            };
+
+            GenericContextMenuAnchorPoint[] centerPoints = {
+                GenericContextMenuAnchorPoint.CENTER_LEFT,
+                GenericContextMenuAnchorPoint.CENTER_RIGHT
+            };
+
+            GenericContextMenuAnchorPoint[] bottomPoints = {
+                GenericContextMenuAnchorPoint.BOTTOM_LEFT,
+                GenericContextMenuAnchorPoint.BOTTOM_RIGHT
+            };
+
+            // Start with the initial anchor point
+            var result = new GenericContextMenuAnchorPoint[5];
+            result[0] = initialAnchorPoint;
+
+            // Determine fallback sequence based on the initial anchor point
+            if (Array.IndexOf(topPoints, initialAnchorPoint) >= 0)
+            {
+                // If we started with a TOP point, try CENTER then BOTTOM
+                result[1] = GenericContextMenuAnchorPoint.CENTER_LEFT;
+                result[2] = GenericContextMenuAnchorPoint.CENTER_RIGHT;
+                result[3] = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
+                result[4] = GenericContextMenuAnchorPoint.BOTTOM_RIGHT;
+            }
+            else if (Array.IndexOf(centerPoints, initialAnchorPoint) >= 0)
+            {
+                // If we started with a CENTER point, try TOP then BOTTOM
+                result[1] = GenericContextMenuAnchorPoint.TOP_LEFT;
+                result[2] = GenericContextMenuAnchorPoint.TOP_RIGHT;
+                result[3] = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
+                result[4] = GenericContextMenuAnchorPoint.BOTTOM_RIGHT;
+            }
+            else
+            {
+                // If we started with a BOTTOM point, try CENTER then TOP
+                result[1] = GenericContextMenuAnchorPoint.CENTER_LEFT;
+                result[2] = GenericContextMenuAnchorPoint.CENTER_RIGHT;
+                result[3] = GenericContextMenuAnchorPoint.TOP_LEFT;
+                result[4] = GenericContextMenuAnchorPoint.TOP_RIGHT;
+            }
+
+            return result;
         }
 
         private Vector3 GetPositionForAnchorPoint(GenericContextMenuAnchorPoint anchorPoint, Vector3 position)
@@ -167,10 +257,19 @@ namespace DCL.UI.GenericContextMenu
                 Mathf.Min(rect1.yMax, rect2.yMax)
             );
 
+            Debug.Log($"[ContextMenu] Rect1: ({rect1.xMin},{rect1.yMin},{rect1.xMax},{rect1.yMax}), Rect2: ({rect2.xMin},{rect2.yMin},{rect2.xMax},{rect2.yMax})");
+
             float intersectionArea = 0;
 
             if (intersection is { width: > 0, height: > 0 })
+            {
                 intersectionArea = intersection.width * intersection.height;
+                Debug.Log($"[ContextMenu] Intersection: ({intersection.xMin},{intersection.yMin},{intersection.xMax},{intersection.yMax}), Area: {intersectionArea}");
+            }
+            else
+            {
+                Debug.Log("[ContextMenu] No intersection between rects");
+            }
 
             return area1 + area2 - intersectionArea;
         }
