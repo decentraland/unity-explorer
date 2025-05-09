@@ -14,7 +14,7 @@ namespace DCL.UI
         // float4 used as rect: x,y = position, z,w = width,height
         
         [BurstCompile]
-        public static bool IsRectContained(float4 container, float4 rect)
+        public static bool IsRectContained(ref float4 container, ref float4 rect)
         {
             return rect.x >= container.x && 
                    rect.x + rect.z <= container.x + container.z && 
@@ -23,7 +23,7 @@ namespace DCL.UI
         }
         
         [BurstCompile]
-        public static float CalculateOutOfBoundsArea(float4 container, float4 rect)
+        public static float CalculateOutOfBoundsArea(ref float4 container, ref float4 rect)
         {
             float outOfBoundsWidth = 0;
             float outOfBoundsHeight = 0;
@@ -42,20 +42,21 @@ namespace DCL.UI
         }
         
         [BurstCompile]
-        public static float4 CalculateIntersection(float4 rect1, float4 rect2)
+        public static void CalculateIntersection(ref float4 result, ref float4 rect1, ref float4 rect2)
         {
             float xMin = math.max(rect1.x, rect2.x);
             float yMin = math.max(rect1.y, rect2.y);
             float xMax = math.min(rect1.x + rect1.z, rect2.x + rect2.z);
             float yMax = math.min(rect1.y + rect1.w, rect2.y + rect2.w);
             
-            return new float4(xMin, yMin, math.max(0, xMax - xMin), math.max(0, yMax - yMin));
+            result = new float4(xMin, yMin, math.max(0, xMax - xMin), math.max(0, yMax - yMin));
         }
         
         [BurstCompile]
-        public static float CalculateIntersectionArea(float4 rect1, float4 rect2)
+        public static float CalculateIntersectionArea(ref float4 rect1, ref float4 rect2)
         {
-            float4 intersection = CalculateIntersection(rect1, rect2);
+            float4 intersection = new float4();
+            CalculateIntersection(ref intersection, ref rect1, ref rect2);
             
             if (intersection.z <= 0 || intersection.w <= 0)
                 return 0;
@@ -64,12 +65,12 @@ namespace DCL.UI
         }
         
         [BurstCompile]
-        public static float CalculateOutOfBoundsPercent(float4 container, float4 rect)
+        public static float CalculateOutOfBoundsPercent(ref float4 container, ref float4 rect)
         {
             float menuArea = rect.z * rect.w;
             if (menuArea <= 0) return 0;
             
-            float outOfBoundsArea = CalculateOutOfBoundsArea(container, rect);
+            float outOfBoundsArea = CalculateOutOfBoundsArea(ref container, ref rect);
             return outOfBoundsArea / menuArea;
         }
         
@@ -79,7 +80,7 @@ namespace DCL.UI
             ref float outOfBoundsPercentBottom, 
             ref float outOfBoundsPercentRight, 
             ref float outOfBoundsPercentLeft,
-            float4 menuRect, float4 boundaryRect, float menuWidth, float menuHeight)
+            ref float4 menuRect, ref float4 boundaryRect, float menuWidth, float menuHeight)
         {
             if (menuRect.y + menuRect.w > boundaryRect.y + boundaryRect.w)
             {

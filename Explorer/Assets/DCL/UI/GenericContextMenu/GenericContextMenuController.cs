@@ -174,7 +174,7 @@ namespace DCL.UI.GenericContextMenu
                 ref outOfBoundsPercentBottom,
                 ref outOfBoundsPercentRight,
                 ref outOfBoundsPercentLeft,
-                menuRect, boundaryRect, menuWidth, menuHeight);
+                ref menuRect, ref boundaryRect, menuWidth, menuHeight);
 
             float totalOutOfBoundsPercent = outOfBoundsPercentTop + outOfBoundsPercentBottom +
                                            outOfBoundsPercentRight + outOfBoundsPercentLeft;
@@ -214,19 +214,17 @@ namespace DCL.UI.GenericContextMenu
 
             float4 smartMenuRect = GetProjectedRect(new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z));
 
-            bool isWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, smartMenuRect);
+            bool isWithinBounds = BurstRectUtils.IsRectContained(ref boundaryRect, ref smartMenuRect);
 
             if (isWithinBounds)
             {
                 return new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z);
             }
 
-            float smartOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, smartMenuRect);
-
             float3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
             float4 adjustedMenuRect = GetProjectedRect(new Vector3(adjustedPosition.x, adjustedPosition.y, adjustedPosition.z));
-            bool adjustedIsWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, adjustedMenuRect);
-            float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, adjustedMenuRect);
+            bool adjustedIsWithinBounds = BurstRectUtils.IsRectContained(ref boundaryRect, ref adjustedMenuRect);
+            float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : BurstRectUtils.CalculateOutOfBoundsPercent(ref boundaryRect, ref adjustedMenuRect);
 
             if (adjustedIsWithinBounds)
             {
@@ -263,14 +261,14 @@ namespace DCL.UI.GenericContextMenu
 
                     float3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);
                     float4 currentMenuRect = GetProjectedRect(new Vector3(boundaryAdjustedPosition.x, boundaryAdjustedPosition.y, boundaryAdjustedPosition.z));
-                    bool currentIsWithinBounds = BurstRectUtils.IsRectContained(boundaryRect, currentMenuRect);
+                    bool currentIsWithinBounds = BurstRectUtils.IsRectContained(ref boundaryRect, ref currentMenuRect);
 
                     if (currentIsWithinBounds)
                     {
                         return new Vector3(boundaryAdjustedPosition.x, boundaryAdjustedPosition.y, boundaryAdjustedPosition.z);
                     }
 
-                    float currentOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(boundaryRect, currentMenuRect);
+                    float currentOutOfBoundsPercent = BurstRectUtils.CalculateOutOfBoundsPercent(ref boundaryRect, ref currentMenuRect);
                     if (currentOutOfBoundsPercent < bestOutOfBoundsPercent)
                     {
                         bestPosition = boundaryAdjustedPosition;
@@ -381,7 +379,7 @@ namespace DCL.UI.GenericContextMenu
                 ref outOfBoundsPercentBottom,
                 ref outOfBoundsPercentRight,
                 ref outOfBoundsPercentLeft,
-                menuRect, boundaryRect, menuWidth, menuHeight);
+                ref menuRect, ref boundaryRect, menuWidth, menuHeight);
 
             bool avoidTop = outOfBoundsPercentTop > 0;
             bool avoidBottom = outOfBoundsPercentBottom > 0;
