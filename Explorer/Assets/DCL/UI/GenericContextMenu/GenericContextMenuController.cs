@@ -118,6 +118,11 @@ namespace DCL.UI.GenericContextMenu
             // Apply container adjustments
             Vector3 adjustedBasePosition = ApplyContainerAdjustments(basePosition, initialDirection);
             
+            // For debugging all directions
+            Debug.Log($"[ContextMenu] Direction {initialDirection}: anchoredPosition={anchoredPosition}, " +
+                     $"offsetByDirection={offsetByDirection}, basePosition={basePosition}, " +
+                     $"adjustedBasePosition={adjustedBasePosition}");
+            
             // Get boundary rect we need to stay within
             Rect boundaryRect = overlapRect ?? backgroundWorldRect;
             
@@ -173,30 +178,31 @@ namespace DCL.UI.GenericContextMenu
                 {
                     Vector2 currentOffsetByDirection = GetOffsetByDirection(offsetDirection, offsetFromTarget);
                     Vector3 currentPosition = currentAnchoredPosition + new Vector3(currentOffsetByDirection.x, currentOffsetByDirection.y, 0);
-                    Debug.Log($"[ContextMenu] Trying offset direction: {offsetDirection}, Position after offset: {currentPosition}");
-
+                    
                     // Apply container adjustments
-                    currentPosition = ApplyContainerAdjustments(currentPosition, offsetDirection);
+                    Vector3 adjustedCurrentPosition = ApplyContainerAdjustments(currentPosition, offsetDirection);
+                    
+                    Debug.Log($"[ContextMenu] Direction {offsetDirection}: adjustedCurrentPosition={adjustedCurrentPosition}");
 
                     // Try to adjust this position to fit bounds
-                    Vector3 adjustedCurrentPosition = AdjustPositionToFitBounds(currentPosition, boundaryRect);
-                    Rect currentMenuRect = GetProjectedRect(adjustedCurrentPosition);
+                    Vector3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);
+                    Rect currentMenuRect = GetProjectedRect(boundaryAdjustedPosition);
                     bool currentIsWithinBounds = IsRectContained(boundaryRect, currentMenuRect);
                     
-                    Debug.Log($"[ContextMenu] Position after adjustment: {adjustedCurrentPosition}, within bounds: {currentIsWithinBounds}");
+                    Debug.Log($"[ContextMenu] Position after adjustment: {boundaryAdjustedPosition}, within bounds: {currentIsWithinBounds}");
 
                     // If this position is within bounds, use it immediately
                     if (currentIsWithinBounds)
                     {
-                        Debug.Log($"[ContextMenu] Found position within bounds! Using: {adjustedCurrentPosition}");
-                        return adjustedCurrentPosition;
+                        Debug.Log($"[ContextMenu] Found position within bounds! Using: {boundaryAdjustedPosition}");
+                        return boundaryAdjustedPosition;
                     }
                     
                     // Otherwise, track the position with least area outside bounds
                     float currentOutOfBoundsArea = CalculateOutOfBoundsArea(boundaryRect, currentMenuRect);
                     if (currentOutOfBoundsArea < bestOutOfBoundsArea)
                     {
-                        bestPosition = adjustedCurrentPosition;
+                        bestPosition = boundaryAdjustedPosition;
                         bestOutOfBoundsArea = currentOutOfBoundsArea;
                         Debug.Log($"[ContextMenu] New best position found: {bestPosition} with out-of-bounds area: {bestOutOfBoundsArea}");
                     }
@@ -331,33 +337,53 @@ namespace DCL.UI.GenericContextMenu
 
         private Vector3 GetPositionForDirection(ContextMenuOpenDirection direction, Vector3 position)
         {
+            float halfWidth = viewInstance!.ControlsContainer.rect.width / 2;
+            float halfHeight = viewInstance!.ControlsContainer.rect.height / 2;
+            Vector3 result = position;
+            
+            // Apply horizontal offset based on direction
             switch (direction)
             {
                 case ContextMenuOpenDirection.TOP_LEFT:
-                    position.y -= viewInstance!.ControlsContainer.rect.height / 2;
-                    position.x += viewInstance!.ControlsContainer.rect.width / 2;
+                case ContextMenuOpenDirection.BOTTOM_LEFT:
+                case ContextMenuOpenDirection.CENTER_LEFT:
+                    // For LEFT positions, we want the right edge to be at the anchor point
+                    // So we move left by half width
+                    result.x -= halfWidth;
                     break;
                 case ContextMenuOpenDirection.TOP_RIGHT:
-                    position.y -= viewInstance!.ControlsContainer.rect.height / 2;
-                    position.x -= viewInstance!.ControlsContainer.rect.width / 2;
-                    break;
-                case ContextMenuOpenDirection.BOTTOM_LEFT:
-                    position.y += viewInstance!.ControlsContainer.rect.height / 2;
-                    position.x += viewInstance!.ControlsContainer.rect.width / 2;
-                    break;
                 case ContextMenuOpenDirection.BOTTOM_RIGHT:
-                    position.y += viewInstance!.ControlsContainer.rect.height / 2;
-                    position.x -= viewInstance!.ControlsContainer.rect.width / 2;
-                    break;
-                case ContextMenuOpenDirection.CENTER_LEFT:
-                    position.x += viewInstance!.ControlsContainer.rect.width / 2;
-                    break;
                 case ContextMenuOpenDirection.CENTER_RIGHT:
-                    position.x -= viewInstance!.ControlsContainer.rect.width / 2;
+                    // For RIGHT positions, we want the left edge to be at the anchor point
+                    // So we move right by half width
+                    result.x += halfWidth;
                     break;
             }
-
-            return position;
+            
+            // Apply vertical offset based on direction
+            switch (direction)
+            {
+                case ContextMenuOpenDirection.TOP_LEFT:
+                case ContextMenuOpenDirection.TOP_RIGHT:
+                    // For TOP positions, we want the bottom edge to be at the anchor point
+                    // So we move up by half height
+                    result.y += halfHeight;
+                    break;
+                case ContextMenuOpenDirection.BOTTOM_LEFT:
+                case ContextMenuOpenDirection.BOTTOM_RIGHT:
+                    // For BOTTOM positions, we want the top edge to be at the anchor point
+                    // So we move down by half height
+                    result.y -= halfHeight;
+                    break;
+                case ContextMenuOpenDirection.CENTER_LEFT:
+                case ContextMenuOpenDirection.CENTER_RIGHT:
+                    // For CENTER positions, we want the vertical center to be at the anchor point
+                    // No vertical adjustment needed
+                    break;
+            }
+            
+            Debug.Log($"[ContextMenu] GetPositionForDirection {direction}: {position} -> {result}");
+            return result;
         }
 
         private float CalculateIntersectionArea(Rect rect1, Rect rect2)
@@ -418,28 +444,11 @@ namespace DCL.UI.GenericContextMenu
         
         private Vector3 ApplyContainerAdjustments(Vector3 position, ContextMenuOpenDirection direction)
         {
-            // Apply container width adjustment based on direction
-            if (direction == ContextMenuOpenDirection.BOTTOM_LEFT || 
-                direction == ContextMenuOpenDirection.TOP_LEFT ||
-                direction == ContextMenuOpenDirection.CENTER_LEFT)
-            {
-                position.x -= viewInstance!.ControlsContainer.rect.width;
-            }
-
-            // Apply container height adjustment based on direction
-            if (direction == ContextMenuOpenDirection.TOP_RIGHT || 
-                direction == ContextMenuOpenDirection.TOP_LEFT)
-            {
-                position.y += viewInstance!.ControlsContainer.rect.height;
-            }
-            // CENTER positions need half height adjustment
-            else if (direction == ContextMenuOpenDirection.CENTER_RIGHT ||
-                     direction == ContextMenuOpenDirection.CENTER_LEFT)
-            {
-                position.y += viewInstance!.ControlsContainer.rect.height / 2;
-            }
-            
+            // We already did the positioning in GetPositionForDirection, so we don't need any further adjustments
+            // This method is kept for compatibility
             return position;
         }
     }
 }
+
+
