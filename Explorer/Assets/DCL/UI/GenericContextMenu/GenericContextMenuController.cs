@@ -110,6 +110,12 @@ namespace DCL.UI.GenericContextMenu
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
             Debug.Log($"[ContextMenu] Initial position: {position}, Requested direction: {initialDirection}");
 
+            // Get base position for the initial direction
+            Vector3 basePosition = GetPositionForDirection(initialDirection, position);
+            Vector2 offsetByDirection = GetOffsetByDirection(initialDirection, offsetFromTarget);
+            Vector3 initialPosition = basePosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
+            Vector3 adjustedInitialPosition = ApplyContainerAdjustments(initialPosition, initialDirection);
+            
             // Get boundary rect we need to stay within
             Rect boundaryRect = overlapRect ?? backgroundWorldRect;
             
@@ -117,11 +123,61 @@ namespace DCL.UI.GenericContextMenu
             float menuWidth = viewInstance!.ControlsContainer.rect.width;
             float menuHeight = viewInstance!.ControlsContainer.rect.height;
             
+            // Project the menu rectangle at the initial position
+            Rect menuRect = GetProjectedRect(adjustedInitialPosition);
+            
+            // Calculate how much the menu would go out of bounds (as percentage of menu size)
+            float outOfBoundsPercentTop = 0;
+            float outOfBoundsPercentBottom = 0;
+            float outOfBoundsPercentRight = 0;
+            float outOfBoundsPercentLeft = 0;
+            
+            if (menuRect.yMax > boundaryRect.yMax)
+            {
+                float overflow = menuRect.yMax - boundaryRect.yMax;
+                outOfBoundsPercentTop = overflow / menuHeight;
+            }
+            
+            if (menuRect.yMin < boundaryRect.yMin)
+            {
+                float overflow = boundaryRect.yMin - menuRect.yMin;
+                outOfBoundsPercentBottom = overflow / menuHeight;
+            }
+            
+            if (menuRect.xMax > boundaryRect.xMax)
+            {
+                float overflow = menuRect.xMax - boundaryRect.xMax;
+                outOfBoundsPercentRight = overflow / menuWidth;
+            }
+            
+            if (menuRect.xMin < boundaryRect.xMin)
+            {
+                float overflow = boundaryRect.xMin - menuRect.xMin;
+                outOfBoundsPercentLeft = overflow / menuWidth;
+            }
+            
+            // Calculate total percentage out of bounds
+            float totalOutOfBoundsPercent = outOfBoundsPercentTop + outOfBoundsPercentBottom + 
+                                           outOfBoundsPercentRight + outOfBoundsPercentLeft;
+            
+            Debug.Log($"[ContextMenu] Out of bounds analysis: Top={outOfBoundsPercentTop:P2}, Bottom={outOfBoundsPercentBottom:P2}, " +
+                      $"Right={outOfBoundsPercentRight:P2}, Left={outOfBoundsPercentLeft:P2}, Total={totalOutOfBoundsPercent:P2}");
+            
+            // Threshold for minimum adjustment (1% is often visual noise)
+            const float MINIMAL_ADJUSTMENT_THRESHOLD = 0.01f;
+            
+            // Check if the menu is already well-positioned or only minimally out of bounds
+            if (totalOutOfBoundsPercent < MINIMAL_ADJUSTMENT_THRESHOLD)
+            {
+                Debug.Log($"[ContextMenu] Only {totalOutOfBoundsPercent:P2} out of bounds, keeping initial position: {adjustedInitialPosition}");
+                return adjustedInitialPosition;
+            }
+            
             // Check if the menu would go out of bounds in different directions
-            bool outOfBoundsOnRight = anchorPosition.x + menuWidth > boundaryRect.xMax;
-            bool outOfBoundsOnLeft = anchorPosition.x - menuWidth < boundaryRect.xMin;
-            bool outOfBoundsOnTop = anchorPosition.y + menuHeight > boundaryRect.yMax;
-            bool outOfBoundsOnBottom = anchorPosition.y - menuHeight < boundaryRect.yMin;
+            bool outOfBoundsOnRight = outOfBoundsPercentRight > 0;
+            bool outOfBoundsOnLeft = outOfBoundsPercentLeft > 0;
+            bool outOfBoundsOnTop = outOfBoundsPercentTop > 0;
+            bool outOfBoundsOnBottom = outOfBoundsPercentBottom > 0;
             
             Debug.Log($"[ContextMenu] Boundary checks: Right={outOfBoundsOnRight}, Left={outOfBoundsOnLeft}, " +
                       $"Top={outOfBoundsOnTop}, Bottom={outOfBoundsOnBottom}");
@@ -164,21 +220,21 @@ namespace DCL.UI.GenericContextMenu
             // Proceed with the smart direction (either original or adjusted)
             // Get base position for the smart direction
             Vector3 anchoredPosition = GetPositionForDirection(smartDirection, position);
-            Vector2 offsetByDirection = GetOffsetByDirection(smartDirection, offsetFromTarget);
-            Vector3 basePosition = anchoredPosition + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
+            Vector2 offsetBySmartDirection = GetOffsetByDirection(smartDirection, offsetFromTarget);
+            Vector3 baseSmartPosition = anchoredPosition + new Vector3(offsetBySmartDirection.x, offsetBySmartDirection.y, 0);
             
             // For debugging all directions
             Debug.Log($"[ContextMenu] Using direction {smartDirection}: anchoredPosition={anchoredPosition}, " +
-                     $"offsetByDirection={offsetByDirection}, basePosition={basePosition}");
+                     $"offsetByDirection={offsetBySmartDirection}, basePosition={baseSmartPosition}");
             
             // Apply container adjustments
-            Vector3 adjustedBasePosition = ApplyContainerAdjustments(basePosition, smartDirection);
+            Vector3 adjustedBasePosition = ApplyContainerAdjustments(baseSmartPosition, smartDirection);
             
             // Check if menu is within bounds with the smart direction
-            Rect menuRect = GetProjectedRect(adjustedBasePosition);
+            Rect smartMenuRect = GetProjectedRect(adjustedBasePosition);
             
             // Check if menu is fully contained within boundary
-            bool isWithinBounds = IsRectContained(boundaryRect, menuRect);
+            bool isWithinBounds = IsRectContained(boundaryRect, smartMenuRect);
             Debug.Log($"[ContextMenu] Smart position is within bounds: {isWithinBounds}");
             
             if (isWithinBounds)
@@ -187,16 +243,22 @@ namespace DCL.UI.GenericContextMenu
                 return adjustedBasePosition;
             }
             
+            // Calculate how much the smart position is out of bounds (as percentage)
+            float smartOutOfBoundsPercent = CalculateOutOfBoundsPercent(boundaryRect, smartMenuRect);
+            
             // Try to adjust the position to fit within bounds while maintaining the smart direction
             Vector3 adjustedPosition = AdjustPositionToFitBounds(adjustedBasePosition, boundaryRect);
             Rect adjustedMenuRect = GetProjectedRect(adjustedPosition);
             bool adjustedIsWithinBounds = IsRectContained(boundaryRect, adjustedMenuRect);
+            float adjustedOutOfBoundsPercent = adjustedIsWithinBounds ? 0 : CalculateOutOfBoundsPercent(boundaryRect, adjustedMenuRect);
             
-            Debug.Log($"[ContextMenu] After boundary adjustment: position={adjustedPosition}, within bounds: {adjustedIsWithinBounds}");
+            Debug.Log($"[ContextMenu] After boundary adjustment: position={adjustedPosition}, within bounds: {adjustedIsWithinBounds}, " +
+                      $"out of bounds: {adjustedOutOfBoundsPercent:P2} (was {smartOutOfBoundsPercent:P2})");
             
+            // If the adjusted position is within bounds, use it
             if (adjustedIsWithinBounds)
             {
-                Debug.Log($"[ContextMenu] Using adjusted position: {adjustedPosition}");
+                Debug.Log($"[ContextMenu] Adjusted position is within bounds, using: {adjustedPosition}");
                 return adjustedPosition;
             }
             
@@ -208,8 +270,9 @@ namespace DCL.UI.GenericContextMenu
             Debug.Log($"[ContextMenu] Fallback order: {string.Join(", ", fallbackOrder)}");
 
             // Track the best position (one with least amount outside bounds)
-            float bestOutOfBoundsArea = CalculateOutOfBoundsArea(boundaryRect, adjustedMenuRect);
+            float bestOutOfBoundsPercent = adjustedOutOfBoundsPercent;
             Vector3 bestPosition = adjustedPosition; // Start with our adjusted position as fallback
+            bool foundPerfectPosition = false; // Track if we found a perfect (within bounds) position
 
             // Try each direction in the fallback sequence
             foreach (var currentDirection in fallbackOrder)
@@ -247,17 +310,18 @@ namespace DCL.UI.GenericContextMenu
                     }
                     
                     // Otherwise, track the position with least area outside bounds
-                    float currentOutOfBoundsArea = CalculateOutOfBoundsArea(boundaryRect, currentMenuRect);
-                    if (currentOutOfBoundsArea < bestOutOfBoundsArea)
+                    float currentOutOfBoundsPercent = CalculateOutOfBoundsPercent(boundaryRect, currentMenuRect);
+                    if (currentOutOfBoundsPercent < bestOutOfBoundsPercent)
                     {
                         bestPosition = boundaryAdjustedPosition;
-                        bestOutOfBoundsArea = currentOutOfBoundsArea;
-                        Debug.Log($"[ContextMenu] New best position found: {bestPosition} with out-of-bounds area: {bestOutOfBoundsArea}");
+                        bestOutOfBoundsPercent = currentOutOfBoundsPercent;
+                        Debug.Log($"[ContextMenu] New best position found: {bestPosition} with out-of-bounds: {bestOutOfBoundsPercent:P2}");
                     }
                 }
             }
 
-            Debug.Log($"[ContextMenu] Final best position: {bestPosition} with out-of-bounds area: {bestOutOfBoundsArea}");
+            // Only accept an out-of-bounds position if we've tried everything else
+            Debug.Log($"[ContextMenu] Final best position: {bestPosition} with out-of-bounds: {bestOutOfBoundsPercent:P2}");
             return bestPosition;
         }
         
@@ -338,62 +402,217 @@ namespace DCL.UI.GenericContextMenu
             HorizontalPosition initialHorizontal = GetHorizontalPosition(initialDirection);
             VerticalPosition initialVertical = GetVerticalPosition(initialDirection);
             
+            // Check if the menu would go out of bounds vertically
+            float outOfBoundsPercentTop = 0;
+            float outOfBoundsPercentBottom = 0;
+            // Check horizontal boundaries too
+            float outOfBoundsPercentRight = 0;
+            float outOfBoundsPercentLeft = 0;
+            
+            // Get menu dimensions
+            float menuHeight = viewInstance!.ControlsContainer.rect.height;
+            float menuWidth = viewInstance!.ControlsContainer.rect.width;
+            
+            // Get anchor position in world space
+            Vector2 anchorPosition = inputData.AnchorPosition;
+            
+            // Get boundary rect
+            Rect boundaryRect = inputData.OverlapRect ?? backgroundWorldRect;
+            
+            // Check if the menu would go out of bounds with current position
+            Vector3 menuPosition = GetPositionForDirection(initialDirection, viewRectTransform.InverseTransformPoint(anchorPosition));
+            menuPosition = ApplyContainerAdjustments(menuPosition, initialDirection);
+            Rect menuRect = GetProjectedRect(menuPosition);
+            
+            // Calculate how much the menu would go out of bounds
+            if (menuRect.yMax > boundaryRect.yMax)
+            {
+                float overflow = menuRect.yMax - boundaryRect.yMax;
+                outOfBoundsPercentTop = overflow / menuHeight;
+                Debug.Log($"[ContextMenu] Out of bounds on top: {outOfBoundsPercentTop:P2}");
+            }
+            
+            if (menuRect.yMin < boundaryRect.yMin)
+            {
+                float overflow = boundaryRect.yMin - menuRect.yMin;
+                outOfBoundsPercentBottom = overflow / menuHeight;
+                Debug.Log($"[ContextMenu] Out of bounds on bottom: {outOfBoundsPercentBottom:P2}");
+            }
+            
+            if (menuRect.xMax > boundaryRect.xMax)
+            {
+                float overflow = menuRect.xMax - boundaryRect.xMax;
+                outOfBoundsPercentRight = overflow / menuWidth;
+                Debug.Log($"[ContextMenu] Out of bounds on right: {outOfBoundsPercentRight:P2}");
+            }
+            
+            if (menuRect.xMin < boundaryRect.xMin)
+            {
+                float overflow = boundaryRect.xMin - menuRect.xMin;
+                outOfBoundsPercentLeft = overflow / menuWidth;
+                Debug.Log($"[ContextMenu] Out of bounds on left: {outOfBoundsPercentLeft:P2}");
+            }
+            
+            // The threshold for when to skip CENTER positions (40%)
+            const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
+            
+            // Variables to track which positions we should avoid
+            bool avoidTop = outOfBoundsPercentTop > 0;
+            bool avoidBottom = outOfBoundsPercentBottom > 0;
+            bool skipCenter = outOfBoundsPercentTop > SEVERE_BOUNDARY_VIOLATION_THRESHOLD || 
+                               outOfBoundsPercentBottom > SEVERE_BOUNDARY_VIOLATION_THRESHOLD;
+            
+            // Avoid horizontal positions too
+            bool avoidRight = outOfBoundsPercentRight > 0;
+            bool avoidLeft = outOfBoundsPercentLeft > 0;
+            
+            Debug.Log($"[ContextMenu] Position constraints: avoidTop={avoidTop}, avoidBottom={avoidBottom}, " +
+                      $"skipCenter={skipCenter}, avoidRight={avoidRight}, avoidLeft={avoidLeft}");
+            
             // Create result array for all 6 directions with priority order
-            var result = new ContextMenuOpenDirection[6];
-            int index = 0;
+            var resultList = new System.Collections.Generic.List<ContextMenuOpenDirection>(6);
             
-            // Always start with the initial direction
-            result[index++] = initialDirection;
-            
-            // First: Add all other directions with the SAME horizontal position
-            // Try to maintain vertical order based on initial position
-            if (initialHorizontal == HorizontalPosition.LEFT)
+            // Always start with the initial direction unless it's clearly invalid
+            if ((initialVertical == VerticalPosition.TOP && !avoidTop) ||
+                (initialVertical == VerticalPosition.BOTTOM && !avoidBottom) ||
+                (initialVertical == VerticalPosition.CENTER) ||
+                (initialHorizontal == HorizontalPosition.LEFT && !avoidLeft) ||
+                (initialHorizontal == HorizontalPosition.RIGHT && !avoidRight))
             {
-                // We're starting with a LEFT direction, add other LEFT directions
-                // If starting with TOP, the order is: TOP -> CENTER -> BOTTOM
-                // If starting with CENTER, the order is: CENTER -> TOP -> BOTTOM
-                // If starting with BOTTOM, the order is: BOTTOM -> CENTER -> TOP
-                
-                // Add other vertical positions while keeping the same (LEFT) horizontal position
-                if (initialVertical != VerticalPosition.TOP)
-                    result[index++] = ContextMenuOpenDirection.TOP_LEFT;
-                    
-                if (initialVertical != VerticalPosition.CENTER)
-                    result[index++] = ContextMenuOpenDirection.CENTER_LEFT;
-                    
-                if (initialVertical != VerticalPosition.BOTTOM)
-                    result[index++] = ContextMenuOpenDirection.BOTTOM_LEFT;
-                
-                // Then add all RIGHT positions, maintaining the same vertical order
-                result[index++] = ContextMenuOpenDirection.TOP_RIGHT;
-                result[index++] = ContextMenuOpenDirection.CENTER_RIGHT;
-                result[index++] = ContextMenuOpenDirection.BOTTOM_RIGHT;
-            }
-            else // HorizontalPosition.RIGHT
-            {
-                // We're starting with a RIGHT direction, add other RIGHT directions
-                
-                // Add other vertical positions while keeping the same (RIGHT) horizontal position
-                if (initialVertical != VerticalPosition.TOP)
-                    result[index++] = ContextMenuOpenDirection.TOP_RIGHT;
-                    
-                if (initialVertical != VerticalPosition.CENTER)
-                    result[index++] = ContextMenuOpenDirection.CENTER_RIGHT;
-                    
-                if (initialVertical != VerticalPosition.BOTTOM)
-                    result[index++] = ContextMenuOpenDirection.BOTTOM_RIGHT;
-                
-                // Then add all LEFT positions
-                result[index++] = ContextMenuOpenDirection.TOP_LEFT;
-                result[index++] = ContextMenuOpenDirection.CENTER_LEFT;
-                result[index++] = ContextMenuOpenDirection.BOTTOM_LEFT;
+                resultList.Add(initialDirection);
             }
             
-            // Create a new array with only the non-null values
-            var trimmedResult = new ContextMenuOpenDirection[index];
-            Array.Copy(result, trimmedResult, index);
+            // First prioritize fixing the most severe boundary violation
+            if (outOfBoundsPercentTop > outOfBoundsPercentBottom && outOfBoundsPercentTop > 0)
+            {
+                // Top violation is worse, prioritize bottom positions
+                if (initialHorizontal == HorizontalPosition.LEFT)
+                {
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                    if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                    
+                    // Only if right side isn't problematic
+                    if (!avoidRight)
+                    {
+                        resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                        if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                    }
+                }
+                else // RIGHT
+                {
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                    if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                    
+                    // Only if left side isn't problematic
+                    if (!avoidLeft)
+                    {
+                        resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                        if (!skipCenter && !avoidBottom) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                    }
+                }
+                
+                // Add top positions only as last resort and they're not in the list yet
+                if (!resultList.Contains(ContextMenuOpenDirection.TOP_LEFT) && !avoidLeft) 
+                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
+                if (!resultList.Contains(ContextMenuOpenDirection.TOP_RIGHT) && !avoidRight) 
+                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
+            }
+            else if (outOfBoundsPercentBottom > 0)
+            {
+                // Bottom violation is worse or only violation, prioritize top positions
+                if (initialHorizontal == HorizontalPosition.LEFT)
+                {
+                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
+                    if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                    
+                    // Only if right side isn't problematic
+                    if (!avoidRight)
+                    {
+                        resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
+                        if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                    }
+                }
+                else // RIGHT
+                {
+                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
+                    if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                    
+                    // Only if left side isn't problematic
+                    if (!avoidLeft)
+                    {
+                        resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
+                        if (!skipCenter && !avoidTop) resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                    }
+                }
+                
+                // Add bottom positions only as last resort and they're not in the list yet
+                if (!resultList.Contains(ContextMenuOpenDirection.BOTTOM_LEFT) && !avoidLeft) 
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                if (!resultList.Contains(ContextMenuOpenDirection.BOTTOM_RIGHT) && !avoidRight) 
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
+            }
+            else if (avoidLeft || avoidRight)
+            {
+                // Handle horizontal violations without vertical violations
+                if (avoidLeft)
+                {
+                    // Add all RIGHT positions first
+                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
+                    resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                }
+                else if (avoidRight)
+                {
+                    // Add all LEFT positions first
+                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
+                    resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                }
+            }
+            else
+            {
+                // No boundary violations, use standard fallback orders
+                if (initialHorizontal == HorizontalPosition.LEFT)
+                {
+                    // Add LEFT positions first in appropriate vertical order
+                    if (initialVertical != VerticalPosition.TOP && !resultList.Contains(ContextMenuOpenDirection.TOP_LEFT))
+                        resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
+                        
+                    if (initialVertical != VerticalPosition.CENTER && !resultList.Contains(ContextMenuOpenDirection.CENTER_LEFT))
+                        resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                        
+                    if (initialVertical != VerticalPosition.BOTTOM && !resultList.Contains(ContextMenuOpenDirection.BOTTOM_LEFT))
+                        resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                    
+                    // Then add RIGHT positions in same vertical order
+                    resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
+                    resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                }
+                else // RIGHT
+                {
+                    // Add RIGHT positions first in appropriate vertical order
+                    if (initialVertical != VerticalPosition.TOP && !resultList.Contains(ContextMenuOpenDirection.TOP_RIGHT))
+                        resultList.Add(ContextMenuOpenDirection.TOP_RIGHT);
+                        
+                    if (initialVertical != VerticalPosition.CENTER && !resultList.Contains(ContextMenuOpenDirection.CENTER_RIGHT))
+                        resultList.Add(ContextMenuOpenDirection.CENTER_RIGHT);
+                        
+                    if (initialVertical != VerticalPosition.BOTTOM && !resultList.Contains(ContextMenuOpenDirection.BOTTOM_RIGHT))
+                        resultList.Add(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                    
+                    // Then add LEFT positions in same vertical order
+                    resultList.Add(ContextMenuOpenDirection.TOP_LEFT);
+                    resultList.Add(ContextMenuOpenDirection.CENTER_LEFT);
+                    resultList.Add(ContextMenuOpenDirection.BOTTOM_LEFT);
+                }
+            }
             
-            return trimmedResult;
+            // Remove duplicates - convert to array
+            var result = resultList.ToArray();
+            
+            Debug.Log($"[ContextMenu] Fallback directions: {string.Join(", ", result)}");
+            return result;
         }
         
         // Enum to represent horizontal position
@@ -591,6 +810,16 @@ namespace DCL.UI.GenericContextMenu
                 ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.TOP_RIGHT,
                 _ => direction // Keep CENTER positions as is
             };
+        }
+
+        // Helper method to calculate percentage of menu that's out of bounds
+        private float CalculateOutOfBoundsPercent(Rect container, Rect rect)
+        {
+            float menuArea = rect.width * rect.height;
+            if (menuArea <= 0) return 0;
+            
+            float outOfBoundsArea = CalculateOutOfBoundsArea(container, rect);
+            return outOfBoundsArea / menuArea;
         }
     }
 }
