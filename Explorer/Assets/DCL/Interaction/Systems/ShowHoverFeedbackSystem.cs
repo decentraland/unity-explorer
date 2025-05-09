@@ -18,7 +18,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
     public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
-        private readonly Dictionary<UnityEngine.InputSystem.InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
+        private readonly Dictionary<string, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
         private Vector2 cursorPositionPercent;
 
         internal ShowHoverFeedbackSystem(World world, UI.HoverCanvas hoverCanvasInstance,
@@ -26,10 +26,13 @@ namespace DCL.Interaction.HoverCanvas.Systems
         {
             this.hoverCanvasInstance = hoverCanvasInstance;
 
-            inputButtonSettingsMap = new Dictionary<UnityEngine.InputSystem.InputAction, HoverCanvasSettings.InputButtonSettings>(settings.Count);
+            inputButtonSettingsMap = new Dictionary<string, HoverCanvasSettings.InputButtonSettings>(settings.Count);
 
             foreach (HoverCanvasSettings.InputButtonSettings inputButtonSettings in settings)
-                inputButtonSettingsMap.Add(inputButtonSettings.PlayerInputAction, inputButtonSettings);
+            {
+                string actionId = inputButtonSettings.PlayerInputAction.action.actionMap.name + "/" + inputButtonSettings.PlayerInputAction.action.name;
+                inputButtonSettingsMap.Add(actionId, inputButtonSettings);
+            }
         }
 
         protected override void Update(float t)
@@ -65,7 +68,8 @@ namespace DCL.Interaction.HoverCanvas.Systems
                     string? actionKeyText = null;
                     Sprite? icon = null;
 
-                    if (inputButtonSettingsMap.TryGetValue(tooltipInfo.Action, out HoverCanvasSettings.InputButtonSettings settings))
+                    string actionId = tooltipInfo.Action.actionMap?.name + "/" + tooltipInfo.Action.name;
+                    if (inputButtonSettingsMap.TryGetValue(actionId, out HoverCanvasSettings.InputButtonSettings settings))
                     {
                         actionKeyText = settings.Key;
                         icon = settings.Icon;
