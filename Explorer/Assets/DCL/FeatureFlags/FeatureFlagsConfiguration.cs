@@ -26,6 +26,9 @@ namespace DCL.FeatureFlags
             return variant.name == variantId == variant.enabled;
         }
 
+        public bool TryGetVariant(string id, out FeatureFlagVariantDto variant) =>
+            result.variants.TryGetValue(id, out variant);
+
         public bool TryGetJsonPayload<T>(string id, string variantId, out T? json)
         {
             json = default(T);

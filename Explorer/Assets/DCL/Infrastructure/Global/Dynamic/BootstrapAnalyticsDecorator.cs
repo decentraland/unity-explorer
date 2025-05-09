@@ -101,7 +101,14 @@ namespace Global.Dynamic
             var enabledFeatureFlags = new JsonArray();
 
             foreach (string flag in configuration.AllEnabledFlags)
-                enabledFeatureFlags.Add(flag);
+            {
+                string name = flag;
+
+                if (configuration.TryGetVariant(flag, out FeatureFlagVariantDto variant))
+                    name += $":{variant.name}";
+
+                enabledFeatureFlags.Add(name);
+            }
 
             analytics.Track(FeatureFlags.ENABLED_FEATURES, new JsonObject
             {
