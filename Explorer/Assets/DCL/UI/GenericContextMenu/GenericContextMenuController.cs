@@ -152,9 +152,8 @@ namespace DCL.UI.GenericContextMenu
             float3 tempPos = tempPositionCache[0];
             tempPos.x += offsetByDirection.x;
             tempPos.y += offsetByDirection.y;
-            tempPositionCache[0] = tempPos;
-
-            float3 adjustedInitialPosition = ApplyContainerAdjustments(tempPositionCache[0], initialDirection);
+            
+            float3 adjustedInitialPosition = tempPos;
 
             float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
 
@@ -205,9 +204,8 @@ namespace DCL.UI.GenericContextMenu
             float3 tempSmartPos = tempPositionCache[1];
             tempSmartPos.x += offsetBySmartDirection.x;
             tempSmartPos.y += offsetBySmartDirection.y;
-            tempPositionCache[1] = tempSmartPos;
-
-            float3 adjustedBasePosition = ApplyContainerAdjustments(tempPositionCache[1], smartDirection);
+            
+            float3 adjustedBasePosition = tempSmartPos;
 
             float4 smartMenuRect = GetProjectedRect(new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z));
 
@@ -248,9 +246,8 @@ namespace DCL.UI.GenericContextMenu
                     tempPosForLoop.x = currentAnchoredPosition.x + currentOffsetByDirection.x;
                     tempPosForLoop.y = currentAnchoredPosition.y + currentOffsetByDirection.y;
                     tempPosForLoop.z = currentAnchoredPosition.z;
-                    tempPositionCache[0] = tempPosForLoop;
-
-                    float3 adjustedCurrentPosition = ApplyContainerAdjustments(tempPositionCache[0], offsetDirection);
+            
+                    float3 adjustedCurrentPosition = tempPosForLoop;
 
                     float3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);
                     float4 currentMenuRect = GetProjectedRect(new Vector3(boundaryAdjustedPosition.x, boundaryAdjustedPosition.y, boundaryAdjustedPosition.z));
@@ -353,7 +350,7 @@ namespace DCL.UI.GenericContextMenu
                 viewRectTransform.InverseTransformPoint(anchorPosition).z);
 
             float3 menuPosition = GetPositionForDirection(initialDirection, transformedPosition);
-            float3 adjustedMenuPosition = ApplyContainerAdjustments(menuPosition, initialDirection);
+            float3 adjustedMenuPosition = menuPosition;
             float4 menuRect = GetProjectedRect(new Vector3(adjustedMenuPosition.x, adjustedMenuPosition.y, adjustedMenuPosition.z));
 
             BurstRectUtils.CalculateOutOfBoundsPercentages(
@@ -506,8 +503,6 @@ namespace DCL.UI.GenericContextMenu
 
         private void ProcessHorizontalBoundaryViolation(bool avoidLeft, bool avoidRight)
         {
-            if (!avoidLeft && !avoidRight) return;
-
             if (avoidLeft)
             {
                 AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
@@ -607,7 +602,7 @@ namespace DCL.UI.GenericContextMenu
                     return HorizontalPosition.RIGHT;
 
                 default:
-                    return HorizontalPosition.LEFT;
+                    return HorizontalPosition.RIGHT;
             }
         }
 
@@ -629,7 +624,7 @@ namespace DCL.UI.GenericContextMenu
                     return VerticalPosition.BOTTOM;
 
                 default:
-                    return VerticalPosition.CENTER;
+                    return VerticalPosition.BOTTOM;
             }
         }
 
@@ -711,10 +706,6 @@ namespace DCL.UI.GenericContextMenu
             UniTask inputCloseTask = inputData.CloseTask ?? UniTask.Never(ct);
             return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.Button.OnClickAsync(ct));
         }
-
-        [BurstCompile]
-        private static float3 ApplyContainerAdjustments(float3 position, ContextMenuOpenDirection direction) =>
-            position;
 
         [BurstCompile]
         private static ContextMenuOpenDirection GetOppositeHorizontalDirection(ContextMenuOpenDirection direction)

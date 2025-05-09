@@ -32,7 +32,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         ///     offsetFromTarget has the default value of (11, 18).
         ///     horizontalLayoutPadding has the default value of (8, 8, 4, 12).
         /// </summary>
-        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.TOP_LEFT)
+        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
         {
             this.width = width;
             this.offsetFromTarget = offsetFromTarget ?? DEFAULT_OFFSET_FROM_TARGET;

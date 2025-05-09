@@ -92,7 +92,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
 
-            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -104,7 +104,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_LEFT)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();

@@ -125,7 +125,7 @@ namespace MVC
                     return ContextMenuOpenDirection.CENTER_RIGHT;
                 default:
                 case MenuAnchorPoint.DEFAULT:
-                    return ContextMenuOpenDirection.BOTTOM_LEFT;
+                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
             }
         }
     }
