@@ -12,6 +12,6 @@ namespace DCL.SDKComponents.NFTShape.Component
         }
 
         public readonly override string ToString() =>
-            $"NFTLoadingComponent {{ promise: {Promise.Entity.Entity} {Promise.LoadingIntention.CommonArguments.URL} }}";
+            $"NFTLoadingComponent {{ promise: {Promise.Entity} {Promise.LoadingIntention.CommonArguments.URL} }}";
     }
 }

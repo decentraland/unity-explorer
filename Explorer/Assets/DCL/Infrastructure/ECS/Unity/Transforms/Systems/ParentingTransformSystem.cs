@@ -42,7 +42,7 @@ namespace ECS.Unity.Transforms.Systems
         {
             var parentTransform = World!.TryGetRef<TransformComponent>(transformComponentToBeDeleted.Parent, out bool exists);
 
-            if (exists && parentTransform.Children.Remove(World.Reference(entity)) == false)
+            if (exists && parentTransform.Children.Remove(entity) == false)
                 ReportHub.LogError(
                     GetReportData(),
                     $"Entity {entity} is not a child of its parent {transformComponentToBeDeleted.Parent}"
@@ -53,9 +53,9 @@ namespace ECS.Unity.Transforms.Systems
         [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
         private void OrphanChildrenOfDeletedEntity(ref TransformComponent transformComponentToBeDeleted)
         {
-            foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
+            foreach (Entity childEntity in transformComponentToBeDeleted.Children)
             {
-                ref var transformComponent = ref World!.Get<TransformComponent>(childEntity.Entity);
+                ref TransformComponent transformComponent = ref World!.Get<TransformComponent>(childEntity);
 
                 SetNewChild(
                     ref transformComponent,
@@ -85,13 +85,13 @@ namespace ECS.Unity.Transforms.Systems
 
                 //We have to remove the child from the old parent
                 if (transformComponent.Parent != parentReference)
-                    RemoveFromParent(transformComponent, World.Reference(entity));
+                    RemoveFromParent(transformComponent, entity);
             }
 
-            SetNewChild(ref transformComponent, World.Reference(entity), crdtEntity, parentReference, sdkTransform.ParentId);
+            SetNewChild(ref transformComponent, entity, crdtEntity, parentReference, sdkTransform.ParentId);
         }
 
-        private void SetNewChild(ref TransformComponent childComponent, EntityReference childEntityReference, CRDTEntity childCRDTEntity,
+        private void SetNewChild(ref TransformComponent childComponent, Entity childEntityReference, CRDTEntity childCRDTEntity,
             Entity parentEntity, CRDTEntity parentId)
         {
             if (childComponent.Parent == parentEntity)
@@ -99,7 +99,7 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!World.IsAlive(parentEntity))
             {
-                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to a dead entity parent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference} ({childCRDTEntity}) to a dead entity parent");
                 return;
             }
 
@@ -107,17 +107,17 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!success)
             {
-                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent");
                 return;
             }
 
-            childComponent.AssignParent(childEntityReference, World.Reference(parentEntity), in parentComponent);
+            childComponent.AssignParent(childEntityReference, parentEntity, in parentComponent);
         }
 
-        private void RemoveFromParent(TransformComponent childComponent, EntityReference childEntityReference)
+        private void RemoveFromParent(TransformComponent childComponent, Entity childEntityReference)
         {
-            if (childComponent.Parent.IsAlive(World))
-                World.Get<TransformComponent>(childComponent.Parent.Entity).Children.Remove(childEntityReference);
+            if (World.IsAlive(childComponent.Parent))
+                World.Get<TransformComponent>(childComponent.Parent).Children.Remove(childEntityReference);
         }
     }
 }

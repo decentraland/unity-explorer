@@ -13,7 +13,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             World world = previousSceneEntityInfo.EcsExecutor.World;
 
             // Entity died or PointerEvents component was removed, nothing to do
-            if (!previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference.IsAlive(world) ||
+            if (!world.IsAlive(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference) ||
                 !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
                 return;
 

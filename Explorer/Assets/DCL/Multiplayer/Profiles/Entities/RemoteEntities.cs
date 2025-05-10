@@ -154,7 +154,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new ExtrapolationComponent()
             );
 
-            collidersGlobalCache.Associate(remoteAvatarCollider.Collider, world.Reference(entity));
+            collidersGlobalCache.Associate(remoteAvatarCollider.Collider, entity);
 
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
 

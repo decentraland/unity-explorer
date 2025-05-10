@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsNotNull(uiTransformComponent);
             Assert.AreEqual(UiElementUtils.BuildElementName("UITransform", world.Get<CRDTEntity>(entity)), uiTransformComponent.Transform.name);
             Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
-            Assert.AreEqual(EntityReference.Null, uiTransformComponent.RelationData.parent);
+            Assert.AreEqual(Entity.Null, uiTransformComponent.RelationData.parent);
             Assert.AreEqual(new CRDTEntity(0), uiTransformComponent.RelationData.rightOf);
             Assert.AreEqual(null, uiTransformComponent.RelationData.head);
             Assert.IsFalse(uiTransformComponent.IsHidden);

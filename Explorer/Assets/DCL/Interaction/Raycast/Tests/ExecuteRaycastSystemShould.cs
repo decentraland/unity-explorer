@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.ResetExtensions;
-using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
@@ -19,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using Component = UnityEngine.Component;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 using Vector3 = Decentraland.Common.Vector3;
 
@@ -73,7 +73,7 @@ namespace DCL.Interaction.Raycast.Tests
 
             sceneStateProvider.TickNumber.Returns(5u);
             sceneStateProvider.IsCurrent.Returns(true);
-                
+
 
             pbRaycast = new PBRaycast
             {
@@ -254,7 +254,7 @@ namespace DCL.Interaction.Raycast.Tests
                 entityCollidersSceneCache.TryGetEntity(collider, out Arg.Any<ColliderSceneEntityInfo>())
                                          .Returns(x =>
                                           {
-                                              x[1] = new ColliderSceneEntityInfo(EntityReference.Null, entity, mask);
+                                              x[1] = new ColliderSceneEntityInfo(Entity.Null, entity, mask);
                                               return true;
                                           });
             }

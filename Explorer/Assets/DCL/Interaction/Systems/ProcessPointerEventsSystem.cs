@@ -96,7 +96,7 @@ namespace DCL.Interaction.Systems
         private void HighlightNewEntity(GlobalColliderSceneEntityInfo entityInfo, bool isAtDistance)
         {
             World world = entityInfo.EcsExecutor.World;
-            EntityReference entityRef = entityInfo.ColliderSceneEntityInfo.EntityReference;
+            Entity entityRef = entityInfo.ColliderSceneEntityInfo.EntityReference;
             int count = world.CountEntities(highlightQuery);
 
             if (count > 0)
@@ -115,9 +115,9 @@ namespace DCL.Interaction.Systems
             || previousEntityInfo.IsSameEntity(entityInfo) == false;
 
         [Query]
-        private void SetupHighlightComponent([Data] bool isAtDistance, [Data] EntityReference nextEntity, ref HighlightComponent highlightComponent)
+        private void SetupHighlightComponent([Data] bool isAtDistance, [Data] Entity nextEntityRef, ref HighlightComponent highlightComponent)
         {
-            highlightComponent.Setup(isAtDistance, nextEntity);
+            highlightComponent.Setup(isAtDistance, nextEntityRef);
         }
 
         [Query]
