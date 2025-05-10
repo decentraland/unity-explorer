@@ -26,7 +26,6 @@ namespace DCL.InWorldCamera
 
         private readonly float targetAspectRatio;
         private readonly RectTransform canvasRectTransform;
-        private readonly GPUInstancingService gpuInstancingService;
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
 
@@ -36,13 +35,12 @@ namespace DCL.InWorldCamera
 
         public RecordingState State { get; private set; } = RecordingState.IDLE;
 
-        public ScreenRecorder(RectTransform canvasRectTransform, GPUInstancingService gpuInstancingService)
+        public ScreenRecorder(RectTransform canvasRectTransform)
         {
             targetAspectRatio = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
             Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
 
             this.canvasRectTransform = canvasRectTransform;
-            this.gpuInstancingService = gpuInstancingService;
         }
 
         public void Dispose()
@@ -54,7 +52,7 @@ namespace DCL.InWorldCamera
                 RenderTexture.ReleaseTemporary(originalBaseTargetTexture);
         }
 
-        public IEnumerator CaptureScreenshot(Camera camera)
+        public IEnumerator CaptureScreenshot()
         {
             State = RecordingState.CAPTURING;
 
@@ -65,24 +63,43 @@ namespace DCL.InWorldCamera
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
 
-            // Workaround to fix roads appearance on the screenshot (since they are rendered indirectly).
-            // TODO (Vit): Remove this workaround when GPU Instancing is moved to the RenderFeature approach.
-            RenderTexture rt = RenderTexture.GetTemporary((int)rescaledScreenFrame.ScreenWidth, (int)currentScreenFrame.ScreenHeight, 24, RenderTextureFormat.ARGB32);
-            RenderTexture previousCamRT = camera.targetTexture;
-            camera.targetTexture = rt;
+            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture();
 
-            gpuInstancingService.RenderIndirect();
-            camera.Render();
+            // All the following is necessary due to a Unity bug when working in Linear color space:
+            var newScreenShot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            newScreenShot.SetPixels(screenshotTexture.GetPixels());
+            newScreenShot.Apply();
 
-            Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(roundedUpscale); // upscaled Screen Frame resolution
-            screenshotTexture = CropTexture2D(screenshotTexture, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
-            ResizeTexture2D(screenshotTexture);
+            UpscaleTexture2D(newScreenShot, roundedUpscale); // upscaled Screen Frame resolution
+            CropTexture2D(newScreenShot, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
+            ResizeTexture2D(newScreenShot);
 
             Object.Destroy(screenshotTexture);
-            RenderTexture.ReleaseTemporary(rt);
-            camera.targetTexture = previousCamRT;
+            Object.Destroy(newScreenShot);
 
             State = RecordingState.SCREENSHOT_READY;
+        }
+
+        private void UpscaleTexture2D(Texture2D sourceTexture, int upscaleFactor)
+        {
+            if (upscaleFactor <= 1)
+                return;
+
+            int targetWidth = sourceTexture.width * upscaleFactor;
+            int targetHeight = sourceTexture.height * upscaleFactor;
+
+            var rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
+            RenderTexture.active = rt;
+
+            Graphics.Blit(sourceTexture, rt);
+
+            sourceTexture.Reinitialize(targetWidth, targetHeight, sourceTexture.graphicsFormat, false);
+            sourceTexture.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+            sourceTexture.Apply();
+
+            RenderTexture.active = null;
+            RenderTexture.ReleaseTemporary(rt);
+
         }
 
         public Texture2D GetScreenshotAndReset()
@@ -94,20 +111,18 @@ namespace DCL.InWorldCamera
             return screenshot;
         }
 
-        private static Texture2D CropTexture2D(Texture2D texture, Vector2Int startCorner, int width, int height)
+        private void CropTexture2D(Texture2D texture, Vector2Int startCorner, int width, int height)
         {
             Color[] pixels = texture.GetPixels(startCorner.x, startCorner.y, width, height);
 
-            var result = new Texture2D(width, height, TextureFormat.RGB24, false);
-            result.SetPixels(pixels);
-            result.Apply();
-
-            return result;
+            texture.Reinitialize(width, height, texture.graphicsFormat, false);
+            texture.SetPixels(pixels);
+            texture.Apply();
         }
 
         private void ResizeTexture2D(Texture originalTexture)
         {
-            var renderTexture = RenderTexture.GetTemporary(TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, 0);
+            var renderTexture = RenderTexture.GetTemporary(TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, 0, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
             RenderTexture.active = renderTexture;
 
             // Copy and scale the original texture into the RenderTexture
