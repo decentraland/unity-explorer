@@ -87,9 +87,9 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking,
                     chatEventBus,
-                    sharedSpaceManager);
+                    sharedSpaceManager,
+                    viewDependencies);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -102,7 +102,6 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking,
                     viewDependencies,
                     chatEventBus,
                     sharedSpaceManager);

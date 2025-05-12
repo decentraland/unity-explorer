@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
@@ -37,8 +36,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking,
-            ViewDependencies viewDependencies, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
+            ViewDependencies viewDependencies,
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;

@@ -11,7 +11,7 @@ using DCL.TeleportPrompt;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
@@ -36,6 +36,8 @@ namespace MVC
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly IProfileRepository profileRepository;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
@@ -50,7 +52,9 @@ namespace MVC
             bool includeUserBlocking,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator, ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy)
+            IRealmNavigator realmNavigator, ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IProfileRepository profileRepository,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
@@ -62,6 +66,8 @@ namespace MVC
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.profileRepository = profileRepository;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -82,7 +88,11 @@ namespace MVC
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
             Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            if (!profileCache.TryGet(walletId, out Profile profile)) return;
+            Profile profile = await profileRepository.GetAsync(walletId, ct);
+
+            if (profile == null)
+                return;
+
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint);
         }
 
@@ -103,7 +113,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
         }
 

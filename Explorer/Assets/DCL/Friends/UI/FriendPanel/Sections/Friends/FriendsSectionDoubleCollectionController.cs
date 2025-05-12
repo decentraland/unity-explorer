@@ -3,7 +3,6 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
@@ -26,8 +25,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IRealmNavigator realmNavigator;
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly GenericContextMenu contextMenu;
-        private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -35,10 +33,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private FriendProfile contextMenuFriendProfile;
         private CancellationTokenSource openPassportCts = new ();
         private bool elementClicked;
+        private CancellationTokenSource popupCts;
+        private UniTaskCompletionSource contextMenuTask = new ();
 
         internal event Action<string>? OnlineFriendClicked;
         internal event Action<string, Vector2Int>? JumpInClicked;
-        internal event Action<Web3Address> OpenConversationClicked;
+        internal event Action<Web3Address>? OpenConversationClicked;
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
@@ -49,7 +49,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            bool includeUserBlocking, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager)
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager,
+            ViewDependencies viewDependencies)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
@@ -58,14 +60,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
-
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
-
-            (GenericContextMenu, GenericContextMenuElement) buildContextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
-                userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, JumpToFriendLocationCtx, BlockUserCtx);
-
-            contextMenu = buildContextMenu.Item1;
-            contextMenuJumpInButton = buildContextMenu.Item2;
+            this.viewDependencies = viewDependencies;
 
             doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
@@ -147,28 +142,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             contextMenuFriendProfile = friendProfile;
-
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                friendProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                friendProfile.FacePictureUrl);
-
             elementView.CanUnHover = false;
 
             bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.Address) != OnlineStatus.OFFLINE;
 
-            contextMenuJumpInButton.Enabled = isFriendOnline;
-
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(
-                               contextMenu,
-                               buttonPosition,
-                               actionOnHide: () => elementView.CanUnHover = true,
-                               closeTask: panelLifecycleTask?.Task))
-                       )
-                      .Forget();
-
             if (isFriendOnline)
                 OnlineFriendClicked?.Invoke(friendProfile.Address);
+
+            popupCts = popupCts.SafeRestart();
+            contextMenuTask?.TrySetResult();
+
+            contextMenuTask = new UniTaskCompletionSource();
+            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(contextMenuFriendProfile.Address), buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: menuTask, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
         private void OnJumpInClicked(FriendProfile profile)
