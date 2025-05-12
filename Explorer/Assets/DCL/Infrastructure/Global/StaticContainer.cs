@@ -157,6 +157,7 @@ namespace Global
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
             ObjectProxy<IProfileRepository> profileRepository,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct,
             bool enableGPUInstancing = true)
         {
@@ -212,6 +213,7 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
+            featureFlagsCacheProxy.SetObject(container.FeatureFlagsCache);
 
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
 

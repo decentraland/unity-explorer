@@ -31,5 +31,7 @@
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
+
+        public const string AUTH_CODE_VALIDATION = "number-validation";
     }
 }
