@@ -27,5 +27,5 @@ MonoBehaviour:
     replacementShaderName: GPUInstancerPro/Universal Render Pipeline/Nature/Stylized
       Grass
     extensionCode: 
-    isUseOriginal: 0
+    isUseOriginal: 1
     modifiedDate: 05/12/2025 12:28:34.850

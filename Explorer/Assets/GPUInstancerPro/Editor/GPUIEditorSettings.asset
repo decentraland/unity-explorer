@@ -9,12 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: f114f251a87571a4a8acdc699b3c6eb4, type: 3}
   m_Name: GPUIEditorSettings
-  m_EditorClassIdentifier: GPUInstancerPro.Core.Editor:GPUInstancerPro:GPUIEditorSettings
-  _version: 
+  m_EditorClassIdentifier: 
+  _version: 0.9.19
   _buildNo: 25
-  _subModuleVersions: []
+  _subModuleVersions:
+  - packageName: com.gurbu.gpui-pro.prefab
+    version: 0.9.19
+    processedVersion: 0.9.19
+  - packageName: com.gurbu.gpui-pro.terrain
+    version: 0.9.19
+    processedVersion: 0.9.19
   isGenerateShaderVariantCollection: 1
   isAutoShaderConversion: 1
   _requirePackageReload: 1
