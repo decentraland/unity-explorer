@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
+  m_Name: GPUI_Flower2
+  m_EditorClassIdentifier: 
+  asset: {fileID: 8770045540823553937, guid: 88654eac46663423385e47aabaf736b0, type: 3}
+  noiseData: {fileID: 11400000, guid: 6406502bce6346d42874c1caffa6720c, type: 2}
+  randomization:
+    randomRotationX: {x: 0, y: 0}
+    randomRotationY: {x: 0, y: 0}
+    randomRotationZ: {x: 0, y: 0}
+    proportionalScale: 0
+    randomScale: {x: 0, y: 0}
+    randomScaleX: {x: 0, y: 0}
+    randomScaleY: {x: 0, y: 0}
+    randomScaleZ: {x: 0, y: 0}
+    positionOffsetX: {x: 0, y: 0}
+    positionOffsetY: {x: 0, y: 0}
+    positionOffsetZ: {x: 0, y: 0}
+  radius: 1
+  secondaryRadius: 0
+  TerrainDetailSettings:
+    alignToGround: 15.9
+    positionJitter: 50
+    minWidth: 1
+    maxWidth: 2
+    minHeight: 0.8
+    maxHeight: 2
+    noiseSeed: 1
+    noiseSpread: 193.5
+    holeEdgePadding: 75
+    detailDensity: 1
+    affectedByGlobalDensityScale: 1

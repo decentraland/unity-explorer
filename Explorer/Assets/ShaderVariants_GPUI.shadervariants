@@ -1,0 +1,554 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ShaderVariants_GPUI
+  m_Shaders:
+  - first: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+  - first: {fileID: 4800000, guid: 4f256ae8bfd72b64a9fc3ad0884d0126, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: a1b78b8d9e9324b4381332da097df555, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 6e9f244bbe8f40e38644cb9c55cf1a67, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 66, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 10490, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 13
+      - keywords: INSTANCING_ON
+        passType: 13
+  - first: {fileID: 9000, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9001, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9002, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9003, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9004, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9007, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9100, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9101, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9103, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: UIE_FORCE_GAMMA
+        passType: 0
+  - first: {fileID: 19011, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: d6dae50ee9e1bfa4db75f19f99355220, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: _DEPTH_MSAA_2
+        passType: 0
+      - keywords: _DEPTH_MSAA_4
+        passType: 0
+      - keywords: _OUTPUT_DEPTH
+        passType: 0
+  - first: {fileID: 4800000, guid: 65df88701913c224d95fc554db28381a, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: ec9fec698a3456d4fb18cf8bacb7a2bc, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: _TONEMAP_ACES
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 1121bb4e615ca3c48b214e79e841e823, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 5f1864addb451f54bae8c86d230f736e, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: _BLOOM_HQ
+        passType: 0
+  - first: {fileID: 4800000, guid: c489ea23d5aa70b429e3f77d5d528d19, type: 3}
+    second:
+      variants:
+      - keywords: _BLOOM_HQ _HDR_GRADING
+        passType: 0
+      - keywords: _BLOOM_LQ _TONEMAP_ACES
+        passType: 0
+      - keywords: _HDR_GRADING
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: FOG_EXP
+        passType: 0
+  - first: {fileID: 4800000, guid: e6e9a19c3678ded42a3bc431ebef7dbd, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 93446b5c5339d4f00b85c159e1159b7c, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 9920c1f1781549a46ba081a2a15a16ec, type: 3}
+    second:
+      variants:
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD INSTANCING_ON _WINDQUALITY_BEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD INSTANCING_ON _WINDQUALITY_FASTEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD INSTANCING_ON _WINDQUALITY_NONE
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR INSTANCING_ON _WINDQUALITY_BEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR INSTANCING_ON _WINDQUALITY_BETTER
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR INSTANCING_ON _WINDQUALITY_NONE
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP INSTANCING_ON
+          _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: EFFECT_BILLBOARD FOG_EXP INSTANCING_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _WINDQUALITY_BEST
+        passType: 13
+  - first: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 8
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _NORMALMAP _SHADOWS_SOFT _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+  - first: {fileID: 4800000, guid: 69c1f799e772cb6438f56c23efccb782, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _NORMALMAP _SHADOWS_SOFT _TERRAIN_BLEND_HEIGHT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _NORMALMAP _SHADOWS_SOFT _TERRAIN_BLEND_HEIGHT
+        passType: 13
+      - keywords: FOG_EXP _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP
+        passType: 13
+  - first: {fileID: 4800000, guid: c66b10f85c3065c47bae66386821456a, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+  - first: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+      - keywords: INSTANCING_ON _GPU_INSTANCER_BATCHER
+        passType: 8
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 8
+      - keywords: _GPU_INSTANCER_BATCHER
+        passType: 8
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _GPU_INSTANCER_BATCHER
+          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: -6465566751694194690, guid: d7b0192b9bf19c949900035fa781fdc4, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ADVANCED_SHADING _FOAM _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _RECEIVE_SHADOWS_OFF _REFRACTION
+          _SHADOWS_SOFT _SHARP_INERSECTION _SPECULARHIGHLIGHTS_OFF _TRANSLUCENCY
+          _UNLIT _WAVES
+        passType: 13
+  - first: {fileID: 4800000, guid: d77b7a7570974707a3c094386b19c6bc, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP
+        passType: 0
+      - keywords: FOG_EXP _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+  - first: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT
+        passType: 0
+  - first: {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ENVIRONMENTREFLECTIONS_OFF _FORWARD_PLUS
+          _GPU_INSTANCER_BATCHER _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _SHADOWS_SOFT
+          _SIMPLE_LIGHTING
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ENVIRONMENTREFLECTIONS_OFF _FORWARD_PLUS
+          _GPU_INSTANCER_BATCHER _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _SHADOWS_SOFT
+          _SIMPLE_LIGHTING _SPECULARHIGHLIGHTS_OFF
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ENVIRONMENTREFLECTIONS_OFF _FORWARD_PLUS
+          _GPU_INSTANCER_BATCHER _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _SIMPLE_LIGHTING
+          _SPECULARHIGHLIGHTS_OFF
+        passType: 13
+      - keywords: FOG_EXP _GPU_INSTANCER_BATCHER _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP
+          _SIMPLE_LIGHTING
+        passType: 13
+  - first: {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
+    second:
+      variants:
+      - keywords: ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED
+        passType: 13
+  - first: {fileID: 4800000, guid: 55469a28bf0d2b14db8e6452e462bd4c, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 39a0f13973a45b74e9491c428916d9c2, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: -6465566751694194690, guid: 1f1a6a17110491b47bc8ce03f1009606, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+        passType: 13
+      - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: 4800000, guid: 36e335017ad71d54fbb10842863188ae, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 4c0071f1ad885644bb08c4d69a1de235, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: -6465566751694194690, guid: d521bfc19653b9c4f9408f8aba861c7d, type: 3}
+    second:
+      variants:
+      - keywords: INSTANCING_ON
+        passType: 8
+  - first: {fileID: 4800000, guid: f170ae3e465eb4630922844ff2959bcf, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: fe393ace9b354375a9cb14cdbbc28be4, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: OUTLINE_ON
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: fe92240e90009c348a46de79571603a9, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 13
+      - keywords: FOG_EXP
+        passType: 13
+  - first: {fileID: 4800000, guid: 21322c8b137c66e49b86085d3c8161f6, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: 4800000, guid: 8fbe92a9edfe6074e841d6dd1509bc59, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: _TERRAIN_BLEND_HEIGHT
+        passType: 0
+  - first: {fileID: 4800000, guid: 28d453dc10844f4418372200603a88e5, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 13
+  - first: {fileID: 4800000, guid: a49434af1b9eb4b3e8939f140ef0c160, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 84ce70d26f48d412ab142adda1b14f22, type: 3}
+    second:
+      variants:
+      - keywords: SOFTMASK_SIMPLE UNDERLAY_ON
+        passType: 0
+  - first: {fileID: 4800000, guid: 35dcfe58e964e4c3b840211d4513a140, type: 3}
+    second:
+      variants:
+      - keywords: SOFTMASK_SIMPLE
+        passType: 0
+  - first: {fileID: 4800000, guid: cf81c85f95fe47e1a27f6ae460cf182c, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800006, guid: ba0a7fb9562a1034bba74ad27932a2b4, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+  - first: {fileID: 4800004, guid: ba0a7fb9562a1034bba74ad27932a2b4, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+  - first: {fileID: 4800008, guid: ba0a7fb9562a1034bba74ad27932a2b4, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+  - first: {fileID: 4800000, guid: ba0a7fb9562a1034bba74ad27932a2b4, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+  - first: {fileID: 4800002, guid: ba0a7fb9562a1034bba74ad27932a2b4, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 8
+  - first: {fileID: -6465566751694194690, guid: 1bd9f7cbb929540ea8d9f39e8c37188b, type: 3}
+    second:
+      variants:
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD LOD_FADE_CROSSFADE
+          PROCEDURAL_INSTANCING_ON _WINDQUALITY_FASTEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD LOD_FADE_CROSSFADE
+          PROCEDURAL_INSTANCING_ON _WINDQUALITY_NONE
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD PROCEDURAL_INSTANCING_ON
+          _WINDQUALITY_FASTEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD PROCEDURAL_INSTANCING_ON
+          _WINDQUALITY_NONE
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR INSTANCING_ON _WINDQUALITY_BEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR LOD_FADE_CROSSFADE PROCEDURAL_INSTANCING_ON
+          _WINDQUALITY_BEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR LOD_FADE_CROSSFADE PROCEDURAL_INSTANCING_ON
+          _WINDQUALITY_NONE
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR PROCEDURAL_INSTANCING_ON _WINDQUALITY_BEST
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR PROCEDURAL_INSTANCING_ON _WINDQUALITY_NONE
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR _WINDQUALITY_NONE
+        passType: 8
+      - keywords: PROCEDURAL_INSTANCING_ON
+        passType: 8
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP INSTANCING_ON
+          LOD_FADE_CROSSFADE _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP INSTANCING_ON
+          _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+          _WINDQUALITY_FASTEST
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP LOD_FADE_CROSSFADE
+          PROCEDURAL_INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT _WINDQUALITY_FASTEST
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP LOD_FADE_CROSSFADE
+          PROCEDURAL_INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT _WINDQUALITY_NONE
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP LOD_FADE_CROSSFADE
+          _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD FOG_EXP _ADDITIONAL_LIGHT_SHADOWS
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _WINDQUALITY_NONE
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR FOG_EXP LOD_FADE_CROSSFADE PROCEDURAL_INSTANCING_ON
+          _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+          _WINDQUALITY_BEST
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR FOG_EXP LOD_FADE_CROSSFADE PROCEDURAL_INSTANCING_ON
+          _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+          _WINDQUALITY_NONE
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR FOG_EXP LOD_FADE_CROSSFADE _ADDITIONAL_LIGHT_SHADOWS
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _WINDQUALITY_NONE
+        passType: 13
+      - keywords: EFFECT_BILLBOARD FOG_EXP INSTANCING_ON LOD_FADE_CROSSFADE _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS_CASCADE _WINDQUALITY_FASTEST
+        passType: 13
+      - keywords: EFFECT_BILLBOARD FOG_EXP LOD_FADE_CROSSFADE _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _WINDQUALITY_NONE
+        passType: 13
+      - keywords: FOG_EXP INSTANCING_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _WINDQUALITY_BEST
+        passType: 13
+      - keywords: FOG_EXP LOD_FADE_CROSSFADE _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _WINDQUALITY_NONE
+        passType: 13
+  - first: {fileID: -6465566751694194690, guid: c894774be9cbd49139d1fec8f0f9d075, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: PROCEDURAL_INSTANCING_ON
+        passType: 8
+      - keywords: FOG_EXP PROCEDURAL_INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: 4800000, guid: a9f0e02e0db0e426ead3371323e03b23, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _ADVANCED_LIGHTING
+          _FADING _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _SPECULARHIGHLIGHTS_OFF
+        passType: 13
+      - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _ADVANCED_LIGHTING
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP INSTANCING_ON _ADVANCED_LIGHTING _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: FOG_EXP PROCEDURAL_INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _ADVANCED_LIGHTING
+          _FADING _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _SPECULARHIGHLIGHTS_OFF
+        passType: 13
+      - keywords: FOG_EXP PROCEDURAL_INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _ADVANCED_LIGHTING
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13

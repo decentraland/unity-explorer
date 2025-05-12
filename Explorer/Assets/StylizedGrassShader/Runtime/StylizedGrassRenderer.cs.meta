@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: f88c6c0bd2ee8e9439ca69a1bbb88368
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - bendRenderer: {fileID: 11400000, guid: 6646d2562bb9379498d38addaba2d66d, type: 2}
+  - followTarget: {instanceID: 0}
+  - vectorRT: {instanceID: 0}
+  - renderCam: {instanceID: 0}
+  - colorMap: {instanceID: 0}
+  executionOrder: 0
+  icon: {fileID: -2718852975875110509, guid: 0000000000000000d000000000000000, type: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

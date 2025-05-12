@@ -1,0 +1,30 @@
+{
+    "name": "sc.stylizedgrass.runtime",
+    "rootNamespace": "",
+    "references": [
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+        "GUID:fb58d5396d4f85044a40c7548929c37d",
+        "GUID:4fd6538c1c56b409fb53fdf0183170ec"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "12.1.8",
+            "define": "URP"
+        },
+        {
+            "name": "com.unity.rendering.hybrid",
+            "expression": "0.5.0",
+            "define": "DOTS_INSTANCING"
+        }
+    ],
+    "noEngineReferences": false
+}

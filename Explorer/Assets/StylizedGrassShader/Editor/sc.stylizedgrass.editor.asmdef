@@ -1,0 +1,29 @@
+{
+    "name": "sc.stylizedgrass.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ea8005fdf30f9c24dab04181c20b1310",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+        "GUID:3eae0364be2026648bf74846acb8a731",
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "GUID:c579267770062bf448e75eb160330b7f",
+        "GUID:fb58d5396d4f85044a40c7548929c37d"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "12.1.8",
+            "define": "URP"
+        }
+    ],
+    "noEngineReferences": false
+}
