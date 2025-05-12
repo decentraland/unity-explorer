@@ -12,14 +12,14 @@ namespace DCL.Settings.ModuleControllers
         private const string CHAT_SOUNDS_DATA_STORE_KEY = "Settings_ChatSounds";
 
         private readonly SettingsDropdownModuleView view;
-        private readonly ChatAudioSettingsAsset chatAudioSettingsAsset;
+        private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly AudioMixer generalAudioMixer;
 
-        public ChatSoundsSettingsController(SettingsDropdownModuleView view, AudioMixer generalAudioMixer, ChatAudioSettingsAsset chatAudioSettingsAsset)
+        public ChatSoundsSettingsController(SettingsDropdownModuleView view, AudioMixer generalAudioMixer, ChatSettingsAsset chatSettingsAsset)
         {
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
-            this.chatAudioSettingsAsset = chatAudioSettingsAsset;
+            this.chatSettingsAsset = chatSettingsAsset;
 
             if (settingsDataStore.HasKey(CHAT_SOUNDS_DATA_STORE_KEY))
                 view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(CHAT_SOUNDS_DATA_STORE_KEY);
@@ -32,15 +32,15 @@ namespace DCL.Settings.ModuleControllers
             switch (index)
             {
                 case (int)ChatAudioSettings.NONE:
-                    chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.NONE;
+                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.NONE;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(0f));
                     break;
                 case (int)ChatAudioSettings.MENTIONS_ONLY:
-                    chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.MENTIONS_ONLY;
+                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.MENTIONS_ONLY;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
                     break;
                 case (int)ChatAudioSettings.ALL:
-                    chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.ALL;
+                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.ALL;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
                     break;
                 default:

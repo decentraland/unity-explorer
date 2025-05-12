@@ -33,7 +33,7 @@ namespace DCL.Chat
 
         private void OpenContextMenu()
         {
-            ChatEntryClicked?.Invoke(chatMessage.WalletAddress, profileButton.transform.position);
+            ChatEntryClicked?.Invoke(chatMessage.SenderWalletAddress, profileButton.transform.position);
         }
 
         public void AnimateChatEntry()

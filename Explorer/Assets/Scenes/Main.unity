@@ -512,6 +512,12 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    <GenericUserProfileContextMenuSettings>k__BackingField:
+      m_AssetGUID: 19167fed20773434b8bb06d4ca81f60c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     <MainUIView>k__BackingField:
       m_AssetGUID: c7887090193b1ec4c994ad22169b86db
       m_SubObjectName: 
