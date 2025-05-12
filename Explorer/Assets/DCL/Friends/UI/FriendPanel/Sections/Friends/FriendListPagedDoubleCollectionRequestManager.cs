@@ -1,11 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
-using DCL.WebRequests;
 using MVC;
 using SuperScrollView;
 using System;
@@ -27,11 +23,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly List<FriendProfile> onlineFriends = new ();
         private readonly List<FriendProfile> offlineFriends = new ();
-        private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public event Action<FriendProfile>? JumpInClicked;
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action<FriendProfile>? ChatClicked;
         public event Action? NoFriendsInCollections;
         public event Action? AtLeastOneFriendInCollections;
 
@@ -42,14 +37,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             LoopListView2 loopListView,
             ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold,
-            IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager) : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            int elementsMissingThreshold
+        ) : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
-            this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
@@ -100,6 +92,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendBecameOnline(FriendProfile friendProfile)
         {
             offlineFriends.Remove(friendProfile);
+
             if (!onlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.ONLINE);
 
@@ -109,6 +102,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendBecameAway(FriendProfile friendProfile)
         {
             offlineFriends.Remove(friendProfile);
+
             if (!onlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.AWAY);
 
@@ -118,6 +112,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendBecameOffline(FriendProfile friendProfile)
         {
             onlineFriends.Remove(friendProfile);
+
             if (!offlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
 
@@ -133,7 +128,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (newFriendProfile != null)
                 {
-                    FriendProfile friendProfile = newFriendProfile.ToFriendProfile();
+                    var friendProfile = newFriendProfile.ToFriendProfile();
+
                     if (!offlineFriends.Contains(friendProfile) && !onlineFriends.Contains(friendProfile))
                     {
                         AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
@@ -185,7 +181,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
 
             elementView.ChatButton.onClick.RemoveAllListeners();
-            elementView.ChatButton.onClick.AddListener(() => OnChatButtonClicked(elementView.UserProfile));
+            elementView.ChatButton.onClick.AddListener(() => ChatClicked?.Invoke(elementView.UserProfile));
 
             elementView.ToggleOnlineStatus(true);
 
@@ -212,17 +208,5 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             return result.TotalAmount;
         }
-
-        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
-        {
-            OnOpenConversationAsync(elementViewUserProfile).Forget();
-        }
-
-        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
-        {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(profile.Address);
-        }
-
     }
 }

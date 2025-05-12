@@ -82,12 +82,14 @@ namespace DCL.Friends.UI.FriendPanel
                     friendsService,
                     friendEventBus,
                     mvcManager,
-                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD, chatEventBus, sharedSpaceManager),
+                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking);
+                    includeUserBlocking,
+                    chatEventBus,
+                    sharedSpaceManager);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -96,12 +98,14 @@ namespace DCL.Friends.UI.FriendPanel
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                     mvcManager,
-                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD, chatEventBus, sharedSpaceManager),
+                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,
-                    viewDependencies);
+                    viewDependencies,
+                    chatEventBus,
+                    sharedSpaceManager);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,

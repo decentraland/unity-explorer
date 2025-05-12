@@ -1,8 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -25,6 +28,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly GenericContextMenu contextMenu;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly IChatEventBus chatEventBus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private FriendProfile contextMenuFriendProfile;
@@ -44,13 +49,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            bool includeUserBlocking)
+            bool includeUserBlocking, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
+            this.chatEventBus = chatEventBus;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
@@ -60,8 +67,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenu = buildContextMenu.Item1;
             contextMenuJumpInButton = buildContextMenu.Item2;
 
-            doubleCollectionRequestManager.JumpInClicked += JumpInClick;
-            doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;
+            doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
+            doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
+            doubleCollectionRequestManager.ChatClicked += OnChatButtonClicked;
             doubleCollectionRequestManager.NoFriendsInCollections += ShowEmptyState;
             doubleCollectionRequestManager.AtLeastOneFriendInCollections += HideEmptyState;
         }
@@ -69,8 +77,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public override void Dispose()
         {
             base.Dispose();
-            requestManager.ContextMenuClicked -= ContextMenuClicked;
-            requestManager.JumpInClicked -= JumpInClick;
+            requestManager.ContextMenuClicked -= OnContextMenuClicked;
+            requestManager.JumpInClicked -= OnJumpInClicked;
+            requestManager.ChatClicked -= OnChatButtonClicked;
             requestManager.NoFriendsInCollections -= ShowEmptyState;
             requestManager.AtLeastOneFriendInCollections -= HideEmptyState;
             jumpToFriendLocationCts.SafeCancelAndDispose();
@@ -134,7 +143,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             await passportBridge.ShowAsync(profile.Address);
         }
 
-        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
+        private void OnContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             contextMenuFriendProfile = friendProfile;
@@ -162,10 +171,21 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 OnlineFriendClicked?.Invoke(friendProfile.Address);
         }
 
-        private void JumpInClick(FriendProfile profile)
+        private void OnJumpInClicked(FriendProfile profile)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
+        }
+
+        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
+        {
+            OnOpenConversationAsync(elementViewUserProfile).Forget();
+        }
+
+        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            chatEventBus.OpenConversationUsingUserId(profile.Address);
         }
     }
 }

@@ -21,11 +21,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IProfileRepository profileRepository;
         private readonly List<FriendProfile> friends = new ();
         private readonly CancellationTokenSource addFriendProfileCts = new ();
-        private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
         public event Action<FriendProfile>? JumpInClicked;
+        public event Action<FriendProfile>? ChatClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -33,16 +32,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             LoopListView2 loopListView,
             ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold,
-            IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager) :
+            int elementsMissingThreshold) :
             base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.profileRepository = profileRepository;
-            this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
@@ -132,20 +127,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
 
             elementView.ChatButton.onClick.RemoveAllListeners();
-            elementView.ChatButton.onClick.AddListener(() => OnChatButtonClicked(elementView.UserProfile));
+            elementView.ChatButton.onClick.AddListener(() => ChatClicked?.Invoke(elementView.UserProfile));
 
             elementView.ToggleOnlineStatus(false);
-        }
-
-        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
-        {
-            OnOpenConversationAsync(elementViewUserProfile).Forget();
-        }
-
-        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
-        {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(profile.Address);
         }
     }
 }
