@@ -5,6 +5,7 @@ using DCL.AssetsProvision.CodeResolver;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -84,6 +85,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
                 new ObjectProxy<IProfileRepository>(),
+                new ObjectProxy<FeatureFlagsCache>(),
                 ct,
                 enableGPUInstancing: false
             );

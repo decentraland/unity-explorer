@@ -35,10 +35,11 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ChatAudioSettingsAsset chatAudioSettingsAsset,
+            ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ISettingsModuleEventListener settingsEventListener,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = Object.Instantiate(View, parent);

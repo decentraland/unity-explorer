@@ -10,10 +10,10 @@ namespace DCL.UI.ProfileElements
         [field: SerializeField] private TMP_Text userNameHashtagText;
         [field: SerializeField] private GameObject verifiedMark;
 
-        public void Setup(Profile profile, Color usernameColor)
+        public void Setup(Profile profile)
         {
             userNameText.text = profile.Name;
-            userNameText.color = usernameColor;
+            userNameText.color = profile.UserNameColor;
             userNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
 
             if (!profile.HasClaimedName)

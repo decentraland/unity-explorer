@@ -173,7 +173,9 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
-             bootstrapContainer = await BootstrapContainer.CreateAsync(
+            var featureFlagsProxy = new ObjectProxy<FeatureFlagsCache>();
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
@@ -189,6 +191,7 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
+                featureFlagsProxy,
                 destroyCancellationToken
             );
 
@@ -200,7 +203,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsProxy, ct);
 
                 if (!isLoaded)
                 {

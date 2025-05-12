@@ -146,9 +146,7 @@ namespace DCL.Profiles
 
         private bool TryProfileFromCache(string id, int version, out Profile? profile)
         {
-            profile = profileCache.Get(id);
-
-            if (profile == null)
+            if (!profileCache.TryGet(id, out profile))
                 return false;
 
             return profile.Version >= version;

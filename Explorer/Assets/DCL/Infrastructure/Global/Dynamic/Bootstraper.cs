@@ -107,6 +107,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCache,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -131,6 +132,7 @@ namespace Global.Dynamic
                 partialsDiskCache,
                 sceneUIRoot,
                 profileRepositoryProxy,
+                featureFlagsCache,
                 ct
             );
 

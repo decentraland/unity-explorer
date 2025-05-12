@@ -19,7 +19,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
-    public class SettingsController : ISection, IDisposable
+    public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
     {
         private enum SettingsSection
         {
@@ -43,8 +43,10 @@ namespace DCL.Settings
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
-        private readonly ChatAudioSettingsAsset chatAudioSettingsAsset;
+        private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+
+        public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
         public SettingsController(
             SettingsView view,
@@ -56,7 +58,7 @@ namespace DCL.Settings
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
-            ChatAudioSettingsAsset chatAudioSettingsAsset,
+            ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
             WorldVolumeMacBus worldVolumeMacBus = null
@@ -69,7 +71,7 @@ namespace DCL.Settings
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
-            this.chatAudioSettingsAsset = chatAudioSettingsAsset;
+            this.chatSettingsAsset = chatSettingsAsset;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.controlsSettingsAsset = controlsSettingsAsset;
@@ -114,6 +116,11 @@ namespace DCL.Settings
         public RectTransform GetRectTransform() =>
             rectTransform;
 
+        public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility)
+        {
+            ChatBubblesVisibilityChanged?.Invoke(newVisibility);
+        }
+
         private void GenerateSettings()
         {
             if (settingsMenuConfiguration.SettingsGroupPrefab == null)
@@ -139,10 +146,14 @@ namespace DCL.Settings
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
                 SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
-                generalGroupView.GroupTitle.text = group.GroupTitle;
+
+                if (!string.IsNullOrEmpty(group.GroupTitle))
+                    generalGroupView.GroupTitle.text = group.GroupTitle;
+                else
+                    generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatAudioSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, worldVolumeMacBus));
             }
         }
 
