@@ -180,21 +180,22 @@ namespace DCL.Interaction.Raycast.Systems
             // The range of Unity Layers is narrower than the range of SDK Layers
             // so we need to raycast against all (even if the query type is hit first) and then filter our each individual raycast hit
             int hitsCount = Physics.RaycastNonAlloc(ray, SHARED_RAYCAST_HIT_ARRAY, sdkComponent.MaxDistance, collisionMask);
+            Vector3 rayOriginPosition = ray.origin.FromGlobalToSceneRelativePosition(scenePos);
 
             switch (sdkComponent.QueryType)
             {
                 case RaycastQueryType.RqtHitFirst:
-                    SetClosestQualifiedHit(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
+                    SetClosestQualifiedHit(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, rayOriginPosition, ray.direction);
                     break;
                 case RaycastQueryType.RqtQueryAll:
-                    SetAllQualifiedHits(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
+                    SetAllQualifiedHits(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, rayOriginPosition, ray.direction);
                     break;
             }
 
             raycastComponent.Executed = !sdkComponent.Continuous;
 
             raycastResult.Direction.Set(ray.direction);
-            raycastResult.GlobalOrigin.Set(ray.origin);
+            raycastResult.GlobalOrigin.Set(rayOriginPosition);
             raycastResult.Timestamp = sdkComponent.Timestamp;
             raycastResult.TickNumber = sceneStateProvider.TickNumber;
 
@@ -289,8 +290,6 @@ namespace DCL.Interaction.Raycast.Systems
             if (!value)
                 ClearRaycastIntentsQuery(World);
         }
-
-
 
         [Query]
         [None(typeof(DeleteEntityIntention))]

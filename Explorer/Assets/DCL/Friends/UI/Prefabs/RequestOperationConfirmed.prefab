@@ -10,13 +10,14 @@ GameObject:
   m_Component:
   - component: {fileID: 4507916386824873467}
   - component: {fileID: 5106998095864747473}
+  - component: {fileID: 9147094892529715447}
   m_Layer: 0
   m_Name: RequestOperationConfirmed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4507916386824873467
 RectTransform:
   m_ObjectHideFlags: 0
@@ -53,6 +54,21 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &9147094892529715447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1383994391753394959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12c32cd18734bdaaa29c776399de61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RaysGameObject>k__BackingField: {fileID: 7367747045704248808}
+  <PanelContent>k__BackingField: {fileID: 1383994391753394959}
+  <PanelCanvasGroup>k__BackingField: {fileID: 5106998095864747473}
 --- !u!1 &2049973128462533738
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,7 +383,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.19215687}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.101960786}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

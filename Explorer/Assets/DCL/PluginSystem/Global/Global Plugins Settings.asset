@@ -51,6 +51,7 @@ MonoBehaviour:
   - rid: 7621844642437005314
   - rid: 7621844642437005315
   - rid: 8449516130764587014
+  - rid: 8813103964372074592
   references:
     version: 2
     RefIds:
@@ -636,20 +637,14 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        GenericContextMenuMentionUserButtonPrefab:
-          m_AssetGUID: 734732fb25eed5944b9c5a5814249f81
+        GenericContextMenuButtonWithStringDelegatePrefab:
+          m_AssetGUID: 688aa1f59829ea64fb0887ed7bb87d26
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        GenericContextMenuViewUserProfileButtonPrefab:
-          m_AssetGUID: c325bf3c176cc034d83115896fd851da
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        GenericContextMenuViewBlockUserButtonPrefab:
-          m_AssetGUID: 2308a593e7fee41dbad5a6b14f89e0e7
+        GenericContextMenuToggleWithIconPrefab:
+          m_AssetGUID: bc2f6e2e838c8114e89c2f3157c0ab47
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -743,12 +738,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmotesWheelPrefab>k__BackingField:
           m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
-          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -907,6 +896,15 @@ MonoBehaviour:
       data:
         <phyiscsSettings>k__BackingField:
           m_AssetGUID: b68ba436e63c39949b58b7aac96c291c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 8813103964372074592
+      type: {class: MarketplaceCreditsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CreditsUnlockedPrefab>k__BackingField:
+          m_AssetGUID: adccb7c4aa6e2424c95ac85e0d3f0a35
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

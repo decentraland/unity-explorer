@@ -18,6 +18,10 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class MoveInWorldCameraSystem : BaseUnityLoopSystem
     {
+        private const float ZOOM_SPEED_SCALAR_WINDOWS = 50f;
+        private const float ZOOM_SPEED_SCALAR_MAC = 1f;
+
+        private readonly float zoomSpeedScalar;
         private readonly InWorldCameraMovementSettings settings;
         private readonly Transform playerTransform;
         private readonly ICursor cursor;
@@ -27,11 +31,16 @@ namespace DCL.InWorldCamera.Systems
         private CinemachineVirtualCamera virtualCamera;
         private bool cursorWasLocked;
 
-        public MoveInWorldCameraSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform, ICursor cursor) : base(world)
+        private MoveInWorldCameraSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform, ICursor cursor) : base(world)
         {
             this.settings = settings;
             this.playerTransform = playerTransform;
             this.cursor = cursor;
+
+            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+                zoomSpeedScalar = ZOOM_SPEED_SCALAR_MAC;
+            else
+                zoomSpeedScalar = ZOOM_SPEED_SCALAR_WINDOWS;
         }
 
         public override void Initialize()
@@ -64,7 +73,7 @@ namespace DCL.InWorldCamera.Systems
         private void Zoom(ref CameraDampedFOV fov, float zoomInput, float deltaTime)
         {
             if (!Mathf.Approximately(zoomInput, 0f))
-                fov.Target -= zoomInput * settings.FOVChangeSpeed * deltaTime;
+                fov.Target -= zoomInput * settings.FOVChangeSpeed * deltaTime * zoomSpeedScalar;
 
             fov.Target = Mathf.Clamp(fov.Target, settings.MinFOV, settings.MaxFOV);
             fov.Current = Mathf.SmoothDamp(fov.Current, fov.Target, ref fov.Velocity, settings.FOVDamping);

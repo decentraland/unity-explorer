@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             {
                 // Triggers when the user is already logged in
                 case AuthenticationStatus.LoggedInCached:
-                    analytics.Track(Authentication.LOGGED_IN_CACHED); break;
+                    analytics.Track(Authentication.LOGGED_IN_CACHED, isInstant: true); break;
 
                 // Triggers when the user is not logged in (login is requested)
                 // TODO: We should also track the auth Request UUID here to link the explorer_v2 event with the auth page view and login events.
@@ -48,7 +48,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
                 // Triggered when the user is logged in
                 case AuthenticationStatus.LoggedIn:
-                    analytics.Track(Authentication.LOGGED_IN); break;
+                    analytics.Track(Authentication.LOGGED_IN, isInstant: true); break;
             }
         }
     }
