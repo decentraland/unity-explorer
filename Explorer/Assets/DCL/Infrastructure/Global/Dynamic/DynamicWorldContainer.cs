@@ -881,8 +881,6 @@ namespace Global.Dynamic
                     debugBuilder,
                     nametagsData,
                     viewDependencies,
-                    staticContainer.GPUInstancingService,
-                    exposedGlobalDataContainer.ExposedCameraData,
                     sharedSpaceManager,
                     identityCache));
 
