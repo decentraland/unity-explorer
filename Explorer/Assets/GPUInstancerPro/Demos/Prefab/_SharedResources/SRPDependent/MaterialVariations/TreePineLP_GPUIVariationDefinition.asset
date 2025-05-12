@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbee6a24366d230469e0c5eb6f5ecf9a, type: 3}
+  m_Name: TreePineLP_GPUIVariationDefinition
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: abd5a17bf0810fa449057ef5ab418af0, type: 2}
+  replacementShader: {fileID: 4800000, guid: 6fba524a4c76de94ca0c418daa035f10, type: 3}
+  bufferName: variationBuffer
+  items:
+  - propertyName: _BaseMap_ST
+    variationType: 0
+    defaultValue: {x: 0.5, y: 1, z: 1, w: 1}
+  shaderIncludeFile: {fileID: 10900000, guid: 0af508e8b89870145ab189e39f91e76a, type: 3}

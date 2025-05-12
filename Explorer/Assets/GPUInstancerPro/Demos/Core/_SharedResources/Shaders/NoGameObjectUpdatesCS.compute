@@ -1,0 +1,44 @@
+// GPU Instancer Pro
+// Copyright (c) GurBu Technologies
+
+#pragma kernel CSMain
+
+#include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Compute/Include/PlatformDefines.hlsl"
+#include "Packages/com.gurbu.gpui-pro/Runtime/Compute/Include/GPUIDefines.hlsl"
+
+uniform RWStructuredBuffer<float4x4> gpuiTransformBuffer;
+uniform RWStructuredBuffer<float4> gpuiProFloat4Variation;
+uniform uint startIndex;
+uniform uint radial;
+uniform uint vertical;
+uniform uint circular;
+uniform float time;
+uniform float2 spinSpeed;
+uniform float3 colorSpeeds;
+
+[numthreads(GPUI_THREADS_3D, GPUI_THREADS_3D, GPUI_THREADS_3D)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= radial || id.y >= vertical || id.z >= circular)
+        return;
+    
+    uint index = id.x * vertical * circular + id.y * circular + id.z;
+    float r = id.x;
+    float v = id.y;
+    float c = id.z;
+    
+    float radius = 5.0 + r * (pow(v * 0.02, 1.6) + 1);
+    float angle = v * r * 0.001 * sin(spinSpeed.y * time) + 2 * GPUIPI * c / circular;
+    float4x4 m = identityMatrix;
+    m._m03 = radius * cos(angle - time * spinSpeed.x);
+    m._m13 = v;
+    m._m23 = radius * sin(angle - time * spinSpeed.x);
+    gpuiTransformBuffer[index + startIndex] = m;
+    
+    float4 color;
+    color.r = frac(r / radial + time * colorSpeeds.x);
+    color.g = frac(v / vertical + time * colorSpeeds.y);
+    color.b = frac(c / circular - time * colorSpeeds.z);
+    color.a = 1;
+    gpuiProFloat4Variation[index] = color;
+}
