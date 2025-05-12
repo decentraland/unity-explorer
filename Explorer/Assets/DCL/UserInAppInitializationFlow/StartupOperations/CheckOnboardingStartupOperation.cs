@@ -72,7 +72,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
-            EnumResult<TaskError> res = await TryToChangeToOnBoardingRealm(ct);
+            EnumResult<TaskError> res = await TryToChangeToOnBoardingRealmAsync(ct);
 
             if (!res.Success)
                 return res;
@@ -81,7 +81,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             return res;
         }
 
-        private async UniTask<EnumResult<TaskError>> TryToChangeToOnBoardingRealm(CancellationToken ct)
+        private async UniTask<EnumResult<TaskError>> TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
