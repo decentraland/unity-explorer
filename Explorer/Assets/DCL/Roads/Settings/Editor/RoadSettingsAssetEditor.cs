@@ -99,6 +99,13 @@ namespace DCL.Roads.Settings.Editor
                 RoadConfigCollect();
             }
 
+            //
+            if (GUILayout.Button("Enable Instancing Keywords (Editor-only)"))
+            {
+                RoadSettingsAsset roadsConfig = target as RoadSettingsAsset;
+                roadsConfig.InitializeInstancingKeywords();
+            }
+
             EditorGUILayout.EndVertical();
 
 
