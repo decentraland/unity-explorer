@@ -56,12 +56,12 @@ namespace SceneRunner
         {
             MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
 
-            SceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State.Set(SceneState.Disposing);
             runtimeInstance.SetIsDisposing();
 
             DisposeInternal();
 
-            SceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
         public void SetTargetFPS(int fps)
@@ -207,7 +207,7 @@ namespace SceneRunner
         {
             // Because of multithreading Disposing is not synced with the update loop
             // so just mark it as disposed and let the update loop handle the disposal
-            SceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State.Set(SceneState.Disposing);
 
             // TODO do it better
             runtimeInstance.SetIsDisposing();
@@ -216,7 +216,7 @@ namespace SceneRunner
 
             DisposeInternal();
 
-            SceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
         private void DisposeInternal()

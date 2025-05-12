@@ -4,24 +4,19 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class WebSocketApiWrapper : JsApiWrapperBase<IWebSocketApi>
+    public class WebSocketApiWrapper : JsApiWrapper<IWebSocketApi>
     {
-        private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IJavaScriptApiExceptionsHandler exceptionsHandler;
+        private readonly bool isLocalSceneDevelopment;
 
-        public WebSocketApiWrapper(IWebSocketApi api, IJavaScriptApiExceptionsHandler exceptionsHandler, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
+        public WebSocketApiWrapper(IWebSocketApi api, IJavaScriptApiExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts, bool isLocalSceneDevelopment)
+            : base(api, disposeCts)
         {
             this.exceptionsHandler = exceptionsHandler;
-            cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        protected override void DisposeInternal()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
@@ -41,7 +36,7 @@ namespace SceneRuntime.Apis.Modules
                 if (!isLocalSceneDevelopment && !url.ToLower().StartsWith("wss://"))
                     throw new Exception("Can't start an unsafe ws connection, please upgrade to wss. url=" + url);
 
-                return api.ConnectAsync(websocketId, url, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise();
+                return api.ConnectAsync(websocketId, url, disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this);
             }
             catch (Exception e)
             {
@@ -54,9 +49,9 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.SendTextAsync(webSocketId, str, cancellationTokenSource.Token)
+                return api.SendTextAsync(webSocketId, str, disposeCts.Token)
                           .ReportAndRethrowException(exceptionsHandler)
-                          .ToDisconnectedPromise();
+                          .ToDisconnectedPromise(this);
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
@@ -66,9 +61,9 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.SendBinaryAsync(webSocketId, arrayBuffer, cancellationTokenSource.Token)
+                return api.SendBinaryAsync(webSocketId, arrayBuffer, disposeCts.Token)
                           .ReportAndRethrowException(exceptionsHandler)
-                          .ToDisconnectedPromise();
+                          .ToDisconnectedPromise(this);
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
@@ -78,9 +73,9 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.SendBinaryAsync(webSocketId, typedArray.ArrayBuffer, cancellationTokenSource.Token)
+                return api.SendBinaryAsync(webSocketId, typedArray.ArrayBuffer, disposeCts.Token)
                           .ReportAndRethrowException(exceptionsHandler)
-                          .ToDisconnectedPromise();
+                          .ToDisconnectedPromise(this);
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
@@ -90,9 +85,9 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.ReceiveAsync(websocketId, cancellationTokenSource.Token)
+                return api.ReceiveAsync(websocketId, disposeCts.Token)
                           .ReportAndRethrowException(exceptionsHandler)
-                          .ToDisconnectedPromise();
+                          .ToDisconnectedPromise(this);
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
@@ -100,7 +95,7 @@ namespace SceneRuntime.Apis.Modules
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
         public object CloseAsync(int websocketId)
         {
-            try { return api.CloseAsync(websocketId, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return api.CloseAsync(websocketId, disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
     }
