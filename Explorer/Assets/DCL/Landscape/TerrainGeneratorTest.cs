@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using DCL.Profiling;
+using GPUInstancerPro.TerrainModule;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -28,6 +29,8 @@ namespace DCL.Landscape
         private NativeList<int2> emptyParcels;
         private TerrainGenerator gen;
         private WorldTerrainGenerator wGen;
+
+
 
         private void Start()
         {
@@ -79,6 +82,25 @@ namespace DCL.Landscape
                 gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false);
                 await gen.GenerateTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }
+
+            Terrain[] terrains = Terrain.activeTerrains;
+
+            GPUITreeManager treeManager = FindObjectOfType<GPUITreeManager>();
+            GPUIDetailManager detailManager = FindObjectOfType<GPUIDetailManager>();
+
+            if (treeManager != null)
+            {
+                foreach (Terrain terrain in terrains)
+                {
+                    if (treeManager != null)
+                        GPUITerrainAPI.AddTerrain(treeManager, terrain);
+
+                    if (detailManager != null)
+                        GPUITerrainAPI.AddTerrain(detailManager, terrain);
+                }
+            }
+
+
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();

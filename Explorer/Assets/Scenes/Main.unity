@@ -32,7 +32,7 @@ RenderSettings:
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
   m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
-  m_DefaultReflectionMode: 0
+  m_DefaultReflectionMode: 1
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
@@ -475,7 +475,7 @@ MonoBehaviour:
     showSplash: 1
     showAuthentication: 1
     showLoading: 1
-    enableLandscape: 0
+    enableLandscape: 1
     enableLOD: 0
     enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
@@ -590,6 +590,249 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+--- !u!1 &481631813
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 481631815}
+  - component: {fileID: 481631814}
+  m_Layer: 0
+  m_Name: GPUI Detail Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &481631814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 481631813}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0293089e577d0ef41bf2ac4c44548d66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isDontDestroyOnLoad: 0
+  _prototypes:
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 82b621e20ed37bb4c9db643ef47175a3, type: 2}
+    prefabObject: {fileID: 1333259486307050118, guid: 1d3a58f76810e485ca8120ead0e06fbc, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: GPUI_grass Variant 1
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 82b621e20ed37bb4c9db643ef47175a3, type: 2}
+    prefabObject: {fileID: 4014139367857823368, guid: c44f25f524a734ff39be7bcc047c90d3, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: Flower01 Variant 1
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 82b621e20ed37bb4c9db643ef47175a3, type: 2}
+    prefabObject: {fileID: 8770045540823553937, guid: 88654eac46663423385e47aabaf736b0, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: GPUI_Flower02
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 82b621e20ed37bb4c9db643ef47175a3, type: 2}
+    prefabObject: {fileID: 8197679525369401166, guid: 891ddc64817774d089bfb1782b46325b, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: GPUI_Flower03
+  defaultProfile: {fileID: 11400000, guid: 82b621e20ed37bb4c9db643ef47175a3, type: 2}
+  isEnableDefaultRenderingWhenDisabled: 1
+  _disablePlayModeRendering: 0
+  editor_isRenderInEditMode: 0
+  editor_isTextMode: 0
+  editor_isRollbackRuntimeProfileChanges: 1
+  _prototypeDataArray:
+  - mpbDescription: {fileID: 0}
+    detailTexture: {fileID: 0}
+    noiseSpread: 0.1
+    healthyColor: {r: 1, g: 1, b: 1, a: 1}
+    dryColor: {r: 1, g: 1, b: 1, a: 1}
+    isBillboard: 0
+    ambientOcclusion: 0.2
+    gradientPower: 0.5
+    windWaveTintColor: {r: 0.69803923, g: 0.6, b: 0.5019608, a: 1}
+    isOverrideHealthyDryNoiseTexture: 0
+    healthyDryNoiseTexture: {fileID: 0}
+    windIdleSway: 0.6
+    windWavesOn: 1
+    windWaveSize: 0.8
+    windWaveTint: 0.5
+    windWaveSway: 0.5
+    contrast: 1
+    healthyDryRatio: 1
+    isUseDensityReduction: 1
+    densityReduceDistance: 200
+    densityReduceMultiplier: 16
+    densityReduceMaxScale: 0
+    densityReduceHeightScale: 0
+    initialBufferSize: 1024
+    maxDetailInstanceCountPerUnit: 16
+    detailBufferSizePercentageDifferenceForReduction: 0.5
+    detailExtraBufferSizePercentage: 0.2
+    densityAdjustment: 1
+    healthyDryScaleAdjustment: 0
+    noiseSeedAdjustment: 0
+    noiseSpreadAdjustment: 1
+    proceduralDensityData: {fileID: 0}
+  - mpbDescription: {fileID: 0}
+    detailTexture: {fileID: 0}
+    noiseSpread: 0.1
+    healthyColor: {r: 1, g: 1, b: 1, a: 1}
+    dryColor: {r: 1, g: 1, b: 1, a: 1}
+    isBillboard: 0
+    ambientOcclusion: 0.2
+    gradientPower: 0.5
+    windWaveTintColor: {r: 0.69803923, g: 0.6, b: 0.5019608, a: 1}
+    isOverrideHealthyDryNoiseTexture: 0
+    healthyDryNoiseTexture: {fileID: 0}
+    windIdleSway: 0.6
+    windWavesOn: 1
+    windWaveSize: 0.8
+    windWaveTint: 0.5
+    windWaveSway: 0.5
+    contrast: 1
+    healthyDryRatio: 1
+    isUseDensityReduction: 1
+    densityReduceDistance: 200
+    densityReduceMultiplier: 16
+    densityReduceMaxScale: 0
+    densityReduceHeightScale: 0
+    initialBufferSize: 1024
+    maxDetailInstanceCountPerUnit: 16
+    detailBufferSizePercentageDifferenceForReduction: 0.5
+    detailExtraBufferSizePercentage: 0.2
+    densityAdjustment: 1
+    healthyDryScaleAdjustment: 0
+    noiseSeedAdjustment: 0
+    noiseSpreadAdjustment: 1
+    proceduralDensityData: {fileID: 0}
+  - mpbDescription: {fileID: 0}
+    detailTexture: {fileID: 0}
+    noiseSpread: 0.1
+    healthyColor: {r: 1, g: 1, b: 1, a: 1}
+    dryColor: {r: 1, g: 1, b: 1, a: 1}
+    isBillboard: 0
+    ambientOcclusion: 0.2
+    gradientPower: 0.5
+    windWaveTintColor: {r: 0.69803923, g: 0.6, b: 0.5019608, a: 1}
+    isOverrideHealthyDryNoiseTexture: 0
+    healthyDryNoiseTexture: {fileID: 0}
+    windIdleSway: 0.6
+    windWavesOn: 1
+    windWaveSize: 0.8
+    windWaveTint: 0.5
+    windWaveSway: 0.5
+    contrast: 1
+    healthyDryRatio: 1
+    isUseDensityReduction: 1
+    densityReduceDistance: 200
+    densityReduceMultiplier: 16
+    densityReduceMaxScale: 0
+    densityReduceHeightScale: 0
+    initialBufferSize: 1024
+    maxDetailInstanceCountPerUnit: 16
+    detailBufferSizePercentageDifferenceForReduction: 0.5
+    detailExtraBufferSizePercentage: 0.2
+    densityAdjustment: 1
+    healthyDryScaleAdjustment: 0
+    noiseSeedAdjustment: 0
+    noiseSpreadAdjustment: 1
+    proceduralDensityData: {fileID: 0}
+  - mpbDescription: {fileID: 0}
+    detailTexture: {fileID: 0}
+    noiseSpread: 0.1
+    healthyColor: {r: 1, g: 1, b: 1, a: 1}
+    dryColor: {r: 1, g: 1, b: 1, a: 1}
+    isBillboard: 0
+    ambientOcclusion: 0.2
+    gradientPower: 0.5
+    windWaveTintColor: {r: 0.69803923, g: 0.6, b: 0.5019608, a: 1}
+    isOverrideHealthyDryNoiseTexture: 0
+    healthyDryNoiseTexture: {fileID: 0}
+    windIdleSway: 0.6
+    windWavesOn: 1
+    windWaveSize: 0.8
+    windWaveTint: 0.5
+    windWaveSway: 0.5
+    contrast: 1
+    healthyDryRatio: 1
+    isUseDensityReduction: 1
+    densityReduceDistance: 200
+    densityReduceMultiplier: 16
+    densityReduceMaxScale: 0
+    densityReduceHeightScale: 0
+    initialBufferSize: 1024
+    maxDetailInstanceCountPerUnit: 16
+    detailBufferSizePercentageDifferenceForReduction: 0.5
+    detailExtraBufferSizePercentage: 0.2
+    densityAdjustment: 1
+    healthyDryScaleAdjustment: 0
+    noiseSeedAdjustment: 0
+    noiseSpreadAdjustment: 1
+    proceduralDensityData: {fileID: 0}
+  _gpuiTerrains: []
+  _isAutoAddPrototypesBasedOnTerrains: 1
+  _isAutoAddActiveTerrainsOnInitialization: 0
+  _isAutoRemovePrototypesBasedOnTerrains: 0
+  defaultDetailTextureProfile: {fileID: 11400000, guid: a6a4e387c75305b4a8e6bd0c576190f9, type: 2}
+  detailObjectDistance: 750
+  windVector: {x: 0.4, y: 0.8, z: 0, w: 0}
+  healthyDryNoiseTexture: {fileID: 2800000, guid: 9f956857cd1205048a6319af863aa4e6, type: 3}
+  detailUpdateDistance: 1
+  disableAsyncDetailDataRequest: 0
+--- !u!4 &481631815
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 481631813}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &614279045 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8273374857345574935, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
@@ -731,6 +974,179 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!1001 &1564802357
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4940153599442777884, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[5].name
+      value: GPUI_Juani_Prefab_Rock03 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[6].name
+      value: GPUI_Juani_Prefab_Rock02 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[7].name
+      value: GPUI_Juani_Prefab_Rock01 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[5].profile
+      value: 
+      objectReference: {fileID: 11400000, guid: dd06b37bf8bf8a240b1b2c1e10dcdb90, type: 2}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[6].profile
+      value: 
+      objectReference: {fileID: 11400000, guid: dd06b37bf8bf8a240b1b2c1e10dcdb90, type: 2}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[7].profile
+      value: 
+      objectReference: {fileID: 11400000, guid: dd06b37bf8bf8a240b1b2c1e10dcdb90, type: 2}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[5].isEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[6].isEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[7].isEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[5].prefabObject
+      value: 
+      objectReference: {fileID: 8130742305417628576, guid: d72daa2e58237492d8a4dc7ddcc2892c, type: 3}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[6].prefabObject
+      value: 
+      objectReference: {fileID: 5568536584481621665, guid: d18ffb39aec2c4035883b5f0a214c81e, type: 3}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[7].prefabObject
+      value: 
+      objectReference: {fileID: 2193585823466417083, guid: 76a69c27dfbdb490ba44b40ffae0ad3e, type: 3}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[5].billboardDistance
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[6].billboardDistance
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[7].billboardDistance
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[5].isApplyHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[6].isApplyHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[7].isApplyHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[5].isApplyRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[6].isApplyRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[7].isApplyRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[5].isApplyPrefabScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[6].isApplyPrefabScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypeDataArray.Array.data[7].isApplyPrefabScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[5].isBillboardReplaceLODCulled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[6].isBillboardReplaceLODCulled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7455358223051447241, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: _prototypes.Array.data[7].isBillboardReplaceLODCulled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8866002460495006742, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
+      propertyPath: m_Name
+      value: GPUI Tree Manager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 04d6aaeb665104b3a9da919eab23867b, type: 3}
 --- !u!1 &1800558272
 GameObject:
   m_ObjectHideFlags: 0
@@ -1104,3 +1520,5 @@ SceneRoots:
   - {fileID: 5050490996342943587}
   - {fileID: 1929393544}
   - {fileID: 2104274357}
+  - {fileID: 481631815}
+  - {fileID: 1564802357}

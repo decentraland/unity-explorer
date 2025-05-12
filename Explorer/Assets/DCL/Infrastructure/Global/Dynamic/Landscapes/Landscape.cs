@@ -7,6 +7,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using GPUInstancerPro.TerrainModule;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -60,6 +61,23 @@ namespace Global.Dynamic.Landscapes
                     await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
                 else
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
+            }
+
+            Terrain[] terrains = Terrain.activeTerrains;
+
+            GPUITreeManager treeManager = GameObject.FindObjectOfType<GPUITreeManager>();
+            GPUIDetailManager detailManager = GameObject.FindObjectOfType<GPUIDetailManager>();
+
+            if (treeManager != null)
+            {
+                foreach (Terrain terrain in terrains)
+                {
+                    if (treeManager != null)
+                        GPUITerrainAPI.AddTerrain(treeManager, terrain);
+
+                    if (detailManager != null)
+                        GPUITerrainAPI.AddTerrain(detailManager, terrain);
+                }
             }
 
             return EnumResult<LandscapeError>.SuccessResult();
