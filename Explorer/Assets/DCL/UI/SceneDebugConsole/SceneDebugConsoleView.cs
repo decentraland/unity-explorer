@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -37,7 +38,7 @@ namespace DCL.UI.SceneDebugConsole
         private Button togglePanelButton;
 
         [SerializeField]
-        private SceneDebugConsoleLogViewerElement logMessageViewer;
+        private SceneDebugConsoleLogViewerElement logEntriesViewer;
 
         [SerializeField]
         private Button clearButton;
@@ -83,7 +84,7 @@ namespace DCL.UI.SceneDebugConsole
         private CancellationTokenSource fadeoutCts;
 
         private bool isInputSelected;
-        private IReadOnlyList<SceneDebugConsoleLogMessage> logMessages;
+        private IReadOnlyList<SceneDebugConsoleLogEntry> logEntries;
         private SceneDebugConsoleSettings consoleSettings;
         private readonly List<LogEntryView> logEntryViews = new();
 
@@ -111,11 +112,10 @@ namespace DCL.UI.SceneDebugConsole
                 consolePanelCanvasGroup.alpha = value ? 1f : 0f;
                 consolePanelCanvasGroup.interactable = value;
                 consolePanelCanvasGroup.blocksRaycasts = value;
-                logMessageViewer.IsVisible = value;
+                // logEntriesViewer.IsVisible = value;
 
                 if (value)
                 {
-                    RefreshLogs();
                     ShowLatestLogs();
                 }
                 else
@@ -142,9 +142,9 @@ namespace DCL.UI.SceneDebugConsole
             viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
         }
 
-        public void Initialize(IReadOnlyList<SceneDebugConsoleLogMessage> logMessages, SceneDebugConsoleSettings settings)
+        public void Initialize(IReadOnlyList<SceneDebugConsoleLogEntry> logEntries, SceneDebugConsoleSettings settings)
         {
-            this.logMessages = logMessages;
+            this.logEntries = logEntries;
             this.consoleSettings = settings;
 
             togglePanelButton.onClick.AddListener(OnTogglePanelButtonClicked);
@@ -156,8 +156,7 @@ namespace DCL.UI.SceneDebugConsole
 
             viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
 
-            logMessageViewer.Initialize();
-            logMessageViewer.SetData(logMessages);
+            logEntriesViewer.Initialize(logEntries);
         }
 
         private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
@@ -196,52 +195,6 @@ namespace DCL.UI.SceneDebugConsole
             }
         }
 
-        public void RefreshLogs()
-        {
-            // UnityEngine.Debug.Log($"PRAVS - View.RefreshLogs()");
-            logMessageViewer.RefreshLogs();
-
-            // SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
-        }
-
-        /// <summary>
-        /// Changes the visibility of the scroll-to-bottom button.
-        /// </summary>
-        /// <param name="isVisible">Whether to make it visible or invisible.</param>
-        /// <param name="useAnimation">Whether to use a fading animation or change its visual state immediately.</param>
-        /*public void SetScrollToBottomVisibility(bool isVisible, bool useAnimation = false)
-        {
-            // Resets animation
-            scrollToBottomCanvasGroup.DOKill();
-
-            if (isVisible)
-            {
-                scrollToBottomCanvasGroup.alpha = 1.0f;
-                scrollToBottomButton.gameObject.SetActive(true);
-            }
-            else
-            {
-                if(useAnimation)
-                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).
-                                              SetDelay(scrollToBottomButtonTimeBeforeHiding).
-                                              OnComplete(() => { scrollToBottomButton.gameObject.SetActive(false); });
-                else
-                {
-                    scrollToBottomCanvasGroup.alpha = 0.0f;
-                    scrollToBottomButton.gameObject.SetActive(false);
-                }
-            }
-        }*/
-
-        /*private void AddLogEntryView(SceneDebugConsoleLogMessage logMessage)
-        {
-            // TODO: optimize with pool of this prefab
-            GameObject entryGO = Instantiate(logEntryPrefab, logContentTransform);
-            LogEntryView entryView = entryGO.GetComponent<LogEntryView>();
-            entryView.SetItemData(logMessage);
-            logEntryViews.Add(entryView);
-        }*/
-
         /// <summary>
         /// Moves the console so it shows the latest logs.
         /// </summary>
@@ -249,7 +202,7 @@ namespace DCL.UI.SceneDebugConsole
         {
             /*Canvas.ForceUpdateCanvases();
             logScrollRect.normalizedPosition = new Vector2(0, 0);*/
-            logMessageViewer.ShowLastMessage();
+            logEntriesViewer.ShowLastLogEntry();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -268,10 +221,14 @@ namespace DCL.UI.SceneDebugConsole
             // chatMessageViewer.StartChatEntriesFadeout();
         }
 
+        public void OnLogHistoryEntryAdded()
+        {
+            logEntriesViewer.OnLogEntryAdded();
+        }
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
-            logMessageViewer.InjectDependencies(dependencies);
         }
 
         private void OnInputFieldSelected(string value)

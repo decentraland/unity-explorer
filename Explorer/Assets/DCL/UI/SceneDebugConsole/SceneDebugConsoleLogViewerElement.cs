@@ -1,151 +1,55 @@
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.Utilities;
-using MVC;
-using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI.SceneDebugConsole
 {
-    /// <summary>
-    /// A UI element that displays a list of log messages.
-    /// </summary>
-    public class SceneDebugConsoleLogViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
+    public class SceneDebugConsoleLogViewerElement : MonoBehaviour
     {
-        public delegate void LogMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
+        [SerializeField] private ScrollRect scrollRect;
+        [SerializeField] private Transform logEntriesParent;
+        [SerializeField] private GameObject logEntryPrefab;
 
-        /// <summary>
-        /// The prefab to use when instantiating a new item.
-        /// </summary>
-        private enum LogItemPrefabIndex // It must match the list in the LoopListView.
+        private PooledConsoleLogEntriesList pooledConsoleLogEntriesList;
+        private IReadOnlyList<SceneDebugConsoleLogEntry> logEntries;
+        private bool needsUiUpdate = false;
+
+        public bool IsScrollAtBottom => scrollRect.normalizedPosition.y <= 0.001f;
+        public bool IsScrollAtTop => scrollRect.normalizedPosition.y >= 0.999f;
+
+        public void Initialize(IReadOnlyList<SceneDebugConsoleLogEntry> logEntries)
         {
-            LogEntry,
-        }
-
-        [SerializeField]
-        private LoopListView2 loopList = null!; // Ensure this is assigned in the inspector
-
-        [SerializeField]
-        private ScrollRect scrollRect = null!; // Ensure this is assigned in the inspector
-
-        private IReadOnlyList<SceneDebugConsoleLogMessage> logMessages;
-        private ViewDependencies viewDependencies;
-
-        /// <summary>
-        /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
-        /// </summary>
-        public bool IsScrollAtBottom => loopList.ScrollRect.normalizedPosition.y <= 0.001f;
-
-        /// <summary>
-        /// Gets whether the scroll view is showing the top of the content, and it can't scroll up anymore.
-        /// </summary>
-        public bool IsScrollAtTop => loopList.ScrollRect.normalizedPosition.y >= 0.999f;
-
-        /// <summary>
-        /// Gets or sets whether the UI is visible.
-        /// </summary>
-        public bool IsVisible;
-
-        /// <summary>
-        /// Initializes the UI element.
-        /// </summary>
-        public void Initialize()
-        {
-            loopList.InitListView(0, OnGetItemByIndex);
+            this.logEntries = logEntries;
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+
+            pooledConsoleLogEntriesList = new PooledConsoleLogEntriesList(
+                logEntries,
+                logEntriesParent,
+                logEntryPrefab
+            );
         }
 
-        /// <summary>
-        /// Replaces the data to be represented by the UI element.
-        /// </summary>
-        /// <param name="messages">The log messages to display.</param>
-        public void SetData(IReadOnlyList<SceneDebugConsoleLogMessage> messages)
+        public void OnLogEntryAdded()
         {
-            logMessages = messages;
-            RefreshLogs();
+            needsUiUpdate = true;
         }
 
-        /// <summary>
-        /// Moves the log so it shows the last created message.
-        /// </summary>
-        public void ShowLastMessage()
+        private void Update()
         {
-            if (loopList.ItemTotalCount == 0) return;
-
-            ShowItem(loopList.ItemTotalCount - 1);
-        }
-
-        /// <summary>
-        /// Moves the scroll view so an item is visible in the panel.
-        /// </summary>
-        /// <param name="itemIndex">The index of the item in the list.</param>
-        public void ShowItem(int itemIndex)
-        {
-             if (loopList.ItemTotalCount == 0 || itemIndex < 0 || itemIndex >= loopList.ItemTotalCount) return;
-
-             // Adjust the target offset if needed, this is just a copy from Chat example
-             // loopList.MovePanelToItemIndex(itemIndex, loopList.ViewPortHeight - 170.0f);
-             loopList.MovePanelToItemIndex(itemIndex, 0);
-
-            // scrollRect.normalizedPosition = loopList.GetItemCornerPosInViewPort(loopList.ItemList[itemIndex]);
-            scrollRect.normalizedPosition = loopList.GetItemCornerPosInViewPort(loopList.GetShownItemByItemIndex(itemIndex));
-        }
-
-        /// <summary>
-        /// Makes sure the view is showing all the messages stored in the data and adjusts scroll position.
-        /// </summary>
-        public void RefreshLogs()
-        {
-            if (!IsVisible) return;
-
-            int logMessagesCount = logMessages.Count;
-            int currentItemTotalCount = loopList.ItemTotalCount;
-
-            if (logMessagesCount == currentItemTotalCount)
+            if (needsUiUpdate)
             {
-                // Even if count is same, content might change
-                loopList.RefreshAllShownItem();
-                return;
+                pooledConsoleLogEntriesList.ConfigureUiItem(logEntries.Count - 1);
+                needsUiUpdate = false;
+
+                ShowLastLogEntry();
             }
-            // Set the correct total item count.
-            loopList.SetListItemCount(logMessagesCount, resetPos: true);
-
-            // After changing the count, ensure visible items are updated.
-            // This helps if SetListItemCount doesn't immediately trigger all necessary OnGetItemByIndex calls.
-            loopList.RefreshAllShownItem();
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void ShowLastLogEntry()
         {
-             viewDependencies = dependencies;
-        }
-
-        public void Dispose()
-        {
-        }
-
-        // Called by the LoopListView when the number of items change
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
-        {
-            if (index < 0 || index >= logMessages.Count)
-            {
-                Debug.Log($"PRAVS - LogViewerElement.OnGetItemByIndex() - INVALID INDEX - index: {index}");
-                return null;
-            }
-
-            SceneDebugConsoleLogMessage itemData = logMessages[index];
-            // Debug.Log($"PRAVS - LogViewerElement.OnGetItemByIndex() - index: {index} / message: {itemData.Message}");
-
-            LoopListViewItem2 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)LogItemPrefabIndex.LogEntry].mItemPrefab.name);
-            LogEntryView itemScript = item.GetComponent<LogEntryView>();
-
-            itemScript.SetItemData(itemData);
-
-            listView.OnItemSizeChanged(index);
-
-            return item;
+            scrollRect.verticalNormalizedPosition = 0;
         }
     }
 }

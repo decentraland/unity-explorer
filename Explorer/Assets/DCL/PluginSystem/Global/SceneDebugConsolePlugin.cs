@@ -18,7 +18,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly SceneDebugConsoleLogHistory logHistory;
-        private readonly SceneDebugConsoleMessageBus logMessagesBus;
+        private readonly SceneDebugConsoleLogEntryBus logLogEntriesBus;
         private readonly IInputBlock inputBlock;
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
 
         public SceneDebugConsolePlugin(
             IMVCManager mvcManager,
-            SceneDebugConsoleMessageBus logMessagesBus,
+            SceneDebugConsoleLogEntryBus logLogEntriesBus,
             SceneDebugConsoleLogHistory logHistory,
             MainUIView mainUIView,
             IInputBlock inputBlock,
@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.Global
         {
             this.mvcManager = mvcManager;
             this.logHistory = logHistory;
-            this.logMessagesBus = logMessagesBus;
+            this.logLogEntriesBus = logLogEntriesBus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
@@ -57,7 +57,7 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(true);
                     return view;
                 },
-                logMessagesBus,
+                logLogEntriesBus,
                 logHistory,
                 inputBlock,
                 viewDependencies,

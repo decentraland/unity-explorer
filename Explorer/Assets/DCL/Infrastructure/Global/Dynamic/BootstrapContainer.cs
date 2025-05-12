@@ -56,7 +56,7 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-        public SceneDebugConsoleMessageBus? SceneDebugConsoleMessageBus { get; private set; }
+        public SceneDebugConsoleLogEntryBus? SceneDebugConsoleMessageBus { get; private set; }
 
         public DecentralandEnvironment Environment { get; private set; }
 
@@ -93,7 +93,7 @@ namespace Global.Dynamic
             var web3AccountFactory = new Web3AccountFactory();
 
             bool enableSceneDebugConsole = realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
-            var sceneDebugConsoleMessageBus = enableSceneDebugConsole ? new SceneDebugConsoleMessageBus() : null;
+            var sceneDebugConsoleMessageBus = enableSceneDebugConsole ? new SceneDebugConsoleLogEntryBus() : null;
 
             var bootstrapContainer = new BootstrapContainer
             {

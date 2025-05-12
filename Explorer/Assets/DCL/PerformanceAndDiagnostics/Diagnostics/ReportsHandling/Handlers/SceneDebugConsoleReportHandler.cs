@@ -7,33 +7,33 @@ namespace DCL.Diagnostics
 {
     public class SceneDebugConsoleReportHandler : ReportHandlerBase
     {
-        private readonly SceneDebugConsoleMessageBus sceneDebugConsoleMessageBus;
+        private readonly SceneDebugConsoleLogEntryBus sceneDebugConsoleLogEntryBus;
 
-        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, SceneDebugConsoleMessageBus sceneDebugConsoleMessageBus, bool debounceEnabled) : base(matrix, debounceEnabled)
+        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, SceneDebugConsoleLogEntryBus sceneDebugConsoleLogEntryBus, bool debounceEnabled) : base(matrix, debounceEnabled)
         {
-            this.sceneDebugConsoleMessageBus = sceneDebugConsoleMessageBus;
+            this.sceneDebugConsoleLogEntryBus = sceneDebugConsoleLogEntryBus;
         }
 
         internal override void LogInternal(LogType logType, ReportData reportData, Object context, object message)
         {
-            sceneDebugConsoleMessageBus.Send(message.ToString(), logType);
+            sceneDebugConsoleLogEntryBus.Send(message.ToString(), logType);
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
-            sceneDebugConsoleMessageBus.Send(string.Format(message.ToString(), args), logType);
+            sceneDebugConsoleLogEntryBus.Send(string.Format(message.ToString(), args), logType);
         }
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
-            sceneDebugConsoleMessageBus.Send(ecsSystemException.Message, LogType.Exception);
-            sceneDebugConsoleMessageBus.Send(ecsSystemException.StackTrace, LogType.Exception);
+            sceneDebugConsoleLogEntryBus.Send(ecsSystemException.Message, LogType.Exception);
+            sceneDebugConsoleLogEntryBus.Send(ecsSystemException.StackTrace, LogType.Exception);
         }
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
-            sceneDebugConsoleMessageBus.Send(exception.Message, LogType.Exception);
-            sceneDebugConsoleMessageBus.Send(exception.StackTrace, LogType.Exception);
+            sceneDebugConsoleLogEntryBus.Send(exception.Message, LogType.Exception);
+            sceneDebugConsoleLogEntryBus.Send(exception.StackTrace, LogType.Exception);
         }
     }
 }

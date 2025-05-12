@@ -11,7 +11,7 @@ namespace DCL.UI.SceneDebugConsole
         [field: SerializeField] internal TMP_Text messageContentText { get; private set; }
         [field: SerializeField] internal TextHyperlinkHandlerElement textHyperlinkHandler { get; private set; }
 
-        public void SetMessageContent(SceneDebugConsoleLogMessage data)
+        public void SetMessageContent(SceneDebugConsoleLogEntry data)
         {
             messageContentText.SetText(data.Message);
             messageContentText.color = data.Color;

@@ -167,7 +167,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2680055985081135439}
   m_HandleRect: {fileID: 7426884741399343867}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1893,7 +1893,6 @@ GameObject:
   - component: {fileID: 3166049409186990643}
   - component: {fileID: 1282537677743669863}
   - component: {fileID: 3397229834474510796}
-  - component: {fileID: 6671003195211882300}
   - component: {fileID: 1318046728020079166}
   m_Layer: 5
   m_Name: SceneDebugConsoleLogViewerElement
@@ -1991,28 +1990,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &6671003195211882300
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7696408945074485131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e190d043ef387ee4fad4acea6146931e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mItemPrefabDataList:
-  - mItemPrefab: {fileID: 7324587687337436852, guid: 32d1a44a8af8d4251b59127dc5d4ef29, type: 3}
-    mPadding: 4
-    mInitCreateCount: 50
-    mStartPosOffset: 0
-  mArrangeType: 0
-  mSupportScrollBar: 1
-  mItemSnapEnable: 0
-  mViewPortSnapPivot: {x: 0, y: 0}
-  mItemSnapPivot: {x: 0, y: 0}
 --- !u!114 &1318046728020079166
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2025,9 +2002,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4668935e1d0d47dc86f3493687310d1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loopList: {fileID: 6671003195211882300}
   scrollRect: {fileID: 3397229834474510796}
-  IsVisible: 0
+  logEntriesParent: {fileID: 6334738306198345799}
+  logEntryPrefab: {fileID: 7324587687337436852, guid: 32d1a44a8af8d4251b59127dc5d4ef29, type: 3}
 --- !u!1 &8242090098976053527
 GameObject:
   m_ObjectHideFlags: 0
@@ -2215,7 +2192,7 @@ MonoBehaviour:
   scrollToBottomButtonFadeOutDuration: 0.5
   inputField: {fileID: 3303684574617829340}
   togglePanelButton: {fileID: 7533817777533828581}
-  logMessageViewer: {fileID: 1318046728020079166}
+  logEntriesViewer: {fileID: 1318046728020079166}
   clearButton: {fileID: 0}
   consolePanelCanvasGroup: {fileID: 5372491217721492551}
   scrollToBottomButton: {fileID: 905818817793794684}

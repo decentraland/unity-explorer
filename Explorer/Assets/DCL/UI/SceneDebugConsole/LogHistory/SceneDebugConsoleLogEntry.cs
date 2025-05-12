@@ -13,7 +13,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
     }
 
     // TODO: Maybe better if it's a struct??
-    public class SceneDebugConsoleLogMessage
+    public class SceneDebugConsoleLogEntry
     {
         /// <summary>
         /// The type of message (log, warning, error, etc.)
@@ -40,7 +40,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         /// </summary>
         public Color Color { get; }
 
-        public SceneDebugConsoleLogMessage(LogMessageType type, string message, string stackTrace = "")
+        public SceneDebugConsoleLogEntry(LogMessageType type, string message, string stackTrace = "")
         {
             Type = type;
             StackTrace = stackTrace;
@@ -71,7 +71,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         /// <summary>
         /// Creates a new log message from a Unity LogType
         /// </summary>
-        public static SceneDebugConsoleLogMessage FromUnityLog(LogType logType, string message, string stackTrace = "")
+        public static SceneDebugConsoleLogEntry FromUnityLog(LogType logType, string message, string stackTrace = "")
         {
             LogMessageType type = LogMessageType.Log;
 
@@ -90,23 +90,23 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
                     break;
             }
 
-            return new SceneDebugConsoleLogMessage(type, message, stackTrace);
+            return new SceneDebugConsoleLogEntry(type, message, stackTrace);
         }
 
         /// <summary>
         /// Creates a new command message
         /// </summary>
-        public static SceneDebugConsoleLogMessage Command(string commandText)
+        public static SceneDebugConsoleLogEntry Command(string commandText)
         {
-            return new SceneDebugConsoleLogMessage(LogMessageType.Command, commandText);
+            return new SceneDebugConsoleLogEntry(LogMessageType.Command, commandText);
         }
 
         /// <summary>
         /// Creates a new command response message
         /// </summary>
-        public static SceneDebugConsoleLogMessage CommandResponse(string responseText)
+        public static SceneDebugConsoleLogEntry CommandResponse(string responseText)
         {
-            return new SceneDebugConsoleLogMessage(LogMessageType.CommandResponse, responseText);
+            return new SceneDebugConsoleLogEntry(LogMessageType.CommandResponse, responseText);
         }
     }
 }

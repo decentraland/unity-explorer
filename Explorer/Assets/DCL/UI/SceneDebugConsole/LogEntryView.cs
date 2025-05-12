@@ -8,9 +8,9 @@ namespace DCL.UI.SceneDebugConsole
     {
         /*[SerializeField] private TMP_Text messageText;
 
-        public void SetMessage(string message)
+        public void SetMessage(string entry)
         {
-            messageText.text = message;
+            messageText.text = entry;
         }
 
         public void SetTextColor(Color color)
@@ -30,7 +30,7 @@ namespace DCL.UI.SceneDebugConsole
         [field: Header("Elements")]
         [field: SerializeField] internal LogEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
-        private SceneDebugConsoleLogMessage logMessage;
+        private SceneDebugConsoleLogEntry logEntry;
 
         private void OpenContextMenu()
         {
@@ -43,9 +43,9 @@ namespace DCL.UI.SceneDebugConsole
             logEntryCanvasGroup.DOFade(1, 0.5f);
         }
 
-        public void SetItemData(SceneDebugConsoleLogMessage data)
+        public void SetItemData(SceneDebugConsoleLogEntry data)
         {
-            logMessage = data;
+            logEntry = data;
             messageBubbleElement.SetMessageData(data);
         }
     }

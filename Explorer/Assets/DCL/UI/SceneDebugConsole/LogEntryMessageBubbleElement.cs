@@ -31,8 +31,8 @@ namespace DCL.UI.SceneDebugConsole
         /// <summary>
         ///  Sets the log message data into the log bubble, adapting the background size accordingly and changing the color & outline if it's a mention
         /// </summary>
-        /// <param name="data"> a SceneDebugConsoleLogMessage </param>
-        public void SetMessageData(SceneDebugConsoleLogMessage data)
+        /// <param name="data"> a SceneDebugConsoleLogEntry </param>
+        public void SetMessageData(SceneDebugConsoleLogEntry data)
         {
             messageContentElement.SetMessageContent(data);
         }
