@@ -1,4 +1,6 @@
-﻿using UnityEditor.SceneManagement;
+﻿#if UNITY_EDITOR
+using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
 namespace StylizedGrass
