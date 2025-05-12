@@ -1111,6 +1111,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: LoadingSpinner
       objectReference: {fileID: 0}
+    - target: {fileID: 3817016671180041992, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
+      propertyPath: m_Maskable
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

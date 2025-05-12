@@ -16,7 +16,6 @@ namespace DCL.MarketplaceCredits.Sections
     public class MarketplaceCreditsWelcomeSubController : IDisposable
     {
         private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
-        private const string LEARN_MORE_LINK = "https://decentraland.org";
 
         private readonly MarketplaceCreditsWelcomeSubView subView;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
@@ -230,7 +229,7 @@ namespace DCL.MarketplaceCredits.Sections
         }
 
         private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(LEARN_MORE_LINK);
+            webBrowser.OpenUrl(MarketplaceCreditsMenuController.WEEKLY_REWARDS_INFO_LINK);
 
         private void OnEmailInputValueChanged(string email)
         {
