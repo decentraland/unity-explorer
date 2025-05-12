@@ -135,7 +135,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     currentSceneLimits = SceneLimits.Lerp(transitionStartSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], interpolationProgress);
 
                     if (currentTransitionFrames >= totalFramesToComplete)
+                    {
                         sceneTransitionState = SceneTransitionState.REDUCED;
+                        currentSceneLimits = constantSceneLimits[SceneLimitsKey.WARNING];
+                    }
                 }
             }
 
@@ -155,7 +158,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     currentSceneLimits = SceneLimits.Lerp(transitionStartSceneLimits, constantSceneLimits[initialKey], interpolationProgress);
 
                     if (currentTransitionFrames >= totalFramesToComplete)
+                    {
                         sceneTransitionState = SceneTransitionState.NORMAL;
+                        currentSceneLimits = constantSceneLimits[initialKey];
+                    }
                 }
             }
         }
