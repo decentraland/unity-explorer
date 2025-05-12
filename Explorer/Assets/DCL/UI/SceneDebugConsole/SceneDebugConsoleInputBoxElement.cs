@@ -57,7 +57,7 @@ namespace DCL.UI.SceneDebugConsole
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
             inputField.onValueChanged.AddListener(OnInputChanged);
-            inputField.OnPasteShortcutPerformedEvent += OnPasteShortcutPerformed;
+            inputField.PasteShortcutPerformed += OnPasteShortcutPerformed;
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace DCL.UI.SceneDebugConsole
 
         public void Dispose()
         {
-            inputField.OnPasteShortcutPerformedEvent -= OnPasteShortcutPerformed;
+            inputField.PasteShortcutPerformed -= OnPasteShortcutPerformed;
         }
     }
 }

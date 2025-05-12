@@ -210,11 +210,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5ef9c85ff80df42e88f2946a299f1102
-    m_Address: GenericContextMenu
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5f2c1af519efc4b82b87b887f93077fc
     m_Address: Assets/DCL/MapRenderer/Addressables/Favorite.prefab
     m_ReadOnly: 0
@@ -407,11 +402,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: beceeda1295384ef4921493b30d5cf45
     m_Address: EditorImg
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c6b10fef26cd8456a9804b16b184f584
-    m_Address: SceneDebugConsoleLogEntryConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

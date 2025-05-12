@@ -51,6 +51,10 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: open_support
       isEnabled: 1
+    - eventName: chat_conversation_opened
+      isEnabled: 1
+    - eventName: chat_conversation_closed
+      isEnabled: 1
   - groupName: Wearables
     events:
     - eventName: used_emote
@@ -68,6 +72,10 @@ MonoBehaviour:
     - eventName: badges_tab_opened
       isEnabled: 1
     - eventName: badge_ui_click
+      isEnabled: 1
+    - eventName: name_claim_requested
+      isEnabled: 1
+    - eventName: profile_name_changed
       isEnabled: 1
     - eventName: name_claim_requested
       isEnabled: 1

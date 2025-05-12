@@ -52,7 +52,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
-  - rid: 5769833632620347472
+  - rid: 5769833789245358161
   references:
     version: 2
     RefIds:
@@ -638,20 +638,14 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        GenericContextMenuMentionUserButtonPrefab:
-          m_AssetGUID: 734732fb25eed5944b9c5a5814249f81
+        GenericContextMenuButtonWithStringDelegatePrefab:
+          m_AssetGUID: 688aa1f59829ea64fb0887ed7bb87d26
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        GenericContextMenuViewUserProfileButtonPrefab:
-          m_AssetGUID: c325bf3c176cc034d83115896fd851da
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        GenericContextMenuViewBlockUserButtonPrefab:
-          m_AssetGUID: 2308a593e7fee41dbad5a6b14f89e0e7
+        GenericContextMenuToggleWithIconPrefab:
+          m_AssetGUID: bc2f6e2e838c8114e89c2f3157c0ab47
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -719,7 +713,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 5769833632620347472
+    - rid: 5769833789245358161
       type: {class: SceneDebugConsolePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <ConsoleSettings>k__BackingField: {fileID: 11400000, guid: 5df92492d483946498f93a4a425c060b, type: 2}
@@ -749,12 +743,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmotesWheelPrefab>k__BackingField:
           m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
-          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
