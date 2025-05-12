@@ -140,7 +140,7 @@ MonoBehaviour:
             Key: 4
             Icon: {fileID: 0}
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
-            Key: Right Click
+            Key: 
             Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
