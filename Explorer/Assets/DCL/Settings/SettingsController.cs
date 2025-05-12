@@ -153,7 +153,7 @@ namespace DCL.Settings
                     generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, worldVolumeMacBus));
             }
         }
 
