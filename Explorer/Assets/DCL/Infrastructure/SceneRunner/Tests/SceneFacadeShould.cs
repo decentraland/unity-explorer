@@ -270,6 +270,7 @@ namespace SceneRunner.Tests
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.WebSocketAipImplementation));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.EngineAPI));
 
             await UniTask.SwitchToThreadPool();
 
@@ -293,6 +294,7 @@ namespace SceneRunner.Tests
                     && field.FieldType != typeof(SceneInstanceDependencies))
                 {
                     var disposable = (IDisposable)field.GetValue(sceneFacade.deps);
+
                     disposable.Received(1).Dispose();
                 }
             }
@@ -367,7 +369,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ICRDTMemoryAllocator>(),
                     Substitute.For<IOutgoingCRDTMessagesProvider>(),
                     Substitute.For<IEntityCollidersSceneCache>(),
-                    Substitute.For<ISceneStateProvider>(),
+                    CreateSceneStateProvider(),
                     Substitute.For<ISceneExceptionsHandler>(),
                     worldFactory.CreateWorld(new ECSWorldFactoryArgs()),
                     Substitute.For<ICRDTWorldSynchronizer>(),
@@ -387,6 +389,13 @@ namespace SceneRunner.Tests
         public class TestAPIWrapper : JsApiWrapper<IDisposable>
         {
             public TestAPIWrapper(IDisposable api) : base(api, new CancellationTokenSource()) { }
+        }
+
+        private static ISceneStateProvider CreateSceneStateProvider()
+        {
+            ISceneStateProvider? sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.State = new Atomic<SceneState>();
+            return sceneStateProvider;
         }
     }
 }
