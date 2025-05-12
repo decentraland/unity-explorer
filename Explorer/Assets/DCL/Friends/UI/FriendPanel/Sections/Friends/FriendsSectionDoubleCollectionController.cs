@@ -54,7 +54,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
-            var buildContextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
+            (GenericContextMenu, GenericContextMenuElement) buildContextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
                 userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, JumpToFriendLocationCtx, BlockUserCtx);
 
             contextMenu = buildContextMenu.Item1;
@@ -100,9 +100,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
-            {
-                UserId = new Web3Address(userId),
-            })).Forget();
+                       {
+                           UserId = new Web3Address(userId),
+                       }))
+                      .Forget();
         }
 
         protected override void ElementClicked(FriendProfile profile)
@@ -118,23 +119,20 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 openPassportCts = openPassportCts.SafeRestart();
                 WaitAndOpenPassportAsync(profile, openPassportCts.Token).Forget();
             }
-
         }
 
         private async UniTaskVoid WaitAndOpenPassportAsync(FriendProfile profile, CancellationToken ct)
         {
             elementClicked = true;
+
             if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.OFFLINE)
                 OnlineFriendClicked?.Invoke(profile.Address);
 
             await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BETWEEN_CLICKS), cancellationToken: ct);
             elementClicked = false;
 
-
             await passportBridge.ShowAsync(profile.Address);
         }
-
-
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
@@ -153,8 +151,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(
-                               config: contextMenu,
-                               anchorPosition: buttonPosition,
+                               contextMenu,
+                               buttonPosition,
                                actionOnHide: () => elementView.CanUnHover = true,
                                closeTask: panelLifecycleTask?.Task))
                        )
