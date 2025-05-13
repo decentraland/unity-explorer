@@ -2035,7 +2035,7 @@
                     "name": "MainMenu",
                     "type": "Button",
                     "id": "20936db2-9a40-404f-97ac-eee3c350d7ec",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2053,7 +2053,7 @@
                     "name": "Map",
                     "type": "Button",
                     "id": "78bba755-0c5b-440f-87ae-634652b31146",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2162,6 +2162,15 @@
                     "type": "Button",
                     "id": "beb1ee53-edda-4028-98bb-2706bb7d853e",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Communities",
+                    "type": "Button",
+                    "id": "2f15709f-9167-4392-b768-90dc8f335a4d",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2352,6 +2361,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "FriendPanel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e712ed19-0407-4153-9a6c-cc9ced6dcc5d",
+                    "path": "<Keyboard>/o",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Communities",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

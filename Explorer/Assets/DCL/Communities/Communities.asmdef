@@ -1,3 +1,4 @@
 {
-	"name": "Communities"
+	"name": "Communities",
+	"references":[ "GUID:e169fa6683c924c7e99a85981a91d953" ]
 }
