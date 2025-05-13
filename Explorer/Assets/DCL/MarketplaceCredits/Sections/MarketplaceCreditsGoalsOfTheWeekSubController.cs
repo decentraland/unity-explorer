@@ -93,9 +93,9 @@ namespace DCL.MarketplaceCredits.Sections
                 instantiatedGoalRows.Add(goalRow);
             }
 
-            subView.ShowCaptcha(creditsProgramProgressResponse.SomethingToClaim());
+            subView.ShowCaptcha(creditsProgramProgressResponse.SomethingToClaim(), creditsProgramProgressResponse.credits.isBlockedForClaiming);
 
-            if (creditsProgramProgressResponse.SomethingToClaim())
+            if (creditsProgramProgressResponse.SomethingToClaim() && !creditsProgramProgressResponse.credits.isBlockedForClaiming)
                 ReloadCaptcha();
         }
 
@@ -194,7 +194,12 @@ namespace DCL.MarketplaceCredits.Sections
                     marketplaceCreditsMenuController.SetSidebarButtonAsClaimIndicator(false);
                 }
                 else
-                    subView.SetCaptchaAsErrorState(true, isNonSolvedError: true);
+                {
+                    if (!claimCreditsResponse.is_locked)
+                        subView.SetCaptchaAsErrorState(true, isNonSolvedError: true);
+                    else
+                        subView.ShowCaptcha(true, true);
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
