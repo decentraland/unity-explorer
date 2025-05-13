@@ -73,6 +73,7 @@ namespace Global.Dynamic
         private readonly IProfileRepository profileRepository;
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -88,7 +89,8 @@ namespace Global.Dynamic
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment,
             IProfileRepository profileRepository,
-            RoadAssetsPool roadAssetPool)
+            RoadAssetsPool roadAssetPool,
+            SceneLoadingLimit sceneLoadingLimit)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -116,6 +118,7 @@ namespace Global.Dynamic
             this.roadCoordinates = roadCoordinates;
             this.lodSettingsAsset = lodSettingsAsset;
             this.roadAssetPool = roadAssetPool;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -165,10 +168,8 @@ namespace Global.Dynamic
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData);
 
-
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
-
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
@@ -195,9 +196,6 @@ namespace Global.Dynamic
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
-
-            var sceneLoadingLimit
-                = SceneLoadingLimit.CreateMax();
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
