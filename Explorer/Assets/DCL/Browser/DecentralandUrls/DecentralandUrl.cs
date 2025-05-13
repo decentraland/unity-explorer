@@ -60,6 +60,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         CameraReelUsers,
         CameraReelImages,
         CameraReelPlaces,
+        CameraReelCommunity,
         CameraReelLink,
 
         ApiFriends,

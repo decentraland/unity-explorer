@@ -46,6 +46,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private async UniTask<CameraReelResponsesCompact> FetchResponseAsync(CancellationToken ct)
         {
+            if (parameters.CommunityId != null)
+                return await cameraReelStorageService.GetCompactCommunityScreenshotGalleryAsync(parameters.CommunityId, pageSize, currentOffset, ct);
+
             if (parameters.PlaceId != null)
                 return await cameraReelStorageService.GetCompactPlaceScreenshotGalleryAsync(parameters.PlaceId, pageSize, currentOffset, ct);
 
@@ -90,22 +93,31 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
     public struct PagedCameraReelManagerParameters
     {
+        public enum EntityType
+        {
+            PLACE,
+            COMMUNITY,
+        }
+
         public readonly string? WalletAddress;
         public readonly bool? UseSignedRequest;
         public readonly string? PlaceId;
+        public readonly string? CommunityId;
 
         public PagedCameraReelManagerParameters(string walletAddress, bool useSignedRequest)
         {
             this.WalletAddress = walletAddress;
             this.UseSignedRequest = useSignedRequest;
             this.PlaceId = null;
+            this.CommunityId = null;
         }
 
-        public PagedCameraReelManagerParameters(string placeId)
+        public PagedCameraReelManagerParameters(string entityId, EntityType entityType = EntityType.PLACE)
         {
             this.WalletAddress = null;
             this.UseSignedRequest = null;
-            this.PlaceId = placeId;
+            this.PlaceId = entityType == EntityType.PLACE ? entityId : null;
+            this.CommunityId = entityType == EntityType.COMMUNITY ? entityId : null;
         }
     }
 }
