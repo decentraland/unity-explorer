@@ -104,21 +104,26 @@ namespace ECS.SceneLifeCycle
             {
                 await UniTask.WaitUntil(() =>
                 {
-                    var isNewSceneRunning = false;
+                    var isLoadCompleted = false;
 
+                    // TODO: filter by scene coord/id? We currently assume that only one scene will be running during local scene development
                     world.Query(in new QueryDescription().WithAll<ISceneFacade>().WithNone<DeleteEntityIntention>(),
                         (ref ISceneFacade newScene) =>
                         {
-                            isNewSceneRunning = newScene.SceneStateProvider.State is SceneState.Running
-                                                    or SceneState.EcsError
-                                                    or SceneState.JavaScriptError
+                            if (newScene.SceneStateProvider.State is SceneState.JavaScriptError
+                                or SceneState.EcsError)
+                            {
+                                isLoadCompleted = true;
+                                return;
+                            }
 
+                            isLoadCompleted = newScene.SceneStateProvider.State is SceneState.Running
                                                 // Consider GLTF models in the initial loading phase since they're not tracked by SceneStateProvider.State.
                                                 // This prevents the character from falling through unloaded colliders during scene reload.
                                                 && newScene.SceneData.SceneLoadingConcluded;
                         });
 
-                    return isNewSceneRunning;
+                    return isLoadCompleted;
                 }, cancellationToken: ct);
             }
         }
