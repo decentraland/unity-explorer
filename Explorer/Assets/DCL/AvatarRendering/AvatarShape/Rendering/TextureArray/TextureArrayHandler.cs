@@ -11,12 +11,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     public class TextureArrayHandler
     {
         internal const int DEFAULT_SLOT_INDEX = 0;
-
         internal readonly int arrayID;
         internal readonly int textureID;
 
         private readonly Dictionary<Vector2Int, TextureArraySlotHandler> handlersByResolution;
         private readonly int minArraySize;
+        private readonly int effectiveMinArraySizeForLowRes;
+        private readonly int effectiveMinArraySizeForHighRes;
         private readonly int initialCapacityForEachResolution;
         private readonly TextureFormat textureFormat;
 
@@ -32,7 +33,8 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             IReadOnlyList<int> defaultResolutions,
             TextureFormat textureFormat,
             IReadOnlyDictionary<TextureArrayKey, Texture>? defaultTextures = null,
-            int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+            int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT,
+            int? minArraySizeForHighRes = null)
         {
             this.minArraySize = minArraySize;
             this.arrayID = arrayID;
@@ -40,6 +42,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.textureFormat = textureFormat;
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
+            
+            this.effectiveMinArraySizeForLowRes = minArraySize;
+            this.effectiveMinArraySizeForHighRes = minArraySizeForHighRes ?? minArraySize;
+            
             this.domain = domain;
 
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(defaultResolutions.Count);
@@ -97,8 +103,29 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArraySlotHandler CreateHandler(Vector2Int resolution)
         {
-            //We are creating a considerably smaller array for non square resolutions. Shouldn't be a common case
-            var slotHandler = new TextureArraySlotHandler(domain, resolution, resolution.x == resolution.y ? minArraySize : minArraySize / 10, initialCapacityForEachResolution, textureFormat);
+            // NOTE: We are creating a considerably smaller array for resolutions over
+            // NOTE: the high resolution threshold. Shouldn't be a common case
+            int baseSizeToUse = resolution.x >= TextureArrayConstants.HIGH_RES_THRESHOLD || 
+                                resolution.y >= TextureArrayConstants.HIGH_RES_THRESHOLD
+                ? this.effectiveMinArraySizeForHighRes
+                : this.effectiveMinArraySizeForLowRes;
+
+            // NOTE: We are creating a considerably smaller array for
+            // NOTE: non square resolutions. Shouldn't be a common case
+            int finalSizeForSlotHandler = resolution.x == resolution.y
+                ? baseSizeToUse
+                : baseSizeToUse / 10;
+            
+            // NOTE: safety net for the case the resolution is too small
+            if (finalSizeForSlotHandler <= 0) finalSizeForSlotHandler = 1;
+            
+            var slotHandler = new TextureArraySlotHandler(
+                domain,
+                resolution,
+                finalSizeForSlotHandler,
+                initialCapacityForEachResolution,
+                textureFormat);
+            
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture
