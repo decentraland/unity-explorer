@@ -5,7 +5,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
-using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using DCL.Roads.Settings;
@@ -13,10 +12,10 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using GPUInstancerPro.PrefabModule;
 using UnityEngine;
 using Utility;
 
@@ -33,6 +32,8 @@ namespace DCL.Roads.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly IScenesCache scenesCache;
 
+        private readonly GPUIPrefabManager gpuiPrefabManger;
+
         internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool,
             ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
         {
@@ -42,6 +43,8 @@ namespace DCL.Roads.Systems
             this.roadAssetPool = roadAssetPool;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.scenesCache = scenesCache;
+
+            gpuiPrefabManger = Object.FindObjectOfType<GPUIPrefabManager>();
         }
 
         protected override void Update(float t)
@@ -63,11 +66,8 @@ namespace DCL.Roads.Systems
 
             if (roadDescriptions.TryGetValue(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, out RoadDescription roadDescription))
             {
-                if (!roadAssetPool.Get(roadDescription.RoadModel, out Transform? roadAsset))
-                {
-                    ReportHub.LogWarning(GetReportData(),
-                        $"Road with model for {roadDescription.RoadModel} at {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.ToString()} does not exist, loading default");
-                }
+                roadAssetPool.Get(roadDescription.RoadModel, out var roadAsset);
+                
 
                 //HACK: Since all original scene dont have the correct pivot, we move it here
                 roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + ParcelMathHelper.RoadPivotDeviation;
@@ -80,12 +80,15 @@ namespace DCL.Roads.Systems
 
                 roadInfo.CurrentAsset = roadAsset;
                 roadInfo.CurrentKey = roadDescription.RoadModel;
+
+                gpuiPrefabManger.AddPrefabInstance(roadAsset.GetComponent<GPUIPrefab>(), 0);
             }
             else
             {
                 ReportHub.LogWarning(GetReportData(),
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
             }
+            
 
             sceneLoadingState.PromiseCreated = true;
 

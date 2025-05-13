@@ -1,0 +1,355 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4474862589088033614
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4219021617599105645}
+  - component: {fileID: 1278347858605201400}
+  - component: {fileID: 5497981686985861568}
+  m_Layer: 0
+  m_Name: RoadSideCornerSmall_collider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4219021617599105645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4474862589088033614}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7659698015913129913}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1278347858605201400
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4474862589088033614}
+  m_Mesh: {fileID: -4350150301866392244, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+--- !u!23 &5497981686985861568
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4474862589088033614}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6991669576261201155
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7659698015913129913}
+  - component: {fileID: 8765272194048456998}
+  - component: {fileID: 6496511339782236301}
+  - component: {fileID: 7225687462968762843}
+  m_Layer: 0
+  m_Name: RoadSideCornerSmall
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7659698015913129913
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991669576261201155}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 8, y: 0, z: -8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4219021617599105645}
+  - {fileID: 515818154999679105}
+  - {fileID: 4483157799065860645}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &8765272194048456998
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991669576261201155}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -4350150301866392244, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+--- !u!114 &6496511339782236301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991669576261201155}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: RoadSideCornerSmall
+  Reference: {fileID: 0}
+  Transform: {fileID: 7659698015913129913}
+  RefRenderers:
+  - {fileID: 586184734220902745}
+  - {fileID: 7340887649000614902}
+  ObjectSize: 1
+  Bounds:
+    m_Center: {x: -0.5, y: 0.049999975, z: 0.5}
+    m_Extent: {x: 0.5, y: 0.049999975, z: 0.5}
+  LodsScreenSpaceSizes:
+  - 0.008696001
+  - 0.0029982664
+  LODSizesMatrix:
+    e00: 1
+    e01: 0.009835548
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0.008696001
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 8497477240166568603, guid: efd69e8bb26c58a4fb7db9eac87e66e2, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 586184734220902745}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &7225687462968762843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991669576261201155}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c671be8cae081bb4bad571d31fb0eb4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _prefabID: 862111175
+  childOptionalRenderers: []
+  _isRenderersDisabled: 0
+--- !u!1001 &4923617323692303740
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7659698015913129913}
+    m_Modifications:
+    - target: {fileID: 2750411492089567589, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_Name
+      value: RoadSideCornerSmall_LOD0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+--- !u!4 &515818154999679105 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4862970878093667837, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+  m_PrefabInstance: {fileID: 4923617323692303740}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &586184734220902745 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5509793737869214757, guid: f5bf8875abc8d8641bf96a26c2e649f9, type: 3}
+  m_PrefabInstance: {fileID: 4923617323692303740}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5840401003000663813
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7659698015913129913}
+    m_Modifications:
+    - target: {fileID: 3011398930881507361, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_Name
+      value: RoadSideCornerSmall_LOD1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+--- !u!4 &4483157799065860645 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8014759749900252448, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+  m_PrefabInstance: {fileID: 5840401003000663813}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &7340887649000614902 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3813800842663519475, guid: 5905a0231994fa048af47f8d3e0858da, type: 3}
+  m_PrefabInstance: {fileID: 5840401003000663813}
+  m_PrefabAsset: {fileID: 0}
