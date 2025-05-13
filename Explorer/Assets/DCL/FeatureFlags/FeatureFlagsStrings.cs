@@ -28,8 +28,11 @@
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
         public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
+        public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
+
+        public const string AUTH_CODE_VALIDATION = "number-validation";
     }
 }

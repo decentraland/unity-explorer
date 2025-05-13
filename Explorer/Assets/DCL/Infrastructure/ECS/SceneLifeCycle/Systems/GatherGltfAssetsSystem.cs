@@ -137,8 +137,8 @@ namespace ECS.SceneLifeCycle.Systems
                 if (Time.time - startTime > TIMEOUT.TotalSeconds)
                     concluded = true;
 
-                // Memory is full. Assets may be on deadlock. Show broken state of scene
-                if (memoryBudget.GetMemoryUsageStatus() == MemoryUsageStatus.FULL)
+                // Memory is filling up, we considered it complete to avoid deadlock
+                if (!memoryBudget.IsMemoryNormal())
                 {
                     for (var i = 0; i < reports!.Value.Count; i++)
                     {

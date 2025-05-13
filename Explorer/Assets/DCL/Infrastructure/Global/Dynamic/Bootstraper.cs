@@ -107,6 +107,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCache,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -131,6 +132,7 @@ namespace Global.Dynamic
                 partialsDiskCache,
                 sceneUIRoot,
                 profileRepositoryProxy,
+                featureFlagsCache,
                 ct
             );
 
@@ -287,6 +289,7 @@ namespace Global.Dynamic
         {
             realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
+
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
