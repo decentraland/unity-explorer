@@ -305,6 +305,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88538076b054b4504b11b87773e7393f
+    m_Address: VoiceChatSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
     m_Address: CharacterTriggerArea
     m_ReadOnly: 0

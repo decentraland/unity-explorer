@@ -243,6 +243,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <VoiceChatSettings>k__BackingField:
+          m_AssetGUID: 88538076b054b4504b11b87773e7393f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <VideoPrioritizationSettings>k__BackingField:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 

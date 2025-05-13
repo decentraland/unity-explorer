@@ -8,6 +8,18 @@ namespace DCL.Settings
         public bool HasKey(string key) =>
             PlayerPrefs.HasKey(key);
 
+
+        public void SetStringValue(string key, string value, bool save = false)
+        {
+            PlayerPrefs.SetString(key, value);
+
+            if (save)
+                PlayerPrefs.Save();
+        }
+
+        public string GetStringValue(string key) =>
+            PlayerPrefs.GetString(key);
+
         public void SetToggleValue(string key, bool value, bool save = false)
         {
             PlayerPrefs.SetInt(key, value ? 1 : 0);

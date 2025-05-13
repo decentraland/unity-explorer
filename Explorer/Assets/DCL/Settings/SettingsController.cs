@@ -37,6 +37,7 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
@@ -61,6 +62,7 @@ namespace DCL.Settings
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
+            VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus = null
         )
         {
@@ -77,6 +79,7 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.voiceChatSettings = voiceChatSettings;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -153,7 +156,7 @@ namespace DCL.Settings
                     generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, voiceChatSettings, worldVolumeMacBus));
             }
         }
 
