@@ -1,4 +1,5 @@
 ﻿using DCL.Profiling;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
@@ -7,6 +8,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 {
     public enum MemoryUsageStatus
     {
+        ABUNDANCE,
         NORMAL,
         WARNING,
         FULL,
@@ -22,39 +24,41 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
 
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
+        public bool SimulateLackOfAbundance;
 
         public MemoryBudget(ISystemMemoryCap systemMemoryCap, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
-            SimulatedMemoryUsage = NORMAL;
+            SimulatedMemoryUsage = ABUNDANCE;
 
             this.systemMemoryCap = systemMemoryCap;
             this.profiler = profiler;
             this.memoryThreshold = memoryThreshold;
         }
 
-        public MemoryUsageStatus GetMemoryUsageStatus()
+        private MemoryUsageStatus GetMemoryUsageStatus()
         {
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
-            long totalSystemMemory = GetTotalSystemMemory();
+            long totalSystemMemory = GetTotalSystemMemoryInMB();
 
             return usedMemory switch
                    {
                        _ when usedMemory > totalSystemMemory * memoryThreshold[FULL] => FULL,
                        _ when usedMemory > totalSystemMemory * memoryThreshold[WARNING] => WARNING,
+                       _ when usedMemory < totalSystemMemory * memoryThreshold[ABUNDANCE] => ABUNDANCE,
                        _ => NORMAL,
                    };
         }
 
         public (int warning, int full) GetMemoryRanges()
         {
-            long totalSizeInMB = GetTotalSystemMemory();
+            long totalSizeInMB = GetTotalSystemMemoryInMB();
             return ((int) (totalSizeInMB * memoryThreshold[WARNING]), (int)(totalSizeInMB * memoryThreshold[FULL]));
         }
 
         public bool TrySpendBudget() =>
-            GetMemoryUsageStatus() != FULL;
+            !IsMemoryFull();
 
-        private long GetTotalSystemMemory()
+        public long GetTotalSystemMemoryInMB()
         {
             return SimulatedMemoryUsage switch
                    {
@@ -64,9 +68,29 @@ namespace DCL.Optimization.PerformanceBudgeting
                    };
 
             // ReSharper disable once PossibleLossOfFraction
-            long CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * 1.1f));
+            long CalculateSystemMemoryForWarningThreshold() => // Increase the threshold halfway between warning and full
+                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * GetHalfwayBetweenLimits(FULL, WARNING)));
+
+            float GetHalfwayBetweenLimits(MemoryUsageStatus upperLimit, MemoryUsageStatus bottomLimit) =>
+                1 + ((memoryThreshold[upperLimit] - memoryThreshold[bottomLimit])/2f);
         }
+
+        public bool IsInAbundance()
+        {
+            if (SimulateLackOfAbundance)
+                return false;
+
+            return GetMemoryUsageStatus() == ABUNDANCE;
+        }
+
+        public bool IsMemoryNormal()
+        {
+            MemoryUsageStatus status = GetMemoryUsageStatus();
+            return status is NORMAL or ABUNDANCE;
+        }
+
+        public bool IsMemoryFull() =>
+            GetMemoryUsageStatus() == FULL;
 
         public class Default : IPerformanceBudget
         {
@@ -89,7 +113,6 @@ namespace DCL.Optimization.PerformanceBudgeting
             {
                 public long MemoryCapInMB { get; private set; } = 16 * 1024L;
                 public int MemoryCap { set => MemoryCapInMB = value * 1024L; }
-                public MemoryCapMode Mode { get; set; }
             }
         }
     }

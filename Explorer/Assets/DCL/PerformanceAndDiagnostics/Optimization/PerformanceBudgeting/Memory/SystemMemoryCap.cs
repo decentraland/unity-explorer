@@ -5,37 +5,43 @@ namespace DCL.Optimization.PerformanceBudgeting
 {
     public enum MemoryCapMode
     {
-        MAX_SYSTEM_MEMORY,
-        FROM_SETTINGS,
+        REAL_MEMORY,
+        SIMULATED_MEMORY,
     }
 
     public class SystemMemoryCap : ISystemMemoryCap
     {
-        private const int DEFAULT_CAP = 16;
+        private readonly MemoryCapMode mode;
 
-        public MemoryCapMode Mode { private get; set; }
-
-        public SystemMemoryCap(MemoryCapMode initialMode)
+        public SystemMemoryCap()
         {
-            Mode = initialMode;
+            mode = MemoryCapMode.REAL_MEMORY;
+            //Default value will be later set in `MemoryLimitSettingController`. We start with the max value
+            MemoryCap = -1;
         }
 
-        private long memoryCapInMB;
-
-        public long MemoryCapInMB
+        public SystemMemoryCap(int simulatedMemory)
         {
-            get
-            {
-                if (memoryCapInMB == 0)
-                    MemoryCap = DEFAULT_CAP;
-
-                return Mode == MemoryCapMode.MAX_SYSTEM_MEMORY ? SystemInfo.systemMemorySize : memoryCapInMB;
-            }
+            mode = MemoryCapMode.SIMULATED_MEMORY;
+            MemoryCapInMB = simulatedMemory;
         }
+
+        public long MemoryCapInMB { get; private set; }
 
         public int MemoryCap
         {
-            set => memoryCapInMB = Math.Min(value * 1024L, SystemInfo.systemMemorySize);
+            set
+            {
+                //Memory cannot be changed if we are simulating it
+                if (mode == MemoryCapMode.SIMULATED_MEMORY)
+                    return;
+
+                //-1 means set to max
+                if (value == -1)
+                    MemoryCapInMB = SystemInfo.systemMemorySize;
+                else
+                    MemoryCapInMB = Math.Min(value * 1024L, SystemInfo.systemMemorySize);
+            }
         }
     }
 }
