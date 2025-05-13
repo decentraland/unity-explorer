@@ -22,6 +22,7 @@
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
+        public const string VOICE_CHAT = "alfa-voice-chat";
 
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
