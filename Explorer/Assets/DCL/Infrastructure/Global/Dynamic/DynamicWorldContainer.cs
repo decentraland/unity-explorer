@@ -940,6 +940,9 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache));
             }
 
+            if (includeCommunities)
+                globalPlugins.Add(new CommunitiesPlugin(mvcManager));
+
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
                         bootstrapContainer.Analytics!,
