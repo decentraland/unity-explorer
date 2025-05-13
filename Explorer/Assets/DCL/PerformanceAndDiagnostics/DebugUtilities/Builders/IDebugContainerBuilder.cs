@@ -34,6 +34,8 @@ namespace DCL.DebugUtilities
             public const string REALM = "Realm";
             public const string ANALYTICS = "Analytics";
             public const string GPU_INSTANCING = "GPU Instancing";
+            public const string MEMORY_LIMITS = "Memory Limits";
+
         }
     }
 
