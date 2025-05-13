@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 40b102d62d8eeaf4ea0e6ca76f4d83a5
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 285383
+  packageName: NTP Client - Network Time Protocol
+  packageVersion: 1.0
+  assetPath: Assets/Network Time Protocol/Scripts/NtpClient.cs
+  uploadId: 664934

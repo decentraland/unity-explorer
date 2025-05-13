@@ -363,6 +363,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1551708880}
   - component: {fileID: 1551708879}
+  - component: {fileID: 1551708881}
   m_Layer: 0
   m_Name: _EntryPoint
   m_TagString: Untagged
@@ -377,14 +378,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1551708878}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: acb551a1c92747608beadc204290940d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ntpServer: pool.ntp.org
   ntpPort: 123
-  updateInterval: 1
+  updateInterval: 0.3
 --- !u!4 &1551708880
 Transform:
   m_ObjectHideFlags: 0
@@ -400,6 +401,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1551708881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1551708878}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa19f49532a74d7fb3453dba149a60d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ntpServer: pool.ntp.org
+  ntpPort: 123
+  updateInterval: 0.3
+  timeoutMs: 3000
+  OffsetMs: 1747161031076.8823
+  RoundTripMs: 27.342128906250004
+  IsSynced: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
