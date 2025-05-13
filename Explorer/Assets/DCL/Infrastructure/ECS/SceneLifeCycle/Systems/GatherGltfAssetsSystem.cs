@@ -1,18 +1,17 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.RealmNavigation;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
-using SceneRunner.Scene;
-using System.Collections.Generic;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -163,6 +162,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 concluded = true;
                 sceneData.SceneLoadingConcluded = true;
+
                 World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
                     sceneData.Geometry.BaseParcelPosition;
             }

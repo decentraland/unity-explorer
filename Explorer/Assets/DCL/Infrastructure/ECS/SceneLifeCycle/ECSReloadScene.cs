@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
         {
-            var parcel =  world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
+            var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return false;
 
             var foundEntity = FindSceneEntity(sceneInCache);
@@ -60,13 +60,11 @@ namespace ECS.SceneLifeCycle
         private Entity FindSceneEntity(ISceneFacade targetScene)
         {
             var sceneEntity = Entity.Null;
+
             world.Query(in new QueryDescription().WithAll<ISceneFacade, SceneDefinitionComponent>(),
                 (Entity entity, ref ISceneFacade sceneFacade) =>
                 {
-                    if (sceneFacade.Equals(targetScene))
-                    {
-                        sceneEntity = entity;
-                    }
+                    if (sceneFacade.Equals(targetScene)) { sceneEntity = entity; }
                 });
 
             return sceneEntity;
@@ -93,11 +91,35 @@ namespace ECS.SceneLifeCycle
             if (localSceneDevelopment)
             {
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
-                    (ref StaticScenePointers staticScenePointers) =>
-                    {
-                        staticScenePointers.Promise = null;
-                    });
+                    (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
+
                 Resources.UnloadUnusedAssets();
+
+                await WaitUntilNewSceneIsFullyLoadedAsync();
+            }
+
+            return;
+
+            async UniTask WaitUntilNewSceneIsFullyLoadedAsync()
+            {
+                await UniTask.WaitUntil(() =>
+                {
+                    var isNewSceneRunning = false;
+
+                    world.Query(in new QueryDescription().WithAll<ISceneFacade>().WithNone<DeleteEntityIntention>(),
+                        (ref ISceneFacade newScene) =>
+                        {
+                            isNewSceneRunning = newScene.SceneStateProvider.State is SceneState.Running
+                                                    or SceneState.EcsError
+                                                    or SceneState.JavaScriptError
+
+                                                // Consider GLTF models in the initial loading phase since they're not tracked by SceneStateProvider.State.
+                                                // This prevents the character from falling through unloaded colliders during scene reload.
+                                                && newScene.SceneData.SceneLoadingConcluded;
+                        });
+
+                    return isNewSceneRunning;
+                }, cancellationToken: ct);
             }
         }
     }
