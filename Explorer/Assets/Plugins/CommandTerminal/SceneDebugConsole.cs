@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 // ORIGINAL OPEN SOURCE PLUGIN SCRIPT:
 // https://github.com/stillwwater/command_terminal/blob/0f5918ea79014955b24c7d431625a97a1cac8797/CommandTerminal/Terminal.cs
@@ -34,13 +35,15 @@ namespace CommandTerminal
         }
 
         [Header("Window")]
+        [SerializeField]
+        private Button toggleConsoleButton;
         [Range(0, 1)]
         [SerializeField]
         private float maxHeight = 0.7f;
 
         [SerializeField]
         [Range(0, 1)]
-        private float smallTerminalRatio = 0.33f;
+        private float smallTerminalRatio = 0.4f;
 
         [Range(100, 1000)]
         [SerializeField]
@@ -96,6 +99,19 @@ namespace CommandTerminal
             SetupWindow();
             SetupLabels();
         }
+
+        private void OnEnable()
+        {
+            toggleConsoleButton.onClick.AddListener(OnToggleConsoleButtonClicked);
+        }
+
+        private void OnDisable()
+        {
+            toggleConsoleButton.onClick.RemoveListener(OnToggleConsoleButtonClicked);
+        }
+
+        private void OnToggleConsoleButtonClicked()
+            => SetState(isClosed ? TerminalState.OpenSmall : TerminalState.Close);
 
         private void Update()
         {
@@ -191,7 +207,7 @@ namespace CommandTerminal
             labelStyle.font = consoleFont;
             labelStyle.normal.textColor = foregroundColor;
             labelStyle.wordWrap = true;
-            labelStyle.alignment = TextAnchor.LowerRight;
+            labelStyle.alignment = TextAnchor.LowerLeft;
             labelStyle.fontSize = fontSize;
         }
 

@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Utilities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -56,6 +58,7 @@ namespace DCL.Navmap
             interestedButtonController.OnButtonClicked += SetInterested;
             view.ShareButton.onClick.AddListener(Share);
             view.JumpInButton.onClick.AddListener(JumpIn);
+            view.EventsScrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Show()
@@ -146,7 +149,7 @@ namespace DCL.Navmap
         private void AddRecurrentEventToCalendar(DateTime startAt)
         {
             // Same link as https://decentraland.org/events/event?id=... website
-            var description = $"jump in: https://play.decentraland.org/?position={@event?.x},{@event?.y}";
+            var description = $"jump in: https://decentraland.org/jump/?position={@event?.x},{@event?.y}";
 
             DateTime nextStartAt = DateTime.Parse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind);
             DateTime nextFinishAt = DateTime.Parse(@event?.next_finish_at, null, DateTimeStyles.RoundtripKind);
@@ -192,7 +195,7 @@ namespace DCL.Navmap
         private void JumpIn()
         {
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", "jump in");
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", "jump in");
         }
     }
 }

@@ -1,0 +1,119 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using MVC;
+using System;
+using System.Threading;
+using UnityEngine.InputSystem;
+using Utility;
+
+namespace DCL.Friends.UI.BlockUserPrompt
+{
+    public class BlockUserPromptController : ControllerBase<BlockUserPromptView, BlockUserPromptParams>
+    {
+        private readonly IFriendsService friendsService;
+        private readonly DCLInput dclInput;
+
+        private UniTaskCompletionSource closePopupTask = new ();
+        private CancellationTokenSource blockOperationsCts = new ();
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        public BlockUserPromptController(ViewFactoryMethod viewFactory,
+            IFriendsService friendsService,
+            DCLInput dclInput)
+            : base(viewFactory)
+        {
+            this.friendsService = friendsService;
+            this.dclInput = dclInput;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            viewInstance?.BlockButton.onClick.RemoveAllListeners();
+            viewInstance?.UnblockButton.onClick.RemoveAllListeners();
+            dclInput.UI.Close.performed -= ClosePopup;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            viewInstance!.BlockButton.onClick.AddListener(BlockClicked);
+            viewInstance!.UnblockButton.onClick.AddListener(UnblockClicked);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            closePopupTask = new UniTaskCompletionSource();
+
+            viewInstance!.ConfigureButtons(inputData.Action);
+            viewInstance.SetTitle(inputData.Action, inputData.TargetUserName);
+
+            dclInput.UI.Close.performed += ClosePopup;
+        }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+
+            dclInput.UI.Close.performed -= ClosePopup;
+        }
+
+        private void ClosePopup(InputAction.CallbackContext obj) =>
+            ClosePopup();
+
+        private void ClosePopup() =>
+            closePopupTask.TrySetResult();
+
+        private void BlockClicked()
+        {
+            blockOperationsCts = blockOperationsCts.SafeRestart();
+            BlockUserAsync(blockOperationsCts.Token).Forget();
+
+            async UniTaskVoid BlockUserAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await friendsService.BlockUserAsync(inputData.TargetUserId, ct);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+                finally
+                {
+                    ClosePopup();
+                }
+            }
+        }
+
+        private void UnblockClicked()
+        {
+            blockOperationsCts = blockOperationsCts.SafeRestart();
+            UnblockUserAsync(blockOperationsCts.Token).Forget();
+
+            async UniTaskVoid UnblockUserAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await friendsService.UnblockUserAsync(inputData.TargetUserId, ct);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+                finally
+                {
+                    ClosePopup();
+                }
+            }
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.WhenAny(viewInstance!.CancelButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closePopupTask.Task);
+    }
+}

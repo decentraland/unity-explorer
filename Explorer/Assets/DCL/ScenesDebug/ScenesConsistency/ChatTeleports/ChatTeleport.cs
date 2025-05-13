@@ -4,7 +4,6 @@ using DCL.Chat.Commands;
 using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 using DCL.Utilities.Extensions;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 {
@@ -22,9 +21,9 @@ namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 
         public void GoTo(Vector2Int coordinate)
         {
-            var field = chatViewResource.DangerousResource().EnsureNotNull().InputField;
-            field.text = $"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}";
-            field.OnSubmit(new BaseEventData(null!));
+            ChatView view = chatViewResource.DangerousResource().EnsureNotNull();
+            view.InputBoxText = $"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}";
+            view.SubmitInput();
         }
     }
 }

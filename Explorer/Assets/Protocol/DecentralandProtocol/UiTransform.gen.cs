@@ -25,85 +25,124 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdWlfdHJhbnNmb3JtLnBy",
-            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMi8hIKDVBCVWlUcmFu",
-            "c2Zvcm0SDgoGcGFyZW50GAEgASgFEhAKCHJpZ2h0X29mGAIgASgFEkAKDWFs",
-            "aWduX2NvbnRlbnQYAyABKA4yJC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
-            "dHMuWUdBbGlnbkgAiAEBEj4KC2FsaWduX2l0ZW1zGAQgASgOMiQuZGVjZW50",
-            "cmFsYW5kLnNkay5jb21wb25lbnRzLllHQWxpZ25IAYgBARI7CglmbGV4X3dy",
-            "YXAYBSABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdXcmFw",
-            "SAKIAQESGAoLZmxleF9zaHJpbmsYBiABKAJIA4gBARJCCg1wb3NpdGlvbl90",
-            "eXBlGAcgASgOMisuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHUG9z",
-            "aXRpb25UeXBlEjgKCmFsaWduX3NlbGYYCCABKA4yJC5kZWNlbnRyYWxhbmQu",
-            "c2RrLmNvbXBvbmVudHMuWUdBbGlnbhJECg5mbGV4X2RpcmVjdGlvbhgJIAEo",
-            "DjIsLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR0ZsZXhEaXJlY3Rp",
-            "b24SPwoPanVzdGlmeV9jb250ZW50GAogASgOMiYuZGVjZW50cmFsYW5kLnNk",
-            "ay5jb21wb25lbnRzLllHSnVzdGlmeRI5CghvdmVyZmxvdxgLIAEoDjInLmRl",
-            "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR092ZXJmbG93EjcKB2Rpc3Bs",
-            "YXkYDCABKA4yJi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdEaXNw",
-            "bGF5EjwKD2ZsZXhfYmFzaXNfdW5pdBgNIAEoDjIjLmRlY2VudHJhbGFuZC5z",
-            "ZGsuY29tcG9uZW50cy5ZR1VuaXQSEgoKZmxleF9iYXNpcxgOIAEoAhIRCglm",
-            "bGV4X2dyb3cYDyABKAISNwoKd2lkdGhfdW5pdBgQIAEoDjIjLmRlY2VudHJh",
-            "bGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSDQoFd2lkdGgYESABKAISOAoL",
-            "aGVpZ2h0X3VuaXQYEiABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
-            "dHMuWUdVbml0Eg4KBmhlaWdodBgTIAEoAhI7Cg5taW5fd2lkdGhfdW5pdBgU",
-            "IAEoDjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSEQoJ",
-            "bWluX3dpZHRoGBUgASgCEjwKD21pbl9oZWlnaHRfdW5pdBgWIAEoDjIjLmRl",
-            "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSEgoKbWluX2hlaWdo",
-            "dBgXIAEoAhI7Cg5tYXhfd2lkdGhfdW5pdBgYIAEoDjIjLmRlY2VudHJhbGFu",
-            "ZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSEQoJbWF4X3dpZHRoGBkgASgCEjwK",
-            "D21heF9oZWlnaHRfdW5pdBgaIAEoDjIjLmRlY2VudHJhbGFuZC5zZGsuY29t",
-            "cG9uZW50cy5ZR1VuaXQSEgoKbWF4X2hlaWdodBgbIAEoAhI/ChJwb3NpdGlv",
-            "bl9sZWZ0X3VuaXQYHCABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
-            "dHMuWUdVbml0EhUKDXBvc2l0aW9uX2xlZnQYHSABKAISPgoRcG9zaXRpb25f",
-            "dG9wX3VuaXQYHiABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
-            "WUdVbml0EhQKDHBvc2l0aW9uX3RvcBgfIAEoAhJAChNwb3NpdGlvbl9yaWdo",
-            "dF91bml0GCAgASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllH",
-            "VW5pdBIWCg5wb3NpdGlvbl9yaWdodBghIAEoAhJBChRwb3NpdGlvbl9ib3R0",
-            "b21fdW5pdBgiIAEoDjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5Z",
-            "R1VuaXQSFwoPcG9zaXRpb25fYm90dG9tGCMgASgCEj0KEG1hcmdpbl9sZWZ0",
-            "X3VuaXQYJCABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdV",
-            "bml0EhMKC21hcmdpbl9sZWZ0GCUgASgCEjwKD21hcmdpbl90b3BfdW5pdBgm",
-            "IAEoDjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSEgoK",
-            "bWFyZ2luX3RvcBgnIAEoAhI+ChFtYXJnaW5fcmlnaHRfdW5pdBgoIAEoDjIj",
-            "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSFAoMbWFyZ2lu",
-            "X3JpZ2h0GCkgASgCEj8KEm1hcmdpbl9ib3R0b21fdW5pdBgqIAEoDjIjLmRl",
-            "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSFQoNbWFyZ2luX2Jv",
-            "dHRvbRgrIAEoAhI+ChFwYWRkaW5nX2xlZnRfdW5pdBgsIAEoDjIjLmRlY2Vu",
-            "dHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSFAoMcGFkZGluZ19sZWZ0",
-            "GC0gASgCEj0KEHBhZGRpbmdfdG9wX3VuaXQYLiABKA4yIy5kZWNlbnRyYWxh",
-            "bmQuc2RrLmNvbXBvbmVudHMuWUdVbml0EhMKC3BhZGRpbmdfdG9wGC8gASgC",
-            "Ej8KEnBhZGRpbmdfcmlnaHRfdW5pdBgwIAEoDjIjLmRlY2VudHJhbGFuZC5z",
-            "ZGsuY29tcG9uZW50cy5ZR1VuaXQSFQoNcGFkZGluZ19yaWdodBgxIAEoAhJA",
-            "ChNwYWRkaW5nX2JvdHRvbV91bml0GDIgASgOMiMuZGVjZW50cmFsYW5kLnNk",
-            "ay5jb21wb25lbnRzLllHVW5pdBIWCg5wYWRkaW5nX2JvdHRvbRgzIAEoAhJL",
-            "Cg5wb2ludGVyX2ZpbHRlchg0IAEoDjIuLmRlY2VudHJhbGFuZC5zZGsuY29t",
-            "cG9uZW50cy5Qb2ludGVyRmlsdGVyTW9kZUgEiAEBQhAKDl9hbGlnbl9jb250",
-            "ZW50Qg4KDF9hbGlnbl9pdGVtc0IMCgpfZmxleF93cmFwQg4KDF9mbGV4X3No",
-            "cmlua0IRCg9fcG9pbnRlcl9maWx0ZXIqNgoOWUdQb3NpdGlvblR5cGUSEQoN",
-            "WUdQVF9SRUxBVElWRRAAEhEKDVlHUFRfQUJTT0xVVEUQASqdAQoHWUdBbGln",
-            "bhIMCghZR0FfQVVUTxAAEhIKDllHQV9GTEVYX1NUQVJUEAESDgoKWUdBX0NF",
-            "TlRFUhACEhAKDFlHQV9GTEVYX0VORBADEg8KC1lHQV9TVFJFVENIEAQSEAoM",
-            "WUdBX0JBU0VMSU5FEAUSFQoRWUdBX1NQQUNFX0JFVFdFRU4QBhIUChBZR0Ff",
-            "U1BBQ0VfQVJPVU5EEAcqSQoGWUdVbml0EhEKDVlHVV9VTkRFRklORUQQABIN",
-            "CglZR1VfUE9JTlQQARIPCgtZR1VfUEVSQ0VOVBACEgwKCFlHVV9BVVRPEAMq",
-            "XwoPWUdGbGV4RGlyZWN0aW9uEgwKCFlHRkRfUk9XEAASDwoLWUdGRF9DT0xV",
-            "TU4QARIXChNZR0ZEX0NPTFVNTl9SRVZFUlNFEAISFAoQWUdGRF9ST1dfUkVW",
-            "RVJTRRADKj0KBllHV3JhcBIPCgtZR1dfTk9fV1JBUBAAEgwKCFlHV19XUkFQ",
-            "EAESFAoQWUdXX1dSQVBfUkVWRVJTRRACKoQBCglZR0p1c3RpZnkSEgoOWUdK",
-            "X0ZMRVhfU1RBUlQQABIOCgpZR0pfQ0VOVEVSEAESEAoMWUdKX0ZMRVhfRU5E",
-            "EAISFQoRWUdKX1NQQUNFX0JFVFdFRU4QAxIUChBZR0pfU1BBQ0VfQVJPVU5E",
-            "EAQSFAoQWUdKX1NQQUNFX0VWRU5MWRAFKj0KCllHT3ZlcmZsb3cSDwoLWUdP",
-            "X1ZJU0lCTEUQABIOCgpZR09fSElEREVOEAESDgoKWUdPX1NDUk9MTBACKicK",
-            "CVlHRGlzcGxheRIMCghZR0RfRkxFWBAAEgwKCFlHRF9OT05FEAEqkQEKBllH",
-            "RWRnZRIMCghZR0VfTEVGVBAAEgsKB1lHRV9UT1AQARINCglZR0VfUklHSFQQ",
-            "AhIOCgpZR0VfQk9UVE9NEAMSDQoJWUdFX1NUQVJUEAQSCwoHWUdFX0VORBAF",
-            "EhIKDllHRV9IT1JJWk9OVEFMEAYSEAoMWUdFX1ZFUlRJQ0FMEAcSCwoHWUdF",
-            "X0FMTBAIKjAKEVBvaW50ZXJGaWx0ZXJNb2RlEgwKCFBGTV9OT05FEAASDQoJ",
-            "UEZNX0JMT0NLEAFCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
+            "ZC9jb21tb24vY29sb3JzLnByb3RvIpIgCg1QQlVpVHJhbnNmb3JtEg4KBnBh",
+            "cmVudBgBIAEoBRIQCghyaWdodF9vZhgCIAEoBRJACg1hbGlnbl9jb250ZW50",
+            "GAMgASgOMiQuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHQWxpZ25I",
+            "AIgBARI+CgthbGlnbl9pdGVtcxgEIAEoDjIkLmRlY2VudHJhbGFuZC5zZGsu",
+            "Y29tcG9uZW50cy5ZR0FsaWduSAGIAQESOwoJZmxleF93cmFwGAUgASgOMiMu",
+            "ZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHV3JhcEgCiAEBEhgKC2Zs",
+            "ZXhfc2hyaW5rGAYgASgCSAOIAQESQgoNcG9zaXRpb25fdHlwZRgHIAEoDjIr",
+            "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1Bvc2l0aW9uVHlwZRI4",
+            "CgphbGlnbl9zZWxmGAggASgOMiQuZGVjZW50cmFsYW5kLnNkay5jb21wb25l",
+            "bnRzLllHQWxpZ24SRAoOZmxleF9kaXJlY3Rpb24YCSABKA4yLC5kZWNlbnRy",
+            "YWxhbmQuc2RrLmNvbXBvbmVudHMuWUdGbGV4RGlyZWN0aW9uEj8KD2p1c3Rp",
+            "ZnlfY29udGVudBgKIAEoDjImLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
+            "cy5ZR0p1c3RpZnkSOQoIb3ZlcmZsb3cYCyABKA4yJy5kZWNlbnRyYWxhbmQu",
+            "c2RrLmNvbXBvbmVudHMuWUdPdmVyZmxvdxI3CgdkaXNwbGF5GAwgASgOMiYu",
+            "ZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHRGlzcGxheRI8Cg9mbGV4",
+            "X2Jhc2lzX3VuaXQYDSABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
+            "dHMuWUdVbml0EhIKCmZsZXhfYmFzaXMYDiABKAISEQoJZmxleF9ncm93GA8g",
+            "ASgCEjcKCndpZHRoX3VuaXQYECABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNv",
+            "bXBvbmVudHMuWUdVbml0Eg0KBXdpZHRoGBEgASgCEjgKC2hlaWdodF91bml0",
+            "GBIgASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHVW5pdBIO",
+            "CgZoZWlnaHQYEyABKAISOwoObWluX3dpZHRoX3VuaXQYFCABKA4yIy5kZWNl",
+            "bnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdVbml0EhEKCW1pbl93aWR0aBgV",
+            "IAEoAhI8Cg9taW5faGVpZ2h0X3VuaXQYFiABKA4yIy5kZWNlbnRyYWxhbmQu",
+            "c2RrLmNvbXBvbmVudHMuWUdVbml0EhIKCm1pbl9oZWlnaHQYFyABKAISOwoO",
+            "bWF4X3dpZHRoX3VuaXQYGCABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBv",
+            "bmVudHMuWUdVbml0EhEKCW1heF93aWR0aBgZIAEoAhI8Cg9tYXhfaGVpZ2h0",
+            "X3VuaXQYGiABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdV",
+            "bml0EhIKCm1heF9oZWlnaHQYGyABKAISPwoScG9zaXRpb25fbGVmdF91bml0",
+            "GBwgASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHVW5pdBIV",
+            "Cg1wb3NpdGlvbl9sZWZ0GB0gASgCEj4KEXBvc2l0aW9uX3RvcF91bml0GB4g",
+            "ASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHVW5pdBIUCgxw",
+            "b3NpdGlvbl90b3AYHyABKAISQAoTcG9zaXRpb25fcmlnaHRfdW5pdBggIAEo",
+            "DjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXQSFgoOcG9z",
+            "aXRpb25fcmlnaHQYISABKAISQQoUcG9zaXRpb25fYm90dG9tX3VuaXQYIiAB",
+            "KA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdVbml0EhcKD3Bv",
+            "c2l0aW9uX2JvdHRvbRgjIAEoAhI9ChBtYXJnaW5fbGVmdF91bml0GCQgASgO",
+            "MiMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHVW5pdBITCgttYXJn",
+            "aW5fbGVmdBglIAEoAhI8Cg9tYXJnaW5fdG9wX3VuaXQYJiABKA4yIy5kZWNl",
+            "bnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdVbml0EhIKCm1hcmdpbl90b3AY",
+            "JyABKAISPgoRbWFyZ2luX3JpZ2h0X3VuaXQYKCABKA4yIy5kZWNlbnRyYWxh",
+            "bmQuc2RrLmNvbXBvbmVudHMuWUdVbml0EhQKDG1hcmdpbl9yaWdodBgpIAEo",
+            "AhI/ChJtYXJnaW5fYm90dG9tX3VuaXQYKiABKA4yIy5kZWNlbnRyYWxhbmQu",
+            "c2RrLmNvbXBvbmVudHMuWUdVbml0EhUKDW1hcmdpbl9ib3R0b20YKyABKAIS",
+            "PgoRcGFkZGluZ19sZWZ0X3VuaXQYLCABKA4yIy5kZWNlbnRyYWxhbmQuc2Rr",
+            "LmNvbXBvbmVudHMuWUdVbml0EhQKDHBhZGRpbmdfbGVmdBgtIAEoAhI9ChBw",
+            "YWRkaW5nX3RvcF91bml0GC4gASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLllHVW5pdBITCgtwYWRkaW5nX3RvcBgvIAEoAhI/ChJwYWRkaW5n",
+            "X3JpZ2h0X3VuaXQYMCABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
+            "dHMuWUdVbml0EhUKDXBhZGRpbmdfcmlnaHQYMSABKAISQAoTcGFkZGluZ19i",
+            "b3R0b21fdW5pdBgyIAEoDjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
+            "cy5ZR1VuaXQSFgoOcGFkZGluZ19ib3R0b20YMyABKAISSwoOcG9pbnRlcl9m",
+            "aWx0ZXIYNCABKA4yLi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUG9p",
+            "bnRlckZpbHRlck1vZGVIBIgBARJIChZib3JkZXJfbGVmdF93aWR0aF91bml0",
+            "GDUgASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHVW5pdEgF",
+            "iAEBEh4KEWJvcmRlcl9sZWZ0X3dpZHRoGDYgASgCSAaIAQESRwoVYm9yZGVy",
+            "X3RvcF93aWR0aF91bml0GDcgASgOMiMuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLllHVW5pdEgHiAEBEh0KEGJvcmRlcl90b3Bfd2lkdGgYOCABKAJI",
+            "CIgBARJJChdib3JkZXJfcmlnaHRfd2lkdGhfdW5pdBg5IAEoDjIjLmRlY2Vu",
+            "dHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXRICYgBARIfChJib3JkZXJf",
+            "cmlnaHRfd2lkdGgYOiABKAJICogBARJKChhib3JkZXJfYm90dG9tX3dpZHRo",
+            "X3VuaXQYOyABKA4yIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuWUdV",
+            "bml0SAuIAQESIAoTYm9yZGVyX2JvdHRvbV93aWR0aBg8IAEoAkgMiAEBEk0K",
+            "G2JvcmRlcl90b3BfbGVmdF9yYWRpdXNfdW5pdBg9IAEoDjIjLmRlY2VudHJh",
+            "bGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXRIDYgBARIjChZib3JkZXJfdG9w",
+            "X2xlZnRfcmFkaXVzGD4gASgCSA6IAQESTgocYm9yZGVyX3RvcF9yaWdodF9y",
+            "YWRpdXNfdW5pdBg/IAEoDjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
+            "cy5ZR1VuaXRID4gBARIkChdib3JkZXJfdG9wX3JpZ2h0X3JhZGl1cxhAIAEo",
+            "AkgQiAEBElAKHmJvcmRlcl9ib3R0b21fbGVmdF9yYWRpdXNfdW5pdBhBIAEo",
+            "DjIjLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXRIEYgBARIm",
+            "Chlib3JkZXJfYm90dG9tX2xlZnRfcmFkaXVzGEIgASgCSBKIAQESUQofYm9y",
+            "ZGVyX2JvdHRvbV9yaWdodF9yYWRpdXNfdW5pdBhDIAEoDjIjLmRlY2VudHJh",
+            "bGFuZC5zZGsuY29tcG9uZW50cy5ZR1VuaXRIE4gBARInChpib3JkZXJfYm90",
+            "dG9tX3JpZ2h0X3JhZGl1cxhEIAEoAkgUiAEBEjoKEGJvcmRlcl90b3BfY29s",
+            "b3IYRSABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNEgViAEBEj0K",
+            "E2JvcmRlcl9ib3R0b21fY29sb3IYRiABKAsyGy5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLkNvbG9yNEgWiAEBEjsKEWJvcmRlcl9sZWZ0X2NvbG9yGEcgASgLMhsu",
+            "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjRIF4gBARI8ChJib3JkZXJfcmln",
+            "aHRfY29sb3IYSCABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNEgY",
+            "iAEBQhAKDl9hbGlnbl9jb250ZW50Qg4KDF9hbGlnbl9pdGVtc0IMCgpfZmxl",
+            "eF93cmFwQg4KDF9mbGV4X3Nocmlua0IRCg9fcG9pbnRlcl9maWx0ZXJCGQoX",
+            "X2JvcmRlcl9sZWZ0X3dpZHRoX3VuaXRCFAoSX2JvcmRlcl9sZWZ0X3dpZHRo",
+            "QhgKFl9ib3JkZXJfdG9wX3dpZHRoX3VuaXRCEwoRX2JvcmRlcl90b3Bfd2lk",
+            "dGhCGgoYX2JvcmRlcl9yaWdodF93aWR0aF91bml0QhUKE19ib3JkZXJfcmln",
+            "aHRfd2lkdGhCGwoZX2JvcmRlcl9ib3R0b21fd2lkdGhfdW5pdEIWChRfYm9y",
+            "ZGVyX2JvdHRvbV93aWR0aEIeChxfYm9yZGVyX3RvcF9sZWZ0X3JhZGl1c191",
+            "bml0QhkKF19ib3JkZXJfdG9wX2xlZnRfcmFkaXVzQh8KHV9ib3JkZXJfdG9w",
+            "X3JpZ2h0X3JhZGl1c191bml0QhoKGF9ib3JkZXJfdG9wX3JpZ2h0X3JhZGl1",
+            "c0IhCh9fYm9yZGVyX2JvdHRvbV9sZWZ0X3JhZGl1c191bml0QhwKGl9ib3Jk",
+            "ZXJfYm90dG9tX2xlZnRfcmFkaXVzQiIKIF9ib3JkZXJfYm90dG9tX3JpZ2h0",
+            "X3JhZGl1c191bml0Qh0KG19ib3JkZXJfYm90dG9tX3JpZ2h0X3JhZGl1c0IT",
+            "ChFfYm9yZGVyX3RvcF9jb2xvckIWChRfYm9yZGVyX2JvdHRvbV9jb2xvckIU",
+            "ChJfYm9yZGVyX2xlZnRfY29sb3JCFQoTX2JvcmRlcl9yaWdodF9jb2xvcio2",
+            "Cg5ZR1Bvc2l0aW9uVHlwZRIRCg1ZR1BUX1JFTEFUSVZFEAASEQoNWUdQVF9B",
+            "QlNPTFVURRABKp0BCgdZR0FsaWduEgwKCFlHQV9BVVRPEAASEgoOWUdBX0ZM",
+            "RVhfU1RBUlQQARIOCgpZR0FfQ0VOVEVSEAISEAoMWUdBX0ZMRVhfRU5EEAMS",
+            "DwoLWUdBX1NUUkVUQ0gQBBIQCgxZR0FfQkFTRUxJTkUQBRIVChFZR0FfU1BB",
+            "Q0VfQkVUV0VFThAGEhQKEFlHQV9TUEFDRV9BUk9VTkQQBypJCgZZR1VuaXQS",
+            "EQoNWUdVX1VOREVGSU5FRBAAEg0KCVlHVV9QT0lOVBABEg8KC1lHVV9QRVJD",
+            "RU5UEAISDAoIWUdVX0FVVE8QAypfCg9ZR0ZsZXhEaXJlY3Rpb24SDAoIWUdG",
+            "RF9ST1cQABIPCgtZR0ZEX0NPTFVNThABEhcKE1lHRkRfQ09MVU1OX1JFVkVS",
+            "U0UQAhIUChBZR0ZEX1JPV19SRVZFUlNFEAMqPQoGWUdXcmFwEg8KC1lHV19O",
+            "T19XUkFQEAASDAoIWUdXX1dSQVAQARIUChBZR1dfV1JBUF9SRVZFUlNFEAIq",
+            "hAEKCVlHSnVzdGlmeRISCg5ZR0pfRkxFWF9TVEFSVBAAEg4KCllHSl9DRU5U",
+            "RVIQARIQCgxZR0pfRkxFWF9FTkQQAhIVChFZR0pfU1BBQ0VfQkVUV0VFThAD",
+            "EhQKEFlHSl9TUEFDRV9BUk9VTkQQBBIUChBZR0pfU1BBQ0VfRVZFTkxZEAUq",
+            "PQoKWUdPdmVyZmxvdxIPCgtZR09fVklTSUJMRRAAEg4KCllHT19ISURERU4Q",
+            "ARIOCgpZR09fU0NST0xMEAIqJwoJWUdEaXNwbGF5EgwKCFlHRF9GTEVYEAAS",
+            "DAoIWUdEX05PTkUQASqRAQoGWUdFZGdlEgwKCFlHRV9MRUZUEAASCwoHWUdF",
+            "X1RPUBABEg0KCVlHRV9SSUdIVBACEg4KCllHRV9CT1RUT00QAxINCglZR0Vf",
+            "U1RBUlQQBBILCgdZR0VfRU5EEAUSEgoOWUdFX0hPUklaT05UQUwQBhIQCgxZ",
+            "R0VfVkVSVElDQUwQBxILCgdZR0VfQUxMEAgqMAoRUG9pbnRlckZpbHRlck1v",
+            "ZGUSDAoIUEZNX05PTkUQABINCglQRk1fQkxPQ0sQAUIUqgIRRENMLkVDU0Nv",
+            "bXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.YGPositionType), typeof(global::DCL.ECSComponents.YGAlign), typeof(global::DCL.ECSComponents.YGUnit), typeof(global::DCL.ECSComponents.YGFlexDirection), typeof(global::DCL.ECSComponents.YGWrap), typeof(global::DCL.ECSComponents.YGJustify), typeof(global::DCL.ECSComponents.YGOverflow), typeof(global::DCL.ECSComponents.YGDisplay), typeof(global::DCL.ECSComponents.YGEdge), typeof(global::DCL.ECSComponents.PointerFilterMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiTransform), global::DCL.ECSComponents.PBUiTransform.Parser, new[]{ "Parent", "RightOf", "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PositionType", "AlignSelf", "FlexDirection", "JustifyContent", "Overflow", "Display", "FlexBasisUnit", "FlexBasis", "FlexGrow", "WidthUnit", "Width", "HeightUnit", "Height", "MinWidthUnit", "MinWidth", "MinHeightUnit", "MinHeight", "MaxWidthUnit", "MaxWidth", "MaxHeightUnit", "MaxHeight", "PositionLeftUnit", "PositionLeft", "PositionTopUnit", "PositionTop", "PositionRightUnit", "PositionRight", "PositionBottomUnit", "PositionBottom", "MarginLeftUnit", "MarginLeft", "MarginTopUnit", "MarginTop", "MarginRightUnit", "MarginRight", "MarginBottomUnit", "MarginBottom", "PaddingLeftUnit", "PaddingLeft", "PaddingTopUnit", "PaddingTop", "PaddingRightUnit", "PaddingRight", "PaddingBottomUnit", "PaddingBottom", "PointerFilter" }, new[]{ "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PointerFilter" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiTransform), global::DCL.ECSComponents.PBUiTransform.Parser, new[]{ "Parent", "RightOf", "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PositionType", "AlignSelf", "FlexDirection", "JustifyContent", "Overflow", "Display", "FlexBasisUnit", "FlexBasis", "FlexGrow", "WidthUnit", "Width", "HeightUnit", "Height", "MinWidthUnit", "MinWidth", "MinHeightUnit", "MinHeight", "MaxWidthUnit", "MaxWidth", "MaxHeightUnit", "MaxHeight", "PositionLeftUnit", "PositionLeft", "PositionTopUnit", "PositionTop", "PositionRightUnit", "PositionRight", "PositionBottomUnit", "PositionBottom", "MarginLeftUnit", "MarginLeft", "MarginTopUnit", "MarginTop", "MarginRightUnit", "MarginRight", "MarginBottomUnit", "MarginBottom", "PaddingLeftUnit", "PaddingLeft", "PaddingTopUnit", "PaddingTop", "PaddingRightUnit", "PaddingRight", "PaddingBottomUnit", "PaddingBottom", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor" }, new[]{ "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor" }, null, null, null)
           }));
     }
     #endregion
@@ -274,6 +313,26 @@ namespace DCL.ECSComponents {
       paddingBottomUnit_ = other.paddingBottomUnit_;
       paddingBottom_ = other.paddingBottom_;
       pointerFilter_ = other.pointerFilter_;
+      borderLeftWidthUnit_ = other.borderLeftWidthUnit_;
+      borderLeftWidth_ = other.borderLeftWidth_;
+      borderTopWidthUnit_ = other.borderTopWidthUnit_;
+      borderTopWidth_ = other.borderTopWidth_;
+      borderRightWidthUnit_ = other.borderRightWidthUnit_;
+      borderRightWidth_ = other.borderRightWidth_;
+      borderBottomWidthUnit_ = other.borderBottomWidthUnit_;
+      borderBottomWidth_ = other.borderBottomWidth_;
+      borderTopLeftRadiusUnit_ = other.borderTopLeftRadiusUnit_;
+      borderTopLeftRadius_ = other.borderTopLeftRadius_;
+      borderTopRightRadiusUnit_ = other.borderTopRightRadiusUnit_;
+      borderTopRightRadius_ = other.borderTopRightRadius_;
+      borderBottomLeftRadiusUnit_ = other.borderBottomLeftRadiusUnit_;
+      borderBottomLeftRadius_ = other.borderBottomLeftRadius_;
+      borderBottomRightRadiusUnit_ = other.borderBottomRightRadiusUnit_;
+      borderBottomRightRadius_ = other.borderBottomRightRadius_;
+      borderTopColor_ = other.borderTopColor_ != null ? other.borderTopColor_.Clone() : null;
+      borderBottomColor_ = other.borderBottomColor_ != null ? other.borderBottomColor_.Clone() : null;
+      borderLeftColor_ = other.borderLeftColor_ != null ? other.borderLeftColor_.Clone() : null;
+      borderRightColor_ = other.borderRightColor_ != null ? other.borderRightColor_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1062,6 +1121,481 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~16;
     }
 
+    /// <summary>Field number for the "border_left_width_unit" field.</summary>
+    public const int BorderLeftWidthUnitFieldNumber = 53;
+    private global::DCL.ECSComponents.YGUnit borderLeftWidthUnit_;
+    /// <summary>
+    /// Border Width
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderLeftWidthUnit {
+      get { if ((_hasBits0 & 32) != 0) { return borderLeftWidthUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 32;
+        borderLeftWidthUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_left_width_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderLeftWidthUnit {
+      get { return (_hasBits0 & 32) != 0; }
+    }
+    /// <summary>Clears the value of the "border_left_width_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderLeftWidthUnit() {
+      _hasBits0 &= ~32;
+    }
+
+    /// <summary>Field number for the "border_left_width" field.</summary>
+    public const int BorderLeftWidthFieldNumber = 54;
+    private float borderLeftWidth_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderLeftWidth {
+      get { if ((_hasBits0 & 64) != 0) { return borderLeftWidth_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 64;
+        borderLeftWidth_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_left_width" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderLeftWidth {
+      get { return (_hasBits0 & 64) != 0; }
+    }
+    /// <summary>Clears the value of the "border_left_width" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderLeftWidth() {
+      _hasBits0 &= ~64;
+    }
+
+    /// <summary>Field number for the "border_top_width_unit" field.</summary>
+    public const int BorderTopWidthUnitFieldNumber = 55;
+    private global::DCL.ECSComponents.YGUnit borderTopWidthUnit_;
+    /// <summary>
+    /// YGUnit.YGU_UNDEFINED
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderTopWidthUnit {
+      get { if ((_hasBits0 & 128) != 0) { return borderTopWidthUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 128;
+        borderTopWidthUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_top_width_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderTopWidthUnit {
+      get { return (_hasBits0 & 128) != 0; }
+    }
+    /// <summary>Clears the value of the "border_top_width_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderTopWidthUnit() {
+      _hasBits0 &= ~128;
+    }
+
+    /// <summary>Field number for the "border_top_width" field.</summary>
+    public const int BorderTopWidthFieldNumber = 56;
+    private float borderTopWidth_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderTopWidth {
+      get { if ((_hasBits0 & 256) != 0) { return borderTopWidth_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 256;
+        borderTopWidth_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_top_width" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderTopWidth {
+      get { return (_hasBits0 & 256) != 0; }
+    }
+    /// <summary>Clears the value of the "border_top_width" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderTopWidth() {
+      _hasBits0 &= ~256;
+    }
+
+    /// <summary>Field number for the "border_right_width_unit" field.</summary>
+    public const int BorderRightWidthUnitFieldNumber = 57;
+    private global::DCL.ECSComponents.YGUnit borderRightWidthUnit_;
+    /// <summary>
+    /// YGUnit.YGU_UNDEFINED
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderRightWidthUnit {
+      get { if ((_hasBits0 & 512) != 0) { return borderRightWidthUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 512;
+        borderRightWidthUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_right_width_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderRightWidthUnit {
+      get { return (_hasBits0 & 512) != 0; }
+    }
+    /// <summary>Clears the value of the "border_right_width_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderRightWidthUnit() {
+      _hasBits0 &= ~512;
+    }
+
+    /// <summary>Field number for the "border_right_width" field.</summary>
+    public const int BorderRightWidthFieldNumber = 58;
+    private float borderRightWidth_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderRightWidth {
+      get { if ((_hasBits0 & 1024) != 0) { return borderRightWidth_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 1024;
+        borderRightWidth_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_right_width" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderRightWidth {
+      get { return (_hasBits0 & 1024) != 0; }
+    }
+    /// <summary>Clears the value of the "border_right_width" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderRightWidth() {
+      _hasBits0 &= ~1024;
+    }
+
+    /// <summary>Field number for the "border_bottom_width_unit" field.</summary>
+    public const int BorderBottomWidthUnitFieldNumber = 59;
+    private global::DCL.ECSComponents.YGUnit borderBottomWidthUnit_;
+    /// <summary>
+    /// YGUnit.YGU_UNDEFINED
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderBottomWidthUnit {
+      get { if ((_hasBits0 & 2048) != 0) { return borderBottomWidthUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 2048;
+        borderBottomWidthUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_bottom_width_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderBottomWidthUnit {
+      get { return (_hasBits0 & 2048) != 0; }
+    }
+    /// <summary>Clears the value of the "border_bottom_width_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderBottomWidthUnit() {
+      _hasBits0 &= ~2048;
+    }
+
+    /// <summary>Field number for the "border_bottom_width" field.</summary>
+    public const int BorderBottomWidthFieldNumber = 60;
+    private float borderBottomWidth_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderBottomWidth {
+      get { if ((_hasBits0 & 4096) != 0) { return borderBottomWidth_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 4096;
+        borderBottomWidth_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_bottom_width" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderBottomWidth {
+      get { return (_hasBits0 & 4096) != 0; }
+    }
+    /// <summary>Clears the value of the "border_bottom_width" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderBottomWidth() {
+      _hasBits0 &= ~4096;
+    }
+
+    /// <summary>Field number for the "border_top_left_radius_unit" field.</summary>
+    public const int BorderTopLeftRadiusUnitFieldNumber = 61;
+    private global::DCL.ECSComponents.YGUnit borderTopLeftRadiusUnit_;
+    /// <summary>
+    /// Border Radius
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderTopLeftRadiusUnit {
+      get { if ((_hasBits0 & 8192) != 0) { return borderTopLeftRadiusUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 8192;
+        borderTopLeftRadiusUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_top_left_radius_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderTopLeftRadiusUnit {
+      get { return (_hasBits0 & 8192) != 0; }
+    }
+    /// <summary>Clears the value of the "border_top_left_radius_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderTopLeftRadiusUnit() {
+      _hasBits0 &= ~8192;
+    }
+
+    /// <summary>Field number for the "border_top_left_radius" field.</summary>
+    public const int BorderTopLeftRadiusFieldNumber = 62;
+    private float borderTopLeftRadius_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderTopLeftRadius {
+      get { if ((_hasBits0 & 16384) != 0) { return borderTopLeftRadius_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 16384;
+        borderTopLeftRadius_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_top_left_radius" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderTopLeftRadius {
+      get { return (_hasBits0 & 16384) != 0; }
+    }
+    /// <summary>Clears the value of the "border_top_left_radius" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderTopLeftRadius() {
+      _hasBits0 &= ~16384;
+    }
+
+    /// <summary>Field number for the "border_top_right_radius_unit" field.</summary>
+    public const int BorderTopRightRadiusUnitFieldNumber = 63;
+    private global::DCL.ECSComponents.YGUnit borderTopRightRadiusUnit_;
+    /// <summary>
+    /// YGUnit.YGU_UNDEFINED
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderTopRightRadiusUnit {
+      get { if ((_hasBits0 & 32768) != 0) { return borderTopRightRadiusUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 32768;
+        borderTopRightRadiusUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_top_right_radius_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderTopRightRadiusUnit {
+      get { return (_hasBits0 & 32768) != 0; }
+    }
+    /// <summary>Clears the value of the "border_top_right_radius_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderTopRightRadiusUnit() {
+      _hasBits0 &= ~32768;
+    }
+
+    /// <summary>Field number for the "border_top_right_radius" field.</summary>
+    public const int BorderTopRightRadiusFieldNumber = 64;
+    private float borderTopRightRadius_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderTopRightRadius {
+      get { if ((_hasBits0 & 65536) != 0) { return borderTopRightRadius_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 65536;
+        borderTopRightRadius_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_top_right_radius" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderTopRightRadius {
+      get { return (_hasBits0 & 65536) != 0; }
+    }
+    /// <summary>Clears the value of the "border_top_right_radius" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderTopRightRadius() {
+      _hasBits0 &= ~65536;
+    }
+
+    /// <summary>Field number for the "border_bottom_left_radius_unit" field.</summary>
+    public const int BorderBottomLeftRadiusUnitFieldNumber = 65;
+    private global::DCL.ECSComponents.YGUnit borderBottomLeftRadiusUnit_;
+    /// <summary>
+    /// YGUnit.YGU_UNDEFINED
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderBottomLeftRadiusUnit {
+      get { if ((_hasBits0 & 131072) != 0) { return borderBottomLeftRadiusUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 131072;
+        borderBottomLeftRadiusUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_bottom_left_radius_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderBottomLeftRadiusUnit {
+      get { return (_hasBits0 & 131072) != 0; }
+    }
+    /// <summary>Clears the value of the "border_bottom_left_radius_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderBottomLeftRadiusUnit() {
+      _hasBits0 &= ~131072;
+    }
+
+    /// <summary>Field number for the "border_bottom_left_radius" field.</summary>
+    public const int BorderBottomLeftRadiusFieldNumber = 66;
+    private float borderBottomLeftRadius_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderBottomLeftRadius {
+      get { if ((_hasBits0 & 262144) != 0) { return borderBottomLeftRadius_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 262144;
+        borderBottomLeftRadius_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_bottom_left_radius" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderBottomLeftRadius {
+      get { return (_hasBits0 & 262144) != 0; }
+    }
+    /// <summary>Clears the value of the "border_bottom_left_radius" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderBottomLeftRadius() {
+      _hasBits0 &= ~262144;
+    }
+
+    /// <summary>Field number for the "border_bottom_right_radius_unit" field.</summary>
+    public const int BorderBottomRightRadiusUnitFieldNumber = 67;
+    private global::DCL.ECSComponents.YGUnit borderBottomRightRadiusUnit_;
+    /// <summary>
+    /// YGUnit.YGU_UNDEFINED
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.YGUnit BorderBottomRightRadiusUnit {
+      get { if ((_hasBits0 & 524288) != 0) { return borderBottomRightRadiusUnit_; } else { return global::DCL.ECSComponents.YGUnit.YguUndefined; } }
+      set {
+        _hasBits0 |= 524288;
+        borderBottomRightRadiusUnit_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_bottom_right_radius_unit" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderBottomRightRadiusUnit {
+      get { return (_hasBits0 & 524288) != 0; }
+    }
+    /// <summary>Clears the value of the "border_bottom_right_radius_unit" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderBottomRightRadiusUnit() {
+      _hasBits0 &= ~524288;
+    }
+
+    /// <summary>Field number for the "border_bottom_right_radius" field.</summary>
+    public const int BorderBottomRightRadiusFieldNumber = 68;
+    private float borderBottomRightRadius_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float BorderBottomRightRadius {
+      get { if ((_hasBits0 & 1048576) != 0) { return borderBottomRightRadius_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 1048576;
+        borderBottomRightRadius_ = value;
+      }
+    }
+    /// <summary>Gets whether the "border_bottom_right_radius" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBorderBottomRightRadius {
+      get { return (_hasBits0 & 1048576) != 0; }
+    }
+    /// <summary>Clears the value of the "border_bottom_right_radius" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBorderBottomRightRadius() {
+      _hasBits0 &= ~1048576;
+    }
+
+    /// <summary>Field number for the "border_top_color" field.</summary>
+    public const int BorderTopColorFieldNumber = 69;
+    private global::Decentraland.Common.Color4 borderTopColor_;
+    /// <summary>
+    /// Border Color
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color4 BorderTopColor {
+      get { return borderTopColor_; }
+      set {
+        borderTopColor_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "border_bottom_color" field.</summary>
+    public const int BorderBottomColorFieldNumber = 70;
+    private global::Decentraland.Common.Color4 borderBottomColor_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color4 BorderBottomColor {
+      get { return borderBottomColor_; }
+      set {
+        borderBottomColor_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "border_left_color" field.</summary>
+    public const int BorderLeftColorFieldNumber = 71;
+    private global::Decentraland.Common.Color4 borderLeftColor_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color4 BorderLeftColor {
+      get { return borderLeftColor_; }
+      set {
+        borderLeftColor_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "border_right_color" field.</summary>
+    public const int BorderRightColorFieldNumber = 72;
+    private global::Decentraland.Common.Color4 borderRightColor_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color4 BorderRightColor {
+      get { return borderRightColor_; }
+      set {
+        borderRightColor_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1129,6 +1663,26 @@ namespace DCL.ECSComponents {
       if (PaddingBottomUnit != other.PaddingBottomUnit) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PaddingBottom, other.PaddingBottom)) return false;
       if (PointerFilter != other.PointerFilter) return false;
+      if (BorderLeftWidthUnit != other.BorderLeftWidthUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderLeftWidth, other.BorderLeftWidth)) return false;
+      if (BorderTopWidthUnit != other.BorderTopWidthUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderTopWidth, other.BorderTopWidth)) return false;
+      if (BorderRightWidthUnit != other.BorderRightWidthUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderRightWidth, other.BorderRightWidth)) return false;
+      if (BorderBottomWidthUnit != other.BorderBottomWidthUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderBottomWidth, other.BorderBottomWidth)) return false;
+      if (BorderTopLeftRadiusUnit != other.BorderTopLeftRadiusUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderTopLeftRadius, other.BorderTopLeftRadius)) return false;
+      if (BorderTopRightRadiusUnit != other.BorderTopRightRadiusUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderTopRightRadius, other.BorderTopRightRadius)) return false;
+      if (BorderBottomLeftRadiusUnit != other.BorderBottomLeftRadiusUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderBottomLeftRadius, other.BorderBottomLeftRadius)) return false;
+      if (BorderBottomRightRadiusUnit != other.BorderBottomRightRadiusUnit) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(BorderBottomRightRadius, other.BorderBottomRightRadius)) return false;
+      if (!object.Equals(BorderTopColor, other.BorderTopColor)) return false;
+      if (!object.Equals(BorderBottomColor, other.BorderBottomColor)) return false;
+      if (!object.Equals(BorderLeftColor, other.BorderLeftColor)) return false;
+      if (!object.Equals(BorderRightColor, other.BorderRightColor)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1188,6 +1742,26 @@ namespace DCL.ECSComponents {
       if (PaddingBottomUnit != global::DCL.ECSComponents.YGUnit.YguUndefined) hash ^= PaddingBottomUnit.GetHashCode();
       if (PaddingBottom != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PaddingBottom);
       if (HasPointerFilter) hash ^= PointerFilter.GetHashCode();
+      if (HasBorderLeftWidthUnit) hash ^= BorderLeftWidthUnit.GetHashCode();
+      if (HasBorderLeftWidth) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderLeftWidth);
+      if (HasBorderTopWidthUnit) hash ^= BorderTopWidthUnit.GetHashCode();
+      if (HasBorderTopWidth) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderTopWidth);
+      if (HasBorderRightWidthUnit) hash ^= BorderRightWidthUnit.GetHashCode();
+      if (HasBorderRightWidth) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderRightWidth);
+      if (HasBorderBottomWidthUnit) hash ^= BorderBottomWidthUnit.GetHashCode();
+      if (HasBorderBottomWidth) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderBottomWidth);
+      if (HasBorderTopLeftRadiusUnit) hash ^= BorderTopLeftRadiusUnit.GetHashCode();
+      if (HasBorderTopLeftRadius) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderTopLeftRadius);
+      if (HasBorderTopRightRadiusUnit) hash ^= BorderTopRightRadiusUnit.GetHashCode();
+      if (HasBorderTopRightRadius) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderTopRightRadius);
+      if (HasBorderBottomLeftRadiusUnit) hash ^= BorderBottomLeftRadiusUnit.GetHashCode();
+      if (HasBorderBottomLeftRadius) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderBottomLeftRadius);
+      if (HasBorderBottomRightRadiusUnit) hash ^= BorderBottomRightRadiusUnit.GetHashCode();
+      if (HasBorderBottomRightRadius) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BorderBottomRightRadius);
+      if (borderTopColor_ != null) hash ^= BorderTopColor.GetHashCode();
+      if (borderBottomColor_ != null) hash ^= BorderBottomColor.GetHashCode();
+      if (borderLeftColor_ != null) hash ^= BorderLeftColor.GetHashCode();
+      if (borderRightColor_ != null) hash ^= BorderRightColor.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1414,6 +1988,86 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(160, 3);
         output.WriteEnum((int) PointerFilter);
       }
+      if (HasBorderLeftWidthUnit) {
+        output.WriteRawTag(168, 3);
+        output.WriteEnum((int) BorderLeftWidthUnit);
+      }
+      if (HasBorderLeftWidth) {
+        output.WriteRawTag(181, 3);
+        output.WriteFloat(BorderLeftWidth);
+      }
+      if (HasBorderTopWidthUnit) {
+        output.WriteRawTag(184, 3);
+        output.WriteEnum((int) BorderTopWidthUnit);
+      }
+      if (HasBorderTopWidth) {
+        output.WriteRawTag(197, 3);
+        output.WriteFloat(BorderTopWidth);
+      }
+      if (HasBorderRightWidthUnit) {
+        output.WriteRawTag(200, 3);
+        output.WriteEnum((int) BorderRightWidthUnit);
+      }
+      if (HasBorderRightWidth) {
+        output.WriteRawTag(213, 3);
+        output.WriteFloat(BorderRightWidth);
+      }
+      if (HasBorderBottomWidthUnit) {
+        output.WriteRawTag(216, 3);
+        output.WriteEnum((int) BorderBottomWidthUnit);
+      }
+      if (HasBorderBottomWidth) {
+        output.WriteRawTag(229, 3);
+        output.WriteFloat(BorderBottomWidth);
+      }
+      if (HasBorderTopLeftRadiusUnit) {
+        output.WriteRawTag(232, 3);
+        output.WriteEnum((int) BorderTopLeftRadiusUnit);
+      }
+      if (HasBorderTopLeftRadius) {
+        output.WriteRawTag(245, 3);
+        output.WriteFloat(BorderTopLeftRadius);
+      }
+      if (HasBorderTopRightRadiusUnit) {
+        output.WriteRawTag(248, 3);
+        output.WriteEnum((int) BorderTopRightRadiusUnit);
+      }
+      if (HasBorderTopRightRadius) {
+        output.WriteRawTag(133, 4);
+        output.WriteFloat(BorderTopRightRadius);
+      }
+      if (HasBorderBottomLeftRadiusUnit) {
+        output.WriteRawTag(136, 4);
+        output.WriteEnum((int) BorderBottomLeftRadiusUnit);
+      }
+      if (HasBorderBottomLeftRadius) {
+        output.WriteRawTag(149, 4);
+        output.WriteFloat(BorderBottomLeftRadius);
+      }
+      if (HasBorderBottomRightRadiusUnit) {
+        output.WriteRawTag(152, 4);
+        output.WriteEnum((int) BorderBottomRightRadiusUnit);
+      }
+      if (HasBorderBottomRightRadius) {
+        output.WriteRawTag(165, 4);
+        output.WriteFloat(BorderBottomRightRadius);
+      }
+      if (borderTopColor_ != null) {
+        output.WriteRawTag(170, 4);
+        output.WriteMessage(BorderTopColor);
+      }
+      if (borderBottomColor_ != null) {
+        output.WriteRawTag(178, 4);
+        output.WriteMessage(BorderBottomColor);
+      }
+      if (borderLeftColor_ != null) {
+        output.WriteRawTag(186, 4);
+        output.WriteMessage(BorderLeftColor);
+      }
+      if (borderRightColor_ != null) {
+        output.WriteRawTag(194, 4);
+        output.WriteMessage(BorderRightColor);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1632,6 +2286,86 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(160, 3);
         output.WriteEnum((int) PointerFilter);
       }
+      if (HasBorderLeftWidthUnit) {
+        output.WriteRawTag(168, 3);
+        output.WriteEnum((int) BorderLeftWidthUnit);
+      }
+      if (HasBorderLeftWidth) {
+        output.WriteRawTag(181, 3);
+        output.WriteFloat(BorderLeftWidth);
+      }
+      if (HasBorderTopWidthUnit) {
+        output.WriteRawTag(184, 3);
+        output.WriteEnum((int) BorderTopWidthUnit);
+      }
+      if (HasBorderTopWidth) {
+        output.WriteRawTag(197, 3);
+        output.WriteFloat(BorderTopWidth);
+      }
+      if (HasBorderRightWidthUnit) {
+        output.WriteRawTag(200, 3);
+        output.WriteEnum((int) BorderRightWidthUnit);
+      }
+      if (HasBorderRightWidth) {
+        output.WriteRawTag(213, 3);
+        output.WriteFloat(BorderRightWidth);
+      }
+      if (HasBorderBottomWidthUnit) {
+        output.WriteRawTag(216, 3);
+        output.WriteEnum((int) BorderBottomWidthUnit);
+      }
+      if (HasBorderBottomWidth) {
+        output.WriteRawTag(229, 3);
+        output.WriteFloat(BorderBottomWidth);
+      }
+      if (HasBorderTopLeftRadiusUnit) {
+        output.WriteRawTag(232, 3);
+        output.WriteEnum((int) BorderTopLeftRadiusUnit);
+      }
+      if (HasBorderTopLeftRadius) {
+        output.WriteRawTag(245, 3);
+        output.WriteFloat(BorderTopLeftRadius);
+      }
+      if (HasBorderTopRightRadiusUnit) {
+        output.WriteRawTag(248, 3);
+        output.WriteEnum((int) BorderTopRightRadiusUnit);
+      }
+      if (HasBorderTopRightRadius) {
+        output.WriteRawTag(133, 4);
+        output.WriteFloat(BorderTopRightRadius);
+      }
+      if (HasBorderBottomLeftRadiusUnit) {
+        output.WriteRawTag(136, 4);
+        output.WriteEnum((int) BorderBottomLeftRadiusUnit);
+      }
+      if (HasBorderBottomLeftRadius) {
+        output.WriteRawTag(149, 4);
+        output.WriteFloat(BorderBottomLeftRadius);
+      }
+      if (HasBorderBottomRightRadiusUnit) {
+        output.WriteRawTag(152, 4);
+        output.WriteEnum((int) BorderBottomRightRadiusUnit);
+      }
+      if (HasBorderBottomRightRadius) {
+        output.WriteRawTag(165, 4);
+        output.WriteFloat(BorderBottomRightRadius);
+      }
+      if (borderTopColor_ != null) {
+        output.WriteRawTag(170, 4);
+        output.WriteMessage(BorderTopColor);
+      }
+      if (borderBottomColor_ != null) {
+        output.WriteRawTag(178, 4);
+        output.WriteMessage(BorderBottomColor);
+      }
+      if (borderLeftColor_ != null) {
+        output.WriteRawTag(186, 4);
+        output.WriteMessage(BorderLeftColor);
+      }
+      if (borderRightColor_ != null) {
+        output.WriteRawTag(194, 4);
+        output.WriteMessage(BorderRightColor);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1797,6 +2531,66 @@ namespace DCL.ECSComponents {
       }
       if (HasPointerFilter) {
         size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) PointerFilter);
+      }
+      if (HasBorderLeftWidthUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderLeftWidthUnit);
+      }
+      if (HasBorderLeftWidth) {
+        size += 2 + 4;
+      }
+      if (HasBorderTopWidthUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderTopWidthUnit);
+      }
+      if (HasBorderTopWidth) {
+        size += 2 + 4;
+      }
+      if (HasBorderRightWidthUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderRightWidthUnit);
+      }
+      if (HasBorderRightWidth) {
+        size += 2 + 4;
+      }
+      if (HasBorderBottomWidthUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderBottomWidthUnit);
+      }
+      if (HasBorderBottomWidth) {
+        size += 2 + 4;
+      }
+      if (HasBorderTopLeftRadiusUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderTopLeftRadiusUnit);
+      }
+      if (HasBorderTopLeftRadius) {
+        size += 2 + 4;
+      }
+      if (HasBorderTopRightRadiusUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderTopRightRadiusUnit);
+      }
+      if (HasBorderTopRightRadius) {
+        size += 2 + 4;
+      }
+      if (HasBorderBottomLeftRadiusUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderBottomLeftRadiusUnit);
+      }
+      if (HasBorderBottomLeftRadius) {
+        size += 2 + 4;
+      }
+      if (HasBorderBottomRightRadiusUnit) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) BorderBottomRightRadiusUnit);
+      }
+      if (HasBorderBottomRightRadius) {
+        size += 2 + 4;
+      }
+      if (borderTopColor_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(BorderTopColor);
+      }
+      if (borderBottomColor_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(BorderBottomColor);
+      }
+      if (borderLeftColor_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(BorderLeftColor);
+      }
+      if (borderRightColor_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(BorderRightColor);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1965,6 +2759,78 @@ namespace DCL.ECSComponents {
       }
       if (other.HasPointerFilter) {
         PointerFilter = other.PointerFilter;
+      }
+      if (other.HasBorderLeftWidthUnit) {
+        BorderLeftWidthUnit = other.BorderLeftWidthUnit;
+      }
+      if (other.HasBorderLeftWidth) {
+        BorderLeftWidth = other.BorderLeftWidth;
+      }
+      if (other.HasBorderTopWidthUnit) {
+        BorderTopWidthUnit = other.BorderTopWidthUnit;
+      }
+      if (other.HasBorderTopWidth) {
+        BorderTopWidth = other.BorderTopWidth;
+      }
+      if (other.HasBorderRightWidthUnit) {
+        BorderRightWidthUnit = other.BorderRightWidthUnit;
+      }
+      if (other.HasBorderRightWidth) {
+        BorderRightWidth = other.BorderRightWidth;
+      }
+      if (other.HasBorderBottomWidthUnit) {
+        BorderBottomWidthUnit = other.BorderBottomWidthUnit;
+      }
+      if (other.HasBorderBottomWidth) {
+        BorderBottomWidth = other.BorderBottomWidth;
+      }
+      if (other.HasBorderTopLeftRadiusUnit) {
+        BorderTopLeftRadiusUnit = other.BorderTopLeftRadiusUnit;
+      }
+      if (other.HasBorderTopLeftRadius) {
+        BorderTopLeftRadius = other.BorderTopLeftRadius;
+      }
+      if (other.HasBorderTopRightRadiusUnit) {
+        BorderTopRightRadiusUnit = other.BorderTopRightRadiusUnit;
+      }
+      if (other.HasBorderTopRightRadius) {
+        BorderTopRightRadius = other.BorderTopRightRadius;
+      }
+      if (other.HasBorderBottomLeftRadiusUnit) {
+        BorderBottomLeftRadiusUnit = other.BorderBottomLeftRadiusUnit;
+      }
+      if (other.HasBorderBottomLeftRadius) {
+        BorderBottomLeftRadius = other.BorderBottomLeftRadius;
+      }
+      if (other.HasBorderBottomRightRadiusUnit) {
+        BorderBottomRightRadiusUnit = other.BorderBottomRightRadiusUnit;
+      }
+      if (other.HasBorderBottomRightRadius) {
+        BorderBottomRightRadius = other.BorderBottomRightRadius;
+      }
+      if (other.borderTopColor_ != null) {
+        if (borderTopColor_ == null) {
+          BorderTopColor = new global::Decentraland.Common.Color4();
+        }
+        BorderTopColor.MergeFrom(other.BorderTopColor);
+      }
+      if (other.borderBottomColor_ != null) {
+        if (borderBottomColor_ == null) {
+          BorderBottomColor = new global::Decentraland.Common.Color4();
+        }
+        BorderBottomColor.MergeFrom(other.BorderBottomColor);
+      }
+      if (other.borderLeftColor_ != null) {
+        if (borderLeftColor_ == null) {
+          BorderLeftColor = new global::Decentraland.Common.Color4();
+        }
+        BorderLeftColor.MergeFrom(other.BorderLeftColor);
+      }
+      if (other.borderRightColor_ != null) {
+        if (borderRightColor_ == null) {
+          BorderRightColor = new global::Decentraland.Common.Color4();
+        }
+        BorderRightColor.MergeFrom(other.BorderRightColor);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2189,6 +3055,98 @@ namespace DCL.ECSComponents {
             PointerFilter = (global::DCL.ECSComponents.PointerFilterMode) input.ReadEnum();
             break;
           }
+          case 424: {
+            BorderLeftWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 437: {
+            BorderLeftWidth = input.ReadFloat();
+            break;
+          }
+          case 440: {
+            BorderTopWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 453: {
+            BorderTopWidth = input.ReadFloat();
+            break;
+          }
+          case 456: {
+            BorderRightWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 469: {
+            BorderRightWidth = input.ReadFloat();
+            break;
+          }
+          case 472: {
+            BorderBottomWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 485: {
+            BorderBottomWidth = input.ReadFloat();
+            break;
+          }
+          case 488: {
+            BorderTopLeftRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 501: {
+            BorderTopLeftRadius = input.ReadFloat();
+            break;
+          }
+          case 504: {
+            BorderTopRightRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 517: {
+            BorderTopRightRadius = input.ReadFloat();
+            break;
+          }
+          case 520: {
+            BorderBottomLeftRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 533: {
+            BorderBottomLeftRadius = input.ReadFloat();
+            break;
+          }
+          case 536: {
+            BorderBottomRightRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 549: {
+            BorderBottomRightRadius = input.ReadFloat();
+            break;
+          }
+          case 554: {
+            if (borderTopColor_ == null) {
+              BorderTopColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderTopColor);
+            break;
+          }
+          case 562: {
+            if (borderBottomColor_ == null) {
+              BorderBottomColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderBottomColor);
+            break;
+          }
+          case 570: {
+            if (borderLeftColor_ == null) {
+              BorderLeftColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderLeftColor);
+            break;
+          }
+          case 578: {
+            if (borderRightColor_ == null) {
+              BorderRightColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderRightColor);
+            break;
+          }
         }
       }
     #endif
@@ -2410,6 +3368,98 @@ namespace DCL.ECSComponents {
           }
           case 416: {
             PointerFilter = (global::DCL.ECSComponents.PointerFilterMode) input.ReadEnum();
+            break;
+          }
+          case 424: {
+            BorderLeftWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 437: {
+            BorderLeftWidth = input.ReadFloat();
+            break;
+          }
+          case 440: {
+            BorderTopWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 453: {
+            BorderTopWidth = input.ReadFloat();
+            break;
+          }
+          case 456: {
+            BorderRightWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 469: {
+            BorderRightWidth = input.ReadFloat();
+            break;
+          }
+          case 472: {
+            BorderBottomWidthUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 485: {
+            BorderBottomWidth = input.ReadFloat();
+            break;
+          }
+          case 488: {
+            BorderTopLeftRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 501: {
+            BorderTopLeftRadius = input.ReadFloat();
+            break;
+          }
+          case 504: {
+            BorderTopRightRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 517: {
+            BorderTopRightRadius = input.ReadFloat();
+            break;
+          }
+          case 520: {
+            BorderBottomLeftRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 533: {
+            BorderBottomLeftRadius = input.ReadFloat();
+            break;
+          }
+          case 536: {
+            BorderBottomRightRadiusUnit = (global::DCL.ECSComponents.YGUnit) input.ReadEnum();
+            break;
+          }
+          case 549: {
+            BorderBottomRightRadius = input.ReadFloat();
+            break;
+          }
+          case 554: {
+            if (borderTopColor_ == null) {
+              BorderTopColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderTopColor);
+            break;
+          }
+          case 562: {
+            if (borderBottomColor_ == null) {
+              BorderBottomColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderBottomColor);
+            break;
+          }
+          case 570: {
+            if (borderLeftColor_ == null) {
+              BorderLeftColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderLeftColor);
+            break;
+          }
+          case 578: {
+            if (borderRightColor_ == null) {
+              BorderRightColor = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(BorderRightColor);
             break;
           }
         }

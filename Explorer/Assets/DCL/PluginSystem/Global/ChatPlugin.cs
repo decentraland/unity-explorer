@@ -3,169 +3,194 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Chat.Commands;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Emoji;
-using DCL.Friends.Chat;
+using DCL.Chat.EventBus;
+using DCL.Friends;
+using DCL.Friends.UserBlocking;
+using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
+using DCL.RealmNavigation;
+using DCL.Settings.Settings;
+using DCL.SocialService;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.Web3.Identities;
+using DCL.UI.SharedSpaceManager;
+using DCL.Utilities;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ChatPlugin : IDCLGlobalPlugin<ChatPlugin.ChatSettings>
+    public class ChatPlugin : IDCLGlobalPlugin<ChatPluginSettings>
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
-        private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
-        private readonly IChatLifecycleBusController chatLifecycleBusController;
+        private readonly ViewDependencies viewDependencies;
+        private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IRoomHub roomHub;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly ITextFormatter hyperlinkTextFormatter;
+        private readonly IProfileCache profileCache;
+        private readonly IChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ChatMessageFactory chatMessageFactory;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private ChatHistoryStorage? chatStorage;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
+        private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
+        private readonly IFriendsEventBus friendsEventBus;
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
         private ChatController chatController;
 
         public ChatPlugin(
-            IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            DCLInput dclInput,
-            IEventSystem eventSystem,
             MainUIView mainUIView,
             IInputBlock inputBlock,
-            IChatLifecycleBusController chatLifecycleBusController,
             Arch.Core.World world,
-            Entity playerEntity
-        )
+            Entity playerEntity,
+            ViewDependencies viewDependencies,
+            IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub,
+            IAssetsProvisioner assetsProvisioner,
+            ITextFormatter hyperlinkTextFormatter,
+            IProfileCache profileCache,
+            IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus,
+            ISharedSpaceManager sharedSpaceManager,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ObjectProxy<IRPCSocialServices> socialServiceProxy,
+            IFriendsEventBus friendsEventBus,
+            ChatMessageFactory chatMessageFactory,
+            FeatureFlagsCache featureFlagsCache,
+            ObjectProxy<IFriendsService> friendsServiceProxy)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
             this.chatMessagesBus = chatMessagesBus;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
-            this.dclInput = dclInput;
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.eventSystem = eventSystem;
+            this.viewDependencies = viewDependencies;
+            this.chatCommandsBus = chatCommandsBus;
+            this.assetsProvisioner = assetsProvisioner;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            this.profileCache = profileCache;
+            this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
+            this.loadingStatus = loadingStatus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
-            this.chatLifecycleBusController = chatLifecycleBusController;
+            this.roomHub = roomHub;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatMessageFactory = chatMessageFactory;
+            this.featureFlagsCache = featureFlagsCache;
+            this.friendsServiceProxy = friendsServiceProxy;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            chatStorage?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
-            EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
-            EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
-            EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
-            EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
+            ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
+            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            {
+                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+            }
 
             chatController = new ChatController(
                 () =>
                 {
-                    var view = mainUIView.ChatView;
+                    ChatView? view = mainUIView.ChatView;
                     view.gameObject.SetActive(true);
                     return view;
                 },
-                chatEntryConfiguration,
                 chatMessagesBus,
                 chatHistory,
                 entityParticipantTable,
                 nametagsData,
-                emojiPanelConfig,
-                settings.EmojiMappingJson,
-                emojiSectionPrefab,
-                emojiButtonPrefab,
-                emojiSuggestionPrefab,
                 world,
                 playerEntity,
-                dclInput,
-                eventSystem,
                 inputBlock,
-                chatLifecycleBusController
+                viewDependencies,
+                chatCommandsBus,
+                roomHub,
+                chatSettingsAsset.Value,
+                hyperlinkTextFormatter,
+                profileCache,
+                chatEventBus,
+                web3IdentityCache,
+                loadingStatus,
+                userBlockingCacheProxy,
+                privacySettings,
+                friendsEventBus,
+                chatStorage,
+                friendsServiceProxy
             );
 
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
+
             mvcManager.RegisterController(chatController);
+
+            // Log out / log in
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
         }
 
-        public class ChatSettings : IDCLPluginSettings
+        private void OnIdentityCleared()
         {
-            [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
-            [field: Space]
-            [field: SerializeField]
-            public EmojiButtonRef EmojiButtonPrefab { get; private set; }
-
-            [field: SerializeField]
-            public EmojiSectionRef EmojiSectionPrefab { get; private set; }
-
-            [field: SerializeField]
-            public EmojiSuggestionRef EmojiSuggestionPrefab { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<EmojiPanelConfigurationSO> EmojiPanelConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public TextAsset EmojiMappingJson { get; private set; }
-
-            [Serializable]
-            public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
-            {
-                public EmojiSuggestionPanelRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiSuggestionRef : ComponentReference<EmojiSuggestionView>
-            {
-                public EmojiSuggestionRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiSectionRef : ComponentReference<EmojiSectionView>
-            {
-                public EmojiSectionRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiButtonRef : ComponentReference<EmojiButton>
-            {
-                public EmojiButtonRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiPanelRef : ComponentReference<EmojiPanelView>
-            {
-                public EmojiPanelRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class MainUIRef : ComponentReference<MainUIView>
-            {
-                public MainUIRef(string guid) : base(guid) { }
-            }
+            if (chatController.IsVisibleInSharedSpace)
+                chatController.HideViewAsync(CancellationToken.None).Forget();
         }
+
+        private void OnIdentityChanged()
+        {
+            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
+            //Once from here and once from the MainUIController. We need to account for this.
+
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
+        }
+    }
+
+    public class ChatPluginSettings : IDCLPluginSettings
+    {
+        [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
     }
 }

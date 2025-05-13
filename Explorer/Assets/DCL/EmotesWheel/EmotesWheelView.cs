@@ -12,7 +12,7 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelView : ViewBase, IView
     {
-        public event Action? OnClose;
+        public event Action? Closed;
 
         [SerializeField]
         private Button[] closeButtons = null!;
@@ -39,7 +39,7 @@ namespace DCL.EmotesWheel
         private void Awake()
         {
             foreach (Button button in closeButtons)
-                button.onClick.AddListener(() => { OnClose?.Invoke(); });
+                button.onClick.AddListener(() => { Closed?.Invoke(); });
         }
 
         private void OnEnable()

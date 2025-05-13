@@ -33,7 +33,19 @@ namespace DCL.DebugUtilities
                 Container.visible = value;
 
                 foreach (DebugWidget widget in widgets.Values)
+                {
                     widget.visible = value;
+                    SetChildrenVisibility(widget, value);
+                }
+            }
+        }
+
+        private static void SetChildrenVisibility(VisualElement element, bool visible)
+        {
+            foreach (var child in element.Children())
+            {
+                child.visible = visible;
+                SetChildrenVisibility(child, visible);
             }
         }
 

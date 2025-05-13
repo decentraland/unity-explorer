@@ -2,10 +2,16 @@ using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Typing;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.SDKComponents.AvatarAttach.Systems;
+using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -19,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AvatarAttach.Tests
@@ -31,6 +38,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         private AvatarBase playerAvatarBase;
         private ISceneStateProvider sceneStateProvider;
         private AvatarAttachHandlerSetupSystem setupSystem;
+        private IReadOnlyEntityParticipantTable entityParticipantTable;
+        private ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
 
         [SetUp]
         public async void Setup()
@@ -44,7 +53,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Entity playerEntity = globalWorld.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(Substitute.For<Transform>()),
-                playerAvatarBase
+                playerAvatarBase,
+                new AvatarShapeComponent { ID = "" }
             );
 
             // Setup system
@@ -52,8 +62,23 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             sceneStateProvider.IsCurrent.Returns(true);
             var mainPlayerAvatarBase = new ObjectProxy<AvatarBase>();
             mainPlayerAvatarBase.SetObject(playerAvatarBase);
-            system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase, sceneStateProvider);
-            setupSystem = new AvatarAttachHandlerSetupSystem(world, mainPlayerAvatarBase, sceneStateProvider);
+
+            // Create a mock EntityParticipantTable
+            entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
+            entityParticipantTableProxy = new ObjectProxy<IReadOnlyEntityParticipantTable>();
+            entityParticipantTableProxy.SetObject(entityParticipantTable);
+
+            system = new AvatarAttachHandlerSystem(world,
+                globalWorld,
+                mainPlayerAvatarBase,
+                sceneStateProvider,
+                entityParticipantTableProxy);
+
+            setupSystem = new AvatarAttachHandlerSetupSystem(world,
+                globalWorld,
+                mainPlayerAvatarBase,
+                sceneStateProvider,
+                entityParticipantTableProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             entityTransformComponent = AddTransformToEntity(entity);
@@ -64,6 +89,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Object.DestroyImmediate(playerAvatarBase.gameObject);
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
             setupSystem?.Dispose();
+            globalWorld.Dispose();
+            base.OnTearDown();
         }
 
         [Test]
@@ -72,7 +99,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -108,7 +135,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -147,7 +174,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptRightHand };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptRightHand, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -187,7 +214,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             await UniTask.WaitUntil(() => system != null);
 
             // Attach to left hand
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -212,15 +239,13 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         [Test]
         public async Task VerifyAllAnchorPoints()
         {
-            bool ApproximatelyEqual(Vector3 a, Vector3 b)
-            {
-                return Vector3.SqrMagnitude(a - b) < Mathf.Epsilon * Mathf.Epsilon;
-            }
+            bool ApproximatelyEqual(Vector3 a, Vector3 b) =>
+                Vector3.SqrMagnitude(a - b) < Mathf.Epsilon * Mathf.Epsilon;
 
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach();
+            var pbAvatarAttachComponent = new PBAvatarAttach { AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             // Dictionary to map AvatarAnchorPointType to the corresponding Transform property
@@ -251,10 +276,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 { AvatarAnchorPointType.AaptRightUpLeg, () => playerAvatarBase.RightUpLegAnchorPoint },
                 { AvatarAnchorPointType.AaptRightLeg, () => playerAvatarBase.RightLegAnchorPoint },
                 { AvatarAnchorPointType.AaptRightFoot, () => playerAvatarBase.RightFootAnchorPoint },
-                { AvatarAnchorPointType.AaptRightToeBase, () => playerAvatarBase.RightToeBaseAnchorPoint }
+                { AvatarAnchorPointType.AaptRightToeBase, () => playerAvatarBase.RightToeBaseAnchorPoint },
             };
 
-            foreach (var anchorPoint in anchorPointMap)
+            foreach (KeyValuePair<AvatarAnchorPointType, Func<Transform>> anchorPoint in anchorPointMap)
             {
                 // Set the anchor point
                 pbAvatarAttachComponent.AnchorPointId = anchorPoint.Key;
@@ -266,7 +291,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 system.Update(0);
 
                 // After update, position should match the anchor point
-                var position = anchorPoint.Value().position;
+                Vector3 position = anchorPoint.Value().position;
 
                 if (anchorPoint.Key == AvatarAnchorPointType.AaptPosition)
                     position += Vector3.up * AvatarAttachUtils.OLD_CLIENT_PIVOT_CORRECTION;
@@ -282,7 +307,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             entityTransformComponent.SetTransform(Vector3.one * 5, Quaternion.Euler(90, 90, 90), Vector3.one * 3);
@@ -319,8 +344,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreEqual(Vector3.one * 5, entityTransformComponent.Transform.localScale);
         }
 
-        private Vector3 GetExpectedRootPosition() =>
-            playerAvatarBase.transform.position + (Vector3.up * AvatarAttachUtils.OLD_CLIENT_PIVOT_CORRECTION);
+        private Vector3 GetExpectedRootPosition(AvatarBase avatar = null) =>
+            (avatar ?? playerAvatarBase).transform.position + (Vector3.up * AvatarAttachUtils.OLD_CLIENT_PIVOT_CORRECTION);
 
         [Test]
         public async Task StopUpdatingTransformOnComponentRemoval()
@@ -328,7 +353,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -354,7 +379,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -383,7 +408,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
@@ -416,6 +441,308 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             system.Update(0);
             Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+        }
+
+        [Test]
+        public async Task AttachToOtherPlayerAvatar()
+        {
+            await UniTask.WaitUntil(() => system != null);
+
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var otherPlayerAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            otherPlayerAvatarBase.gameObject.transform.position = new Vector3(10, 10, 10);
+
+            int otherPlayerId = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
+
+            Entity otherPlayerEntity = globalWorld.Create(
+                new CRDTEntity(otherPlayerId),
+                new PlayerComponent(Substitute.For<Transform>()),
+                otherPlayerAvatarBase,
+                new AvatarShapeComponent { ID = otherPlayerId.ToString() }
+            );
+
+            var attachToOtherEntity = world.Create(PartitionComponent.TOP_PRIORITY);
+            var attachToOtherTransform = AddTransformToEntity(attachToOtherEntity);
+
+            var pbAvatarAttachComponent = new PBAvatarAttach
+            {
+                AvatarId = otherPlayerId.ToString(),
+                AnchorPointId = AvatarAnchorPointType.AaptPosition,
+                IsDirty = true
+            };
+            world.Add(attachToOtherEntity, pbAvatarAttachComponent);
+
+            Assert.AreEqual(Vector3.zero, attachToOtherTransform.Transform.position);
+
+            setupSystem.Update(0);
+            system.Update(0);
+
+            Assert.AreEqual(GetExpectedRootPosition(otherPlayerAvatarBase), attachToOtherTransform.Transform.position);
+            Assert.AreEqual(otherPlayerAvatarBase.transform.rotation, attachToOtherTransform.Transform.rotation);
+
+            // Move the other player and verify the attachment follows
+            otherPlayerAvatarBase.transform.position += Vector3.one * 5;
+            otherPlayerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
+
+            system.Update(0);
+
+            Assert.AreEqual(GetExpectedRootPosition(otherPlayerAvatarBase), attachToOtherTransform.Transform.position);
+            Assert.AreEqual(otherPlayerAvatarBase.transform.rotation, attachToOtherTransform.Transform.rotation);
+
+            Object.DestroyImmediate(otherPlayerAvatarBase.gameObject);
+            Object.DestroyImmediate(attachToOtherTransform.Transform.gameObject);
+            globalWorld.Destroy(otherPlayerEntity);
+        }
+
+        [Test]
+        public async Task HandlePlayerDisconnection()
+        {
+            await UniTask.WaitUntil(() => system != null);
+
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var disconnectingPlayerAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            disconnectingPlayerAvatarBase.gameObject.transform.position = new Vector3(15, 15, 15);
+
+            int disconnectingPlayerId = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1;
+            string disconnectingPlayerIdString = disconnectingPlayerId.ToString();
+
+            Entity disconnectingPlayerEntity = globalWorld.Create(
+                new CRDTEntity(disconnectingPlayerId),
+                new PlayerComponent(Substitute.For<Transform>()),
+                disconnectingPlayerAvatarBase,
+                new AvatarShapeComponent { ID = disconnectingPlayerIdString }
+            );
+
+            var attachToDisconnectingEntity = world.Create(PartitionComponent.TOP_PRIORITY);
+            var attachToDisconnectingTransform = AddTransformToEntity(attachToDisconnectingEntity);
+
+            var pbAvatarAttachComponent = new PBAvatarAttach
+            {
+                AvatarId = disconnectingPlayerIdString,
+                AnchorPointId = AvatarAnchorPointType.AaptPosition,
+                IsDirty = true
+            };
+            world.Add(attachToDisconnectingEntity, pbAvatarAttachComponent);
+
+            setupSystem.Update(0);
+            system.Update(0);
+
+            Assert.AreEqual(GetExpectedRootPosition(disconnectingPlayerAvatarBase), attachToDisconnectingTransform.Transform.position);
+
+            Vector3 lastKnownPosition = attachToDisconnectingTransform.Transform.position;
+
+            // Simulate player disconnection
+            Object.DestroyImmediate(disconnectingPlayerAvatarBase.gameObject);
+            globalWorld.Destroy(disconnectingPlayerEntity);
+
+            LogAssert.Expect(LogType.Log, $"Failed to find avatar with ID {disconnectingPlayerIdString}");
+
+            system.Update(0);
+
+            // Entity should be moved to "mordor" position when player is gone
+            Assert.AreEqual(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION, attachToDisconnectingTransform.Transform.position);
+            Assert.AreNotEqual(lastKnownPosition, attachToDisconnectingTransform.Transform.position);
+
+            Object.DestroyImmediate(attachToDisconnectingTransform.Transform.gameObject);
+        }
+
+        [Test]
+        public async Task HandleConcurrentAttachments()
+        {
+            await UniTask.WaitUntil(() => system != null);
+
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var targetPlayerAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            targetPlayerAvatarBase.gameObject.transform.position = new Vector3(20, 20, 20);
+
+            int targetPlayerId = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 2;
+
+            Entity targetPlayerEntity = globalWorld.Create(
+                new CRDTEntity(targetPlayerId),
+                new PlayerComponent(Substitute.For<Transform>()),
+                targetPlayerAvatarBase,
+                new AvatarShapeComponent { ID = targetPlayerId.ToString() }
+            );
+
+            // Create multiple entities to attach to the same player
+            const int attachmentCount = 5;
+            var attachEntities = new Entity[attachmentCount];
+            var attachTransforms = new TransformComponent[attachmentCount];
+
+            for (int i = 0; i < attachmentCount; i++)
+            {
+                attachEntities[i] = world.Create(PartitionComponent.TOP_PRIORITY);
+                attachTransforms[i] = AddTransformToEntity(attachEntities[i]);
+
+                // Use different anchor points for each attachment
+                var anchorPoint = (AvatarAnchorPointType)(i % 3 == 0
+                    ? AvatarAnchorPointType.AaptPosition
+                    : (i % 3 == 1 ? AvatarAnchorPointType.AaptLeftHand : AvatarAnchorPointType.AaptRightHand));
+
+                var pbAvatarAttachComponent = new PBAvatarAttach
+                {
+                    AvatarId = targetPlayerId.ToString(),
+                    AnchorPointId = anchorPoint,
+                    IsDirty = true
+                };
+                world.Add(attachEntities[i], pbAvatarAttachComponent);
+            }
+
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify each attachment is at the correct position
+            for (int i = 0; i < attachmentCount; i++)
+            {
+                Transform expectedAnchorPoint;
+                Vector3 expectedPosition;
+
+                if (i % 3 == 0)
+                {
+                    expectedAnchorPoint = targetPlayerAvatarBase.transform;
+                    expectedPosition = GetExpectedRootPosition(targetPlayerAvatarBase);
+                }
+                else if (i % 3 == 1)
+                {
+                    expectedAnchorPoint = targetPlayerAvatarBase.LeftHandAnchorPoint;
+                    expectedPosition = expectedAnchorPoint.position;
+                }
+                else
+                {
+                    expectedAnchorPoint = targetPlayerAvatarBase.RightHandAnchorPoint;
+                    expectedPosition = expectedAnchorPoint.position;
+                }
+
+                Assert.AreEqual(expectedPosition, attachTransforms[i].Transform.position);
+                Assert.AreEqual(expectedAnchorPoint.rotation.ToString(), attachTransforms[i].Transform.rotation.ToString());
+            }
+
+            // Move the target player and verify all attachments follow
+            targetPlayerAvatarBase.transform.position += Vector3.one * 10;
+            targetPlayerAvatarBase.transform.rotation = Quaternion.Euler(45, 45, 45);
+
+            system.Update(0);
+
+            for (int i = 0; i < attachmentCount; i++)
+            {
+                Transform expectedAnchorPoint;
+                Vector3 expectedPosition;
+
+                if (i % 3 == 0)
+                {
+                    expectedAnchorPoint = targetPlayerAvatarBase.transform;
+                    expectedPosition = GetExpectedRootPosition(targetPlayerAvatarBase);
+                }
+                else if (i % 3 == 1)
+                {
+                    expectedAnchorPoint = targetPlayerAvatarBase.LeftHandAnchorPoint;
+                    expectedPosition = expectedAnchorPoint.position;
+                }
+                else
+                {
+                    expectedAnchorPoint = targetPlayerAvatarBase.RightHandAnchorPoint;
+                    expectedPosition = expectedAnchorPoint.position;
+                }
+
+                Assert.AreEqual(expectedPosition, attachTransforms[i].Transform.position);
+                Assert.AreEqual(expectedAnchorPoint.rotation.ToString(), attachTransforms[i].Transform.rotation.ToString());
+            }
+
+            Object.DestroyImmediate(targetPlayerAvatarBase.gameObject);
+            globalWorld.Destroy(targetPlayerEntity);
+
+            for (int i = 0; i < attachmentCount; i++)
+            {
+                Object.DestroyImmediate(attachTransforms[i].Transform.gameObject);
+            }
+        }
+
+        [Test]
+        public async Task UseEntityParticipantTableForLookup()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Create a target avatar
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var targetAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            targetAvatarBase.gameObject.transform.position = new Vector3(20, 20, 20);
+
+            string targetAvatarId = "test-avatar-id";
+            Entity targetEntity = globalWorld.Create(
+                targetAvatarBase,
+                new AvatarShapeComponent { ID = targetAvatarId }
+            );
+
+            // Set up the EntityParticipantTable mock to return the target entity
+            var entry = new IReadOnlyEntityParticipantTable.Entry(targetAvatarId, targetEntity, RoomSource.GATEKEEPER);
+            entityParticipantTable.TryGet(targetAvatarId, out _).Returns(x => {
+                x[1] = entry;
+                return true;
+            });
+
+            // Create an avatar attach component that references the target avatar
+            var pbAvatarAttachComponent = new PBAvatarAttach {
+                AnchorPointId = AvatarAnchorPointType.AaptPosition,
+                AvatarId = targetAvatarId,
+                IsDirty = true
+            };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Run the systems
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify that the EntityParticipantTable was used for lookup
+            // Both the setup system and the handler system call FindAvatarUtils.AvatarWithID
+            entityParticipantTable.Received(2).TryGet(targetAvatarId, out _);
+
+            // Clean up
+            Object.DestroyImmediate(targetAvatarBase.gameObject);
+        }
+
+        [Test]
+        public async Task FallbackToQueryWhenAvatarNotFoundInEntityParticipantTable()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Create a target avatar
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            var targetAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
+            targetAvatarBase.gameObject.transform.position = new Vector3(20, 20, 20);
+
+            string targetAvatarId = "test-avatar-id";
+            Entity targetEntity = globalWorld.Create(
+                targetAvatarBase,
+                new AvatarShapeComponent { ID = targetAvatarId }
+            );
+
+            // Set up the EntityParticipantTable mock to return false for TryGet
+            // This simulates the avatar not being found in the table
+            entityParticipantTable.TryGet(targetAvatarId, out _).Returns(false);
+
+            // Create an avatar attach component that references the target avatar
+            var pbAvatarAttachComponent = new PBAvatarAttach {
+                AnchorPointId = AvatarAnchorPointType.AaptPosition,
+                AvatarId = targetAvatarId,
+                IsDirty = true
+            };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Run the systems
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify that the EntityParticipantTable was queried
+            entityParticipantTable.Received(2).TryGet(targetAvatarId, out _);
+
+            // Verify that the avatar was found via the fallback query mechanism
+            Assert.IsTrue(world.Has<AvatarAttachComponent>(entity),
+                "The AvatarAttachComponent should have been added, indicating the avatar was found via fallback query");
+
+            // Clean up
+            Object.DestroyImmediate(targetAvatarBase.gameObject);
         }
     }
 }

@@ -553,6 +553,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8919628233407399618, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_Maskable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9177864993776066132, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
       propertyPath: m_Name
       value: BlockedUser
@@ -585,6 +589,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1033530974263179573 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6028835980500036326, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 6772688781097931731}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2495907913313176967 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9177864993776066132, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
@@ -606,26 +621,13 @@ MonoBehaviour:
   <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0}
   <HoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.05490196}
   <MainButton>k__BackingField: {fileID: 597359605983982383}
-  <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 8766517600456461327}
   <UserNameTag>k__BackingField: {fileID: 4439377754047818784}
   <VerifiedIcon>k__BackingField: {fileID: 8218420186549764868}
-  <ThumbnailBackground>k__BackingField: {fileID: 5967679218760655358}
-  <ProfileImageView>k__BackingField: {fileID: 3708114937530408104}
+  <ProfilePicture>k__BackingField: {fileID: 1033530974263179573}
   <UnblockButton>k__BackingField: {fileID: 5048879491243901675}
   <ContextMenuButton>k__BackingField: {fileID: 5471597906867111241}
   <BlockedDateText>k__BackingField: {fileID: 5742925771086787138}
---- !u!114 &3708114937530408104 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7964812150383071099, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
-  m_PrefabInstance: {fileID: 6772688781097931731}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &4439377754047818784 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6946444103854276595, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
@@ -643,17 +645,6 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 6772688781097931731}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2495907913313176967}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &5967679218760655358 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1093275411299185197, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
-  m_PrefabInstance: {fileID: 6772688781097931731}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}

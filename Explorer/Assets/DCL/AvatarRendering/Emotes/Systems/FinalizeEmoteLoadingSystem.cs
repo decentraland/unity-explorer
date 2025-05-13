@@ -52,9 +52,10 @@ namespace DCL.AvatarRendering.Emotes
             ref IEmote emote
         )
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World!))
             {
                 emote.ResetManifest();
+                World.Destroy(entity);
                 return;
             }
 
@@ -71,8 +72,11 @@ namespace DCL.AvatarRendering.Emotes
             ref EmotesFromRealmPromise promise
         )
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World!))
+            {
+                World.Destroy(entity);
                 return;
+            }
 
             if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
@@ -122,9 +126,10 @@ namespace DCL.AvatarRendering.Emotes
             Func<StreamableLoadingResult<TAsset>, AttachmentRegularAsset> toRegularAsset)
             where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World!))
             {
                 ResetEmoteResultOnCancellation(emote, bodyShape);
+                World.Destroy(entity);
                 return;
             }
 
@@ -151,8 +156,11 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
         {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            if (promise.IsCancellationRequested(World!))
+            {
+                World.Destroy(entity);
                 return;
+            }
 
             if (promise.IsConsumed) return;
 

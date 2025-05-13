@@ -383,7 +383,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 StreamableLoadingResult<AttachmentAssetBase>? r = results[i];
 
-                if (r is not { Succeeded: true })
+                if (r is not { IsInitialized: true })
                     return false;
             }
 

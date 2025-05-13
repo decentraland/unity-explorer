@@ -64,7 +64,6 @@ namespace DCL.RealmNavigation
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
-                new DestroyAllRoadAssetsTeleportOperation(globalWorld, lodContainer.RoadAssetsPool),
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(analytics),
                 new LoadLandscapeTeleportOperation(landscape),

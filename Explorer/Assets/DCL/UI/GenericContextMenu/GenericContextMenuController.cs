@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -66,9 +67,11 @@ namespace DCL.UI.GenericContextMenu
 
             for (var i = 0; i < inputData.Config.contextMenuSettings.Count; i++)
             {
-                IContextMenuControlSettings config = inputData.Config.contextMenuSettings[i];
+                GenericContextMenuElement config = inputData.Config.contextMenuSettings[i];
 
-                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config, i);
+                if (!config.Enabled) continue;
+
+                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i);
 
                 component.RegisterCloseListener(TriggerContextMenuClose);
 
@@ -83,7 +86,7 @@ namespace DCL.UI.GenericContextMenu
                 + viewInstance!.ControlsLayoutGroup.padding.top
                 + (viewInstance!.ControlsLayoutGroup.spacing * (inputData.Config.contextMenuSettings.Count - 1)));
 
-            viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.offsetFromTarget, inputData.OverlapRect);
+            viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.offsetFromTarget, inputData.OverlapRect, inputData.Config.anchorPoint);
         }
 
         private Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)
@@ -98,11 +101,11 @@ namespace DCL.UI.GenericContextMenu
             };
         }
 
-        private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect)
+        private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.TOP_LEFT, bool exactPosition = false)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
-            position.x += viewInstance!.ControlsContainer.rect.width / 2;
-            position.y -= viewInstance!.ControlsContainer.rect.height / 2;
+
+            position = GetPositionForAnchorPoint(anchorPoint, position);
 
             Vector3 newPosition = Vector3.zero;
             float minNonOverlappingArea = float.MaxValue;
@@ -119,6 +122,37 @@ namespace DCL.UI.GenericContextMenu
             }
 
             return newPosition;
+        }
+
+        private Vector3 GetPositionForAnchorPoint(GenericContextMenuAnchorPoint anchorPoint, Vector3 position)
+        {
+            switch (anchorPoint)
+            {
+                case GenericContextMenuAnchorPoint.TOP_LEFT:
+                    position.y -= viewInstance!.ControlsContainer.rect.height / 2;
+                    position.x += viewInstance!.ControlsContainer.rect.width / 2;
+                    break;
+                case GenericContextMenuAnchorPoint.TOP_RIGHT:
+                    position.y -= viewInstance!.ControlsContainer.rect.height / 2;
+                    position.x -= viewInstance!.ControlsContainer.rect.width / 2;
+                    break;
+                case GenericContextMenuAnchorPoint.BOTTOM_LEFT:
+                    position.y += viewInstance!.ControlsContainer.rect.height / 2;
+                    position.x += viewInstance!.ControlsContainer.rect.width / 2;
+                    break;
+                case GenericContextMenuAnchorPoint.BOTTOM_RIGHT:
+                    position.y += viewInstance!.ControlsContainer.rect.height / 2;
+                    position.x -= viewInstance!.ControlsContainer.rect.width / 2;
+                    break;
+                case GenericContextMenuAnchorPoint.CENTER_LEFT:
+                    position.x += viewInstance!.ControlsContainer.rect.width / 2;
+                    break;
+                case GenericContextMenuAnchorPoint.CENTER_RIGHT:
+                    position.x -= viewInstance!.ControlsContainer.rect.width / 2;
+                    break;
+            }
+
+            return position;
         }
 
         private float CalculateNonOverlappingArea(Rect rect1, Rect rect2)

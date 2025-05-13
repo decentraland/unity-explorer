@@ -109,11 +109,11 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5514867554339137478, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
-      propertyPath: <renderers>k__BackingField.Array.data[1]
+      propertyPath: '<renderers>k__BackingField.Array.data[1]'
       value: 
       objectReference: {fileID: 1383299136475369527}
     - target: {fileID: 5514867554339137478, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}
-      propertyPath: <renderers>k__BackingField.Array.data[2]
+      propertyPath: '<renderers>k__BackingField.Array.data[2]'
       value: 
       objectReference: {fileID: 1654387622509463456}
     - target: {fileID: 5662755829442619425, guid: e7d14406516774d91886b6b4d1a26a58, type: 3}

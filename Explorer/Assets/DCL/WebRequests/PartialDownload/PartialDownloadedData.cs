@@ -1,4 +1,4 @@
-namespace DCL.WebRequests.PartialDownload
+namespace DCL.WebRequests
 {
     public readonly struct PartialDownloadedData
     {

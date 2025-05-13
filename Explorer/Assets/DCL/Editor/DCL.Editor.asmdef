@@ -24,7 +24,9 @@
         "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
         "GUID:fc37ca6521833154cab08ec51af097d9",
         "GUID:fdc035e0abb695e408d8ccf2c3bd63a5",
-        "Quality.RenderFeatures"
+        "GUID:56e8195b069a4dca9c4c4f313c65f526",
+        "GUID:09c5cab4669b047398fa5d42a2f64f5b",
+        "GUID:b46779583a009f04ba9f5f31d0e7e6ac"
     ],
     "includePlatforms": [
         "Editor"

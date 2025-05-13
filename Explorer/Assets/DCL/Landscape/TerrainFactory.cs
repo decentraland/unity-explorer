@@ -10,6 +10,9 @@ namespace DCL.Landscape
 {
     public class TerrainFactory
     {
+        private const string TERRAIN_LAYER = "Default";
+        private const string BORDERS_LAYER = "InvisibleColliders";
+
         private readonly TerrainGenerationData terrainGenData;
 
         private TreePrototype[] treePrototypes;
@@ -72,7 +75,7 @@ namespace DCL.Landscape
         {
             BoxCollider collider = new GameObject(name).AddComponent<BoxCollider>();
             collider.transform.SetParent(parent);
-            collider.gameObject.layer = LayerMask.NameToLayer("InvisibleColliders");
+            collider.gameObject.layer = LayerMask.NameToLayer(BORDERS_LAYER);
 
             collider.size = size;
             collider.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yRotation, 0));
@@ -80,11 +83,12 @@ namespace DCL.Landscape
             return collider;
         }
 
-        public Terrain CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material)
+        public (Terrain, Collider) CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material, bool enableColliders = false)
         {
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
                                      .GetComponent<Terrain>();
 
+            terrain.treeBillboardDistance = 0; //setting to zero as we use LODGroups from speedtree
             terrain.shadowCastingMode = ShadowCastingMode.Off;
             terrain.materialTemplate = material;
             terrain.detailObjectDistance = 200;
@@ -95,7 +99,12 @@ namespace DCL.Landscape
             terrain.transform.position = new Vector3(at.x, -terrainGenData.minHeight, at.y);
             terrain.transform.SetParent(parent, false);
 
-            return terrain;
+            terrain.gameObject.layer = LayerMask.NameToLayer(TERRAIN_LAYER);
+
+            var collider = terrain.GetComponent<Collider>();
+            collider.enabled = enableColliders;
+
+            return (terrain, collider);
         }
 
         public TerrainData CreateTerrainData(int terrainChunkSize, float maxHeight) =>

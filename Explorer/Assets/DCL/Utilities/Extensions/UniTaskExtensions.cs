@@ -25,7 +25,7 @@ namespace DCL.Utilities.Extensions
             catch (Exception e)
             {
                 ReportException(e);
-                return exceptionToResult?.Invoke(e) ?? EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message);
+                return exceptionToResult?.Invoke(e) ?? EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message, e);
             }
 
             void ReportException(Exception e)

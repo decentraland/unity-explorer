@@ -69,9 +69,9 @@ VertexOutput vert_highlight (VertexInput v)
     float4 _ClipCameraPos = mul(UNITY_MATRIX_VP, float4(_WorldSpaceCameraPos.xyz, 1));
     
     #if defined(UNITY_REVERSED_Z)
-        _Offset_Z = _Offset_Z * -0.01;
+        float fOffset_Z = _Offset_Z * -0.01;
     #else
-        _Offset_Z = _Offset_Z * 0.01;
+        float fOffset_Z = _Offset_Z * 0.01;
     #endif
     
     Set_Outline_Width = Set_Outline_Width*50;
@@ -85,7 +85,7 @@ VertexOutput vert_highlight (VertexInput v)
         o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + signVar*normalize(v.vertex)*Set_Outline_Width, 1));
     #endif
 
-    o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
+    o.pos.z = o.pos.z + fOffset_Z * _ClipCameraPos.z;
     o.positionCS = TransformWorldToHClip(o.pos);
     return o;
 }

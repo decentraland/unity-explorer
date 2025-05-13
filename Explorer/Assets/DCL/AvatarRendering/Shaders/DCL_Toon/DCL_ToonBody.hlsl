@@ -411,11 +411,11 @@ VertexOutput vert (VertexInput v)
     #ifdef _DCL_COMPUTE_SKINNING
         o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz);
         float4 skinnedTangent = _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].tangent;
-        o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
+        o.tangentDir = normalize( mul( UNITY_MATRIX_M, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
         o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * skinnedTangent.w);
     #else
         o.normalDir = UnityObjectToWorldNormal(v.normal);
-        o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
+        o.tangentDir = normalize( mul( UNITY_MATRIX_M, float4( v.tangent.xyz, 0.0 ) ).xyz );
         o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
     #endif
     
@@ -425,11 +425,11 @@ VertexOutput vert (VertexInput v)
     o.mirrorFlag = dot(crossFwd, UNITY_MATRIX_V[2].xyz) < 0 ? 1 : -1;
 
     #ifdef _DCL_COMPUTE_SKINNING
-        o.posWorld = mul(unity_ObjectToWorld, float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position, 1.0f));
+        o.posWorld = mul(UNITY_MATRIX_M, float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position, 1.0f));
         o.pos = UnityObjectToClipPos( _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position );
         float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
     #else
-        o.posWorld = mul(unity_ObjectToWorld, v.vertex);
+        o.posWorld = mul(UNITY_MATRIX_M, v.vertex);
         o.pos = UnityObjectToClipPos( v.vertex );
         float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
     #endif
@@ -439,7 +439,8 @@ VertexOutput vert (VertexInput v)
 
     OUTPUT_LIGHTMAP_UV(v.lightmapUV, unity_LightmapST, o.lightmapUV);
     #if UNITY_VERSION >= 202317
-        OUTPUT_SH4(positionWS, o.normalDir.xyz, GetWorldSpaceNormalizeViewDir(positionWS), o.vertexSH);
+        float4 outOcclusion;
+        OUTPUT_SH4(positionWS, o.normalDir.xyz, GetWorldSpaceNormalizeViewDir(positionWS), o.vertexSH, outOcclusion);
     #elif UNITY_VERSION >= 202310
         OUTPUT_SH(positionWS, o.normalDir.xyz, GetWorldSpaceNormalizeViewDir(positionWS), o.vertexSH);
     #else
@@ -467,23 +468,10 @@ VertexOutput vert (VertexInput v)
     return o;
 }
 
-
-
-#if defined(_SHADINGGRADEMAP)
-    #include "DCL_ToonBodyShadingGradeMap.hlsl"
-#else //#if defined(_SHADINGGRADEMAP)
-    #include "DCL_ToonBodyDoubleShadeWithFeather.hlsl"
-#endif //#if defined(_SHADINGGRADEMAP)
-
-
+#include "DCL_ToonBodyDoubleShadeWithFeather.hlsl"
 
 float4 frag(VertexOutput i, half facing : VFACE) : SV_TARGET
 {
     Dithering(_FadeDistance, i.positionCS, _EndFadeDistance, _StartFadeDistance);
-    
-    #if defined(_SHADINGGRADEMAP)
-        return fragShadingGradeMap(i, facing);
-    #else
-        return fragDoubleShadeFeather(i, facing);
-    #endif
+    return fragDoubleShadeFeather(i, facing);
 }

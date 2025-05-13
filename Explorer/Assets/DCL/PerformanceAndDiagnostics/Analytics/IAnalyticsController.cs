@@ -15,13 +15,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         string SessionID { get; }
 
+        string ServiceInfo { get; }
+
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
         void Initialize(IWeb3Identity? web3Identity);
 
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform);
 
-        void Track(string eventName, JsonObject? properties = null);
+        void Track(string eventName, JsonObject? properties = null, bool isInstant = false);
 
         void Identify(IWeb3Identity? identity);
 
@@ -36,13 +38,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
             public string SessionID => string.Empty;
 
+            public string ServiceInfo => UNDEFINED;
+
             private NullAnalytics() { }
 
             public void Initialize(IWeb3Identity? web3Identity) { }
 
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache? __, IExposedTransform ___) { }
 
-            public void Track(string _, JsonObject? __ = null) { }
+            public void Track(string _, JsonObject? __ = null, bool ___ = false) { }
 
             public void Identify(IWeb3Identity? _) { }
 

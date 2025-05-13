@@ -12,11 +12,13 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
+using DCL.UI.Profiles.Helpers;
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
+using Unity.Mathematics;
 
 // #if UNITY_EDITOR
 // using Utility.Editor;
@@ -34,25 +36,27 @@ namespace DCL.Nametags
         private const float NAMETAG_MAX_HEIGHT = 4f;
 
         private readonly IObjectPool<NametagView> nametagViewPool;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NametagsData nametagsData;
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
 
         private SingleInstanceEntity playerCamera;
-        private float distanceFromCamera;
+        private float maxDistance;
+        private float maxDistanceSqr;
+        private CameraComponent cameraComponent;
+        private bool cameraInitialized;
 
         public NametagPlacementSystem(
             World world,
             IObjectPool<NametagView> nametagViewPool,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             NametagsData nametagsData,
             ChatBubbleConfigurationSO chatBubbleConfigurationSo
         ) : base(world)
         {
             this.nametagViewPool = nametagViewPool;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.nametagsData = nametagsData;
             this.chatBubbleConfigurationSo = chatBubbleConfigurationSo;
+            this.maxDistance = chatBubbleConfigurationSo.maxDistance;
+            this.maxDistanceSqr = maxDistance * maxDistance;
         }
 
         public override void Initialize()
@@ -65,40 +69,51 @@ namespace DCL.Nametags
             if (!nametagsData.showNameTags)
                 return;
 
+            if (!cameraInitialized)
+            {
+                cameraComponent = playerCamera.GetCameraComponent(World);
+                cameraInitialized = true;
+            }
+
+            float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(cameraComponent.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
+            NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
+            NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
+
             EnableTagQuery(World);
-
-            CameraComponent camera = playerCamera.GetCameraComponent(World);
-
-            UpdateTagQuery(World, camera);
-            AddTagForPlayerAvatarsQuery(World, camera);
-            AddTagForNonPlayerAvatarsQuery(World, camera);
+            UpdateTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
+            AddTagForPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
+            AddTagForNonPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
+            UpdateOwnTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
-            UpdateOwnTagQuery(World, camera);
-            RemoveUnusedChatBubbleComponentsQuery(World);
         }
 
         [Query]
         [None(typeof(NametagView), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
+            if (partitionComponent.IsBehind ||
+                (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr))
+                return;
 
-            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true);
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
-
+            var nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true, profile);
+            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
         [Query]
         [None(typeof(NametagView), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || string.IsNullOrEmpty(avatarShape.Name)) return;
+            if (avatarShape.HiddenByModifierArea ||
+                partitionComponent.IsBehind ||
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr) ||
+                string.IsNullOrEmpty(avatarShape.Name))
+                return;
 
-            NametagView nametagView = CreateNameTagView(in avatarShape, true, false);
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
-
+            var nametagView = CreateNameTagView(in avatarShape, true, false);
+            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
@@ -107,98 +122,110 @@ namespace DCL.Nametags
         [None(typeof(DeleteEntityIntention))]
         private void EnableTag(in NametagView nametagView)
         {
-            if (nametagView.isActiveAndEnabled)
-                return;
-
-            nametagView.gameObject.SetActive(true);
+            if (!nametagView.isActiveAndEnabled)
+                nametagView.gameObject.SetActive(true);
         }
 
         [Query]
         [None(typeof(PBAvatarShape))]
-        private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
+        private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            if (nametagView.Id == avatarShape.ID)
+            if (nametagView.Id == avatarShape.ID
+                && nametagView.ProfileVersion == profile.Version)
                 return;
 
+            nametagView.ProfileVersion = profile.Version;
+
+            // If version is different, it might be because some part of the profile was updated, but not necessarily the name, so we also check
+            // if the name is different in this case, otherwise we dont re-setup the own tag.
+            if (nametagView.IsSameName(profile.ValidatedName, profile.HasClaimedName)) return;
+
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName, true);
+            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, profile.UserNameColor);
             nametagView.gameObject.name = avatarShape.ID;
-            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
 
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
+            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
         }
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
-        private void ProcessChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent, in NametagView nametagView)
+        private void ProcessChatBubbleComponents(Entity e, in NametagView nametagView, ref ChatBubbleComponent chatBubbleComponent)
         {
-            if (nametagsData.showChatBubbles)
-                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage);
+            if (!chatBubbleComponent.IsDirty)
+                return;
 
-            World.Remove<ChatBubbleComponent>(e);
-        }
+            nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.RecipientValidatedName, chatBubbleComponent.RecipientWalletId, chatBubbleComponent.RecipientNameColor);
 
-        [Query]
-        [All(typeof(ChatBubbleComponent))]
-        //This query is used to remove the ChatBubbleComponent from the entity if the chat bubble has not been displayed
-        private void RemoveUnusedChatBubbleComponents(Entity e)
-        {
-            World.Remove<ChatBubbleComponent>(e);
+            chatBubbleComponent.IsDirty = false;
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
+            if (avatarShape.HiddenByModifierArea ||
+                partitionComponent.IsBehind
+                || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr)
+                || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
+                || World.Has<BlockedPlayerComponent>(e))
             {
                 nametagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);
                 return;
             }
-
-            // To test bounds:
+// To view and test bounds:
 //#if UNITY_EDITOR
 //            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
 //            avatarBounds.center += characterTransform.Position;
 //            avatarBounds.DrawInEditor(Color.red);
 //#endif
 
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position + new Vector3(0.0f, Mathf.Min(avatarSkinningComponent.LocalBounds.max.y, NAMETAG_MAX_HEIGHT), 0.0f));
-            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
+            NametagMathHelper.CalculateTagPosition(characterTransform.Position, NAMETAG_MAX_HEIGHT, avatarSkinningComponent.LocalBounds.max.y, out float3 position);
+
+            UpdateTagPosition(nametagView, position, cameraForward, cameraUp);
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTagPosition(NametagView view, Camera camera, Vector3 newPosition)
+        private void UpdateTagPosition(NametagView view, float3 newPosition, float3 cameraForward, float3 cameraUp)
         {
-            view.transform.position = newPosition;
-            view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
+            var transform = view.transform;
+            transform.position = newPosition;
+            transform.LookAt(newPosition + cameraForward, cameraUp);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTagTransparencyAndScale(NametagView view, Camera camera, Vector3 characterPosition)
+        private void UpdateTagTransparencyAndScale(NametagView view, float3 cameraPosition, float3 characterPosition, float fovScaleFactor)
         {
-            distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
-            view.gameObject.transform.localScale
-                = Vector3.one * (Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * distanceFromCamera * NAMETAG_SCALE_MULTIPLIER);
-            view.SetTransparency(distanceFromCamera, chatBubbleConfigurationSo.maxDistance);
+            if (!NametagMathHelper.HasDistanceChanged(cameraPosition, characterPosition, view.LastSqrDistance))
+                return;
+
+            NametagMathHelper.CalculateDistance(cameraPosition, characterPosition, out float distance, out float sqrDistance);
+            view.LastSqrDistance = sqrDistance;
+            NametagMathHelper.CalculateTagScale(distance, fovScaleFactor, out float3 scale);
+            view.gameObject.transform.localScale = scale;
+            view.SetTransparency(distance, maxDistance);
         }
 
-        private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform) =>
-            Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > chatBubbleConfigurationSo.maxDistance;
-
-        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon)
+        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon, Profile? profile = null)
         {
-            NametagView nametagView = nametagViewPool.Get();
+            var nametagView = nametagViewPool.Get();
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.InjectConfiguration(chatBubbleConfigurationSo);
 
-            int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;
-            string walletId = walletIdLastDigitsIndex >= 0 ? avatarShape.ID.Substring(walletIdLastDigitsIndex) : NAMETAG_DEFAULT_WALLET_ID;
-            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, useVerifiedIcon);
+            Color usernameColor;
+            if (profile != null)
+                usernameColor = profile.UserNameColor != Color.white ?
+                    profile.UserNameColor :
+                    ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            else
+                usernameColor = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+
+            var walletId = profile?.WalletId ?? (avatarShape.ID.Length >= 4
+                ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()
+                : NAMETAG_DEFAULT_WALLET_ID);
+
+            nametagView.InjectConfiguration(chatBubbleConfigurationSo);
+            nametagView.SetUsername(avatarShape.Name, walletId, hasClaimedName, usernameColor);
 
             return nametagView;
         }

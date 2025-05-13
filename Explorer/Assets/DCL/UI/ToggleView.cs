@@ -30,6 +30,15 @@ namespace DCL.UI
         [field: SerializeField]
         public AudioClipConfig ToggleOffAudio { get; private set; }
 
+        /// <summary>
+        /// Gets or sets whether sound FXs will be played or not when interacting with the toggle.
+        /// </summary>
+        public bool IsSoundEnabled
+        {
+            get;
+            set;
+        }
+
         private void OnEnable()
         {
             Toggle.onValueChanged.AddListener(OnToggle);
@@ -50,7 +59,8 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
+            if(IsSoundEnabled)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
 
             if (autoToggleImagesOnToggle)
                 SetToggleGraphics(toggle);

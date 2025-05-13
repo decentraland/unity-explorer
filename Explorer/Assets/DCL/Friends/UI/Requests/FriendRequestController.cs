@@ -2,12 +2,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
-using DCL.UI;
+using DCL.UI.ProfileElements;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Friends.UI.Requests
@@ -17,14 +18,14 @@ namespace DCL.Friends.UI.Requests
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
         private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
         private const string DATE_FORMAT = "MMM dd";
-        private const string FRIEND_REQUEST_SENT_FORMAT = "Friend Request Sent To <color=#73D3D3>{0}</color>";
-        private const string FRIEND_REQUEST_ACCEPTED_FORMAT = "You And <color=#FF8362>{0}</color> Are Now Friends!";
+        private const string FRIEND_REQUEST_SENT_FORMAT = "Friend Request Sent To <color={0}>{1}</color>";
+        private const string FRIEND_REQUEST_ACCEPTED_FORMAT = "You And <color={0}>{1}</color> Are Now Friends!";
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly ViewDependencies viewDependencies;
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
         private CancellationTokenSource? showPreCancelToastCancellationToken;
@@ -37,13 +38,13 @@ namespace DCL.Friends.UI.Requests
             IFriendsService friendsService,
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
-            IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
+            ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
-            this.profileThumbnailCache = profileThumbnailCache;
+            this.viewDependencies = viewDependencies;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -152,11 +153,12 @@ namespace DCL.Friends.UI.Requests
                 if (profile == null) return;
 
                 config.UserName.text = profile.Name;
+                config.UserName.color = profile.UserNameColor;
                 config.UserNameVerification.SetActive(profile.HasClaimedName);
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
                 config.UserNameHash.text = $"#{user.ToString()[^4..]}";
 
-                await config.UserThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, user, profile.Avatar.FaceSnapshotUrl, ct);
+                await config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor,profile.Avatar.FaceSnapshotUrl,user, ct);
             }
         }
 
@@ -206,11 +208,12 @@ namespace DCL.Friends.UI.Requests
             FriendProfile user, CancellationToken ct)
         {
             config.UserName.text = user.Name;
+            config.UserName.color = user.UserNameColor;
             config.UserNameVerification.SetActive(user.HasClaimedName);
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
 
-            await UniTask.WhenAll(config.UserThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, user.Address, user.FacePictureUrl, ct),
+            await UniTask.WhenAll(config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, user.UserNameColor, user.FacePictureUrl,user.Address, ct),
                 LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
@@ -236,8 +239,8 @@ namespace DCL.Friends.UI.Requests
                 mutualConfig[i].Root.SetActive(friendExists);
                 if (!friendExists) continue;
                 FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                ImageView view = mutualConfig[i].Image;
-                view.LoadThumbnailSafeAsync(profileThumbnailCache, mutualFriend.Address, mutualFriend.FacePictureUrl, ct).Forget();
+                ProfilePictureView view = mutualConfig[i].Image;
+                view.SetupWithDependenciesAsync(viewDependencies, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address, ct).Forget();
             }
         }
 
@@ -361,15 +364,15 @@ namespace DCL.Friends.UI.Requests
             FriendRequestView.OperationConfirmedConfig config,
             FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
-            config.Label.text = string.Format(textWithUserNameParam, profile.Name);
-            config.FriendThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, profile.Address, profile.FacePictureUrl, ct).Forget();
+            config.Label.text = string.Format(textWithUserNameParam, ToHexStr(profile.UserNameColor), profile.Name);
+            config.FriendThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.FacePictureUrl,  profile.Address, ct).Forget();
 
             if (config.MyThumbnail != null)
             {
                 Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
 
                 if (myProfile != null)
-                    config.MyThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, new Web3Address(myProfile.UserId), myProfile.Avatar.FaceSnapshotUrl, ct).Forget();
+                    config.MyThumbnail.SetupWithDependenciesAsync(viewDependencies, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
             }
 
             Toggle(state);
@@ -377,6 +380,9 @@ namespace DCL.Friends.UI.Requests
             await viewInstance!.PlayShowAnimationAsync(config, ct);
             await UniTask.WhenAny(config.CloseButton.OnClickAsync(ct), UniTask.Delay(OPERATION_CONFIRMED_WAIT_TIME_MS, cancellationToken: ct));
             await viewInstance!.PlayHideAnimationAsync(config, ct);
+            return;
+
+            string ToHexStr(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
         }
 
         private enum ViewState

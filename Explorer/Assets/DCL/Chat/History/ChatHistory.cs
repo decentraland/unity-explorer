@@ -1,45 +1,143 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.Chat.History
 {
     public class ChatHistory : IChatHistory
     {
-        public event Action? OnCleared;
-        public event Action<ChatMessage>? OnMessageAdded;
+        public event IChatHistory.ChannelAddedDelegate ChannelAdded;
+        public event IChatHistory.ChannelRemovedDelegate ChannelRemoved;
+        public event IChatHistory.ChannelClearedDelegate ChannelCleared;
+        public event IChatHistory.MessageAddedDelegate MessageAdded;
+        public event IChatHistory.ReadMessagesChangedDelegate ReadMessagesChanged;
+        public event IChatHistory.AllChannelsRemovedDelegate AllChannelsRemoved;
 
-        private readonly List<ChatMessage> messages = new ();
+        public IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels => channels;
 
-        public IReadOnlyList<ChatMessage> Messages => messages;
+        private readonly Dictionary<ChatChannel.ChannelId, ChatChannel> channels = new ();
 
-        public void AddMessage(ChatMessage message)
+        private int cachedReadMessages;
+        private int cachedTotalMessages;
+        private bool isReadMessagesDirty = true;
+        private bool isTotalMessagesDirty = true;
+
+
+        public int ReadMessages
         {
-            if (messages.Count is 0)
+            get
             {
-                // Adding two elements to count as top and bottom padding
-                messages.Add(new ChatMessage(true));
-                messages.Add(new ChatMessage(true));
+                if (!isReadMessagesDirty) return cachedReadMessages;
+
+                cachedReadMessages = channels.Values.Sum(channel => channel.ReadMessages);
+                isReadMessagesDirty = false;
+                return cachedReadMessages;
             }
-
-            //Removing padding element and reversing list due to infinite scroll view behaviour
-            messages.Remove(messages[^1]);
-            messages.Reverse();
-            messages.Add(message);
-            messages.Add(new ChatMessage(true));
-            messages.Reverse();
-
-            OnMessageAdded?.Invoke(message);
         }
 
-        public void ForceUpdateMessage(int inIndex, ChatMessage message)
+        public int TotalMessages
         {
-            messages[inIndex] = message;
+            get
+            {
+                if (!isTotalMessagesDirty) return cachedTotalMessages;
+
+                cachedTotalMessages = channels.Values.Sum(channel => channel.Messages.Count);
+                isTotalMessagesDirty = false;
+                return cachedTotalMessages;
+            }
         }
 
-        public void Clear()
+        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.UNDEFINED)
         {
-            messages.Clear();
-            OnCleared?.Invoke();
+            if (channels.TryGetValue(channelId, out ChatChannel channel))
+                return channel;
+
+            if (type == ChatChannel.ChatChannelType.UNDEFINED)
+                type = GetChannelTypeFromId(channelId);
+
+            ChatChannel newChannel = new ChatChannel(type, channelId.Id);
+            newChannel.MessageAdded += OnChannelMessageAdded;
+            newChannel.Cleared += OnChannelCleared;
+            newChannel.ReadMessagesChanged += OnChannelReadMessagesChanged;
+
+            channels.Add(newChannel.Id, newChannel);
+            ChannelAdded?.Invoke(newChannel);
+            return newChannel;
         }
+
+        public void RemoveChannel(ChatChannel.ChannelId channelId)
+        {
+            if (!channels.TryGetValue(channelId, out ChatChannel channel))
+                return;
+
+            UnsubscribeFromChannelEvents(channel);
+            channels.Remove(channelId);
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+
+            if(channel.ReadMessages != channel.Messages.Count)
+                ReadMessagesChanged?.Invoke(channel);
+
+            ChannelRemoved?.Invoke(channelId);
+        }
+
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
+        {
+            var channel = AddOrGetChannel(channelId);
+            channel.AddMessage(newMessage);
+        }
+
+        public void ClearChannel(ChatChannel.ChannelId channelId)
+        {
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+
+            if (channels.TryGetValue(channelId, out ChatChannel channel))
+            {
+                channel.Clear();
+            }
+        }
+
+        public void DeleteAllChannels()
+        {
+            foreach (var channel in channels.Values)
+            {
+                UnsubscribeFromChannelEvents(channel);
+                channel.Clear();
+            }
+            channels.Clear();
+            isReadMessagesDirty = true;
+            isTotalMessagesDirty = true;
+        }
+
+        private void OnChannelMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        {
+            isTotalMessagesDirty = true;
+            MessageAdded?.Invoke(destinationChannel, addedMessage);
+        }
+
+        private void OnChannelCleared(ChatChannel clearedChannel)
+        {
+            isTotalMessagesDirty = true;
+            ChannelCleared?.Invoke(clearedChannel);
+        }
+
+        private void OnChannelReadMessagesChanged(ChatChannel changedChannel)
+        {
+            isReadMessagesDirty = true;
+            ReadMessagesChanged?.Invoke(changedChannel);
+        }
+
+        private void UnsubscribeFromChannelEvents(ChatChannel channel)
+        {
+            channel.MessageAdded -= OnChannelMessageAdded;
+            channel.Cleared -= OnChannelCleared;
+            channel.ReadMessagesChanged -= OnChannelReadMessagesChanged;
+        }
+
+        private static ChatChannel.ChatChannelType GetChannelTypeFromId(ChatChannel.ChannelId channelId) =>
+            channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)
+                ? ChatChannel.ChatChannelType.NEARBY
+                : ChatChannel.ChatChannelType.USER;
+
     }
 }

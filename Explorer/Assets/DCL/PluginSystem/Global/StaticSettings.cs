@@ -41,14 +41,17 @@ namespace DCL.PluginSystem.Global
 
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {
-            { MemoryUsageStatus.WARNING, 0.65f },
+            { MemoryUsageStatus.ABUNDANCE, 0.65f },
+            { MemoryUsageStatus.WARNING, 0.7f },
             { MemoryUsageStatus.FULL, 0.75f }
         };
 
         [field: Space]
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
-        [field: SerializeField] public int WebRequestsBudget { get; private set; } = 20;
+        [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
+        [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>

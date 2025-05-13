@@ -16,10 +16,10 @@ namespace DCL.Notifications.NewNotification
 {
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {
-        private static readonly int SHOW_BADGE_TRIGGER = Animator.StringToHash("Show");
-        private static readonly int HIDE_BADGE_TRIGGER = Animator.StringToHash("Hide");
+        private static readonly int SHOW_TRIGGER = Animator.StringToHash("Show");
+        private static readonly int HIDE_TRIGGER = Animator.StringToHash("Hide");
+        private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
         private const float ANIMATION_DURATION = 0.5f;
-        private const float TIME_BEFORE_HIDE_NOTIFICATION = 5f;
 
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
@@ -30,6 +30,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController thumbnailImageController;
         private ImageController badgeThumbnailImageController;
         private ImageController friendsThumbnailImageController;
+        private ImageController marketplaceCreditsThumbnailImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -38,8 +39,7 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
@@ -60,6 +60,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
             friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, webRequestController);
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
+            marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
+            viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
         }
 
         private void StopAnimation()
@@ -103,6 +105,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
                         await ProcessFriendsNotificationAsync(notification);
+                        break;
+                    case NotificationType.CREDITS_GOAL_COMPLETED:
+                        await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -170,6 +175,18 @@ namespace DCL.Notifications.NewNotification
             await AnimateBadgeNotificationAsync();
         }
 
+        private async UniTask ProcessMarketplaceCreditsNotificationAsync(INotification notification)
+        {
+            viewInstance!.MarketplaceCreditsNotificationView.SetHeaderText(notification.GetHeader());
+            viewInstance.MarketplaceCreditsNotificationView.SetTitleText(notification.GetTitle());
+            viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+
+            await AnimateMarketplaceCreditsNotificationAsync();
+        }
+
         private void ProcessCustomMetadata(INotification notification)
         {
             switch (notification)
@@ -193,7 +210,7 @@ namespace DCL.Notifications.NewNotification
                 notificationCanvasGroup.interactable = true;
                 notificationCanvasGroup.blocksRaycasts = true;
                 await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
-                await UniTask.Delay(TimeSpan.FromSeconds(TIME_BEFORE_HIDE_NOTIFICATION), cancellationToken: cts.Token);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
             finally
@@ -212,11 +229,26 @@ namespace DCL.Notifications.NewNotification
             try
             {
                 viewInstance.BadgeNotificationView.PlayNotificationAudio();
-                viewInstance.BadgeNotificationAnimator.SetTrigger(SHOW_BADGE_TRIGGER);
-                await UniTask.Delay(TimeSpan.FromSeconds(TIME_BEFORE_HIDE_NOTIFICATION), cancellationToken: cts.Token);
+                viewInstance.BadgeNotificationAnimator.SetTrigger(SHOW_TRIGGER);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
-            finally { viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_BADGE_TRIGGER); }
+            finally { viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_TRIGGER); }
+        }
+
+        private async UniTask AnimateMarketplaceCreditsNotificationAsync()
+        {
+            if (viewInstance == null)
+                return;
+
+            try
+            {
+                viewInstance.MarketplaceCreditsNotificationView.PlayNotificationAudio();
+                viewInstance.MarketplaceCreditsNotificationAnimator.SetTrigger(SHOW_TRIGGER);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally { viewInstance.MarketplaceCreditsNotificationAnimator.SetTrigger(HIDE_TRIGGER); }
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

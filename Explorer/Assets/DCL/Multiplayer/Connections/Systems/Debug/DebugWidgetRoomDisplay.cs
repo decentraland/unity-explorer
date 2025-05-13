@@ -17,6 +17,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> selfMetadata;
         private readonly ElementBinding<string> roomSid;
         private readonly ElementBinding<string> connectionQuality;
+        private readonly ElementBinding<string> attemptToConnectState;
         private readonly ElementBinding<string> connectiveState;
         private readonly ElementBinding<string> connectionLoopHealth;
         private readonly ElementBinding<string> activateButtonText;
@@ -49,6 +50,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             selfSid = new ElementBinding<string>(string.Empty);
             roomSid = new ElementBinding<string>(string.Empty);
             connectionQuality = new ElementBinding<string>(string.Empty);
+            attemptToConnectState = new ElementBinding<string>(string.Empty);
             stateScene = new ElementBinding<string>(string.Empty);
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
             selfMetadata = new ElementBinding<string>(string.Empty);
@@ -59,6 +61,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             widgetBuilder
                .SetVisibilityBinding(visibilityBinding)
                .AddCustomMarker("Room State", stateScene)
+               .AddCustomMarker("Attempt to Connect", attemptToConnectState)
                .AddCustomMarker("Connecting State", connectiveState)
                .AddCustomMarker("Connection Loop", connectionLoopHealth)
                .AddCustomMarker("Connection Quality", connectionQuality)
@@ -79,10 +82,11 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         protected virtual void UpdateInternal()
         {
-            connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
-            connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
-            connectionLoopHealth.SetAndUpdate(room.CurrentConnectionLoopHealth.ToString());
-            stateScene.SetAndUpdate(room.CurrentState().ToString());
+            connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToStringNonAlloc());
+            connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToStringNonAlloc());
+            connectionLoopHealth.SetAndUpdate(room.CurrentConnectionLoopHealth.ToStringNonAlloc());
+            attemptToConnectState.SetAndUpdate(room.AttemptToConnectState.ToStringNonAlloc());
+            stateScene.SetAndUpdate(room.CurrentState().ToStringNonAlloc());
             selfSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Sid : "Not connected");
             selfMetadata.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Metadata : "Not connected");
             roomSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Info.Sid : "Not connected");

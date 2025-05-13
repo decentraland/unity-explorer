@@ -1,5 +1,7 @@
+pub mod batcher;
 pub mod cabi;
 pub mod operations;
+pub mod queue_batcher;
 pub mod server;
 
 use lazy_static::lazy_static;

@@ -235,6 +235,17 @@ jobs:
           pip install -r scripts/cloudbuild/requirements.txt
 
       - name: Execute Unity Cloud build
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 180  # matches your GLOBAL_TIMEOUT = 10800s
+          max_attempts: 3
+          retry_on: any
+          retry_wait_seconds: 30
+          on_retry_command: |
+            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"
+          command: |
+            echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
+            python -u scripts/cloudbuild/build.py
         env:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
@@ -263,7 +274,6 @@ jobs:
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
-        run: python -u scripts/cloudbuild/build.py
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
@@ -309,12 +319,32 @@ jobs:
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
 
+      - name: Set SHA, branch, and build prefix
+        run: |
+          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
+          echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
+
+          EVENT_NAME="${{ github.event_name }}"
+          echo "Detected event: $EVENT_NAME"
+          case "$EVENT_NAME" in
+            pull_request) echo "BUILD_PREFIX=pr" >> $GITHUB_ENV ;;
+            push) echo "BUILD_PREFIX=pu" >> $GITHUB_ENV ;;
+            merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
+            workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
+            workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
+            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
+            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
+          esac
+
       - name: Upload artifact to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: ${{ inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version) || format('@dcl/{0}/branch/{1}', github.event.repository.name, github.head_ref || github.ref_name) }}
+          DESTINATION_PATH: "${{
+            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
+            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
+          }}"
         run: |
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \

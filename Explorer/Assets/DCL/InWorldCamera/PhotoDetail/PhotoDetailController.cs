@@ -147,6 +147,11 @@ namespace DCL.InWorldCamera.PhotoDetail
             HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
+
+            if (viewInstance.mainImage.texture != null)
+                GameObject.Destroy(viewInstance.mainImage.texture);
+
+            viewInstance.mainImage.texture = null;
             PhotoDetailInfoController.Release();
         }
 
@@ -167,7 +172,10 @@ namespace DCL.InWorldCamera.PhotoDetail
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
                     ScreenshotDownloaded?.Invoke();
-                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
+
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(
+                        CameraReelToastMessageType.DOWNLOAD,
+                        photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
@@ -213,15 +221,20 @@ namespace DCL.InWorldCamera.PhotoDetail
         private async UniTaskVoid ShowReelAsync(int reelIndex, CancellationToken ct)
         {
             viewInstance!.mainImageCanvasGroup.alpha = 0;
-            viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(true);
+            viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
+
+            if (viewInstance.mainImage.texture != null)
+                GameObject.Destroy(viewInstance!.mainImage.texture);
+
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
             UniTask detailInfoTask = PhotoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
             Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, false, ct);
-            viewInstance!.mainImage.texture = reelTexture;
+            reelTexture.Apply(false, true);
+            viewInstance.mainImage.texture = reelTexture;
             aspectRatioFitter.aspectRatio = reelTexture.width * 1f / reelTexture.height;
 
-            viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(false);
+            viewInstance.mainImageLoadingSpinner.gameObject.SetActive(false);
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
             await detailInfoTask;

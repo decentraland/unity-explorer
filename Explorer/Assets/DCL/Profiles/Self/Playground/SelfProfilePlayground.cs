@@ -11,8 +11,6 @@ using DCL.WebRequests;
 using ECS;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Browser.DecentralandUrls;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.Profiles.Self.Playground
@@ -48,8 +46,7 @@ namespace DCL.Profiles.Self.Playground
                                 )
                             )
                         ),
-                        new DefaultProfileCache()
-                    )
+                        new DefaultProfileCache())
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

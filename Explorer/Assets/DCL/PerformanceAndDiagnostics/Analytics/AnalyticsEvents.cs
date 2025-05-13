@@ -32,6 +32,8 @@
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
+            public const string CHAT_CONVERSATION_OPENED = "chat_conversation_opened";
+            public const string CHAT_CONVERSATION_CLOSED = "chat_conversation_closed";
             public const string OPEN_SUPPORT = "open_support";
         }
 
@@ -41,6 +43,8 @@
             public const string PASSPORT_OPENED = "passport_opened";
             public const string BADGES_TAB_OPENED = "badges_tab_opened";
             public const string BADGE_UI_CLICK = "badge_ui_click";
+            public const string NAME_CLAIM_REQUESTED = "name_claim_requested";
+            public const string NAME_CHANGED = "profile_name_changed";
         }
 
         public static class Map
@@ -94,6 +98,19 @@
             public const string REQUEST_ACCEPTED = "friend_request_accepted";
             public const string REQUEST_REJECTED = "friend_request_rejected";
             public const string FRIENDSHIP_DELETED = "friendship_deleted";
+
+            public const string BLOCK_USER = "block_user";
+            public const string UNBLOCK_USER = "unblock_user";
+        }
+
+        public static class MarketplaceCredits
+        {
+            public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
+        }
+
+        public static class Settings
+        {
+            public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
         }
     }
 }

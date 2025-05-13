@@ -1,21 +1,28 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.History;
+using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
+using DCL.Friends.UI.FriendPanel;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
-using DCL.SidebarBus;
+using DCL.Profiles.Self;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
-using DCL.UI.Sidebar.SidebarActionsBus;
+using DCL.UI.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
-using DCL.Web3.Identities;
+using ECS;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -24,22 +31,26 @@ namespace DCL.UI.Sidebar
     {
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
-        private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
-        private readonly IProfileRepository profileRepository;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
-        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly ChatView chatView;
+        private readonly IChatHistory chatHistory;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISelfProfile selfProfile;
+        private readonly IRealmData realmData;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
-        private CancellationTokenSource systemMenuCts = new ();
+        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private const string IDLE_ICON_ANIMATOR = "Empty";
+        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
         public event Action? HelpOpened;
 
@@ -54,41 +65,43 @@ namespace DCL.UI.Sidebar
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
-            ISidebarBus sidebarBus,
-            ChatEntryConfigurationSO chatEntryConfiguration,
-            IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            ISidebarActionsBus sidebarActionsBus,
             bool includeCameraReel,
-            bool includeFriends)
+            bool includeFriends,
+            bool includeMarketplaceCredits,
+            ChatView chatView,
+            IChatHistory chatHistory,
+            ISharedSpaceManager sharedSpaceManager,
+            ISelfProfile selfProfile,
+            IRealmData realmData,
+            FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
             this.profileMenuController = profileMenuMenuWidgetController;
-            this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
-            this.chatEntryConfiguration = chatEntryConfiguration;
-
-            this.identityCache = identityCache;
-            this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.includeCameraReel = includeCameraReel;
+            this.chatView = chatView;
+            this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
-
-            sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.selfProfile = selfProfile;
+            this.realmData = realmData;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            notificationsMenuController.Dispose();
+            notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
+            checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -98,76 +111,104 @@ namespace DCL.UI.Sidebar
             viewInstance!.backpackButton.onClick.AddListener(() =>
             {
                 viewInstance.backpackNotificationIndicator.SetActive(false);
-                OpenExplorePanelInSection(ExploreSections.Backpack);
+                OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
             });
 
-            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
-            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
+            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
 
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenu);
-            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
-            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
+            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
+            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
-            viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
-            viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
+            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
+            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
 
             if (includeCameraReel)
-                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
+                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
             else
             {
                 viewInstance.cameraReelButton.gameObject.SetActive(false);
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
 
+            if(includeFriends)
+                viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
+
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+            chatView.FoldingChanged += OnChatViewFoldingChanged;
+
+            mvcManager.RegisterController(skyboxMenuController);
+            mvcManager.RegisterController(profileMenuController);
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
+
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+
+            checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
+            CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
         }
 
-        private void OnHelpButtonClicked()
+        private void OnMvcManagerViewClosed(IController closedController)
         {
-            webBrowser.OpenUrl(DecentralandUrl.Help);
-            HelpOpened?.Invoke();
+            // Panels that are controllers and can be opened using shortcuts
+            if (closedController is EmotesWheelController)
+            {
+                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            }
+            else if (closedController is FriendsPanelController)
+            {
+                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                OnChatViewFoldingChanged(chatView.IsUnfolded);
+            }
         }
 
-        private void OnControlsButtonClicked()
+        private void OnMvcManagerViewShowed(IController showedController)
         {
-            mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
-            sidebarActionsBus.OpenWidget();
+            // Panels that are controllers and can be opened using shortcuts
+            if (showedController is EmotesWheelController)
+            {
+                viewInstance.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            }
+            else if (showedController is FriendsPanelController)
+            {
+                viewInstance.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                OnChatViewFoldingChanged(false);
+            }
+        }
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        {
+            viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
+        }
+
+        private void OnChatViewFoldingChanged(bool isUnfolded)
+        {
+            viewInstance.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+        }
+
+        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
+        {
+            viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
 
         private void OnAutoHideToggleChanged(bool value)
         {
-            sidebarBus.SetAutoHideSidebarStatus(value);
-        }
-
-        private void CloseAllWidgets()
-        {
-            systemMenuCts = systemMenuCts.SafeRestart();
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { profileMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
-            if (skyboxMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
-            notificationsMenuController.ToggleNotificationsPanel(true);
-            viewInstance!.sidebarSettingsWidget.CloseElement();
-            sidebarBus.UnblockSidebar();
-        }
-
-        private void OpenSidebarSettings()
-        {
-            CloseAllWidgets();
-            sidebarBus.BlockSidebar();
-            viewInstance!.sidebarSettingsWidget.ShowAsync(CancellationToken.None).Forget();
-            viewInstance.sidebarSettingsButton.OnSelect(null);
-            sidebarActionsBus.OpenWidget();
-        }
-
-        private void OnSidebarSettingsClosed()
-        {
-            sidebarBus.UnblockSidebar();
-            viewInstance!.sidebarSettingsButton.OnDeselect(null);
+            viewInstance.SetAutoHideSidebarStatus(value);
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
@@ -183,77 +224,119 @@ namespace DCL.UI.Sidebar
         protected override void OnViewShow()
         {
             profileWidgetCts = profileWidgetCts.SafeRestart();
+
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-            UpdateFrameColorAsync().Forget();
-        }
-
-        private async UniTaskVoid UpdateFrameColorAsync()
-        {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
-            viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
             profileWidgetCts.SafeCancelAndDispose();
-            systemMenuCts.SafeCancelAndDispose();
-        }
-
-        private void OpenProfileMenu()
-        {
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-            {
-                //Profile is already open
-                return;
-            }
-
-            CloseAllWidgets();
-            sidebarBus.BlockSidebar();
-
-            systemMenuCts = systemMenuCts.SafeRestart();
-            viewInstance!.ProfileMenuView.gameObject.SetActive(true);
-            profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
-            sidebarActionsBus.OpenWidget();
-        }
-
-        private void OpenSkyboxSettings()
-        {
-            CloseAllWidgets();
-            sidebarBus.BlockSidebar();
-
-            systemMenuCts = systemMenuCts.SafeRestart();
-            viewInstance!.skyboxButton.SetSelected(true);
-            skyboxMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
-            sidebarActionsBus.OpenWidget();
-        }
-
-        private void OnSkyboxSettingsClosed()
-        {
-            sidebarBus.UnblockSidebar();
-            viewInstance!.skyboxButton.SetSelected(false);
-        }
-
-        private void OpenNotificationsPanel()
-        {
-            CloseAllWidgets();
-            sidebarBus.BlockSidebar();
-            notificationsMenuController.ToggleNotificationsPanel(false);
-            sidebarActionsBus.OpenWidget();
-        }
-
-        private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
-        {
-            CloseAllWidgets();
-
-            mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(
-                    new ExplorePanelParameter(section, backpackSection)));
-            sidebarActionsBus.OpenWidget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
+
+        private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(false);
+
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
+
+            includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
+                includeMarketplaceCredits,
+                ownProfile.UserId,
+                featureFlagsCache,
+                ct);
+
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
+            if (includeMarketplaceCredits)
+                viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
+
+        #region Sidebar button handlers
+
+        private void OnUnreadMessagesButtonClicked()
+        {
+            // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true)).Forget();
+        }
+
+        private async void OnEmotesWheelButtonClickedAsync()
+        {
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+        }
+
+        private async void OnFriendsButtonClickedAsync()
+        {
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
+        }
+
+        private async void OnMarketplaceCreditsButtonClickedAsync() =>
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false));
+
+        private void OnHelpButtonClicked()
+        {
+            webBrowser.OpenUrl(DecentralandUrl.Help);
+            HelpOpened?.Invoke();
+        }
+
+        private async void OnControlsButtonClickedAsync()
+        {
+            await mvcManager.ShowAsync(ControlsPanelController.IssueCommand());
+        }
+
+        private async void OpenSidebarSettingsAsync()
+        {
+            viewInstance.BlockSidebar();
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
+            viewInstance.UnblockSidebar();
+
+            viewInstance!.sidebarSettingsButton.OnDeselect(null);
+        }
+
+        private async void OpenProfileMenuAsync()
+        {
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+
+                //Profile is already open
+                return;
+
+            viewInstance!.ProfileMenuView.gameObject.SetActive(true);
+
+            viewInstance.BlockSidebar();
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
+            viewInstance.UnblockSidebar();
+        }
+
+        private async void OpenSkyboxSettingsAsync()
+        {
+            viewInstance.BlockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
+            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.UnblockSidebar();
+        }
+
+        private async void OpenNotificationsPanelAsync()
+        {
+            viewInstance.BlockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
+            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.UnblockSidebar();
+        }
+
+        private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
+        {
+            // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
+        }
+
+        #endregion
     }
 }

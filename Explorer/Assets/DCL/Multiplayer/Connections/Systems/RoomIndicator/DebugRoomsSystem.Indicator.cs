@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private void AddIndicator(Entity entity, NametagView nametagView)
         {
             DebugRoomIndicatorView? view = roomIndicatorPool.Get();
-            view.Attach(nametagView.Background);
+            view.Attach(nametagView.BackgroundSprite);
             World.Add(entity, new DebugRoomIndicatorComponent(view));
         }
 
@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.Systems
 
             if (prevValue != indicatorComponent.ConnectedTo) { indicatorComponent.View.SetRooms(indicatorComponent.ConnectedTo); }
 
-            indicatorComponent.View.UpdateTransparency(nametagView.alpha);
+            indicatorComponent.View.UpdateTransparency(nametagView.NameTagAlpha);
         }
 
         [Query]

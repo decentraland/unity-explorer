@@ -71,10 +71,10 @@ VertexOutput vert (VertexInput v)
     //v.2.0.7
     #if defined(UNITY_REVERSED_Z)
         //v.2.0.4.2 (DX)
-        _Offset_Z = _Offset_Z * -0.01;
+        float fOffset_Z = _Offset_Z * -0.01;
     #else
         //OpenGL
-        _Offset_Z = _Offset_Z * 0.01;
+        float fOffset_Z = _Offset_Z * 0.01;
     #endif
     
     //v2.0.4
@@ -98,7 +98,7 @@ VertexOutput vert (VertexInput v)
         #endif
     #endif
     //v.2.0.7.5
-    o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
+    o.pos.z = o.pos.z + fOffset_Z * _ClipCameraPos.z;
     o.positionCS = TransformWorldToHClip(positionWS);
     return o;
 }
@@ -111,7 +111,7 @@ float4 frag(VertexOutput i) : SV_Target
     // {
     //     return float4(1.0f, 1.0f, 1.0f, 1.0f);  // but nothing should be drawn except Z value as colormask is set to 0
     // }
-    _Color = _BaseColor;
+    //_Color = _BaseColor;
     float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
     //v.2.0.9
     float3 envLightSource_GradientEquator = unity_AmbientEquator.rgb >0.05 ? unity_AmbientEquator.rgb : half3(0.05,0.05,0.05);

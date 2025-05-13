@@ -9,13 +9,13 @@ using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Platforms;
 using ECS;
 using Global.AppArgs;
 using System.Threading;
 using Utility;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
 using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.Systems.RemotePlayersMovementSystem;
-using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.PluginSystem.Global
 {
@@ -77,10 +77,9 @@ namespace DCL.PluginSystem.Global
                 return;
             }
 
-            string os = SystemInfo.operatingSystem;
-            if (os.Contains("Windows"))
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
                 this.settings.Value.UseCompression = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN);
-            else if (os.Contains("Mac"))
+            else if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
                 this.settings.Value.UseCompression = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC);
         }
 

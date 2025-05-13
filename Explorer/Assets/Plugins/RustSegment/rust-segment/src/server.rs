@@ -5,21 +5,23 @@ use std::sync::{
 };
 
 use segment::{
-    message::{BatchMessage, User},
-    AutoBatcher, Batcher, HttpClient,
+    message::{BatchMessage, User}, Client, HttpClient
 };
 use tokio::sync::Mutex;
 
-use crate::{operations, FfiCallbackFn, OperationHandleId, Response};
+use crate::{operations, queue_batcher::QueueBatcher, FfiCallbackFn, OperationHandleId, Response};
 
 pub struct Context {
-    pub batcher: AutoBatcher,
+    pub batcher: QueueBatcher,
+    pub segment_client: segment::HttpClient,
+    pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
 }
 
 pub struct SegmentServer {
     context: Arc<Mutex<Context>>,
     next_id: AtomicU64,
+    unflushed_count_cache: AtomicU64,
 }
 
 pub enum ServerState {
@@ -102,6 +104,20 @@ impl Server {
             }
         }
     }
+
+    pub fn unflushed_batches_count(&self) -> u64 {
+        let state_lock = self.state.lock();
+        if state_lock.is_err() {
+            return 0;
+        }
+
+        let state = state_lock.unwrap();
+
+        match &*state {
+            ServerState::Disposed => 0,
+            ServerState::Ready(server) => server.unflushed_count_cache.load(Ordering::Relaxed),
+        }
+    }
 }
 
 impl SegmentServer {
@@ -111,11 +127,14 @@ impl SegmentServer {
 
     fn new(writer_key: String, callback_fn: FfiCallbackFn) -> Self {
         let client = HttpClient::default();
-        let batcher = Batcher::new(None);
-        let auto_batcher = AutoBatcher::new(client, batcher, writer_key);
+        let queue_batcher = QueueBatcher::new(client, writer_key.clone());
+        
+        let direct_client = HttpClient::default();
 
         let context = Context {
-            batcher: auto_batcher,
+            batcher: queue_batcher,
+            segment_client: direct_client,
+            write_key: writer_key,
             callback_fn: Box::new(move |id, response| unsafe {
                 callback_fn(id, response);
             }),
@@ -123,7 +142,31 @@ impl SegmentServer {
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
+            unflushed_count_cache: AtomicU64::new(0),
             context: Arc::new(Mutex::new(context)),
+        }
+    }
+
+    pub async fn instant_track_and_flush(
+        instance: Arc<Self>,
+        id: OperationHandleId,
+        user: User,
+        event_name: &str,
+        properties_json: &str,
+        context_json: &str,
+    ) {
+        let msg = operations::new_track(user, event_name, properties_json, context_json);
+        match msg {
+            Some(m) => {
+                let guard = instance.context.lock().await;
+                let key = guard.write_key.clone();
+                let result = guard.segment_client.send(key, m.into()).await;
+                let response = SegmentServer::result_as_response_code(result);
+                guard.call_callback(id, response);
+            },
+            None => {
+                instance.call_callback(id, Response::ErrorDeserialize).await;
+            }
         }
     }
 
@@ -157,6 +200,7 @@ impl SegmentServer {
         let result = context.batcher.push(msg).await;
 
         let response_code = Self::result_as_response_code(result);
+        self.update_unflushed_count_cache(&context, &response_code);
         context.call_callback(id, response_code);
     }
 
@@ -167,6 +211,7 @@ impl SegmentServer {
         let result = context.batcher.flush().await;
 
         let response_code = Self::result_as_response_code(result);
+        instance.update_unflushed_count_cache(&context, &response_code);
         context.call_callback(id, response_code);
     }
 
@@ -193,6 +238,13 @@ impl SegmentServer {
                 segment::Error::DeserializeError(_) => Response::ErrorDeserialize,
                 segment::Error::NetworkError(_) => Response::ErrorNetwork,
             },
+        }
+    }
+
+    fn update_unflushed_count_cache(&self, context: &Context, response: &Response) {
+        if matches!(response, Response::Success) {
+            let len = context.batcher.len() as u64;
+            self.unflushed_count_cache.store(len, Ordering::Relaxed);
         }
     }
 }

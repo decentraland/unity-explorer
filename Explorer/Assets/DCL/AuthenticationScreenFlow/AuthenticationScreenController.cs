@@ -144,6 +144,10 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
 #endif
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+
+            viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
+            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);
+            viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
         }
 
         protected override void OnBeforeViewShow()
@@ -248,12 +252,18 @@ namespace DCL.AuthenticationScreenFlow
 
         private void StartLoginFlowUntilEnd()
         {
+            CancelLoginProcess();
+            loginCancellationToken = new CancellationTokenSource();
+            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+            return;
+
             async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
             {
                 try
                 {
                     CurrentRequestID = string.Empty;
 
+                    viewInstance!.ErrorPopupRoot.SetActive(false);
                     viewInstance!.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
@@ -284,12 +294,9 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     SwitchState(ViewState.Login);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ShowConnectionErrorPopup();
                 }
             }
-
-            CancelLoginProcess();
-            loginCancellationToken = new CancellationTokenSource();
-            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
         }
 
         private void ShowVerification(int code, DateTime expiration, string requestID)
@@ -314,6 +321,8 @@ namespace DCL.AuthenticationScreenFlow
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
+            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
+            profile.HasConnectedWeb3 = true;
             profileNameLabel!.Value = profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
         }
@@ -351,6 +360,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void SwitchState(ViewState state)
         {
+            viewInstance!.ErrorPopupRoot.SetActive(false);
+
             switch (state)
             {
                 case ViewState.Login:
@@ -436,9 +447,22 @@ namespace DCL.AuthenticationScreenFlow
             verificationCountdownCancellationToken = null;
         }
 
-        private void RequestAlphaAccess()
-        {
+        private void RequestAlphaAccess() =>
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
+
+        private void ExitApp()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            return;
+#endif
+            Application.Quit();
         }
+
+        private void CloseErrorPopup() =>
+            viewInstance!.ErrorPopupRoot.SetActive(false);
+
+        private void ShowConnectionErrorPopup() =>
+            viewInstance!.ErrorPopupRoot.SetActive(true);
     }
 }

@@ -1,5 +1,5 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests.GenericDelete;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 
@@ -33,8 +33,9 @@ namespace DCL.WebRequests.RequestsHub
         }
 
         private readonly IReadOnlyDictionary<Key, object> map;
+        private bool ktxEnabled;
 
-        public RequestHub(ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
+        public RequestHub(IDecentralandUrlsSource urlsSource)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
@@ -47,7 +48,8 @@ namespace DCL.WebRequests.RequestsHub
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
             Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
+            Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
+            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
         }
 
         private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
@@ -65,6 +67,11 @@ namespace DCL.WebRequests.RequestsHub
                 return (InitializeRequest<T, TWebRequest>)requestDelegate!;
 
             throw new InvalidOperationException("Request type not supported.");
+        }
+
+        public void SetKTXEnabled(bool enabled)
+        {
+            ktxEnabled = enabled;
         }
     }
 }

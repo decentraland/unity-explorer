@@ -786,13 +786,17 @@ MonoBehaviour:
     m_AssetGUID: 028bf9eb42404424bbd1df5cd802720e
     m_SubObjectName: 
     m_SubObjectType: 
+    m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   searchResultsContainer: {fileID: 5219067921947935141}
+  scrollView: {fileID: 0}
   <CanvasGroup>k__BackingField: {fileID: 4979883465811775721}
-  panelAnimator: {fileID: 2963534357147214929}
+  <PaginationContainer>k__BackingField: {fileID: 0}
+  <NextPageButton>k__BackingField: {fileID: 0}
+  <PreviousPageButton>k__BackingField: {fileID: 0}
 --- !u!95 &2963534357147214929
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -806,6 +810,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1

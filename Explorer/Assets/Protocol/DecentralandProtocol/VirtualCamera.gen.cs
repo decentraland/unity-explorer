@@ -27,15 +27,16 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdmlydHVhbF9jYW1lcmEu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo6ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9jYW1lcmFfdHJhbnNpdGlvbi5w",
-            "cm90byKvAQoPUEJWaXJ0dWFsQ2FtZXJhElUKEmRlZmF1bHRfdHJhbnNpdGlv",
+            "cm90byLJAQoPUEJWaXJ0dWFsQ2FtZXJhElUKEmRlZmF1bHRfdHJhbnNpdGlv",
             "bhgBIAEoCzI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24u",
             "Q2FtZXJhVHJhbnNpdGlvbkgAiAEBEhsKDmxvb2tfYXRfZW50aXR5GAIgASgN",
-            "SAGIAQFCFQoTX2RlZmF1bHRfdHJhbnNpdGlvbkIRCg9fbG9va19hdF9lbnRp",
-            "dHlCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "SAGIAQESEAoDZm92GAMgASgCSAKIAQFCFQoTX2RlZmF1bHRfdHJhbnNpdGlv",
+            "bkIRCg9fbG9va19hdF9lbnRpdHlCBgoEX2ZvdkIUqgIRRENMLkVDU0NvbXBv",
+            "bmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.CameraTransitionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity" }, new[]{ "DefaultTransition", "LookAtEntity" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity", "Fov" }, new[]{ "DefaultTransition", "LookAtEntity", "Fov" }, null, null, null)
           }));
     }
     #endregion
@@ -48,6 +49,7 @@ namespace DCL.ECSComponents {
   /// an 'instant' transition (like using speed/time = 0)
   /// * The lookAtEntity defines to which entity the Camera has to look at constantly (independent from 
   /// the holding entity transform).
+  /// * The fov defines the Field of View of the virtual camera
   /// </summary>
   public sealed partial class PBVirtualCamera : pb::IMessage<PBVirtualCamera>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -87,6 +89,7 @@ namespace DCL.ECSComponents {
       _hasBits0 = other._hasBits0;
       defaultTransition_ = other.defaultTransition_ != null ? other.defaultTransition_.Clone() : null;
       lookAtEntity_ = other.lookAtEntity_;
+      fov_ = other.fov_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -133,6 +136,34 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~1;
     }
 
+    /// <summary>Field number for the "fov" field.</summary>
+    public const int FovFieldNumber = 3;
+    private float fov_;
+    /// <summary>
+    /// default: 60
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Fov {
+      get { if ((_hasBits0 & 2) != 0) { return fov_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 2;
+        fov_ = value;
+      }
+    }
+    /// <summary>Gets whether the "fov" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasFov {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "fov" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearFov() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -150,6 +181,7 @@ namespace DCL.ECSComponents {
       }
       if (!object.Equals(DefaultTransition, other.DefaultTransition)) return false;
       if (LookAtEntity != other.LookAtEntity) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Fov, other.Fov)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -159,6 +191,7 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (defaultTransition_ != null) hash ^= DefaultTransition.GetHashCode();
       if (HasLookAtEntity) hash ^= LookAtEntity.GetHashCode();
+      if (HasFov) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Fov);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -185,6 +218,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(16);
         output.WriteUInt32(LookAtEntity);
       }
+      if (HasFov) {
+        output.WriteRawTag(29);
+        output.WriteFloat(Fov);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -203,6 +240,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(16);
         output.WriteUInt32(LookAtEntity);
       }
+      if (HasFov) {
+        output.WriteRawTag(29);
+        output.WriteFloat(Fov);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -218,6 +259,9 @@ namespace DCL.ECSComponents {
       }
       if (HasLookAtEntity) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(LookAtEntity);
+      }
+      if (HasFov) {
+        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -239,6 +283,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasLookAtEntity) {
         LookAtEntity = other.LookAtEntity;
+      }
+      if (other.HasFov) {
+        Fov = other.Fov;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -266,6 +313,10 @@ namespace DCL.ECSComponents {
             LookAtEntity = input.ReadUInt32();
             break;
           }
+          case 29: {
+            Fov = input.ReadFloat();
+            break;
+          }
         }
       }
     #endif
@@ -290,6 +341,10 @@ namespace DCL.ECSComponents {
           }
           case 16: {
             LookAtEntity = input.ReadUInt32();
+            break;
+          }
+          case 29: {
+            Fov = input.ReadFloat();
             break;
           }
         }

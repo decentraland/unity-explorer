@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -9,8 +10,10 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
+using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
@@ -30,6 +33,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         None,
         Success,
         Error,
+        /// <summary>
+        ///     Indicates that the loop was successfully launched but in the current context connection was not required
+        /// </summary>
+        NoConnectionRequired,
     }
 
     /// <summary>
@@ -50,20 +57,30 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
-            () => new LogRoom(
-                new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    new ParticipantsHub(),
-                    new TracksFactory(),
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo()
-                )
-            )
-        );
+            () =>
+            {
+                var hub = new ParticipantsHub();
+                var videoStreams = new VideoStreams(hub);
+
+                var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+                var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+
+                return new LogRoom(
+                    new Room(
+                        new ArrayMemoryPool(),
+                        new DefaultActiveSpeakers(),
+                        hub,
+                        new TracksFactory(),
+                        new FfiHandleFactory(),
+                        new ParticipantFactory(),
+                        new TrackPublicationFactory(),
+                        new DataPipe(),
+                        new MemoryRoomInfo(),
+                        videoStreams,
+                        audioStreams
+                    )
+                );
+            });
 
         private CancellationTokenSource? cancellationTokenSource;
 
@@ -72,6 +89,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         protected ConnectiveRoom()
         {
             logPrefix = GetType().Name;
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = null;
         }
 
         protected abstract UniTask PrewarmAsync(CancellationToken token);
@@ -93,7 +116,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
-            return attemptToConnectState.Value() is AttemptToConnectState.Success;
+            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
         }
 
         public virtual async UniTask StopAsync()
@@ -110,6 +133,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public IConnectiveRoom.State CurrentState() =>
             roomState.Value();
+
+        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
 
         public IRoom Room() =>
             room;
@@ -151,7 +176,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
             UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
 
-        protected async UniTask DisconnectCurrentRoomAsync(CancellationToken token)
+        protected async UniTask DisconnectCurrentRoomAsync(bool connectionIsNoLongerRequired, CancellationToken token)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -160,6 +185,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             roomState.Set(IConnectiveRoom.State.Stopping);
             await room.ResetRoom(roomPool, token);
             roomState.Set(IConnectiveRoom.State.Stopped);
+
+            if (connectionIsNoLongerRequired)
+                attemptToConnectState.Set(AttemptToConnectState.NoConnectionRequired);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -236,12 +264,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             await room.SwapRoomsAsync(roomSelection, previous, newRoom, roomsPool, ct);
 
             return (connectResult, roomSelection);
-        }
-
-        public void Dispose()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = null;
         }
     }
 }

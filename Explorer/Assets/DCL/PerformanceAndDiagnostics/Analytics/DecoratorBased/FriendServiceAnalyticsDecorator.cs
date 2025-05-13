@@ -15,10 +15,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.core = core;
             this.analytics = analytics;
         }
-        public void Dispose()
-        {
-            core.Dispose();
-        }
 
         public UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
             core.GetFriendsAsync(pageNum, pageSize, ct);
@@ -85,6 +81,37 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             });
 
             return result;
+        }
+
+        public UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct) =>
+            core.GetBlockedUsersAsync(pageNum, pageSize, ct);
+
+        public async UniTask BlockUserAsync(string userId, CancellationToken ct)
+        {
+            await core.BlockUserAsync(userId, ct);
+
+            analytics.Track(AnalyticsEvents.Friends.BLOCK_USER, new JsonObject
+            {
+                {"receiver_id", userId}
+            });
+        }
+
+        public async UniTask UnblockUserAsync(string userId, CancellationToken ct)
+        {
+            await core.UnblockUserAsync(userId, ct);
+
+            analytics.Track(AnalyticsEvents.Friends.UNBLOCK_USER, new JsonObject
+            {
+                {"receiver_id", userId}
+            });
+        }
+
+        public UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct) =>
+            core.GetUserBlockingStatusAsync(ct);
+
+        public void Dispose()
+        {
+            core?.Dispose();
         }
     }
 }

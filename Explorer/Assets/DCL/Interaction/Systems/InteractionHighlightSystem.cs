@@ -57,7 +57,9 @@ namespace DCL.Interaction.Systems
             if (highlightComponent.IsEmpty())
                 return;
 
-            RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+            if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null && highlightComponent.CurrentEntityOrNull().IsAlive(World))
+                RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+
             highlightComponent.MoveNextAndRemoveMaterial();
         }
 
@@ -66,12 +68,12 @@ namespace DCL.Interaction.Systems
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
             if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
-                && World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
+                && (!highlightComponent.CurrentEntityOrNull().IsAlive(World) || World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull())))
                 highlightComponent.Disable();
 
-            if (highlightComponent.ReadyForMaterial())
+            if (highlightComponent.ReadyForMaterial(World))
             {
-                if (highlightComponent.HasToResetLastEntity())
+                if (highlightComponent.HasToResetLastEntity(World))
                     RemoveHighlight(highlightComponent.CurrentEntityOrNull());
 
                 highlightComponent.SwitchEntity();

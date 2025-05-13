@@ -12,13 +12,13 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class EmitInWorldCameraInputSystem : BaseUnityLoopSystem
     {
-        public const string SOURCE_SHORTCUT = "Shortcut";
+        private const string SOURCE_SHORTCUT = "Shortcut";
 
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
 
-        public EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
+        private EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
             this.inputSchema = inputSchema;
         }
@@ -30,8 +30,7 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
-            if (inputSchema.ToggleInWorldCamera.triggered)
-                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
+            if (!World.Get<CameraComponent>(camera).CameraInputChangeEnabled) return;
 
             if (inputSchema.CameraReel.triggered || inputSchema.Close.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });

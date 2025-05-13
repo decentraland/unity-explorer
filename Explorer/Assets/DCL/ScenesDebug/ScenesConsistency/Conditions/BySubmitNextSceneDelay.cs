@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.Chat.History;
 using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 
 namespace DCL.ScenesDebug.ScenesConsistency.Conditions
@@ -17,15 +18,15 @@ namespace DCL.ScenesDebug.ScenesConsistency.Conditions
         {
             var ready = false;
 
-            void OnSubmit(string _)
+            void OnSubmit(ChatChannel _, string __, string ___)
             {
                 ready = true;
             }
 
             ChatView resource = await chatViewResource.ResourceAsync();
-            resource.InputField.onSubmit!.AddListener(OnSubmit);
+            resource.InputSubmitted += OnSubmit;
             await UniTask.WaitUntil(() => ready);
-            resource.InputField.onSubmit.RemoveListener(OnSubmit);
+            resource.InputSubmitted -= OnSubmit;
         }
     }
 }

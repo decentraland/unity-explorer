@@ -98,7 +98,7 @@ namespace DCL.Backpack
             OverrideHide.onClick.RemoveListener(PlayOverrideHideAudio);
             NoOverride.onClick.RemoveListener(PlayDontOverrideHideAudio);
             UnequipButton.onClick.RemoveListener(PlayUnequipAudio);
-
+            ToggleHoverTooltip(false);
         }
 
         private void PlayOverrideHideAudio() =>
@@ -127,17 +127,21 @@ namespace DCL.Backpack
         public void OnPointerEnter(PointerEventData eventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
-            HoverTootlip.SetActive(true);
-            focusedImage.enabled = true;
+            ToggleHoverTooltip(true);
             UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn) && !BlockUnEquip);
             ScaleUpAnimation(focusedImage.transform);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            HoverTootlip.SetActive(false);
+            ToggleHoverTooltip(false);
             UnequipButton.gameObject.SetActive(false);
-            focusedImage.enabled = false;
+        }
+
+        private void ToggleHoverTooltip(bool isActive)
+        {
+            HoverTootlip.SetActive(isActive);
+            focusedImage.enabled = isActive;
         }
 
         private void ScaleUpAnimation(Transform targetTransform)

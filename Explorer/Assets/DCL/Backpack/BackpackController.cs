@@ -223,6 +223,10 @@ namespace DCL.Backpack
             foreach (ISection backpackSectionsValue in backpackSections.Values)
                 backpackSectionsValue.Deactivate();
 
+            //Resets the tab selector to the default state (Avatar selected and open)
+            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+                tabSelector.TabSelectorViews.TabSelectorToggle.isOn = tabSelector.Section == BackpackSections.Avatar;
+
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
 

@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connectivity
                 urlBuilder.AppendParameter(new URLParameter("id", userId));
 
             return await webRequestController.GetAsync(urlBuilder.Build(), ct, ReportCategory.MULTIPLAYER)
-                                             .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(serializerSettings: SERIALIZER_SETTINGS);
+                                         .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(serializerSettings: SERIALIZER_SETTINGS);
         }
     }
 }

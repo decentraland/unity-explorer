@@ -50,7 +50,7 @@ namespace DCL.StylizedSkybox.Scripts
             // Copy properties from the original material as it is being constantly modified
             material.CopyPropertiesFromMaterial(originalMaterial);
 
-            CommandBuffer cmd = CommandBufferPool.Get("SkyBoxToCubemapPass");
+            CommandBuffer cmd = CommandBufferPool.Get();
 
             using (new ProfilingScope(cmd, profilingSampler))
             {
@@ -68,6 +68,8 @@ namespace DCL.StylizedSkybox.Scripts
                     // Draw fullscreen triangle
                     CoreUtils.DrawFullScreen(cmd, material, materialPropertyBlock);
                 }
+
+                CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
             }
 
             context.ExecuteCommandBuffer(cmd);

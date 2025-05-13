@@ -5,22 +5,24 @@ using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.SidebarBus;
+using DCL.UI.SharedSpaceManager;
+using DCL.UI.Utilities;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuController : IDisposable
+    public class NotificationsMenuController : IDisposable, IPanelInSharedSpace<ControllerNoData>
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
@@ -38,7 +40,6 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
-        private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
@@ -49,13 +50,16 @@ namespace DCL.Notifications.NotificationsMenu
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
 
+        public bool IsVisibleInSharedSpace => view.gameObject.activeSelf;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
-            ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache)
         {
@@ -66,7 +70,6 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
-            this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
             this.view.OnViewShown += OnViewShown;
@@ -75,6 +78,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.previousWeb3Identity = web3IdentityCache.Identity?.Address;
             CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void Dispose()
@@ -86,26 +90,32 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
-        private void ClosePanel()
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ControllerNoData parameters)
         {
-            sidebarBus.UnblockSidebar();
             notificationPanelCts = notificationPanelCts.SafeRestart();
-            view.HideAsync(notificationPanelCts.Token).Forget();
+            await view.ShowAsync(notificationPanelCts.Token);
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.WaitUntilCanceled(notificationPanelCts.Token);
+            await view.HideAsync(notificationPanelCts.Token);
         }
 
-        public void ToggleNotificationsPanel(bool forceClose)
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
 
-            if (!forceClose && !view.gameObject.activeSelf) { view.ShowAsync(notificationPanelCts.Token).Forget(); }
-            else if (view.gameObject.activeSelf) { view.HideAsync(notificationPanelCts.Token).Forget(); }
+            await UniTask.WaitUntil(() => !view.gameObject.activeSelf, PlayerLoopTiming.Update, ct);
+        }
+
+        private void ClosePanel()
+        {
+            notificationPanelCts = notificationPanelCts.SafeRestart();
         }
 
         private void OnViewShown()
         {
             if (unreadNotifications > 0)
             {
-                view.LoopList.DoActionForEachShownItem((item2, param) =>
+                view.LoopList.DoActionForEachShownItem((item2, _) =>
                 {
                     INotificationView notificationView = item2!.GetComponent<INotificationView>();
                     INotification notificationData = notificationView.Notification;
@@ -196,6 +206,7 @@ namespace DCL.Notifications.NotificationsMenu
             ManageNotificationReadStatus(notificationData, view.gameObject.activeSelf);
             UpdateUnreadNotificationRender();
 
+            notificationView.NotificationImage.SetImage(null);
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
@@ -215,6 +226,10 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
+            var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
+            if (iconBackground.backgroundSprite != null)
+                notificationView.NotificationImageBackground.sprite = iconBackground.backgroundSprite;
+            notificationView.NotificationImageBackground.color = iconBackground.backgroundColor;
 
             ProcessCustomMetadata(notificationData, notificationView);
 
@@ -228,6 +243,10 @@ namespace DCL.Notifications.NotificationsMenu
                 case RewardAssignedNotification rewardAssignedNotification:
                     NotificationView nView = (NotificationView)notificationView;
                     nView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+                case RewardInProgressNotification rewardInProgress:
+                    NotificationView rewardInProgressView = (NotificationView)notificationView;
+                    rewardInProgressView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardInProgress.Metadata.Rarity);
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;

@@ -7,15 +7,11 @@ namespace DCL.Roads.Components
 {
     public struct RoadInfo
     {
-        public bool IsDirty;
         public string CurrentKey;
         public Transform CurrentAsset;
 
         public static RoadInfo Create() =>
-            new ()
-            {
-                IsDirty = true,
-            };
+            new ();
 
         public void Dispose(IRoadAssetPool roadAssetPool)
         {

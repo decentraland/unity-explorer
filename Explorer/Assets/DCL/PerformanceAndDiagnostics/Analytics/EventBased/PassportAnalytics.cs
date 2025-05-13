@@ -19,6 +19,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.passportController.BadgesSectionOpened += OnBadgesSectionOpened;
             this.passportController.BadgeSelected += OnBadgeSelected;
             this.passportController.JumpToFriendClicked += JumpToFriendClicked;
+            this.passportController.NameClaimRequested += OnNameClaimRequested;
         }
 
         public void Dispose()
@@ -27,6 +28,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             passportController.BadgesSectionOpened -= OnBadgesSectionOpened;
             passportController.BadgeSelected -= OnBadgeSelected;
             passportController.JumpToFriendClicked -= JumpToFriendClicked;
+            passportController.NameClaimRequested -= OnNameClaimRequested;
         }
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
@@ -59,7 +61,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             analytics.Track(eventName, new JsonObject
             {
                 { "receiver_id", userId },
-            });
+            }, isInstant: eventName == AnalyticsEvents.Profile.PASSPORT_OPENED);
         }
+
+        private void OnNameClaimRequested() =>
+            analytics.Track(AnalyticsEvents.Profile.NAME_CLAIM_REQUESTED);
     }
 }

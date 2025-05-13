@@ -13,37 +13,15 @@ MonoBehaviour:
   m_Name: Chat
   m_EditorClassIdentifier: 
   m_GroupName: Chat
-  m_Data:
-    m_SerializedData: []
   m_GUID: 8b013415c163949639034d60860ef87f
   m_SerializeEntries:
-  - m_GUID: 5bc332aa8fd2147cab980e20e64bec03
-    m_Address: EmojiSuggestion
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7355ae17e96e64b9592813524510dc45
-    m_Address: EmojiKeywords
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22
     m_Address: EmojiPanelConfig
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f3b1d401bc50845629a6b982f9793f16
-    m_Address: Chat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d4552d3a2432742f58c63ba71bdfb50e
-    m_Address: EmojiSection
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 20fcd3bb3495c4af78b93a75fc26fccf
-    m_Address: EmojiSuggestionBox
+  - m_GUID: 52e1c4c3ef9524f3a9d48c3c2216036d
+    m_Address: Assets/DCL/Chat/Assets/ChatEntry_Own.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -52,13 +30,43 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7d0a647adf3334ee1a142e7bf69f128d
-    m_Address: EmojiButton
+  - m_GUID: 7355ae17e96e64b9592813524510dc45
+    m_Address: EmojiKeywords
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 738b2479bcbccba45b0c649ce580ef7a
     m_Address: ChatAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d0a647adf3334ee1a142e7bf69f128d
+    m_Address: EmojiButton
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4552d3a2432742f58c63ba71bdfb50e
+    m_Address: EmojiSection
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d845292f5e8993041befc3df2e68e96e
+    m_Address: Assets/DCL/Chat/Assets/ChatEntry_OtherUser.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: efdc5e8175a88de4eaaf5800a0e3bea8
+    m_Address: Assets/DCL/Chat/Assets/ChatEntry_System.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3b1d401bc50845629a6b982f9793f16
+    m_Address: Chat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f74fa2421d947f4439553458ae5fbd93
+    m_Address: Assets/DCL/UI/Assets/ChatEntryMenuPopupView.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

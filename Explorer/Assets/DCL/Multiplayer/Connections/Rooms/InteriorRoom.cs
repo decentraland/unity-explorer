@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
 using LiveKit.Proto;
@@ -9,9 +8,11 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
+using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,15 +25,20 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
+        private readonly InteriorVideoStreams videoStreams = new ();
+        private readonly InteriorAudioStreams audioStreams = new ();
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
+        public IVideoStreams VideoStreams => videoStreams;
+        public IAudioStreams AudioStreams => audioStreams;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
         public event Room.MetaDelegate? RoomMetadataChanged;
+        public event Room.SidDelegate? RoomSidChanged;
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -70,6 +76,21 @@ namespace DCL.Multiplayer.Connections.Rooms
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
             SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
+
+        /// <summary>
+        ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
+        /// </summary>
+        public async UniTask ResetRoomAsync(CancellationToken ct)
+        {
+            try { await assigned.DisconnectAsync(ct); }
+            finally
+            {
+                Unsubscribe(assigned);
+                assigned = NullRoom.INSTANCE;
+            }
+        }
+
+
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
         {
             switch (roomSelection)
@@ -104,7 +125,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             }
         }
 
-        private void SimulateConnectionStateChanged()
+        public void SimulateConnectionStateChanged()
         {
             // It's not clear why LiveKit has two different events for the same thing
             ConnectionState currentState = assigned.Info.ConnectionState;
@@ -115,6 +136,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
+
                                                 };
 
             // TODO check the order of these messages
@@ -127,8 +149,11 @@ namespace DCL.Multiplayer.Connections.Rooms
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
+            videoStreams.Assign(room.VideoStreams);
+            audioStreams.Assign(room.AudioStreams);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
+            room.RoomSidChanged += RoomOnRoomSidChanged;
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
             room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
             room.TrackPublished += RoomOnTrackPublished;
@@ -145,6 +170,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private void Unsubscribe(IRoom previous)
         {
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+            previous.RoomSidChanged -= RoomOnRoomSidChanged;
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
@@ -156,6 +182,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
@@ -216,6 +243,11 @@ namespace DCL.Multiplayer.Connections.Rooms
         private void RoomOnRoomMetadataChanged(string metadata)
         {
             RoomMetadataChanged?.Invoke(metadata);
+        }
+
+        private void RoomOnRoomSidChanged(string sid)
+        {
+            RoomSidChanged?.Invoke(sid);
         }
 
         public void UpdateLocalMetadata(string metadata) =>

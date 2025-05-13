@@ -4,8 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.Chat.Commands;
-using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
@@ -19,6 +17,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
+using DCL.UI.SharedSpaceManager;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -35,7 +34,8 @@ namespace DCL.Minimap
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
-
+        private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
+        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { {"onboardingdcl.dcl.eth", "EXIT TUTORIAL"} };
         private const float ANIMATION_TIME = 0.2f;
 
         private readonly IMapRenderer mapRenderer;
@@ -48,7 +48,7 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
-
+        private readonly ISharedSpaceManager sharedSpaceManager;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
@@ -70,7 +70,8 @@ namespace DCL.Minimap
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            Vector2Int startParcelInGenesis
+            Vector2Int startParcelInGenesis,
+            ISharedSpaceManager sharedSpaceManager
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -82,6 +83,7 @@ namespace DCL.Minimap
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
+            this.sharedSpaceManager = sharedSpaceManager;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -99,7 +101,7 @@ namespace DCL.Minimap
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
-            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
@@ -116,6 +118,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
+            viewInstance.sdk6Label.gameObject.SetActive(false);
         }
 
         private void ExpandMinimap()
@@ -220,9 +223,10 @@ namespace DCL.Minimap
             placesApiCts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
 
-            bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
-            bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
-            viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+            // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
+            // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
+            // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
+            // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
 
             return;
 
@@ -260,6 +264,9 @@ namespace DCL.Minimap
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
                 go.SetActive(!isGenesisModeActivated);
+
+            if (!isGenesisModeActivated)
+                viewInstance.goToGenesisCityText.text = CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT);
 
             viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }

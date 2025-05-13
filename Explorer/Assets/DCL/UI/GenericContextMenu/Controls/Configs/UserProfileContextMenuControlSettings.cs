@@ -1,4 +1,3 @@
-using DCL.Clipboard;
 using System;
 using UnityEngine;
 
@@ -15,22 +14,21 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             REQUEST_SENT,
             REQUEST_RECEIVED,
             BLOCKED,
+            DISABLED,
         }
 
         internal string userName;
         internal string userAddress;
         internal bool hasClaimedName;
-        internal Sprite? userThumbnail;
+        internal string userThumbnailAddress;
         internal Color userColor;
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
-        internal readonly ISystemClipboard systemClipboard;
-        internal readonly Action<string, FriendshipStatus> requestFriendshipAction;
+        internal readonly Action<string, FriendshipStatus> friendButtonClickAction;
 
-        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string, FriendshipStatus> requestFriendshipAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(Action<string, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
         {
-            this.systemClipboard = systemClipboard;
-            this.requestFriendshipAction = requestFriendshipAction;
+            this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
         }
 
@@ -39,13 +37,13 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             bool hasClaimedName,
             Color userColor,
             FriendshipStatus friendshipStatus,
-            Sprite? userThumbnail = null)
+            string userThumbnailAddress = null)
         {
             this.userName = userName;
             this.userAddress = userAddress;
             this.hasClaimedName = hasClaimedName;
             this.userColor = userColor;
-            this.userThumbnail = userThumbnail;
+            this.userThumbnailAddress = userThumbnailAddress;
             this.friendshipStatus = friendshipStatus;
         }
     }

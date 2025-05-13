@@ -51,7 +51,7 @@ MonoBehaviour:
     logo: {fileID: 21300000, guid: 1b4d0df87e5e94b5bb432204bb1d26c6, type: 3}
     editionValues: {fileID: 11400000, guid: 5ac76ba89a93911468d5218dc64b3258, type: 2}
   - type: 9
-    title: HOBBIES
+    title: FAVORITE HOBBY
     logo: {fileID: 21300000, guid: dbf95ee638ebe41219ba427998387333, type: 3}
     editionValues: {fileID: 0}
   - type: 10

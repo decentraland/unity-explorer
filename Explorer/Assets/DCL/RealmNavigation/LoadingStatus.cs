@@ -1,4 +1,5 @@
-﻿using DCL.Utilities;
+﻿using DCL.Diagnostics;
+using DCL.Utilities;
 using System.Collections.Generic;
 using Utility;
 
@@ -31,27 +32,29 @@ namespace DCL.RealmNavigation
 
         public enum LoadingStage : byte
         {
-            Init,
-            AuthenticationScreenShowing,
-            LiveKitConnectionEnsuring,
+            // Initial loading stages, in order
+            Init = 0,
+            AuthenticationScreenShowing = 1,
+            ProfileLoading = 2,
+            PlayerAvatarLoading = 3,
+            LandscapeLoading = 4,
+            OnboardingChecking = 5,
+            PlayerTeleporting = 6,
+            LiveKitConnectionEnsuring = 7,
+            GlobalPXsLoading = 8,
+            Completed = 9,
+
+            // Others
             UnloadCacheChecking,
-            ProfileLoading,
-            PlayerAvatarLoading,
-            LandscapeLoading,
-            OnboardingChecking,
-            RealmRestarting,
-            RealmChanging,
-
             LiveKitStopping,
-            PlayerTeleporting,
+            RealmChanging,
+            RealmRestarting,
             LivekitRestarting,
-            GlobalPXsLoading,
-            Completed
         }
-
 
         public float SetCurrentStage(LoadingStage stage)
         {
+            ReportHub.LogProductionInfo($"Current loading stage: {stage}");
             CurrentStage.Value = stage;
             return PROGRESS[stage];
         }
