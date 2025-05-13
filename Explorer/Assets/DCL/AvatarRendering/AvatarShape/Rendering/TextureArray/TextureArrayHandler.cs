@@ -115,9 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             int finalSizeForSlotHandler = resolution.x == resolution.y
                 ? baseSizeToUse
                 : baseSizeToUse / 10;
-            
-            // NOTE: safety net for the case the resolution is too small
-            if (finalSizeForSlotHandler <= 0) finalSizeForSlotHandler = 1;
+
             
             var slotHandler = new TextureArraySlotHandler(
                 domain,
