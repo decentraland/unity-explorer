@@ -450,7 +450,7 @@ namespace DCL.Nametags
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
                            .Join(this.messageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                           .Join(this.messageContent.DOColor(currentSpritesColor, animationInDurationQuarter));
+                           .Join(this.messageContent.DOColor(currentSpritesColor, animationInDuration));
 
 
             if (isMention)
