@@ -1,17 +1,25 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Communities.CommunitiesCard;
 using MVC;
+using System;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
     public class CommunitiesPlugin : IDCLGlobalPlugin<CommunitiesPluginSettings>
     {
         private readonly IMVCManager mvcManager;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
-        public CommunitiesPlugin(IMVCManager mvcManager)
+        public CommunitiesPlugin(IMVCManager mvcManager,
+            IAssetsProvisioner assetsProvisioner)
         {
             this.mvcManager = mvcManager;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void Dispose()
@@ -22,11 +30,19 @@ namespace DCL.PluginSystem.Global
         {
         }
 
-        public UniTask InitializeAsync(CommunitiesPluginSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(CommunitiesPluginSettings settings, CancellationToken ct)
         {
-            return UniTask.CompletedTask;
+            CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
+            ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
+
+            mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod));
         }
     }
 
-    public class CommunitiesPluginSettings : IDCLPluginSettings { }
+    [Serializable]
+    public class CommunitiesPluginSettings : IDCLPluginSettings
+    {
+        [field: Header("Community Card")]
+        [field: SerializeField] internal AssetReferenceGameObject CommunityCardPrefab { get; private set; }
+    }
 }
