@@ -18,8 +18,6 @@ namespace ECS.StreamableLoading.GLTF
             this.containerGameObject = containerGameObject;
         }
 
-        public AnimationClip[]? AnimationClips => gltfImportedData.GetAnimationClips();
-
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.GltfDataAmount;
 
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.GltfReferencedAmount;
@@ -28,9 +26,6 @@ namespace ECS.StreamableLoading.GLTF
         {
             // Dispose the GltfImport which will handle texture disposal
             Asset?.Dispose();
-
-            // TODO: Is this necessary?
-            // gltfImportedData.Dispose();
 
             // Destroy the container GameObject
             if (containerGameObject != null)

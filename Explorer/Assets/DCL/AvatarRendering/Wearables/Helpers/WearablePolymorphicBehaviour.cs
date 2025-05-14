@@ -9,7 +9,6 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
@@ -25,7 +24,6 @@ using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<Sce
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
-using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {

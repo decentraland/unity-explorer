@@ -30,9 +30,9 @@ namespace DCL.AvatarRendering.Loading.Assets
     {
         public static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
 
+        private readonly List<RendererInfo> rendererInfos;
         public readonly GameObject MainAsset;
 
-        private readonly List<RendererInfo> rendererInfos;
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
         public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, IStreamableRefCountData streamableData) : base(streamableData)

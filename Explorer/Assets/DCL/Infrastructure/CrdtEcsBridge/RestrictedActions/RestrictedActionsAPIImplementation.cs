@@ -94,11 +94,6 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneData.SceneContent.TryGetHash(src, out string hash))
                 return false;
 
-            // TODO: Find a way to remove LocalSceneDevelopment from the globalWorldActions...
-            // if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
-            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL && !globalWorldActions.LocalSceneDevelopment)
-                return false;
-
             try
             {
                 await UniTask.SwitchToMainThread();

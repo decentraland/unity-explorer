@@ -30,8 +30,6 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
 
-        public bool LocalSceneDevelopment => localSceneDevelopment;
-
         public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles)
         {
             this.world = world;
@@ -69,7 +67,25 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        private async UniTask TriggerSceneEmoteFromAssetBundleAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
+        public void TriggerEmote(URN urn, bool isLooping)
+        {
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
+
+            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            messageBus.Send(urn, isLooping);
+        }
+
+        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
+        {
+            if (localSceneDevelopment && !useRemoteAssetBundles)
+                await TriggerSceneEmoteFromLocalSceneAsync(sceneData,src,hash, loop, ct);
+            else
+                await TriggerSceneEmoteFromRealmAsync(
+                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
+                    sceneData.AssetBundleManifest, hash, loop, ct);
+        }
+
+        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -106,24 +122,6 @@ namespace CrdtEcsBridge.RestrictedActions
             URN urn = value.GetUrn();
 
             TriggerEmote(urn, loop);
-        }
-
-        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
-        {
-            if (localSceneDevelopment && !useRemoteAssetBundles)
-                await TriggerSceneEmoteFromLocalSceneAsync(sceneData,src,hash, loop, ct);
-            else
-                await TriggerSceneEmoteFromAssetBundleAsync(
-                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                    sceneData.AssetBundleManifest, hash, loop, ct);
-        }
-
-        public void TriggerEmote(URN urn, bool isLooping)
-        {
-            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
-
-            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
-            messageBus.Send(urn, isLooping);
         }
     }
 }
