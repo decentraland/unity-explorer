@@ -7,6 +7,6 @@ namespace DCL.MarketplaceCreditsAPIService
     {
         public bool ok;
         public float credits_granted;
-        public bool is_locked;
+        public bool isBlockedForClaiming;
     }
 }

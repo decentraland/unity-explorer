@@ -195,7 +195,7 @@ namespace DCL.MarketplaceCredits.Sections
                 }
                 else
                 {
-                    if (!claimCreditsResponse.is_locked)
+                    if (!claimCreditsResponse.isBlockedForClaiming)
                         subView.SetCaptchaAsErrorState(true, isNonSolvedError: true);
                     else
                         subView.ShowCaptcha(true, true);
