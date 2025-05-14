@@ -12,13 +12,14 @@ namespace DCL.Rendering.Highlight
         private static readonly int highlightColour = Shader.PropertyToID("_HighlightColour");
         private static readonly int outlineWidth = Shader.PropertyToID("_Outline_Width");
         private static readonly int highlightObjectOffset = Shader.PropertyToID("_HighlightObjectOffset");
+        private static readonly int HIGHLIGHT_TEXTURE = Shader.PropertyToID("_HighlightTexture");
 
         public class HighlightInputRenderPass : ScriptableRenderPass
         {
             private enum ShaderPasses_Blur
             {
                 HighlightInput_Blur_Horizontal = 0,
-                HighlightInput_Blur_Vertical = 1
+                HighlightInput_Blur_Vertical = 1,
             }
 
             private const string PROFILER_TAG_ADDITIVE = "Custom Pass: Highlight Additive";
@@ -112,7 +113,7 @@ namespace DCL.Rendering.Highlight
                 {
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
-                        if (renderer == null)
+                        if (!renderer)
                             continue;
 
                         if (!renderer.enabled || renderer.forceRenderingOff)
@@ -125,7 +126,7 @@ namespace DCL.Rendering.Highlight
                             continue;
 
                         // We use a GPU Skinning based material
-                        if (renderer.sharedMaterial == null)
+                        if (!renderer.sharedMaterial)
                             continue;
 
                         int originalMaterialOutlinerPass = renderer.sharedMaterial.FindPass("Highlight");
@@ -166,7 +167,7 @@ namespace DCL.Rendering.Highlight
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                     {
                         ++nOutputTexture;
-                        cmd.SetGlobalTexture("_HighlightTexture", (nBlurPass % 2) < 1 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong);
+                        cmd.SetGlobalTexture(HIGHLIGHT_TEXTURE, (nBlurPass % 2) < 1 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong);
                         cmd.SetRenderTarget((nBlurPass % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
                         CoreUtils.DrawFullScreen(cmd, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Horizontal);
                         CoreUtils.DrawFullScreen(cmd, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Vertical);
