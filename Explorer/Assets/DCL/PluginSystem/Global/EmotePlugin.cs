@@ -136,7 +136,6 @@ namespace DCL.PluginSystem.Global
 
             if (localSceneDevelopment)
             {
-                // TODO: Manage conflicts with other LoadGLTFSystem running in global...
                 LoadGLTFSystem.InjectToWorld(
                     ref builder,
                     NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
