@@ -30,7 +30,7 @@ namespace DCL.Rendering.GPUInstancing.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            GPUInstancingRenderSystem.InjectToWorld(ref builder, gpuInstancingService, realmData, loadingStatus, exposedCameraData);
+            //GPUInstancingRenderSystem.InjectToWorld(ref builder, gpuInstancingService, realmData, loadingStatus, exposedCameraData);
         }
 
         public void Dispose()

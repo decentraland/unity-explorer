@@ -29,3 +29,29 @@ MonoBehaviour:
     extensionCode: 
     isUseOriginal: 1
     modifiedDate: 05/12/2025 12:28:34.850
+  - shaderName: Universal Render Pipeline/Lit
+    replacementShaderName: GPUInstancerPro/Universal Render Pipeline/Lit
+    extensionCode: 
+    isUseOriginal: 0
+    modifiedDate: 05/13/2025 11:51:32.060
+  - shaderName: GPUInstancerPro/Foliage_SG
+    replacementShaderName: GPUInstancerPro/Foliage_SG
+    extensionCode: 
+    isUseOriginal: 0
+    modifiedDate: 05/13/2025 11:56:47.463
+  - shaderName: GPUInstancerPro/ColorVariationShader_SG_GPUIPro
+    replacementShaderName: GPUInstancerPro/ColorVariationShader_SG_GPUIPro
+    extensionCode: 
+    isUseOriginal: 0
+    modifiedDate: 05/13/2025 11:57:27.100
+  - shaderName: Universal Render Pipeline/Nature/Stylized Grass
+    replacementShaderName: GPUInstancerPro/Universal Render Pipeline/Nature/Stylized
+      Grass
+    extensionCode: 
+    isUseOriginal: 0
+    modifiedDate: 05/13/2025 12:37:15.777
+  - shaderName: DCL/Scene
+    replacementShaderName: GPUInstancerPro/DCL/Scene
+    extensionCode: 
+    isUseOriginal: 0
+    modifiedDate: 05/13/2025 16:22:49.585

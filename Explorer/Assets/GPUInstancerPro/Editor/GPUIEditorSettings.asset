@@ -23,7 +23,7 @@ MonoBehaviour:
     processedVersion: 0.9.19
   isGenerateShaderVariantCollection: 1
   isAutoShaderConversion: 1
-  _requirePackageReload: 1
+  _requirePackageReload: 0
   stripDOTSInstancingVariants: 1
   _customEditorSettings: []
   packageImportList: []

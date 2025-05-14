@@ -8,6 +8,42 @@ ShaderVariantCollection:
   m_PrefabAsset: {fileID: 0}
   m_Name: GPUIShaderVariantCollection
   m_Shaders:
+  - first: {fileID: -6465566751694194690, guid: 1bd9f7cbb929540ea8d9f39e8c37188b, type: 3}
+    second:
+      variants:
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD LOD_FADE_CROSSFADE
+          _WINDQUALITY_BEST
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD _WINDQUALITY_BEST
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR LOD_FADE_CROSSFADE _WINDQUALITY_BEST
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR _WINDQUALITY_BEST
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 78f1b5ae9238ef140869bdba4aef19db, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: 93acd7c99530b38469249f13c901d8ec, type: 3}
+    second:
+      variants:
+      - keywords: GPUI_COLOR_VARIATION
+        passType: 0
+  - first: {fileID: 4800000, guid: a9f0e02e0db0e426ead3371323e03b23, type: 3}
+    second:
+      variants:
+      - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF _GPU_INSTANCER_BATCHER
+          _NORMALMAP _SIMPLE_LIGHTING _SPECULARHIGHLIGHTS_OFF
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF _SIMPLE_LIGHTING
+          _SPECULARHIGHLIGHTS_OFF
+        passType: 0
+      - keywords: _ENVIRONMENTREFLECTIONS_OFF _GPU_INSTANCER_BATCHER _NORMALMAP _SIMPLE_LIGHTING
+          _SPECULARHIGHLIGHTS_OFF
+        passType: 0
+      - keywords: _ENVIRONMENTREFLECTIONS_OFF _SIMPLE_LIGHTING _SPECULARHIGHLIGHTS_OFF
+        passType: 0
   - first: {fileID: 4800000, guid: 8478781d80234fa29651593b02782b9d, type: 3}
     second:
       variants:
@@ -17,4 +53,26 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: b01e1d1d428a2c5449cab11e199ea60a, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE _NORMALMAP
+        passType: 0
+      - keywords: _ENVIRONMENTREFLECTIONS_OFF
+        passType: 0
+      - keywords: _NORMALMAP
+        passType: 0
+  - first: {fileID: 4800000, guid: 4167cc666386a984194b8ba9dcec1d20, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE
         passType: 0

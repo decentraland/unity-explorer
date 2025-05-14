@@ -81,7 +81,11 @@ namespace DCL.Roads.Systems
                 roadInfo.CurrentAsset = roadAsset;
                 roadInfo.CurrentKey = roadDescription.RoadModel;
 
-                gpuiPrefabManger.AddPrefabInstance(roadAsset.GetComponent<GPUIPrefab>(), 0);
+                foreach (var gpuiPrefab in roadAsset.GetComponent<GPUI_Prefab_Holder>().prefabs)
+                {
+                    gpuiPrefabManger.AddPrefabInstance(gpuiPrefab);
+                }
+
             }
             else
             {
