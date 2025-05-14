@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS.Abstract;
@@ -24,13 +25,14 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string HOVER_TOOLTIP = "Options";
+        private const string HOVER_TOOLTIP = "Open Passport";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private Profile? currentProfileHovered;
+        private readonly IMVCManager mvcManager;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
 
@@ -38,14 +40,16 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             DCLInput dclInput,
-            IMVCManagerMenusAccessFacade menusAccessFacade) : base(world)
+            IMVCManagerMenusAccessFacade menusAccessFacade,
+            IMVCManager mvcManager) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
             this.menusAccessFacade = menusAccessFacade;
-            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.RightPointer);
+            this.mvcManager = mvcManager;
+            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
 
-            dclInput.Player.RightPointer!.performed += OpenContextMenu;
+            dclInput.Player.Pointer!.performed += OpenContextMenu;
         }
 
         protected override void Update(float t)

@@ -161,9 +161,10 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
             if (partitionComponent.IsBehind
+                || avatarShape.HiddenByModifierArea
                 || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
                 || World.Has<BlockedPlayerComponent>(e))

@@ -696,7 +696,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ZoomOut"",
                     ""type"": ""Button"",
                     ""id"": ""2b54f45b-5428-4ae3-893b-fcdabddca74d"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1468,7 +1468,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Submit"",
                     ""type"": ""Button"",
                     ""id"": ""71506014-7297-4064-8fa5-cbf7ff21d68e"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1595,6 +1595,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""type"": ""Button"",
                     ""id"": ""88b91896-4abe-4728-b828-0e6a082b00f7"",
                     ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Tab"",
+                    ""type"": ""Button"",
+                    ""id"": ""d2214e71-9264-42e6-bf3b-bb20c1d57ad0"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1878,6 +1887,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""68736c60-8e28-4f69-918b-3b4c3dbb24ff"",
+                    ""path"": ""<Keyboard>/numpadEnter"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse;Gamepad;Touch;Joystick;XR"",
+                    ""action"": ""Submit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""189346e5-9eff-42e6-ad3d-f686936c3416"",
                     ""path"": ""*/{Cancel}"",
                     ""interactions"": """",
@@ -2139,6 +2159,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ActionDown"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""03b828e1-ae5d-496f-a570-0f53946f190c"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tab"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -2150,7 +2181,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""MainMenu"",
                     ""type"": ""Button"",
                     ""id"": ""20936db2-9a40-404f-97ac-eee3c350d7ec"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3802,6 +3833,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_UI_Close = m_UI.FindAction("Close", throwIfNotFound: true);
         m_UI_ActionUp = m_UI.FindAction("ActionUp", throwIfNotFound: true);
         m_UI_ActionDown = m_UI.FindAction("ActionDown", throwIfNotFound: true);
+        m_UI_Tab = m_UI.FindAction("Tab", throwIfNotFound: true);
         // Shortcuts
         m_Shortcuts = asset.FindActionMap("Shortcuts", throwIfNotFound: true);
         m_Shortcuts_MainMenu = m_Shortcuts.FindAction("MainMenu", throwIfNotFound: true);
@@ -4592,6 +4624,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_Close;
     private readonly InputAction m_UI_ActionUp;
     private readonly InputAction m_UI_ActionDown;
+    private readonly InputAction m_UI_Tab;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -4668,6 +4701,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @ActionDown => m_Wrapper.m_UI_ActionDown;
         /// <summary>
+        /// Provides access to the underlying input action "UI/Tab".
+        /// </summary>
+        public InputAction @Tab => m_Wrapper.m_UI_Tab;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_UI; }
@@ -4741,6 +4778,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionDown.started += instance.OnActionDown;
             @ActionDown.performed += instance.OnActionDown;
             @ActionDown.canceled += instance.OnActionDown;
+            @Tab.started += instance.OnTab;
+            @Tab.performed += instance.OnTab;
+            @Tab.canceled += instance.OnTab;
         }
 
         /// <summary>
@@ -4800,6 +4840,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionDown.started -= instance.OnActionDown;
             @ActionDown.performed -= instance.OnActionDown;
             @ActionDown.canceled -= instance.OnActionDown;
+            @Tab.started -= instance.OnTab;
+            @Tab.performed -= instance.OnTab;
+            @Tab.canceled -= instance.OnTab;
         }
 
         /// <summary>
@@ -6117,6 +6160,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnActionDown(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Tab" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTab(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Shortcuts" which allows adding and removing callbacks.
