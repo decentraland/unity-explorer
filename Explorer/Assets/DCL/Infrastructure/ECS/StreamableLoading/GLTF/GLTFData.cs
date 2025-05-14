@@ -8,13 +8,11 @@ namespace ECS.StreamableLoading.GLTF
 {
     public class GLTFData : StreamableRefCountData<GltfImport>
     {
-        public readonly GltfImport gltfImportedData;
         public readonly GameObject containerGameObject;
 
         public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject)
             : base(gltfImportedData, ReportCategory.GLTF_CONTAINER)
         {
-            this.gltfImportedData = gltfImportedData;
             this.containerGameObject = containerGameObject;
         }
 

@@ -1,10 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.GLTFast.Wrappers;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -19,7 +17,6 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    // [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
