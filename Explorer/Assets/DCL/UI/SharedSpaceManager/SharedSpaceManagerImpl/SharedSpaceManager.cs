@@ -29,6 +29,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isCameraReelFeatureEnabled;
+        private readonly bool isCommunitiesFeatureEnabled;
 
         private readonly CancellationTokenSource cts = new ();
         private bool isTransitioning; // true whenever a view is being shown or hidden, so other calls wait for them to finish
@@ -36,12 +37,13 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
+        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled, bool isCommunitiesEnabled)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
+            isCommunitiesFeatureEnabled = isCommunitiesEnabled;
             ecsWorld = world;
 
             if (isFriendsEnabled)
@@ -55,6 +57,9 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
+
+            if (isCommunitiesEnabled)
+                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 
             if (isCameraReelEnabled)
             {
@@ -76,6 +81,9 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
+
+            if (isCameraReelFeatureEnabled)
+                dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformedAsync;
 
             if (isCameraReelFeatureEnabled)
                 dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
@@ -392,6 +400,12 @@ namespace DCL.UI.SharedSpaceManager
         {
             if (!isExplorePanelVisible && !isTransitioning)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+        }
+
+        private async void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (!isExplorePanelVisible && isCommunitiesFeatureEnabled)
+                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Communities));
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
