@@ -942,7 +942,9 @@ namespace Global.Dynamic
 
             if (includeCommunities)
                 globalPlugins.Add(new CommunitiesPlugin(mvcManager,
-                    assetsProvisioner));
+                    assetsProvisioner,
+                    cameraReelStorageService,
+                    cameraReelScreenshotsStorage));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

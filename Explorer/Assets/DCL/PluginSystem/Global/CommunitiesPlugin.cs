@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Communities.CommunitiesCard;
+using DCL.InWorldCamera.CameraReelStorageService;
 using MVC;
 using System;
 using System.Threading;
@@ -14,12 +15,18 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
         }
 
         public void Dispose()
@@ -35,7 +42,10 @@ namespace DCL.PluginSystem.Global
             CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
             ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
 
-            mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod));
+            mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod,
+                mvcManager,
+                cameraReelStorageService,
+                cameraReelScreenshotsStorage));
         }
     }
 
