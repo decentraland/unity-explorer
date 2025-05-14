@@ -52,7 +52,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
-  - rid: 7749989374430543977
+  - rid: 1766526263112499293
   references:
     version: 2
     RefIds:
@@ -892,7 +892,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 7749989374430543977
+    - rid: 1766526263112499293
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <CommunityCardPrefab>k__BackingField:
