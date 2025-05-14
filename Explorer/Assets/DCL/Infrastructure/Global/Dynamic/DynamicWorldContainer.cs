@@ -432,7 +432,7 @@ namespace Global.Dynamic
             bool includeCommunities = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel, includeCommunities);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -751,6 +751,7 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
+                    includeCommunities,
                     appArgs,
                     viewDependencies,
                     userBlockingCacheProxy,
