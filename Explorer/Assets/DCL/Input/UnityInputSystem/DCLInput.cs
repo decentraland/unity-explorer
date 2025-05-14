@@ -667,7 +667,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ZoomOut"",
                     ""type"": ""Button"",
                     ""id"": ""2b54f45b-5428-4ae3-893b-fcdabddca74d"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2121,7 +2121,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""MainMenu"",
                     ""type"": ""Button"",
                     ""id"": ""20936db2-9a40-404f-97ac-eee3c350d7ec"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2130,7 +2130,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Backpack"",
                     ""type"": ""Button"",
                     ""id"": ""22261e3d-8587-4a52-bd3c-378cbe477a19"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3705,6 +3705,34 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""VoiceChat"",
+            ""id"": ""5eeff51b-88c9-467f-bc3c-c27cbfc35f3c"",
+            ""actions"": [
+                {
+                    ""name"": ""Talk"",
+                    ""type"": ""Button"",
+                    ""id"": ""ac43f17c-f5a8-4949-8602-3b5b32184e64"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""bafd4790-6aa0-468e-9fe0-169c595ad93e"",
+                    ""path"": ""<Keyboard>/t"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Talk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -3829,6 +3857,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
         m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
         m_InWorldCamera_ToggleNametags = m_InWorldCamera.FindAction("ToggleNametags", throwIfNotFound: true);
+        // VoiceChat
+        m_VoiceChat = asset.FindActionMap("VoiceChat", throwIfNotFound: true);
+        m_VoiceChat_Talk = m_VoiceChat.FindAction("Talk", throwIfNotFound: true);
     }
 
     ~@DCLInput()
@@ -3841,6 +3872,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Emotes.enabled, "This will cause a leak and performance issues, DCLInput.Emotes.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_EmoteWheel.enabled, "This will cause a leak and performance issues, DCLInput.EmoteWheel.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_InWorldCamera.enabled, "This will cause a leak and performance issues, DCLInput.InWorldCamera.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_VoiceChat.enabled, "This will cause a leak and performance issues, DCLInput.VoiceChat.Disable() has not been called.");
     }
 
     /// <summary>
@@ -5670,6 +5702,102 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="InWorldCameraActions" /> instance referencing this action map.
     /// </summary>
     public InWorldCameraActions @InWorldCamera => new InWorldCameraActions(this);
+
+    // VoiceChat
+    private readonly InputActionMap m_VoiceChat;
+    private List<IVoiceChatActions> m_VoiceChatActionsCallbackInterfaces = new List<IVoiceChatActions>();
+    private readonly InputAction m_VoiceChat_Talk;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "VoiceChat".
+    /// </summary>
+    public struct VoiceChatActions
+    {
+        private @DCLInput m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public VoiceChatActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "VoiceChat/Talk".
+        /// </summary>
+        public InputAction @Talk => m_Wrapper.m_VoiceChat_Talk;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_VoiceChat; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="VoiceChatActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(VoiceChatActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="VoiceChatActions" />
+        public void AddCallbacks(IVoiceChatActions instance)
+        {
+            if (instance == null || m_Wrapper.m_VoiceChatActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_VoiceChatActionsCallbackInterfaces.Add(instance);
+            @Talk.started += instance.OnTalk;
+            @Talk.performed += instance.OnTalk;
+            @Talk.canceled += instance.OnTalk;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="VoiceChatActions" />
+        private void UnregisterCallbacks(IVoiceChatActions instance)
+        {
+            @Talk.started -= instance.OnTalk;
+            @Talk.performed -= instance.OnTalk;
+            @Talk.canceled -= instance.OnTalk;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="VoiceChatActions.UnregisterCallbacks(IVoiceChatActions)" />.
+        /// </summary>
+        /// <seealso cref="VoiceChatActions.UnregisterCallbacks(IVoiceChatActions)" />
+        public void RemoveCallbacks(IVoiceChatActions instance)
+        {
+            if (m_Wrapper.m_VoiceChatActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="VoiceChatActions.AddCallbacks(IVoiceChatActions)" />
+        /// <seealso cref="VoiceChatActions.RemoveCallbacks(IVoiceChatActions)" />
+        /// <seealso cref="VoiceChatActions.UnregisterCallbacks(IVoiceChatActions)" />
+        public void SetCallbacks(IVoiceChatActions instance)
+        {
+            foreach (var item in m_Wrapper.m_VoiceChatActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_VoiceChatActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="VoiceChatActions" /> instance referencing this action map.
+    /// </summary>
+    public VoiceChatActions @VoiceChat => new VoiceChatActions(this);
     private int m_DesktopSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -6432,5 +6560,20 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleNametags(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "VoiceChat" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="VoiceChatActions.AddCallbacks(IVoiceChatActions)" />
+    /// <seealso cref="VoiceChatActions.RemoveCallbacks(IVoiceChatActions)" />
+    public interface IVoiceChatActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Talk" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTalk(InputAction.CallbackContext context);
     }
 }
