@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             };
         }
 
-        public bool Play(GameObject mainAsset, IReadOnlyList<AnimationClip>? animationClips, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
@@ -44,8 +44,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
-                if (IsValid(mainAsset, animationClips))
-                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, animationClips), onRelease: releaseEmoteReferences));
+                if (IsValid(mainAsset))
+                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
                 else
                     return false;
             }
@@ -69,7 +69,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (child != null)
                     child.gameObject.layer = avatarTransform.gameObject.layer;
 
-            // TODO: can we remove the 'animationClips' parameter altogether ???
             if (emoteReferences.avatarClip is { legacy: true })
             {
                 var avatarAnimator = view.GetAnimator();
@@ -123,21 +122,32 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
-        private static bool IsValid(GameObject mainAsset, IReadOnlyList<AnimationClip>? animationClips) =>
-            mainAsset.GetComponent<Animator>() || animationClips is { Count: > 0 };
+        private static bool IsValid(GameObject mainAsset) =>
+            mainAsset.GetComponent<Animator>() || mainAsset.GetComponent<Animation>();
 
-        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset, IReadOnlyList<AnimationClip>? animationClips)
+        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset);
 
+            AnimationClip[] animationClips;
+
             Animator? animator = mainGameObject.GetComponent<Animator>();
+            if (animator)
+            {
+                animationClips = animator.runtimeAnimatorController.animationClips;
+            }
+            else
+            {
+                // Scene Emotes in Local Scene Development mode (legacy animations) only have 1 clip
+                Animation animation = mainGameObject.GetComponent<Animation>();
+                animationClips = new AnimationClip[1];
+                animationClips[0] = animation.clip;
+            }
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
-            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!; // TODO: This should be a hashset...
+            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
 
-            ExtractClips(animationClips ?? animator.runtimeAnimatorController.animationClips,
-                uniqueClips,
-                out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
+            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
 
             if (uniqueClips.Count == 1)
             {
