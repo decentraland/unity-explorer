@@ -164,7 +164,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             else if (intention is GetSceneEmoteFromLocalSceneIntention localIntention)
             {
                 var promise = GltfPromise.Create(World,
-                    GetGLTFIntention.Create(localIntention.EmotePath, localIntention.EmoteHash, mecanimAnimationClips: true),
+                    GetGLTFIntention.Create(localIntention.EmotePath, localIntention.EmoteHash, mecanimAnimationClips: false),
                     partitionComponent);
 
                 World.Create(promise, emote, intention.BodyShape);
