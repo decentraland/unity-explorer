@@ -97,10 +97,13 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            contextMenuTask.TrySetResult();
-            contextMenuTask = new UniTaskCompletionSource();
+            //Commented for now, we will restore it later
+            //contextMenuTask.TrySetResult();
+            //contextMenuTask = new UniTaskCompletionSource();
 
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
+
+            //menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }
