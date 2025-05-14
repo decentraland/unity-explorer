@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: VoiceChatSettings
   m_EditorClassIdentifier: 
   SelectedMicrophoneIndex: 0
+  SampleWindow: 64
+  MicrophoneLoudnessMinimumThreshold: 0.2
