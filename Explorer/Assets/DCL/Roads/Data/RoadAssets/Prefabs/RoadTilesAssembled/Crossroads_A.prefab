@@ -397,6 +397,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RoadTileCornersAll
       objectReference: {fileID: 0}
+    - target: {fileID: 8100020644663008113, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
