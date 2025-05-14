@@ -326,9 +326,6 @@ namespace DCL.Nametags
         {
             try
             {
-                if (animationState == AnimationState.ANIMATING)
-                    await AnimateOutAsync(ct);
-
                 await AnimateInAsync(messageText, ct);
                 await UniTask.Delay(bubbleIdleTime + AdditionalMessageVisibilityTimeMs(messageText), cancellationToken: ct);
                 await AnimateOutAsync(ct);
@@ -380,20 +377,18 @@ namespace DCL.Nametags
             messageContent.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
             messageContent.SetText(messageText);
             SetHeightAndTextStyle(messageText);
+            messageContentRectTransform.ForceUpdateRectTransforms();
             messageContent.ForceMeshUpdate();
 
             preferredSize = CalculatePreferredSize(out float availableWidthForPrivateMessage);
             messageContentRectTransform.sizeDelta = preferredSize;
-            messageContent.ForceMeshUpdate();
-
-            textContentInitialPosition = CalculateMessageContentPosition(preferredSize.x, preferredSize.y);
-            messageContentRectTransform.anchoredPosition = textContentInitialPosition;
+            textContentInitialPosition = NametagViewConstants.ZERO_VECTOR;
 
             preferredSize.x += bubbleMarginOffsetWidth;
-            preferredSize.y += bubbleMarginOffsetHeight;
+            preferredSize.y = messageContent.preferredHeight + bubbleMarginOffsetHeight;
 
             usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, usernameText.preferredWidth, bubbleMarginOffsetWidth);
-            usernameFinalPosition.y = messageContentRectTransform.sizeDelta.y + bubbleMarginOffsetHeightThird;
+            usernameFinalPosition.y = messageContent.preferredHeight + bubbleMarginOffsetHeightThird;
 
             currentSequence?.Kill();
             currentSequence = DOTween.Sequence();
@@ -450,8 +445,7 @@ namespace DCL.Nametags
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
                            .Join(this.messageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
-                           .Join(this.messageContent.DOColor(currentSpritesColor, animationInDurationQuarter));
-
+                           .Join(this.messageContent.DOColor(currentSpritesColor, animationInDuration));
 
             if (isMention)
                 currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve));
@@ -463,18 +457,18 @@ namespace DCL.Nametags
 
         private void SetHeightAndTextStyle(string message)
         {
+            additionalHeight = 0;
             bool isSingleEmoji = NametagViewConstants.SINGLE_EMOJI_REGEX.Match(message).Success;
             if (isSingleEmoji)
             {
                 additionalHeight = singleEmojiExtraHeight;
                 messageContent.fontSize = singleEmojiSize;
-                messageContent.alignment = TextAlignmentOptions.Center;
+                messageContent.alignment = TextAlignmentOptions.Bottom;
             }
             else
             {
-                additionalHeight = 0;
                 messageContent.fontSize = NametagViewConstants.MESSAGE_CONTENT_FONT_SIZE;
-                messageContent.alignment = TextAlignmentOptions.Left;
+                messageContent.alignment = TextAlignmentOptions.BottomLeft;
             }
         }
 
@@ -592,11 +586,7 @@ namespace DCL.Nametags
         [BurstCompile]
         private static float2 CalculateUsernamePosition(float usernamePositionX, float verifiedIconWidth) =>
             new float2(usernamePositionX - (verifiedIconWidth / 2), 0);
-
-        [BurstCompile]
-        private static float2 CalculateMessageContentPosition(float preferredSizeX, float preferredSizeY) =>
-            new (preferredSizeX / 2, -preferredSizeY);
-
+        
         [BurstCompile]
         private static float2 CalculateUsernameFinalPosition(float preferredSizeX, float usernameWidth, float bubbleMarginWidth) =>
             new ((-preferredSizeX / 2) + (usernameWidth / 2) + (bubbleMarginWidth / 2), 0);
