@@ -68,6 +68,9 @@ namespace DCL.UI.CustomInputField
             if (Keyboard.current.leftCommandKey.wasPressedThisFrame || Keyboard.current.leftCtrlKey.wasPressedThisFrame)
                 isControlPressed = true;
 
+            if (Keyboard.current.tabKey.wasPressedThisFrame)
+                return true;
+
             if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
             {
                 PasteShortcutPerformed?.Invoke();
