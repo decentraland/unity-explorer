@@ -52,17 +52,17 @@ namespace DCL.AvatarRendering.Emotes
             ref IEmote emote
         )
         {
-            if (promise.IsCancellationRequested(World!))
+            if (promise.IsCancellationRequested(World))
             {
                 emote.ResetManifest();
                 World.Destroy(entity);
                 return;
             }
 
-            if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.UpdateManifest(result);
-                World!.Destroy(entity);
+                World.Destroy(entity);
             }
         }
 
@@ -72,13 +72,13 @@ namespace DCL.AvatarRendering.Emotes
             ref EmotesFromRealmPromise promise
         )
         {
-            if (promise.IsCancellationRequested(World!))
+            if (promise.IsCancellationRequested(World))
             {
                 World.Destroy(entity);
                 return;
             }
 
-            if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -94,7 +94,7 @@ namespace DCL.AvatarRendering.Emotes
                             component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 
-                World!.Destroy(entity);
+                World.Destroy(entity);
             }
         }
 
@@ -103,7 +103,7 @@ namespace DCL.AvatarRendering.Emotes
             Entity entity,
             ref GltfPromise promise,
             ref IEmote emote,
-            ref BodyShape bodyShape)
+            in BodyShape bodyShape)
         {
             FinalizeAssetLoading<GLTFData, GetGLTFIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
         }
@@ -122,11 +122,11 @@ namespace DCL.AvatarRendering.Emotes
             Entity entity,
             ref AssetPromise<TAsset, TLoadingIntention> promise,
             ref IEmote emote,
-            BodyShape bodyShape,
+            in BodyShape bodyShape,
             Func<StreamableLoadingResult<TAsset>, AttachmentRegularAsset> toRegularAsset)
             where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
-            if (promise.IsCancellationRequested(World!))
+            if (promise.IsCancellationRequested(World))
             {
                 ResetEmoteResultOnCancellation(emote, bodyShape);
                 World.Destroy(entity);
@@ -149,14 +149,14 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 emote.UpdateLoadingStatus(false);
-                World!.Destroy(entity);
+                World.Destroy(entity);
             }
         }
 
         [Query]
-        private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
+        private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, in BodyShape bodyShape)
         {
-            if (promise.IsCancellationRequested(World!))
+            if (promise.IsCancellationRequested(World))
             {
                 World.Destroy(entity);
                 return;
@@ -164,13 +164,13 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.IsConsumed) return;
 
-            if (!promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
+            if (!promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
                 return;
 
             if (result.Succeeded)
                 emote.AudioAssetResults[bodyShape] = result;
 
-            World!.Destroy(entity);
+            World.Destroy(entity);
         }
 
         [Query]
@@ -184,7 +184,7 @@ namespace DCL.AvatarRendering.Emotes
             World.Destroy(entity);
         }
 
-        private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
+        private static void ResetEmoteResultOnCancellation(IEmote emote, in BodyShape bodyShape)
         {
             emote.UpdateLoadingStatus(false);
 

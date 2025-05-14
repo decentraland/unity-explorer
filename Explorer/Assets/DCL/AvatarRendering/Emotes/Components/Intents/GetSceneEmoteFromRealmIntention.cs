@@ -2,7 +2,6 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading;
-using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Threading;

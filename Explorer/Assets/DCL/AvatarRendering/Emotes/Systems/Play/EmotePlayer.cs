@@ -1,7 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
-using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
