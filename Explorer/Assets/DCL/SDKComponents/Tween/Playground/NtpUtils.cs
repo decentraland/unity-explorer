@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.Tween.Playground
         {
             byte[] ntpData = new byte[48];
             const byte li = 0,
-                       vn = 4, // protocol version
+                       vn = 3, // protocol version
                        mode = 3; // client mode
 
             ntpData[0] = (li << 6) | (vn << 3) | mode;
