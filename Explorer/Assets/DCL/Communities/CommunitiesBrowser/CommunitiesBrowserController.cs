@@ -1,3 +1,4 @@
+using DCL.Input;
 using DCL.UI;
 using UnityEngine;
 
@@ -7,16 +8,21 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
+        private readonly ICursor cursor;
 
-        public CommunitiesBrowserController(CommunitiesBrowserView view)
+        public CommunitiesBrowserController(
+            CommunitiesBrowserView view,
+            ICursor cursor)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            this.cursor = cursor;
         }
 
         public void Activate()
         {
             view.gameObject.SetActive(true);
+            cursor.Unlock();
         }
 
         public void Deactivate()
