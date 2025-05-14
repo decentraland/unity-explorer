@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 namespace DCL.SDKComponents.Tween.Playground
@@ -12,15 +13,15 @@ namespace DCL.SDKComponents.Tween.Playground
     [Serializable]
     public class NtpSample
     {
-        public string Server;
+        public string ServerName;
         public double OffsetMs;
         public double RoundTripMs;
-        public string Timestamp;
+        public string ServerTime;
+        public DateTime Timestamp;
     }
 
     public class MyNtpClient : MonoBehaviour
     {
-        private const double MAX_RTT_MS = 150;   // far-away servers
         private const double SMEAR_THRESHOLD_MS = 200;  // >200 ms = highly likely leap-smear
 
         public List<NtpSample> Samples = new ();
@@ -59,14 +60,92 @@ namespace DCL.SDKComponents.Tween.Playground
             foreach (string server in ntpServers)
                 PollServer(server);
 
+            MiniFilter();
+            MitigateAndCalculateOffset();
+        }
+
+        private void MiniFilter()
+        {
             var cluster = Samples
                          .GroupBy(p => Math.Round(p.OffsetMs / SMEAR_THRESHOLD_MS)) // шаг 200 мс
                          .OrderByDescending(g => g.Count())                       // берем самый массовый
                          .FirstOrDefault();
 
             finalOffsetMs = cluster?.Average(p => p.OffsetMs)
-                                   ?? Samples.OrderBy(p => p.RoundTripMs).First().OffsetMs;
+                            ?? Samples.OrderBy(p => p.RoundTripMs).First().OffsetMs;
         }
+
+        public double _mitigatedOffsetMs = 0;
+        public bool _hasValidSamples = false;
+        private DateTime _lastMitigationTime;
+        private int maxSampleAge = 300;
+
+        private void MitigateAndCalculateOffset()
+        {
+            // Remove old samples
+            // Samples.RemoveAll(s => (DateTime.UtcNow - s.Timestamp).TotalSeconds > maxSampleAge);
+
+            if (Samples.Count < 3)
+            {
+                _hasValidSamples = false;
+                return;
+            }
+
+            // Filter 1: Remove samples with excessive round-trip time
+            double medianRtt = CalculateMedian(Samples.Select(s => s.RoundTripMs).ToList());
+            var filteredByRtt = Samples
+                               .Where(s => s.RoundTripMs < medianRtt * 2) // Filter out samples with RTT > 2x median
+                               .ToList();
+
+            if (filteredByRtt.Count < 3)
+            {
+                _hasValidSamples = false;
+                return;
+            }
+
+            // Filter 2: Remove outlier offsets (samples far from the median)
+            double medianOffset = CalculateMedian(filteredByRtt.Select(s => s.OffsetMs).ToList());
+            var filteredByOffset = filteredByRtt
+                .Where(s => Math.Abs(s.OffsetMs - medianOffset) < medianRtt) // Within 1 RTT of median offset
+                .ToList();
+
+            if (filteredByOffset.Count < 3)
+            {
+                _hasValidSamples = false;
+                return;
+            }
+
+            // Select best 3 candidates (lowest RTT samples)
+            var bestCandidates = filteredByOffset
+                .OrderBy(s => s.RoundTripMs)
+                .Take(3)
+                .ToList();
+
+            // Calculate weighted average offset (weight by inverse of RTT)
+            double totalWeight = bestCandidates.Sum(s => 1.0 / s.RoundTripMs);
+            double weightedOffsetSum = bestCandidates.Sum(s => s.OffsetMs * (1.0 / s.RoundTripMs));
+
+            _mitigatedOffsetMs = weightedOffsetSum / totalWeight;
+            _hasValidSamples = true;
+            _lastMitigationTime = DateTime.UtcNow;
+
+            Debug.Log($"Mitigated offset: {_mitigatedOffsetMs:F3}ms from {bestCandidates.Count} samples");
+        }
+
+        // Statistical helper: Calculate median of a list
+        private static double CalculateMedian(List<double> values)
+        {
+            if (values == null || values.Count == 0)
+                return 0;
+
+            var sortedValues = values.OrderBy(v => v).ToList();
+            int count = sortedValues.Count;
+
+            return count % 2 == 0
+                ? (sortedValues[(count / 2) - 1] + sortedValues[count / 2]) / 2
+                : sortedValues[count / 2];
+        }
+
         private void PollServer(string server)
         {
             byte[] ntpData = NtpUtils.CreateNtpRequestBuffer();
@@ -110,15 +189,8 @@ namespace DCL.SDKComponents.Tween.Playground
                 var roundTripMs  = (wayIn + wayOut); // δ
 
                 DateTime serverTime = DateTimeOffset.FromUnixTimeMilliseconds((long)(clientReceiveT4 + offsetMs)).UtcDateTime;
-                var ServerTime = serverTime.ToString("O");
 
-                // 7.  Diagnostics
-                Debug.Log($"Server time : {ServerTime}");
-                Debug.Log($"Offset      : {offsetMs:F3}ms (server is {(offsetMs >= 0 ? "ahead" : "behind")})");
-                Debug.Log($"Delay (RTT) : {roundTripMs:F3}ms");
-
-                if(roundTripMs < MAX_RTT_MS)
-                    Samples.Add(new NtpSample{ OffsetMs = offsetMs, Server = server, RoundTripMs = roundTripMs, Timestamp = ServerTime });
+                Samples.Add(new NtpSample{ OffsetMs = offsetMs, ServerName = server, RoundTripMs = roundTripMs, ServerTime = serverTime.ToString("O") });
             }
         }
     }
