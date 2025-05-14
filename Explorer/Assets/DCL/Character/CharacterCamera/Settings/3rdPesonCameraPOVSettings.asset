@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f400a5a1cfb363048a56d039b59fd0fd, type: 3}
   m_Name: 3rdPesonCameraPOVSettings
   m_EditorClassIdentifier: 
-  <RotationSpeed>k__BackingField: 7
+  <RotationSpeed>k__BackingField: 4.5
   <MaxRotationPerFrame>k__BackingField: 150
   <RotationDamping>k__BackingField: 0.05
   <MinVerticalAngle>k__BackingField: -55
