@@ -400,7 +400,7 @@ namespace DCL.UI.SharedSpaceManager
             Entity camera = ecsWorld.CacheCamera();
 
             if (!ecsWorld.Has<InWorldCameraComponent>(camera))
-                await HideAllAsync();
+                await HideAllAsync(PanelsSharingSpace.Chat);
 
             const string SOURCE_SHORTCUT = "Shortcut";
             ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
