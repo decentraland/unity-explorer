@@ -39,9 +39,9 @@ namespace DCL.MarketplaceCredits.Sections
             switch (creditsProgramProgressResponse.season.seasonState)
             {
                 case nameof(MarketplaceCreditsUtils.SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS):
-                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS):
                     title = "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
                     break;
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS):
                 case nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED):
                     title = "Marketplace Credits are Temporarily Offline";
                     subTitle = $"Please check the #product-status channel in <color=#FF2D55><b><u><link={DISCORD_LINK_ID}>Decentraland's Discord server</link></u></b></color> for updates if service does not resume shortly.";
