@@ -28,6 +28,7 @@ namespace DCL.Communities.CommunitiesCard
 
         [field: Header("References")]
         [field: SerializeField] public Button CloseButton { get; private set; }
+        [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]

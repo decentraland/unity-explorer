@@ -7,6 +7,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.CommunitiesCard
@@ -21,6 +22,8 @@ namespace DCL.Communities.CommunitiesCard
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private CancellationTokenSource photosSectionCancellationTokenSource = new ();
+        private CancellationTokenSource membersSectionCancellationTokenSource = new ();
+        private CancellationTokenSource placesSectionCancellationTokenSource = new ();
 
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -35,6 +38,10 @@ namespace DCL.Communities.CommunitiesCard
         public override void Dispose()
         {
             viewInstance!.SectionChanged -= OnSectionChanged;
+
+            photosSectionCancellationTokenSource.SafeCancelAndDispose();
+            membersSectionCancellationTokenSource.SafeCancelAndDispose();
+            placesSectionCancellationTokenSource.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -53,6 +60,9 @@ namespace DCL.Communities.CommunitiesCard
 
         protected override void OnViewClose()
         {
+            photosSectionCancellationTokenSource.SafeCancelAndDispose();
+            membersSectionCancellationTokenSource.SafeCancelAndDispose();
+            placesSectionCancellationTokenSource.SafeCancelAndDispose();
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -60,22 +70,24 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnSectionChanged(CommunityCardView.Sections section)
         {
+            Debug.Log(section);
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
                     photosSectionCancellationTokenSource = photosSectionCancellationTokenSource.SafeRestart();
                     //TODO (Lorenzo): inputData should hold the community data structure
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync("this is a communityId", photosSectionCancellationTokenSource.Token).Forget();
+                    // cameraReelGalleryController!.ShowCommunityGalleryAsync("this is a communityId", photosSectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
+                    membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
                     break;
                 case CommunityCardView.Sections.PLACES:
+                    placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
                     break;
             }
         }
 
-
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            throw new NotImplementedException();
+            UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct));
     }
 }
