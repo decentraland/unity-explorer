@@ -74,14 +74,14 @@ namespace DCL.SDKComponents.Tween.Playground
 
                     // Читаем метки времени сервера из пакета (RFC 5905)
                     // T2 = Receive Timestamp - когда сервер получил наш запрос
-                    ulong t2 = ReadTimestamp(ntpData, 32);
+                    ulong t2 = 0;//ReadTimestamp(ntpData, 32);
 
                     // T3 = Transmit Timestamp - когда сервер отправил ответ
-                    ulong t3 = ReadTimestamp(ntpData, 40);
+                    ulong t3 = 0;//ReadTimestamp(ntpData, 40);
 
                     // Переводим в миллисекунды
-                    double t2ms = NtpToUnixMilliseconds(t2);
-                    double t3ms = NtpToUnixMilliseconds(t3);
+                    double t2ms = 0;//NtpToUnixMilliseconds(t2);
+                    double t3ms = 0;//NtpToUnixMilliseconds(t3);
 
                     // Расчет по 4-точечному методу
                     RoundTripMs = (t4 - t1) - (t3ms - t2ms);
@@ -99,34 +99,6 @@ namespace DCL.SDKComponents.Tween.Playground
             }
         }
 
-        // Читаем 64-битную метку времени из буфера (big-endian)
-        private static ulong ReadTimestamp(byte[] buffer, int offset)
-        {
-            ulong intPart = ((ulong)buffer[offset + 0] << 24) |
-                            ((ulong)buffer[offset + 1] << 16) |
-                            ((ulong)buffer[offset + 2] << 8) |
-                            ((ulong)buffer[offset + 3]);
 
-            ulong fracPart = ((ulong)buffer[offset + 4] << 24) |
-                             ((ulong)buffer[offset + 5] << 16) |
-                             ((ulong)buffer[offset + 6] << 8) |
-                             ((ulong)buffer[offset + 7]);
-
-            return (intPart << 32) | fracPart;
-        }
-
-        // Конвертация из NTP-времени в миллисекунды Unix-эпохи
-        private static double NtpToUnixMilliseconds(ulong ntpTimestamp)
-        {
-            const ulong SecondsFrom1900To1970 = 2208988800UL;
-
-            ulong seconds = ntpTimestamp >> 32;
-            ulong fraction = ntpTimestamp & 0xFFFFFFFF;
-
-            double milliseconds = (seconds - SecondsFrom1900To1970) * 1000.0 +
-                                  (fraction * 1000.0 / 0x100000000L);
-
-            return milliseconds;
-        }
     }
 }
