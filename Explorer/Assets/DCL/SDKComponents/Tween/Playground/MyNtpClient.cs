@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.SDKComponents.Tween.Playground
 {
@@ -32,32 +34,32 @@ namespace DCL.SDKComponents.Tween.Playground
         [SerializeField] private  int timeoutMs = 3000;
 
         public string ServerTime;
-        public double pathInMs;     // client → server   (after clock‑base correction)
-        public double pathOutMs;    // server → client   (after clock‑base correction)
         public double offsetMs;
         public double roundTripMs;
 
         [ContextMenu("VVV")]
         private void Poll()
         {
-            byte[] ntpData = NtpUtils.CreateNtpClientModeRequestArray();
+            byte[] ntpData = NtpUtils.CreateNtpRequestBuffer();
 
-            using (UdpClient client = new UdpClient())
+            using (UdpClient udp = new UdpClient())
             {
-                client.Client.ReceiveTimeout = timeoutMs;
+                udp.Client.ReceiveTimeout = timeoutMs;
+                udp.Client.SendTimeout    = timeoutMs;
 
-                // Resolve first IPv4 address to avoid potential IPv6/UDP issues in some stacks
-                // IPAddress address = (await Dns.GetHostAddressesAsync(server)).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
-                //  IPAddress[] addrs = await Dns.GetHostAddressesAsync(ntpServers[0]);
-                IPAddress[] addresses = Dns.GetHostAddresses(ntpServers[0]); // IPAddress[] addresses = Dns.GetHostEntry(ntpServers[0]).AddressList;
-                IPEndPoint ipEndPoint = new IPEndPoint(addresses[0], ntpPort); // Retrieve the IP addresses associated with the specified NTP server
+                IPAddress[] addresses = Dns.GetHostAddresses(ntpServers[0]);
+                IPEndPoint ipEndPoint = new IPEndPoint(addresses[0], ntpPort);
 
                 double clientSendT1 = NtpUtils.UnixUtcNowMs();
+                long   swTicksT1   = Stopwatch.GetTimestamp();
                 NtpUtils.WriteTimestamp(ntpData, 40, NtpUtils.UnixMillisecondsToNtpTimestamp(clientSendT1));
 
-                client.Send(ntpData, ntpData.Length, ipEndPoint);
-                ntpData = client.Receive(ref ipEndPoint); // blocks (timeout‑guarded)
-                double clientReceiveT4 = NtpUtils.UnixUtcNowMs();
+                udp.Send(ntpData, ntpData.Length, ipEndPoint);
+                ntpData = udp.Receive(ref ipEndPoint); // blocks (timeout‑guarded)
+
+                long   swTicksT4 = Stopwatch.GetTimestamp();
+                double t4DeltaMs = NtpUtils.StopwatchTicksToMilliseconds(swTicksT4 - swTicksT1);
+                double clientReceiveT4 = clientSendT1 + t4DeltaMs;
 
                 double serverReceiveT2 = NtpUtils.NtpEpochToUnixMilliseconds(NtpUtils.ReadTimestamp(ntpData, 32));
                 double serverSendT3 = NtpUtils.NtpEpochToUnixMilliseconds(NtpUtils.ReadTimestamp(ntpData, 40));
@@ -67,17 +69,13 @@ namespace DCL.SDKComponents.Tween.Playground
                 offsetMs     = (wayIn - wayOut) / 2.0; // θ
                 roundTripMs  = (wayIn + wayOut); // δ
 
-                pathInMs  = serverReceiveT2 - (clientSendT1 + offsetMs);
-                pathOutMs = (clientReceiveT4 - offsetMs) - serverSendT3;
-
                 DateTime serverTime = DateTimeOffset.FromUnixTimeMilliseconds((long)(clientReceiveT4 + offsetMs)).UtcDateTime;
-                ServerTime = serverTime.ToString($"{serverTime:O}");
+                ServerTime = serverTime.ToString("O");
 
                 // 7.  Diagnostics
                 Debug.Log($"Server time : {serverTime:O}");
-                Debug.Log($"Offset      : {offsetMs:F3} ms (server is {(offsetMs >= 0 ? "ahead" : "behind")})");
-                Debug.Log($"Delay (RTT) : {roundTripMs:F3} ms");
-                Debug.Log($"Path ↑      : {pathInMs:F3} ms · Path ↓ : {pathOutMs:F3} ms");
+                Debug.Log($"Offset      : {offsetMs:F3}ms (server is {(offsetMs >= 0 ? "ahead" : "behind")})");
+                Debug.Log($"Delay (RTT) : {roundTripMs:F3}ms");
             }
         }
     }

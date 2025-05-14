@@ -362,7 +362,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1551708880}
-  - component: {fileID: 1551708879}
   - component: {fileID: 1551708881}
   m_Layer: 0
   m_Name: _EntryPoint
@@ -371,21 +370,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1551708879
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551708878}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: acb551a1c92747608beadc204290940d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ntpServer: pool.ntp.org
-  ntpPort: 123
-  updateInterval: 0.3
 --- !u!4 &1551708880
 Transform:
   m_ObjectHideFlags: 0
@@ -408,22 +392,29 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1551708878}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa19f49532a74d7fb3453dba149a60d3, type: 3}
+  m_Script: {fileID: 11500000, guid: 6df7bdf1f0434bcda4672ce3aac39e93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ntpServer: pool.ntp.org
+  ntpServers:
+  - time.cloudflare.com
+  - time.windows.com
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org
+  - time.facebook.com
+  - time.nist.gov
   ntpPort: 123
-  updateInterval: 0.3
   timeoutMs: 3000
-  OffsetMs: 1747161031076.8823
-  RoundTripMs: 27.342128906250004
-  IsSynced: 1
+  ServerTime: 2025-05-14T12:12:11.5680000Z
+  offsetMs: 44.939453125
+  roundTripMs: 14.169921875
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1551708880}
   - {fileID: 444072512}
   - {fileID: 1514223289}
-  - {fileID: 1551708880}

@@ -6,6 +6,7 @@ namespace DCL.SDKComponents.Tween.Playground
     public static class NtpUtils
     {
         private const ulong SECONDS_FROM1900_TO1970 = 2_208_988_800UL; // 70 years + 17 leap‑days
+        private const double FRAC_TO_MS = 1000.0 / 0x1_0000_0000UL;
 
         private static readonly double MS_PER_TICK = 1000.0 / Stopwatch.Frequency;
 
@@ -15,9 +16,9 @@ namespace DCL.SDKComponents.Tween.Playground
         public static double StopwatchTicksToMilliseconds(long ticks) => ticks * MS_PER_TICK;
 
         /// <summary>
-        /// Creates a minimal NTP request buffer
+        /// Creates a minimal NTP request buffer. RFC 5905 §7.3
         /// </summary>
-        public static byte[] CreateNtpClientModeRequestArray()
+        public static byte[] CreateNtpRequestBuffer()
         {
             byte[] ntpData = new byte[48];
             const byte li = 0,
@@ -35,7 +36,7 @@ namespace DCL.SDKComponents.Tween.Playground
         {
             ulong seconds  = ntpTimestamp >> 32;
             ulong fraction = ntpTimestamp & 0xFFFF_FFFFUL;
-            return ((seconds - SECONDS_FROM1900_TO1970) * 1000.0) + (fraction * 1000.0 / 0x1_0000_0000UL);
+            return ((seconds - SECONDS_FROM1900_TO1970) * 1000.0) + (fraction * FRAC_TO_MS);
         }
 
         /// <summary>
@@ -48,14 +49,15 @@ namespace DCL.SDKComponents.Tween.Playground
             return (seconds << 32) | fraction;
         }
 
-
         /// <summary>
         /// Current Unix time in milliseconds (wall‑clock).
         /// </summary>
         public static double UnixUtcNowMs() =>
             (DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
 
-        /// <summary>Write a 64‑bit NTP timestamp into <paramref name="buf"/> at <paramref name="ofs"/> (big‑endian).</summary>
+        /// <summary>
+        /// Write a 64‑bit NTP timestamp into <paramref name="buf"/> at <paramref name="ofs"/> (big‑endian).
+        /// </summary>
         public static void WriteTimestamp(byte[] buf, int ofs, ulong ntpTimestamp)
         {
             buf[ofs + 0] = (byte)(ntpTimestamp >> 56);
