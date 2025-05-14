@@ -69,6 +69,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteReferences.avatarClip is { legacy: true })
             {
+                Debug.Log($"PRAVS - Playing LEGACY emote");
+
                 var avatarAnimator = view.GetAnimator();
                 avatarAnimator.enabled = false;
 
@@ -87,6 +89,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
             else
             {
+                Debug.Log($"PRAVS - Playing MECANIM emote");
+
                 if (emoteReferences.avatarClip != null)
                 {
                     view.ReplaceEmoteAnimation(emoteReferences.avatarClip);

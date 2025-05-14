@@ -335,12 +335,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            // Scene emotes come with only 1 animation
-            AnimationClip[]? animationClips = null;
-            if (go.TryGetComponent<Animation>(out var animation))
-                animationClips = new[] { animation.clip };
-
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, animationClips);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
@@ -355,7 +350,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, result.Asset.AnimationClips);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)
