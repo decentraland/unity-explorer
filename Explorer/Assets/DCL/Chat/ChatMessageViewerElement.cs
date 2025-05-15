@@ -375,7 +375,7 @@ namespace DCL.Chat
             popupCts = popupCts.SafeRestart();
             contextMenuTask?.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
