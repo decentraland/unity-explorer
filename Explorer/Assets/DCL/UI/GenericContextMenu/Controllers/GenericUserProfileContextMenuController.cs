@@ -249,13 +249,13 @@ namespace DCL.UI.GenericContextMenu.Controllers
             closeContextMenuTask.TrySetResult();
 
             //Per design request we need to add an extra character after adding the mention to the chat.
-            ShowChat(() => chatEventBus.InsertText(userName + " ")).Forget();
+            ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ShowChat(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
+            ShowChatAsync(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
         }
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
