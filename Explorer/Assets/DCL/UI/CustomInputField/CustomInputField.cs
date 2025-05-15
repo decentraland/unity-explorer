@@ -41,8 +41,6 @@ namespace DCL.UI.CustomInputField
             base.OnDeselect(eventData);
         }
 
-        private readonly Event processingEvent = new ();
-
         public override void OnUpdateSelected(BaseEventData eventData)
         {
             if (!isFocused)
@@ -149,7 +147,8 @@ namespace DCL.UI.CustomInputField
                          .Append(" ")
                          .Append(text.AsSpan(replaceAt + replaceAmount));
 
-            if (notify) text = stringBuilder.ToString();
+            if (notify)
+                text = stringBuilder.ToString();
             else
                 SetTextWithoutNotify(stringBuilder.ToString());
 
