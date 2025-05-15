@@ -24,7 +24,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly float width;
         internal readonly RectOffset verticalLayoutPadding;
         internal readonly int elementsSpacing;
-        internal ContextMenuOpenDirection anchorPoint;
+        internal GenericContextMenuAnchorPoint anchorPoint;
         internal Vector2 offsetFromTarget;
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         ///     offsetFromTarget has the default value of (11, 18).
         ///     horizontalLayoutPadding has the default value of (8, 8, 4, 12).
         /// </summary>
-        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
+        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.TOP_LEFT)
         {
             this.width = width;
             this.offsetFromTarget = offsetFromTarget ?? DEFAULT_OFFSET_FROM_TARGET;
@@ -53,7 +53,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             return this;
         }
 
-        public void ChangeAnchorPoint(ContextMenuOpenDirection newAnchorPoint)
+        public void ChangeAnchorPoint(GenericContextMenuAnchorPoint newAnchorPoint)
         {
             this.anchorPoint = newAnchorPoint;
         }
@@ -81,5 +81,16 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.setting = setting;
             this.Enabled = true;
         }
+    }
+
+    public enum GenericContextMenuAnchorPoint
+    {
+        TOP_LEFT,
+        TOP_RIGHT,
+        BOTTOM_LEFT,
+        BOTTOM_RIGHT,
+        CENTER_LEFT,
+        CENTER_RIGHT,
+        DEFAULT
     }
 }

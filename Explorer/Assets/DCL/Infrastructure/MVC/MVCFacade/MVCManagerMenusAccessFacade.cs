@@ -11,6 +11,7 @@ using DCL.TeleportPrompt;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3;
@@ -117,26 +118,27 @@ namespace MVC
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
         }
 
-        private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
+        private GenericContextMenuAnchorPoint ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
         {
             switch (anchorPoint)
             {
                 case MenuAnchorPoint.TOP_LEFT:
-                    return ContextMenuOpenDirection.TOP_LEFT;
+                    return GenericContextMenuAnchorPoint.TOP_LEFT;
                 case MenuAnchorPoint.TOP_RIGHT:
-                    return ContextMenuOpenDirection.TOP_RIGHT;
+                    return GenericContextMenuAnchorPoint.TOP_RIGHT;
                 case MenuAnchorPoint.BOTTOM_LEFT:
-                    return ContextMenuOpenDirection.BOTTOM_LEFT;
+                    return GenericContextMenuAnchorPoint.BOTTOM_LEFT;
                 case MenuAnchorPoint.BOTTOM_RIGHT:
-                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
+                    return GenericContextMenuAnchorPoint.BOTTOM_RIGHT;
                 case MenuAnchorPoint.CENTER_LEFT:
-                    return ContextMenuOpenDirection.CENTER_LEFT;
+                    return GenericContextMenuAnchorPoint.CENTER_LEFT;
                 case MenuAnchorPoint.CENTER_RIGHT:
-                    return ContextMenuOpenDirection.CENTER_RIGHT;
+                    return GenericContextMenuAnchorPoint.CENTER_RIGHT;
                 default:
                 case MenuAnchorPoint.DEFAULT:
-                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
+                    return GenericContextMenuAnchorPoint.DEFAULT;
             }
         }
+
     }
 }
