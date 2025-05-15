@@ -28,7 +28,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.mvcManager = mvcManager;
             ButtonContextMenuControlSettings deleteChatHistoryButton = new ButtonContextMenuControlSettings(deleteChatHistoryText, deleteChatHistoryIcon, onDeleteChatHistoryClicked);
 
-            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.TOP_LEFT)
+            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                .AddControl(deleteChatHistoryButton);
 
             //Disabled until we got multiple channels working

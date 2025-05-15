@@ -120,7 +120,7 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 8522526520946479007}
   <ControlsContainer>k__BackingField: {fileID: 2932465032679087180}
   <ControlsLayoutGroup>k__BackingField: {fileID: 5384044999603412779}
-  <BackgroundCloseButton>k__BackingField: {fileID: 3243245791156245727}
+  <BackgroundCloseButton>k__BackingField: {fileID: 4391696262981364702}
 --- !u!1 &7170495978923432429
 GameObject:
   m_ObjectHideFlags: 0
@@ -250,6 +250,7 @@ GameObject:
   - component: {fileID: 7636819472055252989}
   - component: {fileID: 5113297092000709205}
   - component: {fileID: 3243245791156245727}
+  - component: {fileID: 4391696262981364702}
   m_Layer: 5
   m_Name: BackgroundCloseButton
   m_TagString: Untagged
@@ -358,3 +359,16 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4391696262981364702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8356711805427779659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 412440416f2849bd887c7fdb02e92cb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 3243245791156245727}

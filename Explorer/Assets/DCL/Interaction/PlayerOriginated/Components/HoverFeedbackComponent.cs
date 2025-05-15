@@ -11,9 +11,9 @@ namespace DCL.Interaction.PlayerOriginated.Components
         public readonly struct Tooltip
         {
             public readonly string Text;
-            public readonly InputAction Action;
+            public readonly UnityEngine.InputSystem.InputAction Action;
 
-            public Tooltip(string text, InputAction action)
+            public Tooltip(string text, UnityEngine.InputSystem.InputAction action)
             {
                 Text = text;
                 Action = action;

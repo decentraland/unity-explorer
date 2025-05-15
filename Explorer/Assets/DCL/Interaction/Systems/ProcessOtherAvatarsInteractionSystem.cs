@@ -8,10 +8,12 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
-using DCL.Passport;
 using DCL.Profiles;
+using DCL.Web3;
 using ECS.Abstract;
 using MVC;
+using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using InputAction = DCL.ECSComponents.InputAction;
 
@@ -22,25 +24,28 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string VIEW_PROFILE_TOOLTIP = "View Profile";
+        private const string HOVER_TOOLTIP = "Options";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
-        private readonly IMVCManager mvcManager;
-        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip = new (VIEW_PROFILE_TOOLTIP, InputAction.IaPointer);
+        private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
+        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private Profile? currentProfileHovered;
+        private Vector2? currentPositionHovered;
+        private UniTaskCompletionSource contextMenuTask = new ();
 
         private ProcessOtherAvatarsInteractionSystem(
             World world,
             IEventSystem eventSystem,
             DCLInput dclInput,
-            IMVCManager mvcManager) : base(world)
+            IMVCManagerMenusAccessFacade menusAccessFacade) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
-            this.mvcManager = mvcManager;
+            this.menusAccessFacade = menusAccessFacade;
+            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.RightPointer);
 
-            dclInput.Player.Pointer!.performed += OpenPassport;
+            dclInput.Player.RightPointer!.performed += OpenContextMenu;
         }
 
         protected override void Update(float t)
@@ -50,13 +55,16 @@ namespace DCL.Interaction.Systems
 
         protected override void OnDispose()
         {
-            dclInput.Player.Pointer!.performed -= OpenPassport;
+            dclInput.Player.RightPointer!.performed -= OpenContextMenu;
+            contextMenuTask.TrySetResult();
         }
 
         [Query]
-        private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities, ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
+        private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities,
+            ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
         {
             currentProfileHovered = null;
+            currentPositionHovered = null;
             hoverFeedbackComponent.Remove(viewProfileTooltip);
 
             bool canHover = !eventSystem.IsPointerOverGameObject();
@@ -73,12 +81,13 @@ namespace DCL.Interaction.Systems
                 || World.Has<IgnoreInteractionComponent>(entityRef))
                 return;
 
+            currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
-            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, isAtDistance: true);
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 
-        private void OpenPassport(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        private void OpenContextMenu(UnityEngine.InputSystem.InputAction.CallbackContext context)
         {
             if (context.control!.IsPressed() || currentProfileHovered == null)
                 return;
@@ -88,7 +97,10 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
+
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }

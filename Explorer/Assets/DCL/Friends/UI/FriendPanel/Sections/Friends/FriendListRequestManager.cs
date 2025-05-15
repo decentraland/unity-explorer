@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using SuperScrollView;
 using System;
@@ -21,6 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
         public event Action<FriendProfile>? JumpInClicked;
+        public event Action<FriendProfile>? ChatClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -28,7 +32,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             LoopListView2 loopListView,
             ViewDependencies viewDependencies,
             int pageSize,
-            int elementsMissingThreshold) : base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
+            int elementsMissingThreshold) :
+            base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
@@ -120,6 +125,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             elementView.JumpInButton.onClick.RemoveAllListeners();
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
+
+            elementView.ChatButton.onClick.RemoveAllListeners();
+            elementView.ChatButton.onClick.AddListener(() => ChatClicked?.Invoke(elementView.UserProfile));
 
             elementView.ToggleOnlineStatus(false);
         }
