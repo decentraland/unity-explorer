@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using ECS.SceneLifeCycle;
 using System;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -32,7 +33,7 @@ namespace DCL.Chat.Commands
             this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
         }
 
-        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
             globalWorld.Add<SceneReloadComponent>(playerEntity);
 

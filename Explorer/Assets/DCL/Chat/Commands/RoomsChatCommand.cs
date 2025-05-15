@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Multiplayer.Connections.RoomHubs;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -20,7 +21,7 @@ namespace Global.Dynamic.ChatCommands
             this.roomHub = roomHub;
         }
 
-        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
             string mode = parameters[0];
 

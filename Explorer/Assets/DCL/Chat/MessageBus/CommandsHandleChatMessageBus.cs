@@ -43,14 +43,14 @@ namespace DCL.Chat.MessageBus
 
             if (message[0] == '/') // User tried running a command
             {
-                HandleChatCommandAsync(channel.Id, message).Forget();
+                HandleChatCommandAsync(channel, message).Forget();
                 return;
             }
 
             this.origin.Send(channel, message, origin);
         }
 
-        private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, string message)
+        private async UniTaskVoid HandleChatCommandAsync(ChatChannel channel, string message)
         {
             string[] split = message.Replace(", ", ",").Split(' '); // Split by space but keep commas
             string userCommand = split[0][1..];
@@ -65,20 +65,20 @@ namespace DCL.Chat.MessageBus
 
                     try
                     {
-                        string response = await command.ExecuteCommandAsync(parameters, commandCts.Token);
-                        SendFromSystem(channelId, response);
+                        string response = await command.ExecuteCommandAsync(channel, parameters, commandCts.Token);
+                        SendFromSystem(channel.Id, response);
                     }
-                    catch (Exception) { SendFromSystem(channelId, "🔴 Error running command."); }
+                    catch (Exception) { SendFromSystem(channel.Id, "🔴 Error running command."); }
 
                     return;
                 }
 
-                SendFromSystem(channelId, $"🔴 Invalid parameters, usage:\n{command.Description}");
+                SendFromSystem(channel.Id, $"🔴 Invalid parameters, usage:\n{command.Description}");
                 return;
             }
 
             // Command not found
-            SendFromSystem(channelId, "🔴 Command not found.");
+            SendFromSystem(channel.Id, "🔴 Command not found.");
         }
 
         private void SendFromSystem(ChatChannel.ChannelId channelId, string? message)

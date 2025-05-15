@@ -3,6 +3,7 @@ using Global.AppArgs;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -28,7 +29,7 @@ namespace DCL.Chat.Commands
             this.commands = commands;
         }
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
             var sb = new StringBuilder();
 

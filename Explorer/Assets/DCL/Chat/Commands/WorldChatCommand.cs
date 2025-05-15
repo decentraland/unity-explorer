@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -27,7 +28,7 @@ namespace DCL.Chat.Commands
             parameters.Length == 1 || // Case: /world <world>
             (parameters.Length == 2 && ChatParamUtils.IsPositionParameter(parameters[1], false)); // Case: /world <world> <x,y>
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+        public UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct) =>
             parameters.Length == 1
 
                 // Case: /world <world>

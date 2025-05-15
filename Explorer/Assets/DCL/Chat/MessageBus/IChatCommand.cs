@@ -1,5 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
+﻿#nullable enable
+
+using Cysharp.Threading.Tasks;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -14,7 +17,7 @@ namespace DCL.Chat.Commands
         bool ValidateParameters(string[] parameters) =>
             parameters.Length == 0;
 
-        UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct);
+        UniTask<string> ExecuteCommandAsync(ChatChannel sourceChannel, string[] parameters, CancellationToken ct);
     }
 
     public static class ChatCommandsUtils

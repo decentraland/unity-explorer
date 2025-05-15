@@ -3,6 +3,7 @@ using DCL.Chat.Commands;
 using SceneRunner.Debugging;
 using SceneRunner.Debugging.Hub;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -29,7 +30,7 @@ namespace DCL.Chat.Commands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 2 && int.TryParse(parameters[1], out _);
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+        public UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct) =>
             UniTask.FromResult(Execute(parameters));
 
         private string Execute(string[] parameters)
