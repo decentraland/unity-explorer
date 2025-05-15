@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Rendering.GPUInstancing.InstancingData
 {
@@ -8,6 +9,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     {
         public string Name;
         public GPUInstancingLODGroup LODGroup;
+        [HideInInspector] 
         public List<PerInstanceBuffer> InstancesBuffer;
 
         public GPUInstancingLODGroupWithBuffer(GPUInstancingLODGroup lodGroup, List<PerInstanceBuffer> instances)

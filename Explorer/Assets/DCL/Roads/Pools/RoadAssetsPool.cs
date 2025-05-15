@@ -13,7 +13,8 @@ namespace DCL.LOD
 {
     public class RoadAssetsPool : IRoadAssetPool, IDisposable
     {
-        public const string DEFAULT_ROAD_KEY = "OpenRoad_0";
+        public const string DEFAULT_ROAD_KEY = "Road_A";
+
 
         /// <summary>
         /// The amount of instances of each type of road asset that will be created from the beginning in the pools.
@@ -81,6 +82,9 @@ namespace DCL.LOD
         /// <returns>True if the pool exists; False otherwise.</returns>
         public bool Get(string key, out Transform roadAsset)
         {
+            roadAsset = roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Get();
+            return false;
+            
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
             {
                 if (roadAssetPool.CountInactive == 0)

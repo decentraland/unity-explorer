@@ -17,7 +17,9 @@ namespace DCL.Roads.Settings
         public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
         public List<GPUInstancingLODGroup> PropsAndTiles;
 
-        [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
+        [field: SerializeField] 
+        [field: HideInInspector] 
+        public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
 
         IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
@@ -35,13 +37,9 @@ namespace DCL.Roads.Settings
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
-
-                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
-                {
-                    ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"Can't find prefab {roadDescription.RoadModel}, using default");
-                    prefab = loadedPrefabs[RoadAssetsPool.DEFAULT_ROAD_KEY];
-                }
-
+                Debug.Log($"DOING {roadDescription.RoadCoordinate}");
+                GPUInstancingPrefabData prefab = loadedPrefabs[RoadAssetsPool.DEFAULT_ROAD_KEY];
+                
                 var rotation = roadDescription.Rotation;
                 if (roadDescription.Rotation is { x: 0, y: 0, z: 0, w: 0 })
                 {
@@ -56,13 +54,17 @@ namespace DCL.Roads.Settings
 
                 ProcessCandidates(prefab.IndirectCandidates, roadRoot, tempIndirectCandidates);
             }
+            Debug.Log($"JUANI IT FINISHED A");
 
             IndirectLODGroups = tempIndirectCandidates
                                .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList()))
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
+            Debug.Log($"JUANI IT FINISHED B");
 
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
+                        Debug.Log($"JUANI IT FINISHED B");
+
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>

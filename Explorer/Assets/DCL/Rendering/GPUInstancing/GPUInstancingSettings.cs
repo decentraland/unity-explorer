@@ -7,7 +7,7 @@ namespace DCL.Rendering.GPUInstancing
     [CreateAssetMenu(fileName = nameof(GPUInstancingSettings), menuName = "DCL/" + nameof(GPUInstancingSettings), order = 0)]
     public class GPUInstancingSettings : ScriptableObject
     {
-        private const float SCENE_DIST_MIN = 20f;
+        private const float SCENE_DIST_MIN = 300f;
         private const float ENV_DIST_MIN = 1000f;
         private const float ENV_DIST_MAX = 7000f;
 

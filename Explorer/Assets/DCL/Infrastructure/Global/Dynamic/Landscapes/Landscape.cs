@@ -31,6 +31,8 @@ namespace Global.Dynamic.Landscapes
             this.worldsTerrain = worldsTerrain;
             this.landscapeEnabled = landscapeEnabled;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            
+
         }
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
@@ -38,8 +40,7 @@ namespace Global.Dynamic.Landscapes
             if (ct.IsCancellationRequested)
                 return EnumResult<LandscapeError>.CancelledResult(LandscapeError.MessageError);
 
-            if (landscapeEnabled == false)
-                return EnumResult<LandscapeError>.ErrorResult(LandscapeError.LandscapeDisabled);
+            return EnumResult<LandscapeError>.ErrorResult(LandscapeError.LandscapeDisabled);
 
             if (realmController.RealmData.IsGenesis())
             {

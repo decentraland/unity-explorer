@@ -109,6 +109,8 @@ namespace DCL.Roads.Settings.Editor
         {
             RoadSettingsAsset roadsConfig = target as RoadSettingsAsset;
             roadsConfig.CollectGPUInstancingLODGroups(parcelsMin, parcelsMax);
+            Debug.Log($"JUANI FINISH");
         }
+        
     }
 }

@@ -415,6 +415,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7baa85a7da60ef4b8b5252d78fa1b3d
+    m_Address: Assets/DCL/Roads/Settings/RoadData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: db7da980fc6384f848eeeb3077442864
     m_Address: MinimumSpecsScreen
     m_ReadOnly: 0
