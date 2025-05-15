@@ -31,6 +31,7 @@ namespace DCL.Roads
 
         private void SwitchRoadsInstancedRendering(RealmKind realmKind)
         {
+            return;
             if (realmKind == RealmKind.GenesisCity)
                 gpuInstancingService.AddToIndirect(roadSettingsAsset.IndirectLODGroups);
             else

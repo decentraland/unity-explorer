@@ -36,6 +36,9 @@ ShaderVariantCollection:
       - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF _GPU_INSTANCER_BATCHER
           _NORMALMAP _SIMPLE_LIGHTING _SPECULARHIGHLIGHTS_OFF
         passType: 0
+      - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF _NORMALMAP _SIMPLE_LIGHTING
+          _SPECULARHIGHLIGHTS_OFF
+        passType: 0
       - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF _SIMPLE_LIGHTING
           _SPECULARHIGHLIGHTS_OFF
         passType: 0
@@ -60,6 +63,10 @@ ShaderVariantCollection:
       - keywords: 
         passType: 0
       - keywords: LOD_FADE_CROSSFADE
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE _EMISSION
+        passType: 0
+      - keywords: LOD_FADE_CROSSFADE _EMISSION _NORMALMAP
         passType: 0
       - keywords: LOD_FADE_CROSSFADE _ENVIRONMENTREFLECTIONS_OFF
         passType: 0

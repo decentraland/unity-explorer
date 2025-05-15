@@ -441,7 +441,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   launchSettings:
     initialRealm: 0
-    targetScene: {x: 0, y: 0}
+    targetScene: {x: -1, y: -109}
     predefinedScenes:
       enabled: 0
       parcels:
@@ -729,6 +729,110 @@ MonoBehaviour:
     billboardAsset: {fileID: 0}
     isEnabled: 1
     name: TreeRoad
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 3079347412379983386, guid: d75c9e171edc52442bae8ecd08882042, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: Bench01
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 4978888978659943037, guid: 8307a4d2b4c1afb48a2048f00f1f0f2b, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: HedgeFlowersMiddleLarge
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 3782712905146421868, guid: 655c134bdeab03944b84e725431b6c2f, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: HedgeMiddleLarge
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 428089331256475796, guid: 5327073bf7b79244d974fd6aab0b7bc1, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: HedgeMiddleLarge_Plants
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 2644392047091892105, guid: c26debb3db62fc942b9e211d04b676a9, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: Lamp01
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 1448208319932153623, guid: 58b6758355bebfa498509ea878b23ec1, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: RoadSideDecor01
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 2393574900888397282, guid: 29fd90ce947b2254a86ce8ccd155ecc2, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: RoadSideStraight
+  - prototypeType: 0
+    profile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
+    prefabObject: {fileID: 2769323476320717760, guid: d8fc4817ba2e7ff4fa62925713c43fb2, type: 3}
+    gpuiLODGroupData: {fileID: 0}
+    prototypeMesh: {fileID: 0}
+    prototypeMaterials: []
+    layer: 0
+    isGenerateBillboard: 0
+    isBillboardReplaceLODCulled: 1
+    billboardDistance: 0.9
+    billboardAsset: {fileID: 0}
+    isEnabled: 1
+    name: RoadTile2Straight_Update
   defaultProfile: {fileID: 11400000, guid: 4ac8ab46672cd2a47926058ec5eb0b97, type: 2}
   isEnableDefaultRenderingWhenDisabled: 1
   _disablePlayModeRendering: 0
@@ -736,6 +840,30 @@ MonoBehaviour:
   editor_isTextMode: 0
   editor_isRollbackRuntimeProfileChanges: 1
   _prototypeDataArray:
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
+  - isAutoUpdateTransformData: 0
+    registeredInstances:
+      prefabInstances: []
   - isAutoUpdateTransformData: 0
     registeredInstances:
       prefabInstances: []
@@ -1266,6 +1394,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 234607242}
+  - {fileID: 5050490996342943587}
   - {fileID: 158563622}
   - {fileID: 233166828}
   - {fileID: 4363253906714060728}
@@ -1275,7 +1404,6 @@ SceneRoots:
   - {fileID: 46733615}
   - {fileID: 1901323879}
   - {fileID: 91211227}
-  - {fileID: 5050490996342943587}
   - {fileID: 1929393544}
   - {fileID: 2104274357}
   - {fileID: 769794053}

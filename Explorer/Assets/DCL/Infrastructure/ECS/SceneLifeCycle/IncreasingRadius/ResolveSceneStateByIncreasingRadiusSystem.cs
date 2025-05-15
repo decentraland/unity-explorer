@@ -287,6 +287,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
             SceneLoadingState sceneState)
         {
+            return;
             VisualSceneState candidateBy
                 = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
 

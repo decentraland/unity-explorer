@@ -45,6 +45,11 @@ namespace DCL.Roads.Systems
             this.scenesCache = scenesCache;
 
             gpuiPrefabManger = Object.FindObjectOfType<GPUIPrefabManager>();
+
+            foreach (var keyValuePair in roadDescriptions)
+            {
+                InstantiateRoad(keyValuePair.Key, keyValuePair.Value);
+            }
         }
 
         protected override void Update(float t)
@@ -64,10 +69,13 @@ namespace DCL.Roads.Systems
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            if (roadDescriptions.TryGetValue(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, out RoadDescription roadDescription))
+            /*if (roadDescriptions.TryGetValue(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, out RoadDescription roadDescription))
             {
-                roadAssetPool.Get(roadDescription.RoadModel, out var roadAsset);
-                
+                if (!roadAssetPool.Get(roadDescription.RoadModel, out Transform? roadAsset))
+                {
+                    ReportHub.LogWarning(GetReportData(),
+                        $"Road with model for {roadDescription.RoadModel} at {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.ToString()} does not exist, loading default");
+                }
 
                 //HACK: Since all original scene dont have the correct pivot, we move it here
                 roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + ParcelMathHelper.RoadPivotDeviation;
@@ -85,19 +93,36 @@ namespace DCL.Roads.Systems
                 {
                     gpuiPrefabManger.AddPrefabInstance(gpuiPrefab);
                 }
-
             }
             else
             {
                 ReportHub.LogWarning(GetReportData(),
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
-            }
-            
+            }*/
 
             sceneLoadingState.PromiseCreated = true;
 
             //In case this is a road teleport destination, we need to release the loading screen
             SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+        }
+
+        private void InstantiateRoad(Vector2Int baseParcel, RoadDescription roadDescription)
+        {
+            roadAssetPool.Get(roadDescription.RoadModel, out var roadAsset);
+
+            //HACK: Since all original scene dont have the correct pivot, we move it here
+            roadAsset.localPosition = new Vector3(baseParcel.x * 16, 0, baseParcel.y * 16) + ParcelMathHelper.RoadPivotDeviation;
+            roadAsset.localRotation = roadDescription.Rotation;
+            roadAsset.gameObject.SetActive(true);
+
+#if UNITY_EDITOR
+            roadAsset.gameObject.name = $"{roadAsset.gameObject.name}_{roadDescription.RoadCoordinate.x},{roadDescription.RoadCoordinate.y}";
+#endif
+
+            foreach (var gpuiPrefab in roadAsset.GetComponent<GPUI_Prefab_Holder>().prefabs)
+            {
+                gpuiPrefabManger.AddPrefabInstance(gpuiPrefab);
+            }
         }
     }
 }
