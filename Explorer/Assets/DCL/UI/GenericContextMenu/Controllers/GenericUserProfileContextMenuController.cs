@@ -258,7 +258,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             ShowChat(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
         }
 
-        private async UniTaskVoid ShowChat(Action onChatShown)
+        private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             onChatShown?.Invoke();
