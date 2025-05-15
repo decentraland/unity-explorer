@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using DCL.Diagnostics;
 using UnityEngine;
 
 namespace DCL.Chat.History
@@ -83,7 +84,7 @@ namespace DCL.Chat.History
 
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
         {
-            Debug.Log($"HISTORY AddMessage: Channel={channelId}, Sender={newMessage.SenderWalletAddress}, Content='{newMessage.Message}'");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"HISTORY AddMessage: Channel={channelId}, Sender={newMessage.SenderWalletAddress}, Content='{newMessage.Message}'");
             var channel = AddOrGetChannel(channelId);
             channel.AddMessage(newMessage);
         }

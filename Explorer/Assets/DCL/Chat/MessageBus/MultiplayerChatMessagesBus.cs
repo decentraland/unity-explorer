@@ -61,22 +61,22 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                Debug.Log($"RAW MSG IN: From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}, Content='{receivedMessage.Payload.Message.Substring(0, Math.Min(20, receivedMessage.Payload.Message.Length))}'");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"RAW MSG IN: From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}, Content='{receivedMessage.Payload.Message.Substring(0, Math.Min(20, receivedMessage.Payload.Message.Length))}'");
 
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
                     || IsUserBlockedAndMessagesHidden(receivedMessage.FromWalletId))
                 {
-                    Debug.Log($"Dedupe Check: Passed=false, From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"Dedupe Check: Passed=false, From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
                     return;
                 }
                 else
                 {
-                    Debug.Log($"Dedupe Check: Passed=true, From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"Dedupe Check: Passed=true, From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
                 }
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
 
-                Debug.Log($"BUS FIRING MessageAdded: From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"BUS FIRING MessageAdded: From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
                 ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
