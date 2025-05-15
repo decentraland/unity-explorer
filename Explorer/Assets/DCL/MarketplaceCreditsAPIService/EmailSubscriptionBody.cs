@@ -6,5 +6,6 @@ namespace DCL.MarketplaceCreditsAPIService
     public struct EmailSubscriptionBody
     {
         public string email;
+        public bool isCreditsWorkflow;
     }
 }

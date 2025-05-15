@@ -12,7 +12,7 @@ namespace DCL.Navmap
 {
     public class SharePlacesAndEventsContextMenuController
     {
-        private const string JUMP_IN_LINK = "https://play.decentraland.org/?position={0},{1}";
+        private const string JUMP_IN_LINK = " https://decentraland.org/jump/?position={0},{1}";
         private const string EVENT_WEBSITE_LINK = "https://decentraland.org/events/event/?id={0}";
         private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";

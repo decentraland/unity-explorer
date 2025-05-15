@@ -1,8 +1,17 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
+
+    [Serializable]
+    public struct GenericContextMenuControlConfig
+    {
+        public Sprite Sprite;
+        public string Text;
+    }
+
     /// <summary>
     ///     Main generic context menu class, used to invoke the MVC manager
     /// </summary>
@@ -12,18 +21,18 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         private static readonly Vector2 DEFAULT_OFFSET_FROM_TARGET = new (11, 18);
 
         internal readonly List<GenericContextMenuElement> contextMenuSettings = new ();
-        internal readonly Vector2 offsetFromTarget;
         internal readonly float width;
         internal readonly RectOffset verticalLayoutPadding;
         internal readonly int elementsSpacing;
-        internal readonly GenericContextMenuAnchorPoint anchorPoint;
+        internal ContextMenuOpenDirection anchorPoint;
+        internal Vector2 offsetFromTarget;
 
         /// <summary>
         ///     Main context menu class.
         ///     offsetFromTarget has the default value of (11, 18).
         ///     horizontalLayoutPadding has the default value of (8, 8, 4, 12).
         /// </summary>
-        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.TOP_LEFT)
+        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
         {
             this.width = width;
             this.offsetFromTarget = offsetFromTarget ?? DEFAULT_OFFSET_FROM_TARGET;
@@ -42,6 +51,16 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         {
             contextMenuSettings.Add(element);
             return this;
+        }
+
+        public void ChangeAnchorPoint(ContextMenuOpenDirection newAnchorPoint)
+        {
+            this.anchorPoint = newAnchorPoint;
+        }
+
+        public void ChangeOffsetFromTarget(Vector2 offsetFromTarget)
+        {
+            this.offsetFromTarget = offsetFromTarget;
         }
     }
 
@@ -62,15 +81,5 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.setting = setting;
             this.Enabled = true;
         }
-    }
-
-    public enum GenericContextMenuAnchorPoint
-    {
-        TOP_LEFT,
-        TOP_RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM_RIGHT,
-        CENTER_LEFT,
-        CENTER_RIGHT,
     }
 }

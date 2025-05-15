@@ -44,6 +44,10 @@ namespace DCL.UI.SuggestionPanel
 
         private void CreateSuggestionPools()
         {
+            // Skip if already initialized
+            if(suggestionItemsPools.Count != 0)
+                return;
+
             foreach (BaseInputSuggestionElement suggestionElement in configurationSo.SuggestionElements)
             {
                 var suggestionPool = new ObjectPool<BaseInputSuggestionElement>(
@@ -75,8 +79,8 @@ namespace DCL.UI.SuggestionPanel
         {
             if (lastSelectedInputSuggestion != null && IsActive)
                 SuggestionSelected?.Invoke(lastSelectedInputSuggestion.SuggestionId);
-            else
-                SetPanelVisibility(false);
+
+            SetPanelVisibility(false);
         }
 
         private void OnArrowDown(InputAction.CallbackContext obj)
@@ -236,6 +240,7 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.ActionUp.performed += OnArrowUp;
                 viewDependencies.DclInput.UI.ActionDown.performed += OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
+                viewDependencies.DclInput.UI.Tab.performed += OnSubmit;
             }
             else
             {
@@ -244,6 +249,7 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.ActionUp.performed -= OnArrowUp;
                 viewDependencies.DclInput.UI.ActionDown.performed -= OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
+                viewDependencies.DclInput.UI.Tab.performed -= OnSubmit;
             }
 
             gameObject.SetActive(isVisible);

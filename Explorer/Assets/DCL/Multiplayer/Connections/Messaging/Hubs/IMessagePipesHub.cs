@@ -9,12 +9,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
 
         IMessagePipe IslandPipe();
 
+        IMessagePipe ChatPipe();
+
         class Fake : IMessagePipesHub
         {
             public IMessagePipe ScenePipe() =>
                 IMessagePipe.Null.INSTANCE;
 
             public IMessagePipe IslandPipe() =>
+                IMessagePipe.Null.INSTANCE;
+
+            public IMessagePipe ChatPipe() =>
                 IMessagePipe.Null.INSTANCE;
 
             public void Dispose()

@@ -1,3 +1,4 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -35,18 +36,19 @@ namespace DCL.Chat.MessageBus
             commandCts.SafeCancelAndDispose();
         }
 
-        public void Send(ChatChannel.ChannelId channelId, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin)
         {
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                 return;
 
             if (message[0] == '/') // User tried running a command
             {
-                HandleChatCommandAsync(channelId, message).Forget();
+                //We send the results of the command to the nearby channel
+                HandleChatCommandAsync(ChatChannel.NEARBY_CHANNEL_ID, message).Forget();
                 return;
             }
 
-            this.origin.Send(channelId, message, origin);
+            this.origin.Send(channel, message, origin);
         }
 
         private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, string message)
@@ -55,7 +57,7 @@ namespace DCL.Chat.MessageBus
             string userCommand = split[0][1..];
             string[] parameters = new ArraySegment<string>(split, 1, split.Length - 1).ToArray()!;
 
-            if (commands.TryGetValue(userCommand, out IChatCommand? command))
+            if (commands.TryGetValue(userCommand, out IChatCommand command))
             {
                 if (command.ValidateParameters(parameters))
                 {
@@ -80,7 +82,7 @@ namespace DCL.Chat.MessageBus
             SendFromSystem(channelId, "🔴 Command not found.");
         }
 
-        private void SendFromSystem(ChatChannel.ChannelId channelId, string message)
+        private void SendFromSystem(ChatChannel.ChannelId channelId, string? message)
         {
             if (string.IsNullOrEmpty(message)) return;
 
