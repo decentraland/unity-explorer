@@ -309,8 +309,6 @@ namespace DCL.Chat
             ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
 
             var channelId = new ChatChannel.ChannelId(userId);
-            bool isNewChannel = !chatHistory.Channels.ContainsKey(channelId);
-
             ChatChannel channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
@@ -320,8 +318,6 @@ namespace DCL.Chat
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
-            if (isNewChannel)
-                chatHistory.AddMessage(channelId, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
 
             viewInstance!.Focus();
         }
@@ -450,6 +446,10 @@ namespace DCL.Chat
             {
                 await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
                 chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
+
+                if (chatHistory.Channels[viewInstance.CurrentChannelId].Messages.Count == 0)
+                    chatHistory.AddMessage(viewInstance.CurrentChannelId, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+
                 viewInstance.RefreshMessages();
             }
         }
