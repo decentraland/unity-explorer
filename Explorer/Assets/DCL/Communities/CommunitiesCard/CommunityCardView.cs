@@ -1,3 +1,4 @@
+using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
 using MVC;
 using System;
@@ -29,6 +30,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("References")]
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
+        [field: SerializeField] public SectionLoadingView LoadingObject { get; private set; }
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
@@ -54,6 +56,14 @@ namespace DCL.Communities.CommunitiesCard
         private void OnEnable()
         {
             ToggleSection(Sections.PHOTOS);
+        }
+
+        public void SetLoadingState(bool isLoading)
+        {
+            if (isLoading)
+                LoadingObject?.Show();
+            else
+                LoadingObject?.Hide();
         }
 
         private void ToggleSection(Sections section)

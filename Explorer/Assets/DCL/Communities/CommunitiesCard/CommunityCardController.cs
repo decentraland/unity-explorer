@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource photosSectionCancellationTokenSource = new ();
         private CancellationTokenSource membersSectionCancellationTokenSource = new ();
         private CancellationTokenSource placesSectionCancellationTokenSource = new ();
+        private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
 
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -56,6 +57,16 @@ namespace DCL.Communities.CommunitiesCard
 
         protected override void OnViewShow()
         {
+            loadCommunityDataCancellationTokenSource = loadCommunityDataCancellationTokenSource.SafeRestart();
+            LoadCommunityDataAsync(loadCommunityDataCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
+            {
+                viewInstance!.SetLoadingState(true);
+                //Fetch community data
+                viewInstance!.SetLoadingState(false);
+            }
         }
 
         protected override void OnViewClose()
@@ -63,6 +74,7 @@ namespace DCL.Communities.CommunitiesCard
             photosSectionCancellationTokenSource.SafeCancelAndDispose();
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
+            loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -75,8 +87,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 case CommunityCardView.Sections.PHOTOS:
                     photosSectionCancellationTokenSource = photosSectionCancellationTokenSource.SafeRestart();
-                    //TODO (Lorenzo): inputData should hold the community data structure
-                    // cameraReelGalleryController!.ShowCommunityGalleryAsync("this is a communityId", photosSectionCancellationTokenSource.Token).Forget();
+                    cameraReelGalleryController!.ShowCommunityGalleryAsync(inputData.CommunityId, photosSectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
