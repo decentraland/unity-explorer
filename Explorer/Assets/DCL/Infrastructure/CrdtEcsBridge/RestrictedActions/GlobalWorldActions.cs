@@ -24,6 +24,8 @@ namespace CrdtEcsBridge.RestrictedActions
 {
     public class GlobalWorldActions : IGlobalWorldActions
     {
+        private const string SCENE_EMOTE_NAMING = "_emote.glb";
+
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IEmotesMessageBus messageBus;
@@ -78,11 +80,18 @@ namespace CrdtEcsBridge.RestrictedActions
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
             if (localSceneDevelopment && !useRemoteAssetBundles)
-                await TriggerSceneEmoteFromLocalSceneAsync(sceneData,src,hash, loop, ct);
+            {
+                // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
+                // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
+                if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
+                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
+            }
             else
+            {
                 await TriggerSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
                     sceneData.AssetBundleManifest, hash, loop, ct);
+            }
         }
 
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)

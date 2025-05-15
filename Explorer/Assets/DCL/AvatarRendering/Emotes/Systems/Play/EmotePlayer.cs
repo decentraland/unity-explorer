@@ -67,6 +67,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (child != null)
                     child.gameObject.layer = avatarTransform.gameObject.layer;
 
+            // Scene Emotes in Local Scene Development are loaded as legacy animations
+            // (there's no other way to load them in runtime from a GLB)
             if (emoteReferences.avatarClip is { legacy: true })
             {
                 var avatarAnimator = view.GetAnimator();
