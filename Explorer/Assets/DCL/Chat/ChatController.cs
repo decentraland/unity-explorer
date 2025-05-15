@@ -322,6 +322,8 @@ namespace DCL.Chat
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
             if (isNewChannel)
                 chatHistory.AddMessage(channelId, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+
+            viewInstance!.Focus();
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)

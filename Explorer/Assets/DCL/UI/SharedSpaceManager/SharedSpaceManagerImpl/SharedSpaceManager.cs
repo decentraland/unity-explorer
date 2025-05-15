@@ -116,12 +116,10 @@ namespace DCL.UI.SharedSpaceManager
 
                         if (controller.State == ControllerState.ViewHidden)
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
-                        else
-                        {
+                        else if (!panelInSharedSpace.IsVisibleInSharedSpace)
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
+                        else
                             isTransitioning = false;
-                        }
-
                         break;
                     }
                     case PanelsSharingSpace.Friends:
