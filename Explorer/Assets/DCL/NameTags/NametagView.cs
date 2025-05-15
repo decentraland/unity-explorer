@@ -374,7 +374,6 @@ namespace DCL.Nametags
             BackgroundSprite.color = currentSpritesColor;
             mentionBackgroundSprite.color = currentSpritesColor;
 
-            messageContent.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
             messageContent.SetText(messageText);
             SetHeightAndTextStyle(messageText);
             messageContentRectTransform.ForceUpdateRectTransforms();
@@ -586,7 +585,7 @@ namespace DCL.Nametags
         [BurstCompile]
         private static float2 CalculateUsernamePosition(float usernamePositionX, float verifiedIconWidth) =>
             new float2(usernamePositionX - (verifiedIconWidth / 2), 0);
-        
+
         [BurstCompile]
         private static float2 CalculateUsernameFinalPosition(float preferredSizeX, float usernameWidth, float bubbleMarginWidth) =>
             new ((-preferredSizeX / 2) + (usernameWidth / 2) + (bubbleMarginWidth / 2), 0);
