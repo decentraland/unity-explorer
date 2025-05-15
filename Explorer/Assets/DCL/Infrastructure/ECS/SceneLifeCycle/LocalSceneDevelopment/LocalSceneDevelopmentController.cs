@@ -13,6 +13,8 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
     public class LocalSceneDevelopmentController
     {
+        private const double RELOAD_SCENE_TIMEOUT_SECS = 5;
+
         private readonly IReloadScene reloadScene;
         private readonly Entity playerEntity;
         private readonly World globalWorld;
@@ -29,9 +31,10 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             this.globalWorld = globalWorld;
 
             ConnectToServerAsync(localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),
-                new WsSceneMessage(),
-                new byte[1024],
-                connectToServerCancellationToken.Token).Forget();
+                    new WsSceneMessage(),
+                    new byte[1024],
+                    connectToServerCancellationToken.Token)
+               .Forget();
         }
 
         public void Dispose()
@@ -42,11 +45,12 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                 webSocket?.Dispose();
             }
             catch (ObjectDisposedException) { }
+
             connectToServerCancellationToken.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid ConnectToServerAsync(string localSceneWebsocketServer,
-            WsSceneMessage wsSceneMessage, byte[] receiveBuffer,CancellationToken ct)
+            WsSceneMessage wsSceneMessage, byte[] receiveBuffer, CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();
 
@@ -80,12 +84,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                         globalWorld.AddOrGet(playerEntity, new StopCharacterMotion());
 
                         await reloadScene.TryReloadSceneAsync(ct,
-                            wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateScene ? wsSceneMessage.UpdateScene.SceneId : wsSceneMessage.UpdateModel.SceneId);
+                                              wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateScene ? wsSceneMessage.UpdateScene.SceneId : wsSceneMessage.UpdateModel.SceneId)
+                                         .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS));
                     }
-                    finally
-                    {
-                        globalWorld.Remove<StopCharacterMotion>(playerEntity);
-                    }
+                    catch (TimeoutException) { }
+                    finally { globalWorld.Remove<StopCharacterMotion>(playerEntity); }
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {
