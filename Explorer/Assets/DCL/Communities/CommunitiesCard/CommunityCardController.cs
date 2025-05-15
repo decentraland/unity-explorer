@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
@@ -21,6 +22,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
 
         private CameraReelGalleryController? cameraReelGalleryController;
+        private MembersListController? membersListController;
         private CancellationTokenSource photosSectionCancellationTokenSource = new ();
         private CancellationTokenSource membersSectionCancellationTokenSource = new ();
         private CancellationTokenSource placesSectionCancellationTokenSource = new ();
@@ -38,11 +40,15 @@ namespace DCL.Communities.CommunitiesCard
 
         public override void Dispose()
         {
-            viewInstance!.SectionChanged -= OnSectionChanged;
+            if (viewInstance != null)
+                viewInstance.SectionChanged -= OnSectionChanged;
 
             photosSectionCancellationTokenSource.SafeCancelAndDispose();
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
+
+            cameraReelGalleryController?.Dispose();
+            membersListController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -53,6 +59,8 @@ namespace DCL.Communities.CommunitiesCard
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+
+            membersListController = new MembersListController(viewInstance.MembersListView);
         }
 
         protected override void OnViewShow()
@@ -65,6 +73,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance!.SetLoadingState(true);
                 //Fetch community data
+                await UniTask.Delay(5_000, cancellationToken: ct);
                 viewInstance!.SetLoadingState(false);
             }
         }
@@ -75,6 +84,8 @@ namespace DCL.Communities.CommunitiesCard
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
             loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
+
+            membersListController?.Reset();
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -82,7 +93,6 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnSectionChanged(CommunityCardView.Sections section)
         {
-            Debug.Log(section);
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
@@ -91,6 +101,7 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
+                    membersListController!.ShowMembersListAsync(inputData.CommunityId, membersSectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();

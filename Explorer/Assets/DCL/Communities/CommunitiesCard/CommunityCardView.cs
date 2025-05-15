@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
 using MVC;
@@ -45,6 +46,7 @@ namespace DCL.Communities.CommunitiesCard
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
+        [field: SerializeField] public MembersListView MembersListView { get; private set; }
 
         private void Awake()
         {
@@ -73,6 +75,7 @@ namespace DCL.Communities.CommunitiesCard
             PlacesSectionSelection.SetActive(section == Sections.PLACES);
 
             CameraReelGalleryConfigs.CameraReelGalleryView.transform.parent.gameObject.SetActive(section == Sections.PHOTOS);
+            MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
 
             SectionChanged?.Invoke(section);
         }
