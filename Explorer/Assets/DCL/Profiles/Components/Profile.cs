@@ -76,7 +76,7 @@ namespace DCL.Profiles
         public string UnclaimedName { get; internal set; }
 
         /// <summary>
-        /// The Display Name with @ before it. Cached here to avoid further allocations.
+        /// The Display Name with @ before it. Cached here to avoid re-allocations.
         /// </summary>
         public string MentionName => mentionName;
 
@@ -212,9 +212,8 @@ namespace DCL.Profiles
 
             ValidatedName = result;
             DisplayName = result;
-            if (HasClaimedName) return;
 
-            if (!string.IsNullOrEmpty(UserId) && UserId.Length > 4)
+            if (!HasClaimedName && !string.IsNullOrEmpty(UserId) && UserId.Length > 4)
             {
                 WalletId = $"#{UserId[^4..]}";
                 DisplayName = $"{result}{WalletId}";
