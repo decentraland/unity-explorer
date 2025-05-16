@@ -50,12 +50,6 @@ namespace DCL.SDKComponents.Tween.Playground
         }
 
         /// <summary>
-        /// Current Unix time in milliseconds (wall‑clock).
-        /// </summary>
-        public static double UnixUtcNowMs() =>
-            (DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
-
-        /// <summary>
         /// Write a 64‑bit NTP timestamp into <paramref name="buf"/> at <paramref name="ofs"/> (big‑endian).
         /// </summary>
         public static void WriteTimestamp(byte[] buf, int ofs, ulong ntpTimestamp)

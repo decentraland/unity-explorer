@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 namespace DCL.SDKComponents.Tween.Playground
@@ -20,7 +19,12 @@ namespace DCL.SDKComponents.Tween.Playground
         public DateTime Timestamp;
     }
 
-    public class MyNtpClient : MonoBehaviour
+    public interface INtpTimeService
+    {
+        public ulong ServerTimeMs { get; }
+    };
+
+    public class MyNtpClient : MonoBehaviour, INtpTimeService
     {
         private const double SMEAR_THRESHOLD_MS = 200;  // >200 ms = highly likely leap-smear
 
@@ -52,7 +56,31 @@ namespace DCL.SDKComponents.Tween.Playground
         // public double roundTripMs;
         public double finalOffsetMs;
 
-        public long CurrentServerTimeMs => (long)(NtpUtils.UnixUtcNowMs() + finalOffsetMs);
+        public double _mitigatedOffsetMs = 0;
+        public bool _hasValidSamples = false;
+        private DateTime _lastMitigationTime;
+        private int maxSampleAge = 300;
+
+        public ulong ServerTimeMs => (ulong)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + _mitigatedOffsetMs);
+
+        private float _timeSinceLastUpdate;
+
+        private void Start()
+        {
+            Poll();
+        }
+        [SerializeField] private float updateInterval = 60f; // Секунд между обновлениями
+
+        private void Update()
+        {
+            _timeSinceLastUpdate += UnityEngine.Time.unscaledDeltaTime;
+            if (_timeSinceLastUpdate >= updateInterval)
+            {
+                Samples.Clear();
+                Poll();
+                _timeSinceLastUpdate = 0;
+            }
+        }
 
         [ContextMenu("VVV")]
         private void Poll()
@@ -75,15 +103,10 @@ namespace DCL.SDKComponents.Tween.Playground
                             ?? Samples.OrderBy(p => p.RoundTripMs).First().OffsetMs;
         }
 
-        public double _mitigatedOffsetMs = 0;
-        public bool _hasValidSamples = false;
-        private DateTime _lastMitigationTime;
-        private int maxSampleAge = 300;
-
         private void MitigateAndCalculateOffset()
         {
             // Remove old samples
-            // Samples.RemoveAll(s => (DateTime.UtcNow - s.Timestamp).TotalSeconds > maxSampleAge);
+            Samples.RemoveAll(s => (DateTime.UtcNow - s.Timestamp).TotalSeconds > maxSampleAge);
 
             if (Samples.Count < 3)
             {
@@ -169,7 +192,7 @@ namespace DCL.SDKComponents.Tween.Playground
 
                 IPEndPoint ipEndPoint = new IPEndPoint(address, ntpPort);
 
-                double clientSendT1 = NtpUtils.UnixUtcNowMs();
+                double clientSendT1 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 long   swTicksT1   = Stopwatch.GetTimestamp();
                 NtpUtils.WriteTimestamp(ntpData, 40, NtpUtils.UnixMillisecondsToNtpTimestamp(clientSendT1));
 
@@ -190,7 +213,7 @@ namespace DCL.SDKComponents.Tween.Playground
 
                 DateTime serverTime = DateTimeOffset.FromUnixTimeMilliseconds((long)(clientReceiveT4 + offsetMs)).UtcDateTime;
 
-                Samples.Add(new NtpSample{ OffsetMs = offsetMs, ServerName = server, RoundTripMs = roundTripMs, ServerTime = serverTime.ToString("O") });
+                Samples.Add(new NtpSample{ OffsetMs = offsetMs, ServerName = server, RoundTripMs = roundTripMs, ServerTime = serverTime.ToString("O"), Timestamp = DateTime.UtcNow});
             }
         }
     }

@@ -37,6 +37,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
 using DCL.Roads.Systems;
+using DCL.SDKComponents.Tween.Playground;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -185,6 +186,9 @@ namespace Global.Dynamic
 
             UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
+
+            // INtpTimeService ntpClient = new GameObject("NtpClient").AddComponent<MyNtpClient>();
+            // SynchronizeNtpTimeSystem.InjectToWorld(ref builder, ntpClient);
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData, profileRepository);
 

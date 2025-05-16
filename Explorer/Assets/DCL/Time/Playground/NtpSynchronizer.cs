@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
@@ -65,10 +64,10 @@ namespace DCL.SDKComponents.Tween.Playground
                 var pkt = new byte[48];
                 pkt[0] = 0x1B; // LI=0, VN=3, Mode=3 (client)
 
-                double clientSendT1 = NtpUtils.UnixUtcNowMs();
+                double clientSendT1 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 await udp.SendAsync(pkt, pkt.Length).AsUniTask();
                 UdpReceiveResult response = await udp.ReceiveAsync().AsUniTask();
-                double clientReceiveT4 = NtpUtils.UnixUtcNowMs();
+                double clientReceiveT4 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                 pkt = response.Buffer;
                 double serverReceiveT2 = NtpUtils.NtpEpochToUnixMilliseconds(NtpUtils.ReadTimestamp(pkt, 32));

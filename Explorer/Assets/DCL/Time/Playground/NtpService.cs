@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.Tween.Playground
 
         private void Update()
         {
-            _timeSinceLastUpdate += Time.deltaTime;
+            _timeSinceLastUpdate += UnityEngine.Time.deltaTime;
             if (_timeSinceLastUpdate >= updateInterval)
             {
                 SyncWithNTPServer();
