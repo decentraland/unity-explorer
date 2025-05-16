@@ -61,7 +61,7 @@ namespace DCL.MapRenderer.MapCameraController
         void IMapCameraControllerInternal.Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers)
         {
             textureResolution = ClampTextureResolution(textureResolution);
-            renderTexture = new RenderTexture(textureResolution.x, textureResolution.y, 0, RenderTextureFormat.Default, 0);
+            renderTexture = new RenderTexture(textureResolution.x, textureResolution.y, 16, RenderTextureFormat.Default, 0);
             // Bilinear and Trilinear make texture blurry
             renderTexture.filterMode = FilterMode.Point;
             renderTexture.autoGenerateMips = false;
