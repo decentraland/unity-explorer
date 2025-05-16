@@ -97,14 +97,15 @@ namespace DCL.PluginSystem.Global
                 exposedCameraData,
                 cinemachinePreset,
                 new CinemachineCameraState(),
+                new CameraDampedPOV { Current = Vector2.up, Velocity = Vector2.up },
                 realmSamplingData
             );
 
             exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
             // Register systems
-            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, cinemachineCameraAudioSettings.Value);
-            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, isFreeCameraAllowed: commandLineArgs.HasDebugFlag());
+            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, playerFocus.CameraFocus, controlsSettingsAsset.Value.CameraMovementPOVSettings, cinemachineCameraAudioSettings.Value);
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, playerFocus.CameraFocus, controlsSettingsAsset.Value, isFreeCameraAllowed: commandLineArgs.HasDebugFlag());
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder, cinemachinePreset.Brain);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
             ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value);
