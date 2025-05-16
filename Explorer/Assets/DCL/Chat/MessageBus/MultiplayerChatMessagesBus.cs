@@ -27,6 +27,9 @@ namespace DCL.Chat.MessageBus
 
         private readonly SimplePriorityQueue<MessageStamp, double> orderedStamps = new ();
 
+        private readonly HeadOfLineBlockingDetection islandHeadOfLineBlockingDetection = new ("island");
+        private readonly HeadOfLineBlockingDetection sceneHeadOfLineBlockingDetection = new ("scene");
+
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
@@ -39,8 +42,8 @@ namespace DCL.Chat.MessageBus
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, m => OnMessageReceived(m, islandHeadOfLineBlockingDetection));
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, m => OnMessageReceived(m, sceneHeadOfLineBlockingDetection));
             messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnPrivateMessageReceived);
         }
 
@@ -53,19 +56,24 @@ namespace DCL.Chat.MessageBus
         private void OnPrivateMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
-            OnChatAsync(receivedMessage, true).Forget();
+            OnChatAsync(receivedMessage, null, true).Forget();
         }
 
-        private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
+        private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, HeadOfLineBlockingDetection headOfLineBlockingDetection)
         {
-            OnChatAsync(receivedMessage).Forget();
+            OnChatAsync(receivedMessage, headOfLineBlockingDetection).Forget();
         }
 
-        private async UniTaskVoid OnChatAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, bool isPrivate = false)
+        private async UniTaskVoid OnChatAsync(
+            ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage,
+            HeadOfLineBlockingDetection? headOfLineBlockingDetection,
+            bool isPrivate = false)
         {
             using (receivedMessage)
             {
                 ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"RAW MSG IN: From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}, Content='{receivedMessage.Payload.Message.Substring(0, Math.Min(20, receivedMessage.Payload.Message.Length))}'");
+
+                headOfLineBlockingDetection?.RecordAndDetect(receivedMessage);
 
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
                     || IsUserBlockedAndMessagesHidden(receivedMessage.FromWalletId))
