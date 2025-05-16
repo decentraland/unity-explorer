@@ -429,9 +429,10 @@ namespace Global.Dynamic
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
             bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
+            bool includeCommunities = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel, includeCommunities);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -753,6 +754,7 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
+                    includeCommunities,
                     appArgs,
                     viewDependencies,
                     userBlockingCacheProxy,
@@ -940,6 +942,9 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     staticContainer.FeatureFlagsCache));
             }
+
+            if (includeCommunities)
+                globalPlugins.Add(new CommunitiesPlugin(mvcManager));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

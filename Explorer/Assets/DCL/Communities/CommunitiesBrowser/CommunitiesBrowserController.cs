@@ -1,0 +1,40 @@
+using DCL.UI;
+using UnityEngine;
+
+namespace DCL.Communities.CommunitiesBrowser
+{
+    public class CommunitiesBrowserController : ISection
+    {
+        private readonly CommunitiesBrowserView view;
+        private readonly RectTransform rectTransform;
+
+        public CommunitiesBrowserController(CommunitiesBrowserView view)
+        {
+            this.view = view;
+            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+        }
+
+        public void Activate()
+        {
+            view.gameObject.SetActive(true);
+        }
+
+        public void Deactivate()
+        {
+            view.gameObject.SetActive(false);
+        }
+
+        public void Animate(int triggerId)
+        {
+
+        }
+
+        public void ResetAnimator()
+        {
+
+        }
+
+        public RectTransform GetRectTransform() =>
+            rectTransform;
+    }
+}

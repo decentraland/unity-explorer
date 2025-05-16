@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
+  - rid: 1766526334245273896
   references:
     version: 2
     RefIds:
@@ -295,6 +296,9 @@ MonoBehaviour:
         <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
         <PlaceThumbnailHeight>k__BackingField: 320
         <PlaceThumbnailWidth>k__BackingField: 404
+    - rid: 1766526334245273896
+      type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data: 
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
