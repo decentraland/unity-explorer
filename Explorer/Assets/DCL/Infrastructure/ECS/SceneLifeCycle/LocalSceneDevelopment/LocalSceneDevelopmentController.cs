@@ -18,23 +18,15 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
         private readonly IReloadScene reloadScene;
         private readonly Entity playerEntity;
         private readonly World globalWorld;
-        private readonly CancellationTokenSource connectToServerCancellationToken = new ();
         private ClientWebSocket? webSocket;
 
         public LocalSceneDevelopmentController(IReloadScene reloadScene,
-            string localSceneServer,
             Entity playerEntity,
             World globalWorld)
         {
             this.reloadScene = reloadScene;
             this.playerEntity = playerEntity;
             this.globalWorld = globalWorld;
-
-            ConnectToServerAsync(localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),
-                    new WsSceneMessage(),
-                    new byte[1024],
-                    connectToServerCancellationToken.Token)
-               .Forget();
         }
 
         public void Dispose()
@@ -45,11 +37,14 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                 webSocket?.Dispose();
             }
             catch (ObjectDisposedException) { }
-
-            connectToServerCancellationToken.SafeCancelAndDispose();
         }
 
-        private async UniTaskVoid ConnectToServerAsync(string localSceneWebsocketServer,
+        public async UniTask ConnectToServerAsync(string url, CancellationToken ct)
+        {
+            await ConnectToServerAsync(url, new WsSceneMessage(), new byte[1024], ct);
+        }
+
+        private async UniTask ConnectToServerAsync(string localSceneWebsocketServer,
             WsSceneMessage wsSceneMessage, byte[] receiveBuffer, CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();

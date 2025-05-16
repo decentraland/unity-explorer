@@ -196,6 +196,7 @@ namespace Global.Dynamic
                 appArgs,
                 coroutineRunner,
                 dclVersion,
+                realmUrls,
                 ct);
 
             if (tuple.container != null)
