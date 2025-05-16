@@ -43,7 +43,7 @@ namespace CrdtEcsBridge.UpdateGate
         }
 
         // Close the group so it won't be updated unless the gate is opened again
-        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info _)
+        public bool ShouldThrottle(Type systemGroupType, in Arch.SystemGroups.UnityBridge.TimeProvider.Info _)
         {
             // Let systems run in the remaining of the current frame
             if (Time.frameCount < keepOpenFrame)

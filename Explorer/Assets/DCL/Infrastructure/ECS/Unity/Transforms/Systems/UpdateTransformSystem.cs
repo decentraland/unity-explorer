@@ -31,7 +31,7 @@ namespace ECS.Unity.Transforms.Systems
         {
             if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
                 UpdateTransformQuery(World);
-            else if (!ecsGroupThrottler.ShouldThrottle(THROTTLING_GROUP_TYPE, new TimeProvider.Info()))
+            else if (!ecsGroupThrottler.ShouldThrottle(THROTTLING_GROUP_TYPE, new Arch.SystemGroups.UnityBridge.TimeProvider.Info()))
                 UpdateTransformQuery(World);
         }
 
