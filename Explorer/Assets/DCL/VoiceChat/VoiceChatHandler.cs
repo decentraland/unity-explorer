@@ -15,35 +15,64 @@ namespace DCL.VoiceChat
 
         private bool isTalkingEnabled;
         private string microphoneName;
+        private float buttonPressStartTime;
+        private bool isPushToTalk;
 
         public VoiceChatHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
             waveData = new float[voiceChatSettings.SampleWindow];
+
             dclInput.VoiceChat.Talk.performed += OnPressed;
+            dclInput.VoiceChat.Talk.canceled += OnReleased;
         }
 
         private void OnPressed(InputAction.CallbackContext obj)
         {
-            //detect different interactions with the button, pressed once or held
-            //in order to enable/disable microphone or behave as push to talk
-            ToggleVoiceInput();
+            buttonPressStartTime = Time.time;
+            isPushToTalk = false;
+
+            // Start the microphone immediately when button is pressed
+            // If it's a quick press, we'll handle it in OnReleased
+            if (!isTalkingEnabled)
+                EnableMicrophone();
         }
 
-        private void ToggleVoiceInput()
+        private void OnReleased(InputAction.CallbackContext obj)
         {
-            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            if (isTalkingEnabled)
+            float pressDuration = Time.time - buttonPressStartTime;
+
+            // If the button was held for longer than the threshold, treat it as push-to-talk
+            if (pressDuration >= voiceChatSettings.HoldThresholdInSeconds)
             {
-                Microphone.End(microphoneName);
+                isPushToTalk = true;
+                if (isTalkingEnabled)
+                    DisableMicrophone();
             }
             else
             {
-                MicrophoneAudioClip = Microphone.Start(microphoneName, true, 20, AudioSettings.outputSampleRate);
-            }
+                if (isPushToTalk)
+                    return;
 
-            isTalkingEnabled = !isTalkingEnabled;
+                // Handle microphone toggle behaviour
+                if (isTalkingEnabled)
+                    DisableMicrophone();
+            }
+        }
+
+        private void EnableMicrophone()
+        {
+            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+            MicrophoneAudioClip = Microphone.Start(microphoneName, true, 20, AudioSettings.outputSampleRate);
+            isTalkingEnabled = true;
+        }
+
+        private void DisableMicrophone()
+        {
+            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+            Microphone.End(microphoneName);
+            isTalkingEnabled = false;
         }
 
         private float GetLoudnessFromMicrophone()
@@ -65,6 +94,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             dclInput.VoiceChat.Talk.performed -= OnPressed;
+            dclInput.VoiceChat.Talk.canceled -= OnReleased;
         }
     }
 }
