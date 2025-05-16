@@ -27,6 +27,8 @@ using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -363,6 +365,7 @@ namespace DCL.Chat
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
+            ReportHub.Log(ReportCategory.CHAT_HISTORY,$"CONTROLLER OnChatHistoryMessageAdded: Channel={destinationChannel.Id}, Sender={addedMessage.SenderWalletAddress}, Content='{addedMessage.Message}'");
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
             chatBubblesHelper.CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
@@ -546,6 +549,7 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,$"CONTROLLER OnChatBusMessageAdded: Channel={channelId.Id}, Sender={chatMessage.SenderWalletAddress}, ID={chatMessage.SenderWalletId}, Content='{chatMessage.Message}'");
             if (!chatMessage.IsSystemMessage)
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);

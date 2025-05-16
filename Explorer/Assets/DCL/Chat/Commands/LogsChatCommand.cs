@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using DCL.Chat.History;
 using UnityEngine;
 
 namespace DCL.Chat.Commands
@@ -10,7 +11,7 @@ namespace DCL.Chat.Commands
         public string Command => "logs";
         public string Description => "<b>/logs </b>\n Opens the logs folder";
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
             string path =
                 Application.platform switch

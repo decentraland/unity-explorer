@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.Deduplication
         }
 
         [Serializable]
-        internal struct RegisteredStamp : IEquatable<RegisteredStamp>
+        public struct RegisteredStamp : IEquatable<RegisteredStamp>
         {
             public string walletId;
             public T timestamp;
