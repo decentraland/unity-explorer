@@ -222,6 +222,7 @@ namespace DCL.Navmap
             zoomController.Deactivate();
             cameraController?.Release(this);
             navmapBus.ClearHistory();
+            searchBarController.ClearInput();
         }
 
         public void Animate(int triggerId)

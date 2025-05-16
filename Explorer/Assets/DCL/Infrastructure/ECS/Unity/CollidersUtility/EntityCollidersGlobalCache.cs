@@ -34,7 +34,7 @@ namespace DCL.Interaction.Utility
                 colliderSceneEntityInfos[collider] = new GlobalColliderSceneEntityInfo(ecsExecutor, colliderSceneEntityInfo);
         }
 
-        public void Associate(Collider collider, EntityReference entityReference)
+        public void Associate(Collider collider, Entity entityReference)
         {
             colliderGlobalEntityInfos[collider] = new GlobalColliderGlobalEntityInfo(entityReference);
         }
