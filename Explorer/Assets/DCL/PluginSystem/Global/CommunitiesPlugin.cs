@@ -17,16 +17,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly ViewDependencies viewDependencies;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage)
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            ViewDependencies viewDependencies)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.viewDependencies = viewDependencies;
         }
 
         public void Dispose()
@@ -45,7 +48,16 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage));
+                cameraReelScreenshotsStorage,
+                viewDependencies));
+
+            Test().Forget();
+        }
+
+        private async UniTaskVoid Test()
+        {
+            await UniTask.Delay(30_000);
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter())).Forget();
         }
     }
 
