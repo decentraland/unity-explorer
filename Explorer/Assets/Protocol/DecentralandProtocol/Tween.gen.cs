@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CidkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdHdlZW4ucHJvdG8SG2Rl",
             "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxohZGVjZW50cmFsYW5kL2NvbW1v",
-            "bi92ZWN0b3JzLnByb3RvIpgDCgdQQlR3ZWVuEhAKCGR1cmF0aW9uGAEgASgC",
+            "bi92ZWN0b3JzLnByb3RvItgDCgdQQlR3ZWVuEhAKCGR1cmF0aW9uGAEgASgC",
             "EkQKD2Vhc2luZ19mdW5jdGlvbhgCIAEoDjIrLmRlY2VudHJhbGFuZC5zZGsu",
             "Y29tcG9uZW50cy5FYXNpbmdGdW5jdGlvbhIxCgRtb3ZlGAMgASgLMiEuZGVj",
             "ZW50cmFsYW5kLnNkay5jb21wb25lbnRzLk1vdmVIABI1CgZyb3RhdGUYBCAB",
@@ -34,40 +34,41 @@ namespace DCL.ECSComponents {
             "c2NhbGUYBSABKAsyIi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuU2Nh",
             "bGVIABJACgx0ZXh0dXJlX21vdmUYCCABKAsyKC5kZWNlbnRyYWxhbmQuc2Rr",
             "LmNvbXBvbmVudHMuVGV4dHVyZU1vdmVIABIUCgdwbGF5aW5nGAYgASgISAGI",
-            "AQESGQoMY3VycmVudF90aW1lGAcgASgCSAKIAQFCBgoEbW9kZUIKCghfcGxh",
-            "eWluZ0IPCg1fY3VycmVudF90aW1lIo4BCgRNb3ZlEisKBXN0YXJ0GAEgASgL",
-            "MhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEikKA2VuZBgCIAEoCzIc",
-            "LmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIbCg5mYWNlX2RpcmVjdGlv",
-            "bhgDIAEoCEgAiAEBQhEKD19mYWNlX2RpcmVjdGlvbiJmCgZSb3RhdGUSLgoF",
-            "c3RhcnQYASABKAsyHy5kZWNlbnRyYWxhbmQuY29tbW9uLlF1YXRlcm5pb24S",
-            "LAoDZW5kGAIgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9u",
-            "Il8KBVNjYWxlEisKBXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
-            "bi5WZWN0b3IzEikKA2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24u",
-            "VmVjdG9yMyLFAQoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
-            "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjISKQoDZW5kGAIgASgLMhwuZGVjZW50",
-            "cmFsYW5kLmNvbW1vbi5WZWN0b3IyEkwKDW1vdmVtZW50X3R5cGUYAyABKA4y",
-            "MC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuVGV4dHVyZU1vdmVtZW50",
-            "VHlwZUgAiAEBQhAKDl9tb3ZlbWVudF90eXBlKjUKE1RleHR1cmVNb3ZlbWVu",
-            "dFR5cGUSDgoKVE1UX09GRlNFVBAAEg4KClRNVF9USUxJTkcQASrnBAoORWFz",
-            "aW5nRnVuY3Rpb24SDQoJRUZfTElORUFSEAASEQoNRUZfRUFTRUlOUVVBRBAB",
-            "EhIKDkVGX0VBU0VPVVRRVUFEEAISDwoLRUZfRUFTRVFVQUQQAxIRCg1FRl9F",
-            "QVNFSU5TSU5FEAQSEgoORUZfRUFTRU9VVFNJTkUQBRIPCgtFRl9FQVNFU0lO",
-            "RRAGEhEKDUVGX0VBU0VJTkVYUE8QBxISCg5FRl9FQVNFT1VURVhQTxAIEg8K",
-            "C0VGX0VBU0VFWFBPEAkSFAoQRUZfRUFTRUlORUxBU1RJQxAKEhUKEUVGX0VB",
-            "U0VPVVRFTEFTVElDEAsSEgoORUZfRUFTRUVMQVNUSUMQDBITCg9FRl9FQVNF",
-            "SU5CT1VOQ0UQDRIUChBFRl9FQVNFT1VUQk9VTkNFEA4SEQoNRUZfRUFTRUJP",
-            "VU5DRRAPEhIKDkVGX0VBU0VJTkNVQklDEBASEwoPRUZfRUFTRU9VVENVQklD",
-            "EBESEAoMRUZfRUFTRUNVQklDEBISEgoORUZfRUFTRUlOUVVBUlQQExITCg9F",
-            "Rl9FQVNFT1VUUVVBUlQQFBIQCgxFRl9FQVNFUVVBUlQQFRISCg5FRl9FQVNF",
-            "SU5RVUlOVBAWEhMKD0VGX0VBU0VPVVRRVUlOVBAXEhAKDEVGX0VBU0VRVUlO",
-            "VBAYEhEKDUVGX0VBU0VJTkNJUkMQGRISCg5FRl9FQVNFT1VUQ0lSQxAaEg8K",
-            "C0VGX0VBU0VDSVJDEBsSEQoNRUZfRUFTRUlOQkFDSxAcEhIKDkVGX0VBU0VP",
-            "VVRCQUNLEB0SDwoLRUZfRUFTRUJBQ0sQHkIUqgIRRENMLkVDU0NvbXBvbmVu",
-            "dHNiBnByb3RvMw=="));
+            "AQESGQoMY3VycmVudF90aW1lGAcgASgCSAKIAQESIwoWc3RhcnRfc3luY2Vk",
+            "X3RpbWVzdGFtcBgJIAEoBEgDiAEBQgYKBG1vZGVCCgoIX3BsYXlpbmdCDwoN",
+            "X2N1cnJlbnRfdGltZUIZChdfc3RhcnRfc3luY2VkX3RpbWVzdGFtcCKOAQoE",
+            "TW92ZRIrCgVzdGFydBgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVj",
+            "dG9yMxIpCgNlbmQYAiABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3Rv",
+            "cjMSGwoOZmFjZV9kaXJlY3Rpb24YAyABKAhIAIgBAUIRCg9fZmFjZV9kaXJl",
+            "Y3Rpb24iZgoGUm90YXRlEi4KBXN0YXJ0GAEgASgLMh8uZGVjZW50cmFsYW5k",
+            "LmNvbW1vbi5RdWF0ZXJuaW9uEiwKA2VuZBgCIAEoCzIfLmRlY2VudHJhbGFu",
+            "ZC5jb21tb24uUXVhdGVybmlvbiJfCgVTY2FsZRIrCgVzdGFydBgBIAEoCzIc",
+            "LmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIpCgNlbmQYAiABKAsyHC5k",
+            "ZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMixQEKC1RleHR1cmVNb3ZlEisK",
+            "BXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IyEikK",
+            "A2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMhJMCg1t",
+            "b3ZlbWVudF90eXBlGAMgASgOMjAuZGVjZW50cmFsYW5kLnNkay5jb21wb25l",
+            "bnRzLlRleHR1cmVNb3ZlbWVudFR5cGVIAIgBAUIQCg5fbW92ZW1lbnRfdHlw",
+            "ZSo1ChNUZXh0dXJlTW92ZW1lbnRUeXBlEg4KClRNVF9PRkZTRVQQABIOCgpU",
+            "TVRfVElMSU5HEAEq5wQKDkVhc2luZ0Z1bmN0aW9uEg0KCUVGX0xJTkVBUhAA",
+            "EhEKDUVGX0VBU0VJTlFVQUQQARISCg5FRl9FQVNFT1VUUVVBRBACEg8KC0VG",
+            "X0VBU0VRVUFEEAMSEQoNRUZfRUFTRUlOU0lORRAEEhIKDkVGX0VBU0VPVVRT",
+            "SU5FEAUSDwoLRUZfRUFTRVNJTkUQBhIRCg1FRl9FQVNFSU5FWFBPEAcSEgoO",
+            "RUZfRUFTRU9VVEVYUE8QCBIPCgtFRl9FQVNFRVhQTxAJEhQKEEVGX0VBU0VJ",
+            "TkVMQVNUSUMQChIVChFFRl9FQVNFT1VURUxBU1RJQxALEhIKDkVGX0VBU0VF",
+            "TEFTVElDEAwSEwoPRUZfRUFTRUlOQk9VTkNFEA0SFAoQRUZfRUFTRU9VVEJP",
+            "VU5DRRAOEhEKDUVGX0VBU0VCT1VOQ0UQDxISCg5FRl9FQVNFSU5DVUJJQxAQ",
+            "EhMKD0VGX0VBU0VPVVRDVUJJQxAREhAKDEVGX0VBU0VDVUJJQxASEhIKDkVG",
+            "X0VBU0VJTlFVQVJUEBMSEwoPRUZfRUFTRU9VVFFVQVJUEBQSEAoMRUZfRUFT",
+            "RVFVQVJUEBUSEgoORUZfRUFTRUlOUVVJTlQQFhITCg9FRl9FQVNFT1VUUVVJ",
+            "TlQQFxIQCgxFRl9FQVNFUVVJTlQQGBIRCg1FRl9FQVNFSU5DSVJDEBkSEgoO",
+            "RUZfRUFTRU9VVENJUkMQGhIPCgtFRl9FQVNFQ0lSQxAbEhEKDUVGX0VBU0VJ",
+            "TkJBQ0sQHBISCg5FRl9FQVNFT1VUQkFDSxAdEg8KC0VGX0VBU0VCQUNLEB5C",
+            "FKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureMovementType), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "Playing", "CurrentTime", "StartSyncedTimestamp" }, new[]{ "Mode", "Playing", "CurrentTime", "StartSyncedTimestamp" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Move), global::DCL.ECSComponents.Move.Parser, new[]{ "Start", "End", "FaceDirection" }, new[]{ "FaceDirection" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Rotate), global::DCL.ECSComponents.Rotate.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Scale), global::DCL.ECSComponents.Scale.Parser, new[]{ "Start", "End" }, null, null, null, null),
@@ -170,6 +171,7 @@ namespace DCL.ECSComponents {
       easingFunction_ = other.easingFunction_;
       playing_ = other.playing_;
       currentTime_ = other.currentTime_;
+      startSyncedTimestamp_ = other.startSyncedTimestamp_;
       switch (other.ModeCase) {
         case ModeOneofCase.Move:
           Move = other.Move.Clone();
@@ -325,6 +327,34 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~2;
     }
 
+    /// <summary>Field number for the "start_synced_timestamp" field.</summary>
+    public const int StartSyncedTimestampFieldNumber = 9;
+    private ulong startSyncedTimestamp_;
+    /// <summary>
+    /// timestamp (in milliseconds) when the tween started, allows synchronization across clients
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong StartSyncedTimestamp {
+      get { if ((_hasBits0 & 4) != 0) { return startSyncedTimestamp_; } else { return 0UL; } }
+      set {
+        _hasBits0 |= 4;
+        startSyncedTimestamp_ = value;
+      }
+    }
+    /// <summary>Gets whether the "start_synced_timestamp" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasStartSyncedTimestamp {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "start_synced_timestamp" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearStartSyncedTimestamp() {
+      _hasBits0 &= ~4;
+    }
+
     private object mode_;
     /// <summary>Enum of possible cases for the "mode" oneof.</summary>
     public enum ModeOneofCase {
@@ -371,6 +401,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(TextureMove, other.TextureMove)) return false;
       if (Playing != other.Playing) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(CurrentTime, other.CurrentTime)) return false;
+      if (StartSyncedTimestamp != other.StartSyncedTimestamp) return false;
       if (ModeCase != other.ModeCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -387,6 +418,7 @@ namespace DCL.ECSComponents {
       if (modeCase_ == ModeOneofCase.TextureMove) hash ^= TextureMove.GetHashCode();
       if (HasPlaying) hash ^= Playing.GetHashCode();
       if (HasCurrentTime) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(CurrentTime);
+      if (HasStartSyncedTimestamp) hash ^= StartSyncedTimestamp.GetHashCode();
       hash ^= (int) modeCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -438,6 +470,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(66);
         output.WriteMessage(TextureMove);
       }
+      if (HasStartSyncedTimestamp) {
+        output.WriteRawTag(72);
+        output.WriteUInt64(StartSyncedTimestamp);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -480,6 +516,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(66);
         output.WriteMessage(TextureMove);
       }
+      if (HasStartSyncedTimestamp) {
+        output.WriteRawTag(72);
+        output.WriteUInt64(StartSyncedTimestamp);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -514,6 +554,9 @@ namespace DCL.ECSComponents {
       if (HasCurrentTime) {
         size += 1 + 4;
       }
+      if (HasStartSyncedTimestamp) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(StartSyncedTimestamp);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -537,6 +580,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasCurrentTime) {
         CurrentTime = other.CurrentTime;
+      }
+      if (other.HasStartSyncedTimestamp) {
+        StartSyncedTimestamp = other.StartSyncedTimestamp;
       }
       switch (other.ModeCase) {
         case ModeOneofCase.Move:
@@ -632,6 +678,10 @@ namespace DCL.ECSComponents {
             TextureMove = subBuilder;
             break;
           }
+          case 72: {
+            StartSyncedTimestamp = input.ReadUInt64();
+            break;
+          }
         }
       }
     #endif
@@ -697,6 +747,10 @@ namespace DCL.ECSComponents {
             }
             input.ReadMessage(subBuilder);
             TextureMove = subBuilder;
+            break;
+          }
+          case 72: {
+            StartSyncedTimestamp = input.ReadUInt64();
             break;
           }
         }
