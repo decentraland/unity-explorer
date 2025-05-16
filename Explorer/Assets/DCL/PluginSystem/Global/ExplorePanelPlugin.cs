@@ -371,10 +371,11 @@ namespace DCL.PluginSystem.Global
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
+                cursor,
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
-            var communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView);
+            var communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, cursor);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
