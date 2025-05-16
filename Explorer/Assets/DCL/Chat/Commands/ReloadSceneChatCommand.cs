@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using ECS.SceneLifeCycle;
 using System;
 using DCL.Chat.History;
@@ -35,7 +36,7 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
-            globalWorld.Add<SceneReloadComponent>(playerEntity);
+            globalWorld.Add<StopCharacterMotion>(playerEntity);
 
             try
             {
@@ -47,10 +48,8 @@ namespace DCL.Chat.Commands
             }
             finally
             {
-                globalWorld.Remove<SceneReloadComponent>(playerEntity);
+                globalWorld.Remove<StopCharacterMotion>(playerEntity);
             }
         }
-
-        public struct SceneReloadComponent {}
     }
 }

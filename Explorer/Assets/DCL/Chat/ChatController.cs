@@ -2,7 +2,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.CharacterCamera;
-using DCL.Chat.Commands;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -26,7 +25,6 @@ using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Diagnostics;
@@ -44,6 +42,7 @@ namespace DCL.Chat
         public delegate void ConversationClosedDelegate();
 
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
+        private const string NEW_CHAT_MESSAGE = "The chat starts here! Time to say hi! \\U0001F44B";
 
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
@@ -51,7 +50,6 @@ namespace DCL.Chat
         private readonly World world;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
-        private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
@@ -100,7 +98,6 @@ namespace DCL.Chat
             Entity playerEntity,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
             ChatSettingsAsset chatSettings,
             ITextFormatter hyperlinkTextFormatter,
@@ -120,7 +117,6 @@ namespace DCL.Chat
             this.world = world;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
-            this.chatCommandsBus = chatCommandsBus;
             this.islandRoom = roomHub.IslandRoom();
             this.roomHub = roomHub;
             this.chatSettings = chatSettings;
@@ -314,7 +310,8 @@ namespace DCL.Chat
         {
             ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
 
-            ChatChannel channel = chatHistory.AddOrGetChannel(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER);
+            var channelId = new ChatChannel.ChannelId(userId);
+            ChatChannel channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
 
@@ -323,9 +320,11 @@ namespace DCL.Chat
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
+
+            viewInstance!.Focus();
         }
 
-        public void OnSelectConversation(ChatChannel.ChannelId channelId)
+        private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             chatUserStateUpdater.CurrentConversation = channelId.Id;
             if (TryGetView(out var view))
@@ -450,6 +449,10 @@ namespace DCL.Chat
             {
                 await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
                 chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
+
+                if (chatHistory.Channels[viewInstance.CurrentChannelId].Messages.Count == 0)
+                    chatHistory.AddMessage(viewInstance.CurrentChannelId, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+
                 viewInstance.RefreshMessages();
             }
         }
