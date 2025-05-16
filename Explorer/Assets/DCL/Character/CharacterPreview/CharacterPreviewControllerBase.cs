@@ -81,12 +81,12 @@ namespace DCL.CharacterPreview
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, TextureUtilities.GetColorSpaceFormat())
+            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
             };
 
-            newTexture.antiAliasing = 8;
+            newTexture.antiAliasing = 4;
             newTexture.useDynamicScale = true;
             newTexture.Create();
 
