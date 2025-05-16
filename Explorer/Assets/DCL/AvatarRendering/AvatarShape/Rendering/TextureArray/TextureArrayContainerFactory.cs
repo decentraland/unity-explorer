@@ -40,11 +40,38 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             var textureArrayMapping = new List<TextureArrayMapping>
             {
                 // Asset Bundle Wearables
-                new (new TextureArrayHandler("Avatar_Toon", MAIN_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_BASEMAP_TEXTURE_FORMAT, defaultTextures),
-                    MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION),
-                new (new TextureArrayHandler("Avatar_Toon", NORMAL_TEXTURE_ARRAY_SIZE, NORMAL_MAP_TEX_ARR_INDEX, NORMAL_MAP_TEX_ARR, defaultResolutions, DEFAULT_NORMALMAP_TEXTURE_FORMAT, defaultTextures),
-                    BUMP_MAP_ORIGINAL_TEXTURE_ID, NORMAL_TEXTURE_RESOLUTION),
-                new (new TextureArrayHandler("Avatar_Toon", EMISSION_TEXTURE_ARRAY_SIZE, EMISSIVE_MAP_TEX_ARR_INDEX, EMISSIVE_MAP_TEX_ARR, defaultResolutions, DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT, defaultTextures),
+                new (new TextureArrayHandler("Avatar_Toon",
+                        MAIN_TEXTURE_ARRAY_SIZE,
+                        MAINTEX_ARR_SHADER_INDEX,
+                        MAINTEX_ARR_TEX_SHADER,
+                        defaultResolutions,
+                        DEFAULT_BASEMAP_TEXTURE_FORMAT,
+                        defaultTextures,
+                        // NOTE: using different texture array size for high res textures
+                        // NOTE: for main textures
+                        // NOTE: Normal and Emission handlers remain unchanged,
+                        // NOTE: using their single respective constants
+                        minArraySizeForHighRes:MAIN_TEXTURE_ARRAY_SIZE_FOR_1024_AND_ABOVE),
+                    MAINTEX_ORIGINAL_TEXTURE,
+                    MAIN_TEXTURE_RESOLUTION),
+                
+                new (new TextureArrayHandler("Avatar_Toon",
+                        NORMAL_TEXTURE_ARRAY_SIZE,
+                        NORMAL_MAP_TEX_ARR_INDEX,
+                        NORMAL_MAP_TEX_ARR,
+                        defaultResolutions,
+                        DEFAULT_NORMALMAP_TEXTURE_FORMAT,
+                        defaultTextures),
+                    BUMP_MAP_ORIGINAL_TEXTURE_ID,
+                    NORMAL_TEXTURE_RESOLUTION),
+                
+                new (new TextureArrayHandler("Avatar_Toon",
+                        EMISSION_TEXTURE_ARRAY_SIZE,
+                        EMISSIVE_MAP_TEX_ARR_INDEX,
+                        EMISSIVE_MAP_TEX_ARR,
+                        defaultResolutions,
+                        DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT,
+                        defaultTextures),
                     EMISSION_MAP_ORIGINAL_TEXTURE_ID, EMISSION_TEXTURE_RESOLUTION),
             };
 
@@ -53,12 +80,37 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 // Raw GLTF Wearables
                 textureArrayMapping.AddRange(new[]
                 {
-                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF", MAIN_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
-                        MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION),
-                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF", NORMAL_TEXTURE_ARRAY_SIZE, NORMAL_MAP_TEX_ARR_INDEX, NORMAL_MAP_TEX_ARR, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
-                        BUMP_MAP_ORIGINAL_TEXTURE_ID, NORMAL_TEXTURE_RESOLUTION),
-                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF", EMISSION_TEXTURE_ARRAY_SIZE, EMISSIVE_MAP_TEX_ARR_INDEX, EMISSIVE_MAP_TEX_ARR, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
-                        EMISSION_MAP_ORIGINAL_TEXTURE_ID, EMISSION_TEXTURE_RESOLUTION)
+                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF",
+                            MAIN_TEXTURE_ARRAY_SIZE,
+                            MAINTEX_ARR_SHADER_INDEX,
+                            MAINTEX_ARR_TEX_SHADER,
+                            defaultResolutions,
+                            DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT,
+                            // NOTE: using different texture array size for high res textures
+                            // NOTE: for main textures
+                            // NOTE: Normal and Emission handlers remain unchanged,
+                            // NOTE: using their single respective constants
+                            minArraySizeForHighRes:MAIN_TEXTURE_ARRAY_SIZE_FOR_1024_AND_ABOVE),
+                        MAINTEX_ORIGINAL_TEXTURE,
+                        MAIN_TEXTURE_RESOLUTION),
+                    
+                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF",
+                            NORMAL_TEXTURE_ARRAY_SIZE,
+                            NORMAL_MAP_TEX_ARR_INDEX,
+                            NORMAL_MAP_TEX_ARR,
+                            defaultResolutions,
+                            DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                        BUMP_MAP_ORIGINAL_TEXTURE_ID,
+                        NORMAL_TEXTURE_RESOLUTION),
+                    
+                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF",
+                            EMISSION_TEXTURE_ARRAY_SIZE,
+                            EMISSIVE_MAP_TEX_ARR_INDEX,
+                            EMISSIVE_MAP_TEX_ARR,
+                            defaultResolutions,
+                            DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                        EMISSION_MAP_ORIGINAL_TEXTURE_ID,
+                        EMISSION_TEXTURE_RESOLUTION)
                 });
             }
 
