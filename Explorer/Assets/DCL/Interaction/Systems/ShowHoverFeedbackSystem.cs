@@ -7,8 +7,10 @@ using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Systems;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility.UIToolkit;
 
 namespace DCL.Interaction.HoverCanvas.Systems
@@ -18,7 +20,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
     public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
-        private readonly Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
+        private readonly Dictionary<Guid, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
         private Vector2 cursorPositionPercent;
 
         internal ShowHoverFeedbackSystem(World world, UI.HoverCanvas hoverCanvasInstance,
@@ -26,10 +28,10 @@ namespace DCL.Interaction.HoverCanvas.Systems
         {
             this.hoverCanvasInstance = hoverCanvasInstance;
 
-            inputButtonSettingsMap = new Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings>(settings.Count);
+            inputButtonSettingsMap = new Dictionary<Guid, HoverCanvasSettings.InputButtonSettings>(settings.Count);
 
             foreach (HoverCanvasSettings.InputButtonSettings inputButtonSettings in settings)
-                inputButtonSettingsMap.Add(inputButtonSettings.InputAction, inputButtonSettings);
+                inputButtonSettingsMap.Add(inputButtonSettings.PlayerInputAction.action.id, inputButtonSettings);
         }
 
         protected override void Update(float t)
@@ -65,7 +67,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
                     string? actionKeyText = null;
                     Sprite? icon = null;
 
-                    if (inputButtonSettingsMap.TryGetValue(tooltipInfo.Action, out HoverCanvasSettings.InputButtonSettings settings))
+                    if (inputButtonSettingsMap.TryGetValue(tooltipInfo.Action.id, out HoverCanvasSettings.InputButtonSettings settings))
                     {
                         actionKeyText = settings.Key;
                         icon = settings.Icon;
