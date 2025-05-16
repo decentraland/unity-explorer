@@ -11,6 +11,9 @@ using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Groups;
+using ECS.Unity.Textures.Components;
+using UnityEngine;
+using Utility.Arch;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
 
 namespace DCL.SDKComponents.NFTShape.System
@@ -42,14 +45,43 @@ namespace DCL.SDKComponents.NFTShape.System
         }
 
         [Query]
-        private void FinishAndApply(ref NFTLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
+        private void FinishAndApply(Entity entity, ref NFTLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
         {
             if (!nftLoadingComponent.Promise.IsConsumed && nftLoadingComponent.Promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result))
             {
                 if (result.Succeeded)
+                {
                     nftShapeRendererComponent.PoolableComponent.Apply(result.Asset!);
-                else
-                    nftShapeRendererComponent.PoolableComponent.NotifyFailed();
+
+                    if (result.Asset?.VideoURL != null)
+                    {
+                        var vtc = new VideoTextureConsumer(result.Asset);
+                        var texture2D = vtc.Texture.Asset;
+                        texture2D.Reinitialize(1, 1);
+                        texture2D.SetPixel(0, 0, Color.clear);
+                        texture2D.Apply();
+
+                        if (World.TryGet<PBVideoPlayer>(entity, out var videoPlayer))
+                        {
+                            videoPlayer!.Src = result.Asset.VideoURL;
+                            videoPlayer.IsDirty = true;
+
+                            World.Add(entity, vtc);
+                        }
+                        else
+                        {
+                            var pbVideo = new PBVideoPlayer
+                            {
+                                Src = result.Asset.VideoURL,
+                                Playing = true,
+                                Loop = true,
+                            };
+
+                            World.Add(entity, pbVideo, vtc);
+                        }
+                    }
+                }
+                else { nftShapeRendererComponent.PoolableComponent.NotifyFailed(); }
             }
         }
     }
