@@ -85,6 +85,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             UserNameTag.gameObject.SetActive(!memberProfile.HasClaimedName);
             VerifiedIcon.SetActive(memberProfile.HasClaimedName);
             MutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, 32);
+            // MutualFriendsText.transform.parent.gameObject.SetActive(friendShipStatus != FriendshipStatus.FRIEND);
             ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.Avatar.FaceSnapshotUrl.ToString(), memberProfile.UserId);
 
             //TODO (Lorenzo): the friendship status should be passed from the controller

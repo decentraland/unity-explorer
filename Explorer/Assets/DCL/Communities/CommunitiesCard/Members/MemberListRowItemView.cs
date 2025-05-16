@@ -1,5 +1,6 @@
 using DCL.Friends;
 using DCL.Profiles;
+using MVC;
 using System;
 using UnityEngine;
 
@@ -14,11 +15,25 @@ namespace DCL.Communities.CommunitiesCard.Members
         private event Action<Profile>? ContextMenuButtonClicked;
         private event Action<Profile, FriendshipStatus>? FriendButtonClicked;
 
-        public void ConfigureLeft(Profile memberProfile) =>
+        public void ConfigureLeft(Profile memberProfile, ViewDependencies viewDependencies)
+        {
+            LeftItem.gameObject.SetActive(true);
+            LeftItem.InjectDependencies(viewDependencies);
             LeftItem.Configure(memberProfile);
+        }
 
-        public void ConfigureRight(Profile memberProfile) =>
+        public void ConfigureRight(Profile memberProfile, ViewDependencies viewDependencies)
+        {
+            RightItem.gameObject.SetActive(true);
+            RightItem.InjectDependencies(viewDependencies);
             RightItem.Configure(memberProfile);
+        }
+
+        public void ResetElements()
+        {
+            LeftItem.gameObject.SetActive(false);
+            RightItem.gameObject.SetActive(false);
+        }
 
         private void Awake()
         {

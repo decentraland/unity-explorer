@@ -945,7 +945,8 @@ namespace Global.Dynamic
                 globalPlugins.Add(new CommunitiesPlugin(mvcManager,
                     assetsProvisioner,
                     cameraReelStorageService,
-                    cameraReelScreenshotsStorage));
+                    cameraReelScreenshotsStorage,
+                    viewDependencies));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

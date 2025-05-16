@@ -3546,11 +3546,11 @@ MonoBehaviour:
   <VerifiedIcon>k__BackingField: {fileID: 4501456302625573118}
   <ProfilePicture>k__BackingField: {fileID: 1694188027347510192}
   <MutualFriendsText>k__BackingField: {fileID: 5938182082582794967}
-  <AddFriendButton>k__BackingField: {fileID: 0}
-  <AcceptFriendButton>k__BackingField: {fileID: 0}
-  <RemoveFriendButton>k__BackingField: {fileID: 0}
-  <CancelFriendButton>k__BackingField: {fileID: 0}
-  <UnblockFriendButton>k__BackingField: {fileID: 0}
+  <AddFriendButton>k__BackingField: {fileID: 2460795307562479628}
+  <AcceptFriendButton>k__BackingField: {fileID: 317669208496194194}
+  <RemoveFriendButton>k__BackingField: {fileID: 5817629165951777490}
+  <CancelFriendButton>k__BackingField: {fileID: 9203260340736320445}
+  <UnblockFriendButton>k__BackingField: {fileID: 8669135269965918077}
 --- !u!1 &8007795603535597700
 GameObject:
   m_ObjectHideFlags: 0

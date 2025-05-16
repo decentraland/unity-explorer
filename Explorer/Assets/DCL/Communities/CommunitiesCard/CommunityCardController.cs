@@ -20,6 +20,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly ViewDependencies viewDependencies;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -31,11 +32,13 @@ namespace DCL.Communities.CommunitiesCard
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage) : base(viewFactory)
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            ViewDependencies viewDependencies) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.viewDependencies = viewDependencies;
         }
 
         public override void Dispose()
@@ -60,7 +63,7 @@ namespace DCL.Communities.CommunitiesCard
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
 
-            membersListController = new MembersListController(viewInstance.MembersListView);
+            membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies);
         }
 
         protected override void OnViewShow()
@@ -101,7 +104,7 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersListAsync(inputData.CommunityId, membersSectionCancellationTokenSource.Token).Forget();
+                    membersListController!.ShowMembersListAsync(inputData.CommunityId, membersSectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
