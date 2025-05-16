@@ -8,9 +8,12 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Utilities;
+using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
 using System.Threading;
+using Utility.PriorityQueue;
+using MessageStamp = DCL.Multiplayer.Deduplication.MessageDeduplication<double>.RegisteredStamp;
 
 namespace DCL.Chat.MessageBus
 {
@@ -21,6 +24,8 @@ namespace DCL.Chat.MessageBus
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ChatMessageFactory messageFactory;
+
+        private readonly SimplePriorityQueue<MessageStamp, double> orderedStamps = new ();
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
@@ -34,9 +39,9 @@ namespace DCL.Chat.MessageBus
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnPrivateMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnPrivateMessageReceived);
         }
 
         public void Dispose()
@@ -65,7 +70,31 @@ namespace DCL.Chat.MessageBus
                     return;
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
-                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
+
+                var messageStamp = new MessageStamp(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp);
+
+                // There is no problem with ordering of private messages as `await messageFactory.CreateChatMessageAsync` will always resolve the same wallet id
+                if (!isPrivate)
+                    orderedStamps.Enqueue(messageStamp, receivedMessage.Payload.Timestamp);
+
+                ChatMessage newMessage;
+
+                try
+                {
+                    newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
+
+                    if (!isPrivate)
+                    {
+                        // Make sure that the message that was resolved [first] is actually the message that was received first
+                        while (!messageStamp.Equals(orderedStamps.First))
+                            await UniTask.Yield(cancellationTokenSource.Token);
+                    }
+                }
+                finally
+                {
+                    if (!isPrivate)
+                        orderedStamps.Remove(messageStamp);
+                }
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }
