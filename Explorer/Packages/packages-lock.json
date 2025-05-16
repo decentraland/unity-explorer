@@ -87,14 +87,6 @@
         "com.unity.mathematics": "1.2.0"
       }
     },
-    "com.gurbu.gpui-pro.prefab": {
-      "version": "file:com.gurbu.gpui-pro.prefab",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.gurbu.gpui-pro": "0.9.19"
-      }
-    },
     "com.gurbu.gpui-pro.terrain": {
       "version": "file:com.gurbu.gpui-pro.terrain",
       "depth": 0,
