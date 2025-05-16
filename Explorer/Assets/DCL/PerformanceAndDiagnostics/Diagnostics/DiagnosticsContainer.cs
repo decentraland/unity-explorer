@@ -1,7 +1,11 @@
 using DCL.Diagnostics.Sentry;
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using UnityEngine;
+using ZLogger;
+using ZLogger.Providers;
+using ZLogger.Unity;
 
 namespace DCL.Diagnostics
 {
@@ -12,6 +16,8 @@ namespace DCL.Diagnostics
     {
         private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
 
+        private ILoggerFactory? zloggerFactory;
+        
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
 
@@ -19,6 +25,10 @@ namespace DCL.Diagnostics
 
         public void Dispose()
         {
+            // Dispose ZLogger factory
+            zloggerFactory?.Dispose();
+            zloggerFactory = null;
+            
             // Restore Default Unity Logger
             Debug.unityLogger.logHandler = defaultLogHandler;
         }
@@ -57,7 +67,35 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Initialize(logger, enableSceneDebugConsole);
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler };
+            var container = new DiagnosticsContainer
+            {
+                ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler
+            };
+            
+            container.zloggerFactory = LoggerFactory.Create(logging =>
+            {
+                logging.SetMinimumLevel(LogLevel.Debug); // ZLogger's LogLevel
+                
+                if (settings.IsEnabled(ReportHandler.DebugLog))
+                {
+                    logging.AddZLoggerRollingFile(opts =>
+                    {
+                        opts.FilePathSelector = (ts, seq) => $"logs/{ts:yyyy-MM-dd_HH-mm-ss}_{seq}.log";
+                        opts.RollingInterval = RollingInterval.Day;
+                        opts.RollingSizeKB   = 1024;
+                        opts.UsePlainTextFormatter(); // writes UTF-8 spans directly
+                    });
+
+                    logging.AddZLoggerUnityDebug(options =>
+                    {
+                        options.UsePlainTextFormatter();
+                    });
+                }
+            });
+            
+            var log = container.zloggerFactory.CreateLogger("DCL");
+            log.LogInformation("DiagnosticsContainer created with {HandlersCount} handlers", handlers.Count);
+            return container;
         }
 
         private static void AddSceneDebugConsoleReportHandler(List<(ReportHandler, IReportHandler)> handlers)
