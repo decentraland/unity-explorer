@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Emotes
 
         protected override void Update(float t)
         {
-            FinalizeEmoteDTOQuery(World!);
+            FinalizeEmoteDTOQuery(World);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeGltfLoadingQuery(World);
