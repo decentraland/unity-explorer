@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "5954fac94334a8af6742b45ae92ac0b1044528a7"
+      "hash": "6219df9d156bcd1bc36fd43f451caa4273b6dc23"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
@@ -78,22 +78,24 @@
       "hash": "f2621a8b09b68f3a7639eea40a7aba18571f3f28"
     },
     "com.gurbu.gpui-pro": {
-      "version": "file:com.gurbu.gpui-pro",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/GPUI_Instancer_Pro",
       "depth": 0,
-      "source": "embedded",
+      "source": "git",
       "dependencies": {
         "com.unity.burst": "1.6.0",
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
-      }
+      },
+      "hash": "5954fac94334a8af6742b45ae92ac0b1044528a7"
     },
     "com.gurbu.gpui-pro.terrain": {
-      "version": "file:com.gurbu.gpui-pro.terrain",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#feat/GPUI_Instancer_Pro",
       "depth": 0,
-      "source": "embedded",
+      "source": "git",
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
-      }
+      },
+      "hash": "5954fac94334a8af6742b45ae92ac0b1044528a7"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
