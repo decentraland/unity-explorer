@@ -44,7 +44,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
             if (sceneState == null) return;
 
             if (Handle(exception, new ReportData(category, sceneShortInfo: sceneShortInfo), engineRegisteredExceptions) != ISystemGroupExceptionHandler.Action.Continue)
-                sceneState!.State = SceneState.EngineError;
+                sceneState!.State.Set(SceneState.EngineError);
         }
 
         public void OnJavaScriptException(Exception exception)
@@ -56,7 +56,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // In order to keep the scenes running we need to increase the error tolerance. Scenes that exceed will need a fix on the scene level.
             // This works different from the old kernel. The sdk7 runtime just does a try/catch: https://github.com/decentraland/scene-runtime/blob/adbf9e78c3b5d85d619c41494a177dfd7b6b5581/src/worker-sdk7/sdk7-runtime.ts#L119-L130
             if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber), javascriptRegisteredExceptions) != ISystemGroupExceptionHandler.Action.Continue)
-                sceneState!.State = SceneState.JavaScriptError;
+                sceneState!.State.Set(SceneState.JavaScriptError);
         }
 
         public async UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task)
@@ -150,7 +150,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
                     ReportHub.LogException(new SceneExecutionException(registeredExceptions.Select(e => e!.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));
 
                     // Put the scene into the error state
-                    sceneState!.State = SceneState.EcsError;
+                    sceneState!.State.Set(SceneState.EcsError);
                     return ISystemGroupExceptionHandler.Action.Suspend;
                 }
 

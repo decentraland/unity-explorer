@@ -2,6 +2,7 @@
 using DCL.WebRequests;
 using JetBrains.Annotations;
 using Microsoft.ClearScript;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,27 +10,22 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.FetchApi
 {
-    public class SimpleFetchApiWrapper : JsApiWrapperBase<ISimpleFetchApi>
+    public class SimpleFetchApiWrapper : JsApiWrapper<ISimpleFetchApi>
     {
-        private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IWebRequestController webController;
+        private readonly bool isLocalSceneDevelopment;
 
-        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
+        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController, CancellationTokenSource disposeCts, bool isLocalSceneDevelopment) : base(api, disposeCts)
         {
-            cancellationTokenSource = new CancellationTokenSource();
             this.webController = webController;
-        }
-
-        protected override void DisposeInternal()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/SimpleFetchApi.js")]
         public object Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout)
         {
-            return FetchAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
+            return FetchAsync(disposeCts.Token).ToDisconnectedPromise(this);
 
             async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
             {
@@ -56,6 +52,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         }
 
         [Serializable]
+        [PublicAPI]
         public struct ResponseToJs
         {
             public bool ok;

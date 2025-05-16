@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis
 {
@@ -15,7 +13,7 @@ namespace SceneRuntime.Apis
         ///     Disconnects from the main thread so it does not wait for the async task to complete
         ///     as it can lead to accidental synchronization by the main thread and to a dead lock subsequently.
         /// </summary>
-        public static object ToDisconnectedPromise<T>(this UniTask<T> uniTask)
+        public static object ToDisconnectedPromise<T>(this UniTask<T> uniTask, JsApiWrapper api)
         {
             var completionSource = new UniTaskCompletionSource<T>();
 
@@ -24,12 +22,23 @@ namespace SceneRuntime.Apis
                         try
                         {
                             T result = await uniTask;
-                            await UniTask.SwitchToThreadPool();
+
+                            if (PlayerLoopHelper.IsMainThread)
+                                await UniTask.SwitchToThreadPool();
+
+                            if (api.disposeCts.IsCancellationRequested)
+                                return;
+
                             completionSource.TrySetResult(result);
                         }
                         catch (Exception e)
                         {
-                            await UniTask.SwitchToThreadPool();
+                            if (PlayerLoopHelper.IsMainThread)
+                                await UniTask.SwitchToThreadPool();
+
+                            if (api.disposeCts.IsCancellationRequested)
+                                return;
+
                             completionSource.TrySetException(e);
                         }
                     })
@@ -41,7 +50,7 @@ namespace SceneRuntime.Apis
         /// <summary>
         ///     <inheritdoc cref="ToDisconnectedPromise{T}" />
         /// </summary>
-        public static object ToDisconnectedPromise(this UniTask uniTask)
+        public static object ToDisconnectedPromise(this UniTask uniTask, JsApiWrapper api)
         {
             var completionSource = new UniTaskCompletionSource();
 
@@ -50,12 +59,23 @@ namespace SceneRuntime.Apis
                         try
                         {
                             await uniTask;
-                            await UniTask.SwitchToThreadPool();
+
+                            if (PlayerLoopHelper.IsMainThread)
+                                await UniTask.SwitchToThreadPool();
+
+                            if (api.disposeCts.IsCancellationRequested)
+                                return;
+
                             completionSource.TrySetResult();
                         }
                         catch (Exception e)
                         {
-                            await UniTask.SwitchToThreadPool();
+                            if (PlayerLoopHelper.IsMainThread)
+                                await UniTask.SwitchToThreadPool();
+
+                            if (api.disposeCts.IsCancellationRequested)
+                                return;
+
                             completionSource.TrySetException(e);
                         }
                     })

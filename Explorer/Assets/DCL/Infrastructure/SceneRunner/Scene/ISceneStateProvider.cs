@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+using Utility.Multithreading;
 
 namespace SceneRunner.Scene
 {
@@ -9,7 +9,7 @@ namespace SceneRunner.Scene
         /// </summary>
         bool IsCurrent { get; set; }
 
-        SceneState State { get; set; }
+        Atomic<SceneState> State { get; set; }
 
         uint TickNumber { get; set; }
 
@@ -21,7 +21,7 @@ namespace SceneRunner.Scene
     public static class SceneStateProviderExtensions
     {
         public static bool IsNotRunningState(this ISceneStateProvider sceneStateProvider) =>
-            sceneStateProvider.State
+            sceneStateProvider.State.Value()
                 is SceneState.Disposing
                 or SceneState.Disposed
                 or SceneState.JavaScriptError

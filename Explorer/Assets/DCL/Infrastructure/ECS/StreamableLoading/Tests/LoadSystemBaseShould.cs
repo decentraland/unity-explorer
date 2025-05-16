@@ -1,4 +1,5 @@
 ﻿using AssetManagement;
+using DCL.Diagnostics.Tests;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -8,10 +9,8 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene.Tests;
 using System;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.Tests
 {

@@ -12,7 +12,7 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.Ethereums
 {
-    public class EthereumApiWrapper : IJsApiWrapper
+    public class EthereumApiWrapper : JsApiWrapper
     {
         private readonly IEthereumApi ethereumApi;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
@@ -20,20 +20,18 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         private readonly CancellationTokenSource sendCancellationToken;
         private CancellationTokenSource signMessageCancellationToken;
 
-        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache) : this(
-            ethereumApi, sceneExceptionsHandler, web3IdentityCache, new CancellationTokenSource(), new CancellationTokenSource()
-        ) { }
-
-        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache, CancellationTokenSource sendCancellationToken, CancellationTokenSource signMessageCancellationToken)
+        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache,
+            CancellationTokenSource disposeCts,
+            CancellationTokenSource? sendCancellationToken = null, CancellationTokenSource? signMessageCancellationToken = null) : base(disposeCts)
         {
             this.ethereumApi = ethereumApi;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.web3IdentityCache = web3IdentityCache;
-            this.sendCancellationToken = sendCancellationToken;
-            this.signMessageCancellationToken = signMessageCancellationToken;
+            this.sendCancellationToken = sendCancellationToken ?? new CancellationTokenSource();
+            this.signMessageCancellationToken = signMessageCancellationToken ?? new CancellationTokenSource();
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             sendCancellationToken.SafeCancelAndDispose();
             signMessageCancellationToken.SafeCancelAndDispose();
@@ -57,7 +55,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
             signMessageCancellationToken = signMessageCancellationToken.SafeRestart();
 
             return RequestPersonalSignatureAsync(signMessageCancellationToken.Token)
-               .ToDisconnectedPromise();
+               .ToDisconnectedPromise(this);
 
             async UniTask<SignMessageResponse> RequestPersonalSignatureAsync(CancellationToken ct)
             {
@@ -94,7 +92,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         public object SendAsync(double id, string method, string jsonParams)
         {
             return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
-               .ToDisconnectedPromise();
+               .ToDisconnectedPromise(this);
 
             async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(double id, string method, object[] @params, CancellationToken ct)
             {

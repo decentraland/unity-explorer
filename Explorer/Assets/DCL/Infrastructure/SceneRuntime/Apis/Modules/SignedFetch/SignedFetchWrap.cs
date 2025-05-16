@@ -21,18 +21,22 @@ using Utility.Times;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch
 {
-    public class SignedFetchWrap : IJsApiWrapper
+    public class SignedFetchWrap : JsApiWrapper
     {
         private static readonly string[] AUTH_CHAIN_HEADER_NAMES =
         {
             // AuthLinkType.SIGNER
             "x-identity-auth-chain-0",
+
             // AuthLinkType.ECDSA_EPHEMERAL
             "x-identity-auth-chain-1",
+
             // AuthLinkType.ECDSA_SIGNED_ENTITY
             "x-identity-auth-chain-2",
+
             // AuthLinkType.ECDSA_EIP_1654_EPHEMERAL
             "x-identity-auth-chain-3",
+
             // AuthLinkType.ECDSA_EIP_1654_SIGNED_ENTITY
             "x-identity-auth-chain-4",
         };
@@ -42,25 +46,21 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         private readonly ISceneData sceneData;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public SignedFetchWrap(
             IWebRequestController webController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISceneData sceneData,
             IRealmData realmData,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            CancellationTokenSource disposeCts)
+            : base(disposeCts)
         {
             this.webController = webController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sceneData = sceneData;
             this.realmData = realmData;
             this.identityCache = identityCache;
-        }
-
-        public void Dispose()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         [UsedImplicitly]
@@ -94,9 +94,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             string signatureMetadata = CreateSignatureMetadata(hashBody);
 
-            var headers = new WebRequestHeadersInfo(request.init?.headers)
-                         .WithSign(signatureMetadata, unixTimestamp)
-                         .AsMutableDictionary();
+            Dictionary<string, string> headers = new WebRequestHeadersInfo(request.init?.headers)
+                                                .WithSign(signatureMetadata, unixTimestamp)
+                                                .AsMutableDictionary();
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
                 signatureMetadata,
@@ -134,10 +134,12 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             });
         }
 
-        private static string sha256_hash(string value) {
-            StringBuilder sb = new StringBuilder();
+        private static string sha256_hash(string value)
+        {
+            var sb = new StringBuilder();
 
-            using (SHA256 hash = SHA256.Create()) {
+            using (var hash = SHA256.Create())
+            {
                 Encoding enc = Encoding.UTF8;
                 byte[] result = hash.ComputeHash(enc.GetBytes(value));
 
@@ -162,8 +164,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             string signatureMetadata = CreateSignatureMetadata(hashBody);
 
-            var headers = new WebRequestHeadersInfo(request.init?.headers)
-                         .WithSign(signatureMetadata, unixTimestamp);
+            WebRequestHeadersInfo headers = new WebRequestHeadersInfo(request.init?.headers)
+               .WithSign(signatureMetadata, unixTimestamp);
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
                 signatureMetadata,
@@ -188,7 +190,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 signatureMetadata,
                                 GetReportData(),
-                                cancellationTokenSource.Token);
+                                disposeCts.Token);
 
                             break;
                         case "post":
@@ -196,7 +198,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                cancellationTokenSource.Token,
+                                disposeCts.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -206,7 +208,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                                 request.url,
                                 new FlatFetchResponse<GenericGetRequest>(),
-                                cancellationTokenSource.Token,
+                                disposeCts.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportData: GetReportData());
@@ -217,17 +219,18 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPutRequest>(),
                                 GenericPutArguments.CreateJsonOrDefault(request.init?.body),
-                                cancellationTokenSource.Token,
+                                disposeCts.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
+
                             break;
                         case "delete":
                             response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
                                 request.url,
                                 new FlatFetchResponse<GenericDeleteRequest>(),
                                 GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
-                                cancellationTokenSource.Token,
+                                disposeCts.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -240,12 +243,14 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 }
                 catch (UnityWebRequestException e)
                 {
-                    if (e.ResponseHeaders.TryGetValue("Content-type", out var contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+                    if (e.ResponseHeaders.TryGetValue("Content-type", out string? contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
                     {
-                        var flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
+                        FlatFetchError flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
+
                         return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), flatFetchError.error,
                             e.ResponseHeaders);
                     }
+
                     return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error,
                         e.ResponseHeaders);
                 }
@@ -256,7 +261,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 }
             }
 
-            return ExecuteRequestAsync().ToDisconnectedPromise();
+            return ExecuteRequestAsync().ToDisconnectedPromise(this);
         }
 
         private ReportData GetReportData() =>
@@ -276,6 +281,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 // TODO: support guest if required in the future
                 isGuest = false,
                 signer = "decentraland-kernel-scene",
+
                 // It is used for external servers to verify that the user is currently valid for that realm
                 // For example the hostname can be used to form a request to: https://{hostname}/comms/peers to check the user is currently on that parcel
                 realm = new SignatureMetadata.Realm
@@ -284,7 +290,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     protocol = realmData.Protocol,
                     serverName = realmData.RealmName,
                 },
-                hashPayload = hashPayload
+                hashPayload = hashPayload,
             };
 
             return JsonUtility.ToJson(metadata);

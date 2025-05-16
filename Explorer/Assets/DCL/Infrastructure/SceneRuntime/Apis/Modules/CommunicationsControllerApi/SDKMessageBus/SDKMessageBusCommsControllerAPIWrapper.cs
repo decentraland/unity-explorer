@@ -1,35 +1,24 @@
 using DCL.Diagnostics;
 using JetBrains.Annotations;
 using System;
+using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus
 {
-    public class SDKMessageBusCommsControllerAPIWrapper : IJsApiWrapper
+    public class SDKMessageBusCommsControllerAPIWrapper : JsApiWrapper<ISDKMessageBusCommsControllerAPI>
     {
-        private readonly ISDKMessageBusCommsControllerAPI api;
-
-        public SDKMessageBusCommsControllerAPIWrapper(ISDKMessageBusCommsControllerAPI api)
-        {
-            this.api = api;
-        }
+        public SDKMessageBusCommsControllerAPIWrapper(ISDKMessageBusCommsControllerAPI api, CancellationTokenSource disposeCts)
+            : base(api, disposeCts) { }
 
         [UsedImplicitly]
         public void Send(string data)
         {
-            try
-            {
-                api.Send(data);
-            }
+            try { api.Send(data); }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.ENGINE);
                 throw;
             }
-        }
-
-        public void Dispose()
-        {
-            api.Dispose();
         }
     }
 }

@@ -39,37 +39,5 @@ namespace SceneRunner.Scene
         bool Contains(Vector2Int parcel);
 
         bool IsSceneReady();
-
-        class FakeSceneFacade : ISceneFacade
-        {
-            public UniTask DisposeAsync() => UniTask.CompletedTask;
-
-            public void Dispose() { }
-
-            public SceneShortInfo Info { get; }
-            public ISceneStateProvider SceneStateProvider { get; }
-            public SceneEcsExecutor EcsExecutor { get; }
-            public PersistentEntities PersistentEntities { get; }
-            public ISceneData SceneData { get; } = new ISceneData.Fake();
-            public bool IsEmpty { get; }
-
-            public void Initialize() { }
-
-            public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct) => UniTask.CompletedTask;
-
-            public void SetTargetFPS(int fps) { }
-
-            public void SetIsCurrent(bool isCurrent) { }
-
-            UniTask ISceneFacade.StartScene() => UniTask.CompletedTask;
-
-            UniTask ISceneFacade.Tick(float dt) => UniTask.CompletedTask;
-
-            public bool Contains(Vector2Int parcel) =>
-                true;
-
-            public bool IsSceneReady() =>
-                true;
-        }
     }
 }
