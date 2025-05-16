@@ -1,18 +1,17 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.RealmNavigation;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
-using SceneRunner.Scene;
-using System.Collections.Generic;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -30,7 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private PooledLoadReportList? reports;
 
-        private HashSet<EntityReference>? entitiesUnderObservation;
+        private HashSet<Entity>? entitiesUnderObservation;
 
         private bool concluded;
         private int assetsResolved;
@@ -63,7 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         public override void Initialize()
         {
-            entitiesUnderObservation = HashSetPool<EntityReference>.Get();
+            entitiesUnderObservation = HashSetPool<Entity>.Get();
             startTime = Time.time;
         }
 
@@ -71,7 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (entitiesUnderObservation != null)
             {
-                HashSetPool<EntityReference>.Release(entitiesUnderObservation);
+                HashSetPool<Entity>.Release(entitiesUnderObservation);
                 entitiesUnderObservation = null;
             }
             sceneData.SceneLoadingConcluded = true;
@@ -96,16 +95,16 @@ namespace ECS.SceneLifeCycle.Systems
 
                 concluded = true;
 
-                List<EntityReference> toDelete = ListPool<EntityReference>.Get();
+                List<Entity> toDelete = ListPool<Entity>.Get();
 
                 // iterate over entities
 
-                foreach (EntityReference entityRef in entitiesUnderObservation!)
+                foreach (Entity entityRef in entitiesUnderObservation!)
                 {
                     // if entity has died
                     // or entity no longer contains GltfContainerComponent
                     // continue
-                    if (!entityRef.IsAlive(World)
+                    if (!World.IsAlive(entityRef)
                         || !World.TryGet(entityRef, out GltfContainerComponent gltfContainerComponent))
                     {
                         toDelete.Add(entityRef);
@@ -131,7 +130,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 entitiesUnderObservation.ExceptWith(toDelete);
-                ListPool<EntityReference>.Release(toDelete);
+                ListPool<Entity>.Release(toDelete);
 
                 // it's an internal timeout
                 if (Time.time - startTime > TIMEOUT.TotalSeconds)
@@ -163,6 +162,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 concluded = true;
                 sceneData.SceneLoadingConcluded = true;
+
                 World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
                     sceneData.Geometry.BaseParcelPosition;
             }
@@ -171,8 +171,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void GatherEntities(Entity entity, GltfContainerComponent component)
         {
             // No matter to which state component has changed
-            EntityReference entityRef = World.Reference(entity);
-            entitiesUnderObservation!.Add(entityRef);
+            entitiesUnderObservation!.Add(entity);
         }
     }
 }

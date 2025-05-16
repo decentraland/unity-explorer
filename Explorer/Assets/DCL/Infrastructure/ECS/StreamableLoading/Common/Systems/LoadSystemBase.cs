@@ -96,8 +96,6 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
-            EntityReference entityReference = World!.Reference(entity);
-
             //If a chunk is already loading, don't start another one, if it is a partial request it will resume from the point it was stopped
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
@@ -107,7 +105,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
                     // if it's unable to keep up with their number
-                    FinalizeLoading(entityReference, intention, null, currentSource, state);
+                    FinalizeLoading(entity, intention, null, currentSource, state);
 
                 return;
             }
@@ -115,11 +113,11 @@ namespace ECS.StreamableLoading.Common.Systems
             // Indicate that loading has started
             state.StartProgress();
 
-            FlowAsync(entityReference, currentSource, intention, state, partitionComponent, cancellationTokenSource.Token).Forget();
+            FlowAsync(entity, currentSource, intention, state, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
         private async UniTask FlowAsync(
-            EntityReference entity,
+            Entity entity,
             AssetSource source,
             TIntention intention,
             StreamableLoadingState state,
@@ -200,7 +198,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
-        private void FinalizeLoading(EntityReference entity, TIntention intention,
+        private void FinalizeLoading(Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             StreamableLoadingState state)
         {
@@ -251,7 +249,7 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
-        private bool IsWorldInvalid(EntityReference entity, IAcquiredBudget? acquiredBudget)
+        private bool IsWorldInvalid(Entity entity, IAcquiredBudget? acquiredBudget)
         {
             if (systemIsDisposed || !World!.IsAlive(entity))
             {

@@ -53,7 +53,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             {
                 // Require parent to re-evaluate its children order
 
-                if (uiTransformComponent.RelationData.parent != EntityReference.Null)
+                if (uiTransformComponent.RelationData.parent != Entity.Null)
                 {
                     ref var parent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
 
@@ -61,13 +61,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     {
                         ref var newRightOfComponent = ref World.Get<UITransformComponent>(newRightOfEntity);
 
-                        if (newRightOfComponent.RelationData.parent != EntityReference.Null)
+                        if (newRightOfComponent.RelationData.parent != Entity.Null)
                         {
                             Assert.AreEqual(uiTransformComponent.RelationData.parent, newRightOfComponent.RelationData.parent);
                             parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf, newRightOf, ref newRightOfComponent.RelationData);
                         }
                         else if (!newRightOfComponent.IsRoot)
-                            ReportHub.LogError(ReportCategory.SCENE_UI, $"Can't Resolve sibling order for entity: {uiTransformComponent.RelationData.parent.Entity.ToString()} - as its new RightOfEntity: {newRightOfEntity.ToString()} - has no parent, but it is NOT a ROOT either");
+                            ReportHub.LogError(ReportCategory.SCENE_UI, $"Can't Resolve sibling order for entity: {uiTransformComponent.RelationData.parent.ToString()} - as its new RightOfEntity: {newRightOfEntity.ToString()} - has no parent, but it is NOT a ROOT either");
                     }
                     else
                     {

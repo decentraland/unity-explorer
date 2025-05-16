@@ -11,6 +11,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
     {
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
         [field: SerializeField] public Button JumpInButton { get; private set; }
+        [field: SerializeField] public Button ChatButton { get; private set; }
+
 
         [field: Header("Online status")]
         [field: SerializeField] public GameObject OnlineStatusContainer { get; private set; }
@@ -24,6 +26,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             buttons.Clear();
             buttons.Add(JumpInButton);
             buttons.Add(ContextMenuButton);
+            buttons.Add(ChatButton);
             base.Configure(profile);
             SetOnlineStatus(OnlineStatus.OFFLINE);
         }
@@ -36,6 +39,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             buttons.Clear();
             buttons.Add(ContextMenuButton);
+            buttons.Add(ChatButton);
 
             if (onlineStatus != OnlineStatus.OFFLINE)
                 buttons.Add(JumpInButton);
@@ -50,6 +54,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             {
                 buttons.Clear();
                 buttons.Add(ContextMenuButton);
+                buttons.Add(ChatButton);
             }
         }
     }
