@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
         [Query]
         [None(typeof(SDKTweenComponent))]
-        private void LoadTween(in Entity entity, ref PBTween pbTween)
+        private void LoadTween(Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 

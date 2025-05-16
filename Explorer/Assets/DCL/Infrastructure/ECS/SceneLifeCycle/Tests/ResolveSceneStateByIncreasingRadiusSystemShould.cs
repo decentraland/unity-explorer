@@ -5,6 +5,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -19,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -31,6 +33,7 @@ namespace ECS.SceneLifeCycle.Tests
         private RealmComponent realmComponent;
 
         private SceneLoadingLimit sceneLoadingLimit;
+        private ISystemMemoryCap systemMemoryCap;
         private int maximumAmountOfScenesThatCanLoad;
         private int maximumAmountOfLODThatCanLoad;
         private int maximumAmountOfLODReductedThatCanLoad;
@@ -58,10 +61,10 @@ namespace ECS.SceneLifeCycle.Tests
             maximumAmountOfLODThatCanLoad = 5;
             maximumAmountOfLODReductedThatCanLoad = 8;
 
-            sceneLoadingLimit = SceneLoadingLimit.CreateMax();
-            sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad = maximumAmountOfScenesThatCanLoad;
-            sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad = maximumAmountOfLODThatCanLoad;
-            sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad = maximumAmountOfLODReductedThatCanLoad;
+            systemMemoryCap = Substitute.For<ISystemMemoryCap>();
+            systemMemoryCap.MemoryCapInMB.Returns(long.MaxValue);
+            sceneLoadingLimit = new SceneLoadingLimit(systemMemoryCap);
+            sceneLoadingLimit.SetEnabled(true);
 
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
             system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, realmData, sceneLoadingLimit);
@@ -71,14 +74,24 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        [TestCase(0, "7")]
-        [TestCase(20, "7")]
-        [TestCase(20, "6")]
-        public async Task LimitSceneLoadingByMemory(int sceneAmount, string runtimeVersion)
+        [TestCase(7_000, 10, 1, 9, 8)]
+        [TestCase(15_000, 10, 3, 7, 2)]
+        [TestCase(33_000, 10, 10, 0, 0)]
+        public async Task LimitSceneLoadingByMemory(long memoryInMB, int scenesToLoad, int expectedScenes, int expectedLOD, int expectedLowQualityLODs)
         {
+            systemMemoryCap.MemoryCapInMB.Returns(memoryInMB);
+            sceneLoadingLimit.UpdateMemoryCap();
             realmPartitionSettings.ScenesRequestBatchSize.Returns(30);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
-            CreateScenes(realmPartitionSettings.ScenesRequestBatchSize, runtimeVersion, sceneAmount);
+
+
+            for (var i = 0; i < scenesToLoad; i++)
+            {
+                if (i < expectedScenes)
+                    CreateScene(300, "7", i);
+                else
+                    CreateLOD(300, i);
+            }
 
             system.Update(0f);
 
@@ -88,9 +101,9 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0f);
 
+
             //If no scene were requested, or all of them were sdk6
-            AssertResult(sceneAmount == 0 || runtimeVersion != "7" ? 0 : sceneLoadingLimit.MaximumAmountOfScenesThatCanLoad, sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad + sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad,
-                sceneLoadingLimit.MaximumAmountOfLODsThatCanLoad, sceneLoadingLimit.MaximumAmountOfReductedLoDsThatCanLoad);
+            AssertResult(expectedScenes, expectedLOD, expectedLOD - expectedLowQualityLODs, expectedLowQualityLODs);
         }
 
         [Test]
@@ -100,7 +113,7 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesRequestBatchSize.Returns(30);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
 
-            CreateScenes(realmPartitionSettings.ScenesRequestBatchSize, "7", 20);
+            CreateScene(1, "7", 1);
 
             system.Update(0f);
 
@@ -147,8 +160,8 @@ namespace ECS.SceneLifeCycle.Tests
             system.Update(0f);
 
             // Serve 2
-            var entities = new List<Entity>();
-            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities);
+            var entities = new Entity[2];
+            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities.AsSpan());
 
             Assert.That(entities.Count, Is.EqualTo(2));
             Assert.That(entities.Any(e => world.Get<IPartitionComponent>(e).Bucket == 0), Is.True);
@@ -188,11 +201,14 @@ namespace ECS.SceneLifeCycle.Tests
 
         private void AssertResult(int sceneResultExpected, int lodResultExpected, int lodHighQualityResultExpected, int lodLowQualityResultExpected)
         {
-            var sceneEntities = new List<Entity>();
-            var lodEntities = new List<Entity>();
+            QueryDescription facadeQuery = new QueryDescription().WithAll<GetSceneFacadeIntention>();
+            QueryDescription lodQuery = new QueryDescription().WithAll<SceneLODInfo>();
 
-            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), sceneEntities);
-            world.GetEntities(new QueryDescription().WithAll<SceneLODInfo>(), lodEntities);
+            Span<Entity> sceneEntities = stackalloc Entity[world.CountEntities(facadeQuery)];
+            Span<Entity> lodEntities = stackalloc Entity[world.CountEntities(lodQuery)];
+
+            world.GetEntities(facadeQuery, sceneEntities);
+            world.GetEntities(lodQuery, lodEntities);
 
             var qualityReductedLODCount = 0;
             var qualityHighLODCount = 0;
@@ -207,32 +223,45 @@ namespace ECS.SceneLifeCycle.Tests
                     qualityReductedLODCount++;
             }
 
-            Assert.That(sceneEntities.Count, Is.EqualTo(sceneResultExpected));
-            Assert.That(lodEntities.Count, Is.EqualTo(lodResultExpected));
+            Assert.That(sceneEntities.Length, Is.EqualTo(sceneResultExpected));
+            Assert.That(lodEntities.Length, Is.EqualTo(lodResultExpected));
             Assert.That(qualityHighLODCount, Is.EqualTo(lodHighQualityResultExpected));
             Assert.That(qualityReductedLODCount, Is.EqualTo(lodLowQualityResultExpected));
         }
 
-        private void CreateScenes(int sceneBatch, string runtime, int sceneAmount)
+        private void CreateScene(int parcelAmount, string runtime, int distanceToPlayer)
         {
-            // Create 30 scene candidate.
-            for (var i = 0; i < sceneBatch; i++)
-            {
-                world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
-                    new SceneEntityDefinition
-                    {
-                        metadata = new SceneMetadata
-                        {
-                            scene = new SceneMetadataScene
-                                { DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) } },
-                            runtimeVersion = runtime,
-                        },
-                    },
-                    new IpfsPath()), new PartitionComponent
+            world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
+                new SceneEntityDefinition
                 {
-                    Bucket = (byte)(i < sceneAmount ? 0 : SDK7LODThreshold + 1), RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i,
-                });
-            }
+                    metadata = new SceneMetadata
+                    {
+                        scene = new SceneMetadataScene
+                            { DecodedParcels = new Vector2Int[parcelAmount] },
+                        runtimeVersion = runtime,
+                    },
+                },
+                new IpfsPath()), new PartitionComponent
+            {
+                Bucket = 0, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * distanceToPlayer,
+            });
+        }
+
+        private void CreateLOD(int parcelAmount, int distanceToPlayer)
+        {
+            world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(
+                new SceneEntityDefinition
+                {
+                    metadata = new SceneMetadata
+                    {
+                        scene = new SceneMetadataScene
+                            { DecodedParcels = new Vector2Int[parcelAmount] },
+                    },
+                },
+                new IpfsPath()), new PartitionComponent
+            {
+                Bucket = (byte)(SDK7LODThreshold + 1), RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * distanceToPlayer,
+            });
         }
     }
 }

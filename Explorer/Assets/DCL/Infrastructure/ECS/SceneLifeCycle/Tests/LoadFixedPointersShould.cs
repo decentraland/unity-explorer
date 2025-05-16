@@ -13,6 +13,7 @@ using ECS.TestSuite;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -78,7 +79,7 @@ namespace ECS.SceneLifeCycle.Tests
                                                                                                    UnityWebRequestAsyncOperation request = UnityWebRequest.Get(ipfsRealm.ContentBaseUrl + path.EntityId).SendWebRequest();
                                                                                                    await request;
 
-                                                                                                   world.Add(promise.Entity, new StreamableLoadingResult<SceneEntityDefinition>(
+                                                                                                   world.Add(promise.Entity, StreamableLoadingState.Create(), new StreamableLoadingResult<SceneEntityDefinition>(
                                                                                                        JsonConvert.DeserializeObject<SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
 
                                                                                                    return promise;
@@ -95,14 +96,18 @@ namespace ECS.SceneLifeCycle.Tests
             system.Update(0);
 
             QueryDescription q = new QueryDescription().WithAll<SceneDefinitionComponent>();
-            var entities = new List<Entity>();
-            world.GetEntities(in q, entities);
 
-            Assert.That(entities.Count, Is.EqualTo(2));
+            AssertAsSpan();
 
-            var definitions = entities.Select(e => world.Get<SceneDefinitionComponent>(e)).ToList();
-            Assert.That(definitions.Any(d => d.IpfsPath.EntityId == "bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"), Is.True);
-            Assert.That(definitions.Any(d => d.IpfsPath.EntityId == "bafkreihh3b5zjpb252blfa6b2n5lpr63pl5tdwhcxjidxx6vpytjjhbxou"), Is.True);
+            void AssertAsSpan()
+            {
+                Span<Entity> entities = stackalloc Entity[2];
+                world.GetEntities(in q, entities);
+
+                var definitions = entities.ToArray().Select(e => world.Get<SceneDefinitionComponent>(e)).ToList();
+                Assert.That(definitions.Any(d => d.IpfsPath.EntityId == "bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"), Is.True);
+                Assert.That(definitions.Any(d => d.IpfsPath.EntityId == "bafkreihh3b5zjpb252blfa6b2n5lpr63pl5tdwhcxjidxx6vpytjjhbxou"), Is.True);
+            }
         }
     }
 }

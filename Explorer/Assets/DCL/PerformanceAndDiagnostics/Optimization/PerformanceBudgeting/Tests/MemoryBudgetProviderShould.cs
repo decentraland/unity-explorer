@@ -11,6 +11,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
 
         private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold = new ()
         {
+            { MemoryUsageStatus.ABUNDANCE, 0.6f },
             { MemoryUsageStatus.WARNING, 0.8f },
             { MemoryUsageStatus.FULL, 0.9f },
         };
@@ -29,17 +30,19 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             memoryBudget = new MemoryBudget(systemMemoryCap, profiler, memoryThreshold);
         }
 
-        [TestCase(1000, 500, MemoryUsageStatus.NORMAL)]
-        [TestCase(1000, 810, MemoryUsageStatus.WARNING)]
-        [TestCase(1000, 910, MemoryUsageStatus.FULL)]
-        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, MemoryUsageStatus expectedUsage)
+        [TestCase(1000, 500, true, false, true)]
+        [TestCase(1000, 810, false, false, false)]
+        [TestCase(1000, 910, false, true, false)]
+        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(long systemMemoryInMB, long usedMemoryInMB, bool expectedUsage, bool isFull, bool isAbundance)
         {
             // Arrange
             profiler.SystemUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
             systemMemoryCap.MemoryCapInMB.Returns((int)systemMemoryInMB);
 
             // Act-Assert
-            Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
+            Assert.That(memoryBudget.IsMemoryNormal(), Is.EqualTo(expectedUsage));
+            Assert.That(memoryBudget.IsMemoryFull(), Is.EqualTo(isFull));
+            Assert.That(memoryBudget.IsInAbundance(), Is.EqualTo(isAbundance));
         }
 
         [TestCase(1000, 810, true)]

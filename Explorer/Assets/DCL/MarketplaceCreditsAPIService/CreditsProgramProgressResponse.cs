@@ -19,7 +19,7 @@ namespace DCL.MarketplaceCreditsAPIService
         public string startDate;
         public string endDate;
         public uint timeLeft;
-        public bool isOutOfFunds;
+        public string seasonState;
     }
 
     [Serializable]
@@ -41,6 +41,7 @@ namespace DCL.MarketplaceCreditsAPIService
     {
         public float available;
         public uint expiresIn;
+        public bool isBlockedForClaiming;
     }
 
     [Serializable]

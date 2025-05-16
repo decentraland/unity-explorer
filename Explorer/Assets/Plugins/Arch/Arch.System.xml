@@ -9,6 +9,11 @@
                 Marks a method to generate a high performance query for it. 
             </summary>
         </member>
+        <member name="P:Arch.System.QueryAttribute.Parallel">
+            <summary>
+            If set to true, Query will be run in parallel.
+            </summary>
+        </member>
         <member name="T:Arch.System.DataAttribute">
             <summary>
                 Marks a parameter as "data". This will be taken into account during source generation and will still be passed as a parameter in the query method.
@@ -131,7 +136,7 @@
         </member>
         <member name="F:Arch.System.Group`1._systems">
             <summary>
-            All <see cref="T:Arch.System.ISystem`1"/>'s in this group. 
+            All <see cref="T:Arch.System.Group`1.SystemEntry"/>'s in this group. 
             </summary>
         </member>
         <member name="M:Arch.System.Group`1.#ctor(System.String,Arch.System.ISystem{`0}[])">
@@ -158,7 +163,7 @@
         <member name="M:Arch.System.Group`1.Add``1">
             <summary>
                 Adds an single <see cref="T:Arch.System.ISystem`1"/> to this group by its generic.
-                Automaticly initializes it properly. Must be contructorless.
+                Automatically initializes it properly. Must be contructorless.
             </summary>
             <typeparam name="G">Its generic type.</typeparam>
             <returns>The same <see cref="T:Arch.System.Group`1"/>.</returns>
@@ -172,9 +177,16 @@
         </member>
         <member name="M:Arch.System.Group`1.Get``1">
             <summary>
-            Get all systems which can be cast into the given type
+                Return the first <see cref="!:G"/> which was found in the hierachy.
             </summary>
-            <typeparam name="G"></typeparam>
+            <typeparam name="G">The Type.</typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.Group`1.Find``1">
+            <summary>
+                Finds all <see cref="T:Arch.System.ISystem`1"/>s which can be cast into the given type.
+            </summary>
+            <typeparam name="G">The Type.</typeparam>
             <returns></returns>
         </member>
         <member name="M:Arch.System.Group`1.Initialize">
@@ -203,6 +215,17 @@
         <member name="M:Arch.System.Group`1.Dispose">
             <summary>
                 Disposes this <see cref="T:Arch.System.Group`1"/> and all <see cref="T:Arch.System.ISystem`1"/>'s within.
+            </summary>
+        </member>
+        <member name="M:Arch.System.Group`1.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.System.Group`1"/> to a human readable string.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Arch.System.Group`1.SystemEntry">
+            <summary>
+                The struct <see cref="T:Arch.System.Group`1.SystemEntry"/> represents the given <see cref="T:Arch.System.ISystem`1"/> in the <see cref="T:Arch.System.Group`1"/> with all its performance statistics.
             </summary>
         </member>
     </members>

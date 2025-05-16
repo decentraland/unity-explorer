@@ -8,7 +8,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     public class GPUInstancingMaterialsCache : IDisposable
     {
-        private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
+        public const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
 
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
@@ -20,16 +20,6 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
                 var keyword = new LocalKeyword(sharedMat.shader, GPU_INSTANCING_KEYWORD);
                 instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
-
-#if UNITY_EDITOR
-                if (sharedMat.parent != null)
-                {
-                    sharedMat.parent.EnableKeyword(keyword);
-
-                    instancedMat = new Material(sharedMat.parent.shader);
-                    instancedMat.CopyPropertiesFromMaterial(sharedMat);
-                }
-#endif
 
                 sharedMat.DisableKeyword(keyword);
                 instancedMat.EnableKeyword(keyword);

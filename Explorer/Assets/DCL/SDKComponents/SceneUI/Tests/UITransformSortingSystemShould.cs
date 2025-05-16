@@ -81,7 +81,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Entity e = world.Create(crdtEntity, sdkModel, component);
 
                 entitiesMap[crdtEntity] = e;
-                root.RelationData.AddChild(world.Reference(sceneRoot), crdtEntity, ref component.RelationData);
+                root.RelationData.AddChild(sceneRoot, crdtEntity, ref component.RelationData);
             }
         }
     }

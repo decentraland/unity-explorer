@@ -73,6 +73,7 @@ namespace DCL.Browser.DecentralandUrls
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
+                DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",

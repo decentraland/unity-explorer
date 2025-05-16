@@ -48,7 +48,8 @@ namespace DCL.SDKComponents.Animator.Tests
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
-            finalizeGltfContainerLoadingSystem = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), releasablePerformanceBudget,
+
+            finalizeGltfContainerLoadingSystem = new FinalizeGltfContainerLoadingSystem(world, sceneRoot, releasablePerformanceBudget,
                 NullEntityCollidersSceneCache.INSTANCE, sceneData, new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);

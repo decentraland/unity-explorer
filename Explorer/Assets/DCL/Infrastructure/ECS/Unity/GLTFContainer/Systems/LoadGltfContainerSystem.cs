@@ -132,7 +132,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
                 }
 
-                entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
+                entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
             }
         }
     }

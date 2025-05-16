@@ -8,9 +8,11 @@ using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -44,11 +46,12 @@ namespace DCL.Settings.Configuration
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
-            var viewInstance = UnityEngine.Object.Instantiate(View, parent);
+            var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
@@ -59,7 +62,7 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
                                                        DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                                                        DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
-                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
+                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),
                                                        DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatSettingsAsset),
                                                        DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
                                                        DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),

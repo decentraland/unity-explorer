@@ -4,6 +4,5 @@ namespace DCL.Optimization.PerformanceBudgeting
     {
         long MemoryCapInMB { get; }
         int MemoryCap { set; }
-        public MemoryCapMode Mode { set; }
     }
 }

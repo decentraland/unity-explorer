@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private Transform? localAvatarTransform;
-        private EntityReference ownAvatarEntity;
+        private Entity ownAvatarEntity;
 
         public AvatarModifierAreaHandlerSystem(World world, World globalWorld,
             ISceneRestrictionBusController sceneRestrictionBusController,
@@ -213,7 +213,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 if (profile.UserId == web3IdentityCache.Identity?.Address)
                 {
-                    ownAvatarEntity = globalWorld.Reference(entity);
+                    ownAvatarEntity = entity;
                     sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.APPLIED));
                 }
             }

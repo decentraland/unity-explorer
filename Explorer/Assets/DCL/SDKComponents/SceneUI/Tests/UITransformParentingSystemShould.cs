@@ -35,10 +35,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var childUiTransformComponent = new UITransformComponent();
             var childSdkEntity = new CRDTEntity(200);
             childUiTransformComponent.InitializeAsChild("TEST", childSdkEntity, -1);
-            childUiTransformComponent.RelationData.parent = world.Reference(parentEntity);
+            childUiTransformComponent.RelationData.parent = parentEntity;
             Entity childEntity = world.Create(childSdkEntity, childUiTransformComponent, new DeleteEntityIntention(), new PBUiTransform());
 
-            parentUiTransformComponent.RelationData.AddChild(world.Reference(parentEntity), childSdkEntity, ref childUiTransformComponent.RelationData);
+            parentUiTransformComponent.RelationData.AddChild(parentEntity, childSdkEntity, ref childUiTransformComponent.RelationData);
 
             entitiesMap.Add(childSdkEntity, childEntity);
 

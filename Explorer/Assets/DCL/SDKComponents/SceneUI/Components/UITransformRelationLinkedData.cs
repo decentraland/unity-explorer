@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         private Dictionary<CRDTEntity, Node> nodes;
         private Dictionary<CRDTEntity, Node> pendingRightOf; // key is the left entity
 
-        internal EntityReference parent;
+        internal Entity parent;
 
         internal CRDTEntity rightOf;
 
@@ -56,7 +56,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal bool ContainsNode(CRDTEntity entity) =>
             nodes != null && nodes.ContainsKey(entity);
 
-        public void AddChild(EntityReference thisEntity, CRDTEntity childEntity, ref UITransformRelationLinkedData childComponent)
+        public void AddChild(Entity thisEntity, CRDTEntity childEntity, ref UITransformRelationLinkedData childComponent)
         {
             Node newNode = Node.POOL.Get();
             newNode.Setup(childEntity);
@@ -154,7 +154,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             pendingRightOf.Remove(child);
             pendingRightOf.Remove(childData.rightOf);
 
-            childData.parent = EntityReference.Null;
+            childData.parent = Entity.Null;
 
             Node.POOL.Release(nodeToRemove);
         }

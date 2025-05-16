@@ -29,6 +29,5 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             currentFrameCountForUnloadAssets = FRAMES_UNTIL_UNLOAD_IS_INVOKED;
         }
 
-        
     }
 }

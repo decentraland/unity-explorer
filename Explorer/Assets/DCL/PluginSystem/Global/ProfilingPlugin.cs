@@ -6,6 +6,7 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.Versioning;
 
 namespace DCL.PluginSystem.Global
@@ -19,9 +20,10 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly DCLVersion dclVersion;
         private readonly AdaptivePhysicsSettings adaptivePhysicsSettings;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
 
         public ProfilingPlugin(IProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings)
+            IScenesCache scenesCache, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings, SceneLoadingLimit sceneLoadingLimit)
         {
             this.profiler = profiler;
             this.realmData = realmData;
@@ -29,6 +31,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.dclVersion = dclVersion;
             this.adaptivePhysicsSettings = adaptivePhysicsSettings;
+            this.sceneLoadingLimit = sceneLoadingLimit;
             this.memoryBudget = memoryBudget;
         }
 
@@ -42,7 +45,7 @@ namespace DCL.PluginSystem.Global
             UpdateProfilerSystem.InjectToWorld(ref builder, profiler, scenesCache);
 
             DebugViewProfilingSystem.InjectToWorld(ref builder, realmData, profiler, memoryBudget,
-                debugContainerBuilder, dclVersion, adaptivePhysicsSettings);
+                debugContainerBuilder, dclVersion, adaptivePhysicsSettings, sceneLoadingLimit);
         }
     }
 }

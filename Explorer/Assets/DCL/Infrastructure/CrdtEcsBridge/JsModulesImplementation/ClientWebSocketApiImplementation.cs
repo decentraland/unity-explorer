@@ -53,16 +53,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
             await GetInstanceOrThrow(websocketId).WebSocket.ConnectAsync(new Uri(url), ct);
         }
 
-        public async UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, CancellationToken ct)
+        public async UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, ulong size, CancellationToken ct)
         {
             WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
 
-            var bytesCount = (int)data.Size;
-            if (bytesCount == 0) return;
+            if (size == 0) return;
 
-            using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool(bytesCount);
+            using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool((int)size);
 
-            data.ReadBytes(0, data.Size, poolableArray.Array, 0);
+            data.ReadBytes(0, size, poolableArray.Array, 0);
             await CHUNK_TRANSMISSION.SendAsync(webSocket, poolableArray.Memory, WebSocketMessageType.Binary, ct);
         }
 

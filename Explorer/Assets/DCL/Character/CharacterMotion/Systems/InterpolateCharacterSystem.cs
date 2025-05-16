@@ -5,7 +5,6 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
-using DCL.Chat.Commands;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
@@ -34,7 +33,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(ReloadSceneChatCommand.SceneReloadComponent), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
+        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,

@@ -66,7 +66,7 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.SendBinaryAsync(webSocketId, arrayBuffer, cancellationTokenSource.Token)
+                return api.SendBinaryAsync(webSocketId, arrayBuffer, arrayBuffer.Size, cancellationTokenSource.Token)
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise();
             }
@@ -78,7 +78,8 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.SendBinaryAsync(webSocketId, typedArray.ArrayBuffer, cancellationTokenSource.Token)
+                // Apparently typedArray.Length != typedArray.ArrayBuffer.Length as the latter is preallocated to the bigger size (e.g. 8192)
+                return api.SendBinaryAsync(webSocketId, typedArray.ArrayBuffer, typedArray.Length, cancellationTokenSource.Token)
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise();
             }

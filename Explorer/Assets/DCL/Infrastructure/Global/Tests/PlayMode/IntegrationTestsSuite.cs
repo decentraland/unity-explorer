@@ -77,7 +77,7 @@ namespace Global.Tests.PlayMode
                 useRemoteAssetBundles: false,
                 World.Create(),
                 new Entity(),
-                new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
+                new SystemMemoryCap(),
                 new WorldVolumeMacBus(),
                 enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),

@@ -41,7 +41,6 @@ namespace DCL.UI.ProfileElements
         public void Dispose()
         {
             Element.CopyUserNameButton.onClick.RemoveAllListeners();
-            Element.CopyNameWarningNotification.Hide(true);
         }
     }
 }

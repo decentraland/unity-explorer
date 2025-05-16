@@ -94,14 +94,12 @@ namespace DCL.CharacterPreview
                     avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
                 PartitionComponent.TOP_PRIORITY));
 
-            EntityReference emotePromiseRef = globalWorld.Reference(emotePromiseEntity);
-
             avatarShape.IsDirty = true;
 
-            return WaitForAvatarInstantiatedAsync(emotePromiseRef, ct);
+            return WaitForAvatarInstantiatedAsync(emotePromiseEntity, ct);
         }
 
-        private async UniTask WaitForAvatarInstantiatedAsync(EntityReference emotePromiseEntity, CancellationToken ct)
+        private async UniTask WaitForAvatarInstantiatedAsync(Entity emotePromiseEntity, CancellationToken ct)
         {
             World world = globalWorld;
             Entity avatarEntity = characterPreviewEntity;
@@ -118,11 +116,9 @@ namespace DCL.CharacterPreview
                 return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
             }
 
-            bool IsEmoteLoaded()
-            {
-                return !emotePromiseEntity.IsAlive(world)
-                       || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
-            }
+            bool IsEmoteLoaded() =>
+                !world.IsAlive(emotePromiseEntity)
+                || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
         }
 
         public void PlayEmote(string emoteId)

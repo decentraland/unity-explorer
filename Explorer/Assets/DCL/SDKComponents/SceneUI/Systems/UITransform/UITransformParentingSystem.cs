@@ -104,19 +104,19 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             if (parentComponent == childComponent) return;
 
-            parentComponent.RelationData.AddChild(World.Reference(parentEntity), childEntity, ref childComponent.RelationData);
+            parentComponent.RelationData.AddChild(parentEntity, childEntity, ref childComponent.RelationData);
             parentComponent.Transform.Add(childComponent.Transform);
         }
 
         private void RemoveFromParent(UITransformComponent childComponent, CRDTEntity child)
         {
-            if (!childComponent.RelationData.parent.IsAlive(World)) return;
+            if (!World.IsAlive(childComponent.RelationData.parent)) return;
 
-            ref UITransformComponent parentTransform = ref World.TryGetRef<UITransformComponent>(childComponent.RelationData.parent.Entity, out bool exists);
+            ref UITransformComponent parentTransform = ref World.TryGetRef<UITransformComponent>(childComponent.RelationData.parent, out bool exists);
 
             if (!exists)
             {
-                ReportHub.LogError(GetReportData(), $"Trying to remove a child from a parent {childComponent.RelationData.parent.Entity} that do not have ${nameof(UITransformComponent)} component");
+                ReportHub.LogError(GetReportData(), $"Trying to remove a child from a parent {childComponent.RelationData.parent} that do not have ${nameof(UITransformComponent)} component");
                 return;
             }
 

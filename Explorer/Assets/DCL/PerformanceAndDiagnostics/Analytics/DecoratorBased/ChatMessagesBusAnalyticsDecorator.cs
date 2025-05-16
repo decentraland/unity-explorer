@@ -41,16 +41,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin);
 
-            analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, new JsonObject
-            {
-                { "is_command", message[0] == '/' },
-                { "origin", origin },
-                { "is_mention", CheckIfIsMention(message)},
-                { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
+            JsonObject jsonObject = new JsonObject
+                {
+                    { "is_command", message[0] == '/' },
+                    { "origin", origin },
+                    { "is_mention", CheckIfIsMention(message)},
+                    { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
 
-                //TODO FRAN: Add here array of mentioned players.
-                // { "emoji_count", emoji_count },
-            });
+                    //TODO FRAN: Add here array of mentioned players.
+                    // { "emoji_count", emoji_count },
+                };
+
+            if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
+                jsonObject.Add("receiver_id", channel.Id.Id);
+
+            analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
         }
 
         private bool  CheckIfIsMention(string message)

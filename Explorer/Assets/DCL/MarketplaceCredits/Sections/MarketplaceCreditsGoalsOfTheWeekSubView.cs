@@ -23,6 +23,9 @@ namespace DCL.MarketplaceCredits.Sections
         public GameObject CaptchaContainer { get; private set; }
 
         [field: SerializeField]
+        public GameObject CaptchaBlockedContainer { get; private set; }
+
+        [field: SerializeField]
         public MarketplaceCreditsCaptchaView CaptchaControl { get; private set; }
 
         [field: SerializeField]
@@ -37,8 +40,11 @@ namespace DCL.MarketplaceCredits.Sections
         public void ShowTimeLeftTooltip(bool show) =>
             TimeLeftLinkTooltip.SetActive(show);
 
-        public void ShowCaptcha(bool show) =>
-            CaptchaContainer.SetActive(show);
+        public void ShowCaptcha(bool show, bool isBlocked)
+        {
+            CaptchaContainer.SetActive(show && !isBlocked);
+            CaptchaBlockedContainer.SetActive(show && isBlocked);
+        }
 
         public void SetCaptchaAsLoading(bool isLoading) =>
             CaptchaControl.SetAsLoading(isLoading);

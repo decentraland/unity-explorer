@@ -109,7 +109,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0);
 
             ref AvatarShapeComponent avatarShapeComponent = ref world.Get<AvatarShapeComponent>(entity);
-            EntityReference originalPromise = avatarShapeComponent.WearablePromise.Entity;
+            Entity originalPromise = avatarShapeComponent.WearablePromise.Entity;
 
             pbAvatarShape.BodyShape = BODY_SHAPE_FEMALE;
             pbAvatarShape.IsDirty = true;
