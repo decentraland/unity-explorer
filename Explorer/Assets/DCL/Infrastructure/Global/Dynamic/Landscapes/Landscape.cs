@@ -47,7 +47,7 @@ namespace Global.Dynamic.Landscapes
                 worldsTerrain.SwitchVisibility(false);
 
                 if (!genesisTerrain.IsTerrainGenerated)
-                    await genesisTerrain.GenerateTerrainAndShowAsync(processReport: landscapeLoadReport,
+                    await genesisTerrain.GenerateGenesisTerrainAndShowAsync(processReport: landscapeLoadReport,
                         cancellationToken: ct);
                 else
                     await genesisTerrain.ShowAsync(landscapeLoadReport);

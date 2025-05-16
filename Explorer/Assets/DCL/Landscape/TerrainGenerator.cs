@@ -11,6 +11,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
+#if GPUIPRO_PRESENT
+using GPUInstancerPro.TerrainModule;
+#endif
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -188,7 +191,7 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask GenerateTerrainAndShowAsync(
+        public async UniTask GenerateGenesisTerrainAndShowAsync(
             uint worldSeed = 1,
             bool withHoles = true,
             bool hideTrees = false,
@@ -289,6 +292,19 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
+            
+#if GPUIPRO_PRESENT
+            GPUITreeManager treeManager = new GameObject("GPUITreeManager").AddComponent<GPUITreeManager>();
+            GPUIDetailManager detailManager = new GameObject("GPUIDetailManager").AddComponent<GPUIDetailManager>();
+            foreach (Terrain terrain in terrains)
+            {
+                if (treeManager != null)
+                    GPUITerrainAPI.AddTerrain(treeManager, terrain);
+
+                if (detailManager != null)
+                    GPUITerrainAPI.AddTerrain(detailManager, terrain);
+            }
+#endif
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
