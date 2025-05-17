@@ -150,7 +150,6 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 inputBlock,
                 viewDependencies,
-                chatCommandsBus,
                 roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,

@@ -13,7 +13,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             World world = previousSceneEntityInfo.EcsExecutor.World;
 
             // Entity died or PointerEvents component was removed, nothing to do
-            if (!previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference.IsAlive(world) ||
+            if (!world.IsAlive(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference) ||
                 !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
                 return;
 
@@ -47,29 +47,25 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             // Down tooltips should be shown only if a key of interest is not down yet
             // Up tooltips should be shown only if a key of interest is down
 
+            if (!sdkInputActionsMap.TryGetValue(pointerEventEntry.EventInfo.Button, out UnityEngine.InputSystem.InputAction unityInputAction))
+                return false;
+
             if (pointerEventEntry.EventInfo.Button == InputAction.IaAny)
-            {
                 switch (anyButtonIsDown)
                 {
                     case false when pointerEventEntry.EventType != PointerEventType.PetDown:
                     case true when pointerEventEntry.EventType != PointerEventType.PetUp:
                         return false;
                 }
-            }
-            else if (!sdkInputActionsMap.TryGetValue(pointerEventEntry.EventInfo.Button, out UnityEngine.InputSystem.InputAction unityInputAction))
-                return false;
             else
-            {
                 switch (unityInputAction.IsPressed())
                 {
                     case true when pointerEventEntry.EventType != PointerEventType.PetUp:
                     case false when pointerEventEntry.EventType != PointerEventType.PetDown:
                         return false;
                 }
-            }
 
-            // Add the tooltip
-            hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, pointerEventEntry.EventInfo.Button));
+            hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, unityInputAction));
             return true;
         }
     }
