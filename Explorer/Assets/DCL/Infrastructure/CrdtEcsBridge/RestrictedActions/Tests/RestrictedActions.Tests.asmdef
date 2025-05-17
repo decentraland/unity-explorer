@@ -1,39 +1,52 @@
 {
-    "name": "RestrictedActions.Tests",
-    "rootNamespace": "",
-    "references": [
-        "GUID:27619889b8ba8c24980f49ee34dbb44a",
-        "GUID:0acc523941302664db1f4e527237feb3",
-        "GUID:0f4c0f120707fb74497f5d581b9858f8",
-        "GUID:96825943f4e14954b5172da80fdee63d",
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:d414ef88f3b15f746a4b97636b50dfb4",
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:286980af24684da6acc1caa413039811",
-        "GUID:275e22790c04e9b47a5085d7b0c4432a",
-        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
-        "GUID:55c1fa1550cafa242ba23555f5a26b47",
-        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
-        "GUID:bd0560debe21467c961ac123eedc3c05",
-        "GUID:448ba91996ca4f1b9226ae37fe258dcb",
-        "GUID:26dfeb689dce47e296e47d5f55216bf7",
-        "GUID:9e1d2c55e6ac881409672d1d3b380e79"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "nunit.framework.dll",
-        "NSubstitute.dll",
-        "Arch.dll"
-    ],
-    "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "RestrictedActions.Tests",
+  "rootNamespace": "",
+  "references": [
+    "GUID:27619889b8ba8c24980f49ee34dbb44a",
+    "GUID:0acc523941302664db1f4e527237feb3",
+    "GUID:0f4c0f120707fb74497f5d581b9858f8",
+    "GUID:96825943f4e14954b5172da80fdee63d",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:d414ef88f3b15f746a4b97636b50dfb4",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:286980af24684da6acc1caa413039811",
+    "GUID:275e22790c04e9b47a5085d7b0c4432a",
+    "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+    "GUID:55c1fa1550cafa242ba23555f5a26b47",
+    "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+    "GUID:bd0560debe21467c961ac123eedc3c05",
+    "GUID:448ba91996ca4f1b9226ae37fe258dcb",
+    "GUID:26dfeb689dce47e296e47d5f55216bf7",
+    "GUID:9e1d2c55e6ac881409672d1d3b380e79",
+    "GUID:e74ed5baa5004d34a6b3240075d14758",
+    "GUID:d832748739a186646b8656bdbd447ad0",
+    "GUID:8322ea9340a544c59ddc56d4793eac74",
+    "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+    "GUID:fc4fd35fb877e904d8cedee73b2256f6",
+    "GUID:4794e238ed0f65142a4aea5848b513e5",
+    "GUID:543b8f091a5947a3880b7f2bca2358bd",
+    "GUID:5eabe9a3d4dd19d42a16208ea5411062",
+    "GUID:d0ec51c740809fd4680d3ea27279dca7",
+    "GUID:9e314663ce958b746873cb22d57ede55",
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:f4a0f40a2545482b8929d4c3c642f50a",
+    "GUID:e25ef972de004615a22937e739de2def"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "NSubstitute.dll",
+    "Arch.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

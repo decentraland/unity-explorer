@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Loading.Assets
     /// </summary>
     public abstract class AttachmentAssetBase : IDisposable
     {
-        protected readonly IStreamableRefCountData assetData;
+        internal readonly IStreamableRefCountData assetData;
 
         private bool disposed;
 

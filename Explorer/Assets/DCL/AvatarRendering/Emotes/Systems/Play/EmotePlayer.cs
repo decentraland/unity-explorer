@@ -1,7 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
-using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -69,19 +67,42 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (child != null)
                     child.gameObject.layer = avatarTransform.gameObject.layer;
 
-            if (emoteReferences.avatarClip != null)
+            // Scene Emotes in Local Scene Development are loaded as legacy animations
+            // (there's no other way to load them in runtime from a GLB)
+            if (emoteReferences.avatarClip is { legacy: true })
             {
-                view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
-                emoteComponent.EmoteLoop = isLooping;
+                var avatarAnimator = view.GetAnimator();
+                avatarAnimator.enabled = false;
+
+                var animationComp = avatarAnimator.gameObject.GetComponent<Animation>();
+
+                if (animationComp == null)
+                {
+                    animationComp = avatarAnimator.gameObject.AddComponent<Animation>();
+                    animationComp.playAutomatically = false;
+                }
+
+                AnimationClip legacyAnimationClip = emoteReferences.avatarClip;
+                legacyAnimationClip.wrapMode = emoteComponent.EmoteLoop ? WrapMode.Loop : WrapMode.Once;
+                animationComp.AddClip(legacyAnimationClip, legacyAnimationClip.name);
+                animationComp.Play(legacyAnimationClip.name);
             }
-
-            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
-            view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
-
-            if (emoteReferences.propClip != null)
+            else
             {
-                emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
-                emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+                if (emoteReferences.avatarClip != null)
+                {
+                    view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
+                    emoteComponent.EmoteLoop = isLooping;
+                }
+
+                view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
+                view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
+
+                if (emoteReferences.propClip != null && emoteReferences.animator != null)
+                {
+                    emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
+                    emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+                }
             }
 
             if (audioAsset != null)
@@ -102,20 +123,31 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         private static bool IsValid(GameObject mainAsset) =>
-            mainAsset.GetComponent<Animator>();
+            mainAsset.GetComponent<Animator>() || mainAsset.GetComponent<Animation>();
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
-            GameObject mainGameObject = Object.Instantiate(mainAsset)!;
+            GameObject mainGameObject = Object.Instantiate(mainAsset);
 
-            Animator animator = mainGameObject.GetComponent<Animator>().EnsureNotNull();
-            EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>()!;
-            IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>()!;
-            RuntimeAnimatorController runtimeAnimator = animator.runtimeAnimatorController!;
+            AnimationClip[] animationClips;
+
+            Animator? animator = mainGameObject.GetComponent<Animator>();
+            if (animator)
+            {
+                animationClips = animator.runtimeAnimatorController.animationClips;
+            }
+            else
+            {
+                // Scene Emotes in Local Scene Development mode (legacy animations) only have 1 clip
+                Animation animation = mainGameObject.GetComponent<Animation>();
+                animationClips = new AnimationClip[1];
+                animationClips[0] = animation.clip;
+            }
+            EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
+            IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
 
-            ExtractClips(runtimeAnimator, uniqueClips,
-                out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
+            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
 
             if (uniqueClips.Count == 1)
             {
@@ -151,7 +183,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             ListPool<AnimationClip>.Release(uniqueClips);
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
-            animator.fireEvents = false;
+            if (animator != null)
+                animator.fireEvents = false;
 
             return references;
         }
@@ -164,7 +197,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             pool!.Release(emoteReference);
         }
 
-        private static void ExtractClips(RuntimeAnimatorController runtimeAnimator,
+        private static void ExtractClips(
+            IReadOnlyList<AnimationClip> animationClips,
             List<AnimationClip> uniqueClips,
             out AnimationClip? avatarClip,
             out AnimationClip? propClip,
@@ -174,7 +208,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             propClip = null;
             propClipHash = 0;
 
-            foreach (AnimationClip clip in runtimeAnimator.animationClips!)
+            foreach (AnimationClip clip in animationClips)
                 if (!uniqueClips.Contains(clip))
                     uniqueClips.Add(clip);
 

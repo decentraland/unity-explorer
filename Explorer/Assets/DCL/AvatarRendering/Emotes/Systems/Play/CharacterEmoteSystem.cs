@@ -151,7 +151,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.Reset();
         }
 
-        // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
+        // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
