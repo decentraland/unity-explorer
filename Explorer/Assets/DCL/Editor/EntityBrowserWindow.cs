@@ -96,10 +96,12 @@ namespace DCL.Editor
 
             UpdateRegistryTypeArray();
 
-            DrawQueryTerm(nameof(query.All), ref query.All, all);
-            DrawQueryTerm(nameof(query.Any), ref query.Any, any);
-            DrawQueryTerm(nameof(query.None), ref query.None, none);
-            DrawQueryTerm(nameof(query.Exclusive), ref query.Exclusive, exclusive);
+            ComponentType[] newAll = DrawQueryTerm(nameof(query.All), query.All, all);
+            ComponentType[] newAny = DrawQueryTerm(nameof(query.Any), query.Any, any);
+            ComponentType[] newNone = DrawQueryTerm(nameof(query.None), query.None, none);
+            ComponentType[] newExclusive = DrawQueryTerm(nameof(query.Exclusive), query.Exclusive, exclusive);
+
+            query = new QueryDescription(newAll, newAny, newNone, newExclusive);
 
             // Entity list
 
@@ -138,7 +140,7 @@ namespace DCL.Editor
         }
 
         private void DrawComponents(Chunk chunk, int index, int entityId,
-            ComponentType[] componentTypes)
+            Span<ComponentType> componentTypes)
         {
             foreach (var componentType in componentTypes)
             {
@@ -179,11 +181,11 @@ namespace DCL.Editor
 
         private void DrawEntities(Archetype archetype)
         {
-            ComponentType[] componentTypes = archetype.Types;
+            Span<ComponentType> componentTypes = archetype.Signature.Components;
 
             foreach (Chunk chunk in archetype)
             {
-                int chunkSize = chunk.Size;
+                int chunkSize = chunk.Count;
 
                 for (int index = 0; index < chunkSize; index++)
                 {
@@ -270,7 +272,7 @@ namespace DCL.Editor
             }
         }
 
-        private void DrawQueryTerm(string name, ref ComponentType[] queryTerm, HashSet<Type> types)
+        private ComponentType[] DrawQueryTerm(string name, ComponentType[] queryTerm, HashSet<Type> types)
         {
             EditorGUI.BeginChangeCheck();
 
@@ -281,7 +283,7 @@ namespace DCL.Editor
                 unfoldedQueryTerm = foldout ? types : null;
 
             if (!foldout)
-                return;
+                return queryTerm;
 
             EditorGUI.BeginChangeCheck();
 
@@ -309,7 +311,7 @@ namespace DCL.Editor
                 types.Clear();
 
             if (!EditorGUI.EndChangeCheck())
-                return;
+                return queryTerm;
 
             using (ListPool<ComponentType>.Get(out var componentTypes))
             {
@@ -322,6 +324,8 @@ namespace DCL.Editor
 
                 componentTypes.CopyTo(queryTerm);
             }
+
+            return queryTerm;
         }
 
         private static string GetNiceName(FieldInfo field) =>

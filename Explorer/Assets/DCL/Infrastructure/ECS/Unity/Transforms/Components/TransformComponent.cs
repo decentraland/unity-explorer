@@ -34,16 +34,16 @@ namespace ECS.Unity.Transforms.Components
         public CachedTransform Cached;
 
         public Transform Transform;
-        public readonly HashSet<EntityReference> Children;
-        public EntityReference Parent;
+        public readonly HashSet<Entity> Children;
+        public Entity Parent;
 
         public TransformComponent(GameObject gameObject) : this(gameObject.transform) { }
 
         public TransformComponent(Transform transform)
         {
             Transform = transform;
-            Children = HashSetPool<EntityReference>.Get()!;
-            Parent = EntityReference.Null;
+            Children = HashSetPool<Entity>.Get()!;
+            Parent = Entity.Null;
 
             Cached = new CachedTransform(transform);
         }
@@ -92,7 +92,7 @@ namespace ECS.Unity.Transforms.Components
 
         public void Dispose()
         {
-            HashSetPool<EntityReference>.Release(Children);
+            HashSetPool<Entity>.Release(Children);
         }
 
         public override readonly string ToString() =>

@@ -30,9 +30,9 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
-        private readonly ICursor cursor;
         private readonly IEventSystem eventSystem;
         private readonly IMVCManager mvcManager;
+        private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -44,18 +44,18 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
-            ICursor cursor,
             IEventSystem eventSystem,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IMVCManagerMenusAccessFacade menusAccessFacade)
         {
             this.dclInput = dclInput;
             this.canvas = canvas;
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.globalInputEvents = globalInputEvents;
-            this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.mvcManager = mvcManager;
+            this.menusAccessFacade = menusAccessFacade;
         }
 
         public void Dispose() { }
@@ -100,10 +100,11 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaAction4, playerInput.ActionButton4 },
                 { InputAction.IaAction5, playerInput.ActionButton5 },
                 { InputAction.IaAction6, playerInput.ActionButton6 },
+                { InputAction.IaAny, playerInput.Any },
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, mvcManager);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, menusAccessFacade, mvcManager);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

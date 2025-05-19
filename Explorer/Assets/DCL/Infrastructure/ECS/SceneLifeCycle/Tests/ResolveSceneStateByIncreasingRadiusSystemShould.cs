@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -159,8 +160,8 @@ namespace ECS.SceneLifeCycle.Tests
             system.Update(0f);
 
             // Serve 2
-            var entities = new List<Entity>();
-            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities);
+            var entities = new Entity[2];
+            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities.AsSpan());
 
             Assert.That(entities.Count, Is.EqualTo(2));
             Assert.That(entities.Any(e => world.Get<IPartitionComponent>(e).Bucket == 0), Is.True);
@@ -200,11 +201,14 @@ namespace ECS.SceneLifeCycle.Tests
 
         private void AssertResult(int sceneResultExpected, int lodResultExpected, int lodHighQualityResultExpected, int lodLowQualityResultExpected)
         {
-            var sceneEntities = new List<Entity>();
-            var lodEntities = new List<Entity>();
+            QueryDescription facadeQuery = new QueryDescription().WithAll<GetSceneFacadeIntention>();
+            QueryDescription lodQuery = new QueryDescription().WithAll<SceneLODInfo>();
 
-            world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), sceneEntities);
-            world.GetEntities(new QueryDescription().WithAll<SceneLODInfo>(), lodEntities);
+            Span<Entity> sceneEntities = stackalloc Entity[world.CountEntities(facadeQuery)];
+            Span<Entity> lodEntities = stackalloc Entity[world.CountEntities(lodQuery)];
+
+            world.GetEntities(facadeQuery, sceneEntities);
+            world.GetEntities(lodQuery, lodEntities);
 
             var qualityReductedLODCount = 0;
             var qualityHighLODCount = 0;
@@ -219,8 +223,8 @@ namespace ECS.SceneLifeCycle.Tests
                     qualityReductedLODCount++;
             }
 
-            Assert.That(sceneEntities.Count, Is.EqualTo(sceneResultExpected));
-            Assert.That(lodEntities.Count, Is.EqualTo(lodResultExpected));
+            Assert.That(sceneEntities.Length, Is.EqualTo(sceneResultExpected));
+            Assert.That(lodEntities.Length, Is.EqualTo(lodResultExpected));
             Assert.That(qualityHighLODCount, Is.EqualTo(lodHighQualityResultExpected));
             Assert.That(qualityReductedLODCount, Is.EqualTo(lodLowQualityResultExpected));
         }
