@@ -41,14 +41,14 @@ namespace DCL.Chat.History
             if (isSentByLocalUser)
             {
                 if (string.IsNullOrEmpty(usernameOverride))
-                    usernameOverride = ownProfile?.ValidatedName ?? $"#{senderWalletAddress[^4..]}";
+                    usernameOverride = ownProfile?.ValidatedName ?? string.Empty;
 
                 return new ChatMessage(
                     message,
                     usernameOverride,
                     senderWalletAddress,
                     true,
-                    ownProfile?.WalletId ?? string.Empty,
+                    GetUserHash(ownProfile),
                     isMention: false
                 );
             }
@@ -58,7 +58,7 @@ namespace DCL.Chat.History
             Profile? profile = profileCache.Get(senderWalletAddress);
 
             if (string.IsNullOrEmpty(usernameOverride))
-                usernameOverride = profile?.ValidatedName ?? $"#{senderWalletAddress[^4..]}";
+                usernameOverride = profile?.ValidatedName ?? string.Empty;
 
             bool isMention = false;
 
@@ -70,10 +70,22 @@ namespace DCL.Chat.History
                 usernameOverride,
                 senderWalletAddress,
                 false,
-                profile?.WalletId ?? string.Empty,
+                GetUserHash(profile),
                 isMention,
                 false
             );
+
+            string GetUserHash(Profile? profile)
+            {
+                string userHash;
+
+                if (profile != null)
+                    userHash = profile.WalletId ?? string.Empty;
+                else
+                    userHash = $"#{senderWalletAddress[^4..]}";
+
+                return userHash;
+            }
         }
 
         private bool IsMention(string chatMessage, string userName)
