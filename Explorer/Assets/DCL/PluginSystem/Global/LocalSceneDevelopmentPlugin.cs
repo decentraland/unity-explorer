@@ -1,9 +1,11 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using Global.Dynamic.RealmUrl;
+using System;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Threading;
@@ -55,8 +57,25 @@ namespace DCL.PluginSystem.Global
                         realm.Contains("https") ? realm.Replace("https", "wss") : realm.Replace("http", "ws"),
                         ct);
                 }
-                catch (WebSocketException) { await UniTask.Delay(RETRY_DELAY_MS, cancellationToken: ct); }
-                catch (SocketException) { await UniTask.Delay(RETRY_DELAY_MS, cancellationToken: ct); }
+                catch (OperationCanceledException) { break; }
+                catch (WebSocketException e)
+                {
+                    // Only log to console as we don't want to flood sentry with this error
+                    ReportHub.LogError(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT,
+                        $"Error on local scene development web socket: {e}",
+                        ReportHandler.DebugLog);
+
+                    await UniTask.Delay(RETRY_DELAY_MS, cancellationToken: ct);
+                }
+                catch (SocketException e)
+                {
+                    // Only log to console as we don't want to flood sentry with this error
+                    ReportHub.LogError(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT,
+                        $"Error on local scene development web socket: {e}",
+                        ReportHandler.DebugLog);
+
+                    await UniTask.Delay(RETRY_DELAY_MS, cancellationToken: ct);
+                }
             }
         }
     }
