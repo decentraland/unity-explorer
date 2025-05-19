@@ -73,6 +73,13 @@ namespace DCL.Multiplayer.Connections.Systems
                 debugBuilder
             );
 
+            IRoomDisplay voiceChatRoomDisplay = DebugWidgetRoomDisplay.Create(
+                IDebugContainerBuilder.Categories.ROOM_VOICE_CHAT,
+                chatRoom,
+                debugBuilder
+            );
+
+
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
                 infoWidget
@@ -94,7 +101,7 @@ namespace DCL.Multiplayer.Connections.Systems
             );
 
             roomDisplay = new DebounceRoomDisplay(
-                new SeveralRoomDisplay(gateKeeperRoomDisplay, archipelagoRoomDisplay, infoRoomDisplay, chatRoomDisplay),
+                new SeveralRoomDisplay(gateKeeperRoomDisplay, archipelagoRoomDisplay, infoRoomDisplay, chatRoomDisplay, voiceChatRoomDisplay),
                 TimeSpan.FromSeconds(1)
             );
 

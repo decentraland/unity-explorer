@@ -71,6 +71,7 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Settings.Settings;
 using DCL.SocialService;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.GenericContextMenu.Controllers;
@@ -86,7 +87,6 @@ using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
-using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -365,7 +365,10 @@ namespace Global.Dynamic
             LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
-            var voiceChatRoom = new VoiceChatConnectiveRoom();
+
+            ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsAssetProxy = new ObjectProxy<VoiceChatSettingsAsset>();
+
+            var voiceChatRoom = new VoiceChatConnectiveRoom(voiceChatSettingsAssetProxy);
 
             IRoomHub roomHub = new RoomHub(
                 localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
@@ -843,8 +846,8 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-                new SocialServicesPlugin(socialServicesRPCProxy, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs)
-
+                new SocialServicesPlugin(socialServicesRPCProxy, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),
+                new VoiceChatPlugin(voiceChatSettingsAssetProxy, assetsProvisioner)
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

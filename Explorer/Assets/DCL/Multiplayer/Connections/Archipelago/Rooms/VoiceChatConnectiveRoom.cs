@@ -4,6 +4,8 @@ using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Settings.Settings;
+using DCL.Utilities;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -34,6 +36,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
+        private readonly ObjectProxy<VoiceChatSettingsAsset> settings;
 
         private CancellationTokenSource? cts;
         private string connectionString = string.Empty;
@@ -43,8 +46,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
         public IRoom Room() => room;
 
-        public VoiceChatConnectiveRoom()
+        public VoiceChatConnectiveRoom(ObjectProxy<VoiceChatSettingsAsset> settings)
         {
+            this.settings = settings;
             var hub = new ParticipantsHub();
 
             var videoStreams = new VideoStreams(hub);
@@ -84,6 +88,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             }
 
             Activated = true;
+            connectionString = settings.StrictObject.ConnectionString;
             await this.StartIfNotAsync();
         }
 

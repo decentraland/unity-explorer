@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Settings.Settings;
+using DCL.Utilities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,17 +12,25 @@ namespace DCL.PluginSystem.Global
 {
     public class VoiceChatPlugin : IDCLGlobalPlugin<VoiceChatPlugin.Settings>
     {
-        public VoiceChatPlugin()
-        {
+        private readonly ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
+
+        public VoiceChatPlugin(ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy, IAssetsProvisioner assetsProvisioner)
+        {
+            this.voiceChatSettingsProxy = voiceChatSettingsProxy;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
         }
 
-        public UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            var voiceChatSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct: ct);
+            voiceChatSettingsProxy.SetObject(voiceChatSettings.Value);
+        }
 
         public void Dispose()
         {

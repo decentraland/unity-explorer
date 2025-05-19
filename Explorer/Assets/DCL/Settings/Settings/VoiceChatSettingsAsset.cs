@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Settings.Settings
 {
@@ -14,5 +15,9 @@ namespace DCL.Settings.Settings
 
         [Tooltip("Defines the minimum loudness (wave form amplitude) to detect input to be sent via voice chat")]
         public float MicrophoneLoudnessMinimumThreshold = 0.2f;
+
+        [FormerlySerializedAs("ConnectiveString")]
+        [Tooltip("Used for Debug Purposes")]
+        public string ConnectionString;
     }
 }
