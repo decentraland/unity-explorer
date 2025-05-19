@@ -44,18 +44,23 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom VoiceChatRoom() => voiceChatRoom.Room();
 
+        /// <summary>
+        /// Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going
+        /// </summary>
+        /// <returns>True if all rooms connected correctly</returns>
         public async UniTask<bool> StartAsync()
         {
             var result = await UniTask.WhenAll(
                 archipelagoIslandRoom.StartIfNotAsync(),
                 gateKeeperSceneRoom.StartIfNotAsync(),
-                chatRoom.StartIfNotAsync(),
-                voiceChatRoom.StartIfNotAsync()
-            );
+                chatRoom.StartIfNotAsync());
 
             return result is { Item1: true, Item2: true, Item3: true };
         }
 
+        /// <summary>
+        /// We stop all rooms when logging out as we need to change profiles.
+        /// </summary>
         public UniTask StopAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
@@ -64,6 +69,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
                 voiceChatRoom.StopIfNotAsync()
             );
 
+        /// <summary>
+        /// Stops only local rooms, that is, only the Island Room and Scene Room, as the other rooms are needed for the chat and voice chat
+        /// </summary>
         public UniTask StopLocalRoomsAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
