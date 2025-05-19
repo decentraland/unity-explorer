@@ -14,6 +14,7 @@ using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using System.Threading;
+using DCL.Landscape.GPUIHelpers;
 using Unity.Collections;
 using Unity.Mathematics;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
@@ -42,6 +43,8 @@ namespace DCL.PluginSystem.Global
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
+        private readonly IGPUIWrapper wrapper;
+        
         public LandscapePlugin(IRealmData realmData,
             ILoadingStatus loadingStatus,
             IScenesCache sceneCache,
@@ -66,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.worldTerrainGenerator = worldTerrainGenerator;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
+            wrapper = GPUIWrapperFactory.CreateGPUIWrapper();
         }
 
         public void Dispose()
@@ -80,6 +84,9 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+
+            await wrapper.InitializeAsync(assetsProvisioner, settings.gpuiAssets, ct);
+            wrapper.OverrideTerrainGenerationData(landscapeData.Value.terrainData);
 
             floor = new SatelliteFloor(realmData, landscapeData.Value);
 
@@ -120,8 +127,7 @@ namespace DCL.PluginSystem.Global
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
 
-            GPUIWrapper wrapper = new GPUIWrapper();
-            wrapper.Initialize(terrainGenerator, ref builder, debugContainerBuilder);
+            wrapper.Setup(terrainGenerator, ref builder, debugContainerBuilder);
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using ECS.Abstract;
@@ -14,10 +13,13 @@ namespace DCL.Landscape.GPUI_Pro
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GPUIDebugSystem : BaseUnityLoopSystem
     {
-        public bool isDebugWindowInstantiated;
-        
-        public GPUIDebugSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
+        private bool isDebugWindowInstantiated;
+        private readonly GPUIDebuggerCanvas debuggerCanvas;
+
+        public GPUIDebugSystem(World world, IDebugContainerBuilder debugBuilder, GPUIDebuggerCanvas debuggerCanvas) : base(world)
         {
+            this.debuggerCanvas = debuggerCanvas;
+
             debugBuilder.TryAddWidget("Landscape - GPUI")
                 ?.AddSingleButton("Debug", InstantiateDebugWindow);
         }
@@ -25,10 +27,7 @@ namespace DCL.Landscape.GPUI_Pro
         private void InstantiateDebugWindow()
         {
             if (isDebugWindowInstantiated) return;
-            
-            //ONLY VALID CASE FOR RESOURCES, DO NOT REUSE
-            GPUIDebuggerCanvas debugWindow = Resources.Load<GPUIDebuggerCanvas>("GPUIDebuggerCanvas");
-            GameObject.Instantiate(debugWindow);
+            Object.Instantiate(debuggerCanvas);
         }
 
         protected override void Update(float t)

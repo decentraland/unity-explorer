@@ -11,9 +11,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
-#if GPUIPRO_PRESENT
-using GPUInstancerPro.TerrainModule;
-#endif
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
