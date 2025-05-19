@@ -3,14 +3,16 @@ using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
 using Microsoft.ClearScript.V8.SplitProxy;
 using Newtonsoft.Json;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
 {
-    public class CommsApiWrap : IJsApiWrapper, IV8HostObject
+    public class CommsApiWrap : JsApiWrapper, IV8HostObject
     {
         private readonly IRoomHub roomHub;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
@@ -21,7 +23,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private readonly StringWriter stringWriter;
         private readonly JsonWriter writer;
 
-        public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler)
+        public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.roomHub = roomHub;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
@@ -32,7 +34,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             writer = new JsonTextWriter(stringWriter);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             stringBuilder.Clear();
             stringWriter.Dispose();
