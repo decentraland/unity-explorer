@@ -42,6 +42,13 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<Profile>? ContextMenuButtonClicked;
         public event Action<Profile, FriendshipStatus>? FriendButtonClicked;
 
+        public void RemoveAllListeners()
+        {
+            MainButtonClicked = null;
+            ContextMenuButtonClicked = null;
+            FriendButtonClicked = null;
+        }
+
         internal bool CanUnHover
         {
             get => canUnHover;

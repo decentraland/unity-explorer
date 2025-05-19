@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Friends;
 using DCL.Profiles;
 using MVC;
 using SuperScrollView;
@@ -63,6 +64,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             elementView.ConfigureLeft(members[leftIndex], viewDependencies);
 
+            elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked);
+
             if (index >= totalFetched - ELEMENT_MISSING_THRESHOLD && totalFetched < totalToFetch && !isFetching)
                 FetchNewDataAsync().Forget();
 
@@ -100,6 +103,24 @@ namespace DCL.Communities.CommunitiesCard.Members
             lastCommunityId = communityId;
 
             FetchNewDataAsync().Forget();
+        }
+
+        private void MainButtonClicked(Profile profile)
+        {
+            // Handle main button click
+            Debug.Log("MainButtonClicked: " + profile.UserId);
+        }
+
+        private void ContextMenuButtonClicked(Profile profile)
+        {
+            // Handle context menu button click
+            Debug.Log("ContextMenuButtonClicked: " + profile.UserId);
+        }
+
+        private void FriendButtonClicked(Profile profile, FriendshipStatus status)
+        {
+            // Handle friend button click
+            Debug.Log("FriendButtonClicked: " + profile.UserId);
         }
     }
 }
