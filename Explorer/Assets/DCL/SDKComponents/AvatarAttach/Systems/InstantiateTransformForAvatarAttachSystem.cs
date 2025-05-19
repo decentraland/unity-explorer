@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             // Parenting system won't work as it relies on ParentId from SDKTransform
             // Assign sceneRoot as parent manually, we don't need any validation for this
 
-            transformComponent.AssignParent(World.Reference(entity), World.Reference(sceneRoot), in World.Get<TransformComponent>(sceneRoot));
+            transformComponent.AssignParent(entity, sceneRoot, in World.Get<TransformComponent>(sceneRoot));
 
             transformComponent.SetTransform(Vector3.zero, Quaternion.identity, Vector3.one);
 

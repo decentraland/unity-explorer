@@ -1,3 +1,4 @@
+using DCL.UI.Buttons;
 using MVC;
 using System;
 using UnityEngine;
@@ -9,9 +10,9 @@ namespace DCL.UI.GenericContextMenu
     {
         [field: SerializeField] public RectTransform ControlsContainer { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ControlsLayoutGroup { get; private set; }
-        [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
+        [field: SerializeField] public ButtonWithRightClickHandler BackgroundCloseButton { get; private set; }
 
         public void Dispose() =>
-            BackgroundCloseButton?.onClick.RemoveAllListeners();
+            BackgroundCloseButton?.Button.onClick.RemoveAllListeners();
     }
 }

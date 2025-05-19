@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
 
             Assert.That(world.TryGet(entity, out NFTLoadingComponent loadingComponent), Is.True);
             Assert.That(loadingComponent.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
-            Assert.That(loadingComponent.Promise.Entity, Is.EqualTo(EntityReference.Null));
+            Assert.That(loadingComponent.Promise.Entity, Is.EqualTo(Entity.Null));
 
             Assert.That(texData.referenceCount, Is.EqualTo(0));
         }
@@ -63,7 +63,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
 
             Assert.That(world.TryGet(entity, out NFTLoadingComponent loadingComponent), Is.True);
             Assert.That(loadingComponent.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
-            Assert.That(loadingComponent.Promise.Entity, Is.EqualTo(EntityReference.Null));
+            Assert.That(loadingComponent.Promise.Entity, Is.EqualTo(Entity.Null));
 
             Assert.That(texData.referenceCount, Is.EqualTo(0));
         }

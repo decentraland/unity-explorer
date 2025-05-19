@@ -67,6 +67,7 @@ namespace DCL.MarketplaceCredits.Sections
         public void OpenSection()
         {
             subView.gameObject.SetActive(true);
+            totalCreditsWidgetView.gameObject.SetActive(false);
 
             fetchProgramRegistrationInfoCts = fetchProgramRegistrationInfoCts.SafeRestart();
             LoadProgramRegistrationInfoAsync(fetchProgramRegistrationInfoCts.Token).Forget();
@@ -193,8 +194,13 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
+                totalCreditsWidgetView.gameObject.SetActive(
+                    currentCreditsProgramProgress.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS) &&
+                    currentCreditsProgramProgress.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
                 return;
             }
+
+            totalCreditsWidgetView.gameObject.SetActive(true);
 
             // NON-REGISTERED USER FLOW
             if (!currentCreditsProgramProgress.IsUserEmailRegistered())
