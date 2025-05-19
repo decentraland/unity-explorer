@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -21,6 +23,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ViewDependencies viewDependencies;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -33,12 +36,14 @@ namespace DCL.Communities.CommunitiesCard
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ViewDependencies viewDependencies) : base(viewFactory)
+            ViewDependencies viewDependencies,
+            ObjectProxy<IFriendsService> friendServiceProxy) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.viewDependencies = viewDependencies;
+            this.friendServiceProxy = friendServiceProxy;
         }
 
         public override void Dispose()
@@ -63,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
 
-            membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies);
+            membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies, mvcManager, friendServiceProxy);
         }
 
         protected override void OnViewShow()

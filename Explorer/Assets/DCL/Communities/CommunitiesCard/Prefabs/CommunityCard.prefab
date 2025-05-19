@@ -1264,6 +1264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <LoopList>k__BackingField: {fileID: 1721272686305589660}
+  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
 --- !u!1 &5059185125724751890
 GameObject:
   m_ObjectHideFlags: 0

@@ -39,7 +39,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public Profile UserProfile { get; protected set; }
 
         public event Action<Profile>? MainButtonClicked;
-        public event Action<Profile>? ContextMenuButtonClicked;
+        public event Action<Profile, Vector2, MemberListSingleItemView>? ContextMenuButtonClicked;
         public event Action<Profile, FriendshipStatus>? FriendButtonClicked;
 
         public void RemoveAllListeners()
@@ -66,7 +66,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void Awake()
         {
             MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
-            ContextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile));
+            ContextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile, ContextMenuButton.transform.position, this));
 
             // AddFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));
             // AcceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));

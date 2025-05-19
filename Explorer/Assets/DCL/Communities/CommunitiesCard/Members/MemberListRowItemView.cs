@@ -32,7 +32,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         public void SubscribeToInteractions(Action<Profile> mainButton,
-            Action<Profile> contextMenuButton,
+            Action<Profile, Vector2, MemberListSingleItemView> contextMenuButton,
             Action<Profile, FriendshipStatus> friendButton)
         {
             LeftItem.RemoveAllListeners();

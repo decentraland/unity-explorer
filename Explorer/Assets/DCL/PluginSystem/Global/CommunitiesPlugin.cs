@@ -2,7 +2,9 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Communities.CommunitiesCard;
+using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -18,18 +20,21 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ViewDependencies viewDependencies;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            ObjectProxy<IFriendsService> friendServiceProxy)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.viewDependencies = viewDependencies;
+            this.friendServiceProxy = friendServiceProxy;
         }
 
         public void Dispose()
@@ -49,7 +54,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
-                viewDependencies));
+                viewDependencies,
+                friendServiceProxy));
 
             Test().Forget();
         }
