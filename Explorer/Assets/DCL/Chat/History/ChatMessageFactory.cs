@@ -24,6 +24,7 @@ namespace DCL.Chat.History
 
         /// <summary>
         /// Generates a new chat message filled with the data provided in the parameters and also by the profile cache.
+        /// Additional note: we need this function to be immediate (not async) to ensure chat messages are propagated in the correct chronological order.
         /// </summary>
         /// <param name="senderWalletAddress">The wallet address of the user that sent the message.</param>
         /// <param name="isSentByLocalUser">Whether the user that sent the message corresponds to the local user.</param>
