@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.Tween.Tests
         public void SetUp()
         {
             tweneerPool = new TweenerPool();
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, Substitute.For<SceneStateProvider>());
+            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, Substitute.For<SceneStateProvider>(), null);
         }
 
         [TearDown]

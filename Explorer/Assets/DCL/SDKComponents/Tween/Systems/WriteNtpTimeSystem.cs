@@ -25,6 +25,8 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
+            if(!ntpTimeService.IsSynced) return;
+
             ecsToCRDTWriter.PutMessage<PBSyncedClock, ulong>(static (component, currentServerTime) =>
                 {
                     component.SyncedTimestamp = currentServerTime;

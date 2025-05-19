@@ -21,6 +21,7 @@ namespace DCL.SDKComponents.Tween.Playground
 
     public interface INtpTimeService
     {
+        public bool IsSynced { get; }
         public ulong ServerTimeMs { get; }
     };
 
@@ -61,6 +62,7 @@ namespace DCL.SDKComponents.Tween.Playground
         private DateTime _lastMitigationTime;
         private int maxSampleAge = 300;
 
+        public bool IsSynced { get; private set; }
         public ulong ServerTimeMs => (ulong)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + _mitigatedOffsetMs);
 
         private float _timeSinceLastUpdate;
@@ -151,6 +153,7 @@ namespace DCL.SDKComponents.Tween.Playground
             _mitigatedOffsetMs = weightedOffsetSum / totalWeight;
             _hasValidSamples = true;
             _lastMitigationTime = DateTime.UtcNow;
+            IsSynced = true;
 
             Debug.Log($"Mitigated offset: {_mitigatedOffsetMs:F3}ms from {bestCandidates.Count} samples");
         }

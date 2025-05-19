@@ -1,6 +1,7 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
+using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
@@ -50,6 +51,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
+            Debug.Log($"VVV {tweenModelCurrentTime}");
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 

@@ -12,11 +12,13 @@ using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
+using DCL.SDKComponents.Tween.Playground;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -29,7 +31,7 @@ namespace DCL.SDKComponents.Tween.Systems
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem
     {
-        private const int MILLISECONDS_CONVERSION_INT = 1000;
+        private const float MS_TO_SEC = 1f/1000f;
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
         {
@@ -70,12 +72,15 @@ namespace DCL.SDKComponents.Tween.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly INtpTimeService ntpTimeService;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneStateProvider sceneStateProvider) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
+            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService) : base(world)
         {
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
+            this.ntpTimeService = ntpTimeService;
         }
 
         protected override void Update(float t)
@@ -166,7 +171,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
-            float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
+            float durationInSeconds = pbTween.Duration * MS_TO_SEC;
 
             SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying);
 
@@ -201,13 +206,18 @@ namespace DCL.SDKComponents.Tween.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying)
         {
+            var startTime = tweenModel.CurrentTime * durationInSeconds;
+
+            if (tweenModel.HasStartSyncedTimestamp)
+                startTime += Mathf.Max(ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp, 0) * MS_TO_SEC;
+
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds);
-            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
+            sdkTweenComponent.CustomTweener.DoTween(ease, startTime, isPlaying);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
