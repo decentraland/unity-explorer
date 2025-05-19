@@ -93,10 +93,10 @@ namespace DCL.AvatarRendering.Emotes.Load
                 var dto = new EmoteDTO
                 {
                     id = urn,
-                    metadata = new EmoteDTO.Metadata
+                    metadata = new EmoteDTO.EmoteMetadataDto
                     {
                         id = urn,
-                        emoteDataADR74 = new EmoteDTO.Metadata.Data
+                        emoteDataADR74 = new EmoteDTO.EmoteMetadataDto.Data
                         {
                             loop = intention.Loop,
                             category = "emote",

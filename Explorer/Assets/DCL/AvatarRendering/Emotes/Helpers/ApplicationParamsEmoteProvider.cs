@@ -2,44 +2,79 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Web3;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Emotes
 {
     public class ApplicationParamsEmoteProvider : IEmoteProvider
     {
+        private const string BUILDER_DTO_URL_COL_ID = "[COL-ID]";
+
         private readonly IAppArgs appArgs;
         private readonly IEmoteProvider source;
+        private readonly string builderDTOsUrl;
 
-        public ApplicationParamsEmoteProvider(IAppArgs appArgs,
-            IEmoteProvider source)
+        public ApplicationParamsEmoteProvider(IAppArgs appArgs, IEmoteProvider source, string builderDTOsUrl)
         {
             this.appArgs = appArgs;
             this.source = source;
+            this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public async UniTask<int> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
+        public async UniTask<int> GetAsync(Web3Address userId, CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
-            List<IEmote> output)
+            List<IEmote>? results = null,
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false)
         {
-            if (!appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_EMOTES, out string? emotesCsv))
-                return await source.GetOwnedEmotesAsync(userId, ct, requestOptions, output);
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_EMOTES, out string? emotesCsv))
+            {
+                URN[] pointers = emotesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(s => new URN(s))
+                                           .ToArray();
 
-            URN[] pointers = emotesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                       .Select(s => new URN(s))
-                                       .ToArray();
+                await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct, results),
+                    RequestPointersAsync(pointers, BodyShape.FEMALE, ct, results));
 
-            await UniTask.WhenAll(GetEmotesAsync(pointers, BodyShape.MALE, ct, output),
-                GetEmotesAsync(pointers, BodyShape.FEMALE, ct, output));
+                return results.Count;
+            }
 
-            return output.Count;
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
+            {
+                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                      .ToArray();
+
+                // NeedsBuilderAPISigning gets used at EcsEmoteProvider
+                results ??= new List<IEmote>();
+                var localBuffer = ListPool<IEmote>.Get();
+                for (var i = 0; i < collections.Length; i++)
+                {
+                    // localBuffer accumulates the loaded wearables
+                    await source.GetAsync(userId, ct, requestOptions, localBuffer,
+                        loadingArguments: new CommonLoadingArguments(
+                            builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i]),
+                            cancellationTokenSource: new CancellationTokenSource()
+                        ),
+                        needsBuilderAPISigning: true);
+                }
+
+                int count = localBuffer.Count;
+                ListPool<IEmote>.Release(localBuffer);
+
+                return count;
+            }
+
+            // Regular path without any "self-preview" element
+            return await source.GetAsync(userId, ct, requestOptions, results);
         }
 
-        public UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output) =>
-            source.GetEmotesAsync(emoteIds, bodyShape, ct, output);
+        public UniTask RequestPointersAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> results) =>
+            source.RequestPointersAsync(emoteIds, bodyShape, ct, results);
     }
 }

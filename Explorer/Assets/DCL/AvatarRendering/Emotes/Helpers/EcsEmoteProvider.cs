@@ -29,14 +29,16 @@ namespace DCL.AvatarRendering.Emotes
             this.realmData = realmData;
         }
 
-        public async UniTask<int> GetOwnedEmotesAsync(
+        public async UniTask<int> GetAsync(
             Web3Address userId,
             CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
-            List<IEmote> output
+            List<IEmote>? results = null,
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false
         )
         {
-            output.Clear();
+            results.Clear();
 
             urlBuilder.Clear();
 
@@ -70,7 +72,7 @@ namespace DCL.AvatarRendering.Emotes
 
             URLAddress url = urlBuilder.Build();
 
-            var intention = new GetOwnedEmotesFromRealmIntention(new CommonLoadingArguments(url));
+            var intention = new GetOwnedEmotesFromRealmIntention(new CommonLoadingArguments(url), needsBuilderAPISigning);
 
             OwnedEmotesPromise promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY)
                                                                  .ToUniTaskAsync(world, cancellationToken: ct);
@@ -82,11 +84,11 @@ namespace DCL.AvatarRendering.Emotes
                 throw promise.Result.Value.Exception!;
 
             using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
-            output.AddRange(emotes.Value);
+            results.AddRange(emotes.Value);
             return promise.Result.Value.Asset.TotalAmount;
         }
 
-        public async UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)
+        public async UniTask RequestPointersAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)
         {
             output.Clear();
 

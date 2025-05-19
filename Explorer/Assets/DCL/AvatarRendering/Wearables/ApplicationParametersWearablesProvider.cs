@@ -71,6 +71,7 @@ namespace DCL.AvatarRendering.Wearables
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                    .ToArray();
 
+                // NeedsBuilderAPISigning gets used at ECSWearablesProvider
                 results ??= new List<IWearable>();
                 var localBuffer = ListPool<IWearable>.Get();
                 for (var i = 0; i < collections.Length; i++)

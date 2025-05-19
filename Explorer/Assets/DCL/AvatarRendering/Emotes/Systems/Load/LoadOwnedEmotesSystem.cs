@@ -5,7 +5,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS;
@@ -18,6 +17,8 @@ namespace DCL.AvatarRendering.Emotes.Load
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadOwnedEmotesSystem : LoadElementsByIntentionSystem<EmotesResolution, GetOwnedEmotesFromRealmIntention, IEmote, EmoteDTO>
     {
+        internal IURLBuilder urlBuilder = new URLBuilder();
+
         public LoadOwnedEmotesSystem(
             World world,
             IRealmData realmData,
@@ -31,13 +32,24 @@ namespace DCL.AvatarRendering.Emotes.Load
             await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
         protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            throw new NotImplementedException();
-        // => await adapter.CreateFromJson<WearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft); // TODO: Adapt for 'EmoteDTO'
+            await adapter.CreateFromJson<BuilderEmoteDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
 
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>
             new (intention.Result, intention.TotalAmount);
 
-        protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention) =>
-            intention.CommonArguments.URL;
+        protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention)
+        {
+            // TODO: Is this configuration correct???
+            if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
+            {
+                urlBuilder.Clear();
+                var url = new Uri(intention.CommonArguments.URL);
+                urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))
+                          .AppendSubDirectory(URLSubdirectory.FromString(url.AbsolutePath));
+                return urlBuilder.Build();
+            }
+
+            return intention.CommonArguments.URL;
+        }
     }
 }
