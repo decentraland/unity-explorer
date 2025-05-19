@@ -22,6 +22,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
     /// </summary>
     public class EngineAPIImplementation : IEngineApi
     {
+        protected readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly CustomSampler applyBufferSampler;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly CustomSampler crdtProcessMessagesSampler;
@@ -39,11 +40,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
-        private bool isDisposing;
 
         private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
-
-        protected readonly ISharedPoolsProvider sharedPoolsProvider;
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
@@ -79,11 +77,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
             processPendingMessage = ProcessPendingMessage;
         }
 
+        public virtual void Dispose() { }
+
         public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
-            // TODO it's dirty, think how to do it better
-            if (isDisposing) return PoolableByteArray.EMPTY;
-
             // Called on the thread where the Scene Runtime is running (background thread)
 
             // Deserialize messages from the byte array
@@ -130,8 +127,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public PoolableByteArray CrdtGetState()
         {
-            if (isDisposing) return PoolableByteArray.EMPTY;
-
             Profiler.BeginThreadProfiling("SceneRuntime", "CrtdGetState");
 
             // Invoked on the background thread
@@ -151,8 +146,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
                 // We know exactly how many bytes we need to serialize
-                var serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
-                var currentStateSpan = serializationBufferPoolable.Span;
+                PoolableByteArray serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
+                Span<byte> currentStateSpan = serializationBufferPoolable.Span;
 
                 // Serialize the current state
 
@@ -173,16 +168,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
             finally { Profiler.EndThreadProfiling(); }
         }
 
-        public virtual void SetIsDisposing()
-        {
-            isDisposing = true;
-        }
+        private OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock() =>
+            outgoingCrtdMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
 
-        private OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock() => outgoingCrtdMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
-
-        protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
-        {
-        }
+        protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage) { }
 
         private PoolableByteArray SerializeOutgoingCRDTMessages()
         {
@@ -218,10 +207,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         /// </summary>
         private void SyncOutgoingCRDTMessages(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
         {
-            for (var i = 0; i < outgoingMessages.Count; i++)
-            {
-                SyncCRDTMessage(outgoingMessages[i]);
-            }
+            for (var i = 0; i < outgoingMessages.Count; i++) { SyncCRDTMessage(outgoingMessages[i]); }
         }
 
         private void SyncCRDTMessage(ProcessedCRDTMessage message)
@@ -250,8 +236,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
 
-                if (isDisposing) return;
-
                 applyBufferSampler.Begin();
 
                 // Apply changes to the ECS World on the main thread
@@ -270,10 +254,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             if (outgoingMessages.Count == 0) return;
 
-            foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
-            {
-                crdtSerializer.Serialize(ref span, in processedCRDTMessage);
-            }
+            foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages) { crdtSerializer.Serialize(ref span, in processedCRDTMessage); }
         }
     }
 }
