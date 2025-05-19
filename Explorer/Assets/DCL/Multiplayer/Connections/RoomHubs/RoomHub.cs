@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
@@ -13,7 +14,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         private readonly IConnectiveRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IConnectiveRoom chatRoom;
-        private readonly IConnectiveRoom voiceChatRoom;
+        private readonly VoiceChatConnectiveRoom voiceChatRoom;
 
         private readonly IParticipantsHub islandParticipantsHub;
         private readonly IParticipantsHub sceneParticipantsHub;
@@ -22,7 +23,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         private long participantsUpdateLastFrame = -1;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom chatRoom, IConnectiveRoom voiceChatRoom)
+        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom chatRoom, VoiceChatConnectiveRoom voiceChatRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
