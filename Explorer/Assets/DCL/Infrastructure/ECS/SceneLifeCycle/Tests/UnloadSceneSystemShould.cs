@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Arch.Core.Utils;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -30,7 +31,7 @@ namespace ECS.SceneLifeCycle.Tests
             scene.Received(1).DisposeAsync();
 
             // remain scene definition
-            Assert.That(world.GetArchetype(e).Types.Select(t => t.Type), Is.EquivalentTo(new[] { typeof(SceneDefinitionComponent) }));
+            Assert.That(world.GetArchetype(e).Signature, Is.EqualTo(new Signature(typeof(SceneDefinitionComponent))));
         }
     }
 }
