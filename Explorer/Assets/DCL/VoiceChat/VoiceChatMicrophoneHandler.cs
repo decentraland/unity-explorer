@@ -7,6 +7,9 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
+        public event Action EnabledMicrophone;
+        public event Action DisabledMicrophone;
+
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly float[] waveData;
@@ -61,11 +64,20 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void ToggleMicrophone()
+        {
+            if(isTalkingEnabled)
+                EnableMicrophone();
+            else
+                DisableMicrophone();
+        }
+
         private void EnableMicrophone()
         {
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             MicrophoneAudioClip = Microphone.Start(microphoneName, true, 20, AudioSettings.outputSampleRate);
             isTalkingEnabled = true;
+            EnabledMicrophone?.Invoke();
         }
 
         private void DisableMicrophone()
@@ -73,6 +85,7 @@ namespace DCL.VoiceChat
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             Microphone.End(microphoneName);
             isTalkingEnabled = false;
+            DisabledMicrophone?.Invoke();
         }
 
         private float GetLoudnessFromMicrophone()
