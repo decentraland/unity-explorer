@@ -7,9 +7,9 @@ namespace DCL.Interaction.Utility
     /// </summary>
     public readonly struct GlobalColliderGlobalEntityInfo
     {
-        public readonly EntityReference EntityReference;
+        public readonly Entity EntityReference;
 
-        public GlobalColliderGlobalEntityInfo(EntityReference entityReference)
+        public GlobalColliderGlobalEntityInfo(Entity entityReference)
         {
             EntityReference = entityReference;
         }
