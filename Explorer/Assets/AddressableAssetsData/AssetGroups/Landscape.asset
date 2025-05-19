@@ -30,11 +30,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 145e1bd976108a54fb9fb47f8fc36fb4
-    m_Address: Assets/DCL/Landscape/GPUIHelpers/Assets/GPUIAsset.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 14d01fab2fcc2a440a8bccf12e0ff49f
     m_Address: 0,-69
     m_ReadOnly: 0
@@ -257,6 +252,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d19aabb5dfdafa14b98585f5cf96d9cd
     m_Address: EmptyFork_B
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4a97ae521e0ac94f83a6915aa0343c6
+    m_Address: Assets/DCL/Landscape/GPUIHelpers/GPUIAsset.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
