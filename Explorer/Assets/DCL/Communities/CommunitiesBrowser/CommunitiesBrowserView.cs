@@ -1,3 +1,4 @@
+using DCL.UI;
 using UnityEngine;
 
 namespace DCL.Communities.CommunitiesBrowser
@@ -8,6 +9,11 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal Animator panelAnimator { get; private set; }
         [field: SerializeField] internal Animator headerAnimator { get; private set; }
 
-        // TODO: Implement the CommunitiesBrowserView class
+        [field: Header("Header")]
+        [field: SerializeField] internal DropdownView sortByDropdown { get; private set; }
+
+        [field: Header("Results")]
+        [field: SerializeField] internal GameObject communityCardPrefab { get; private set; }
+        [field: SerializeField] internal Transform resultsContainer { get; private set; }
     }
 }

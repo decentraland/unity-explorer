@@ -1,10 +1,12 @@
 using DCL.Input;
 using DCL.UI;
+using System;
+using TMPro;
 using UnityEngine;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserController : ISection
+    public class CommunitiesBrowserController : ISection, IDisposable
     {
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
@@ -17,6 +19,8 @@ namespace DCL.Communities.CommunitiesBrowser
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
+
+            ConfigureSortBySelector();
         }
 
         public void Activate()
@@ -46,5 +50,30 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void Dispose()
+        {
+            view.sortByDropdown.Dropdown.onValueChanged.RemoveListener(OnSortByChanged);
+        }
+
+        private void ConfigureSortBySelector()
+        {
+            view.sortByDropdown.Dropdown.interactable = true;
+            view.sortByDropdown.Dropdown.MultiSelect = false;
+            view.sortByDropdown.Dropdown.options.Clear();
+            view.sortByDropdown.Dropdown.options.AddRange(new[]
+            {
+                new TMP_Dropdown.OptionData { text = "Alphabetically" },
+                new TMP_Dropdown.OptionData { text = "Popularity" },
+            });
+            view.sortByDropdown.Dropdown.value = 0;
+
+            view.sortByDropdown.Dropdown.onValueChanged.AddListener(OnSortByChanged);
+        }
+
+        private static void OnSortByChanged(int arg0)
+        {
+
+        }
     }
 }
