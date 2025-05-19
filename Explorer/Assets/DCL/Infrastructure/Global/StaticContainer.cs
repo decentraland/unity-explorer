@@ -45,6 +45,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -88,6 +89,8 @@ namespace Global
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         public ISystemMemoryCap MemoryCap { get; private set; }
+
+        public SceneLoadingLimit SceneLoadingLimit { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -283,11 +286,12 @@ namespace Global
 #endif
             };
 
+            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
+
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
-                    container.RealmPartitionSettings),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,
