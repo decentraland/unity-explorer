@@ -23,9 +23,9 @@ namespace DCL.Interaction.Utility
         public bool TryGetPointerEvents(out PBPointerEvents? pbPointerEvents)
         {
             World world = EcsExecutor.World;
-            EntityReference entityRef = ColliderSceneEntityInfo.EntityReference;
+            Entity entityRef = ColliderSceneEntityInfo.EntityReference;
             pbPointerEvents = null;
-            return entityRef.IsAlive(world) && world.TryGet(entityRef, out pbPointerEvents);
+            return world.IsAlive(entityRef) && world.TryGet(entityRef, out pbPointerEvents);
         }
 
         public bool IsSameEntity(in GlobalColliderSceneEntityInfo other) =>
