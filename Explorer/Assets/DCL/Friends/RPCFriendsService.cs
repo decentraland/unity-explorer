@@ -39,23 +39,22 @@ namespace DCL.Friends
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
         private readonly ISelfProfile selfProfile;
-        private readonly ObjectProxy<IRPCSocialServices> socialServiceRPCProxy;
+        private readonly IRPCSocialServices socialServiceRPCProxy;
 
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
         private readonly List<FriendProfile> friendProfileBuffer = new ();
         private readonly List<BlockedProfile> blockedProfileBuffer = new ();
 
-        public event Action? WebSocketConnectionEstablished;
-
-
         private CancellationTokenSource subscriptionCancellationToken = new ();
+
+        public event Action? WebSocketConnectionEstablished;
 
         public RPCFriendsService(
             IFriendsEventBus eventBus,
             FriendsCache friendsCache,
             ISelfProfile selfProfile,
-            ObjectProxy<IRPCSocialServices> socialServiceRPCProxy,
+            IRPCSocialServices socialServiceRPCProxy,
             ISocialServiceEventBus socialServiceEventBus)
         {
             this.eventBus = eventBus;
@@ -66,6 +65,11 @@ namespace DCL.Friends
             socialServiceEventBus.WebSocketConnectionEstablished += OnWebSocketConnectionEstablished;
         }
 
+        public void Dispose()
+        {
+            subscriptionCancellationToken.SafeCancelAndDispose();
+        }
+
         public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
             // We try to keep the stream open until cancellation is requested
@@ -74,12 +78,9 @@ namespace DCL.Friends
             {
                 try
                 {
-                    if (socialServiceRPCProxy.Configured)
-                    {
-                        await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
-                        var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
-                        await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
-                    }
+                    await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
+                    var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
+                    await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
@@ -92,11 +93,12 @@ namespace DCL.Friends
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
                 IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
-                    socialServiceRPCProxy.StrictObject.Module().CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
-                        new Empty());
+                    socialServiceRPCProxy.Module()
+                                         .CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
+                                              new Empty());
 
                 // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
-                await foreach (var response in stream)
+                await foreach (FriendshipUpdate? response in stream)
                 {
                     try
                     {
@@ -121,7 +123,7 @@ namespace DCL.Friends
                                 break;
 
                             case FriendshipUpdate.UpdateOneofCase.Request:
-                                var request = response.Request;
+                                FriendshipUpdate.Types.RequestResponse? request = response.Request;
 
                                 Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
@@ -151,12 +153,9 @@ namespace DCL.Friends
             {
                 try
                 {
-                    if (socialServiceRPCProxy.Configured)
-                    {
-                        await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
-                        var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
-                        await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
-                    }
+                    await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
+                    var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
+                    await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
@@ -169,10 +168,10 @@ namespace DCL.Friends
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
                 IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
-                    socialServiceRPCProxy.StrictObject.Module()!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
+                    socialServiceRPCProxy.Module()!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
 
                 // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
-                await foreach (var response in stream)
+                await foreach (FriendConnectivityUpdate? response in stream)
                 {
                     try
                     {
@@ -204,12 +203,9 @@ namespace DCL.Friends
             {
                 try
                 {
-                    if (socialServiceRPCProxy.Configured)
-                    {
-                        await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
-                        var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
-                        await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
-                    }
+                    await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
+                    var subscriptionCt = CancellationTokenSource.CreateLinkedTokenSource(ct, subscriptionCancellationToken.Token);
+                    await OpenStreamAndProcessUpdatesAsync().AttachExternalCancellation(subscriptionCt.Token);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
@@ -222,9 +218,9 @@ namespace DCL.Friends
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
                 IUniTaskAsyncEnumerable<BlockUpdate> stream =
-                    socialServiceRPCProxy.StrictObject.Module()!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
+                    socialServiceRPCProxy.Module()!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
 
-                await foreach (var response in stream)
+                await foreach (BlockUpdate? response in stream)
                 {
                     try
                     {
@@ -242,7 +238,7 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetBlockedUsersPayload
             {
@@ -253,10 +249,10 @@ namespace DCL.Friends
                 },
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                       .CallUnaryProcedure<GetBlockedUsersResponse>(GET_BLOCKED_USERS, payload)
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            GetBlockedUsersResponse? response = await socialServiceRPCProxy.Module()!
+                                                                           .CallUnaryProcedure<GetBlockedUsersResponse>(GET_BLOCKED_USERS, payload)
+                                                                           .AttachExternalCancellation(ct)
+                                                                           .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             IEnumerable<BlockedProfile> profiles = ToClientBlockedProfiles(response.Profiles);
 
@@ -265,7 +261,7 @@ namespace DCL.Friends
 
         public async UniTask BlockUserAsync(string userId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new BlockUserPayload
             {
@@ -275,10 +271,10 @@ namespace DCL.Friends
                 },
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                       .CallUnaryProcedure<BlockUserResponse>(BLOCK_USER, payload)
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            BlockUserResponse? response = await socialServiceRPCProxy.Module()!
+                                                                     .CallUnaryProcedure<BlockUserResponse>(BLOCK_USER, payload)
+                                                                     .AttachExternalCancellation(ct)
+                                                                     .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             if (response.ResponseCase == BlockUserResponse.ResponseOneofCase.Ok)
             {
@@ -291,7 +287,7 @@ namespace DCL.Friends
 
         public async UniTask UnblockUserAsync(string userId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new UnblockUserPayload
             {
@@ -301,10 +297,10 @@ namespace DCL.Friends
                 },
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                       .CallUnaryProcedure<UnblockUserResponse>(UNBLOCK_USER, payload)
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            UnblockUserResponse? response = await socialServiceRPCProxy.Module()!
+                                                                       .CallUnaryProcedure<UnblockUserResponse>(UNBLOCK_USER, payload)
+                                                                       .AttachExternalCancellation(ct)
+                                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             if (response.ResponseCase == UnblockUserResponse.ResponseOneofCase.Ok)
             {
@@ -317,19 +313,19 @@ namespace DCL.Friends
 
         public async UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                       .CallUnaryProcedure<GetBlockingStatusResponse>(GET_BLOCKING_STATUS, new Empty())
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            GetBlockingStatusResponse? response = await socialServiceRPCProxy.Module()!
+                                                                             .CallUnaryProcedure<GetBlockingStatusResponse>(GET_BLOCKING_STATUS, new Empty())
+                                                                             .AttachExternalCancellation(ct)
+                                                                             .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             return new UserBlockingStatus(response.BlockedUsers, response.BlockedByUsers);
         }
 
         public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendsPayload
             {
@@ -340,12 +336,12 @@ namespace DCL.Friends
                 },
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                       .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            PaginatedFriendsProfilesResponse? response = await socialServiceRPCProxy.Module()!
+                                                                                    .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
+                                                                                    .AttachExternalCancellation(ct)
+                                                                                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-            foreach (var profile in response.Friends)
+            foreach (Decentraland.SocialService.V2.FriendProfile? profile in response.Friends)
                 friendsCache.Add(profile.Address);
 
             IEnumerable<FriendProfile> profiles = ToClientFriendProfiles(response.Friends);
@@ -356,7 +352,7 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendsResult> GetMutualFriendsAsync(string userId, int pageNum, int pageSize,
             CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetMutualFriendsPayload
             {
@@ -371,19 +367,19 @@ namespace DCL.Friends
                 },
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                       .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
-                                                       .AttachExternalCancellation(ct)
-                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            PaginatedFriendsProfilesResponse? response = await socialServiceRPCProxy.Module()!
+                                                                                    .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
+                                                                                    .AttachExternalCancellation(ct)
+                                                                                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-            var profiles = ToClientFriendProfiles(response.Friends);
+            IEnumerable<FriendProfile> profiles = ToClientFriendProfiles(response.Friends);
 
             return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
         }
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendshipStatusPayload
             {
@@ -393,10 +389,10 @@ namespace DCL.Friends
                 },
             };
 
-            GetFriendshipStatusResponse response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                                               .CallUnaryProcedure<GetFriendshipStatusResponse>(GET_FRIENDSHIP_STATUS_PROCEDURE_NAME, payload)
-                                                                               .AttachExternalCancellation(ct)
-                                                                               .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            GetFriendshipStatusResponse response = await socialServiceRPCProxy.Module()!
+                                                                              .CallUnaryProcedure<GetFriendshipStatusResponse>(GET_FRIENDSHIP_STATUS_PROCEDURE_NAME, payload)
+                                                                              .AttachExternalCancellation(ct)
+                                                                              .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             switch (response.ResponseCase)
             {
@@ -427,7 +423,7 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize,
             CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             receivedFriendRequestsBuffer.Clear();
 
@@ -440,18 +436,18 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendshipRequestsResponse response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                                                       .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME,
-                                                                                            payload)
-                                                                                       .AttachExternalCancellation(ct)
-                                                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            PaginatedFriendshipRequestsResponse response = await socialServiceRPCProxy.Module()!
+                                                                                      .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME,
+                                                                                           payload)
+                                                                                      .AttachExternalCancellation(ct)
+                                                                                      .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
             switch (response.ResponseCase)
             {
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
-                    foreach (var rr in response.Requests.Requests)
+                    foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
                         var fr = new FriendRequest(
                             rr.Id,
@@ -475,7 +471,7 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize,
             CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             sentFriendRequestsBuffer.Clear();
 
@@ -488,18 +484,18 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendshipRequestsResponse response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                                                       .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME,
-                                                                                            payload)
-                                                                                       .AttachExternalCancellation(ct)
-                                                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            PaginatedFriendshipRequestsResponse response = await socialServiceRPCProxy.Module()!
+                                                                                      .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME,
+                                                                                           payload)
+                                                                                      .AttachExternalCancellation(ct)
+                                                                                      .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
             switch (response.ResponseCase)
             {
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
-                    foreach (var rr in response.Requests.Requests)
+                    foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
                         var fr = new FriendRequest(
                             rr.Id,
@@ -522,7 +518,7 @@ namespace DCL.Friends
 
         public async UniTask RejectFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
@@ -540,7 +536,7 @@ namespace DCL.Friends
 
         public async UniTask CancelFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
@@ -558,7 +554,7 @@ namespace DCL.Friends
 
         public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
@@ -578,7 +574,7 @@ namespace DCL.Friends
 
         public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
@@ -599,7 +595,7 @@ namespace DCL.Friends
         public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody,
             CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             UpsertFriendshipResponse.Types.Accepted response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
@@ -626,24 +622,19 @@ namespace DCL.Friends
             return fr;
         }
 
-        public void Dispose()
-        {
-            subscriptionCancellationToken.SafeCancelAndDispose();
-        }
-
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
-            UpsertFriendshipResponse response = await socialServiceRPCProxy.StrictObject.Module()!
-                                                                            .CallUnaryProcedure<UpsertFriendshipResponse>(UPDATE_FRIENDSHIP_PROCEDURE_NAME, payload)
-                                                                            .AttachExternalCancellation(ct)
-                                                                            .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            UpsertFriendshipResponse response = await socialServiceRPCProxy.Module()!
+                                                                           .CallUnaryProcedure<UpsertFriendshipResponse>(UPDATE_FRIENDSHIP_PROCEDURE_NAME, payload)
+                                                                           .AttachExternalCancellation(ct)
+                                                                           .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             return response.ResponseCase switch
                    {
                        UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
-                       _ => throw new Exception($"Cannot update friendship {response.ResponseCase}")
+                       _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
                    };
         }
 
@@ -706,6 +697,7 @@ namespace DCL.Friends
         private void OnTransportClosed() =>
             subscriptionCancellationToken = subscriptionCancellationToken.SafeRestart();
 
-        private void OnWebSocketConnectionEstablished() => WebSocketConnectionEstablished?.Invoke();
+        private void OnWebSocketConnectionEstablished() =>
+            WebSocketConnectionEstablished?.Invoke();
     }
 }

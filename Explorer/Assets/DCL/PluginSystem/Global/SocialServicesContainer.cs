@@ -12,43 +12,33 @@ using Utility;
 
 namespace DCL.PluginSystem.Global
 {
-    public class SocialServicesPlugin : IDCLGlobalPluginWithoutSettings
+    public class SocialServicesContainer : IDisposable
     {
-        // TODO why ObjectProxy, is it a circular dependency?
-        private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
 
-        private RPCSocialServices? socialServicesRPC;
+        internal readonly RPCSocialServices? socialServicesRPC;
+
         private CancellationTokenSource cts = new ();
 
-        public SocialServicesPlugin(
-            ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
-            IDecentralandUrlsSource dclUrlSource,
+        public SocialServicesContainer(IDecentralandUrlsSource dclUrlSource,
             IWeb3IdentityCache web3IdentityCache,
             ISocialServiceEventBus socialServiceEventBus,
             IAppArgs appArgs)
         {
-            this.socialServicesRPCProxy = socialServicesRPCProxy;
             this.dclUrlSource = dclUrlSource;
             this.web3IdentityCache = web3IdentityCache;
             this.socialServiceEventBus = socialServiceEventBus;
             this.appArgs = appArgs;
-        }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
-
-        public async UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct)
-        {
             // We need to restart the connection to the service as identity changes
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
 
             socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
-            socialServicesRPCProxy.SetObject(socialServicesRPC);
         }
 
         public void Dispose()
@@ -79,7 +69,6 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-
         private void DisconnectRpcClient()
         {
             cts = cts.SafeRestart();
@@ -104,7 +93,5 @@ namespace DCL.PluginSystem.Global
 
             return URLAddress.FromString(url);
         }
-
-
     }
 }

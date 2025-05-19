@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool useAnalytics;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
+        private readonly IRPCSocialServices socialServicesRPCProxy;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
 
@@ -97,8 +97,9 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
-            ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
-            ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus)
+            IRPCSocialServices socialServicesRPCProxy,
+            ObjectProxy<FriendsCache> friendCacheProxy,
+            IFriendsEventBus friendsEventBus)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -296,9 +297,7 @@ namespace DCL.PluginSystem.Global
 
             void ReconnectFriendServiceAsync(CancellationToken ct)
             {
-                if (!socialServicesRPCProxy.Configured || friendsService == null) return;
-
-                friendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
+                friendsService!.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
 
                 if (IsConnectivityStatusEnabled())
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
@@ -314,13 +313,13 @@ namespace DCL.PluginSystem.Global
     public class FriendsPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField]
-        public FriendRequestAssetReference FriendRequestPrefab { get; set; }
+        public FriendRequestAssetReference FriendRequestPrefab { get; private set; }
 
         [field: SerializeField]
-        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; set; }
+        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; private set; }
 
         [field: SerializeField]
-        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; set; }
+        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; private set; }
 
         [Serializable]
         public class FriendRequestAssetReference : ComponentReference<FriendRequestView>
