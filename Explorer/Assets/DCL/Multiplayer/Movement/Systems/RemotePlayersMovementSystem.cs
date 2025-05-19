@@ -61,8 +61,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (playerInbox.Count == 0) return;
             }
 
-            // We wait delay of 2 messages for more stability of interpolation
-            if (remotePlayerMovement.InitialCooldownTime < 2 * settings.MoveSendRate)
+            // We wait delay of 3 messages for more stability of interpolation
+            if (remotePlayerMovement.InitialCooldownTime < (3 * settings.MoveSendRate) + 0.05f)
             {
                 remotePlayerMovement.InitialCooldownTime += deltaTime;
                 return;
