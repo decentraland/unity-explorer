@@ -1,5 +1,7 @@
 using DCL.UI;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -11,9 +13,23 @@ namespace DCL.Communities.CommunitiesBrowser
 
         [field: Header("Header")]
         [field: SerializeField] internal DropdownView sortByDropdown { get; private set; }
+        [field: SerializeField] internal SearchBarView searchBar { get; private set; }
 
-        [field: Header("Results")]
+        [field: Header("Side Section")]
+        [field: SerializeField] internal Button createCommunityButton { get; private set; }
+        [field: SerializeField] internal Button viewAllMyCommunitiesButton { get; private set; }
+        [field: SerializeField] internal Transform myCommunitiesContainer { get; private set; }
+
+        [field: Header("Results Section")]
         [field: SerializeField] internal GameObject communityCardPrefab { get; private set; }
+        [field: SerializeField] internal Button resultsBackButton { get; private set; }
+        [field: SerializeField] internal TMP_Text resultsTitleText { get; private set; }
         [field: SerializeField] internal Transform resultsContainer { get; private set; }
+
+        public void SetResultsBackButtonVisible(bool isVisible) =>
+            resultsBackButton.gameObject.SetActive(isVisible);
+
+        public void SetResultsTitleText(string text) =>
+            resultsTitleText.text = text;
     }
 }
