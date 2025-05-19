@@ -50,6 +50,12 @@ namespace DCL.CharacterCamera.Systems
             switch (camera.Mode)
             {
                 case CameraMode.DroneView:
+                    float hRotation = cameraInput.Delta.x * settings.HorizontalMouseSensitivity;
+                    float vRotation = cameraInput.Delta.y * settings.VerticalMouseSensitivity;
+                    Vector2 dtInput = new Vector2(hRotation, vRotation);
+
+                    CameraMovementUtils.Rotate(ref dampedPOV, cameraFocus, dtInput, settings.DroneCameraMovementPOVSettings, dt);
+                    break;
                 case CameraMode.ThirdPerson:
                 case CameraMode.SDKCamera:
                     float horizontalRotation = cameraInput.Delta.x * settings.HorizontalMouseSensitivity;
