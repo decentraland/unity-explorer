@@ -63,7 +63,3 @@ Explorer/UserSettings
 # OS generated
 .DS_Store
 .DS_Store?
-
-#GPUI Pro
-/Assets/GPUIInstancerPro
-/Assets/GPUIInstancerPro.meta
