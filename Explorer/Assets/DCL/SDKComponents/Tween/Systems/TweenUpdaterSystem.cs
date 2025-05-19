@@ -170,6 +170,10 @@ namespace DCL.SDKComponents.Tween.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
         {
+            // Don't start the tween that is in the "future"
+            if (pbTween.HasStartSyncedTimestamp && pbTween.StartSyncedTimestamp > ntpTimeService.ServerTimeMs)
+                return;
+
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
             float durationInSeconds = pbTween.Duration * MS_TO_SEC;
 
@@ -206,17 +210,21 @@ namespace DCL.SDKComponents.Tween.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying)
         {
-            var startTime = tweenModel.CurrentTime * durationInSeconds;
-
-            if (tweenModel.HasStartSyncedTimestamp)
-                startTime += Mathf.Max(ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp, 0) * MS_TO_SEC;
-
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds);
+
+            var startTime = tweenModel.CurrentTime * durationInSeconds;
+
+            if (tweenModel.HasStartSyncedTimestamp)
+            {
+                startTime += (ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp) * MS_TO_SEC;
+                startTime = Mathf.Clamp(startTime, 0, durationInSeconds);
+            }
+
             sdkTweenComponent.CustomTweener.DoTween(ease, startTime, isPlaying);
         }
 
