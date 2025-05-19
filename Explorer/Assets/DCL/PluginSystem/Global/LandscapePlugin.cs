@@ -119,6 +119,9 @@ namespace DCL.PluginSystem.Global
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+
+            GPUIWrapper wrapper = new GPUIWrapper();
+            wrapper.Initialize(terrainGenerator, ref builder, debugContainerBuilder);
         }
     }
 }

@@ -78,6 +78,8 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
+        public Action<List<Terrain>> GenesisTerrainGenerated;
+
         private TerrainModel terrainModel;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
@@ -293,18 +295,8 @@ namespace DCL.Landscape
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
             
-#if GPUIPRO_PRESENT
-            GPUITreeManager treeManager = new GameObject("GPUITreeManager").AddComponent<GPUITreeManager>();
-            GPUIDetailManager detailManager = new GameObject("GPUIDetailManager").AddComponent<GPUIDetailManager>();
-            foreach (Terrain terrain in terrains)
-            {
-                if (treeManager != null)
-                    GPUITerrainAPI.AddTerrain(treeManager, terrain);
+            GenesisTerrainGenerated.Invoke(terrains);
 
-                if (detailManager != null)
-                    GPUITerrainAPI.AddTerrain(detailManager, terrain);
-            }
-#endif
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it

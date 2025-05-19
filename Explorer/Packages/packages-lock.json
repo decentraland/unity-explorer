@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6219df9d156bcd1bc36fd43f451caa4273b6dc23"
+      "hash": "41ecd44091f268f5ffb11e939389f0188397215b"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
@@ -86,7 +86,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "5954fac94334a8af6742b45ae92ac0b1044528a7"
+      "hash": "8488aded7914f22ffd6bd75c7c40250b2c06ca9a"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#feat/GPUI_Instancer_Pro",
