@@ -97,7 +97,6 @@ namespace DCL.Friends.UI.FriendPanel
             }
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
-                    mvcManager,
                     new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,

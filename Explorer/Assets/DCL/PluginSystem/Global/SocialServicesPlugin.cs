@@ -14,6 +14,7 @@ namespace DCL.PluginSystem.Global
 {
     public class SocialServicesPlugin : IDCLGlobalPluginWithoutSettings
     {
+        // TODO why ObjectProxy, is it a circular dependency?
         private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;

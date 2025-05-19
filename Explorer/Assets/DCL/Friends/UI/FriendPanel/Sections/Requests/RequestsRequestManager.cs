@@ -69,6 +69,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnYouSentFriendRequestToOtherUser -= CreateNewSentRequest;
             friendEventBus.OnFriendRequestReceived -= CreateNewReceivedRequest;
             modifyRequestsCts.SafeCancelAndDispose();
+
+            base.Dispose();
         }
 
         private void CreateNewReceivedRequest(FriendRequest request)
@@ -155,7 +157,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             elementView.HasMessageIndicator.SetActive(!string.IsNullOrEmpty(request.MessageBody));
         }
 
-        protected override void ResetCollections()
+        protected override void ResetCollection()
         {
             receivedRequests.Clear();
             sentRequests.Clear();
