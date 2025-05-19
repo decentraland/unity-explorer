@@ -24,7 +24,7 @@ namespace DCL.Friends.UI.FriendPanel
         {
             FRIENDS,
             REQUESTS,
-            BLOCKED
+            BLOCKED,
         }
 
         private const int FRIENDS_PAGE_SIZE = 50;
@@ -87,7 +87,10 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking);
+                    chatEventBus,
+                    sharedSpaceManager,
+                    viewDependencies);
+
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
                 friendSectionControllerConnectivity.OpenConversationClicked += OnOpenConversationClicked;
@@ -99,7 +102,10 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking);
+                    viewDependencies,
+                    chatEventBus,
+                    sharedSpaceManager);
+
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -107,6 +113,7 @@ namespace DCL.Friends.UI.FriendPanel
                 new RequestsRequestManager(friendsService, friendEventBus, viewDependencies, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
                 includeUserBlocking);
+
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,
                 new BlockedPanelList(friendsService, friendEventBus, viewDependencies, instantiatedView.BlockedSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
@@ -154,7 +161,6 @@ namespace DCL.Friends.UI.FriendPanel
             closeTaskCompletionSource.TrySetResult();
             JumpToFriendClicked?.Invoke(targetAddress, parcel);
         }
-
 
         public UniTask InitAsync(CancellationToken ct) =>
             requestsSectionController.InitAsync(ct);

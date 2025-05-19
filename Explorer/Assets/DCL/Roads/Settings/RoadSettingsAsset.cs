@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Roads.Settings
@@ -24,6 +25,25 @@ namespace DCL.Roads.Settings
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
 #if UNITY_EDITOR
+        public void InitializeInstancingKeywords()
+        {
+            foreach (var candidate in IndirectLODGroups)
+            foreach (var combinedLodRenderer in candidate.LODGroup.CombinedLodsRenderers)
+            {
+                if (combinedLodRenderer.SharedMaterial.parent != null)
+                {
+                    var keyword = new LocalKeyword(combinedLodRenderer.SharedMaterial.shader, GPUInstancingMaterialsCache.GPU_INSTANCING_KEYWORD);
+                    combinedLodRenderer.SharedMaterial.EnableKeyword(keyword);
+
+                    var instancedMat = new Material(combinedLodRenderer.SharedMaterial.parent.shader);
+                    instancedMat.CopyPropertiesFromMaterial(combinedLodRenderer.SharedMaterial);
+
+                    combinedLodRenderer.SharedMaterial.DisableKeyword(keyword);
+                    instancedMat.EnableKeyword(keyword);
+                }
+            }
+        }
+
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
