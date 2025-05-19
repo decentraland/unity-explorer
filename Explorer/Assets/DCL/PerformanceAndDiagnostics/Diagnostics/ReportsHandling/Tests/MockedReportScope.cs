@@ -1,9 +1,8 @@
-﻿using DCL.Diagnostics;
-using NSubstitute;
+﻿using NSubstitute;
 using System;
 using System.Collections.Generic;
 
-namespace SceneRunner.Scene.Tests
+namespace DCL.Diagnostics.Tests
 {
     /// <summary>
     ///     Provides a report logger for tests so all logs are registered by nothing is sent to console
