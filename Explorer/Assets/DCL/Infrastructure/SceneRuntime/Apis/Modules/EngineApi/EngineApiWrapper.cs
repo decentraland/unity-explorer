@@ -1,16 +1,16 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript.V8.SplitProxy;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
+using System.Threading;
 using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : IJsApiWrapper, IV8HostObject
+    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8HostObject
     {
-        internal readonly IEngineApi api;
-
         private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
 
@@ -20,9 +20,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         private readonly InvokeHostObject crdtGetState;
         private readonly InvokeHostObject sendBatch;
 
-        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
+        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
+            : base(api, disposeCts)
         {
-            this.api = api;
             this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -31,7 +31,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             sendBatch = SendBatch;
         }
 
-        public void Dispose()
+        protected override void DisposeInternal()
         {
             // Dispose the last input buffer
             lastInput.ReleaseAndDispose();
@@ -45,6 +45,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         private ScriptableByteArray CrdtSendToRenderer(Uint8Array data)
         {
+            if (disposeCts.IsCancellationRequested)
+                return ScriptableByteArray.EMPTY;
+
             try
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
@@ -59,8 +62,11 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
             catch (Exception e)
             {
-                // Report an uncategorized MANAGED exception (don't propagate it further)
-                exceptionsHandler.OnEngineException(e);
+                if (!disposeCts.IsCancellationRequested)
+
+                    // Report an uncategorized MANAGED exception (don't propagate it further)
+                    exceptionsHandler.OnEngineException(e);
+
                 return ScriptableByteArray.EMPTY;
             }
         }
@@ -70,6 +76,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         private ScriptableByteArray CrdtGetState()
         {
+            if (disposeCts.IsCancellationRequested)
+                return ScriptableByteArray.EMPTY;
+
             try
             {
                 PoolableByteArray result = api.CrdtGetState();
@@ -89,11 +98,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         protected virtual ScriptableSDKObservableEventArray? SendBatch() => null;
-
-        public void SetIsDisposing()
-        {
-            api.SetIsDisposing();
-        }
 
         void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst) =>
             GetNamedProperty(name, value, out isConst);

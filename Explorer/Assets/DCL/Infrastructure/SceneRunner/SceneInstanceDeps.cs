@@ -193,7 +193,7 @@ namespace SceneRunner
 
             public readonly SceneInstanceDependencies SyncDeps;
             public readonly ISceneRuntime Runtime;
-            public IEngineApi EngineAPI;
+            public readonly IEngineApi EngineAPI;
 
             /// <summary>
             ///     For Unit Tests only
