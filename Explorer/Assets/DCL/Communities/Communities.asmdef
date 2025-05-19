@@ -1,4 +1,17 @@
 {
-	"name": "Communities",
-	"references":[ "GUID:e169fa6683c924c7e99a85981a91d953" ]
+    "name": "Communities",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:4ea6ca08dc181df4487ffee3648c7d94"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
