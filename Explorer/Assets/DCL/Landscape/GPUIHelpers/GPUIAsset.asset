@@ -16,14 +16,14 @@ MonoBehaviour:
   detailsManagerPrefab: {fileID: 9060911270677862200, guid: 5a044b6b7525c90448396ce99acf8d0a, type: 3}
   debuggerCanvasPrefab: {fileID: 845808253591855193, guid: 2502ae8a71130474e98553fbb57691aa, type: 3}
   treesToOverride:
+  - {fileID: 11400000, guid: 2d0d1e8513d36414d9a849e0c2f48ddb, type: 2}
+  - {fileID: 11400000, guid: 340b43eeec023dc42ac39307dc1683de, type: 2}
+  - {fileID: 11400000, guid: 2a263778ac3bb0244997cac3684ed7cf, type: 2}
+  - {fileID: 11400000, guid: 0837e6a0ba793dd44a312e688a3d3336, type: 2}
+  - {fileID: 11400000, guid: 41bebe4e09d050545b69379808e1a1cc, type: 2}
   - {fileID: 11400000, guid: 173f495f4fc578e4191089554d648152, type: 2}
   - {fileID: 11400000, guid: 11a01cc1863d90740a153cafc3e24d56, type: 2}
   - {fileID: 11400000, guid: 397c38802661f7f459f706d2e5f58757, type: 2}
-  - {fileID: 11400000, guid: 41bebe4e09d050545b69379808e1a1cc, type: 2}
-  - {fileID: 11400000, guid: 0837e6a0ba793dd44a312e688a3d3336, type: 2}
-  - {fileID: 11400000, guid: 2a263778ac3bb0244997cac3684ed7cf, type: 2}
-  - {fileID: 11400000, guid: 2d0d1e8513d36414d9a849e0c2f48ddb, type: 2}
-  - {fileID: 11400000, guid: 340b43eeec023dc42ac39307dc1683de, type: 2}
   detailToOverride:
   - {fileID: 11400000, guid: 376b5f41c264f0c4c910bdb4a1f65524, type: 2}
   - {fileID: 11400000, guid: 862a1a72d47bd8948abbcc046a8ef859, type: 2}
