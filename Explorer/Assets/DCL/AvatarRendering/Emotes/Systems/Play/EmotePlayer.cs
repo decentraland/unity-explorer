@@ -11,6 +11,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 {
     public class EmotePlayer
     {
+        // Scene Emotes in Local Scene Development mode (legacy animations) only have 1 clip
+        private static readonly AnimationClip[] LEGACY_ANIMATION_CLIPS = new AnimationClip[1];
+
         private readonly GameObjectPool<AudioSource> audioSourcePool;
         private readonly Action<EmoteReferences> releaseEmoteReferences;
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
@@ -122,10 +125,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
             else
             {
-                // Scene Emotes in Local Scene Development mode (legacy animations) only have 1 clip
                 Animation animation = mainGameObject.GetComponent<Animation>();
-                animationClips = new AnimationClip[1];
-                animationClips[0] = animation.clip;
+                LEGACY_ANIMATION_CLIPS[0] = animation.clip;
+                animationClips = LEGACY_ANIMATION_CLIPS;
             }
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
