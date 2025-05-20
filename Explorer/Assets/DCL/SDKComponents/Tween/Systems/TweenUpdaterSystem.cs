@@ -106,9 +106,17 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (sdkTweenComponent.IsDirty)
             {
-                LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
-                SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                if (pbTween.HasStartSyncedTimestamp && sdkTweenComponent.StartSyncedTimestamp > 0 && sdkTweenComponent.StartSyncedTimestamp != pbTween.StartSyncedTimestamp)
+                {
+                    // check state
+                    Debug.Log("VVV synced changed");
+                }
+                else
+                {
+                    LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
+                    SetupTween(ref sdkTweenComponent, in pbTween);
+                    UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                }
             }
             else
             {
@@ -221,8 +229,9 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (tweenModel.HasStartSyncedTimestamp)
             {
-                startTime += (ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp) * MS_TO_SEC; 
+                startTime += (ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp) * MS_TO_SEC;
                 startTime = Mathf.Clamp(startTime, 0, durationInSeconds);
+                sdkTweenComponent.StartSyncedTimestamp = tweenModel.StartSyncedTimestamp;
             }
 
             sdkTweenComponent.CustomTweener.DoTween(ease, startTime, isPlaying);

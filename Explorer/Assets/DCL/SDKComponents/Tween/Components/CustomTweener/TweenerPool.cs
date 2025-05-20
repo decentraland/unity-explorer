@@ -74,6 +74,7 @@ namespace DCL.SDKComponents.Tween.Components
             }
 
             sdkTweenComponent.CustomTweener = null;
+            sdkTweenComponent.StartSyncedTimestamp = 0;
         }
     }
 }
