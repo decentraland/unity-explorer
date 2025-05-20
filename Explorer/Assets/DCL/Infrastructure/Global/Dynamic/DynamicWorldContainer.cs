@@ -14,8 +14,8 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
-using DCL.Chat.History;
 using DCL.Chat.EventBus;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
@@ -86,11 +86,10 @@ using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
-using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
+using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -116,7 +115,6 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
-        private readonly LocalSceneDevelopmentController? localSceneDevelopmentController;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IProfileBroadcast profileBroadcast;
 
@@ -139,7 +137,6 @@ namespace Global.Dynamic
         public IRoomHub RoomHub { get; }
 
         private DynamicWorldContainer(
-            LocalSceneDevelopmentController? localSceneDevelopmentController,
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
             GlobalWorldFactory globalWorldFactory,
@@ -161,7 +158,6 @@ namespace Global.Dynamic
             MessagePipesHub = messagePipesHub;
             RemoteMetadata = remoteMetadata;
             RoomHub = roomHub;
-            this.localSceneDevelopmentController = localSceneDevelopmentController;
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
         }
@@ -171,7 +167,6 @@ namespace Global.Dynamic
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
-            localSceneDevelopmentController?.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -184,6 +179,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            IRealmUrls realmUrls,
             CancellationToken ct)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -361,10 +357,6 @@ namespace Global.Dynamic
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
-            LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment
-                ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm, playerEntity, globalWorld)
-                : null;
-
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
             IRoomHub roomHub = new RoomHub(
@@ -518,7 +510,7 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            var chatMessageFactory = new ChatMessageFactory(selfProfile, profileRepository);
+            var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy)
@@ -858,6 +850,9 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
+            if (localSceneDevelopment)
+                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
+
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(
                     dclInput,
@@ -982,7 +977,6 @@ namespace Global.Dynamic
             staticContainer.RoomHubProxy.SetObject(roomHub);
 
             var container = new DynamicWorldContainer(
-                localSceneDevelopmentController,
                 mvcManager,
                 realmContainer.RealmController,
                 globalWorldFactory,

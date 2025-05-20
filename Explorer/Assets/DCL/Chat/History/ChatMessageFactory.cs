@@ -1,8 +1,6 @@
-using Cysharp.Threading.Tasks;
 using DCL.Profiles;
-using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace DCL.Chat.History
 {
@@ -13,32 +11,36 @@ namespace DCL.Chat.History
     {
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
-        private readonly ISelfProfile selfProfile;
-        private readonly IProfileRepository profileRepository;
+        private readonly IProfileCache profileCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
-        public ChatMessageFactory(ISelfProfile selfProfile, IProfileRepository profileRepository)
+        public ChatMessageFactory(
+            IProfileCache profileCache,
+            IWeb3IdentityCache web3IdentityCache)
         {
-            this.selfProfile = selfProfile;
-            this.profileRepository = profileRepository;
+            this.profileCache = profileCache;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         /// <summary>
-        /// Generates a new chat message filled with the data provided in the parameters and also by the profile repository.
+        /// Generates a new chat message filled with the data provided in the parameters and also by the profile cache.
+        /// Additional note: we need this function to be immediate (not async) to ensure chat messages are propagated in the correct chronological order.
         /// </summary>
         /// <param name="senderWalletAddress">The wallet address of the user that sent the message.</param>
         /// <param name="isSentByLocalUser">Whether the user that sent the message corresponds to the local user.</param>
         /// <param name="message">The formatted text message.</param>
         /// <param name="usernameOverride">Optional. A sender's username to use instead of the one stored in the profile currently.
         /// Leave it null to use the one provided by the profile.</param>
-        /// <param name="ct">A cancellation token.</param>
-        /// <returns>The task of the asynchronous operation.</returns>
-        public async UniTask<ChatMessage> CreateChatMessageAsync(string senderWalletAddress, bool isSentByLocalUser, string message, string usernameOverride, CancellationToken ct)
+        public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride)
         {
-            Profile ownProfile = await selfProfile.ProfileAsync(ct);
+            Profile? ownProfile = null;
+
+            if (web3IdentityCache.Identity != null)
+                ownProfile = profileCache.Get(web3IdentityCache.Identity.Address);
 
             if (isSentByLocalUser)
             {
-                if(string.IsNullOrEmpty(usernameOverride))
+                if (string.IsNullOrEmpty(usernameOverride))
                     usernameOverride = ownProfile?.ValidatedName ?? string.Empty;
 
                 return new ChatMessage(
@@ -46,31 +48,43 @@ namespace DCL.Chat.History
                     usernameOverride,
                     senderWalletAddress,
                     true,
-                    ownProfile?.WalletId,
+                    GetUserHash(ownProfile),
                     isMention: false
                 );
             }
-            else
+
+            // Using profileCache for immediate access ensures chat messages maintain the correct chronological order
+            // since async profile fetching times are unpredictable.
+            Profile? profile = profileCache.Get(senderWalletAddress);
+
+            if (string.IsNullOrEmpty(usernameOverride))
+                usernameOverride = profile?.ValidatedName ?? string.Empty;
+
+            bool isMention = false;
+
+            if (ownProfile != null)
+                isMention = IsMention(message, ownProfile.MentionName);
+
+            return new ChatMessage(
+                message,
+                usernameOverride,
+                senderWalletAddress,
+                false,
+                GetUserHash(profile),
+                isMention,
+                false
+            );
+
+            string GetUserHash(Profile? profile)
             {
-                Profile profile = await profileRepository.GetAsync(senderWalletAddress, ct);
+                string userHash;
 
-                if(string.IsNullOrEmpty(usernameOverride))
-                    usernameOverride = profile?.ValidatedName ?? string.Empty;
+                if (profile != null)
+                    userHash = profile.WalletId ?? string.Empty;
+                else
+                    userHash = $"#{senderWalletAddress[^4..]}";
 
-                bool isMention = false;
-
-                if (ownProfile != null)
-                    isMention = IsMention(message, ownProfile.MentionName);
-
-                return new ChatMessage(
-                    message,
-                    usernameOverride,
-                    senderWalletAddress,
-                    false,
-                    profile?.WalletId,
-                    isMention,
-                    false
-                );
+                return userHash;
             }
         }
 
@@ -81,6 +95,7 @@ namespace DCL.Chat.History
                 if (match.Value == userName)
                     return true;
             }
+
             return false;
         }
     }
