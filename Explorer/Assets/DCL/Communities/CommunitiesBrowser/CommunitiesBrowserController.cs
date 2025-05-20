@@ -11,14 +11,17 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
+        private readonly ICommunitiesDataProvider dataProvider;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
-            ICursor cursor)
+            ICursor cursor,
+            ICommunitiesDataProvider dataProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
+            this.dataProvider = dataProvider;
 
             ConfigureSortBySelector();
         }
