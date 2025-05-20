@@ -65,7 +65,7 @@ namespace DCL.Chat.MessageBus
                     return;
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
-                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
+                ChatMessage newMessage = messageFactory.CreateChatMessage(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }
