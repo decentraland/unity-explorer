@@ -45,34 +45,41 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
         {
-            cts = cts.SafeRestart();
-
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
-                    OpenMedia();
                     if (!trackPublished)
+                    {
+                        cts = cts.SafeRestart();
+                        OpenMedia();
                         PublishTrack(cts.Token);
+                    }
+
                     break;
                 case ConnectionUpdate.Disconnected:
+                    cts.SafeCancelAndDispose();
                     CloseMedia();
                     trackPublished = false;
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     break;
-                case ConnectionUpdate.Reconnecting: break;
-                case ConnectionUpdate.Reconnected: break;
+                case ConnectionUpdate.Reconnecting:
+                    break;
+                case ConnectionUpdate.Reconnected:
+                    break;
             }
         }
 
         private void PublishTrack(CancellationToken ct)
         {
-            microphoneTrack = voiceChatRoom.CreateAudioTrack("New Track", new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter));
+            var rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
+            rtcAudioSource.Start();
+            microphoneTrack = voiceChatRoom.CreateAudioTrack("New Track", rtcAudioSource);
 
             var options = new TrackPublishOptions
             {
                 AudioEncoding = new AudioEncoding
                 {
-                    MaxBitrate = 64000,
+                    MaxBitrate = 48000,
                 },
                 Source = TrackSource.SourceMicrophone,
             };
@@ -83,8 +90,6 @@ namespace DCL.VoiceChat
 
         private void OpenMedia()
         {
-            CloseMedia();
-
             foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
                 Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
@@ -95,7 +100,6 @@ namespace DCL.VoiceChat
                     if (value.Kind == TrackKind.KindAudio)
                     {
                         WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity, sid);
-
                         if (stream != null)
                             combinedAudioSource.AddStream(stream);
                     }

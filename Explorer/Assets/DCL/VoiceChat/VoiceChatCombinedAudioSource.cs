@@ -7,12 +7,64 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatCombinedAudioSource : MonoBehaviour
     {
-        [field:SerializeField] private AudioSource audioSource;
-
         private static ulong counter;
-        private readonly HashSet<WeakReference<IAudioStream>> streams = new();
-        private int sampleRate;
+        [field: SerializeField] private AudioSource audioSource;
+        [SerializeField] private bool enableAudioMonitoring = true;
+        [SerializeField] private float audioLevelThreshold = 0.01f;
+        private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
+        private float currentAudioLevel;
         private bool isPlaying;
+        private float peakAudioLevel;
+        private int sampleRate;
+        private float[] tempBuffer;
+
+        private void OnEnable()
+        {
+            OnAudioConfigurationChanged(false);
+            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
+        }
+
+        private void OnDisable()
+        {
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+        }
+
+        // Called by Unity on the Audio thread
+        private void OnAudioFilterRead(float[] data, int channels)
+        {
+            if (!isPlaying || streams.Count == 0)
+            {
+                Array.Clear(data, 0, data.Length);
+                return;
+            }
+
+            if (tempBuffer == null || tempBuffer.Length != data.Length) { tempBuffer = new float[data.Length]; }
+
+            Array.Clear(data, 0, data.Length);
+            var activeStreams = 0;
+
+            foreach (WeakReference<IAudioStream> weakStream in streams)
+            {
+                if (weakStream.TryGetTarget(out IAudioStream stream))
+                {
+                    Array.Clear(tempBuffer, 0, tempBuffer.Length);
+                    stream.ReadAudio(tempBuffer, channels, sampleRate);
+
+                    for (var i = 0; i < tempBuffer.Length; i++)
+                        data[i] += tempBuffer[i];
+
+                    activeStreams++;
+                }
+            }
+
+            if (activeStreams > 1)
+            {
+                float norm = 1f / activeStreams;
+
+                for (var i = 0; i < data.Length; i++)
+                    data[i] *= norm;
+            }
+        }
 
         public void AddStream(WeakReference<IAudioStream> stream)
         {
@@ -46,53 +98,9 @@ namespace DCL.VoiceChat
             audioSource.volume = target;
         }
 
-        private void OnEnable()
-        {
-            OnAudioConfigurationChanged(false);
-            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
-        }
-
-        private void OnDisable()
-        {
-            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
-        }
-
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
             sampleRate = AudioSettings.outputSampleRate;
-        }
-
-        // Called by Unity on the Audio thread
-        private void OnAudioFilterRead(float[] data, int channels)
-        {
-            if (!isPlaying || streams.Count == 0)
-            {
-                Array.Clear(data, 0, data.Length);
-                return;
-            }
-
-            Array.Clear(data, 0, data.Length);
-            float[] temp = new float[data.Length];
-            int activeStreams = 0;
-
-            foreach (var weakStream in streams)
-            {
-                if (weakStream.TryGetTarget(out var stream) && stream != null)
-                {
-                    Array.Clear(temp, 0, temp.Length);
-                    stream.ReadAudio(temp, channels, sampleRate);
-                    for (int i = 0; i < data.Length; i++)
-                        data[i] += temp[i];
-                    activeStreams++;
-                }
-            }
-
-            if (activeStreams > 1)
-            {
-                float norm = 1f / activeStreams;
-                for (int i = 0; i < data.Length; i++)
-                    data[i] *= norm;
-            }
         }
     }
 }

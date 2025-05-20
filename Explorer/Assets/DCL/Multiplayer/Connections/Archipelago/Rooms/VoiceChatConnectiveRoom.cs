@@ -19,6 +19,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.ComponentModel;
 using System.Threading;
 using Utility;
 using Utility.Multithreading;
@@ -112,8 +113,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public async UniTask<bool> StartAsync()
         {
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
-                throw new InvalidOperationException("Room is already running");
-
+                throw new WarningException("Room is already running");
 
             cts = cts.SafeRestart();
             attemptToConnectState.Set(AttemptToConnectState.None);
