@@ -92,7 +92,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             UserNameTag.gameObject.SetActive(!memberProfile.hasClaimedName);
             VerifiedIcon.SetActive(memberProfile.hasClaimedName);
             MutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
-            MutualFriendsText.transform.parent.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
+            MutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
             RoleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
             RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.profilePicture, memberProfile.id);
