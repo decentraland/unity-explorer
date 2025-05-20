@@ -15,9 +15,6 @@ namespace DCL.Diagnostics
     public class DiagnosticsContainer : IDisposable
     {
         private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
-
-        private ILoggerFactory? zloggerFactory;
-        
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
 
@@ -25,10 +22,6 @@ namespace DCL.Diagnostics
 
         public void Dispose()
         {
-            // Dispose ZLogger factory
-            zloggerFactory?.Dispose();
-            zloggerFactory = null;
-            
             // Restore Default Unity Logger
             Debug.unityLogger.logHandler = defaultLogHandler;
         }
@@ -40,15 +33,28 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool enableSceneDebugConsole = false, params (ReportHandler, IReportHandler)[] additionalHandlers)
         {
+            var container = new DiagnosticsContainer();
             settings.NotifyErrorDebugLogDisabled();
 
-            int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length + (enableSceneDebugConsole ? 1 : 0);
-            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(handlersCount);
+            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>();
             handlers.AddRange(additionalHandlers);
 
             if (settings.IsEnabled(ReportHandler.DebugLog))
-                handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));
-
+            {
+                if (!settings.UseOptimizedLogger)
+                {
+                    handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));
+                }
+                else
+                {
+                    handlers.Add((
+                        ReportHandler.DebugLog,
+                        new ZLoggerConsoleReportHandler(settings.GetMatrix(ReportHandler.DebugLog),
+                            settings.DebounceEnabled)
+                    ));
+                }
+            }
+            // ... Sentry, SceneDebugConsoleReportHandler ...
             SentryReportHandler? sentryReportHandler = null;
 
             if (settings.IsEnabled(ReportHandler.Sentry))
@@ -56,45 +62,20 @@ namespace DCL.Diagnostics
 
             if (enableSceneDebugConsole)
                 AddSceneDebugConsoleReportHandler(handlers);
-
-            var logger = new ReportHubLogger(handlers);
-
-            ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
-
-            // Override Default Unity Logger
-            Debug.unityLogger.logHandler = logger;
-
-            // Enable Hub static accessors
-            ReportHub.Initialize(logger, enableSceneDebugConsole);
-
-            var container = new DiagnosticsContainer
-            {
-                ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler
-            };
             
-            container.zloggerFactory = LoggerFactory.Create(logging =>
-            {
-                logging.SetMinimumLevel(LogLevel.Debug); // ZLogger's LogLevel
-                
-                if (settings.IsEnabled(ReportHandler.DebugLog))
-                {
-                    logging.AddZLoggerRollingFile(opts =>
-                    {
-                        opts.FilePathSelector = (ts, seq) => $"logs/{ts:yyyy-MM-dd_HH-mm-ss}_{seq}.log";
-                        opts.RollingInterval = RollingInterval.Day;
-                        opts.RollingSizeKB   = 1024;
-                        opts.UsePlainTextFormatter(); // writes UTF-8 spans directly
-                    });
+            // --- Setup ReportHubLogger ---
+            var reportHubInstance = new ReportHubLogger(handlers);
+            container.defaultLogHandler = Debug.unityLogger.logHandler; // Capture original handler
+            //Debug.unityLogger.logHandler = reportHubInstance; // Override with our hub
 
-                    logging.AddZLoggerUnityDebug(options =>
-                    {
-                        options.UsePlainTextFormatter();
-                    });
-                }
-            });
-            
-            var log = container.zloggerFactory.CreateLogger("DCL");
-            log.LogInformation("DiagnosticsContainer created with {HandlersCount} handlers", handlers.Count);
+            ReportHub.Initialize(reportHubInstance, enableSceneDebugConsole);
+
+            container.ReportHubLogger = reportHubInstance;
+            container.Sentry = sentryReportHandler; // Assuming sentryReportHandler is defined
+
+            // var initLogger = container.ZLoggerFactory.CreateLogger("DCL.DiagnosticsContainer");
+            // initLogger.ZLogInformation($"DiagnosticsContainer created. OptimizedLogger: {settings.UseOptimizedLogger}");
+
             return container;
         }
 

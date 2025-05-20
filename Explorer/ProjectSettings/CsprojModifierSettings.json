@@ -1,1 +1,1 @@
-{"AdditionalImports":[{"Path":"LangVersion.props","Position":0}],"AdditionalImportsAdditionalProjects":[],"EnableAddAnalyzerReferences":false,"AddAnalyzerReferencesAdditionalProjects":[]}
+{"AdditionalImports":[{"Path":"LangVersion.props","Position":0}],"AdditionalImportsAdditionalProjects":["DCL.Optimization.csproj"],"EnableAddAnalyzerReferences":false,"AddAnalyzerReferencesAdditionalProjects":[]}

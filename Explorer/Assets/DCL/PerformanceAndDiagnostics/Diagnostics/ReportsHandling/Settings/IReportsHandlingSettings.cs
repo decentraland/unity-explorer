@@ -10,6 +10,11 @@ namespace DCL.Diagnostics
         ///     If true, reports will be debounced on a higher level
         /// </summary>
         bool DebounceEnabled { get; }
+        
+        /// <summary>
+        ///     if true, optimized logger will be used (ZLogger)
+        /// </summary>
+        bool UseOptimizedLogger { get; }
 
         bool IsEnabled(ReportHandler handler);
 

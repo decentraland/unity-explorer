@@ -9,10 +9,12 @@ namespace DCL.Diagnostics
         [SerializeField] private CategorySeverityMatrix debugLogMatrix;
         [SerializeField] private CategorySeverityMatrix sentryMatrix;
         [SerializeField] private bool debounceEnabled;
+        [SerializeField] private bool useOptimizedLogger;
         [SerializeField] private bool isSentryEnabled = true;
         [SerializeField] private bool isDebugLogEnabled = true;
 
         public bool DebounceEnabled => debounceEnabled;
+        public bool UseOptimizedLogger => useOptimizedLogger;
 
         public bool IsEnabled(ReportHandler handler)
         {
