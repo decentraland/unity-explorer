@@ -1,11 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
-using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
+using DCL.Web3;
 using MVC;
 using SuperScrollView;
 using System;
@@ -28,7 +29,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ViewDependencies viewDependencies;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly List<Profile> members = new (PAGE_SIZE);
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly List<GetCommunityMembersResponse.MemberData> members = new (PAGE_SIZE);
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly GenericContextMenuElement removeModeratorContextMenuElement;
@@ -41,19 +43,21 @@ namespace DCL.Communities.CommunitiesCard.Members
         private int totalFetched;
         private int totalToFetch;
         private bool isFetching;
-        private Profile? lastClickedProfileCtx;
+        private GetCommunityMembersResponse.MemberData? lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;
 
         public MembersListController(MembersListView view,
             ViewDependencies viewDependencies,
             IMVCManager mvcManager,
-            ObjectProxy<IFriendsService> friendServiceProxy)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ICommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
             this.viewDependencies = viewDependencies;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
+            this.communitiesDataProvider = communitiesDataProvider;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
@@ -70,42 +74,52 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.LoopList.InitListView(0, GetLoopListItemByIndex);
         }
 
-        private void BlockUserClicked(Profile profile)
+        private void BlockUserClicked(GetCommunityMembersResponse.MemberData profile) =>
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.id), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct).Forget();
+
+        private void BanUser(GetCommunityMembersResponse.MemberData profile)
+        {
+            BanUserAsync().Forget();
+
+            async UniTaskVoid BanUserAsync()
+            {
+                try
+                {
+                    await communitiesDataProvider.BanUserFromCommunity(profile.id, lastCommunityId);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
+                }
+            }
+        }
+
+        private void KickUser(GetCommunityMembersResponse.MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void BanUser(Profile profile)
+        private void AddModerator(GetCommunityMembersResponse.MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void KickUser(Profile profile)
+        private void RemoveModerator(GetCommunityMembersResponse.MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void AddModerator(Profile profile)
+        private void CallUser(GetCommunityMembersResponse.MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void RemoveModerator(Profile profile)
+        private void OpenChatWithUser(GetCommunityMembersResponse.MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void CallUser(Profile profile)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void OpenChatWithUser(Profile profile)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void OpenProfilePassport(Profile profile)
+        private void OpenProfilePassport(GetCommunityMembersResponse.MemberData profile)
         {
             throw new NotImplementedException();
         }
@@ -191,9 +205,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             // Simulate fetching data
             for (int i = 0; i < 15; i++)
-                members.Add(Profile.NewRandomProfile(null));
-            await UniTask.Delay(1000, cancellationToken: ct);
-            totalToFetch = 1; //TODO: From the service response
+                members.Add(GetCommunityMembersResponse.MemberData.RandomMember());
+
+            totalToFetch = members.Count; //TODO: From the service response
         }
 
         public void ShowMembersListAsync(string communityId, CancellationToken cancellationToken)
@@ -207,29 +221,38 @@ namespace DCL.Communities.CommunitiesCard.Members
             FetchNewDataAsync().Forget();
         }
 
-        private void MainButtonClicked(Profile profile)
+        private void MainButtonClicked(GetCommunityMembersResponse.MemberData profile)
         {
             // Handle main button click
-            Debug.Log("MainButtonClicked: " + profile.UserId);
+            Debug.Log("MainButtonClicked: " + profile.id);
         }
 
-        private void ContextMenuButtonClicked(Profile profile, Vector2 buttonPosition, MemberListSingleItemView elementView)
+        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus status)
+        {
+            return status switch
+            {
+                FriendshipStatus.friend => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                FriendshipStatus.request_received => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
+                FriendshipStatus.request_sent => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
+                FriendshipStatus.blocked => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
+                FriendshipStatus.blocked_by => UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
+                FriendshipStatus.none => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+            };
+        }
+
+        private void ContextMenuButtonClicked(GetCommunityMembersResponse.MemberData profile, Vector2 buttonPosition, MemberListSingleItemView elementView)
         {
             lastClickedProfileCtx = profile;
-            userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
+            userProfileContextMenuControlSettings.SetInitialData(profile.name, profile.id, profile.hasClaimedName,
                 profile.UserNameColor,
-                UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT, //TODO: friendship status from the profile
-                profile.Avatar.FaceSnapshotUrl);
+                ConvertFriendshipStatus(profile.friendshipStatus),
+                profile.profilePicture);
             elementView.CanUnHover = false;
 
-            //TODO: set value depending on current role
-            // removeModeratorContextMenuElement.Enabled = ;
-
-            //TODO: set value depending on current role
-            // addModeratorContextMenuElement.Enabled = ;
-
-            //TODO: set value depending on current friendship status
-            // blockUserContextMenuElement.Enabled = ;
+            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator;
+            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member;
+            blockUserContextMenuElement.Enabled = profile.friendshipStatus != FriendshipStatus.blocked && profile.friendshipStatus != FriendshipStatus.blocked_by;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
@@ -237,10 +260,10 @@ namespace DCL.Communities.CommunitiesCard.Members
                       .Forget();
         }
 
-        private void FriendButtonClicked(Profile profile, FriendshipStatus status)
+        private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile, FriendshipStatus status)
         {
             // Handle friend button click
-            Debug.Log("FriendButtonClicked: " + profile.UserId);
+            Debug.Log("FriendButtonClicked: " + profile.id);
         }
     }
 }

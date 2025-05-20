@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -37,13 +38,16 @@ namespace DCL.Communities.CommunitiesCard
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ViewDependencies viewDependencies,
-            ObjectProxy<IFriendsService> friendServiceProxy) : base(viewFactory)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ICommunitiesDataProvider communitiesDataProvider)
+            : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public override void Dispose()
@@ -68,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
 
-            membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies, mvcManager, friendServiceProxy);
+            membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies, mvcManager, friendServiceProxy, communitiesDataProvider);
         }
 
         protected override void OnViewShow()

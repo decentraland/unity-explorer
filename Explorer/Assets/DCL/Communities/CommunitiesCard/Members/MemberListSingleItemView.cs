@@ -1,8 +1,7 @@
-using DCL.Friends;
-using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using MVC;
 using System;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -36,11 +35,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public Button UnblockFriendButton { get; private set; }
 
         private bool canUnHover = true;
-        public Profile UserProfile { get; protected set; }
+        public GetCommunityMembersResponse.MemberData UserProfile { get; protected set; }
 
-        public event Action<Profile>? MainButtonClicked;
-        public event Action<Profile, Vector2, MemberListSingleItemView>? ContextMenuButtonClicked;
-        public event Action<Profile, FriendshipStatus>? FriendButtonClicked;
+        public event Action<GetCommunityMembersResponse.MemberData>? MainButtonClicked;
+        public event Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListSingleItemView>? ContextMenuButtonClicked;
+        public event Action<GetCommunityMembersResponse.MemberData, FriendshipStatus>? FriendButtonClicked;
 
         public void RemoveAllListeners()
         {
@@ -80,30 +79,29 @@ namespace DCL.Communities.CommunitiesCard.Members
             Background.color = NormalColor;
         }
 
-        public void Configure(Profile memberProfile)
+        public void Configure(GetCommunityMembersResponse.MemberData memberProfile)
         {
             UnHover();
             UserProfile = memberProfile;
 
             Color userColor = memberProfile.UserNameColor;
 
-            UserName.text = memberProfile.Name;
+            UserName.text = memberProfile.name;
             UserName.color = userColor;
-            UserNameTag.text = $"#{memberProfile.UserId[^4..]}";
-            UserNameTag.gameObject.SetActive(!memberProfile.HasClaimedName);
-            VerifiedIcon.SetActive(memberProfile.HasClaimedName);
-            MutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, 32);
-            // MutualFriendsText.transform.parent.gameObject.SetActive(friendShipStatus != FriendshipStatus.FRIEND);
-            // RoleText.text = memberProfile.Role.ToString();
-            // RoleText.transform.parent.gameObject.SetActive(memberProfile.Role == Roles.Owner || memberProfile.Role == Roles.Moderator);
-            ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.Avatar.FaceSnapshotUrl.ToString(), memberProfile.UserId);
+            UserNameTag.text = $"#{memberProfile.id[^4..]}";
+            UserNameTag.gameObject.SetActive(!memberProfile.hasClaimedName);
+            VerifiedIcon.SetActive(memberProfile.hasClaimedName);
+            MutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
+            MutualFriendsText.transform.parent.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
+            RoleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
+            RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.profilePicture, memberProfile.id);
 
-            //TODO (Lorenzo): the friendship status should be passed from the controller
-            // AddFriendButton.gameObject.SetActive(friendShipStatus == FriendshipStatus.NONE);
-            // AcceptFriendButton.gameObject.SetActive(friendShipStatus == FriendshipStatus.REQUEST_RECEIVED);
-            // RemoveFriendButton.gameObject.SetActive(friendShipStatus == FriendshipStatus.FRIEND);
-            // CancelFriendButton.gameObject.SetActive(friendShipStatus == FriendshipStatus.REQUEST_SENT);
-            // UnblockFriendButton.gameObject.SetActive(friendShipStatus == FriendshipStatus.BLOCKED);
+            AddFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.none);
+            AcceptFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_received);
+            RemoveFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.friend);
+            CancelFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_sent);
+            UnblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked);
         }
 
         private void UnHover()

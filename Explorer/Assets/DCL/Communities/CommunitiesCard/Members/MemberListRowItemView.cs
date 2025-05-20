@@ -1,5 +1,3 @@
-using DCL.Friends;
-using DCL.Profiles;
 using MVC;
 using System;
 using UnityEngine;
@@ -11,14 +9,14 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public MemberListSingleItemView LeftItem { get; private set; }
         [field: SerializeField] public MemberListSingleItemView RightItem { get; private set; }
 
-        public void ConfigureLeft(Profile memberProfile, ViewDependencies viewDependencies)
+        public void ConfigureLeft(GetCommunityMembersResponse.MemberData memberProfile, ViewDependencies viewDependencies)
         {
             LeftItem.gameObject.SetActive(true);
             LeftItem.InjectDependencies(viewDependencies);
             LeftItem.Configure(memberProfile);
         }
 
-        public void ConfigureRight(Profile memberProfile, ViewDependencies viewDependencies)
+        public void ConfigureRight(GetCommunityMembersResponse.MemberData memberProfile, ViewDependencies viewDependencies)
         {
             RightItem.gameObject.SetActive(true);
             RightItem.InjectDependencies(viewDependencies);
@@ -31,9 +29,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             RightItem.gameObject.SetActive(false);
         }
 
-        public void SubscribeToInteractions(Action<Profile> mainButton,
-            Action<Profile, Vector2, MemberListSingleItemView> contextMenuButton,
-            Action<Profile, FriendshipStatus> friendButton)
+        public void SubscribeToInteractions(Action<GetCommunityMembersResponse.MemberData> mainButton,
+            Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListSingleItemView> contextMenuButton,
+            Action<GetCommunityMembersResponse.MemberData, FriendshipStatus> friendButton)
         {
             LeftItem.RemoveAllListeners();
             RightItem.RemoveAllListeners();
