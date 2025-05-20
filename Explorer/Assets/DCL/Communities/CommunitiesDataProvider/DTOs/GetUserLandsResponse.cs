@@ -1,9 +1,13 @@
 
+using System;
+
 namespace DCL.Communities
 {
+    [Serializable]
     public class GetUserLandsResponse
     {
-        public class LandCoords
+        [Serializable]
+        public struct LandCoords
         {
             public int x;
             public int y;

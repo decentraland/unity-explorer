@@ -1,16 +1,21 @@
 
+using System;
+
 namespace DCL.Communities
 {
+    [Serializable]
     public class GetUserCommunitiesResponse
     {
-        public class FriendInCommunity
+        [Serializable]
+        public struct FriendInCommunity
         {
             public string id;
             public string name;
             public string profilePictureUrl;
         }
 
-        public class CommunityData
+        [Serializable]
+        public struct CommunityData
         {
             public string id;
             public string[] thumbnails;

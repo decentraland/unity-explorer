@@ -1,9 +1,13 @@
 
+using System;
+
 namespace DCL.Communities
 {
+    [Serializable]
     public class GetOnlineCommunityMembersResponse
     {
-        public class MemberData
+        [Serializable]
+        public struct MemberData
         {
             public string id;
             public CommunityMemberRole role;
