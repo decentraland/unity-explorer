@@ -11,7 +11,8 @@ namespace DCL.Audio
         Chat_Volume,
         Music_Volume,
         UI_Volume,
-        World_Volume
+        World_Volume,
+        VoiceChat_Volume
     }
 
     public class AudioMixerVolumesController
