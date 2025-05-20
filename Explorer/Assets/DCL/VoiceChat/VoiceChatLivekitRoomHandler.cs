@@ -63,7 +63,7 @@ namespace DCL.VoiceChat
 
         private void PublishTrack(CancellationToken ct)
         {
-            microphoneTrack = voiceChatRoom.CreateAudioTrack("CAPTAIN LE TRACK", new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter));
+            microphoneTrack = voiceChatRoom.CreateAudioTrack("New Track", new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter));
 
             var options = new TrackPublishOptions
             {
