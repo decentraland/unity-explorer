@@ -1,10 +1,14 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
-using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -18,6 +22,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool Loop { get; }
         public BodyShape BodyShape { get; }
         public LoadTimeout Timeout { get; }
+        public CancellationTokenSource CancellationTokenSource { get; }
 
         public GetSceneEmoteFromLocalSceneIntention(
             ISceneData sceneData,
@@ -42,6 +47,13 @@ namespace DCL.AvatarRendering.Emotes
         public readonly URN NewSceneEmoteURN() =>
             $"{SCENE_EMOTE_PREFIX}:{SceneData.SceneShortInfo.Name}-{EmoteHash}-{Loop.ToString().ToLower()}";
 
-        public CancellationTokenSource CancellationTokenSource { get; }
+        public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
+        {
+            var promise = GltfPromise.Create(world,
+                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: false),
+                partitionComponent);
+
+            world.Create(promise, emote, this.BodyShape);
+        }
     }
 }

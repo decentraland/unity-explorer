@@ -8,15 +8,9 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.GLTF;
 using System;
-using UnityEngine;
-using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -69,12 +63,12 @@ namespace DCL.AvatarRendering.Emotes.Load
             ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent);
         }
 
-        private void ProcessSceneEmoteIntention<T>(
+        private void ProcessSceneEmoteIntention<TIntention>(
             float dt,
             Entity entity,
-            ref T intention,
+            ref TIntention intention,
             ref IPartitionComponent partitionComponent
-        ) where T : struct, IEmoteAssetIntention
+        ) where TIntention : struct, IEmoteAssetIntention
         {
             URN urn = intention.NewSceneEmoteURN();
 
@@ -128,7 +122,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (emote.IsLoading) return;
 
-            if (CreatePromiseIfRequired(ref emote, intention, partitionComponent)) return;
+            if (CreatePromiseIfRequired(ref emote, ref intention, partitionComponent)) return;
 
             if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
             {
@@ -143,32 +137,15 @@ namespace DCL.AvatarRendering.Emotes.Load
             World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
-        private bool CreatePromiseIfRequired<T>(ref IEmote emote, in T intention, IPartitionComponent partitionComponent)
-            where T : struct, IEmoteAssetIntention
+        private bool CreatePromiseIfRequired<TIntention>(
+            ref IEmote emote,
+            ref TIntention intention,
+            IPartitionComponent partitionComponent)
+            where TIntention : struct, IEmoteAssetIntention
         {
             if (emote.AssetResults[intention.BodyShape] != null) return false;
 
-            if (intention is GetSceneEmoteFromRealmIntention realmIntention)
-            {
-                var promise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(typeof(GameObject),
-                        realmIntention.EmoteHash + PlatformUtils.GetCurrentPlatform(),
-                        permittedSources: realmIntention.PermittedSources,
-                        customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        cancellationTokenSource: realmIntention.CancellationTokenSource,
-                        manifest: realmIntention.AssetBundleManifest),
-                    partitionComponent);
-
-                World.Create(promise, emote, intention.BodyShape);
-            }
-            else if (intention is GetSceneEmoteFromLocalSceneIntention localIntention)
-            {
-                var promise = GltfPromise.Create(World,
-                    GetGLTFIntention.Create(localIntention.EmotePath, localIntention.EmoteHash, mecanimAnimationClips: false),
-                    partitionComponent);
-
-                World.Create(promise, emote, intention.BodyShape);
-            }
+            intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, emote);
 
             emote.UpdateLoadingStatus(true);
             return true;

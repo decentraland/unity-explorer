@@ -132,7 +132,7 @@ namespace Global.Dynamic
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
-            globalSceneStateProvider.State = SceneState.Running;
+            globalSceneStateProvider.State.Set(SceneState.Running);
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 

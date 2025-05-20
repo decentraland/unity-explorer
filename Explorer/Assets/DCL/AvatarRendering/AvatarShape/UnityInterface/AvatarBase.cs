@@ -112,9 +112,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public Transform GetTransform() =>
             transform;
 
-        public Animator GetAnimator() =>
-            AvatarAnimator;
-
         public void SetAnimatorFloat(int hash, float value)
         {
             if (AvatarAnimator.GetFloat(hash).Equals(value)) return;
@@ -178,7 +175,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     {
         Transform GetTransform();
 
-        Animator GetAnimator();
+        Animator AvatarAnimator { get; }
 
         void SetAnimatorFloat(int hash, float value);
 

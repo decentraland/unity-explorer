@@ -1,10 +1,17 @@
+using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+using UnityEngine;
+using Utility;
+
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -48,5 +55,19 @@ namespace DCL.AvatarRendering.Emotes
 
         public readonly URN NewSceneEmoteURN() =>
             $"{SCENE_EMOTE_PREFIX}:{SceneId}-{EmoteHash}-{Loop.ToString().ToLower()}";
+
+        public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
+        {
+            var promise = AssetBundlePromise.Create(world,
+                GetAssetBundleIntention.FromHash(typeof(GameObject),
+                    this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    permittedSources: this.PermittedSources,
+                    customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
+                    cancellationTokenSource: this.CancellationTokenSource,
+                    manifest: this.AssetBundleManifest),
+                partitionComponent);
+
+            world.Create(promise, emote, this.BodyShape);
+        }
     }
 }

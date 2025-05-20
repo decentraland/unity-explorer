@@ -129,7 +129,7 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteStorage, builderContentURL);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
