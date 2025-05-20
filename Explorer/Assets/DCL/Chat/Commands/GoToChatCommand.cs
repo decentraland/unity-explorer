@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System.Threading;
+using DCL.Chat.History;
 using UnityEngine;
 using Utility;
 using Random = UnityEngine.Random;
@@ -38,7 +39,7 @@ namespace DCL.Chat.Commands
             parameters.Length == 1 || // /goto <realm> OR /goto <x,y | random | crowd>
             (parameters.Length == 2 && ChatParamUtils.IsPositionParameter(parameters[1], false)); // /goto <realm> <x,y>
 
-        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
             if (parameters.Length == 1)
             {

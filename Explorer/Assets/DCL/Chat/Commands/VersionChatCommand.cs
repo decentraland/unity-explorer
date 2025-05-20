@@ -1,6 +1,8 @@
-﻿using System.Threading;
+﻿#nullable enable
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using Global.Versioning;
 
 namespace Global.Dynamic.ChatCommands
@@ -20,7 +22,7 @@ namespace Global.Dynamic.ChatCommands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 0;
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+        public UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct) =>
             UniTask.FromResult(dclVersion.Version);
     }
 }
