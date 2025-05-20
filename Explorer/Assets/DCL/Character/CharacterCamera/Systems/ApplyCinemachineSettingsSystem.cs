@@ -7,7 +7,6 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Settings.Settings;
 using ECS.Abstract;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.Character.CharacterCamera.Systems
@@ -15,25 +14,18 @@ namespace DCL.Character.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ApplyCinemachineSettingsSystem : BaseUnityLoopSystem
     {
-        private const string PPREF_SENS = "CameraSensitivity";
-
-        private readonly ElementBinding<float> sensitivitySlider;
         private readonly ElementBinding<float> noiseSlider;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
 
-        private float currentSens;
         private bool cameraNoise;
 
         public ApplyCinemachineSettingsSystem(World world, IDebugContainerBuilder debugBuilder, ControlsSettingsAsset controlsSettingsAsset) : base(world)
         {
-            currentSens = PlayerPrefs.GetFloat(PPREF_SENS, 10);
-            sensitivitySlider = new ElementBinding<float>(currentSens);
             noiseSlider = new ElementBinding<float>(0.5f);
             this.controlsSettingsAsset = controlsSettingsAsset;
 
             debugBuilder.TryAddWidget("Camera")
-                       ?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
-                        .AddToggleField("Enable Noise", OnNoiseChange, false)
+                        ?.AddToggleField("Enable Noise", OnNoiseChange, false)
                         .AddFloatSliderField("Noise Value", noiseSlider, 0, 20);
         }
 
@@ -44,22 +36,14 @@ namespace DCL.Character.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
-            if (!Mathf.Approximately(sensitivitySlider.Value, currentSens))
-            {
-                currentSens = sensitivitySlider.Value;
-                PlayerPrefs.SetFloat(PPREF_SENS, currentSens);
-            }
-
             UpdateCameraSettingsQuery(World);
         }
 
         [Query]
         private void UpdateCameraSettings(ref ICinemachinePreset cinemachinePreset)
         {
-            float maxSpeed = currentSens / 100f; // for UX reasons we left the sensitivity value to be shown as 0 to 100 so we divide back
-
-            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = maxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
-            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = maxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
+            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = controlsSettingsAsset.MaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
+            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = controlsSettingsAsset.MaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
         }
     }

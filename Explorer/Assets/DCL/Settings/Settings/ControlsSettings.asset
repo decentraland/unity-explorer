@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   VerticalMouseSensitivity: 1
   HorizontalMouseSensitivity: 1
+  MaxSpeed: 0.1
   CameraMovementPOVSettings: {fileID: 11400000, guid: 321099f170007b140a66b64b762642f0, type: 2}
   DroneCameraMovementPOVSettings: {fileID: 11400000, guid: cade78c355c174bb69e3e0166f5175ba, type: 2}
