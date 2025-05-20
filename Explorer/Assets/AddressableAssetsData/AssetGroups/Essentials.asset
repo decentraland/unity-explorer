@@ -135,11 +135,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4177f048c26079f4296ecc8377c8d7fb
-    m_Address: Assets/DCL/Landscape/GPUIHelpers/GPUIAsset.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4362b43091b0d462db2641f8c866e9b9
     m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
     m_ReadOnly: 0

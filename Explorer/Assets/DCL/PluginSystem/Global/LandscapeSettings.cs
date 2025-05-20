@@ -14,9 +14,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public LandscapeDataRef landscapeData;
         [field: SerializeField] public ParcelsRef parsedParcels;
 
-        [field: Header("GPUI PRO Settings")] [field: Space]
-        [field: SerializeField] public GPUIAssets.GPUIAssetsRef gpuiAssets;
-
         [Serializable]
         public class LandscapeDataRef : AssetReferenceT<LandscapeData>
         {
