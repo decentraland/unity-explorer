@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Chat
   m_GUID: 8b013415c163949639034d60860ef87f
   m_SerializeEntries:
+  - m_GUID: 13e534245f7a87d498ae850d58b9115f
+    m_Address: VoiceChatAudioSource.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22
     m_Address: EmojiPanelConfig
     m_ReadOnly: 0
@@ -67,6 +72,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f74fa2421d947f4439553458ae5fbd93
     m_Address: Assets/DCL/UI/Assets/ChatEntryMenuPopupView.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa9a67059d8a204408ce435cc8827612
+    m_Address: MicrophoneAudioSource.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

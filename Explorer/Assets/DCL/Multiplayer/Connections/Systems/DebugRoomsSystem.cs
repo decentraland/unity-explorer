@@ -34,6 +34,7 @@ namespace DCL.Multiplayer.Connections.Systems
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IActivatableConnectiveRoom chatRoom,
+            IActivatableConnectiveRoom voiceChatRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemoteMetadata remoteMetadata,
             IDebugContainerBuilder debugBuilder,
@@ -75,7 +76,7 @@ namespace DCL.Multiplayer.Connections.Systems
 
             IRoomDisplay voiceChatRoomDisplay = DebugWidgetRoomDisplay.Create(
                 IDebugContainerBuilder.Categories.ROOM_VOICE_CHAT,
-                chatRoom,
+                voiceChatRoom,
                 debugBuilder
             );
 

@@ -737,6 +737,18 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <MicrophoneAudioFilter>k__BackingField:
+          m_AssetGUID: fa9a67059d8a204408ce435cc8827612
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <CombinedAudioSource>k__BackingField:
+          m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6697045322133929986
       type: {class: EmotePlugin/EmoteSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

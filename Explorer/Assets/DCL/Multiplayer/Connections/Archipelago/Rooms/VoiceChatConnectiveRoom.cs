@@ -114,8 +114,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
+
             cts = cts.SafeRestart();
             attemptToConnectState.Set(AttemptToConnectState.None);
+
+            if (connectionString == string.Empty)
+            {
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - No connection string specified");
+                return false;
+            }
+
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
@@ -131,6 +139,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             roomState.Set(IConnectiveRoom.State.Stopping);
             await room.ResetRoomAsync(cts.Token);
             roomState.Set(IConnectiveRoom.State.Stopped);
+            connectionString = string.Empty;
         }
 
         private async UniTaskVoid RunAsync(CancellationToken ct)
