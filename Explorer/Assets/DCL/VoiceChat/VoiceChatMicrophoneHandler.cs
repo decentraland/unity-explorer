@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatHandler : IDisposable
+    public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
@@ -19,7 +19,7 @@ namespace DCL.VoiceChat
         private float buttonPressStartTime;
         private bool isPushToTalk;
 
-        public VoiceChatHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource)
+        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;

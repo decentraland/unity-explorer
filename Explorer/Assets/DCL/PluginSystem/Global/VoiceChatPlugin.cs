@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.Global
 
             ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct: ct);
             voiceChatSettingsProxy.SetObject(voiceChatSettings.Value);
-            var voiceChatHandler = new VoiceChatHandler(dclInput, voiceChatSettings.Value, microphoneAudioSource);
+            var voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings.Value, microphoneAudioSource);
 
             ProvidedInstance<VoiceChatCombinedAudioSource> audioSource = await assetsProvisioner.ProvideInstanceAsync(settings.CombinedAudioSource, ct: ct);
 
