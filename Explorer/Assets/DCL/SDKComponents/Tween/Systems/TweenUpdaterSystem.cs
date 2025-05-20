@@ -221,7 +221,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (tweenModel.HasStartSyncedTimestamp)
             {
-                startTime += (ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp) * MS_TO_SEC;
+                startTime += (ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp) * MS_TO_SEC; 
                 startTime = Mathf.Clamp(startTime, 0, durationInSeconds);
             }
 

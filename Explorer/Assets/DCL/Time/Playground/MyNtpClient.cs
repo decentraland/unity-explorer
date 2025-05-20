@@ -19,12 +19,6 @@ namespace DCL.SDKComponents.Tween.Playground
         public DateTime Timestamp;
     }
 
-    public interface INtpTimeService
-    {
-        public bool IsSynced { get; }
-        public ulong ServerTimeMs { get; }
-    };
-
     public class MyNtpClient : MonoBehaviour, INtpTimeService
     {
         private const double SMEAR_THRESHOLD_MS = 200;  // >200 ms = highly likely leap-smear

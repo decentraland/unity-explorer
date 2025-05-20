@@ -16,10 +16,10 @@ namespace DCL.PluginSystem.World
         private readonly TweenerPool tweenerPool;
         private readonly INtpTimeService ntpClient;
 
-        public TweenPlugin()
+        public TweenPlugin(INtpTimeService ntpClient)
         {
+            this.ntpClient = ntpClient;
             tweenerPool = new TweenerPool();
-            ntpClient = new GameObject("NtpClient").AddComponent<MyNtpClient>();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)

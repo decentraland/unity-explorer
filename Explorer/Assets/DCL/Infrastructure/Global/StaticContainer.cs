@@ -45,6 +45,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
+using DCL.SDKComponents.Tween.Playground;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -91,6 +92,8 @@ namespace Global
         public ISystemMemoryCap MemoryCap { get; private set; }
 
         public SceneLoadingLimit SceneLoadingLimit { get; private set; }
+
+        public INtpTimeService NtpTimeService { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -249,6 +252,7 @@ namespace Global
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
+            container.NtpTimeService = new GameObject("NtpClient").AddComponent<MyNtpClient>();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -270,7 +274,7 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy, scenesUIRoot),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
-                new TweenPlugin(),
+                new TweenPlugin(container.NtpTimeService),
                 new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy, container.FeatureFlagsCache),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),

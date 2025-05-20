@@ -10,6 +10,7 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Platforms;
+using DCL.SDKComponents.Tween.Playground;
 using ECS;
 using Global.AppArgs;
 using System.Threading;
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly INtpTimeService ntpTimeService;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
@@ -39,7 +41,8 @@ namespace DCL.PluginSystem.Global
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs,
-            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, FeatureFlagsCache featureFlagsCache)
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, FeatureFlagsCache featureFlagsCache
+            , INtpTimeService ntpTimeService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -52,6 +55,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.remoteMetadata = remoteMetadata;
             this.featureFlagsCache = featureFlagsCache;
+            this.ntpTimeService = ntpTimeService;
         }
 
         public void Dispose()
@@ -85,7 +89,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, debugSettings.Value);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, debugSettings.Value, ntpTimeService);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings, settings.Value);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
