@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
+using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -76,7 +77,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
             SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
-
         /// <summary>
         ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
         /// </summary>
@@ -89,7 +89,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                 assigned = NullRoom.INSTANCE;
             }
         }
-
 
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
         {
@@ -136,7 +135,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
-
                                                 };
 
             // TODO check the order of these messages
@@ -182,7 +180,6 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
-
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
@@ -261,5 +258,8 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public Task DisconnectAsync(CancellationToken token) =>
             assigned.EnsureAssigned().DisconnectAsync(token);
+
+        public ITrack CreateAudioTrack(string name, RtcAudioSource source) =>
+            assigned.CreateAudioTrack(name, source);
     }
 }

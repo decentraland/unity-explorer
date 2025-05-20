@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Logs;
+using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -235,6 +236,15 @@ namespace DCL.Multiplayer.Connections.Rooms
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} disconnect end");
+        }
+
+        public ITrack CreateAudioTrack(string name, RtcAudioSource source)
+        {
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"{PREFIX} create audio track");
+
+            return origin.CreateAudioTrack(name, source);
         }
     }
 }

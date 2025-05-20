@@ -9,6 +9,7 @@ namespace DCL.VoiceChat
     {
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
+        private readonly AudioSource audioSource;
         private readonly float[] waveData;
 
         public AudioClip MicrophoneAudioClip;
@@ -16,10 +17,11 @@ namespace DCL.VoiceChat
         private bool isTalkingEnabled;
         private string microphoneName;
 
-        public VoiceChatHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings)
+        public VoiceChatHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
+            this.audioSource = audioSource;
             waveData = new float[voiceChatSettings.SampleWindow];
             dclInput.VoiceChat.Talk.performed += OnPressed;
         }
@@ -41,6 +43,7 @@ namespace DCL.VoiceChat
             else
             {
                 MicrophoneAudioClip = Microphone.Start(microphoneName, true, 20, AudioSettings.outputSampleRate);
+                audioSource.clip = MicrophoneAudioClip;
             }
 
             isTalkingEnabled = !isTalkingEnabled;
