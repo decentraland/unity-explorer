@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsHidden = false;
             PointerEventTriggered = null;
 
-            RelationData.parent = EntityReference.Null;
+            RelationData.parent = Entity.Null;
             RelationData.rightOf = 0;
             IsRoot = true;
         }
@@ -53,7 +53,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsRoot = false;
             PointerEventTriggered = null;
 
-            RelationData.parent = EntityReference.Null;
+            RelationData.parent = Entity.Null;
             RelationData.rightOf = rightOf;
         }
 
@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             int i = 0;
             for (UITransformRelationLinkedData.Node node = RelationData.head; node != null; node = node.Next)
             {
-                //EntityReference child = node.EntityId;
+                //Entity child = node.EntityId;
                 var childEntityId = node.EntityId;
 
                 if (entitiesMap.TryGetValue(childEntityId, out var child))

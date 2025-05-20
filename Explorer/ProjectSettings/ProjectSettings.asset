@@ -3,7 +3,7 @@
 --- !u!129 &1
 PlayerSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 26
+  serializedVersion: 28
   productGUID: cf649117e962c5040b6f72b4f7dad22b
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
@@ -899,6 +899,8 @@ PlayerSettings:
     Standalone: 1
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration:
+    Standalone: 1
+  il2cppStacktraceInformation:
     Standalone: 1
   managedStrippingLevel:
     EmbeddedLinux: 1

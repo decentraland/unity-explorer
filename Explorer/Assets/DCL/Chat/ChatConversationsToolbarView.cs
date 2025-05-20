@@ -71,6 +71,8 @@ namespace DCL.Chat
         /// <param name="icon">An icon to show instead of a profile picture.</param>
         public void AddConversation(ChatChannel channel, Sprite icon = null)
         {
+            if (items.TryGetValue(channel.Id, out var item)) return;
+
             ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;

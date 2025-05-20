@@ -347,6 +347,7 @@ namespace DCL.Chat
             IsEmojisEnabled = false;
             characterCounter.gameObject.SetActive(false);
             InputBoxFocusChanged?.Invoke(false);
+            inputField.text = string.Empty;
         }
 
         private void OnInputSelected(string _)

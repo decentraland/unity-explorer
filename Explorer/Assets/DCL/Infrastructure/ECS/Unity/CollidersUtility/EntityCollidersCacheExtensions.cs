@@ -12,7 +12,7 @@ namespace DCL.Interaction.Utility
         /// <summary>
         ///     Asset Must be ready at the moment of calling
         /// </summary>
-        public static void Associate(this IEntityCollidersSceneCache cache, in GltfContainerComponent gltfContainerComponent, EntityReference entityReference, CRDTEntity sdkEntity)
+        public static void Associate(this IEntityCollidersSceneCache cache, in GltfContainerComponent gltfContainerComponent, Entity entityReference, CRDTEntity sdkEntity)
         {
             GltfContainerAsset asset = gltfContainerComponent.Promise.Result.Value.Asset;
 

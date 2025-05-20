@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.System;
 using DCL.Utilities.Extensions;
 using System;
@@ -9,21 +10,21 @@ namespace DCL.DemoWorlds
 {
     public class DemoWorld : IDemoWorld
     {
-        private readonly Func<Arch.Core.World> worldConstructor;
-        private readonly IReadOnlyList<Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>> systemConstructors;
-        private readonly Action<Arch.Core.World> setUp;
+        private readonly Func<World> worldConstructor;
+        private readonly IReadOnlyList<Func<World, BaseSystem<World, float>>> systemConstructors;
+        private readonly Action<World> setUp;
 
-        private IReadOnlyList<BaseSystem<Arch.Core.World, float>> systems = new[] { new FakeSystem() };
+        private IReadOnlyList<BaseSystem<World, float>> systems = new[] { new FakeSystem() };
 
-        public DemoWorld(Action<Arch.Core.World> setUp, params Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>[] systemConstructors) : this(systemConstructors.AsReadOnly(), setUp) { }
+        public DemoWorld(Action<World> setUp, params Func<World, BaseSystem<World, float>>[] systemConstructors) : this(systemConstructors.AsReadOnly(), setUp) { }
 
-        public DemoWorld(IReadOnlyList<Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>> systemConstructors, Action<Arch.Core.World> setUp) : this(Arch.Core.World.Create, systemConstructors, setUp) { }
+        public DemoWorld(IReadOnlyList<Func<World, BaseSystem<World, float>>> systemConstructors, Action<World> setUp) : this(() => World.Create(), systemConstructors, setUp) { }
 
-        public DemoWorld(Arch.Core.World world, Action<Arch.Core.World> setUp, params Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>[] systemConstructors) : this(() => world, systemConstructors.AsReadOnly(), setUp) { }
+        public DemoWorld(World world, Action<World> setUp, params Func<World, BaseSystem<World, float>>[] systemConstructors) : this(() => world, systemConstructors.AsReadOnly(), setUp) { }
 
-        public DemoWorld(Arch.Core.World world, IReadOnlyList<Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>> systemConstructors, Action<Arch.Core.World> setUp) : this(() => world, systemConstructors, setUp) { }
+        public DemoWorld(World world, IReadOnlyList<Func<World, BaseSystem<World, float>>> systemConstructors, Action<World> setUp) : this(() => world, systemConstructors, setUp) { }
 
-        public DemoWorld(Func<Arch.Core.World> worldConstructor, IReadOnlyList<Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>> systemConstructors, Action<Arch.Core.World> setUp)
+        public DemoWorld(Func<World> worldConstructor, IReadOnlyList<Func<World, BaseSystem<World, float>>> systemConstructors, Action<World> setUp)
         {
             this.worldConstructor = worldConstructor;
             this.systemConstructors = systemConstructors;
@@ -43,13 +44,13 @@ namespace DCL.DemoWorlds
                 system.Update(Time.deltaTime);
         }
 
-        private class FakeSystem : BaseSystem<Arch.Core.World, float>
+        private class FakeSystem : BaseSystem<World, float>
         {
-            public FakeSystem() : this(Arch.Core.World.Create())
+            public FakeSystem() : this(World.Create())
             {
             }
 
-            public FakeSystem(Arch.Core.World world) : base(world) { }
+            public FakeSystem(World world) : base(world) { }
 
             public override void Update(in float t)
             {
