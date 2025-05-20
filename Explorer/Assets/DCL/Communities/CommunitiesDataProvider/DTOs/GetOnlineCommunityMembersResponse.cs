@@ -10,6 +10,9 @@ namespace DCL.Communities
         public struct MemberData
         {
             public string id;
+            public string name;
+            public string profilePicture;
+            public FriendshipStatus friendshipStatus;
             public CommunityMemberRole role;
         }
 
