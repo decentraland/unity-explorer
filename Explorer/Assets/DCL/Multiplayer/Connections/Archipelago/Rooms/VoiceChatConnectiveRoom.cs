@@ -146,7 +146,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            SendConnectionStatusAsync(ct).Forget();
+            //Disabled for now
+            //SendConnectionStatusAsync(ct).Forget();
 
             while (ct.IsCancellationRequested == false)
             {
