@@ -6,7 +6,6 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.SDKComponents.Tween.Playground;
 using ECS.Abstract;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -25,17 +24,15 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
-        private readonly INtpTimeService ntpTimeService;
 
         private float sendRate;
 
         public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings,
-            MultiplayerDebugSettings debugSettings, INtpTimeService ntpTimeService) : base(world)
+            MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
-            this.ntpTimeService = ntpTimeService;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -66,7 +63,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
             }
 
-            float timeDiff = ntpTimeService.ServerTimeMs - playerMovement.LastSentMessage.timestamp;
+            float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
@@ -113,13 +110,13 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // We use this calculation instead of Character.velocity because, Character.velocity is 0 in some cases (moving platform)
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
-            float speed = dist / (ntpTimeService.ServerTimeMs - playerMovement.LastSentMessage.timestamp);
+            float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
-                timestamp = ntpTimeService.ServerTimeMs,
+                timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
                 velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,

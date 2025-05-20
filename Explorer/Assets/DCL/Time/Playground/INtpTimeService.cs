@@ -4,5 +4,5 @@
     {
         public bool IsSynced { get; }
         public ulong ServerTimeMs { get; }
-    };
+    }
 }
