@@ -1,4 +1,5 @@
 using DCL.UI;
+using SuperScrollView;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,13 +19,13 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: Header("Side Section")]
         [field: SerializeField] internal Button createCommunityButton { get; private set; }
         [field: SerializeField] internal Button viewAllMyCommunitiesButton { get; private set; }
-        [field: SerializeField] internal Transform myCommunitiesContainer { get; private set; }
+        [field: SerializeField] internal LoopListView2 myCommunitiesLoopList { get; private set; }
 
         [field: Header("Results Section")]
         [field: SerializeField] internal GameObject communityCardPrefab { get; private set; }
         [field: SerializeField] internal Button resultsBackButton { get; private set; }
         [field: SerializeField] internal TMP_Text resultsTitleText { get; private set; }
-        [field: SerializeField] internal Transform resultsContainer { get; private set; }
+        [field: SerializeField] internal LoopGridView resultLoopGrid { get; private set; }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>
             resultsBackButton.gameObject.SetActive(isVisible);
