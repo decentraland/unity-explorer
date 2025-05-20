@@ -69,6 +69,8 @@ namespace DCL.VoiceChat
             MicrophoneAudioClip = Microphone.Start(microphoneName, true, 20, AudioSettings.outputSampleRate);
             isTalkingEnabled = true;
             audioSource.clip = MicrophoneAudioClip;
+            audioSource.loop = true;
+            audioSource.Play();
         }
 
         private void DisableMicrophone()
@@ -76,6 +78,7 @@ namespace DCL.VoiceChat
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             Microphone.End(microphoneName);
             isTalkingEnabled = false;
+            audioSource.Stop();
         }
 
         private float GetLoudnessFromMicrophone()
@@ -98,6 +101,7 @@ namespace DCL.VoiceChat
         {
             dclInput.VoiceChat.Talk.performed -= OnPressed;
             dclInput.VoiceChat.Talk.canceled -= OnReleased;
+            DisableMicrophone();
         }
     }
 }
