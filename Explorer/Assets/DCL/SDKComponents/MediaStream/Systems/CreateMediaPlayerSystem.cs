@@ -125,12 +125,11 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
-            MultiMediaPlayer player = address.MediaKind switch
-                                      {
-                                          MediaAddress.Kind.URL => MultiMediaPlayer.NewAvProMediaPlayer(url, mediaPlayerPool),
-                                          MediaAddress.Kind.LIVEKIT => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(roomHub.StrictObject)),
-                                          _ => throw new ArgumentOutOfRangeException()
-                                      };
+            MultiMediaPlayer player = address.Match(
+                (room: roomHub.StrictObject, mediaPlayerPool),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.NewAvProMediaPlayer(address.Url, ctx.mediaPlayerPool),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(ctx.room))
+            );
 
             var component = new MediaPlayerComponent
             {

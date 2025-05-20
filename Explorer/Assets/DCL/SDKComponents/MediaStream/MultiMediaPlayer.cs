@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.MediaStream
 
     public readonly struct MultiMediaPlayer
     {
-        public static readonly MultiMediaPlayer EMPTY = new (MediaAddress.Kind.URL, null, null, null);
+        public static readonly MultiMediaPlayer EMPTY = new (MediaAddress.Kind.UrlMediaAddress, null, null, null);
 
         private readonly MediaAddress.Kind mediaKind;
 
@@ -26,54 +26,54 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsPlaying => mediaKind switch
                                  {
-                                     MediaAddress.Kind.URL => avProMediaPlayer!.Control!.IsPlaying(),
-                                     MediaAddress.Kind.LIVEKIT => livekitMediaPlayer!.State is PlayerState.PLAYING,
+                                     MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.Control!.IsPlaying(),
+                                     MediaAddress.Kind.LivekitAddress => livekitMediaPlayer!.State is PlayerState.PLAYING,
                                      _ => throw new ArgumentOutOfRangeException()
                                  };
 
         public float CurrentTime => mediaKind switch
                                     {
-                                        MediaAddress.Kind.URL => (float)avProMediaPlayer!.Control!.GetCurrentTime(),
-                                        MediaAddress.Kind.LIVEKIT => 0,
+                                        MediaAddress.Kind.UrlMediaAddress => (float)avProMediaPlayer!.Control!.GetCurrentTime(),
+                                        MediaAddress.Kind.LivekitAddress => 0,
                                         _ => throw new ArgumentOutOfRangeException()
                                     };
 
         public float Duration => mediaKind switch
                                  {
-                                     MediaAddress.Kind.URL => (float)avProMediaPlayer!.Info!.GetDuration(),
-                                     MediaAddress.Kind.LIVEKIT => 0,
+                                     MediaAddress.Kind.UrlMediaAddress => (float)avProMediaPlayer!.Info!.GetDuration(),
+                                     MediaAddress.Kind.LivekitAddress => 0,
                                      _ => throw new ArgumentOutOfRangeException()
                                  };
 
         public bool MediaOpened => mediaKind switch
                                    {
-                                       MediaAddress.Kind.URL => avProMediaPlayer!.MediaOpened,
-                                       MediaAddress.Kind.LIVEKIT => livekitMediaPlayer!.MediaOpened,
+                                       MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.MediaOpened,
+                                       MediaAddress.Kind.LivekitAddress => livekitMediaPlayer!.MediaOpened,
                                        _ => throw new ArgumentOutOfRangeException()
                                    };
         public bool IsFinished => mediaKind switch
                                   {
-                                      MediaAddress.Kind.URL => avProMediaPlayer!.Control!.IsFinished(),
-                                      MediaAddress.Kind.LIVEKIT => livekitMediaPlayer!.State is PlayerState.STOPPED,
+                                      MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.Control!.IsFinished(),
+                                      MediaAddress.Kind.LivekitAddress => livekitMediaPlayer!.State is PlayerState.STOPPED,
                                       _ => throw new ArgumentOutOfRangeException()
                                   };
         public bool IsPaused => mediaKind switch
                                 {
-                                    MediaAddress.Kind.URL => avProMediaPlayer!.Control!.IsPaused(),
-                                    MediaAddress.Kind.LIVEKIT => livekitMediaPlayer!.State is PlayerState.PAUSED,
+                                    MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.Control!.IsPaused(),
+                                    MediaAddress.Kind.LivekitAddress => livekitMediaPlayer!.State is PlayerState.PAUSED,
                                     _ => throw new ArgumentOutOfRangeException()
                                 };
         public bool IsSeeking => mediaKind switch
                                  {
-                                     MediaAddress.Kind.URL => avProMediaPlayer!.Control!.IsSeeking(),
-                                     MediaAddress.Kind.LIVEKIT => false,
+                                     MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.Control!.IsSeeking(),
+                                     MediaAddress.Kind.LivekitAddress => false,
                                      _ => throw new ArgumentOutOfRangeException()
                                  };
 
         public bool HasControl => mediaKind switch
                                   {
-                                      MediaAddress.Kind.URL => avProMediaPlayer!.Control != null,
-                                      MediaAddress.Kind.LIVEKIT => false,
+                                      MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.Control != null,
+                                      MediaAddress.Kind.LivekitAddress => false,
                                       _ => throw new ArgumentOutOfRangeException(),
                                   };
 
@@ -86,19 +86,21 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         public static MultiMediaPlayer NewAvProMediaPlayer(string url, MediaPlayerCustomPool objectPool) =>
-            new (MediaAddress.Kind.URL, objectPool.GetOrCreateReusableMediaPlayer(url), objectPool, null);
+            new (MediaAddress.Kind.UrlMediaAddress, objectPool.GetOrCreateReusableMediaPlayer(url), objectPool, null);
 
         public static MultiMediaPlayer NewLiveKitMediaPlayer(LivekitPlayer videoStream) =>
-            new (MediaAddress.Kind.LIVEKIT, null, null, videoStream);
+            new (MediaAddress.Kind.LivekitAddress, null, null, videoStream);
 
         public void Dispose(MediaAddress address)
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
-                    mediaPlayerCustomPool!.ReleaseMediaPlayer(address.Url, avProMediaPlayer!);
+                case MediaAddress.Kind.UrlMediaAddress:
+                    if (address.IsUrlMediaAddress(out var url))
+                        mediaPlayerCustomPool!.ReleaseMediaPlayer(url!.Value.Url, avProMediaPlayer!);
+
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.Dispose();
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -109,10 +111,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     avProMediaPlayer!.CloseCurrentStream();
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.CloseCurrentStream();
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -126,10 +128,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     avProMediaPlayer!.transform.position = position;
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.PlaceAudioAt(position);
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -139,8 +141,8 @@ namespace DCL.SDKComponents.MediaStream
         public Texture? LastTexture() =>
             mediaKind switch
             {
-                MediaAddress.Kind.URL => avProMediaPlayer!.TextureProducer!.GetTexture(),
-                MediaAddress.Kind.LIVEKIT => livekitMediaPlayer!.LastTexture(),
+                MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.TextureProducer!.GetTexture(),
+                MediaAddress.Kind.LivekitAddress => livekitMediaPlayer!.LastTexture(),
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -148,10 +150,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     avProMediaPlayer!.UpdateVolume(isCurrentScene, hasVolume, volume);
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     float target = hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME;
                     livekitMediaPlayer!.SetVolume(target);
                     break;
@@ -163,12 +165,12 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     var mediaPlayer = avProMediaPlayer!;
                     if (!mediaPlayer.MediaOpened) return;
                     mediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     // Livekit streaming doesn't need to adjust playback properties
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -179,10 +181,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     avProMediaPlayer!.UpdatePlayback(hasPlaying, isPlaying);
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.UpdatePlayback(hasPlaying, isPlaying);
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -193,40 +195,45 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     var mediaPlayer = avProMediaPlayer!;
                     if (!mediaPlayer.MediaOpened) return;
                     MediaPlayerExtensions.SetPlaybackPropertiesAsync(mediaPlayer.Control!, sdkVideoPlayer).Forget();
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     // Livekit streaming doesn't need to adjust playback properties
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
         }
 
-        public void OpenMedia(MediaAddress mediaAddress, bool isFromContentServer, bool autoPlay)
+        public bool OpenMedia(MediaAddress mediaAddress, bool isFromContentServer, bool autoPlay)
         {
-            switch (mediaAddress.MediaKind)
-            {
-                case MediaAddress.Kind.URL:
+            return mediaAddress.Match(
+                (player: this, isFromContentServer, autoPlay),
+                onUrlMediaAddress: static (ctx, address) =>
+                {
                     //The problem is that video files coming from our content server are flagged as application/octet-stream,
                     //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
                     //This adds a query param for video files from content server to force the correct content type
 
-                    //VideoPlayer may be reused
-                    if (avProMediaPlayer!.MediaOpened)
-                        return;
+                    if (ctx.player.avProMediaPlayer == null)
+                        return false;
 
-                    string url = mediaAddress.Url;
-                    avProMediaPlayer!.OpenMedia(MediaPathType.AbsolutePathOrURL, isFromContentServer ? string.Format("{0}?includeMimeType", url) : url, autoPlay);
-                    break;
-                case MediaAddress.Kind.LIVEKIT:
-                    var livekitAddress = mediaAddress.Livekit;
-                    livekitMediaPlayer!.OpenMedia(livekitAddress);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+                    //VideoPlayer may be reused
+                    if (ctx.player.avProMediaPlayer.MediaOpened)
+                        return true;
+
+                    string target = ctx.isFromContentServer ? string.Format("{0}?includeMimeType", address.Url) : address.Url;
+                    return ctx.player.avProMediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, target, ctx.autoPlay);
+                },
+                onLivekitAddress: static (ctx, address) =>
+                {
+                    if (ctx.player.livekitMediaPlayer == null) return false;
+                    ctx.player.livekitMediaPlayer!.OpenMedia(address);
+                    return true;
+                }
+            );
         }
 
         public bool TryGetAvProPlayer(out MediaPlayer? mediaPlayer)
@@ -245,8 +252,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL: avProMediaPlayer!.Control!.Seek(seekTime); break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.UrlMediaAddress:
+                    avProMediaPlayer!.Control!.Seek(seekTime);
+                    break;
+                case MediaAddress.Kind.LivekitAddress:
                     // Livekit streaming doesn't support seeking
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -257,10 +266,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     avProMediaPlayer!.Control!.Play();
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.Play();
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -271,10 +280,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     avProMediaPlayer!.Control!.Pause();
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.Pause();
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -284,8 +293,8 @@ namespace DCL.SDKComponents.MediaStream
         public ErrorCode GetLastError() =>
             mediaKind switch
             {
-                MediaAddress.Kind.URL => avProMediaPlayer!.Control!.GetLastError(),
-                MediaAddress.Kind.LIVEKIT => ErrorCode.None,
+                MediaAddress.Kind.UrlMediaAddress => avProMediaPlayer!.Control!.GetLastError(),
+                MediaAddress.Kind.LivekitAddress => ErrorCode.None,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -293,10 +302,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (mediaKind)
             {
-                case MediaAddress.Kind.URL:
+                case MediaAddress.Kind.UrlMediaAddress:
                     //ignore
                     break;
-                case MediaAddress.Kind.LIVEKIT:
+                case MediaAddress.Kind.LivekitAddress:
                     livekitMediaPlayer!.EnsurePlaying();
                     break;
                 default: throw new ArgumentOutOfRangeException();

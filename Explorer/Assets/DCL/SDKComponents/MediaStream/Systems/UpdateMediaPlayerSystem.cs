@@ -133,26 +133,17 @@ namespace DCL.SDKComponents.MediaStream
             if (sdkComponent.IsNotDirty())
                 return false;
 
-            var kind = component.MediaAddress.MediaKind;
-
-            if (kind != address.MediaKind)
-                return PerformRemove(World, ref component, sdkComponent, entity);
-
-            switch (kind)
+            if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
-                case MediaAddress.Kind.URL:
-                    if (component.MediaAddress != address
-                        && (!sceneData.TryGetMediaUrl(address.Url, out var localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
-                        return PerformRemove(World, ref component, sdkComponent, entity);
+                string selfUrl = urlMediaAddress!.Value.Url;
+                string otherUrl = other!.Value.Url;
 
-                    break;
-                case MediaAddress.Kind.LIVEKIT:
-                    if (component.MediaAddress != address)
-                        return PerformRemove(World, ref component, sdkComponent, entity);
-
-                    break;
-                default: throw new ArgumentOutOfRangeException();
+                if (selfUrl != otherUrl
+                    && (!sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) || selfUrl != localMediaUrl))
+                    return PerformRemove(World, ref component, sdkComponent, entity);
             }
+            else if (component.MediaAddress != address)
+                return PerformRemove(World, ref component, sdkComponent, entity);
 
             return false;
 
@@ -203,12 +194,15 @@ namespace DCL.SDKComponents.MediaStream
             if (!sdkComponent.IsDirty) return;
 
             bool ShouldUpdateSource(in MediaPlayerComponent component) =>
-                component.MediaAddress.MediaKind switch
-                {
-                    MediaAddress.Kind.URL => !sceneData.TryGetMediaUrl(mediaAddress.Url, out URLAddress localMediaUrl) || component.MediaAddress.Url != localMediaUrl,
-                    MediaAddress.Kind.LIVEKIT => true,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                component.MediaAddress.Match(
+                    (sceneData, mediaAddress),
+                    onUrlMediaAddress: static (ctx, componentAddress) =>
+                    {
+                        string mediaAddressUrl = ctx.mediaAddress.IsUrlMediaAddress(out var otherUrl) ? otherUrl!.Value.Url : "";
+                        return !ctx.sceneData.TryGetMediaUrl(mediaAddressUrl, out URLAddress localMediaUrl) || componentAddress.Url != localMediaUrl;
+                    },
+                    onLivekitAddress: static (_, _) => true
+                );
 
             if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
             {
@@ -261,13 +255,14 @@ namespace DCL.SDKComponents.MediaStream
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)
         {
-            if (component.MediaAddress.MediaKind is MediaAddress.Kind.LIVEKIT)
+            if (component.MediaAddress.IsLivekitAddress(out _))
             {
                 component.MediaAddress = mediaAddress;
                 return;
             }
 
-            string url = mediaAddress.Url;
+            mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
+            string url = urlMediaAddress!.Value.Url;
 
             bool isValidStreamUrl = url.IsValidUrl();
             bool isValidLocalPath = false;
