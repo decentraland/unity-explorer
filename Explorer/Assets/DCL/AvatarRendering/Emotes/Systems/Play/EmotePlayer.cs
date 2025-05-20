@@ -109,8 +109,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
-        private static bool IsValid(GameObject mainAsset) =>
-            mainAsset.GetComponent<Animator>() || mainAsset.GetComponent<Animation>();
+        private bool IsValid(GameObject mainAsset) =>
+            mainAsset.GetComponent<Animator>() || (localSceneDevelopment && mainAsset.GetComponent<Animation>());
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
