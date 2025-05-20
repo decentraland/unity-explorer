@@ -54,7 +54,6 @@ namespace DCL.VoiceChat
                         OpenMedia();
                         PublishTrack(cts.Token);
                     }
-
                     break;
                 case ConnectionUpdate.Disconnected:
                     cts.SafeCancelAndDispose();
