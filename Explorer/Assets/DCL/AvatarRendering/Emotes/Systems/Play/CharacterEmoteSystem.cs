@@ -47,12 +47,18 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
 
-        public CharacterEmoteSystem(World world, IEmoteStorage emoteStorage, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
+        public CharacterEmoteSystem(
+            World world,
+            IEmoteStorage emoteStorage,
+            IEmotesMessageBus messageBus,
+            AudioSource audioSource,
+            IDebugContainerBuilder debugContainerBuilder,
+            bool localSceneDevelopment) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
-            emotePlayer = new EmotePlayer(audioSource);
+            emotePlayer = new EmotePlayer(audioSource, localSceneDevelopment);
         }
 
         protected override void Update(float t)

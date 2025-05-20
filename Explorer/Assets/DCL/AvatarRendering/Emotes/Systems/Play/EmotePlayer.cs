@@ -16,9 +16,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
+        private readonly bool localSceneDevelopment;
 
-        public EmotePlayer(AudioSource audioSourcePrefab)
+        public EmotePlayer(AudioSource audioSourcePrefab, bool localSceneDevelopment)
         {
+            this.localSceneDevelopment = localSceneDevelopment;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
@@ -71,16 +73,19 @@ namespace DCL.AvatarRendering.Emotes.Play
             // (there's no other way to load them in runtime from a GLB)
             if (emoteReferences.avatarClip is { legacy: true })
             {
+                // For consistency with processed scene assets in the AB converter (and performance), we only
+                // play legacy animations in Local Scene Dev mode (and only if they follow the naming requirements
+                // but that is checked higher up in the execution flow)
+                if (!localSceneDevelopment)
+                    return false;
+
                 var avatarAnimator = view.GetAnimator();
                 avatarAnimator.enabled = false;
 
-                var animationComp = avatarAnimator.gameObject.GetComponent<Animation>();
-
-                if (animationComp == null)
-                {
+                Animation animationComp;
+                if (!(animationComp = avatarAnimator.gameObject.GetComponent<Animation>()))
                     animationComp = avatarAnimator.gameObject.AddComponent<Animation>();
-                    animationComp.playAutomatically = false;
-                }
+                animationComp.playAutomatically = false;
 
                 AnimationClip legacyAnimationClip = emoteReferences.avatarClip;
                 legacyAnimationClip.wrapMode = emoteComponent.EmoteLoop ? WrapMode.Loop : WrapMode.Once;
