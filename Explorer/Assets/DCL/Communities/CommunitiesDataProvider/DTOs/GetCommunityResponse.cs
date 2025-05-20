@@ -4,16 +4,8 @@ using System;
 namespace DCL.Communities
 {
     [Serializable]
-    public class GetUserCommunitiesResponse
+    public class GetCommunityResponse
     {
-        [Serializable]
-        public struct FriendInCommunity
-        {
-            public string id;
-            public string name;
-            public string profilePictureUrl;
-        }
-
         [Serializable]
         public struct CommunityData
         {
@@ -24,11 +16,10 @@ namespace DCL.Communities
             public string ownerId;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
-            public FriendInCommunity[] friends;
+            public string[] places;
         }
 
-        public CommunityData[] communities;
-        public int totalPages;
+        public CommunityData[] community;
     }
 }
 

@@ -44,7 +44,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private int totalFetched;
         private int totalToFetch;
         private bool isFetching;
-        private GetCommunityMembersResponse.MemberData? lastClickedProfileCtx;
+        private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;

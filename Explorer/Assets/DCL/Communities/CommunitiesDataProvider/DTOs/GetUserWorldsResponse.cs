@@ -1,9 +1,13 @@
 
+using System;
+
 namespace DCL.Communities
 {
+    [Serializable]
     public class GetUserWorldsResponse
     {
-        public class World
+        [Serializable]
+        public struct World
         {
             public string worldName;
         }

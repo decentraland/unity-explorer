@@ -5,12 +5,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using Utility;
+using System;
 
 namespace DCL.Communities
 {
+    [Serializable]
     public class GetCommunityMembersResponse
     {
-        public class MemberData
+        [Serializable]
+        public struct MemberData
         {
             public string id;
             public string profilePicture;
@@ -31,6 +34,7 @@ namespace DCL.Communities
                 this.role = role;
                 this.mutualFriends = mutualFriends;
                 this.friendshipStatus = friendshipStatus;
+                this.UserNameColor = Color.white;
 
                 string displayName = string.Empty;
 
@@ -71,15 +75,15 @@ namespace DCL.Communities
                 var sb = new StringBuilder("0x");
 
                 for (int i = 0; i < 40; i++)
-                    sb.Append(HEX_CHARS[Random.Range(0, HEX_CHARS.Length)]);
+                    sb.Append(HEX_CHARS[UnityEngine.Random.Range(0, HEX_CHARS.Length)]);
 
                 return new MemberData(sb.ToString(),
                     "",
-                    $"{ADJECTIVES[Random.Range(0, ADJECTIVES.Length)]}{NOUNS[Random.Range(0, NOUNS.Length)]}",
-                    Random.Range(0, 100) > 50,
-                    ROLES[Random.Range(0, ROLES.Length)],
-                    Random.Range(0, 10),
-                    FRIENDSHIP_STATUSES[Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
+                    $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
+                    UnityEngine.Random.Range(0, 100) > 50,
+                    ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
+                    UnityEngine.Random.Range(0, 10),
+                    FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
             }
         }
 

@@ -16,6 +16,9 @@ namespace DCL.Communities
 
         }
 
+        public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
+            throw new NotImplementedException();
+
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
@@ -49,15 +52,6 @@ namespace DCL.Communities
             return result;
         }
 
-        public async UniTask<GetCommunityPhotosResponse> GetCommunityPhotosAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            throw new NotImplementedException();
-
-        public async UniTask<GetCommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            throw new NotImplementedException();
-
-        public async UniTask<GetCommunityPlacesResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            throw new NotImplementedException();
-
         public async UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
             throw new NotImplementedException();
 
@@ -77,6 +71,9 @@ namespace DCL.Communities
             throw new NotImplementedException();
 
         public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
+            throw new NotImplementedException();
+
+        public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
     }
 }
