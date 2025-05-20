@@ -39,7 +39,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public event Action<GetCommunityMembersResponse.MemberData>? MainButtonClicked;
         public event Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListSingleItemView>? ContextMenuButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData, FriendshipStatus>? FriendButtonClicked;
+        public event Action<GetCommunityMembersResponse.MemberData>? FriendButtonClicked;
 
         public void RemoveAllListeners()
         {
@@ -67,11 +67,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
             ContextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile, ContextMenuButton.transform.position, this));
 
-            // AddFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));
-            // AcceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));
-            // RemoveFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));
-            // CancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));
-            // UnblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile, friendShipStatus));
+            AddFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            AcceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            RemoveFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            CancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            UnblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
         }
 
         private void Start()

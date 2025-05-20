@@ -276,10 +276,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                       .Forget();
         }
 
-        private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile, FriendshipStatus status)
-        {
-            // Handle friend button click
-            Debug.Log("FriendButtonClicked: " + profile.id);
-        }
+        private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
+            HandleContextMenuUserProfileButton(profile.id, ConvertFriendshipStatus(profile.friendshipStatus));
     }
 }
