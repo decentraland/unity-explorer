@@ -1,27 +1,28 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.Communities
 {
     public interface ICommunitiesDataProvider
     {
-        UniTask<GetUserCommunitiesResponse> GetUserCommunities(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage);
-        UniTask<GetUserLandsResponse> GetUserLands(string userId, int pageNumber, int elementsPerPage);
-        UniTask<GetUserWorldsResponse> GetUserWorlds(string userId, int pageNumber, int elementsPerPage);
-        UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunity(string communityId, string name, string description, Span<byte> thumbnail, List<Vector2Int> lands, List<string> worlds);
-        UniTask<GetCommunityMembersResponse> GetCommunityMembers(string communityId, bool areBanned, int pageNumber, int elementsPerPage);
-        UniTask<GetCommunityPhotosResponse> GetCommunityPhotos(string communityId, int pageNumber, int elementsPerPage);
-        UniTask<GetCommunityEventsResponse> GetCommunityEvents(string communityId, int pageNumber, int elementsPerPage);
-        UniTask<GetCommunityPlacesResponse> GetCommunityPlaces(string communityId, int pageNumber, int elementsPerPage);
-        UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompact();
-        UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembers();
+        UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands, List<string> worlds, CancellationToken ct);
+        UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetCommunityPhotosResponse> GetCommunityPhotosAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetCommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetCommunityPlacesResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct);
+        UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct);
 
-        UniTask<bool> KickUserFromCommunity(string userId, string communityId);
-        UniTask<bool> BanUserFromCommunity(string userId, string communityId);
-        UniTask<bool> LeaveCommunity(string communityId);
-        UniTask<bool> JoinCommunity(string communityId);
-        UniTask<bool> DeleteCommunity(string communityId);
+        UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
+        UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
+        UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct);
+        UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct);
+        UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct);
     }
 }

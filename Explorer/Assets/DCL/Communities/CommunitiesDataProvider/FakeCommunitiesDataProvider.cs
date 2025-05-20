@@ -4,6 +4,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.Communities
@@ -15,50 +16,50 @@ namespace DCL.Communities
 
         }
 
-        public UniTask<GetUserCommunitiesResponse> GetUserCommunities(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetUserLandsResponse> GetUserLands(string userId, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetUserWorldsResponse> GetUserWorlds(string userId, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunity(string communityId, string name, string description, Span<byte> thumbnail, List<Vector2Int> lands,
-            List<string> worlds) =>
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands,
+            List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetCommunityMembersResponse> GetCommunityMembers(string communityId, bool areBanned, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetCommunityPhotosResponse> GetCommunityPhotos(string communityId, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetCommunityPhotosResponse> GetCommunityPhotosAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetCommunityEventsResponse> GetCommunityEvents(string communityId, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetCommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetCommunityPlacesResponse> GetCommunityPlaces(string communityId, int pageNumber, int elementsPerPage) =>
+        public async UniTask<GetCommunityPlacesResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompact() =>
+        public async UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembers() =>
+        public async UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<bool> KickUserFromCommunity(string userId, string communityId) =>
+        public async UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<bool> BanUserFromCommunity(string userId, string communityId) =>
+        public async UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<bool> LeaveCommunity(string communityId) =>
+        public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<bool> JoinCommunity(string communityId) =>
+        public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public UniTask<bool> DeleteCommunity(string communityId) =>
+        public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
     }
 }
