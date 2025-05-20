@@ -18,6 +18,7 @@ using DCL.Chat.History;
 using DCL.Chat.EventBus;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -588,6 +589,8 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
+            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
+
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -760,7 +763,8 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     sharedSpaceManager,
                     profileChangesBus,
-                    staticContainer.SceneLoadingLimit
+                    staticContainer.SceneLoadingLimit,
+                    communitiesDataProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

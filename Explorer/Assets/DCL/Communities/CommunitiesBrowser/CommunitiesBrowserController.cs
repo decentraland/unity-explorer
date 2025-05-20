@@ -7,10 +7,12 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
+        private readonly ICommunitiesDataProvider dataProvider;
 
-        public CommunitiesBrowserController(CommunitiesBrowserView view)
+        public CommunitiesBrowserController(CommunitiesBrowserView view, ICommunitiesDataProvider dataProvider)
         {
             this.view = view;
+            this.dataProvider = dataProvider;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
         }
 

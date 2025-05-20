@@ -40,6 +40,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.EventsApi;
 using DCL.Friends.UserBlocking;
@@ -130,6 +131,7 @@ namespace DCL.PluginSystem.Global
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
         private ViewDependencies viewDependencies;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -180,7 +182,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
-            SceneLoadingLimit sceneLoadingLimit)
+            SceneLoadingLimit sceneLoadingLimit,
+            ICommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -233,6 +236,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public void Dispose()
@@ -374,7 +378,7 @@ namespace DCL.PluginSystem.Global
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
-            var communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView);
+            var communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, communitiesDataProvider);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
