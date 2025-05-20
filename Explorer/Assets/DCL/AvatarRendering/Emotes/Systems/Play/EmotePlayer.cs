@@ -79,35 +79,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!localSceneDevelopment)
                     return false;
 
-                var avatarAnimator = view.AvatarAnimator;
-                avatarAnimator.enabled = false;
+                // Animator gets re-enabled later when its properties get manipulated in AvatarBase
+                view.AvatarAnimator.enabled = false;
 
-                Animation animationComp;
-                if (!(animationComp = avatarAnimator.gameObject.GetComponent<Animation>()))
-                    animationComp = avatarAnimator.gameObject.AddComponent<Animation>();
-                animationComp.playAutomatically = false;
-
-                AnimationClip legacyAnimationClip = emoteReferences.avatarClip;
-                legacyAnimationClip.wrapMode = emoteComponent.EmoteLoop ? WrapMode.Loop : WrapMode.Once;
-                animationComp.AddClip(legacyAnimationClip, legacyAnimationClip.name);
-                animationComp.Play(legacyAnimationClip.name);
+                PlayLegacyEmote(view.AvatarAnimator.gameObject, emoteReferences.avatarClip, emoteComponent.EmoteLoop || isLooping);
             }
             else
             {
-                if (emoteReferences.avatarClip != null)
-                {
-                    view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
-                    emoteComponent.EmoteLoop = isLooping;
-                }
-
-                view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
-                view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
-
-                if (emoteReferences.propClip != null && emoteReferences.animator != null)
-                {
-                    emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
-                    emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
-                }
+                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
             }
 
             if (audioAsset != null)
@@ -192,6 +171,36 @@ namespace DCL.AvatarRendering.Emotes.Play
                 animator.fireEvents = false;
 
             return references;
+        }
+
+        private void PlayLegacyEmote(GameObject avatarAnimatorGameObject, AnimationClip legacyAnimationClip, bool loop)
+        {
+            Animation animationComp;
+            if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
+                animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
+            animationComp.playAutomatically = false;
+
+            legacyAnimationClip.wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
+            animationComp.AddClip(legacyAnimationClip, legacyAnimationClip.name);
+            animationComp.Play(legacyAnimationClip.name);
+        }
+
+        private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
+        {
+            if (emoteReferences.avatarClip != null)
+            {
+                view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
+                emoteComponent.EmoteLoop = isLooping;
+            }
+
+            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
+            view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
+
+            if (emoteReferences.propClip != null && emoteReferences.animator != null)
+            {
+                emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
+                emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+            }
         }
 
         public void Stop(EmoteReferences emoteReference)
