@@ -1,9 +1,13 @@
 
+using System;
+
 namespace DCL.Communities
 {
+    [Serializable]
     public class CreateOrUpdateCommunityResponse
     {
-        public class CommunityData
+        [Serializable]
+        public struct CommunityData
         {
             public string[] thumbnails;
             public string name;
