@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Cysharp.Text;
 using UnityEngine;
 using ZLogger;
 using ZLogger.Unity;
@@ -160,24 +161,39 @@ namespace DCL.Diagnostics
 
         [HideInCallstack]
         private static string GetCategoryColor(in ReportData reportData) =>
-            CATEGORY_COLORS.TryGetValue(reportData.Category, out string color) ? color : DEFAULT_COLOR;
+            CATEGORY_COLORS.GetValueOrDefault(reportData.Category, DEFAULT_COLOR);
 
-        // NOTE: use ZStringBuilder instead of StringBuilder
         private static string GetReportDataPrefix(in ReportData reportData)
         {
             string color = GetCategoryColor(in reportData);
-            var debugLogBuilder = new StringBuilder();
-            debugLogBuilder.Append($"<color=#{color}>");
-            debugLogBuilder.Append($"[{reportData.Category}]");
 
-            if (reportData.SceneShortInfo.BaseParcel != Vector2Int.zero)
-                debugLogBuilder.Append($" {reportData.SceneShortInfo.BaseParcel}");
+            using (var sb = ZString.CreateStringBuilder())
+            {
+                sb.Append($"<color=#{color}>");
+                sb.Append($"[{reportData.Category}]");
 
-            if (reportData.SceneTickNumber != null)
-                debugLogBuilder.Append($" [T: {reportData.SceneTickNumber}]");
+                if (reportData.SceneShortInfo.BaseParcel != Vector2Int.zero)
+                    sb.Append($" {reportData.SceneShortInfo.BaseParcel}");
 
-            debugLogBuilder.Append("</color>: ");
-            return debugLogBuilder.ToString();
+                if (reportData.SceneTickNumber != null)
+                    sb.Append($" [T: {reportData.SceneTickNumber}]");
+
+                sb.Append("</color>: ");
+                return sb.ToString();
+            }
+            
+            // var debugLogBuilder = new StringBuilder();
+            // debugLogBuilder.Append($"<color=#{color}>");
+            // debugLogBuilder.Append($"[{reportData.Category}]");
+            //
+            // if (reportData.SceneShortInfo.BaseParcel != Vector2Int.zero)
+            //     debugLogBuilder.Append($" {reportData.SceneShortInfo.BaseParcel}");
+            //
+            // if (reportData.SceneTickNumber != null)
+            //     debugLogBuilder.Append($" [T: {reportData.SceneTickNumber}]");
+            //
+            // debugLogBuilder.Append("</color>: ");
+            // return debugLogBuilder.ToString();
         }
     }
 }
