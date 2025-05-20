@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!localSceneDevelopment)
                     return false;
 
-                var avatarAnimator = view.GetAnimator();
+                var avatarAnimator = view.AvatarAnimator;
                 avatarAnimator.enabled = false;
 
                 Animation animationComp;
