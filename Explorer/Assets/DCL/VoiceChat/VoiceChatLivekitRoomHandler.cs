@@ -24,6 +24,7 @@ namespace DCL.VoiceChat
         private bool disposed;
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
+        private bool trackPublished;
 
         public VoiceChatLivekitRoomHandler(VoiceChatCombinedAudioSource combinedAudioSource, AudioFilter microphoneAudioFilter, AudioSource microphoneAudioSource, IRoom voiceChatRoom)
         {
@@ -50,10 +51,12 @@ namespace DCL.VoiceChat
             {
                 case ConnectionUpdate.Connected:
                     OpenMedia();
-                    PublishTrack(cts.Token);
+                    if (!trackPublished)
+                        PublishTrack(cts.Token);
                     break;
                 case ConnectionUpdate.Disconnected:
                     CloseMedia();
+                    trackPublished = false;
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     break;
                 case ConnectionUpdate.Reconnecting: break;
@@ -75,6 +78,7 @@ namespace DCL.VoiceChat
             };
 
             voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
+            trackPublished = true;
         }
 
         private void OpenMedia()

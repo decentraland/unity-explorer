@@ -2220,7 +2220,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""OpenChat"",
                     ""type"": ""Button"",
                     ""id"": ""430e31be-9d28-4c75-a904-851e595a70c1"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2400,7 +2400,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""936aa25d-52b8-4067-ab14-76c9c847d3f5"",
-                    ""path"": ""<Keyboard>/t"",
+                    ""path"": ""<Keyboard>/o"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
