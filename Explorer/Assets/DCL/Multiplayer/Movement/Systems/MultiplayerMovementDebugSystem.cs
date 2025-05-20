@@ -79,6 +79,8 @@ namespace DCL.Multiplayer.Movement.Systems
             this.entityParticipantTable = entityParticipantTable;
             this.remoteMetadata = remoteMetadata;
 
+            debugSettings.SelfSending = false;
+
             widget = debugBuilder.TryAddWidget("Multiplayer Movement")
                                 ?.SetVisibilityBinding(widgetVisibility);
 
