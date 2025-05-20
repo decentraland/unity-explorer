@@ -6,7 +6,6 @@ namespace DCL.Communities
         member,
         moderator,
         owner,
-        member
     }
 }
 

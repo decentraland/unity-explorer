@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
+using DCL.Passport;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
@@ -45,6 +46,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private bool isFetching;
         private GetCommunityMembersResponse.MemberData? lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
+        private CancellationTokenSource contextMenuOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;
 
         public MembersListController(MembersListView view,
@@ -79,13 +81,15 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void BanUser(GetCommunityMembersResponse.MemberData profile)
         {
-            BanUserAsync().Forget();
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            BanUserAsync(contextMenuOperationCts.Token).Forget();
+            return;
 
-            async UniTaskVoid BanUserAsync()
+            async UniTaskVoid BanUserAsync(CancellationToken token)
             {
                 try
                 {
-                    await communitiesDataProvider.BanUserFromCommunity(profile.id, lastCommunityId);
+                    await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, lastCommunityId, token);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -96,7 +100,21 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void KickUser(GetCommunityMembersResponse.MemberData profile)
         {
-            throw new NotImplementedException();
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            KickUserAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid KickUserAsync(CancellationToken token)
+            {
+                try
+                {
+                    await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, lastCommunityId, token);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
+                }
+            }
         }
 
         private void AddModerator(GetCommunityMembersResponse.MemberData profile)
@@ -119,13 +137,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             throw new NotImplementedException();
         }
 
-        private void OpenProfilePassport(GetCommunityMembersResponse.MemberData profile)
-        {
-            throw new NotImplementedException();
-        }
+        private void OpenProfilePassport(GetCommunityMembersResponse.MemberData profile) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), ct).Forget();
 
         public void Dispose()
         {
+            contextMenuOperationCts.SafeCancelAndDispose();
+            friendshipOperationCts.SafeCancelAndDispose();
         }
 
         public void Reset()
@@ -203,11 +221,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private async UniTask FetchDataAsync()
         {
-            // Simulate fetching data
-            for (int i = 0; i < 15; i++)
-                members.Add(GetCommunityMembersResponse.MemberData.RandomMember());
-
-            totalToFetch = members.Count; //TODO: From the service response
+            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, false, pageNumber, PAGE_SIZE, ct);
+            members.AddRange(response.members);
+            totalToFetch = response.totalPages * PAGE_SIZE;
         }
 
         public void ShowMembersListAsync(string communityId, CancellationToken cancellationToken)

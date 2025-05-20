@@ -29,8 +29,25 @@ namespace DCL.Communities
             List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            const int TOTAL_MEMBERS = 15;
+            GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[TOTAL_MEMBERS];
+
+            for (int i = 0; i < TOTAL_MEMBERS; i++)
+                members[i] = GetCommunityMembersResponse.MemberData.RandomMember();
+
+            GetCommunityMembersResponse result = new GetCommunityMembersResponse
+                {
+                    totalPages = TOTAL_MEMBERS / elementsPerPage,
+                    members = members,
+                };
+
+            if (result.totalPages == 0)
+                result.totalPages = 1;
+
+            return result;
+        }
 
         public async UniTask<GetCommunityPhotosResponse> GetCommunityPhotosAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
