@@ -45,16 +45,19 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
         {
-            cts = cts.SafeRestart();
 
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
-                    OpenMedia();
                     if (!trackPublished)
+                    {
+                        cts = cts.SafeRestart();
+                        OpenMedia();
                         PublishTrack(cts.Token);
+                    }
                     break;
                 case ConnectionUpdate.Disconnected:
+                    cts.SafeCancelAndDispose();
                     CloseMedia();
                     trackPublished = false;
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
