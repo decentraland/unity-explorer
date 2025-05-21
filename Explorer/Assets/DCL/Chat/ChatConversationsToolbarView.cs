@@ -9,6 +9,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 using Button = UnityEngine.UI.Button;
 
 namespace DCL.Chat
@@ -126,7 +127,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             foreach (var itemsValue in items.Values)
-                Destroy(itemsValue.gameObject);
+                UnityObjectUtils.SafeDestroy(itemsValue.gameObject);
             items.Clear();
             UpdateScrollButtonsVisibility();
         }

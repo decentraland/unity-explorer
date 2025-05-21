@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
         public int RandomID;
-        
+
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
 
@@ -114,16 +114,23 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetAnimatorFloat(int hash, float value)
         {
+            if (AvatarAnimator.GetFloat(hash).Equals(value)) return;
+
+            AvatarAnimator.enabled = true;
             AvatarAnimator.SetFloat(hash, value);
         }
 
         public void SetAnimatorInt(int hash, int value)
         {
+            if (AvatarAnimator.GetInteger(hash).Equals(value)) return;
+
+            AvatarAnimator.enabled = true;
             AvatarAnimator.SetInteger(hash, value);
         }
 
         public void SetAnimatorTrigger(int hash)
         {
+            AvatarAnimator.enabled = true;
             AvatarAnimator.SetTrigger(hash);
         }
 
@@ -141,8 +148,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool GetAnimatorBool(int hash) =>
             AvatarAnimator.GetBool(hash);
 
-        public void SetAnimatorBool(int hash, bool value) =>
+        public void SetAnimatorBool(int hash, bool value)
+        {
+            if (AvatarAnimator.GetBool(hash) == value) return;
+
+            AvatarAnimator.enabled = true;
             AvatarAnimator.SetBool(hash, value);
+        }
 
         public float GetAnimatorFloat(int hash) =>
             AvatarAnimator.GetFloat(hash);
@@ -155,12 +167,15 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.runtimeAnimatorController = overrideController;
 
             lastEmote = animationClip;
+            AvatarAnimator.enabled = true;
         }
     }
 
     public interface IAvatarView
     {
         Transform GetTransform();
+
+        Animator AvatarAnimator { get; }
 
         void SetAnimatorFloat(int hash, float value);
 
