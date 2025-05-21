@@ -20,6 +20,16 @@ namespace DCL.VoiceChat
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
         }
 
+        public void Show()
+        {
+
+        }
+
+        public void Hide()
+        {
+
+        }
+
         private void HangUp()
         {
 

@@ -52,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
         private readonly bool includeUserBlocking;
+        private readonly bool includeCall;
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IAnalyticsController? analyticsController;
@@ -89,6 +90,7 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
+            bool includeCall,
             IAppArgs appArgs,
             FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
@@ -117,6 +119,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
             this.includeUserBlocking = includeUserBlocking;
+            this.includeCall = includeCall;
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
             this.useAnalytics = useAnalytics;
@@ -185,6 +188,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 viewDependencies,
                 includeUserBlocking,
+                includeCall,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager
             );

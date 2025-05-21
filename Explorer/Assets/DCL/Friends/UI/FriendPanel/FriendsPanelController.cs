@@ -67,6 +67,7 @@ namespace DCL.Friends.UI.FriendPanel
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             bool includeUserBlocking,
+            bool includeCall,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
@@ -87,7 +88,8 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking);
+                    includeUserBlocking,
+                    includeCall);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
                 friendSectionControllerConnectivity.OpenConversationClicked += OnOpenConversationClicked;
@@ -99,7 +101,8 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking);
+                    includeUserBlocking,
+                    includeCall);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,

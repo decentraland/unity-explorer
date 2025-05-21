@@ -36,7 +36,7 @@ namespace DCL.VoiceChat
         private void OnPressed(InputAction.CallbackContext obj)
         {
             buttonPressStartTime = Time.time;
-            
+
             // Start the microphone immediately when button is pressed
             // If it's a quick press, we'll handle it in OnReleased
             if (!isTalking)
