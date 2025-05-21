@@ -34,6 +34,7 @@ namespace DCL.ECS7
         public const int VIRTUAL_CAMERA = 1076;
         public const int SYNCED_CLOCK = 1077;
         public const int INPUT_MODIFIER = 1078;
+        public const int NETWORK_ENTITY = 1078;
         public const int LIGHT_SOURCE = 1079;
         public const int AVATAR_SHAPE = 1080;
         public const int VISIBILITY_COMPONENT = 1081;
