@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.GLTFast.Wrappers;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -60,6 +59,7 @@ namespace ECS.StreamableLoading.GLTF
                 NodeNameMethod = NameImportMethod.OriginalUnique,
                 AnisotropicFilterLevel = 0,
                 GenerateMipMaps = false,
+                AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy
             };
 
             bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);
