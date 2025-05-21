@@ -34,15 +34,18 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            const int TOTAL_MEMBERS = 15;
-            GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[TOTAL_MEMBERS];
+            const int TOTAL_MEMBERS = 15, BANNED_MEMBERS = 5;
 
-            for (int i = 0; i < TOTAL_MEMBERS; i++)
+            int membersToReturn = areBanned ? BANNED_MEMBERS : TOTAL_MEMBERS;
+
+            GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[membersToReturn];
+
+            for (int i = 0; i < membersToReturn; i++)
                 members[i] = GetCommunityMembersResponse.MemberData.RandomMember();
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
                 {
-                    totalPages = TOTAL_MEMBERS / elementsPerPage,
+                    totalPages = membersToReturn / elementsPerPage,
                     members = members,
                 };
 

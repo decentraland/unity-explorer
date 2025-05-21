@@ -243,7 +243,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             Debug.Log("MainButtonClicked: " + profile.id);
         }
 
-        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus status)
+        private static UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus status)
         {
             return status switch
             {
