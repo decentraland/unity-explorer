@@ -28,9 +28,8 @@ namespace DCL.CharacterCamera.Settings
         [field: SerializeField]
         public CinemachineBrain Brain { get; private set; } = null!;
 
-        ICinemachineThirdPersonCameraData ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
-
         ICinemachineFirstPersonCameraData ICinemachinePreset.FirstPersonCameraData => firstPersonCameraData;
+        ICinemachineThirdPersonCameraData ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
         ICinemachineThirdPersonCameraData ICinemachinePreset.DroneViewCameraData => droneViewCameraData;
 
         ICinemachineFreeCameraData ICinemachinePreset.FreeCameraData => freeCameraData;
