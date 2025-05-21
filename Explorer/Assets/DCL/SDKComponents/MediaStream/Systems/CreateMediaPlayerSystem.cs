@@ -127,8 +127,8 @@ namespace DCL.SDKComponents.MediaStream
 
             MultiMediaPlayer player = address.Match(
                 (room: roomHub.StrictObject, mediaPlayerPool),
-                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.NewAvProMediaPlayer(address.Url, ctx.mediaPlayerPool),
-                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(ctx.room))
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.room))
             );
 
             var component = new MediaPlayerComponent
