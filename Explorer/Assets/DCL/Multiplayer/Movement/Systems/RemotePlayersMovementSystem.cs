@@ -67,6 +67,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 remotePlayerMovement.InitialCooldownTime += deltaTime;
                 return;
             }
+            else remotePlayerMovement.InitialCooldownTime = float.MaxValue;
 
             while (deltaTime > 0)
             {
@@ -81,7 +82,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     playerInbox.Dequeue();
 
                 // When there is no messages, we extrapolate
-                if (settings.UseExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+                if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
                 {
                     float sqrMinSpeed = settings.ExtrapolationSettings.MinSpeed * settings.ExtrapolationSettings.MinSpeed;
 

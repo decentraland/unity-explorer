@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void CheckNE(Entity e, ref PBNetworkEntity ne)
         {
-            Debug.Log($"VVV exist {ne}");
+            Debug.Log($"VVV exist {ne.EntityId} {ne.NetworkId}");
         }
 
         [Query]
