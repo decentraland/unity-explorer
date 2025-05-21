@@ -31,23 +31,25 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
-        private readonly List<GetCommunityMembersResponse.MemberData> members = new (PAGE_SIZE);
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly GenericContextMenuElement removeModeratorContextMenuElement;
         private readonly GenericContextMenuElement addModeratorContextMenuElement;
         private readonly GenericContextMenuElement blockUserContextMenuElement;
+        private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData> sectionsFetchData = new ()
+        {
+            { MembersListView.MemberListSections.ALL, new SectionFetchData(PAGE_SIZE) },
+            { MembersListView.MemberListSections.BANNED, new SectionFetchData(PAGE_SIZE) }
+        };
 
         private string lastCommunityId = string.Empty;
         private CancellationToken ct;
-        private int pageNumber;
-        private int totalFetched;
-        private int totalToFetch;
         private bool isFetching;
         private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;
+        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
         public MembersListController(MembersListView view,
             ViewDependencies viewDependencies,
@@ -74,6 +76,42 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!))));
 
             this.view.LoopList.InitListView(0, GetLoopListItemByIndex);
+            this.view.ActiveSectionChanged += OnMemberListSectionChanged;
+        }
+
+        public void Dispose()
+        {
+            contextMenuOperationCts.SafeCancelAndDispose();
+            friendshipOperationCts.SafeCancelAndDispose();
+            view.ActiveSectionChanged -= OnMemberListSectionChanged;
+        }
+
+        private void OnMemberListSectionChanged(MembersListView.MemberListSections section)
+        {
+            if (isFetching)
+                WaitForFetchAsync().Forget();
+            else
+                SwitchSection();
+
+            return;
+
+            async UniTaskVoid WaitForFetchAsync()
+            {
+                await UniTask.WaitUntil(() => isFetching == false, cancellationToken: ct);
+                SwitchSection();
+            }
+
+            void SwitchSection()
+            {
+                currentSection = section;
+
+                SectionFetchData sectionData = sectionsFetchData[section];
+
+                if (sectionData.members.Count == 0 && sectionData.pageNumber == 0)
+                    FetchNewDataAsync().Forget();
+                else
+                    RefreshLoopList();
+            }
         }
 
         private void BlockUserClicked(GetCommunityMembersResponse.MemberData profile) =>
@@ -140,19 +178,13 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void OpenProfilePassport(GetCommunityMembersResponse.MemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), ct).Forget();
 
-        public void Dispose()
-        {
-            contextMenuOperationCts.SafeCancelAndDispose();
-            friendshipOperationCts.SafeCancelAndDispose();
-        }
-
         public void Reset()
         {
             lastCommunityId = string.Empty;
-            members.Clear();
-            pageNumber = 0;
-            totalFetched = 0;
-            totalToFetch = 0;
+
+            foreach (var element in sectionsFetchData)
+                element.Value.Reset();
+
             isFetching = false;
             panelLifecycleTask?.TrySetResult();
         }
@@ -192,14 +224,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             int leftIndex = index * 2;
             int rightIndex = leftIndex + 1;
 
-            if (rightIndex < members.Count)
-                elementView.ConfigureRight(members[rightIndex], viewDependencies);
+            if (rightIndex < sectionsFetchData[currentSection].members.Count)
+                elementView.ConfigureRight(sectionsFetchData[currentSection].members[rightIndex], viewDependencies);
 
-            elementView.ConfigureLeft(members[leftIndex], viewDependencies);
+            elementView.ConfigureLeft(sectionsFetchData[currentSection].members[leftIndex], viewDependencies);
 
             elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked);
 
-            if (index >= totalFetched - ELEMENT_MISSING_THRESHOLD && totalFetched < totalToFetch && !isFetching)
+            if (index >= sectionsFetchData[currentSection].totalFetched - ELEMENT_MISSING_THRESHOLD && sectionsFetchData[currentSection].totalFetched < sectionsFetchData[currentSection].totalToFetch && !isFetching)
                 FetchNewDataAsync().Forget();
 
             return listItem;
@@ -209,21 +241,26 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             isFetching = true;
 
-            pageNumber++;
+            sectionsFetchData[currentSection].pageNumber++;
             await FetchDataAsync();
-            totalFetched = (pageNumber + 1) * PAGE_SIZE;
+            sectionsFetchData[currentSection].totalFetched = (sectionsFetchData[currentSection].pageNumber + 1) * PAGE_SIZE;
 
-            view.LoopList.SetListItemCount(Mathf.CeilToInt(members.Count * 1f / 2), false);
-            view.LoopList.RefreshAllShownItem();
+            RefreshLoopList();
 
             isFetching = false;
         }
 
+        private void RefreshLoopList()
+        {
+            view.LoopList.SetListItemCount(Mathf.CeilToInt(sectionsFetchData[currentSection].members.Count * 1f / 2), false);
+            view.LoopList.RefreshAllShownItem();
+        }
+
         private async UniTask FetchDataAsync()
         {
-            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, false, pageNumber, PAGE_SIZE, ct);
-            members.AddRange(response.members);
-            totalToFetch = response.totalPages * PAGE_SIZE;
+            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, currentSection == MembersListView.MemberListSections.BANNED, sectionsFetchData[currentSection].pageNumber, PAGE_SIZE, ct);
+            sectionsFetchData[currentSection].members.AddRange(response.members);
+            sectionsFetchData[currentSection].totalToFetch = response.totalPages * PAGE_SIZE;
         }
 
         public void ShowMembersListAsync(string communityId, CancellationToken cancellationToken)

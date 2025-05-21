@@ -19,6 +19,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private float scrollViewMaxHeight;
         private float scrollViewHeight;
+        private MemberListSections currentSection;
 
         private void Awake()
         {
@@ -40,7 +41,10 @@ namespace DCL.Communities.CommunitiesCard.Members
                 sectionMapping.UnselectedText.SetActive(sectionMapping.Section != section);
             }
 
-            ActiveSectionChanged?.Invoke(section);
+            if (currentSection != section)
+                ActiveSectionChanged?.Invoke(section);
+
+            currentSection = section;
         }
 
         public void SetSectionButtonsActive(bool isActive)
