@@ -10,7 +10,7 @@ namespace DCL.Diagnostics
     /// </summary>
     public static class ReportHub
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void SetLogAndWarningToNoStackTrace()
         {
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);

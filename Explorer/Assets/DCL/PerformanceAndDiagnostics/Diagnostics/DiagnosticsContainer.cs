@@ -33,6 +33,7 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool enableSceneDebugConsole = false, params (ReportHandler, IReportHandler)[] additionalHandlers)
         {
+            // NOTE: cleanup
             var container = new DiagnosticsContainer();
             settings.NotifyErrorDebugLogDisabled();
 
@@ -49,12 +50,12 @@ namespace DCL.Diagnostics
                 {
                     handlers.Add((
                         ReportHandler.DebugLog,
-                        new ZLoggerConsoleReportHandler(settings.GetMatrix(ReportHandler.DebugLog),
+                        new ZLoggerReportLogger(settings.GetMatrix(ReportHandler.DebugLog),
                             settings.DebounceEnabled)
                     ));
                 }
             }
-            // ... Sentry, SceneDebugConsoleReportHandler ...
+            
             SentryReportHandler? sentryReportHandler = null;
 
             if (settings.IsEnabled(ReportHandler.Sentry))
@@ -63,19 +64,14 @@ namespace DCL.Diagnostics
             if (enableSceneDebugConsole)
                 AddSceneDebugConsoleReportHandler(handlers);
             
-            // --- Setup ReportHubLogger ---
             var reportHubInstance = new ReportHubLogger(handlers);
-            container.defaultLogHandler = Debug.unityLogger.logHandler; // Capture original handler
+            container.defaultLogHandler = Debug.unityLogger.logHandler;
             //Debug.unityLogger.logHandler = reportHubInstance; // Override with our hub
 
             ReportHub.Initialize(reportHubInstance, enableSceneDebugConsole);
 
             container.ReportHubLogger = reportHubInstance;
-            container.Sentry = sentryReportHandler; // Assuming sentryReportHandler is defined
-
-            // var initLogger = container.ZLoggerFactory.CreateLogger("DCL.DiagnosticsContainer");
-            // initLogger.ZLogInformation($"DiagnosticsContainer created. OptimizedLogger: {settings.UseOptimizedLogger}");
-
+            container.Sentry = sentryReportHandler;
             return container;
         }
 
