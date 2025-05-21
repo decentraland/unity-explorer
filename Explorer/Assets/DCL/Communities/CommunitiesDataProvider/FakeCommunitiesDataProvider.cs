@@ -19,8 +19,37 @@ namespace DCL.Communities
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
+
+            for (var i = 1; i <= elementsPerPage; i++)
+            {
+                CommunityMemberRole roleToAdd = CommunityMemberRole.owner;
+                if (isOwner && isMember)
+                    roleToAdd = (CommunityMemberRole)UnityEngine.Random.Range(0, 3);
+                else
+                    roleToAdd = isOwner ? CommunityMemberRole.owner : CommunityMemberRole.member;
+
+                communities.Add(new GetUserCommunitiesResponse.CommunityData
+                {
+                    id = i.ToString(),
+                    name = $"Community {i}",
+                    role = roleToAdd,
+                    thumbnails = new [] { "https://picsum.photos/128/128" },
+                });
+            }
+
+            GetUserCommunitiesResponse result = new GetUserCommunitiesResponse
+            {
+                communities = communities.ToArray(),
+                totalPages = 10,
+            };
+
+            await UniTask.Delay(1000, cancellationToken: ct);
+
+            return result;
+        }
 
         public async UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();

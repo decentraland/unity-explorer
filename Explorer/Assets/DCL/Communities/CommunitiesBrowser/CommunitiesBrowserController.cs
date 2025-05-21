@@ -1,12 +1,16 @@
+using Cysharp.Threading.Tasks;
 using DCL.Input;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using TMPro;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
@@ -17,26 +21,28 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly ICommunitiesDataProvider dataProvider;
+        private readonly ISelfProfile selfProfile;
+        private readonly IWebRequestController webRequestController;
         private readonly List<CommunityData> currentMyCommunities = new ();
-        private readonly List<CommunityData> currentResults = new ();
+
+        private CancellationTokenSource loadMyCommunitiesCts;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
             ICursor cursor,
-            ICommunitiesDataProvider dataProvider)
+            ICommunitiesDataProvider dataProvider,
+            ISelfProfile selfProfile,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
+            this.selfProfile = selfProfile;
+            this.webRequestController = webRequestController;
 
-            ConfigureSortBySelector();
-
-            view.myCommunitiesLoopList.InitListView(0, OnGetMyCommunitiesItemByIndex);
-            view.myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-
-            view.resultLoopGrid.InitGridView(0, OnGetResultsItemByIndex);
-            view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            ConfigureMyCommunitiesList();
+            ConfigureResultsGrid();
         }
 
         public void Activate()
@@ -46,13 +52,17 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.SetResultsBackButtonVisible(false);
             view.SetResultsTitleText("Decentraland Communities");
-            LoadMyCommunities();
+
+            loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
+            LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
+
             LoadResults();
         }
 
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+            loadMyCommunitiesCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId)
@@ -74,51 +84,54 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
-
+            loadMyCommunitiesCts?.SafeCancelAndDispose();
         }
 
-        private void ConfigureSortBySelector()
+        private void ConfigureMyCommunitiesList()
         {
-            view.sortByDropdown.Dropdown.interactable = true;
-            view.sortByDropdown.Dropdown.MultiSelect = false;
-            view.sortByDropdown.Dropdown.options.Clear();
-            view.sortByDropdown.Dropdown.options.AddRange(new[]
-            {
-                new TMP_Dropdown.OptionData { text = "Alphabetically" },
-                new TMP_Dropdown.OptionData { text = "Popularity" },
-            });
-            view.sortByDropdown.Dropdown.value = 0;
+            view.myCommunitiesLoopList.InitListView(0, OnGetMyCommunitiesItemByIndex);
+            view.myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         private LoopListViewItem2 OnGetMyCommunitiesItemByIndex(LoopListView2 loopListView, int index)
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
+
+            MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
+            cardView.SetTitle(currentMyCommunities[index].name);
+            cardView.SetUserRole(currentMyCommunities[index].role);
+            cardView.ConfigureImageController(webRequestController);
+            cardView.SetCommunityThumbnail(currentMyCommunities[index].thumbnails[0]);
+
             return listItem;
         }
 
-        private void LoadMyCommunities()
+        private async UniTask LoadMyCommunitiesAsync(CancellationToken ct)
         {
             currentMyCommunities.Clear();
             view.myCommunitiesLoopList.SetListItemCount(0, false);
+            view.SetMyCommunitiesAsLoading(true);
 
-            List<CommunityData> requestCommunities = new List<CommunityData>();
-            for (var i = 1; i <= 20; i++)
-            {
-                requestCommunities.Add(new CommunityData
-                {
-                    id = i.ToString(),
-                    name = $"My Community {i}",
-                    role = CommunityMemberRole.member,
-                });
-            }
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
 
-            foreach (CommunityData community in requestCommunities)
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 15, ct);
+
+            foreach (CommunityData community in userCommunitiesResponse.communities)
                 currentMyCommunities.Add(community);
 
-            view.myCommunitiesLoopList.SetListItemCount(requestCommunities.Count, false);
+            view.SetMyCommunitiesAsLoading(false);
+            view.myCommunitiesLoopList.SetListItemCount(userCommunitiesResponse.communities.Length, false);
         }
 
-        private LoopGridViewItem OnGetResultsItemByIndex(LoopGridView loopGridView, int index, int row, int column)
+        private void ConfigureResultsGrid()
+        {
+            view.resultLoopGrid.InitGridView(0, OnGetResultsItemByIndex);
+            view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        private static LoopGridViewItem OnGetResultsItemByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             return gridItem;
@@ -126,10 +139,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadResults()
         {
-            currentResults.Clear();
             view.resultLoopGrid.SetListItemCount(0, false);
 
-            List<CommunityData> requestCommunities = new List<CommunityData>();
+            /*List<CommunityData> requestCommunities = new List<CommunityData>();
             for (var i = 1; i <= 20; i++)
             {
                 requestCommunities.Add(new CommunityData
@@ -140,10 +152,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 });
             }
 
-            foreach (CommunityData community in requestCommunities)
-                currentResults.Add(community);
-
-            view.resultLoopGrid.SetListItemCount(requestCommunities.Count, false);
+            view.resultLoopGrid.SetListItemCount(requestCommunities.Count, false);*/
         }
     }
 }

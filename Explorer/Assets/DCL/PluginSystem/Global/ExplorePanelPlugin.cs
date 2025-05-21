@@ -381,7 +381,7 @@ namespace DCL.PluginSystem.Global
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
-            communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, cursor, communitiesDataProvider);
+            communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, cursor, communitiesDataProvider, selfProfile, webRequestController);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
