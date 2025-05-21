@@ -7,14 +7,9 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatCombinedAudioSource : MonoBehaviour
     {
-        private static ulong counter;
         [field: SerializeField] private AudioSource audioSource;
-        [SerializeField] private bool enableAudioMonitoring = true;
-        [SerializeField] private float audioLevelThreshold = 0.01f;
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
-        private float currentAudioLevel;
         private bool isPlaying;
-        private float peakAudioLevel;
         private int sampleRate;
         private float[] tempBuffer;
 
