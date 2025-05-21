@@ -332,7 +332,7 @@ namespace DCL.Chat
 
                 if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
                 {
-                    view.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                    view.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                     return;
                 }
             }
@@ -347,7 +347,7 @@ namespace DCL.Chat
             var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
             if (TryGetView(out var view))
             {
-                view.SetInputWithUserState(userState);
+                view.SetupViewWithUserState(userState);
 
                 if (!updateToolbar) return;
 
@@ -575,7 +575,7 @@ namespace DCL.Chat
         private void OnUserDisconnected(string userId)
         {
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
         }
 
         private void OnNonFriendConnected(string userId)
@@ -586,34 +586,34 @@ namespace DCL.Chat
         private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
         {
             //We might need a new state of type "LOADING" or similar to display until we resolve the real state
-            viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
+            viewInstance!.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
         }
 
         private void OnFriendConnected(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
 
         }
 
         private void OnUserBlockedByOwnUser(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
         }
 
         private void OnCurrentConversationUserUnavailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
         }
 
         private void OnCurrentConversationUserAvailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
         }
 
         private void OnUserConnectionStateChanged(string userId, bool isConnected)

@@ -29,6 +29,7 @@ namespace DCL.Chat
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
+        [SerializeField] private Button callButton;
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
@@ -101,6 +102,11 @@ namespace DCL.Chat
         {
             chatChannelNameNameText.text = channelName;
             memberListChannelNameText.text = channelName;
+        }
+
+        public void SetCallButtonStatus(bool isActive)
+        {
+            callButton.gameObject.SetActive(isActive);
         }
 
         public void SetNearbyChannelImage()

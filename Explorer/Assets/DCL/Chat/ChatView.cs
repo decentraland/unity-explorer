@@ -263,7 +263,7 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
@@ -743,14 +743,16 @@ namespace DCL.Chat
         }
 #endregion
 
-        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
-            SetInputWithUserStateAsync(userState, isOtherUserConnected).Forget();
+
+            chatTitleBar.SetCallButtonStatus(isOtherUserConnected && currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
         }
 
-        private async UniTaskVoid SetInputWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
+        private async UniTaskVoid SetupViewWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
         {
             await UniTask.SwitchToMainThread();
 
