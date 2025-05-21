@@ -1,11 +1,11 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.WebRequests;
+using DCL.Settings.Settings;
+using DCL.Utilities;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -19,39 +19,37 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.ComponentModel;
 using System.Threading;
-using UnityEngine;
 using Utility;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class ChatConnectiveRoom : IActivatableConnectiveRoom
+    public class VoiceChatConnectiveRoom : IActivatableConnectiveRoom
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
-        private readonly IWebRequestController webRequests;
-        private readonly URLAddress adapterAddress;
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
+        private readonly ObjectProxy<VoiceChatSettingsAsset> settings;
 
         private CancellationTokenSource? cts;
-
+        private string connectionString = string.Empty;
         public bool Activated { get; private set; }
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
         public IConnectiveRoom.State CurrentState() => roomState.Value();
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
         public IRoom Room() => room;
 
-        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
+        public VoiceChatConnectiveRoom(ObjectProxy<VoiceChatSettingsAsset> settings)
         {
-            this.webRequests = webRequests;
-            this.adapterAddress = adapterAddress;
+            this.settings = settings;
             var hub = new ParticipantsHub();
 
             var videoStreams = new VideoStreams(hub);
@@ -76,6 +74,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             );
         }
 
+        public async UniTask SetConnectionStringAndActivateAsync(string connectionString)
+        {
+            this.connectionString = connectionString;
+            await DeactivateAsync();
+            await ActivateAsync();
+        }
+
         public async UniTask ActivateAsync()
         {
             if (Activated)
@@ -84,6 +89,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             }
 
             Activated = true;
+            connectionString = settings.StrictObject.ConnectionString;
             await this.StartIfNotAsync();
         }
 
@@ -107,10 +113,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public async UniTask<bool> StartAsync()
         {
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
-                throw new InvalidOperationException("Room is already running");
+                throw new WarningException("Room is already running");
 
             cts = cts.SafeRestart();
             attemptToConnectState.Set(AttemptToConnectState.None);
+
+            if (connectionString == string.Empty)
+            {
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - No connection string specified");
+                return false;
+            }
+
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
@@ -126,12 +139,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             roomState.Set(IConnectiveRoom.State.Stopping);
             await room.ResetRoomAsync(cts.Token);
             roomState.Set(IConnectiveRoom.State.Stopped);
+            connectionString = string.Empty;
         }
 
         private async UniTaskVoid RunAsync(CancellationToken ct)
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
+            //Disabled for now
             SendConnectionStatusAsync(ct).Forget();
 
             while (ct.IsCancellationRequested == false)
@@ -176,18 +191,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask CycleStepAsync(CancellationToken ct)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
-            {
-                string connectionString = await ConnectionStringAsync(ct);
                 await TryConnectToRoomAsync(connectionString, ct);
-            }
-        }
-
-        private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
-        {
-            string metadata = FixedMetadata.Default.ToJson();
-            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
-            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-            return response.adapter;
         }
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
@@ -209,26 +213,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             }
 
             return connectResult;
-        }
-
-        [Serializable]
-        private struct FixedMetadata
-        {
-            public static FixedMetadata Default = new ()
-            {
-                signer = "dcl:explorer",
-            };
-
-            public string signer;
-
-            public string ToJson() =>
-                JsonUtility.ToJson(this)!;
-        }
-
-        [Serializable]
-        private struct AdapterResponse
-        {
-            public string adapter;
         }
     }
 }

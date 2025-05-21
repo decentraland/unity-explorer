@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
+  - rid: 6340998280170438737
   references:
     version: 2
     RefIds:
@@ -723,6 +724,27 @@ MonoBehaviour:
       data:
         <spatialStateSettings>k__BackingField:
           m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 6340998280170438737
+      type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <VoiceChatSettings>k__BackingField:
+          m_AssetGUID: 88538076b054b4504b11b87773e7393f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <MicrophoneAudioFilter>k__BackingField:
+          m_AssetGUID: fa9a67059d8a204408ce435cc8827612
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <CombinedAudioSource>k__BackingField:
+          m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

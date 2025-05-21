@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
-using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using UnityEngine;
