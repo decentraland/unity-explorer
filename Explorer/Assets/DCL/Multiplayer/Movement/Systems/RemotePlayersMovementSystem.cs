@@ -210,7 +210,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
             transComp.Transform.position = intComp.Start.position;
 
-            // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
             return Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
         }
 
