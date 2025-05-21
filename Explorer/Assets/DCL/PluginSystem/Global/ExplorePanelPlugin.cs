@@ -40,6 +40,8 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
+using DCL.Communities.CommunitiesBrowser;
 using DCL.EventsApi;
 using DCL.Friends.UserBlocking;
 using DCL.Navmap.ScriptableObjects;
@@ -116,6 +118,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileChangesBus profileChangesBus;
 
         private readonly bool includeCameraReel;
+        private readonly bool includeCommunities;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -128,6 +131,7 @@ namespace DCL.PluginSystem.Global
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
         private ViewDependencies viewDependencies;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -173,11 +177,13 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
+            bool includeCommunities,
             IAppArgs appArgs, ViewDependencies viewDependencies,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
-            SceneLoadingLimit sceneLoadingLimit)
+            SceneLoadingLimit sceneLoadingLimit,
+            ICommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -223,12 +229,14 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
+            this.includeCommunities = includeCommunities;
             this.appArgs = appArgs;
             this.viewDependencies = viewDependencies;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public void Dispose()
@@ -369,11 +377,14 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 settings.StorageProgressBarText);
 
+            CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
+            var communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, communitiesDataProvider);
+
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
-                    dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+                    communitiesBrowserController, dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, includeCommunities, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);
