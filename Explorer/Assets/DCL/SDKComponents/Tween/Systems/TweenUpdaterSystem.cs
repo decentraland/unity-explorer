@@ -73,7 +73,7 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        private void UpdateTweenTransformSequence(Entity e, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove) return;
 
@@ -82,7 +82,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 if (pbTween.HasStartSyncedTimestamp && sdkTweenComponent.StartSyncedTimestamp > 0 && sdkTweenComponent.StartSyncedTimestamp != pbTween.StartSyncedTimestamp)
                 {
                     // check state
-                    Debug.Log($"VVV synced changed from {sdkTweenComponent.StartSyncedTimestamp} to {pbTween.StartSyncedTimestamp}");
+                    Debug.Log($"VVV synced changed for {e} from {sdkTweenComponent.StartSyncedTimestamp % 1000000} to {pbTween.StartSyncedTimestamp % 1000000}");
                 }
 
                 // else
