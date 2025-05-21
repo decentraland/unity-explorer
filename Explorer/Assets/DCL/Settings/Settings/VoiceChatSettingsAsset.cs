@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Settings.Settings
 {
@@ -17,5 +18,8 @@ namespace DCL.Settings.Settings
 
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
         public float HoldThresholdInSeconds = 0.5f;
+
+        [Tooltip("Used for Debug Purposes")]
+        public string ConnectionString;
     }
 }

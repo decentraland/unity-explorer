@@ -11,6 +11,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         IRoom IslandRoom();
         IGateKeeperSceneRoom SceneRoom();
         IRoom ChatRoom();
+        IRoom VoiceChatRoom();
 
         UniTask<bool> StartAsync();
         UniTask StopAsync();
