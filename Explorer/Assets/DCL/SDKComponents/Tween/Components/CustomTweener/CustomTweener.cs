@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            Debug.Log($"VVV {tweenModelCurrentTime}");
+            Debug.Log($"VVV DoTween start current time: {tweenModelCurrentTime}");
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 

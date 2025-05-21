@@ -19,7 +19,6 @@ using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
 namespace DCL.SDKComponents.Tween.Systems
@@ -33,41 +32,7 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private const float MS_TO_SEC = 1f/1000f;
 
-        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
-        {
-            [EfLinear] = Linear,
-            [EfEaseinsine] = InSine,
-            [EfEaseoutsine] = OutSine,
-            [EfEasesine] = InOutSine,
-            [EfEaseinquad] = InQuad,
-            [EfEaseoutquad] = OutQuad,
-            [EfEasequad] = InOutQuad,
-            [EfEaseinexpo] = InExpo,
-            [EfEaseoutexpo] = OutExpo,
-            [EfEaseexpo] = InOutExpo,
-            [EfEaseinelastic] = InElastic,
-            [EfEaseoutelastic] = OutElastic,
-            [EfEaseelastic] = InOutElastic,
-            [EfEaseinbounce] = InBounce,
-            [EfEaseoutbounce] = OutBounce,
-            [EfEasebounce] = InOutBounce,
-            [EfEaseincubic] = InCubic,
-            [EfEaseoutcubic] = OutCubic,
-            [EfEasecubic] = InOutCubic,
-            [EfEaseinquart] = InQuart,
-            [EfEaseoutquart] = OutQuart,
-            [EfEasequart] = InOutQuart,
-            [EfEaseinquint] = InQuint,
-            [EfEaseoutquint] = OutQuint,
-            [EfEasequint] = InOutQuint,
-            [EfEaseincirc] = InCirc,
-            [EfEaseoutcirc] = OutCirc,
-            [EfEasecirc] = InOutCirc,
-            [EfEaseinback] = InBack,
-            [EfEaseoutback] = OutBack,
-            [EfEaseback] = InOutBack,
-        };
-
+        private readonly World world;
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -77,6 +42,7 @@ namespace DCL.SDKComponents.Tween.Systems
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
             ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService) : base(world)
         {
+            this.world = world;
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
@@ -85,13 +51,20 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
+            CheckNEQuery(World);
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
         }
 
         [Query]
-        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        private void CheckNE(Entity e, ref PBNetworkEntity ne)
+        {
+            Debug.Log($"VVV exist {ne}");
+        }
+
+        [Query]
+        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
@@ -109,9 +82,10 @@ namespace DCL.SDKComponents.Tween.Systems
                 if (pbTween.HasStartSyncedTimestamp && sdkTweenComponent.StartSyncedTimestamp > 0 && sdkTweenComponent.StartSyncedTimestamp != pbTween.StartSyncedTimestamp)
                 {
                     // check state
-                    Debug.Log("VVV synced changed");
+                    Debug.Log($"VVV synced changed from {sdkTweenComponent.StartSyncedTimestamp} to {pbTween.StartSyncedTimestamp}");
                 }
-                else
+
+                // else
                 {
                     LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
                     SetupTween(ref sdkTweenComponent, in pbTween);
@@ -220,7 +194,7 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
-            Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
+            Ease ease = EasingFunctionsMap.TO_EASING_FUNCTION.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds);
