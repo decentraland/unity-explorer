@@ -26,7 +26,7 @@ namespace DCL.Communities.CommunitiesCard
             public int ThumbnailWidth;
         }
 
-        public event Action<Sections>? SectionChanged;
+        public event Action<Sections, bool>? SectionChanged;
 
         [field: Header("References")]
         [field: SerializeField] public Button CloseButton { get; private set; }
@@ -57,7 +57,7 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnEnable()
         {
-            ToggleSection(Sections.PHOTOS);
+            ToggleSection(Sections.PHOTOS, false);
         }
 
         public void SetLoadingState(bool isLoading)
@@ -68,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard
                 LoadingObject?.Hide();
         }
 
-        private void ToggleSection(Sections section)
+        private void ToggleSection(Sections section, bool wasManual = true)
         {
             PhotosSectionSelection.SetActive(section == Sections.PHOTOS);
             MembersSectionSelection.SetActive(section == Sections.MEMBERS);
@@ -77,7 +77,7 @@ namespace DCL.Communities.CommunitiesCard
             CameraReelGalleryConfigs.CameraReelGalleryView.transform.parent.gameObject.SetActive(section == Sections.PHOTOS);
             MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
 
-            SectionChanged?.Invoke(section);
+            SectionChanged?.Invoke(section, wasManual);
         }
     }
 }
