@@ -93,6 +93,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
+        private void ConfigureResultsGrid()
+        {
+            view.resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
+            view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
@@ -104,6 +110,15 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityThumbnail(currentMyCommunities[index].thumbnails[0]);
 
             return listItem;
+        }
+
+        private static LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
+        {
+            LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
+
+            // TODO (Santi): Implement this...
+
+            return gridItem;
         }
 
         private async UniTask LoadMyCommunitiesAsync(CancellationToken ct)
@@ -124,18 +139,6 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetMyCommunitiesAsLoading(false);
             view.myCommunitiesLoopList.SetListItemCount(userCommunitiesResponse.communities.Length, false);
             view.SetMyCommunitiesAsEmpty(userCommunitiesResponse.communities.Length == 0);
-        }
-
-        private void ConfigureResultsGrid()
-        {
-            view.resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
-            view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-        }
-
-        private static LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
-        {
-            LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            return gridItem;
         }
 
         private void LoadResults()
