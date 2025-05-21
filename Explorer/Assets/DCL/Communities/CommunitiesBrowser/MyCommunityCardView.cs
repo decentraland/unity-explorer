@@ -8,6 +8,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class MyCommunityCardView : MonoBehaviour
     {
         [field: SerializeField] internal TMP_Text communityTitle { get; private set; }
+        [field: SerializeField] internal GameObject userRoleContainer { get; private set; }
         [field: SerializeField] internal TMP_Text userRole { get; private set; }
         [field: SerializeField] internal ImageView communityThumbnail { get; private set; }
         [field: SerializeField] internal Sprite defaultCommunitySprite { get; private set; }
@@ -33,7 +34,10 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetTitle(string title) =>
             communityTitle.text = title;
 
-        public void SetUserRole(CommunityMemberRole role) =>
+        public void SetUserRole(CommunityMemberRole role)
+        {
+            userRoleContainer.SetActive(role != CommunityMemberRole.member);
             userRole.text = role.ToString();
+        }
     }
 }

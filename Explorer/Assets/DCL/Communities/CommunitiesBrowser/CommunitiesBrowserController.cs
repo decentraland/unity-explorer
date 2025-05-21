@@ -89,11 +89,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ConfigureMyCommunitiesList()
         {
-            view.myCommunitiesLoopList.InitListView(0, OnGetMyCommunitiesItemByIndex);
+            view.myCommunitiesLoopList.InitListView(0, SetupMyCommunityCardByIndex);
             view.myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private LoopListViewItem2 OnGetMyCommunitiesItemByIndex(LoopListView2 loopListView, int index)
+        private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
 
@@ -123,15 +123,16 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.SetMyCommunitiesAsLoading(false);
             view.myCommunitiesLoopList.SetListItemCount(userCommunitiesResponse.communities.Length, false);
+            view.SetMyCommunitiesAsEmpty(userCommunitiesResponse.communities.Length == 0);
         }
 
         private void ConfigureResultsGrid()
         {
-            view.resultLoopGrid.InitGridView(0, OnGetResultsItemByIndex);
+            view.resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
             view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private static LoopGridViewItem OnGetResultsItemByIndex(LoopGridView loopGridView, int index, int row, int column)
+        private static LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             return gridItem;
@@ -141,18 +142,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             view.resultLoopGrid.SetListItemCount(0, false);
 
-            /*List<CommunityData> requestCommunities = new List<CommunityData>();
-            for (var i = 1; i <= 20; i++)
-            {
-                requestCommunities.Add(new CommunityData
-                {
-                    id = i.ToString(),
-                    name = $"Result Community {i}",
-                    role = CommunityMemberRole.member,
-                });
-            }
-
-            view.resultLoopGrid.SetListItemCount(requestCommunities.Count, false);*/
+            // TODO (Santi): Implement this...
         }
     }
 }

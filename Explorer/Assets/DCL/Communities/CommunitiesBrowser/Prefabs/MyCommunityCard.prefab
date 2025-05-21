@@ -149,6 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <communityTitle>k__BackingField: {fileID: 666783682751815830}
+  <userRoleContainer>k__BackingField: {fileID: 6143891042784634557}
   <userRole>k__BackingField: {fileID: 1619217265223932041}
   <communityThumbnail>k__BackingField: {fileID: 5359017888257299776}
   <defaultCommunitySprite>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
@@ -187,7 +188,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 94, y: -19.5}
-  m_SizeDelta: {x: -94, y: 19}
+  m_SizeDelta: {x: -104, y: 20}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &6862407303701384592
 CanvasRenderer:
@@ -252,7 +253,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -262,7 +263,7 @@ MonoBehaviour:
   m_charWidthMaxAdj: 0
   m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
+  m_overflowMode: 1
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
@@ -563,11 +564,11 @@ RectTransform:
   - {fileID: 1964366036991827927}
   m_Father: {fileID: 1251707771264483775}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 80, y: 0}
-  m_Pivot: {x: 0, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 40, y: 0}
+  m_SizeDelta: {x: 80, y: 80}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8525910134596326781
 CanvasRenderer:
   m_ObjectHideFlags: 0

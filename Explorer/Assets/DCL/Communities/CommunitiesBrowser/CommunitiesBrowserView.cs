@@ -12,34 +12,40 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal Animator panelAnimator { get; private set; }
         [field: SerializeField] internal Animator headerAnimator { get; private set; }
 
-        [field: Header("Header")]
-        [field: SerializeField] internal DropdownView sortByDropdown { get; private set; }
+        [field: Header("Search")]
         [field: SerializeField] internal SearchBarView searchBar { get; private set; }
 
+        [field: Header("Creation Section")]
+        [field: SerializeField] internal Button createCommunityButton { get; private set; }
+
         [field: Header("My Communities Section")]
-        [field: SerializeField] internal Button viewAllMyCommunitiesButton { get; private set; }
-        [field: SerializeField] internal LoopListView2 myCommunitiesLoopList { get; private set; }
+        [field: SerializeField] internal GameObject myCommunitiesSection { get; private set; }
+        [field: SerializeField] internal GameObject myCommunitiesMainContainer { get; private set; }
+        [field: SerializeField] internal GameObject myCommunitiesEmptyContainer { get; private set; }
         [field: SerializeField] internal GameObject myCommunitiesLoadingSpinner { get; private set; }
+        [field: SerializeField] internal LoopListView2 myCommunitiesLoopList { get; private set; }
 
         [field: Header("Results Section")]
         [field: SerializeField] internal Button resultsBackButton { get; private set; }
         [field: SerializeField] internal TMP_Text resultsTitleText { get; private set; }
         [field: SerializeField] internal LoopGridView resultLoopGrid { get; private set; }
-        [field: SerializeField] internal GameObject resultsLoadingSpinner { get; private set; }
 
-        [field: Header("Creation Section")]
-        [field: SerializeField] internal Button createCommunityButton { get; private set; }
+        public void SetMyCommunitiesAsLoading(bool isLoading)
+        {
+            myCommunitiesLoadingSpinner.SetActive(isLoading);
+            myCommunitiesSection.SetActive(!isLoading);
+        }
+
+        public void SetMyCommunitiesAsEmpty(bool isEmpty)
+        {
+            myCommunitiesEmptyContainer.SetActive(isEmpty);
+            myCommunitiesMainContainer.SetActive(!isEmpty);
+        }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>
             resultsBackButton.gameObject.SetActive(isVisible);
 
         public void SetResultsTitleText(string text) =>
             resultsTitleText.text = text;
-
-        public void SetMyCommunitiesAsLoading(bool isLoading)
-        {
-            myCommunitiesLoopList.gameObject.SetActive(!isLoading);
-            myCommunitiesLoadingSpinner.SetActive(isLoading);
-        }
     }
 }

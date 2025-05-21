@@ -22,28 +22,33 @@ namespace DCL.Communities
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
+            bool isEmpty = UnityEngine.Random.Range(0, 2) == 0;
 
-            for (var i = 1; i <= elementsPerPage; i++)
+            if (!isEmpty)
             {
-                CommunityMemberRole roleToAdd = CommunityMemberRole.owner;
-                if (isOwner && isMember)
-                    roleToAdd = (CommunityMemberRole)UnityEngine.Random.Range(0, 3);
-                else
-                    roleToAdd = isOwner ? CommunityMemberRole.owner : CommunityMemberRole.member;
-
-                communities.Add(new GetUserCommunitiesResponse.CommunityData
+                for (var i = 1; i <= elementsPerPage; i++)
                 {
-                    id = i.ToString(),
-                    name = $"Community {i}",
-                    role = roleToAdd,
-                    thumbnails = new [] { "https://picsum.photos/128/128" },
-                });
+                    CommunityMemberRole roleToAdd;
+
+                    if (isOwner && isMember)
+                        roleToAdd = (CommunityMemberRole)UnityEngine.Random.Range(0, 3);
+                    else
+                        roleToAdd = isOwner ? CommunityMemberRole.owner : CommunityMemberRole.member;
+
+                    communities.Add(new GetUserCommunitiesResponse.CommunityData
+                    {
+                        id = i.ToString(),
+                        name = $"Community {i}",
+                        role = roleToAdd,
+                        thumbnails = new[] { "https://picsum.photos/128/128" },
+                    });
+                }
             }
 
             GetUserCommunitiesResponse result = new GetUserCommunitiesResponse
             {
                 communities = communities.ToArray(),
-                totalPages = 10,
+                totalPages = isEmpty ? 0 : 10,
             };
 
             await UniTask.Delay(1000, cancellationToken: ct);
