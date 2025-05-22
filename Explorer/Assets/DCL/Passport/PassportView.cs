@@ -107,6 +107,9 @@ namespace DCL.Passport
         public Button JumpInButton { get; private set; }
 
         [field: SerializeField]
+        public Button VoiceChatButton { get; private set; }
+
+        [field: SerializeField]
         public Button ChatButton { get; private set; }
 
         [field: Header("Context menu")]

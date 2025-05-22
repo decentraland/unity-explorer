@@ -30,7 +30,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking) : base(view, requestManager)
+            bool includeUserBlocking,
+            bool includeCall) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
@@ -40,7 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
             contextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
-                userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, null, BlockUserCtx).Item1;
+                userProfileContextMenuControlSettings, includeUserBlocking, includeCall, OpenProfilePassportCtx, null, CallFriendCtx, BlockUserCtx).Item1;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -56,6 +57,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OpenProfilePassportCtx() =>
             FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
+
+        private void CallFriendCtx() =>
+            FriendListSectionUtilities.CallFriend(contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);
 
         private void BlockUserCtx() =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);

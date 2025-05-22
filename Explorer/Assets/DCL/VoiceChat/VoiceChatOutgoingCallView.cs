@@ -1,0 +1,14 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DCL.VoiceChat
+{
+    public class VoiceChatOutgoingCallView : MonoBehaviour
+    {
+        [field: SerializeField]
+        public Button MicrophoneButton;
+
+        [field: SerializeField]
+        public Button HangUpButton;
+    }
+}
