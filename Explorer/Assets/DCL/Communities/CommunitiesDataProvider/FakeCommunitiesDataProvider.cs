@@ -25,7 +25,7 @@ namespace DCL.Communities
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(2, 13)
-                                                                                .Where(x => (isOwner && x.role == CommunityMemberRole.owner) || (isMember && x.role == CommunityMemberRole.member))
+                                                                                .Where(x => (isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member))
                                                                                 .ToList();
 
             var totalPages = (int)Math.Ceiling((double)filteredCommunities.Count / elementsPerPage);
@@ -101,8 +101,8 @@ namespace DCL.Communities
                         description = $"Test description for Community {i + 1}",
                         ownerId = string.Empty,
                         privacy = CommunityPrivacy.@public,
-                        role = i < communitiesAsOwner ? CommunityMemberRole.owner :
-                            i < communitiesAsOwner + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
+                        role = i < communitiesAsOwner ? CommunityMemberRole.Owner :
+                            i < communitiesAsOwner + communitiesAsMember ? CommunityMemberRole.Member : CommunityMemberRole.None,
                     });
                 }
             }

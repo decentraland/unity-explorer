@@ -36,7 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetUserRole(CommunityMemberRole role)
         {
-            userRoleContainer.SetActive(role != CommunityMemberRole.member);
+            userRoleContainer.SetActive(role != CommunityMemberRole.Member);
             userRole.text = role.ToString();
         }
     }
