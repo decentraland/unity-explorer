@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes
                 return results.Count;
             }
 
-            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS, out string? collectionsCsv))
             {
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                       .ToArray();
@@ -53,15 +53,26 @@ namespace DCL.AvatarRendering.Emotes
                 // NeedsBuilderAPISigning gets used at EcsEmoteProvider
                 results ??= new List<IEmote>();
                 var localBuffer = ListPool<IEmote>.Get();
+
                 for (var i = 0; i < collections.Length; i++)
                 {
-                    // localBuffer accumulates the loaded wearables
+                    // localBuffer accumulates the loaded emotes
                     await source.GetAsync(userId, ct, requestOptions, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
                             builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);
+                }
+
+                if (requestOptions.pageNum.HasValue && requestOptions.pageSize.HasValue)
+                {
+                    int pageIndex = requestOptions.pageNum.Value - 1;
+                    results.AddRange(localBuffer.Skip(pageIndex * requestOptions.pageSize.Value).Take(requestOptions.pageSize.Value));
+                }
+                else
+                {
+                    results.AddRange(localBuffer);
                 }
 
                 int count = localBuffer.Count;

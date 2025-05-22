@@ -39,7 +39,6 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention)
         {
-            // TODO: Is this configuration correct???
             if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
                 urlBuilder.Clear();

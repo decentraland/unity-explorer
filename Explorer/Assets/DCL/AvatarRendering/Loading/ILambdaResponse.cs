@@ -25,13 +25,13 @@ namespace DCL.AvatarRendering.Loading
 
     public interface IBuilderLambdaResponse<out TBuilderLambdaResponseElement>
     {
-        IReadOnlyList<TBuilderLambdaResponseElement> WearablesCollection { get; }
+        IReadOnlyList<TBuilderLambdaResponseElement> CollectionElements { get; }
     }
 
     public interface IBuilderLambdaResponseElement<out TElementDTO>
     {
         IReadOnlyDictionary<string, string> Contents { get; }
 
-        TElementDTO BuildWearableDTO(string contentDownloadUrl);
+        TElementDTO BuildElementDTO(string contentDownloadUrl);
     }
 }

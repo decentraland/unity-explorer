@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Emotes
             public List<BuilderEmoteMetadataDto> data;
 
             [JsonIgnore]
-            public IReadOnlyList<BuilderEmoteMetadataDto> WearablesCollection => data;
+            public IReadOnlyList<BuilderEmoteMetadataDto> CollectionElements => data;
         }
 
         [Serializable]
@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Emotes
             [JsonIgnore]
             public IReadOnlyDictionary<string, string> Contents => contents;
 
-            public BuilderEmoteDTO BuildWearableDTO(string contentDownloadUrl)
+            public BuilderEmoteDTO BuildElementDTO(string contentDownloadUrl)
             {
                 Content[] parsedContent = new Content[contents.Count];
 
