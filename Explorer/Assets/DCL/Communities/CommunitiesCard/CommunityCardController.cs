@@ -6,12 +6,10 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Utilities;
-using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.CommunitiesCard
@@ -26,7 +24,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
-        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -36,7 +33,6 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
-        private bool isCommunityOwner;
 
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -44,8 +40,7 @@ namespace DCL.Communities.CommunitiesCard
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
-            IWeb3IdentityCache web3IdentityCache)
+            ICommunitiesDataProvider communitiesDataProvider)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -54,13 +49,15 @@ namespace DCL.Communities.CommunitiesCard
             this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.web3IdentityCache = web3IdentityCache;
         }
 
         public override void Dispose()
         {
             if (viewInstance != null)
+            {
                 viewInstance.SectionChanged -= OnSectionChanged;
+                viewInstance.OpenWizard -= OpenCommunityWizard;
+            }
 
             photosSectionCancellationTokenSource.SafeCancelAndDispose();
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
@@ -73,6 +70,7 @@ namespace DCL.Communities.CommunitiesCard
         protected override void OnViewInstantiated()
         {
             viewInstance!.SectionChanged += OnSectionChanged;
+            viewInstance.OpenWizard += OpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.CameraReelGalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -94,11 +92,10 @@ namespace DCL.Communities.CommunitiesCard
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
                 communityData = response.community;
-                isCommunityOwner = web3IdentityCache.EnsuredIdentity().Address.Equals(communityData.ownerId);
 
                 viewInstance.SetLoadingState(false);
 
-                viewInstance.ConfigureCommunity(communityData, isCommunityOwner);
+                viewInstance.ConfigureCommunity(communityData);
 
                 viewInstance.ToggleUIListeners(true);
             }
@@ -130,12 +127,17 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersListAsync(communityData.id, isCommunityOwner, membersSectionCancellationTokenSource.Token);
+                    membersListController!.ShowMembersListAsync(communityData.id, communityData.role == CommunityMemberRole.owner, membersSectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
                     break;
             }
+        }
+
+        private void OpenCommunityWizard()
+        {
+            throw new NotImplementedException();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

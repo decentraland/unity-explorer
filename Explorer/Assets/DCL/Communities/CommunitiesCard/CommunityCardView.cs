@@ -30,11 +30,17 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public event Action<Sections, bool>? SectionChanged;
+        public event Action? OpenWizard;
 
         [field: Header("References")]
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
         [field: SerializeField] public SectionLoadingView LoadingObject { get; private set; }
+
+        [field: Header("Community interactions")]
+        [field: SerializeField] public Button OpenWizardButton { get; private set; }
+        [field: SerializeField] public Button JoinedButton { get; private set; }
+        [field: SerializeField] public Button JoinButton { get; private set; }
 
         [field: Header("Community data references")]
         [field: SerializeField] public TMP_Text CommunityName { get; private set; }
@@ -65,6 +71,11 @@ namespace DCL.Communities.CommunitiesCard
                        >= 1_000 => (number / 1_000D).ToString("0.#") + "k",
                        _ => number.ToString()
                    };
+        }
+
+        private void Awake()
+        {
+            OpenWizardButton.onClick.AddListener(() => OpenWizard?.Invoke());
         }
 
         public void ToggleUIListeners(bool active)
@@ -105,11 +116,16 @@ namespace DCL.Communities.CommunitiesCard
             SectionChanged?.Invoke(section, wasManual);
         }
 
-        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, bool isCommunityOwner)
+        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData)
         {
             CommunityName.text = communityData.name;
             CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, NumberToCompactString(communityData.membersCount));
             CommunityDescription.text = communityData.description;
+
+            JoinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member or CommunityMemberRole.moderator);
+            OpenWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner);
+            JoinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none);
+
         }
     }
 }

@@ -64,8 +64,7 @@ namespace DCL.PluginSystem.Global
                 cameraReelScreenshotsStorage,
                 viewDependencies,
                 friendServiceProxy,
-                communitiesDataProvider,
-                web3IdentityCache));
+                communitiesDataProvider));
 
             Test().Forget();
         }
