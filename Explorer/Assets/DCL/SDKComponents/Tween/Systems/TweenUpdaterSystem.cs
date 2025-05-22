@@ -41,42 +41,64 @@ namespace DCL.SDKComponents.Tween.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly INtpTimeService ntpTimeService;
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
-        private readonly World globalWorld;
+
+        private CharacterPlatformComponent platformComponent;
+        private Collider currentPlatformCollider;
 
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
-            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService, IEntityCollidersGlobalCache collidersGlobalCache
-            ,World globalWorld) : base(world)
+            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService, IEntityCollidersGlobalCache collidersGlobalCache,
+            World globalWorld) : base(world)
         {
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
             this.ntpTimeService = ntpTimeService;
             this.collidersGlobalCache = collidersGlobalCache;
-            this.globalWorld = globalWorld;
+
+            SingleInstanceEntity player = globalWorld.CachePlayer();
+            platformComponent = globalWorld.Get<CharacterPlatformComponent>(player);
         }
 
         protected override void Update(float t)
         {
-            SingleInstanceEntity player = globalWorld.CachePlayer();
-
-            if (globalWorld.TryGet<CharacterPlatformComponent>(player, out var platformComponent) &&
-                platformComponent.PlatformCollider != null &&
-                collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo)
-                )
+            if (platformComponent.PlatformCollider == null)
             {
-                Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.EntityNumber}");
+                platformComponent.ColliderSceneEntityInfo = null;
+                platformComponent.ColliderNetworkEntityId = 0;
+                platformComponent.ColliderNetworkId = 0;
+            }
+            else if (currentPlatformCollider != platformComponent.PlatformCollider)
+            {
+                currentPlatformCollider = platformComponent.PlatformCollider;
+
+                if(collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
+                    platformComponent.ColliderSceneEntityInfo = sceneEntityInfo;
+                else
+                    platformComponent.ColliderSceneEntityInfo = null;
+
+                // Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id}");
             }
 
-            CheckNEQuery(World);
+            if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
+                CheckNEQuery(World);
+
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
         }
 
         [Query]
-        private void CheckNE(Entity e, ref PBNetworkEntity ne)
+        private void CheckNE(in Entity e, ref PBNetworkEntity ne)
         {
             Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
+
+            if (platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
+            {
+                platformComponent.ColliderNetworkEntityId = ne.EntityId;
+                platformComponent.ColliderNetworkId = ne.NetworkId;
+                Debug.Log($"VVV Networking Platform:  {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id} {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.SDKEntity.Id}");
+                Debug.Log($"VVV Networking Entity: {platformComponent.ColliderNetworkEntityId} {platformComponent.ColliderNetworkId}");
+            }
         }
 
         [Query]

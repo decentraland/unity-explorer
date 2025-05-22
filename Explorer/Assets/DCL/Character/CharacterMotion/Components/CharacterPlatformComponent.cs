@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.Interaction.Utility;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
@@ -16,5 +17,9 @@ namespace DCL.CharacterMotion.Components
         // If the character moves, we update these local positions to save the new relative position
         public Vector3 LastAvatarRelativePosition;
         public Vector3 LastAvatarRelativeRotation;
+
+        public GlobalColliderSceneEntityInfo? ColliderSceneEntityInfo;
+        public ulong? ColliderNetworkEntityId;
+        public ulong? ColliderNetworkId;
     }
 }
