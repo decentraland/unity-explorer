@@ -131,7 +131,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 15, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 50, ct);
 
             foreach (CommunityData community in userCommunitiesResponse.communities)
                 currentMyCommunities.Add(community);

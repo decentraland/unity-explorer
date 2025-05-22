@@ -5,7 +5,8 @@ namespace DCL.Communities
     {
         member,
         moderator,
-        owner
+        owner,
+        none,
     }
 }
 

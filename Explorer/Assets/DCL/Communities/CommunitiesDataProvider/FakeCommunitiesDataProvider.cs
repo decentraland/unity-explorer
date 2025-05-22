@@ -4,6 +4,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 
@@ -11,6 +12,8 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
+        private bool shouldReturnEmpty = false;
+
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource)
         {
 
@@ -21,37 +24,26 @@ namespace DCL.Communities
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
-            bool isEmpty = UnityEngine.Random.Range(0, 2) == 0;
+            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(2, 13)
+                                                                                .Where(x => (isOwner && x.role == CommunityMemberRole.owner) || (isMember && x.role == CommunityMemberRole.member))
+                                                                                .ToList();
 
-            if (!isEmpty)
+            var totalPages = (int)Math.Ceiling((double)filteredCommunities.Count / elementsPerPage);
+
+            List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();
+            for (var i = 0; i < filteredCommunities.Count; i++)
             {
-                for (var i = 1; i <= elementsPerPage; i++)
-                {
-                    CommunityMemberRole roleToAdd;
-
-                    if (isOwner && isMember)
-                        roleToAdd = (CommunityMemberRole)UnityEngine.Random.Range(0, 3);
-                    else
-                        roleToAdd = isOwner ? CommunityMemberRole.owner : CommunityMemberRole.member;
-
-                    communities.Add(new GetUserCommunitiesResponse.CommunityData
-                    {
-                        id = i.ToString(),
-                        name = $"Community {i}",
-                        role = roleToAdd,
-                        thumbnails = new[] { "https://picsum.photos/128/128" },
-                    });
-                }
+                if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
+                    paginatedCommunities.Add(filteredCommunities[i]);
             }
 
             GetUserCommunitiesResponse result = new GetUserCommunitiesResponse
             {
-                communities = communities.ToArray(),
-                totalPages = isEmpty ? 0 : 10,
+                communities = paginatedCommunities.ToArray(),
+                totalPages = totalPages,
             };
 
-            await UniTask.Delay(1000, cancellationToken: ct);
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 3000), cancellationToken: ct);
 
             return result;
         }
@@ -92,5 +84,31 @@ namespace DCL.Communities
 
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
+
+        private List<GetUserCommunitiesResponse.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsMember)
+        {
+            List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
+
+            if (!shouldReturnEmpty)
+            {
+                for (var i = 0; i < 100; i++)
+                {
+                    communities.Add(new GetUserCommunitiesResponse.CommunityData
+                    {
+                        id = (i + 1).ToString(),
+                        thumbnails = new[] { "https://picsum.photos/128/128" },
+                        name = $"Community {i + 1}",
+                        description = $"Test description for Community {i + 1}",
+                        ownerId = string.Empty,
+                        privacy = CommunityPrivacy.@public,
+                        role = i < communitiesAsOwner ? CommunityMemberRole.owner :
+                            i < communitiesAsOwner + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
+                    });
+                }
+            }
+
+            shouldReturnEmpty = !shouldReturnEmpty;
+            return communities;
+        }
     }
 }
