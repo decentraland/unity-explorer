@@ -18,8 +18,7 @@ namespace DCL.CharacterMotion.Platforms
                 {
                     float angleDifference = Quaternion.Angle(platformComponent.LastPlatformRotation.Value, currentPlatformRotation);
 
-                    if (angleDifference > Mathf.Epsilon)
-                        platformComponent.IsRotatingPlatform = true;
+                    platformComponent.IsRotatingPlatform = angleDifference > Mathf.Epsilon;
                 }
 
                 platformComponent.LastPlatformRotation = currentPlatformRotation;
