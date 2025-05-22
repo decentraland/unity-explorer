@@ -10,8 +10,25 @@ namespace DCL.CharacterMotion.Platforms
         public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 forward)
         {
             if (platformComponent.CurrentPlatform != null)
-                platformComponent.LastAvatarRelativeRotation =
-                    platformComponent.CurrentPlatform.transform.InverseTransformDirection(forward);
+            {
+                Transform transform = platformComponent.CurrentPlatform.transform;
+                var currentPlatformRotation = transform.rotation;
+
+                if (platformComponent.LastPlatformRotation != null)
+                {
+                    float angleDifference = Quaternion.Angle(platformComponent.LastPlatformRotation.Value, currentPlatformRotation);
+
+                    platformComponent.IsRotatingPlatform = angleDifference > Mathf.Epsilon;
+                }
+
+                platformComponent.LastPlatformRotation = currentPlatformRotation;
+                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.transform.InverseTransformDirection(forward);
+            }
+            else
+            {
+                platformComponent.LastPlatformRotation = null;
+                platformComponent.IsRotatingPlatform = false;
+            }
         }
     }
 }

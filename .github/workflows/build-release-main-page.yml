@@ -43,8 +43,12 @@ jobs:
       - name: Apply tag to branch
         run: |
           TAG=${{ needs.get-info.outputs.tag_version }}
-          git tag $TAG
-          git push origin $TAG
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping tag creation."
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
 
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
