@@ -1187,6 +1187,7 @@ GameObject:
   - component: {fileID: 257888792820705350}
   - component: {fileID: 8865448273156285983}
   - component: {fileID: 1909907482813293170}
+  - component: {fileID: 7295036619713631873}
   m_Layer: 5
   m_Name: Joined
   m_TagString: Untagged
@@ -1366,6 +1367,21 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 1
           m_CallState: 1
+--- !u!114 &7295036619713631873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2954701450153354126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8865448273156285983}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &2964399526342758766
 GameObject:
   m_ObjectHideFlags: 0
@@ -2004,6 +2020,7 @@ GameObject:
   - component: {fileID: 5526690200129722290}
   - component: {fileID: 4525027396040856805}
   - component: {fileID: 8727945829379734659}
+  - component: {fileID: 4086236099716498049}
   m_Layer: 5
   m_Name: Community members
   m_TagString: Untagged
@@ -2199,6 +2216,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4086236099716498049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3534906006135092492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8727945829379734659}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &3635518331698186406
 GameObject:
   m_ObjectHideFlags: 0
@@ -4963,6 +4995,7 @@ GameObject:
   - component: {fileID: 8722647929843395311}
   - component: {fileID: 8180687553021703787}
   - component: {fileID: 1251281582169058030}
+  - component: {fileID: 2671062729255389467}
   m_Layer: 5
   m_Name: Join
   m_TagString: Untagged
@@ -5072,6 +5105,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2671062729255389467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8794232977265915981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 1251281582169058030}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &9192587969797587560
 GameObject:
   m_ObjectHideFlags: 0
