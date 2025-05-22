@@ -72,6 +72,12 @@ namespace DCL.Diagnostics
 
             container.ReportHubLogger = reportHubInstance;
             container.Sentry = sentryReportHandler;
+            
+            // Setup testing
+            var loggerTest = new GameObject("_LoggerTests");
+            var loggerTestController = loggerTest.AddComponent<LoggerTesting>();
+            loggerTestController.Initialize(container.ReportHubLogger);
+            
             return container;
         }
 
