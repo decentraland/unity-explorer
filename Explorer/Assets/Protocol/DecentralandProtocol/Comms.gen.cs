@@ -47,33 +47,37 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "cG9zaXRpb25feBgDIAEoAhISCgpwb3NpdGlvbl95GAQgASgCEhIKCnBvc2l0",
             "aW9uX3oYBSABKAISEgoKcm90YXRpb25feBgGIAEoAhISCgpyb3RhdGlvbl95",
             "GAcgASgCEhIKCnJvdGF0aW9uX3oYCCABKAISEgoKcm90YXRpb25fdxgJIAEo",
-            "AiLfAgoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
+            "AiL/AwoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
             "X3gYAiABKAISEgoKcG9zaXRpb25feRgDIAEoAhISCgpwb3NpdGlvbl96GAQg",
             "ASgCEhIKCnZlbG9jaXR5X3gYBSABKAISEgoKdmVsb2NpdHlfeRgGIAEoAhIS",
             "Cgp2ZWxvY2l0eV96GAcgASgCEhwKFG1vdmVtZW50X2JsZW5kX3ZhbHVlGAgg",
             "ASgCEhkKEXNsaWRlX2JsZW5kX3ZhbHVlGAkgASgCEhMKC2lzX2dyb3VuZGVk",
             "GAogASgIEhIKCmlzX2p1bXBpbmcYCyABKAgSFAoMaXNfbG9uZ19qdW1wGAwg",
             "ASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5nGA4gASgI",
-            "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAiJCChJN",
-            "b3ZlbWVudENvbXByZXNzZWQSFQoNdGVtcG9yYWxfZGF0YRgBIAEoBRIVCg1t",
-            "b3ZlbWVudF9kYXRhGAIgASgDIjIKC1BsYXllckVtb3RlEhYKDmluY3JlbWVu",
-            "dGFsX2lkGAEgASgNEgsKA3VybhgCIAEoCSI1CgpTY2VuZUVtb3RlEhcKD3Nj",
-            "ZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UYAiABKAkiMQoWQW5ub3Vu",
-            "Y2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24YASABKA0iOgoO",
-            "UHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9wcm9maWxlX3Zl",
-            "cnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNlcmlhbGl6ZWRf",
-            "cHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSIqCgRDaGF0Eg8KB21l",
-            "c3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBIicKBVNjZW5lEhAKCHNj",
-            "ZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcKD2VuY29k",
-            "ZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2RlYxgDIAEo",
-            "DjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2ljZS5Wb2lj",
-            "ZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZwcm90bzM="));
+            "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhJTCg5u",
+            "ZXR3b3JrX2VudGl0eRgRIAEoCzI2LmRlY2VudHJhbGFuZC5rZXJuZWwuY29t",
+            "bXMucmZjNC5Nb3ZlbWVudC5OZXR3b3JrRW50aXR5SACIAQEaNgoNTmV0d29y",
+            "a0VudGl0eRIRCgllbnRpdHlfaWQYASABKA0SEgoKbmV0d29ya19pZBgCIAEo",
+            "BEIRCg9fbmV0d29ya19lbnRpdHkiQgoSTW92ZW1lbnRDb21wcmVzc2VkEhUK",
+            "DXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1lbnRfZGF0YRgCIAEoAyIy",
+            "CgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgBIAEoDRILCgN1cm4Y",
+            "AiABKAkiNQoKU2NlbmVFbW90ZRIXCg9zY2VuZV9lbnRpdHlfaWQYASABKAkS",
+            "DgoGc291cmNlGAIgASgJIjEKFkFubm91bmNlUHJvZmlsZVZlcnNpb24SFwoP",
+            "cHJvZmlsZV92ZXJzaW9uGAEgASgNIjoKDlByb2ZpbGVSZXF1ZXN0Eg8KB2Fk",
+            "ZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92ZXJzaW9uGAMgASgNIj8KD1Byb2Zp",
+            "bGVSZXNwb25zZRIaChJzZXJpYWxpemVkX3Byb2ZpbGUYASABKAkSEAoIYmFz",
+            "ZV91cmwYAiABKAkiKgoEQ2hhdBIPCgdtZXNzYWdlGAEgASgJEhEKCXRpbWVz",
+            "dGFtcBgCIAEoASInCgVTY2VuZRIQCghzY2VuZV9pZBgBIAEoCRIMCgRkYXRh",
+            "GAIgASgMIosBCgVWb2ljZRIXCg9lbmNvZGVkX3NhbXBsZXMYASABKAwSDQoF",
+            "aW5kZXgYAiABKA0SPwoFY29kZWMYAyABKA4yMC5kZWNlbnRyYWxhbmQua2Vy",
+            "bmVsLmNvbW1zLnJmYzQuVm9pY2UuVm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVj",
+            "EgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "NetworkEntity" }, new[]{ "NetworkEntity" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity), global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity.Parser, new[]{ "EntityId", "NetworkId" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
@@ -1395,6 +1399,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       isFalling_ = other.isFalling_;
       isStunned_ = other.isStunned_;
       rotationY_ = other.rotationY_;
+      networkEntity_ = other.networkEntity_ != null ? other.networkEntity_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1608,6 +1613,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "network_entity" field.</summary>
+    public const int NetworkEntityFieldNumber = 17;
+    private global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity networkEntity_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity NetworkEntity {
+      get { return networkEntity_; }
+      set {
+        networkEntity_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1639,6 +1656,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsFalling != other.IsFalling) return false;
       if (IsStunned != other.IsStunned) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RotationY, other.RotationY)) return false;
+      if (!object.Equals(NetworkEntity, other.NetworkEntity)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1662,6 +1680,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsFalling != false) hash ^= IsFalling.GetHashCode();
       if (IsStunned != false) hash ^= IsStunned.GetHashCode();
       if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
+      if (networkEntity_ != null) hash ^= NetworkEntity.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1744,6 +1763,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(133, 1);
         output.WriteFloat(RotationY);
       }
+      if (networkEntity_ != null) {
+        output.WriteRawTag(138, 1);
+        output.WriteMessage(NetworkEntity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1818,6 +1841,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(133, 1);
         output.WriteFloat(RotationY);
       }
+      if (networkEntity_ != null) {
+        output.WriteRawTag(138, 1);
+        output.WriteMessage(NetworkEntity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1875,6 +1902,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (RotationY != 0F) {
         size += 2 + 4;
+      }
+      if (networkEntity_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(NetworkEntity);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1935,6 +1965,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.RotationY != 0F) {
         RotationY = other.RotationY;
+      }
+      if (other.networkEntity_ != null) {
+        if (networkEntity_ == null) {
+          NetworkEntity = new global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity();
+        }
+        NetworkEntity.MergeFrom(other.NetworkEntity);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2013,6 +2049,13 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 133: {
             RotationY = input.ReadFloat();
+            break;
+          }
+          case 138: {
+            if (networkEntity_ == null) {
+              NetworkEntity = new global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity();
+            }
+            input.ReadMessage(NetworkEntity);
             break;
           }
         }
@@ -2094,10 +2137,251 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             RotationY = input.ReadFloat();
             break;
           }
+          case 138: {
+            if (networkEntity_ == null) {
+              NetworkEntity = new global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity();
+            }
+            input.ReadMessage(NetworkEntity);
+            break;
+          }
         }
       }
     }
     #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the Movement message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public sealed partial class NetworkEntity : pb::IMessage<NetworkEntity>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<NetworkEntity> _parser = new pb::MessageParser<NetworkEntity>(() => new NetworkEntity());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<NetworkEntity> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.Kernel.Comms.Rfc4.Movement.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public NetworkEntity() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public NetworkEntity(NetworkEntity other) : this() {
+          entityId_ = other.entityId_;
+          networkId_ = other.networkId_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public NetworkEntity Clone() {
+          return new NetworkEntity(this);
+        }
+
+        /// <summary>Field number for the "entity_id" field.</summary>
+        public const int EntityIdFieldNumber = 1;
+        private uint entityId_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public uint EntityId {
+          get { return entityId_; }
+          set {
+            entityId_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "network_id" field.</summary>
+        public const int NetworkIdFieldNumber = 2;
+        private ulong networkId_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ulong NetworkId {
+          get { return networkId_; }
+          set {
+            networkId_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as NetworkEntity);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(NetworkEntity other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (EntityId != other.EntityId) return false;
+          if (NetworkId != other.NetworkId) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (EntityId != 0) hash ^= EntityId.GetHashCode();
+          if (NetworkId != 0UL) hash ^= NetworkId.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (EntityId != 0) {
+            output.WriteRawTag(8);
+            output.WriteUInt32(EntityId);
+          }
+          if (NetworkId != 0UL) {
+            output.WriteRawTag(16);
+            output.WriteUInt64(NetworkId);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (EntityId != 0) {
+            output.WriteRawTag(8);
+            output.WriteUInt32(EntityId);
+          }
+          if (NetworkId != 0UL) {
+            output.WriteRawTag(16);
+            output.WriteUInt64(NetworkId);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (EntityId != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeUInt32Size(EntityId);
+          }
+          if (NetworkId != 0UL) {
+            size += 1 + pb::CodedOutputStream.ComputeUInt64Size(NetworkId);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(NetworkEntity other) {
+          if (other == null) {
+            return;
+          }
+          if (other.EntityId != 0) {
+            EntityId = other.EntityId;
+          }
+          if (other.NetworkId != 0UL) {
+            NetworkId = other.NetworkId;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 8: {
+                EntityId = input.ReadUInt32();
+                break;
+              }
+              case 16: {
+                NetworkId = input.ReadUInt64();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 8: {
+                EntityId = input.ReadUInt32();
+                break;
+              }
+              case 16: {
+                NetworkId = input.ReadUInt64();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
 
   }
 
