@@ -10,6 +10,7 @@ namespace DCL.Communities.CommunitiesCard.Members
     public class MembersListView : MonoBehaviour
     {
         [field: SerializeField] public LoopListView2 LoopList { get; private set; }
+        [field: SerializeField] public ScrollRect LoopListScrollRect { get; private set; }
         [field: SerializeField] public CommunityMemberListContextMenuConfiguration ContextMenuSettings { get; private set; }
         [field: SerializeField] public RectTransform SectionButtons { get; private set; }
         [field: SerializeField] public RectTransform ScrollViewRect { get; private set; }
@@ -21,9 +22,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         private float scrollViewHeight;
         private MemberListSections currentSection;
 
-        private void Awake()
+        private void Start()
         {
-            LoopList.ScrollRect.SetScrollSensitivityBasedOnPlatform();
+            LoopListScrollRect.SetScrollSensitivityBasedOnPlatform();
             scrollViewHeight = SectionButtons.sizeDelta.y;
             scrollViewMaxHeight = scrollViewHeight + SectionButtons.sizeDelta.y;
 

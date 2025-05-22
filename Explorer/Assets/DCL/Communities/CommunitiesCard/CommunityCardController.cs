@@ -6,6 +6,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -33,13 +35,17 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource placesSectionCancellationTokenSource = new ();
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
 
+        private GetCommunityResponse.CommunityData communityData;
+        private bool isCommunityOwner;
+
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider)
+            ICommunitiesDataProvider communitiesDataProvider,
+            IWeb3IdentityCache web3IdentityCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -48,6 +54,7 @@ namespace DCL.Communities.CommunitiesCard
             this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public override void Dispose()
@@ -84,9 +91,14 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
                 viewInstance!.SetLoadingState(true);
-                //Fetch community data
-                await UniTask.Delay(5_000, cancellationToken: ct);
+
+                GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
+                communityData = response.community;
+                isCommunityOwner = web3IdentityCache.EnsuredIdentity().Address.Equals(communityData.ownerId);
+
                 viewInstance!.SetLoadingState(false);
+
+                viewInstance!.ToggleUIListeners(true);
             }
         }
 
@@ -96,6 +108,7 @@ namespace DCL.Communities.CommunitiesCard
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
             loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
+            viewInstance!.ToggleUIListeners(false);
 
             membersListController?.Reset();
         }
@@ -111,11 +124,11 @@ namespace DCL.Communities.CommunitiesCard
                     if (wasManual) return;
 
                     photosSectionCancellationTokenSource = photosSectionCancellationTokenSource.SafeRestart();
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(inputData.CommunityId, photosSectionCancellationTokenSource.Token).Forget();
+                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityData.places, photosSectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersListAsync(inputData.CommunityId, membersSectionCancellationTokenSource.Token);
+                    membersListController!.ShowMembersListAsync(communityData.id, isCommunityOwner, membersSectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();

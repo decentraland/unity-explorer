@@ -20,7 +20,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         UniTask<CameraReelResponses> GetScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
         UniTask<CameraReelResponsesCompact> GetCompactScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
         UniTask<CameraReelResponsesCompact> GetCompactPlaceScreenshotGalleryAsync(string placeId, int limit, int offset, CancellationToken ct = default);
-        UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotGalleryAsync(string communityId, int limit, int offset, CancellationToken ct = default);
+        UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotGalleryAsync(string[] placeIds, int limit, int offset, CancellationToken ct = default);
         UniTask<CameraReelResponsesCompact> UnsignedGetCompactScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
 
         UniTask<CameraReelStorageStatus> DeleteScreenshotAsync(string uuid, CancellationToken ct = default);

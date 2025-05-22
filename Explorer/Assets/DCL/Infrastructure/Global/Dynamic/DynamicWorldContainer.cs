@@ -954,7 +954,8 @@ namespace Global.Dynamic
                     cameraReelScreenshotsStorage,
                     viewDependencies,
                     friendServiceProxy,
-                    communitiesDataProvider));
+                    communitiesDataProvider,
+                    identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

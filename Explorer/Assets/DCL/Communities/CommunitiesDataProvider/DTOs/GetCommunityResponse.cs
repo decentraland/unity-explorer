@@ -19,7 +19,7 @@ namespace DCL.Communities
             public string[] places;
         }
 
-        public CommunityData[] community;
+        public CommunityData community;
     }
 }
 

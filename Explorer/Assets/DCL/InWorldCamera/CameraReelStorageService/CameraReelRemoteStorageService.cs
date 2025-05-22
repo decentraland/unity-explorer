@@ -45,9 +45,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return new CameraReelStorageStatus(response.currentImages, response.maxImages);
         }
 
-        public async UniTask<CameraReelStorageStatus> GetCommunityGalleryStorageInfoAsync(string communtiyId, CancellationToken ct = default)
+        public async UniTask<CameraReelStorageStatus> GetCommunityGalleryStorageInfoAsync(string communityId, CancellationToken ct = default)
         {
-            CameraReelResponsesCompact response = await imagesMetadataDatabase.GetCompactCommunityScreenshotsAsync(communtiyId, 0, 0, ct);
+            CameraReelResponsesCompact response = await imagesMetadataDatabase.GetCompactCommunityScreenshotsAsync(Array.Empty<string>(), 0, 0, ct);
 
             return new CameraReelStorageStatus(response.currentImages, response.maxImages);
         }
@@ -62,8 +62,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask<CameraReelResponsesCompact> GetCompactPlaceScreenshotGalleryAsync(string placeId, int limit, int offset, CancellationToken ct = default) =>
             await imagesMetadataDatabase.GetCompactPlaceScreenshotsAsync(placeId, limit, offset, ct);
 
-        public async UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotGalleryAsync(string communityId, int limit, int offset, CancellationToken ct = default) =>
-            await imagesMetadataDatabase.GetCompactCommunityScreenshotsAsync(communityId, limit, offset, ct);
+        public async UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotGalleryAsync(string[] placeIds, int limit, int offset, CancellationToken ct = default) =>
+            await imagesMetadataDatabase.GetCompactCommunityScreenshotsAsync(placeIds, limit, offset, ct);
 
         public async UniTask<CameraReelResponsesCompact> UnsignedGetCompactScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct) =>
             await imagesMetadataDatabase.UnsignedGetCompactScreenshotsAsync(userAddress, limit, offset, ct);

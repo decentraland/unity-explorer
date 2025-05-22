@@ -17,7 +17,20 @@ namespace DCL.Communities
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            new ()
+            {
+                community = new GetCommunityResponse.CommunityData
+                {
+                    id = communityId,
+                    thumbnails = new string[] { "https://uchi.imgix.net/properties/anime2.png?crop=focalpoint&domain=uchi.imgix.net&fit=crop&fm=pjpg&fp-x=0.5&fp-y=0.5&h=558&ixlib=php-3.3.1&q=82&usm=20&w=992" },
+                    name = "Fake Community",
+                    description = "This is a fake community for testing purposes.",
+                    ownerId = "0x31d4f4dd8615ec45bbb6330da69f60032aca219e",
+                    privacy = CommunityPrivacy.@public,
+                    role = CommunityMemberRole.owner,
+                    places = new string[] { "land1", "land2" }
+                }
+            };
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();

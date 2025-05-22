@@ -45,6 +45,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private string lastCommunityId = string.Empty;
         private CancellationToken ct;
         private bool isFetching;
+        private bool isCommunityOwner;
         private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
@@ -263,12 +264,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             sectionsFetchData[currentSection].totalToFetch = response.totalPages * PAGE_SIZE;
         }
 
-        public void ShowMembersListAsync(string communityId, CancellationToken cancellationToken)
+        public void ShowMembersListAsync(string communityId, bool communityOwner, CancellationToken cancellationToken)
         {
             if (lastCommunityId == null || lastCommunityId.Equals(communityId)) return;
 
             ct = cancellationToken;
             lastCommunityId = communityId;
+            isCommunityOwner = communityOwner;
+            // view.SetSectionButtonsActive(isCommunityOwner);
             panelLifecycleTask = new UniTaskCompletionSource();
 
             FetchNewDataAsync().Forget();

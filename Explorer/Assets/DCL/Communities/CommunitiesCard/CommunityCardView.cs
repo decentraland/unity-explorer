@@ -48,16 +48,22 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
 
-        private void Awake()
+        public void ToggleUIListeners(bool active)
         {
-            PhotosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
-            MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-            PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
-        }
+            if (active)
+            {
+                PhotosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
+                MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
+                PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
 
-        private void OnEnable()
-        {
-            ToggleSection(Sections.PHOTOS, false);
+                ToggleSection(Sections.PHOTOS, false);
+            }
+            else
+            {
+                PhotosButton.onClick.RemoveAllListeners();
+                MembersButton.onClick.RemoveAllListeners();
+                PlacesButton.onClick.RemoveAllListeners();
+            }
         }
 
         public void SetLoadingState(bool isLoading)

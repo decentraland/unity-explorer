@@ -125,17 +125,17 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
-        public async UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotsAsync(string communityId, int limit, int offset, CancellationToken ct)
+        public async UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotsAsync(string[] placeIds, int limit, int offset, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(communityDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(communityId))
                                        .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
                                        .Build();
+            //TODO: Add placeIds to the request body
 
             urlBuilder.Clear();
 
             CameraReelResponsesCompact responseData = await webRequestController
-                                                           .SignedFetchGetAsync(url, string.Empty, ct)
+                                                           .SignedFetchPostAsync(url,  string.Empty, ct)
                                                            .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
 
             return responseData;
