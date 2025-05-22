@@ -595,7 +595,6 @@ namespace DCL.Chat
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
             viewInstance!.SetupViewWithUserState(state);
-
         }
 
         private void OnUserBlockedByOwnUser(string userId)

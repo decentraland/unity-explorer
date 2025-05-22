@@ -24,7 +24,8 @@ namespace DCL.VoiceChat
         private bool disposed;
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
-        private bool trackPublished;
+        private bool isMediaOpen;
+        private RtcAudioSource rtcAudioSource;
 
         public VoiceChatLivekitRoomHandler(VoiceChatCombinedAudioSource combinedAudioSource, AudioFilter microphoneAudioFilter, AudioSource microphoneAudioSource, IRoom voiceChatRoom)
         {
@@ -48,7 +49,7 @@ namespace DCL.VoiceChat
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
-                    if (!trackPublished)
+                    if (!isMediaOpen)
                     {
                         cts = cts.SafeRestart();
                         OpenMedia();
@@ -58,7 +59,7 @@ namespace DCL.VoiceChat
                 case ConnectionUpdate.Disconnected:
                     cts.SafeCancelAndDispose();
                     CloseMedia();
-                    trackPublished = false;
+                    isMediaOpen = false;
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     break;
                 case ConnectionUpdate.Reconnecting:
@@ -70,7 +71,7 @@ namespace DCL.VoiceChat
 
         private void PublishTrack(CancellationToken ct)
         {
-            var rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
+            rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
             rtcAudioSource.Start();
             microphoneTrack = voiceChatRoom.CreateAudioTrack("New Track", rtcAudioSource);
 
@@ -84,7 +85,7 @@ namespace DCL.VoiceChat
             };
 
             voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
-            trackPublished = true;
+            isMediaOpen = true;
         }
 
         private void OpenMedia()
@@ -105,21 +106,24 @@ namespace DCL.VoiceChat
                 }
             }
 
-            voiceChatRoom.TrackPublished += OnTrackPublished;
+            voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
             combinedAudioSource.Play();
         }
 
-        //We listen to track published events so we can add them to the list of streams to evaluate
-        private void OnTrackPublished(TrackPublication publication, Participant participant)
+        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
+            Debug.LogWarning("VOICE CHAT - Track Subscribed Event " + track.Name);
             if (publication.Kind == TrackKind.KindAudio)
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                 if (stream != null)
+                {
+                    Debug.LogWarning("VOICE CHAT - Added Stream on Subscribe " + publication.Name + " from participant " + participant.Identity);
                     combinedAudioSource.AddStream(stream);
-            }
+                }            }
         }
+
 
         private void CloseMedia()
         {
@@ -129,7 +133,8 @@ namespace DCL.VoiceChat
                 combinedAudioSource.Free();
             }
 
-            voiceChatRoom.TrackPublished -= OnTrackPublished;
+            rtcAudioSource?.Stop();
+            voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
         }
     }
 }
