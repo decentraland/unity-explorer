@@ -1,6 +1,5 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Logs;
-using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -12,7 +11,6 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,6 +28,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info { get; }
         public IVideoStreams VideoStreams { get; }
         public IAudioStreams AudioStreams { get; }
+        public IAudioTracks AudioTracks { get; }
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -59,6 +58,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             Info = new LogRoomInfo(origin.Info);
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
             AudioStreams = new LogAudioStreams(origin.AudioStreams);
+            AudioTracks = new LogAudioTracks(origin.AudioTracks);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
@@ -93,22 +93,22 @@ namespace DCL.Multiplayer.Connections.Rooms
             RoomMetadataChanged?.Invoke(metadata);
         }
 
-        private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connection updated {connectionupdate}");
+               .Log($"{PREFIX} connection updated {connectionUpdate}");
 
-            ConnectionUpdated?.Invoke(room, connectionupdate);
+            ConnectionUpdated?.Invoke(room, connectionUpdate);
         }
 
-        private void OriginOnConnectionStateChanged(ConnectionState connectionstate)
+        private void OriginOnConnectionStateChanged(ConnectionState connectionState)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connection state changed {connectionstate}");
+               .Log($"{PREFIX} connection state changed {connectionState}");
 
-            ConnectionStateChanged?.Invoke(connectionstate);
+            ConnectionStateChanged?.Invoke(connectionState);
         }
 
         private void OriginOnConnectionQualityChanged(ConnectionQuality quality, Participant participant)
@@ -236,15 +236,6 @@ namespace DCL.Multiplayer.Connections.Rooms
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} disconnect end");
-        }
-
-        public ITrack CreateAudioTrack(string name, RtcAudioSource source)
-        {
-            ReportHub
-               .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} create audio track");
-
-            return origin.CreateAudioTrack(name, source);
         }
     }
 }

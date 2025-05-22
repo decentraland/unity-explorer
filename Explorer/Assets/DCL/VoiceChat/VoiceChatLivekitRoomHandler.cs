@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
         {
             rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
             rtcAudioSource.Start();
-            microphoneTrack = voiceChatRoom.CreateAudioTrack("New Track", rtcAudioSource);
+            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource, voiceChatRoom);
 
             var options = new TrackPublishOptions
             {

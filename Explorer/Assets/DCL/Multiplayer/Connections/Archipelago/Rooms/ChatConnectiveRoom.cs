@@ -16,6 +16,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
@@ -58,20 +59,23 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             var audioRemixConveyor = new ThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+            var tracksFactory = new TracksFactory();
+            var audioTracks = new AudioTracks(tracksFactory);
 
             roomInstance = new LogRoom(
                 new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
                     hub,
-                    new TracksFactory(),
+                    tracksFactory,
                     new FfiHandleFactory(),
                     new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),
                     videoStreams,
-                    audioStreams
+                    audioStreams,
+                    audioTracks
                 )
             );
         }
