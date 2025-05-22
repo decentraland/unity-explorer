@@ -52,6 +52,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Button PhotosButton { get; private set; }
         [field: SerializeField] public Button MembersButton { get; private set; }
         [field: SerializeField] public Button PlacesButton { get; private set; }
+        [field: SerializeField] public Button MembersTextButton { get; private set; }
 
         [field: Header("Selections")]
         [field: SerializeField] public GameObject PhotosSectionSelection { get; private set; }
@@ -84,6 +85,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 PhotosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
                 MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
+                MembersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
                 PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
 
                 ToggleSection(Sections.PHOTOS, false);
@@ -92,6 +94,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 PhotosButton.onClick.RemoveAllListeners();
                 MembersButton.onClick.RemoveAllListeners();
+                MembersTextButton.onClick.RemoveAllListeners();
                 PlacesButton.onClick.RemoveAllListeners();
             }
         }

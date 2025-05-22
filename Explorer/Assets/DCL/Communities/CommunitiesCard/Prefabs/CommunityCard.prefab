@@ -404,6 +404,7 @@ MonoBehaviour:
   <PhotosButton>k__BackingField: {fileID: 989126922802926807}
   <MembersButton>k__BackingField: {fileID: 1899825836782332159}
   <PlacesButton>k__BackingField: {fileID: 7242158169097855626}
+  <MembersTextButton>k__BackingField: {fileID: 8727945829379734659}
   <PhotosSectionSelection>k__BackingField: {fileID: 3929084366575678202}
   <MembersSectionSelection>k__BackingField: {fileID: 2405332664425647826}
   <PlacesSectionSelection>k__BackingField: {fileID: 6898860024198349991}
@@ -2000,6 +2001,8 @@ GameObject:
   - component: {fileID: 5132334179416395904}
   - component: {fileID: 5158590217882725722}
   - component: {fileID: 5526690200129722290}
+  - component: {fileID: 4525027396040856805}
+  - component: {fileID: 8727945829379734659}
   m_Layer: 5
   m_Name: Community members
   m_TagString: Untagged
@@ -2024,7 +2027,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 270, y: -131.38}
-  m_SizeDelta: {x: 200, y: 19}
+  m_SizeDelta: {x: 0, y: 19}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &5132334179416395904
 CanvasRenderer:
@@ -2137,6 +2140,64 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4525027396040856805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3534906006135092492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 2
+  m_VerticalFit: 0
+--- !u!114 &8727945829379734659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3534906006135092492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 5158590217882725722}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &3635518331698186406
 GameObject:
   m_ObjectHideFlags: 0
