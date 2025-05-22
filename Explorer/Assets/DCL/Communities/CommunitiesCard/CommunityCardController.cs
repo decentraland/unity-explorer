@@ -5,7 +5,9 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.UI;
 using DCL.Utilities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -24,7 +26,9 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly IWebRequestController webRequestController;
 
+        private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private CancellationTokenSource photosSectionCancellationTokenSource = new ();
@@ -40,7 +44,8 @@ namespace DCL.Communities.CommunitiesCard
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider)
+            ICommunitiesDataProvider communitiesDataProvider,
+            IWebRequestController webRequestController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -49,6 +54,7 @@ namespace DCL.Communities.CommunitiesCard
             this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.webRequestController = webRequestController;
         }
 
         public override void Dispose()
@@ -78,6 +84,8 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies, mvcManager, friendServiceProxy, communitiesDataProvider);
+
+            imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
         }
 
         protected override void OnViewShow()
@@ -95,7 +103,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.SetLoadingState(false);
 
-                viewInstance.ConfigureCommunity(communityData);
+                viewInstance.ConfigureCommunity(communityData, imageController);
 
                 viewInstance.ToggleUIListeners(true);
             }

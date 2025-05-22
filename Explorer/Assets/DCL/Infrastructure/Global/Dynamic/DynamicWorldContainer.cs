@@ -955,7 +955,7 @@ namespace Global.Dynamic
                     viewDependencies,
                     friendServiceProxy,
                     communitiesDataProvider,
-                    identityCache));
+                    staticContainer.WebRequestsContainer.WebRequestController));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

@@ -1,6 +1,7 @@
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
+using DCL.UI;
 using MVC;
 using System;
 using TMPro;
@@ -46,6 +47,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public TMP_Text CommunityName { get; private set; }
         [field: SerializeField] public TMP_Text CommunityMembersNumber { get; private set; }
         [field: SerializeField] public TMP_Text CommunityDescription { get; private set; }
+        [field: SerializeField] public ImageView CommunityThumbnail { get; private set; }
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
@@ -119,11 +121,12 @@ namespace DCL.Communities.CommunitiesCard
             SectionChanged?.Invoke(section, wasManual);
         }
 
-        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData)
+        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, ImageController imageController)
         {
             CommunityName.text = communityData.name;
             CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, NumberToCompactString(communityData.membersCount));
             CommunityDescription.text = communityData.description;
+            imageController.RequestImage(communityData.thumbnails[0], true, true);
 
             JoinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.Member or CommunityMemberRole.Moderator);
             OpenWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.Owner);

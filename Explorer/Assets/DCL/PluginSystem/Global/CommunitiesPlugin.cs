@@ -7,6 +7,7 @@ using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -24,7 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
-        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWebRequestController webRequestController;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
@@ -33,7 +34,7 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
-            IWeb3IdentityCache web3IdentityCache)
+            IWebRequestController webRequestController)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -42,7 +43,7 @@ namespace DCL.PluginSystem.Global
             this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.web3IdentityCache = web3IdentityCache;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose()
@@ -64,7 +65,8 @@ namespace DCL.PluginSystem.Global
                 cameraReelScreenshotsStorage,
                 viewDependencies,
                 friendServiceProxy,
-                communitiesDataProvider));
+                communitiesDataProvider,
+                webRequestController));
 
             Test().Forget();
         }
