@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f426d0e417841f198ad9759652c48b7, type: 3}
   m_Name: AdaptivePhysicsSettings
   m_EditorClassIdentifier: 
-  Mode: 2
+  Mode: 1
   minFixedDelta: 0.02
   maxFixedDelta: 0.05
   changeCooldown: 1

@@ -56,15 +56,15 @@ namespace DCL.WebRequests.Analytics
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
-            var textureFuseRequestHub = new RequestHub(urlsSource);
+            var requestHub = new RequestHub(urlsSource);
 
-            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub)
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                             .WithLog()
                                                             .WithArtificialDelay(options)
                                                             .WithBudget(coreBudget, coreAvailableBudget);
 
-            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub)
                                                              .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                              .WithLog()
                                                              .WithArtificialDelay(options)
