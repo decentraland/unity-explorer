@@ -306,8 +306,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 profile.profilePicture);
             elementView.CanUnHover = false;
 
-            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator;
-            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member;
+            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.Moderator;
+            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.Member;
             blockUserContextMenuElement.Enabled = profile.friendshipStatus != FriendshipStatus.blocked && profile.friendshipStatus != FriendshipStatus.blocked_by;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
