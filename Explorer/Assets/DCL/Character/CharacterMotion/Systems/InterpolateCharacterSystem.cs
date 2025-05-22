@@ -60,7 +60,7 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            if (platformComponent.CurrentPlatform)
+            if (platformComponent.IsRotatingPlatform || platformComponent.IsMovingPlatform)
             {
                 // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
                 characterController.transform.position += rigidTransform.PlatformDelta;
