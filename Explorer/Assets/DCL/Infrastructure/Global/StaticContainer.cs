@@ -274,7 +274,7 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy, scenesUIRoot),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
-                new TweenPlugin(container.NtpTimeService),
+                new TweenPlugin(globalWorld, container.NtpTimeService, container.EntityCollidersGlobalCache),
                 new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy, container.FeatureFlagsCache),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),

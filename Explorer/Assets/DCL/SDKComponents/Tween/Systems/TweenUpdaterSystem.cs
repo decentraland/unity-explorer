@@ -12,6 +12,8 @@ using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Character;
+using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
 using DCL.SDKComponents.Tween.Playground;
 using ECS.Groups;
@@ -33,33 +35,50 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private const float MS_TO_SEC = 1f/1000f;
 
-        private readonly World world;
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly INtpTimeService ntpTimeService;
-        private readonly IEntityCollidersSceneCache collidersSceneCache;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+        private readonly World globalWorld;
 
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
-            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService, IEntityCollidersSceneCache collidersSceneCache) : base(world)
+            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService, IEntityCollidersGlobalCache collidersGlobalCache
+            ,World globalWorld) : base(world)
         {
-            this.world = world;
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
             this.ntpTimeService = ntpTimeService;
-            this.collidersSceneCache = collidersSceneCache;
-
-              // var isNetworkEntity = collidersSceneCache.TryGetEntity(hitInfo.collider, out ColliderSceneEntityInfo entity);
-                // if (isNetworkEntity)
-                // {
-                //     Debug.Log($"VVV Raycast NetEntity {entity.SDKEntity.Id} {entity.SDKEntity.EntityNumber} {entity.SDKEntity.EntityVersion}");
-                // }
+            this.collidersGlobalCache = collidersGlobalCache;
+            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)
         {
+            SingleInstanceEntity player = globalWorld.CachePlayer();
+
+            if (globalWorld.TryGet<CharacterPlatformComponent>(player, out var platformComponent))
+            {
+                Debug.Log($"VVV Has player");
+
+                if(platformComponent.PlatformCollider != null)
+                    Debug.Log($"VVV PlatformComponent FOUND!");
+            }
+
+            // Collider? platformCollider =  World.Get<CharacterPlatformComponent>(playerEntityProxy).PlatformCollider;
+            // if (platformCollider != null && collidersGlobalCache.TryGetSceneEntity(platformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
+            // {
+                // Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id}");
+            // }
+
+            // var isNetworkEntity = collidersSceneCache.TryGetEntity(hitInfo.collider, out ColliderSceneEntityInfo entity);
+            // if (isNetworkEntity)
+            // {
+            //     Debug.Log($"VVV Raycast NetEntity {entity.SDKEntity.Id} {entity.SDKEntity.EntityNumber} {entity.SDKEntity.EntityVersion}");
+            // }
+
             CheckNEQuery(World);
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
@@ -69,7 +88,7 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void CheckNE(Entity e, ref PBNetworkEntity ne)
         {
-            Debug.Log($"VVV exist {ne.EntityId} {ne.NetworkId}");
+            Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
         }
 
         [Query]

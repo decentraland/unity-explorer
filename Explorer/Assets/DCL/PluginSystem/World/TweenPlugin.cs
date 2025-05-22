@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.Tween.Systems;
 using ECS.LifeCycle;
@@ -15,10 +16,14 @@ namespace DCL.PluginSystem.World
     {
         private readonly TweenerPool tweenerPool;
         private readonly INtpTimeService ntpClient;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+        private readonly Arch.Core.World globalWorld;
 
-        public TweenPlugin(INtpTimeService ntpClient)
+        public TweenPlugin(Arch.Core.World globalWorld, INtpTimeService ntpClient, IEntityCollidersGlobalCache collidersGlobalCache)
         {
+            this.globalWorld = globalWorld;
             this.ntpClient = ntpClient;
+            this.collidersGlobalCache = collidersGlobalCache;
             tweenerPool = new TweenerPool();
         }
 
@@ -27,7 +32,7 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             TweenLoaderSystem.InjectToWorld(ref builder);
 
-            TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider, ntpClient);
+            TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider, ntpClient, collidersGlobalCache, globalWorld);
             WriteNtpTimeSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, ntpClient);
 
             finalizeWorldSystems.Add(TweenCleanUpSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool));
