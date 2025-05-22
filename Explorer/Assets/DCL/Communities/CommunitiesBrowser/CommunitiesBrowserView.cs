@@ -32,6 +32,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal LoopGridView resultLoopGrid { get; private set; }
         [field: SerializeField] internal GameObject resultsEmptyContainer { get; private set; }
         [field: SerializeField] internal GameObject resultsLoadingSpinner { get; private set; }
+        [field: SerializeField] internal GameObject resultsLoadingMoreSpinner { get; private set; }
 
         public void SetMyCommunitiesAsLoading(bool isLoading)
         {
@@ -62,5 +63,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetResultsTitleText(string text) =>
             resultsTitleText.text = text;
+
+        public void SetResultsLoadingMoreActive(bool isActive) =>
+            resultsLoadingMoreSpinner.SetActive(isActive);
     }
 }

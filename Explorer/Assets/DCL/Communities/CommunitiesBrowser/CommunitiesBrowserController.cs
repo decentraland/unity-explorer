@@ -29,6 +29,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
 
+        private int currentPageNumber = 1;
+        private bool isGridResultsLoadingItems;
+
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
             ICursor cursor,
@@ -56,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
 
             loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(loadResultsCts.Token).Forget();
+            LoadResultsAsync(isOwner: false, isMember: false, pageNumber: 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
 
             view.SetResultsBackButtonVisible(false);
             view.SetResultsTitleText("Decentraland Communities");
@@ -100,6 +103,14 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             view.resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
             view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            view.resultLoopGrid.ScrollRect.onValueChanged.AddListener(_ =>
+            {
+                if (isGridResultsLoadingItems || view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > 0.01f)
+                    return;
+
+                loadResultsCts = loadResultsCts.SafeRestart();
+                LoadResultsAsync(isOwner: false, isMember: false, pageNumber: currentPageNumber + 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
+            });
         }
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
@@ -118,7 +129,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
             cardView.SetTitle(currentResults[index].name);
             cardView.ConfigureImageController(webRequestController);
@@ -143,28 +153,46 @@ namespace DCL.Communities.CommunitiesBrowser
                 currentMyCommunities.Add(community);
 
             view.SetMyCommunitiesAsLoading(false);
-            view.myCommunitiesLoopList.SetListItemCount(userCommunitiesResponse.communities.Length, false);
-            view.SetMyCommunitiesAsEmpty(userCommunitiesResponse.communities.Length == 0);
+            view.myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, true);
+            view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
-        private async UniTask LoadResultsAsync(CancellationToken ct)
+        private async UniTask LoadResultsAsync(bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            currentResults.Clear();
-            view.resultLoopGrid.SetListItemCount(0, false);
-            view.SetResultsAsLoading(true);
+            isGridResultsLoadingItems = true;
+
+            if (pageNumber == 1)
+            {
+                currentResults.Clear();
+                view.resultLoopGrid.SetListItemCount(0, false);
+                view.SetResultsAsLoading(true);
+            }
+            else
+                view.SetResultsLoadingMoreActive(true);
 
             var ownProfile = await selfProfile.ProfileAsync(ct);
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: false, isMember: false, pageNumber: 1, elementsPerPage: 200, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner, isMember, pageNumber, elementsPerPage, ct);
 
-            foreach (CommunityData community in userCommunitiesResponse.communities)
-                currentResults.Add(community);
+            if (userCommunitiesResponse.communities.Length > 0)
+            {
+                currentPageNumber = pageNumber;
 
-            view.SetResultsAsLoading(false);
-            view.resultLoopGrid.SetListItemCount(userCommunitiesResponse.communities.Length, false);
-            view.SetResultsAsEmpty(userCommunitiesResponse.communities.Length == 0);
+                foreach (CommunityData community in userCommunitiesResponse.communities)
+                    currentResults.Add(community);
+            }
+
+            if (pageNumber == 1)
+            {
+                view.SetResultsAsLoading(false);
+                view.SetResultsAsEmpty(currentResults.Count == 0);
+            }
+
+            view.SetResultsLoadingMoreActive(false);
+            view.resultLoopGrid.SetListItemCount(currentResults.Count, resetPos: pageNumber == 1);
+            isGridResultsLoadingItems = false;
         }
     }
 }
