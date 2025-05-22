@@ -3,6 +3,7 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
 using MVC;
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,8 @@ namespace DCL.Communities.CommunitiesCard
 {
     public class CommunityCardView : ViewBase, IView
     {
+        private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> members";
+
         public enum Sections
         {
             PHOTOS,
@@ -33,6 +36,11 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
         [field: SerializeField] public SectionLoadingView LoadingObject { get; private set; }
 
+        [field: Header("Community data references")]
+        [field: SerializeField] public TMP_Text CommunityName { get; private set; }
+        [field: SerializeField] public TMP_Text CommunityMembersNumber { get; private set; }
+        [field: SerializeField] public TMP_Text CommunityDescription { get; private set; }
+
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
         [field: SerializeField] public Button PhotosButton { get; private set; }
@@ -47,6 +55,17 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
+
+        private static string NumberToCompactString(long number)
+        {
+            return number switch
+                   {
+                       >= 1_000_000_000 => (number / 1_000_000_000D).ToString("0.#") + "B",
+                       >= 1_000_000 => (number / 1_000_000D).ToString("0.#") + "M",
+                       >= 1_000 => (number / 1_000D).ToString("0.#") + "k",
+                       _ => number.ToString()
+                   };
+        }
 
         public void ToggleUIListeners(bool active)
         {
@@ -84,6 +103,13 @@ namespace DCL.Communities.CommunitiesCard
             MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
 
             SectionChanged?.Invoke(section, wasManual);
+        }
+
+        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, bool isCommunityOwner)
+        {
+            CommunityName.text = communityData.name;
+            CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, NumberToCompactString(communityData.membersCount));
+            CommunityDescription.text = communityData.description;
         }
     }
 }

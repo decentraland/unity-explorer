@@ -96,9 +96,11 @@ namespace DCL.Communities.CommunitiesCard
                 communityData = response.community;
                 isCommunityOwner = web3IdentityCache.EnsuredIdentity().Address.Equals(communityData.ownerId);
 
-                viewInstance!.SetLoadingState(false);
+                viewInstance.SetLoadingState(false);
 
-                viewInstance!.ToggleUIListeners(true);
+                viewInstance.ConfigureCommunity(communityData, isCommunityOwner);
+
+                viewInstance.ToggleUIListeners(true);
             }
         }
 

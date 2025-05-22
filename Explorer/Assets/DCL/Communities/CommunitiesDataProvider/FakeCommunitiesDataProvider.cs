@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities
 {
@@ -28,7 +29,8 @@ namespace DCL.Communities
                     ownerId = "0x31d4f4dd8615ec45bbb6330da69f60032aca219e",
                     privacy = CommunityPrivacy.@public,
                     role = CommunityMemberRole.owner,
-                    places = new string[] { "land1", "land2" }
+                    places = new string[] { "land1", "land2" },
+                    membersCount = Random.Range(1, 1_000_000_000),
                 }
             };
 
