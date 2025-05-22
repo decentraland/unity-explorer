@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Components
         public Vector3 LastAvatarRelativeRotation;
 
         public GlobalColliderSceneEntityInfo? ColliderSceneEntityInfo;
-        public ulong? ColliderNetworkEntityId;
+        public uint? ColliderNetworkEntityId;
         public ulong? ColliderNetworkId;
     }
 }

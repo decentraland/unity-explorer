@@ -79,6 +79,8 @@ namespace DCL.SDKComponents.Tween.Systems
                 // Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id}");
             }
 
+            platformComponent.ColliderNetworkEntityId = null;
+            platformComponent.ColliderNetworkId = null;
             if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
                 CheckNEQuery(World);
 

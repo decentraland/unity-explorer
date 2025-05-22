@@ -185,6 +185,13 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
 
             movement.RotationY = message.rotationY;
+
+            if (message.syncedPlatform != null)
+                movement.NetworkEntity = new Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity
+                {
+                    EntityId = message.syncedPlatform.Value.EntityId,
+                    NetworkId = message.syncedPlatform.Value.NetworkId,
+                };
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)

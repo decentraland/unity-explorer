@@ -47,6 +47,7 @@ namespace DCL.Multiplayer.Movement.Systems
             [Data] float t,
             ref PlayerMovementNetworkComponent playerMovement,
             ref CharacterAnimationComponent anim,
+            ref CharacterPlatformComponent platform,
             ref StunComponent stun,
             ref MovementInputComponent move,
             ref JumpInputComponent jump
@@ -58,7 +59,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, platform);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -68,7 +69,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, platform);
                 return;
             }
 
@@ -82,7 +83,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!isMoving && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, platform);
             }
 
             return;
@@ -104,7 +105,8 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent,
+            in MovementInputComponent movement, CharacterPlatformComponent platform)
         {
             playerMovement.MessagesSentInSec++;
 
@@ -142,6 +144,15 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 movementKind = movement.Kind,
             };
+
+            if (platform.ColliderNetworkEntityId != null)
+            {
+                playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
+                {
+                    EntityId = platform.ColliderNetworkEntityId.Value,
+                    NetworkId = platform.ColliderNetworkId!.Value,
+                };
+            }
 
             messageBus.Send(playerMovement.LastSentMessage);
 
