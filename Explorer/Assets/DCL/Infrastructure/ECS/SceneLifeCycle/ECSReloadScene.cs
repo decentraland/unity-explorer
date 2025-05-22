@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle
             world.Add<DeleteEntityIntention>(entity);
 
             //We wait until scene is fully disposed
-            await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Equals(SceneState.Disposed), cancellationToken: ct);
+            await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct);
 
             if (world.IsAlive(entity))
             {
