@@ -28,7 +28,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: Header("Results Section")]
         [field: SerializeField] internal Button resultsBackButton { get; private set; }
         [field: SerializeField] internal TMP_Text resultsTitleText { get; private set; }
+        [field: SerializeField] internal GameObject resultsSection { get; private set; }
         [field: SerializeField] internal LoopGridView resultLoopGrid { get; private set; }
+        [field: SerializeField] internal GameObject resultsEmptyContainer { get; private set; }
+        [field: SerializeField] internal GameObject resultsLoadingSpinner { get; private set; }
 
         public void SetMyCommunitiesAsLoading(bool isLoading)
         {
@@ -40,6 +43,18 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             myCommunitiesEmptyContainer.SetActive(isEmpty);
             myCommunitiesMainContainer.SetActive(!isEmpty);
+        }
+
+        public void SetResultsAsLoading(bool isLoading)
+        {
+            resultsLoadingSpinner.SetActive(isLoading);
+            resultsSection.SetActive(!isLoading);
+        }
+
+        public void SetResultsAsEmpty(bool isEmpty)
+        {
+            resultsEmptyContainer.SetActive(isEmpty);
+            resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>

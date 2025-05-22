@@ -24,8 +24,10 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly List<CommunityData> currentMyCommunities = new ();
+        private readonly List<CommunityData> currentResults = new ();
 
         private CancellationTokenSource loadMyCommunitiesCts;
+        private CancellationTokenSource loadResultsCts;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
@@ -50,13 +52,14 @@ namespace DCL.Communities.CommunitiesBrowser
             view.gameObject.SetActive(true);
             cursor.Unlock();
 
-            view.SetResultsBackButtonVisible(false);
-            view.SetResultsTitleText("Decentraland Communities");
-
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
 
-            LoadResults();
+            loadResultsCts = loadResultsCts.SafeRestart();
+            LoadResultsAsync(loadResultsCts.Token).Forget();
+
+            view.SetResultsBackButtonVisible(false);
+            view.SetResultsTitleText("Decentraland Communities");
         }
 
         public void Deactivate()
@@ -112,11 +115,14 @@ namespace DCL.Communities.CommunitiesBrowser
             return listItem;
         }
 
-        private static LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
+        private LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
 
-            // TODO (Santi): Implement this...
+            CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+            cardView.SetTitle(currentResults[index].name);
+            cardView.ConfigureImageController(webRequestController);
+            cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
 
             return gridItem;
         }
@@ -131,7 +137,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 50, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 1000, ct);
 
             foreach (CommunityData community in userCommunitiesResponse.communities)
                 currentMyCommunities.Add(community);
@@ -141,11 +147,24 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetMyCommunitiesAsEmpty(userCommunitiesResponse.communities.Length == 0);
         }
 
-        private void LoadResults()
+        private async UniTask LoadResultsAsync(CancellationToken ct)
         {
+            currentResults.Clear();
             view.resultLoopGrid.SetListItemCount(0, false);
+            view.SetResultsAsLoading(true);
 
-            // TODO (Santi): Implement this...
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
+
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: false, isMember: false, pageNumber: 1, elementsPerPage: 200, ct);
+
+            foreach (CommunityData community in userCommunitiesResponse.communities)
+                currentResults.Add(community);
+
+            view.SetResultsAsLoading(false);
+            view.resultLoopGrid.SetListItemCount(userCommunitiesResponse.communities.Length, false);
+            view.SetResultsAsEmpty(userCommunitiesResponse.communities.Length == 0);
         }
     }
 }
