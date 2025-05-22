@@ -20,11 +20,7 @@ MonoBehaviour:
   <FOVDamping>k__BackingField: 0.5
   <MinFOV>k__BackingField: 10
   <MaxFOV>k__BackingField: 120
-  <RotationSpeed>k__BackingField: 3
-  <MaxRotationPerFrame>k__BackingField: 10
-  <RotationDamping>k__BackingField: 0.1
-  <MinVerticalAngle>k__BackingField: -90
-  <MaxVerticalAngle>k__BackingField: 90
+  <PovSettings>k__BackingField: {fileID: 11400000, guid: 67f060395f7a53f4c9cb3ad795727ffe, type: 2}
   <TiltSpeed>k__BackingField: 30
   <MaxTiltPerFrame>k__BackingField: 30
   <MaxTiltAngle>k__BackingField: 360

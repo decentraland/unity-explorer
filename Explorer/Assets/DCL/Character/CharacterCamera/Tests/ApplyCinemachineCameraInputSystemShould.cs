@@ -5,8 +5,10 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.InWorldCamera;
+using DCL.Settings.Settings;
 using NSubstitute;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -25,6 +27,7 @@ namespace DCL.CharacterCamera.Tests
         private DCLInput dclInput;
         private World world;
         private ApplyCinemachineCameraInputSystem system;
+        private GameObject cameraFocus;
 
         [SetUp]
         public void CreateCameraSetup()
@@ -33,6 +36,7 @@ namespace DCL.CharacterCamera.Tests
 
             world = World.Create();
             camera = new GameObject("Camera Test").AddComponent<Camera>();
+            cameraFocus = new GameObject("Camera Focus");
             cinemachineObj = new GameObject("Cinemachine");
 
             // Setup First Person Camera
@@ -40,23 +44,27 @@ namespace DCL.CharacterCamera.Tests
             firstPersonCamera.transform.SetParent(cinemachineObj.transform);
             firstPersonCamera.AddCinemachineComponent<CinemachineTransposer>();
             CinemachinePOV pov = firstPersonCamera.AddCinemachineComponent<CinemachinePOV>();
+            pov.m_HorizontalAxis.m_InputAxisName = string.Empty;
+            pov.m_VerticalAxis.m_InputAxisName = string.Empty;
             firstPersonCameraData = Substitute.For<ICinemachineFirstPersonCameraData>();
             firstPersonCameraData.Camera.Returns(firstPersonCamera);
             firstPersonCameraData.POV.Returns(pov);
 
             // Setup Third Person Camera
-            CinemachineFreeLook thirdPersonCamera = new GameObject("Third Person Camera").AddComponent<CinemachineFreeLook>();
+            CinemachineVirtualCamera thirdPersonCamera = new GameObject("Third Person Camera").AddComponent<CinemachineVirtualCamera>();
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
+            var thirdPersonFollow = thirdPersonCamera.AddCinemachineComponent<Cinemachine3rdPersonFollow>();
             thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            thirdPersonCameraData.ThirdPersonFollow.Returns(thirdPersonFollow);
             thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
-            thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
 
             // Setup Drone View Camera
-            CinemachineFreeLook droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineFreeLook>();
+            CinemachineVirtualCamera droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineVirtualCamera>();
             droneView.transform.SetParent(cinemachineObj.transform);
+            var droneViewFollow = droneView.AddCinemachineComponent<Cinemachine3rdPersonFollow>();
             droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            droneViewData.ThirdPersonFollow.Returns(droneViewFollow);
             droneViewData.Camera.Returns(droneView);
-            droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<CinemachineCameraOffset>());
 
             // Setup Free Camera
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();
@@ -80,8 +88,15 @@ namespace DCL.CharacterCamera.Tests
             dclInput = new DCLInput();
             dclInput.Enable();
 
+            string[] guids = AssetDatabase.FindAssets("t:ControlsSettingsAsset");
+            Assert.IsTrue(guids.Length > 0, "No ControlsSettingsAsset found in the project!");
+
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var settings = AssetDatabase.LoadAssetAtPath<ControlsSettingsAsset>(path);
+            Assert.IsNotNull(settings, $"Couldn’t load ControlsSettingsAsset at {path}");
+
             // Create system with free camera allowed
-            system = new ApplyCinemachineCameraInputSystem(world, dclInput, true);
+            system = new ApplyCinemachineCameraInputSystem(world, dclInput, cameraFocus.transform, settings, true);
 
             // Create entity with camera components
             entity = world.Create(
@@ -96,6 +111,7 @@ namespace DCL.CharacterCamera.Tests
         public void DisposeCameraSetup()
         {
             Object.DestroyImmediate(camera.gameObject);
+            Object.DestroyImmediate(cameraFocus);
             Object.DestroyImmediate(cinemachineObj);
             world.Dispose();
             base.TearDown();
@@ -107,22 +123,18 @@ namespace DCL.CharacterCamera.Tests
             // Arrange
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.DroneView });
             world.Set(entity, new CameraInput { Delta = new Vector2(0.5f, 0.3f) });
+            world.Add<CameraDampedPOV>(entity);
 
             // Act
-            system.Update(0.1f);
+            system.Update(1f);
 
             // Assert
             // Get the current components from the world
             CameraComponent cameraComponent = world.Get<CameraComponent>(entity);
             CameraInput cameraInput = world.Get<CameraInput>(entity);
-            ICinemachinePreset preset = world.Get<ICinemachinePreset>(entity);
 
             Assert.That(cameraComponent.Mode, Is.EqualTo(CameraMode.DroneView));
             Assert.That(cameraInput.Delta, Is.EqualTo(new Vector2(0.5f, 0.3f)));
-
-            // Check the camera input was applied correctly to the drone view camera
-            Assert.That(preset.DroneViewCameraData.Camera.m_XAxis.m_InputAxisValue, Is.EqualTo(0.5f));
-            Assert.That(preset.DroneViewCameraData.Camera.m_YAxis.m_InputAxisValue, Is.EqualTo(0.3f));
         }
 
         [Test]
@@ -131,22 +143,18 @@ namespace DCL.CharacterCamera.Tests
             // Arrange
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.ThirdPerson });
             world.Set(entity, new CameraInput { Delta = new Vector2(0.5f, 0.3f) });
+            world.Add<CameraDampedPOV>(entity);
 
             // Act
-            system.Update(0.1f);
+            system.Update(1f);
 
             // Assert
             // Get the current components from the world
             CameraComponent cameraComponent = world.Get<CameraComponent>(entity);
             CameraInput cameraInput = world.Get<CameraInput>(entity);
-            ICinemachinePreset preset = world.Get<ICinemachinePreset>(entity);
 
             Assert.That(cameraComponent.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraInput.Delta, Is.EqualTo(new Vector2(0.5f, 0.3f)));
-
-            // Check the camera input was applied correctly to the third person camera
-            Assert.That(preset.ThirdPersonCameraData.Camera.m_XAxis.m_InputAxisValue, Is.EqualTo(0.5f));
-            Assert.That(preset.ThirdPersonCameraData.Camera.m_YAxis.m_InputAxisValue, Is.EqualTo(0.3f));
         }
 
         [Test]
@@ -155,6 +163,7 @@ namespace DCL.CharacterCamera.Tests
             // Arrange
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.FirstPerson });
             world.Set(entity, new CameraInput { Delta = new Vector2(0.5f, 0.3f) });
+            world.Add<CameraDampedPOV>(entity);
 
             // Act
             system.Update(0.1f);
@@ -183,6 +192,7 @@ namespace DCL.CharacterCamera.Tests
 
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.FirstPerson });
             world.Add(entity, lookAtIntent);
+            world.Add<CameraDampedPOV>(entity);
 
             // Verify the intent component exists before update
             Assert.That(world.Has<CameraLookAtIntent>(entity), Is.True);
@@ -193,9 +203,6 @@ namespace DCL.CharacterCamera.Tests
             // Assert
             // Verify the intent component was removed, which indicates it was processed
             Assert.That(world.Has<CameraLookAtIntent>(entity), Is.False);
-
-            // Get the current preset from the world
-            ICinemachinePreset preset = world.Get<ICinemachinePreset>(entity);
 
             // Verify the preset has the expected camera mode
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.FirstPerson));
@@ -211,6 +218,7 @@ namespace DCL.CharacterCamera.Tests
 
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.ThirdPerson });
             world.Add(entity, lookAtIntent);
+            world.Add<CameraDampedPOV>(entity);
 
             // Verify the intent component exists before update
             Assert.That(world.Has<CameraLookAtIntent>(entity), Is.True);
@@ -221,9 +229,6 @@ namespace DCL.CharacterCamera.Tests
             // Assert
             // Verify the intent component was removed, which indicates it was processed
             Assert.That(world.Has<CameraLookAtIntent>(entity), Is.False);
-
-            // Get the current preset from the world
-            ICinemachinePreset preset = world.Get<ICinemachinePreset>(entity);
 
             // Verify the preset has the expected camera mode
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
@@ -239,6 +244,7 @@ namespace DCL.CharacterCamera.Tests
 
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.DroneView });
             world.Add(entity, lookAtIntent);
+            world.Add<CameraDampedPOV>(entity);
 
             // Verify the intent component exists before update
             Assert.That(world.Has<CameraLookAtIntent>(entity), Is.True);
@@ -249,9 +255,6 @@ namespace DCL.CharacterCamera.Tests
             // Assert
             // Verify the intent component was removed, which indicates it was processed
             Assert.That(world.Has<CameraLookAtIntent>(entity), Is.False);
-
-            // Get the current preset from the world
-            ICinemachinePreset preset = world.Get<ICinemachinePreset>(entity);
 
             // Verify the preset has the expected camera mode
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.DroneView));
@@ -265,6 +268,7 @@ namespace DCL.CharacterCamera.Tests
             Vector3 playerPosition = Vector3.zero;
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.SDKCamera });
             world.Add(entity, new CameraLookAtIntent(lookAtTarget, playerPosition));
+            world.Add<CameraDampedPOV>(entity);
 
             // Act
             system.Update(0.1f);
@@ -286,6 +290,7 @@ namespace DCL.CharacterCamera.Tests
             // Arrange
             world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.ThirdPerson });
             world.Set(entity, new CameraInput { Delta = new Vector2(0.5f, 0.3f) });
+            world.Add<CameraDampedPOV>(entity);
             world.Add(entity, new InWorldCameraComponent());
 
             // Act
@@ -295,17 +300,12 @@ namespace DCL.CharacterCamera.Tests
             // Get the current components from the world
             CameraComponent cameraComponent = world.Get<CameraComponent>(entity);
             CameraInput cameraInput = world.Get<CameraInput>(entity);
-            ICinemachinePreset preset = world.Get<ICinemachinePreset>(entity);
 
             Assert.That(cameraComponent.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraInput.Delta, Is.EqualTo(new Vector2(0.5f, 0.3f)));
 
             // Verify InWorldCameraComponent exists
             Assert.That(world.Has<InWorldCameraComponent>(entity), Is.True);
-
-            // Check the camera input was not applied
-            Assert.That(preset.ThirdPersonCameraData.Camera.m_XAxis.m_InputAxisValue, Is.EqualTo(0f));
-            Assert.That(preset.ThirdPersonCameraData.Camera.m_YAxis.m_InputAxisValue, Is.EqualTo(0f));
         }
     }
 }

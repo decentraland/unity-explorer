@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f400a5a1cfb363048a56d039b59fd0fd, type: 3}
+  m_Name: DroneCameraPOVSettings
+  m_EditorClassIdentifier: 
+  <RotationSpeed>k__BackingField: 4.5
+  <MaxRotationPerFrame>k__BackingField: 150
+  <RotationDamping>k__BackingField: 0.05
+  <MinVerticalAngle>k__BackingField: -55
+  <MaxVerticalAngle>k__BackingField: 75
