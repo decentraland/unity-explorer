@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
-using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;

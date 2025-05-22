@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly URLAddress adapterAddress;
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
 
@@ -114,11 +114,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 throw new InvalidOperationException("Room is already running");
 
             cts = cts.SafeRestart();
-            attemptToConnectState.Set(AttemptToConnectState.None);
+            attemptToConnectState.Set(AttemptToConnectState.NONE);
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
-            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+            return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
         }
 
         public async UniTask StopAsync()
@@ -203,7 +203,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
+            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
             if (connectResult)
