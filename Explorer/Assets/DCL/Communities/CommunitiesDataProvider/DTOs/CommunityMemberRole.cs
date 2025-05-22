@@ -3,9 +3,10 @@ namespace DCL.Communities
 {
     public enum CommunityMemberRole
     {
-        member,
-        moderator,
-        owner
+        Member,
+        Moderator,
+        Owner,
+        None,
     }
 }
 
