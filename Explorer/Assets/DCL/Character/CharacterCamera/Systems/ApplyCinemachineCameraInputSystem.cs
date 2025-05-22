@@ -2,10 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Character.CharacterCamera;
+using DCL.Character.CharacterCamera.Components;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
+using DCL.Settings.Settings;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -20,11 +23,17 @@ namespace DCL.CharacterCamera.Systems
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput input;
+        private readonly Transform cameraFocus;
+        private readonly ControlsSettingsAsset settings;
         private readonly bool isFreeCameraAllowed;
+        private readonly Transform cameraFocusParent;
+        private readonly Vector3 offset;
 
-        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, bool isFreeCameraAllowed) : base(world)
+        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, Transform cameraFocus, ControlsSettingsAsset settings, bool isFreeCameraAllowed) : base(world)
         {
             this.input = input;
+            this.cameraFocus = cameraFocus;
+            this.settings = settings;
             this.isFreeCameraAllowed = isFreeCameraAllowed;
         }
 
@@ -36,22 +45,25 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(CameraLookAtIntent), typeof(InWorldCameraComponent))]
-        private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
+        private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref CameraDampedPOV dampedPOV, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
             {
                 case CameraMode.DroneView:
-                    CinemachineFreeLook dvc = cinemachinePreset.DroneViewCameraData.Camera;
-                    dvc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
-                    dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
+                    float hRotation = cameraInput.Delta.x * settings.HorizontalMouseSensitivity;
+                    float vRotation = cameraInput.Delta.y * settings.VerticalMouseSensitivity;
+                    Vector2 dtInput = new Vector2(hRotation, vRotation);
+
+                    CameraMovementUtils.Rotate(ref dampedPOV, cameraFocus, dtInput, settings.DroneCameraMovementPOVSettings, dt);
                     break;
                 case CameraMode.ThirdPerson:
                 case CameraMode.SDKCamera:
-                    CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
-                    tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
-                    tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
-                    break;
+                    float horizontalRotation = cameraInput.Delta.x * settings.HorizontalMouseSensitivity;
+                    float verticalRotation = cameraInput.Delta.y * settings.VerticalMouseSensitivity;
+                    Vector2 deltaInput = new Vector2(horizontalRotation, verticalRotation);
 
+                    CameraMovementUtils.Rotate(ref dampedPOV, cameraFocus, deltaInput, settings.CameraMovementPOVSettings, dt);
+                    break;
                 case CameraMode.FirstPerson:
                     ApplyPOV(cinemachinePreset.FirstPersonCameraData.POV, in cameraInput);
                     break;
@@ -84,10 +96,8 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.Free:
                 case CameraMode.ThirdPerson:
-                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
-                    break;
                 case CameraMode.DroneView:
-                    cinemachinePreset.ForceDroneCameraLookAt(lookAtIntent);
+                    cameraFocus.transform.rotation = Quaternion.Euler(CinemachineExtensions.GetHorizontalAndVerticalAxisForIntent(lookAtIntent));
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
