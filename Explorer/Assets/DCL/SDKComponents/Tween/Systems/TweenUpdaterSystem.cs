@@ -59,25 +59,13 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             SingleInstanceEntity player = globalWorld.CachePlayer();
 
-            if (globalWorld.TryGet<CharacterPlatformComponent>(player, out var platformComponent))
+            if (globalWorld.TryGet<CharacterPlatformComponent>(player, out var platformComponent) &&
+                platformComponent.PlatformCollider != null &&
+                collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo)
+                )
             {
-                Debug.Log($"VVV Has player");
-
-                if(platformComponent.PlatformCollider != null)
-                    Debug.Log($"VVV PlatformComponent FOUND!");
+                Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.EntityNumber}");
             }
-
-            // Collider? platformCollider =  World.Get<CharacterPlatformComponent>(playerEntityProxy).PlatformCollider;
-            // if (platformCollider != null && collidersGlobalCache.TryGetSceneEntity(platformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
-            // {
-                // Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id}");
-            // }
-
-            // var isNetworkEntity = collidersSceneCache.TryGetEntity(hitInfo.collider, out ColliderSceneEntityInfo entity);
-            // if (isNetworkEntity)
-            // {
-            //     Debug.Log($"VVV Raycast NetEntity {entity.SDKEntity.Id} {entity.SDKEntity.EntityNumber} {entity.SDKEntity.EntityVersion}");
-            // }
 
             CheckNEQuery(World);
             UpdatePBTweenQuery(World);
