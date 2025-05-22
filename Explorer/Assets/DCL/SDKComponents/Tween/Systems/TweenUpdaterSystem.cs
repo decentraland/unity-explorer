@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Interaction.Utility;
 using DCL.SDKComponents.Tween.Playground;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
@@ -38,15 +39,23 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly INtpTimeService ntpTimeService;
+        private readonly IEntityCollidersSceneCache collidersSceneCache;
 
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
-            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService) : base(world)
+            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService, IEntityCollidersSceneCache collidersSceneCache) : base(world)
         {
             this.world = world;
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
             this.ntpTimeService = ntpTimeService;
+            this.collidersSceneCache = collidersSceneCache;
+
+              // var isNetworkEntity = collidersSceneCache.TryGetEntity(hitInfo.collider, out ColliderSceneEntityInfo entity);
+                // if (isNetworkEntity)
+                // {
+                //     Debug.Log($"VVV Raycast NetEntity {entity.SDKEntity.Id} {entity.SDKEntity.EntityNumber} {entity.SDKEntity.EntityVersion}");
+                // }
         }
 
         protected override void Update(float t)
