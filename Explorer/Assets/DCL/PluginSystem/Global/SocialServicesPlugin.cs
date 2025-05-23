@@ -14,7 +14,7 @@ namespace DCL.PluginSystem.Global
 {
     public class SocialServicesPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly RPCSocialServices rpcSocialServices;
+        private readonly IRPCSocialServices rpcSocialServices;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISocialServiceEventBus socialServiceEventBus;
@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource cts = new ();
 
         public SocialServicesPlugin(
-            RPCSocialServices rpcSocialServices,
+            IRPCSocialServices rpcSocialServices,
             IDecentralandUrlsSource dclUrlSource,
             IWeb3IdentityCache web3IdentityCache,
             ISocialServiceEventBus socialServiceEventBus,
