@@ -145,13 +145,15 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = movement.Kind,
             };
 
-            if (platform.ColliderNetworkEntityId != null)
+            if (platform.PlatformCollider != null && platform.ColliderNetworkEntityId != null)
             {
                 playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
                 {
                     EntityId = platform.ColliderNetworkEntityId.Value,
                     NetworkId = platform.ColliderNetworkId!.Value,
                 };
+
+                playerMovement.LastSentMessage.position -= platform.PlatformCollider.transform.position;
             }
 
             messageBus.Send(playerMovement.LastSentMessage);

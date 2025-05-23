@@ -111,6 +111,12 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
+            if (remote.syncedPlatform.HasValue &&
+                collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out Collider coll))
+            {
+                remote.position += coll.transform.position;
+            }
+
             var isBlend = false;
             if (extComp.Enabled)
             {
@@ -129,13 +135,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 remote = playerInbox.Dequeue();
             }
-
-            if (remote.syncedPlatform.HasValue &&
-                collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out Collider coll))
-            {
-                transComp.Transform.position = coll.transform.position;
-            }
-            return 0;
 
             return StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
