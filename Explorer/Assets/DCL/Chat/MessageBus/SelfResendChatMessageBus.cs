@@ -38,13 +38,13 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(channelId, message);
         }
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
-            this.origin.Send(channel, message, origin);
-            SendSelfAsync(channel.Id, message).Forget();
+            this.origin.Send(channel, message, origin, topic);
+            SendSelfAsync(channel.Id, message, topic).Forget();
         }
 
-        private async UniTaskVoid SendSelfAsync(ChatChannel.ChannelId channelId, string chatMessage)
+        private async UniTaskVoid SendSelfAsync(ChatChannel.ChannelId channelId, string chatMessage, string topic)
         {
             IWeb3Identity identity = web3IdentityCache.Identity;
 
@@ -54,7 +54,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(identity.Address, true, chatMessage, null, CancellationToken.None);
+            ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(identity.Address, true, chatMessage, null, topic, CancellationToken.None);
 
             MessageAdded?.Invoke(channelId, newMessage);
         }

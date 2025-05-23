@@ -36,7 +36,7 @@ namespace DCL.Chat.MessageBus
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnPrivateMessageReceived);
+            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
         }
 
         public void Dispose()
@@ -45,9 +45,9 @@ namespace DCL.Chat.MessageBus
             cancellationTokenSource.Dispose();
         }
 
-        private void OnPrivateMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
+        private void OnChatPipeMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload}");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload} with topic: {receivedMessage.Topic}");
             OnChatAsync(receivedMessage, true).Forget();
         }
 
@@ -65,7 +65,7 @@ namespace DCL.Chat.MessageBus
                     return;
 
                 ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
-                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
+                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, receivedMessage.Topic, cancellationTokenSource.Token);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }
@@ -74,7 +74,7 @@ namespace DCL.Chat.MessageBus
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");
@@ -87,7 +87,10 @@ namespace DCL.Chat.MessageBus
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
                 case ChatChannel.ChatChannelType.USER:
-                    SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
+                    SendTo(message, timestamp, "custom-topic", messagePipesHub.ChatPipe(), channel.Id.Id);
+                    break;
+                case ChatChannel.ChatChannelType.COMMUNITY:
+                    SendTo(message, timestamp, topic, messagePipesHub.ChatPipe(), "TODO-Server-User-Id"); // TODO
                     break;
                 default:
                     break;
@@ -97,7 +100,12 @@ namespace DCL.Chat.MessageBus
 
         private void SendTo(string message, double timestamp, IMessagePipe messagePipe, string? recipient = null)
         {
-            MessageWrap<Decentraland.Kernel.Comms.Rfc4.Chat> chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
+            SendTo(message, timestamp, null, messagePipe, recipient);
+        }
+
+        private void SendTo(string message, double timestamp, string topic, IMessagePipe messagePipe, string? recipient = null)
+        {
+            MessageWrap<Decentraland.Kernel.Comms.Rfc4.Chat> chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>(topic);
             if (recipient != null)
                 chat.AddSpecialRecipient(recipient);
             chat.Payload.Message = message;

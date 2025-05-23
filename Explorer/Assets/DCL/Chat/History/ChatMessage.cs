@@ -14,6 +14,7 @@ namespace DCL.Chat.History
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
+        public readonly string CommunityId;
 
         public ChatMessage(
             string message,
@@ -21,6 +22,7 @@ namespace DCL.Chat.History
             string senderWalletAddress,
             bool isSentByOwnUser,
             string senderWalletId,
+            string communityId,
             bool isMention = false,
             bool isSystemMessage = false,
             bool isPaddingElement = false)
@@ -33,6 +35,7 @@ namespace DCL.Chat.History
             SenderWalletId = senderWalletId;
             IsMention = isMention;
             IsSystemMessage = isSystemMessage;
+            CommunityId = communityId;
         }
 
         public static ChatMessage NewPaddingElement() =>
@@ -40,6 +43,7 @@ namespace DCL.Chat.History
                 string.Empty,
                 string.Empty,
                 false,
+                string.Empty,
                 string.Empty,
                 false,
                 false,
@@ -51,13 +55,14 @@ namespace DCL.Chat.History
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
+                chatMessage.CommunityId,
                 chatMessage.IsMention,
                 chatMessage.IsSystemMessage,
                 chatMessage.IsPaddingElement);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, false, true, false);
+                null, string.Empty, false, true, false);
 
         public bool Equals(ChatMessage other)
         {
@@ -76,7 +81,8 @@ namespace DCL.Chat.History
                    SenderWalletId == other.SenderWalletId &&
                    SenderWalletAddress == other.SenderWalletAddress &&
                    IsSentByOwnUser == other.IsSentByOwnUser &&
-                   IsMention == other.IsMention;
+                   IsMention == other.IsMention &&
+                   CommunityId == other.CommunityId;
         }
 
         public override bool Equals(object? obj) =>
