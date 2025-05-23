@@ -23,7 +23,7 @@ namespace DCL.Communities
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 2, communitiesAsMember: 13)
-                                                                                .Where(x => (isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member) || !isOwner || !isMember)
+                                                                                .Where(x => ((isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member) || !isOwner || !isMember) && x.name.Contains(name))
                                                                                 .ToList();
 
             var totalPages = (int)Math.Ceiling((double)filteredCommunities.Count / elementsPerPage);

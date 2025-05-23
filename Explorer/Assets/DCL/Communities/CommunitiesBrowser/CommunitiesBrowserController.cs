@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
 
             loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(isOwner: false, isMember: false, pageNumber: 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
+            LoadResultsAsync(name: string.Empty, isOwner: false, isMember: false, pageNumber: 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
 
             view.SetResultsBackButtonVisible(false);
             view.SetResultsTitleText("Decentraland Communities");
@@ -109,7 +109,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     return;
 
                 loadResultsCts = loadResultsCts.SafeRestart();
-                LoadResultsAsync(isOwner: false, isMember: false, pageNumber: currentPageNumber + 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
+                LoadResultsAsync(name: string.Empty, isOwner: false, isMember: false, pageNumber: currentPageNumber + 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
             });
         }
 
@@ -147,7 +147,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 1000, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, name: string.Empty, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 1000, ct);
 
             foreach (CommunityData community in userCommunitiesResponse.communities)
                 currentMyCommunities.Add(community);
@@ -157,7 +157,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
-        private async UniTask LoadResultsAsync(bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTask LoadResultsAsync(string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             isGridResultsLoadingItems = true;
 
@@ -174,7 +174,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, isOwner, isMember, pageNumber, elementsPerPage, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, name, isOwner, isMember, pageNumber, elementsPerPage, ct);
 
             if (userCommunitiesResponse.communities.Length > 0)
             {
