@@ -113,10 +113,11 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (remote.syncedPlatform.HasValue
                 && remote.syncedPlatform != null
-                && remote.syncedPlatform!.Value.EntityId != null
-                && remote.syncedPlatform!.Value.NetworkId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
+                && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
+                && remote.syncedPlatform!.Value.NetworkId != null
                 && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out Collider coll))
             {
+                Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
                 remote.position += coll.transform.position;
             }
 
