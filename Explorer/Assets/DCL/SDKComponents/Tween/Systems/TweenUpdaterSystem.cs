@@ -62,18 +62,12 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
-            {
-                platformComponent.ColliderSceneEntityInfo = null;
-                platformComponent.ColliderNetworkEntityId = null;
-                platformComponent.ColliderNetworkId = null;
-            }
+            platformComponent.ColliderSceneEntityInfo = null;
+            platformComponent.ColliderNetworkEntityId = null;
+            platformComponent.ColliderNetworkId = null;
 
-            // if (currentPlatformCollider != platformComponent.PlatformCollider)
-            if (platformComponent.PlatformCollider != null
-                && platformComponent.IsMovingPlatform && characterRb.IsGrounded
-                )
+            if (platformComponent.PlatformCollider != null && platformComponent.IsMovingPlatform && characterRb.IsGrounded)
             {
-                // currentPlatformCollider = platformComponent.PlatformCollider;
                 if(collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
                     platformComponent.ColliderSceneEntityInfo = sceneEntityInfo;
             }
@@ -81,13 +75,13 @@ namespace DCL.SDKComponents.Tween.Systems
             // if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
             hasCollider = false;
             CheckNEQuery(World);
+            if(!hasCollider)
+            {
+                platformComponent.ColliderSceneEntityInfo = null;
+                platformComponent.ColliderNetworkEntityId = null;
+                platformComponent.ColliderNetworkId = null;
+            }
 
-                if(!hasCollider)
-                {
-                    platformComponent.ColliderSceneEntityInfo = null;
-                    platformComponent.ColliderNetworkEntityId = null;
-                    platformComponent.ColliderNetworkId = null;
-                }
 
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
@@ -100,8 +94,6 @@ namespace DCL.SDKComponents.Tween.Systems
         private void CheckNE(in Entity e, ref PBNetworkEntity ne)
         {
             Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
-
-            if(hasCollider) return;
 
             if (platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
             if (platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)

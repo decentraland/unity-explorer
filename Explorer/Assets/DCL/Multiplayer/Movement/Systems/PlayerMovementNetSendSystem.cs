@@ -146,7 +146,14 @@ namespace DCL.Multiplayer.Movement.Systems
             };
 
             if (platform.PlatformCollider != null &&
-                 platform.IsMovingPlatform &&  animation.States.IsGrounded && platform.ColliderNetworkEntityId != null)
+                 platform.IsMovingPlatform && animation.States.IsGrounded
+                 && !animation.States.IsJumping
+                 && !animation.States.IsLongJump
+                 && !animation.States.IsFalling
+                 && !animation.States.IsLongFall
+                 && platform.ColliderSceneEntityInfo != null
+                 && platform.ColliderNetworkEntityId != null
+                 && platform.ColliderNetworkId != null)
             {
                 playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
                 {
@@ -155,6 +162,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 };
 
                 playerMovement.LastSentMessage.position -= platform.PlatformCollider.transform.position;
+            }
+            else
+            {
+                playerMovement.LastSentMessage.syncedPlatform = null;
             }
 
             messageBus.Send(playerMovement.LastSentMessage);
