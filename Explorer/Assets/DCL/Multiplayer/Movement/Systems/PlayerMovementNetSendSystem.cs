@@ -167,7 +167,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
                 {
-                    EntityId = 0,
+                    EntityId = uint.MaxValue,
                     NetworkId = 0,
                 };
             }
