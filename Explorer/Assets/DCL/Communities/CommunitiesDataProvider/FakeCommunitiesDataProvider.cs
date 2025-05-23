@@ -19,7 +19,7 @@ namespace DCL.Communities
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct) =>
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
         public async UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
