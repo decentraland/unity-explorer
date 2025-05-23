@@ -119,6 +119,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAudioSource>.Create(ComponentID.AUDIO_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTween>.Create(ComponentID.TWEEN).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBNetworkEntity>.Create(ComponentID.NETWORK_ENTITY).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenState>.Create(ComponentID.TWEEN_STATE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent())
@@ -134,6 +135,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBInputModifier>.Create(ComponentID.INPUT_MODIFIER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMainCamera>.Create(ComponentID.MAIN_CAMERA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVirtualCamera>.Create(ComponentID.VIRTUAL_CAMERA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBSyncedClock>.Create(ComponentID.SYNCED_CLOCK).AsProtobufResult())
                .Add(SDKComponentBuilder<PBLightSource>.Create(ComponentID.LIGHT_SOURCE).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;

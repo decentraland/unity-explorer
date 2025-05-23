@@ -22,6 +22,8 @@ namespace DCL.Multiplayer.Movement
 
         public byte velocityTier;
 
+        public SyncedPlatform? syncedPlatform;
+
         public override string ToString() =>
             JsonUtility.ToJson(this)!;
 
@@ -38,6 +40,7 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(isStunned);
             hashCode.Add(animState);
             hashCode.Add(velocityTier);
+            hashCode.Add(syncedPlatform);
             return hashCode.ToHashCode();
         }
 
@@ -55,5 +58,20 @@ namespace DCL.Multiplayer.Movement
 
         public override bool Equals(object obj) =>
             obj is NetworkMovementMessage other && Equals(other);
+
+        public struct SyncedPlatform : IEquatable<SyncedPlatform>
+        {
+            public uint EntityId;
+            public ulong NetworkId;
+
+            public bool Equals(SyncedPlatform other) =>
+                EntityId == other.EntityId && NetworkId == other.NetworkId;
+
+            public override bool Equals(object? obj) =>
+                obj is SyncedPlatform other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(EntityId, NetworkId);
+        }
     }
 }
