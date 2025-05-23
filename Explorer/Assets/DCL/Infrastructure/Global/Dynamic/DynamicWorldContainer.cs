@@ -526,7 +526,7 @@ namespace Global.Dynamic
             var coreBackpackEventBus = new BackpackEventBus();
 
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
-            IRPCSocialServices rpcSocialServices = new RPCSocialServices(GetApiUrl(bootstrapContainer.DecentralandUrlsSource, appArgs), identityCache, socialServiceEventBus);
+            IRPCSocialServices rpcSocialServices = new RPCSocialServices(GetFriendsApiUrl(bootstrapContainer.DecentralandUrlsSource, appArgs), identityCache, socialServiceEventBus);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -997,7 +997,7 @@ namespace Global.Dynamic
             return (container, true);
         }
 
-        private static URLAddress GetApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
+        private static URLAddress GetFriendsApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
         {
             string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
 
