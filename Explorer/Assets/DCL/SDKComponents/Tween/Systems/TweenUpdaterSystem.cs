@@ -62,38 +62,44 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
-            if (platformComponent.PlatformCollider == null)
             {
                 platformComponent.ColliderSceneEntityInfo = null;
-                platformComponent.ColliderNetworkEntityId = 0;
-                platformComponent.ColliderNetworkId = 0;
+                platformComponent.ColliderNetworkEntityId = null;
+                platformComponent.ColliderNetworkId = null;
             }
-            else if (currentPlatformCollider != platformComponent.PlatformCollider)
-            {
-                currentPlatformCollider = platformComponent.PlatformCollider;
 
+            // if (currentPlatformCollider != platformComponent.PlatformCollider)
+            if (platformComponent.PlatformCollider != null)
+            {
+                // currentPlatformCollider = platformComponent.PlatformCollider;
                 if(collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
                     platformComponent.ColliderSceneEntityInfo = sceneEntityInfo;
-                else
-                    platformComponent.ColliderSceneEntityInfo = null;
-
-                // Debug.Log($"VVV Raycast NetEntity {sceneEntityInfo.ColliderSceneEntityInfo.EntityReference.Id} {sceneEntityInfo.ColliderSceneEntityInfo.SDKEntity.Id}");
             }
 
-            platformComponent.ColliderNetworkEntityId = null;
-            platformComponent.ColliderNetworkId = null;
             // if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
-                CheckNEQuery(World);
+            hasCollider = false;
+            CheckNEQuery(World);
+
+                if(!hasCollider)
+                {
+                    platformComponent.ColliderSceneEntityInfo = null;
+                    platformComponent.ColliderNetworkEntityId = null;
+                    platformComponent.ColliderNetworkId = null;
+                }
 
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
         }
 
+        private bool hasCollider;
+
         [Query]
         private void CheckNE(in Entity e, ref PBNetworkEntity ne)
         {
             Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
+
+            if(hasCollider) return;
 
             if (platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
             if (platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
@@ -102,6 +108,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 platformComponent.ColliderNetworkId = ne.NetworkId;
                 Debug.Log($"VVV Networking Platform:  {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id} {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.SDKEntity.Id}");
                 Debug.Log($"VVV Networking Entity: {platformComponent.ColliderNetworkEntityId} {platformComponent.ColliderNetworkId}");
+                hasCollider = true;
             }
 
             foreach (var sceneInfo in collidersGlobalCache.colliderSceneEntityInfos)
