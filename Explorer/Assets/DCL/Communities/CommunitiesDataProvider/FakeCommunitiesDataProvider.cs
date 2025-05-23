@@ -22,8 +22,13 @@ namespace DCL.Communities
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 2, communitiesAsMember: 13)
-                                                                                .Where(x => ((isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member) || !isOwner || !isMember) && x.name.ToLower().Contains(name.ToLower()))
+            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 13)
+                                                                                .Where(x => (
+                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.owner) && x.role == CommunityMemberRole.owner) ||
+                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
+                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
+                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
+                                                                                            x.name.ToLower().Contains(name.ToLower()))
                                                                                 .ToList();
 
             List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();
@@ -81,7 +86,7 @@ namespace DCL.Communities
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        private List<GetUserCommunitiesResponse.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsMember)
+        private List<GetUserCommunitiesResponse.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
         {
             List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
 
@@ -95,8 +100,9 @@ namespace DCL.Communities
                     description = $"Test description for Community {i + 1}",
                     ownerId = string.Empty,
                     privacy = CommunityPrivacy.@public,
-                    role = i < communitiesAsOwner ? CommunityMemberRole.Owner :
-                        i < communitiesAsOwner + communitiesAsMember ? CommunityMemberRole.Member : CommunityMemberRole.None,
+                    role = i < communitiesAsOwner ? CommunityMemberRole.owner :
+                        i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
+                        i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
                 });
             }
 

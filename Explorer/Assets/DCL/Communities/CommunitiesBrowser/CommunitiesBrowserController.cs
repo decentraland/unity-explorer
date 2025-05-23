@@ -40,6 +40,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
         private bool currentIsMemberFilter;
+        private List<CommunityMemberRole> currentMemberRolesIncluded = new ();
         private int currentPageNumberFilter = 1;
         private int currentResultsTotalAmount;
         private string currentSearchText = string.Empty;
@@ -167,7 +168,13 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, name: string.Empty, isOwner: true, isMember: true, pageNumber: 1, elementsPerPage: 1000, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
+                userId: ownProfile.UserId,
+                name: string.Empty,
+                memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member },
+                pageNumber: 1,
+                elementsPerPage: 1000,
+                ct: ct);
 
             foreach (CommunityData community in userCommunitiesResponse.communities)
                 currentMyCommunities.Add(community);
@@ -183,7 +190,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
 
             loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(string.Empty, true, true, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+            LoadResultsAsync(
+                name: string.Empty,
+                memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member },
+                pageNumber: 1,
+                elementsPerPage: COMMUNITIES_PER_PAGE,
+                ct: loadResultsCts.Token).Forget();
 
         }
 
@@ -192,7 +204,12 @@ namespace DCL.Communities.CommunitiesBrowser
             currentSearchText = string.Empty;
             view.CleanSearchBar(raiseOnChangeEvent: false);
             loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(string.Empty, false, false, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+            LoadResultsAsync(
+                name: string.Empty,
+                memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none },
+                pageNumber: 1,
+                elementsPerPage: COMMUNITIES_PER_PAGE,
+                ct: loadResultsCts.Token).Forget();
 
             view.SetResultsBackButtonVisible(false);
             view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
@@ -204,10 +221,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(currentNameFilter, currentIsOwnerFilter, currentIsMemberFilter, currentPageNumberFilter + 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+            LoadResultsAsync(
+                name: currentNameFilter,
+                memberRolesIncluded: currentMemberRolesIncluded.ToArray(),
+                pageNumber: currentPageNumberFilter + 1,
+                elementsPerPage: COMMUNITIES_PER_PAGE,
+                ct: loadResultsCts.Token).Forget();
         }
 
-        private async UniTask LoadResultsAsync(string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTask LoadResultsAsync(string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             isGridResultsLoadingItems = true;
 
@@ -224,7 +246,13 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ownProfile == null)
                 return;
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(ownProfile.UserId, name, isOwner, isMember, pageNumber, elementsPerPage, ct);
+            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
+                ownProfile.UserId,
+                name,
+                memberRolesIncluded,
+                pageNumber,
+                elementsPerPage,
+                ct);
 
             if (userCommunitiesResponse.communities.Length > 0)
             {
@@ -247,8 +275,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.resultLoopGrid.SetListItemCount(currentResults.Count, resetPos: pageNumber == 1);
 
             currentNameFilter = name;
-            currentIsOwnerFilter = isOwner;
-            currentIsMemberFilter = isMember;
+            currentMemberRolesIncluded.Clear();
+            foreach (CommunityMemberRole memberRole in memberRolesIncluded)
+                currentMemberRolesIncluded.Add(memberRole);
             isGridResultsLoadingItems = false;
         }
 
@@ -281,7 +310,12 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.SetResultsTitleText($"Results for '{searchText}'");
 
                 loadResultsCts = loadResultsCts.SafeRestart();
-                LoadResultsAsync(searchText, false, false, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+                LoadResultsAsync(
+                    name: searchText,
+                    memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none },
+                    pageNumber: 1,
+                    elementsPerPage: COMMUNITIES_PER_PAGE,
+                    ct: loadResultsCts.Token).Forget();
             }
 
             currentSearchText = searchText;
