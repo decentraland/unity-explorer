@@ -515,6 +515,6 @@ MonoBehaviour:
   sentryMatrix:
     entries: []
   debounceEnabled: 1
-  useOptimizedLogger: 0
+  useOptimizedLogger: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

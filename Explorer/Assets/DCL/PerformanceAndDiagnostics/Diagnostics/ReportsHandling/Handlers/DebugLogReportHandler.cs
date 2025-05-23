@@ -105,7 +105,7 @@ namespace DCL.Diagnostics
 
             // Can't override exceptions logging because Unity controls the stack trace, and how it is printed natively
             // So log a category as a separate entry
-            unityLogHandler.LogFormat(LogType.Exception, context, GetReportDataPrefix(in reportData));
+            //unityLogHandler.LogFormat(LogType.Exception, context, GetReportDataPrefix(in reportData));
             unityLogHandler.LogException(exception, context);
         }
 
