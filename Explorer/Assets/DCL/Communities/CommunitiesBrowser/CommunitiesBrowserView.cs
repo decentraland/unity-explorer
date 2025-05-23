@@ -1,5 +1,6 @@
 using DCL.UI;
 using SuperScrollView;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,10 +25,12 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal GameObject myCommunitiesEmptyContainer { get; private set; }
         [field: SerializeField] internal GameObject myCommunitiesLoadingSpinner { get; private set; }
         [field: SerializeField] internal LoopListView2 myCommunitiesLoopList { get; private set; }
+        [field: SerializeField] internal Button myCommunitiesViewAllButton { get; private set; }
 
         [field: Header("Results Section")]
         [field: SerializeField] internal Button resultsBackButton { get; private set; }
         [field: SerializeField] internal TMP_Text resultsTitleText { get; private set; }
+        [field: SerializeField] internal TMP_Text resultsCountText { get; private set; }
         [field: SerializeField] internal GameObject resultsSection { get; private set; }
         [field: SerializeField] internal LoopGridView resultLoopGrid { get; private set; }
         [field: SerializeField] internal GameObject resultsEmptyContainer { get; private set; }
@@ -50,6 +53,9 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             resultsLoadingSpinner.SetActive(isLoading);
             resultsSection.SetActive(!isLoading);
+
+            if (isLoading)
+                resultsCountText.text = string.Empty;
         }
 
         public void SetResultsAsEmpty(bool isEmpty)
@@ -58,11 +64,17 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
-        public void SetResultsBackButtonVisible(bool isVisible) =>
+        public void SetResultsBackButtonVisible(bool isVisible)
+        {
             resultsBackButton.gameObject.SetActive(isVisible);
+            resultsCountText.gameObject.SetActive(isVisible);
+        }
 
         public void SetResultsTitleText(string text) =>
             resultsTitleText.text = text;
+
+        public void SetResultsCountText(int count) =>
+            resultsCountText.text = $"({count})";
 
         public void SetResultsLoadingMoreActive(bool isActive) =>
             resultsLoadingMoreSpinner.SetActive(isActive);

@@ -17,6 +17,10 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserController : ISection, IDisposable
     {
+        private const int COMMUNITIES_PER_PAGE = 20;
+        private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
+        private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
+
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
@@ -29,7 +33,11 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
 
-        private int currentPageNumber = 1;
+        private string currentNameFilter;
+        private bool currentIsOwnerFilter;
+        private bool currentIsMemberFilter;
+        private int currentPageNumberFilter = 1;
+        private int currentResultsTotalAmount;
         private bool isGridResultsLoadingItems;
 
         public CommunitiesBrowserController(
@@ -48,6 +56,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
+
+            view.myCommunitiesViewAllButton.onClick.AddListener(LoadAllMyCommunitiesResults);
+            view.resultsBackButton.onClick.AddListener(LoadAllCommunitiesResults);
         }
 
         public void Activate()
@@ -58,11 +69,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
 
-            loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(name: string.Empty, isOwner: false, isMember: false, pageNumber: 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
-
-            view.SetResultsBackButtonVisible(false);
-            view.SetResultsTitleText("Decentraland Communities");
+            LoadAllCommunitiesResults();
         }
 
         public void Deactivate()
@@ -90,6 +97,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
+            view.myCommunitiesViewAllButton.onClick.RemoveListener(LoadAllMyCommunitiesResults);
+            view.resultsBackButton.onClick.RemoveListener(LoadAllCommunitiesResults);
             loadMyCommunitiesCts?.SafeCancelAndDispose();
         }
 
@@ -105,11 +114,11 @@ namespace DCL.Communities.CommunitiesBrowser
             view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             view.resultLoopGrid.ScrollRect.onValueChanged.AddListener(_ =>
             {
-                if (isGridResultsLoadingItems || view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > 0.01f)
+                if (isGridResultsLoadingItems || currentResults.Count >= currentResultsTotalAmount || view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > 0.01f)
                     return;
 
                 loadResultsCts = loadResultsCts.SafeRestart();
-                LoadResultsAsync(name: string.Empty, isOwner: false, isMember: false, pageNumber: currentPageNumber + 1, elementsPerPage: 20, ct: loadResultsCts.Token).Forget();
+                LoadResultsAsync(currentNameFilter, currentIsOwnerFilter, currentIsMemberFilter, currentPageNumberFilter + 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
             });
         }
 
@@ -157,6 +166,25 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
+        private void LoadAllMyCommunitiesResults()
+        {
+            view.SetResultsBackButtonVisible(true);
+            view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
+
+            loadResultsCts = loadResultsCts.SafeRestart();
+            LoadResultsAsync(string.Empty, true, true, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+
+        }
+
+        private void LoadAllCommunitiesResults()
+        {
+            loadResultsCts = loadResultsCts.SafeRestart();
+            LoadResultsAsync(string.Empty, false, false, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+
+            view.SetResultsBackButtonVisible(false);
+            view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
+        }
+
         private async UniTask LoadResultsAsync(string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             isGridResultsLoadingItems = true;
@@ -178,11 +206,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (userCommunitiesResponse.communities.Length > 0)
             {
-                currentPageNumber = pageNumber;
+                currentPageNumberFilter = pageNumber;
 
                 foreach (CommunityData community in userCommunitiesResponse.communities)
                     currentResults.Add(community);
             }
+
+            currentResultsTotalAmount = userCommunitiesResponse.totalAmount;
 
             if (pageNumber == 1)
             {
@@ -191,7 +221,12 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             view.SetResultsLoadingMoreActive(false);
+            view.SetResultsCountText(currentResults.Count);
             view.resultLoopGrid.SetListItemCount(currentResults.Count, resetPos: pageNumber == 1);
+
+            currentNameFilter = name;
+            currentIsOwnerFilter = isOwner;
+            currentIsMemberFilter = isMember;
             isGridResultsLoadingItems = false;
         }
     }

@@ -29,7 +29,7 @@ namespace DCL.Communities
         }
 
         public CommunityData[] communities;
-        public int totalPages;
+        public int totalAmount;
     }
 }
 

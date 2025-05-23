@@ -26,8 +26,6 @@ namespace DCL.Communities
                                                                                 .Where(x => ((isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member) || !isOwner || !isMember) && x.name.Contains(name))
                                                                                 .ToList();
 
-            var totalPages = (int)Math.Ceiling((double)filteredCommunities.Count / elementsPerPage);
-
             List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();
             for (var i = 0; i < filteredCommunities.Count; i++)
             {
@@ -38,7 +36,7 @@ namespace DCL.Communities
             GetUserCommunitiesResponse result = new GetUserCommunitiesResponse
             {
                 communities = paginatedCommunities.ToArray(),
-                totalPages = totalPages,
+                totalAmount = filteredCommunities.Count,
             };
 
             await UniTask.Delay(UnityEngine.Random.Range(1000, 3000), cancellationToken: ct);
