@@ -42,6 +42,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private bool currentIsMemberFilter;
         private int currentPageNumberFilter = 1;
         private int currentResultsTotalAmount;
+        private string currentSearchText = string.Empty;
         private bool isGridResultsLoadingItems;
 
         public CommunitiesBrowserController(
@@ -63,13 +64,12 @@ namespace DCL.Communities.CommunitiesBrowser
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
 
-            view.myCommunitiesViewAllButton.onClick.AddListener(LoadAllMyCommunitiesResults);
+            view.myCommunitiesViewAllButton.onClick.AddListener(ViewAllMyCommunitiesResults);
             view.resultsBackButton.onClick.AddListener(LoadAllCommunitiesResults);
             view.searchBar.inputField.onSelect.AddListener(DisableShortcutsInput);
             view.searchBar.inputField.onDeselect.AddListener(RestoreInput);
             view.searchBar.inputField.onValueChanged.AddListener(OnSearchBarValueChanged);
             view.searchBar.clearSearchButton.onClick.AddListener(OnSearchBarCleared);
-            view.SetSearchBarClearButtonActive(false);
         }
 
         public void Activate()
@@ -79,7 +79,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
-
             LoadAllCommunitiesResults();
         }
 
@@ -110,7 +109,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
-            view.myCommunitiesViewAllButton.onClick.RemoveListener(LoadAllMyCommunitiesResults);
+            view.resultLoopGrid.ScrollRect.onValueChanged.RemoveListener(LoadMoreResults);
+            view.myCommunitiesViewAllButton.onClick.RemoveListener(ViewAllMyCommunitiesResults);
             view.resultsBackButton.onClick.RemoveListener(LoadAllCommunitiesResults);
             view.searchBar.inputField.onSelect.RemoveListener(DisableShortcutsInput);
             view.searchBar.inputField.onDeselect.RemoveListener(RestoreInput);
@@ -131,20 +131,12 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             view.resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
             view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            view.resultLoopGrid.ScrollRect.onValueChanged.AddListener(_ =>
-            {
-                if (isGridResultsLoadingItems || currentResults.Count >= currentResultsTotalAmount || view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > 0.01f)
-                    return;
-
-                loadResultsCts = loadResultsCts.SafeRestart();
-                LoadResultsAsync(currentNameFilter, currentIsOwnerFilter, currentIsMemberFilter, currentPageNumberFilter + 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
-            });
+            view.resultLoopGrid.ScrollRect.onValueChanged.AddListener(LoadMoreResults);
         }
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-
             MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
             cardView.SetTitle(currentMyCommunities[index].name);
             cardView.SetUserRole(currentMyCommunities[index].role);
@@ -185,7 +177,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
-        private void LoadAllMyCommunitiesResults()
+        private void ViewAllMyCommunitiesResults()
         {
             view.SetResultsBackButtonVisible(true);
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
@@ -197,12 +189,22 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadAllCommunitiesResults()
         {
+            currentSearchText = string.Empty;
             view.CleanSearchBar(raiseOnChangeEvent: false);
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(string.Empty, false, false, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
 
             view.SetResultsBackButtonVisible(false);
             view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
+        }
+
+        private void LoadMoreResults(Vector2 _)
+        {
+            if (isGridResultsLoadingItems || currentResults.Count >= currentResultsTotalAmount || view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > 0.01f)
+                return;
+
+            loadResultsCts = loadResultsCts.SafeRestart();
+            LoadResultsAsync(currentNameFilter, currentIsOwnerFilter, currentIsMemberFilter, currentPageNumberFilter + 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
         }
 
         private async UniTask LoadResultsAsync(string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
@@ -258,13 +260,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnSearchBarValueChanged(string searchText)
         {
-            if (string.IsNullOrEmpty(searchText))
-                LoadAllCommunitiesResults();
-            else
-            {
-                searchCancellationToken = searchCancellationToken.SafeRestart();
-                AwaitAndSendSearchAsync(searchText, searchCancellationToken.Token).Forget();
-            }
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            AwaitAndSendSearchAsync(searchText, searchCancellationToken.Token).Forget();
 
             view.SetSearchBarClearButtonActive(!string.IsNullOrEmpty(searchText));
         }
@@ -273,14 +270,28 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: ct);
 
-            view.SetResultsBackButtonVisible(true);
-            view.SetResultsTitleText($"Results for '{searchText}'");
+            if (currentSearchText == searchText)
+                return;
 
-            loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(searchText, false, false, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+            if (string.IsNullOrEmpty(searchText))
+                LoadAllCommunitiesResults();
+            else
+            {
+                view.SetResultsBackButtonVisible(true);
+                view.SetResultsTitleText($"Results for '{searchText}'");
+
+                loadResultsCts = loadResultsCts.SafeRestart();
+                LoadResultsAsync(searchText, false, false, 1, COMMUNITIES_PER_PAGE, loadResultsCts.Token).Forget();
+            }
+
+            currentSearchText = searchText;
         }
 
-        private void OnSearchBarCleared() =>
-            view.CleanSearchBar();
+        private void OnSearchBarCleared()
+        {
+            currentSearchText = string.Empty;
+            view.CleanSearchBar(false);
+            LoadAllCommunitiesResults();
+        }
     }
 }

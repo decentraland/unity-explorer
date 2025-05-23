@@ -3012,6 +3012,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SearchBar
       objectReference: {fileID: 0}
+    - target: {fileID: 1684105793296059905, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5627994399771922392, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
       propertyPath: m_Color.b
       value: 0.09411765
