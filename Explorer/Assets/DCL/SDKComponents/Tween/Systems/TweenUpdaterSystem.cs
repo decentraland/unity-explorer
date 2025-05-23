@@ -69,7 +69,9 @@ namespace DCL.SDKComponents.Tween.Systems
             }
 
             // if (currentPlatformCollider != platformComponent.PlatformCollider)
-            if (platformComponent.PlatformCollider != null)
+            if (platformComponent.PlatformCollider != null
+                && platformComponent.IsMovingPlatform
+                )
             {
                 // currentPlatformCollider = platformComponent.PlatformCollider;
                 if(collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
