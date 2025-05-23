@@ -266,6 +266,15 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.postprocessing": {
+      "version": "file:com.unity.postprocessing@3.4.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.modules.physics": "1.0.0",
+        "fidelityfx.fsr": "1.0.1"
+      }
+    },
     "com.unity.profiling.core": {
       "version": "1.0.2",
       "depth": 1,
@@ -415,6 +424,12 @@
       "source": "git",
       "dependencies": {},
       "hash": "bb1130092eeda484f9bc03b65fc06820c57ec427"
+    },
+    "fidelityfx.fsr": {
+      "version": "file:fidelityfx.fsr@1.0.1",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
