@@ -40,6 +40,11 @@ on:
           - library
           - workspace
           - inherit
+      sentry_enabled:
+        description: 'Enable Sentry'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       profile:
