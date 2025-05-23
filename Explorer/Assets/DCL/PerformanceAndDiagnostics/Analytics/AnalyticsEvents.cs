@@ -112,5 +112,10 @@
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
         }
+
+        public static class FeatureFlags
+        {
+            public const string ENABLED_FEATURES = "feature_flags";
+        }
     }
 }
