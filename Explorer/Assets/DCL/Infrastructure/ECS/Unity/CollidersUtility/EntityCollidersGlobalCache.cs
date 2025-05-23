@@ -9,8 +9,10 @@ namespace DCL.Interaction.Utility
     public class EntityCollidersGlobalCache : IEntityCollidersGlobalCache
     {
         private readonly Dictionary<IEntityCollidersSceneCache, SceneEcsExecutor> scenesInfo = new (PoolConstants.SCENES_COUNT);
-        private readonly Dictionary<Collider, GlobalColliderSceneEntityInfo> colliderSceneEntityInfos = new (100 * PoolConstants.SCENES_COUNT);
+        public Dictionary<Collider, GlobalColliderSceneEntityInfo> colliderSceneEntityInfos { get; } = new (100 * PoolConstants.SCENES_COUNT);
         private readonly Dictionary<Collider, GlobalColliderGlobalEntityInfo> colliderGlobalEntityInfos = new (100 * PoolConstants.GLOBAL_WORLD_COUNT);
+        public Dictionary<(uint entityId, ulong networkId), Collider> NetworkEntityToSceneEntity { get; } =
+            new (100 * PoolConstants.GLOBAL_WORLD_COUNT);
 
         public bool TryGetSceneEntity(Collider collider, out GlobalColliderSceneEntityInfo sceneEntity) =>
             colliderSceneEntityInfos.TryGetValue(collider, out sceneEntity);

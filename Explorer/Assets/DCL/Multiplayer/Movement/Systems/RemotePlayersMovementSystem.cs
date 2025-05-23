@@ -9,6 +9,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Utilities;
 using ECS.Abstract;
@@ -24,11 +25,14 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private readonly IMultiplayerMovementSettings settings;
         private readonly ICharacterControllerSettings characterControllerSettings;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
 
-        internal RemotePlayersMovementSystem(World world, IMultiplayerMovementSettings settings, ICharacterControllerSettings characterControllerSettings) : base(world)
+        internal RemotePlayersMovementSystem(World world, IMultiplayerMovementSettings settings
+          , ICharacterControllerSettings characterControllerSettings, IEntityCollidersGlobalCache collidersGlobalCache) : base(world)
         {
             this.settings = settings;
             this.characterControllerSettings = characterControllerSettings;
+            this.collidersGlobalCache = collidersGlobalCache;
         }
 
         protected override void Update(float t)
@@ -126,6 +130,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 remote = playerInbox.Dequeue();
             }
 
+            if (remote.syncedPlatform.HasValue &&
+                collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out Collider coll))
+            {
+                transComp.Transform.position = coll.transform.position;
+            }
+            return 0;
+
             return StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
 
@@ -218,9 +229,7 @@ namespace DCL.Multiplayer.Movement.Systems
             ref InterpolationComponent intComp)
         {
             float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta, characterControllerSettings.RotationSpeed);
-
-            if (intComp.Time < intComp.TotalDuration)
-                return -1;
+            if (intComp.Time < intComp.TotalDuration) return -1;
 
             intComp.Stop();
             remotePlayerMovement.AddPassed(intComp.End, characterControllerSettings);

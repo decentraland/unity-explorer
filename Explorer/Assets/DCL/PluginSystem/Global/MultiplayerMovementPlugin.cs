@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.Interaction.Utility;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
@@ -34,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteMetadata remoteMetadata;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly INtpTimeService ntpTimeService;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
@@ -42,7 +44,7 @@ namespace DCL.PluginSystem.Global
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs,
             IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, FeatureFlagsCache featureFlagsCache
-            , INtpTimeService ntpTimeService)
+            , INtpTimeService ntpTimeService, IEntityCollidersGlobalCache collidersGlobalCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -56,6 +58,7 @@ namespace DCL.PluginSystem.Global
             this.remoteMetadata = remoteMetadata;
             this.featureFlagsCache = featureFlagsCache;
             this.ntpTimeService = ntpTimeService;
+            this.collidersGlobalCache = collidersGlobalCache;
         }
 
         public void Dispose()
@@ -90,7 +93,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, debugSettings.Value);
-            RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings);
+            RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings, collidersGlobalCache);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings, settings.Value);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings.Value, settings.Value, entityParticipantTable, remoteMetadata);

@@ -18,6 +18,7 @@ using DCL.Interaction.Utility;
 using DCL.SDKComponents.Tween.Playground;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
+using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
@@ -81,7 +82,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             platformComponent.ColliderNetworkEntityId = null;
             platformComponent.ColliderNetworkId = null;
-            if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
+            // if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
                 CheckNEQuery(World);
 
             UpdatePBTweenQuery(World);
@@ -94,6 +95,7 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
 
+            if (platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
             if (platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
             {
                 platformComponent.ColliderNetworkEntityId = ne.EntityId;
@@ -101,6 +103,17 @@ namespace DCL.SDKComponents.Tween.Systems
                 Debug.Log($"VVV Networking Platform:  {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id} {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.SDKEntity.Id}");
                 Debug.Log($"VVV Networking Entity: {platformComponent.ColliderNetworkEntityId} {platformComponent.ColliderNetworkId}");
             }
+
+            foreach (var sceneInfo in collidersGlobalCache.colliderSceneEntityInfos)
+            {
+                if (sceneInfo.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
+                {
+                    collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sceneInfo.Key);
+                }
+            }
+
+            // collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkCollider.Collider);
+            // collidersGlobalCache.NetworkEntityCollider.Add();
         }
 
         [Query]

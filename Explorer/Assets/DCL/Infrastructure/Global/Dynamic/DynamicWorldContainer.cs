@@ -787,7 +787,8 @@ namespace Global.Dynamic
                     staticContainer.RealmData,
                     remoteMetadata,
                     staticContainer.FeatureFlagsCache,
-                    staticContainer.NtpTimeService),
+                    staticContainer.NtpTimeService,
+                    staticContainer.EntityCollidersGlobalCache),
                 new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(

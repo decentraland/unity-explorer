@@ -1,5 +1,6 @@
 using Arch.Core;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Interaction.Utility
@@ -38,5 +39,7 @@ namespace DCL.Interaction.Utility
         ///     Remove association with the collider (for global entities)
         /// </summary>
         void RemoveGlobalEntityAssociation(Collider collider);
+        Dictionary<Collider, GlobalColliderSceneEntityInfo> colliderSceneEntityInfos { get; }
+        Dictionary<(uint entityId, ulong networkId), Collider> NetworkEntityToSceneEntity { get; }
     }
 }

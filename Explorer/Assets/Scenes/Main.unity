@@ -440,13 +440,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
-    targetScene: {x: 0, y: 0}
+    initialRealm: 5
+    targetScene: {x: 22, y: -24}
     predefinedScenes:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: olavra.dcl.eth
+    targetWorld: boedo.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -473,7 +473,7 @@ MonoBehaviour:
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
     showSplash: 1
-    showAuthentication: 1
+    showAuthentication: 0
     showLoading: 1
     enableLandscape: 0
     enableLOD: 0
@@ -994,6 +994,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4675094418109749352, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5246952748258081463, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
       propertyPath: m_Pivot.x
       value: 0

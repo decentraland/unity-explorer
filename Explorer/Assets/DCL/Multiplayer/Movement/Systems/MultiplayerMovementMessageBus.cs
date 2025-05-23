@@ -132,6 +132,11 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongFall = proto.IsLongFall,
                 },
                 isStunned = proto.IsStunned,
+                syncedPlatform = proto.NetworkEntity == null? null : new NetworkMovementMessage.SyncedPlatform
+                {
+                    EntityId = proto.NetworkEntity.EntityId,
+                    NetworkId = proto.NetworkEntity.NetworkId,
+                },
             };
         }
 
