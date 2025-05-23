@@ -116,6 +116,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly IProfileChangesBus profileChangesBus;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
 
         private readonly bool includeCameraReel;
         private readonly bool includeCommunities;
@@ -131,7 +132,7 @@ namespace DCL.PluginSystem.Global
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
         private ViewDependencies viewDependencies;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private CommunitiesBrowserController? communitiesBrowserController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -247,6 +248,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             inputHandler?.Dispose();
             placeInfoPanelController?.Dispose();
+            communitiesBrowserController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -375,10 +377,11 @@ namespace DCL.PluginSystem.Global
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
+                cursor,
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
-            var communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, communitiesDataProvider);
+            communitiesBrowserController = new CommunitiesBrowserController(communitiesBrowserView, cursor, communitiesDataProvider, selfProfile, webRequestController, inputBlock);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
