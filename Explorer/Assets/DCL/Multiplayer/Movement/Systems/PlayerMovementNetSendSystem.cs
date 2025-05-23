@@ -145,7 +145,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = movement.Kind,
             };
 
-            if (platform.PlatformCollider != null && platform.ColliderNetworkEntityId != null)
+            if (platform.PlatformCollider != null &&
+                 platform.IsMovingPlatform &&  animation.States.IsGrounded && platform.ColliderNetworkEntityId != null)
             {
                 playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
                 {

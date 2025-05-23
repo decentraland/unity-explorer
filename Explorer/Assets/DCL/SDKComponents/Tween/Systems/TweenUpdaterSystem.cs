@@ -18,7 +18,6 @@ using DCL.Interaction.Utility;
 using DCL.SDKComponents.Tween.Playground;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
-using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
@@ -44,6 +43,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
 
         private CharacterPlatformComponent platformComponent;
+        private CharacterRigidTransform characterRb;
         private Collider currentPlatformCollider;
 
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
@@ -56,8 +56,8 @@ namespace DCL.SDKComponents.Tween.Systems
             this.ntpTimeService = ntpTimeService;
             this.collidersGlobalCache = collidersGlobalCache;
 
-            SingleInstanceEntity player = globalWorld.CachePlayer();
-            platformComponent = globalWorld.Get<CharacterPlatformComponent>(player);
+            platformComponent =  globalWorld.Get<CharacterPlatformComponent>(globalWorld.CachePlayer());
+            characterRb = globalWorld.Get<CharacterRigidTransform>(globalWorld.CachePlayer());
         }
 
         protected override void Update(float t)
@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             // if (currentPlatformCollider != platformComponent.PlatformCollider)
             if (platformComponent.PlatformCollider != null
-                && platformComponent.IsMovingPlatform
+                && platformComponent.IsMovingPlatform && characterRb.IsGrounded
                 )
             {
                 // currentPlatformCollider = platformComponent.PlatformCollider;
