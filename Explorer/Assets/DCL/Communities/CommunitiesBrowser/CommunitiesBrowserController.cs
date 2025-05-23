@@ -152,6 +152,9 @@ namespace DCL.Communities.CommunitiesBrowser
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
             cardView.SetTitle(currentResults[index].name);
+            cardView.SetPrivacy(currentResults[index].privacy);
+            cardView.SetMembersCount(currentResults[index].memberCount);
+            cardView.SetOwnership(currentResults[index].role != CommunityMemberRole.none);
             cardView.ConfigureImageController(webRequestController);
             cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
 

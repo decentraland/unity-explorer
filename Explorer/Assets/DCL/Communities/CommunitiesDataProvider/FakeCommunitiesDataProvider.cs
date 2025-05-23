@@ -95,14 +95,15 @@ namespace DCL.Communities
                 communities.Add(new GetUserCommunitiesResponse.CommunityData
                 {
                     id = (i + 1).ToString(),
-                    thumbnails = new[] { "https://picsum.photos/128/128" },
+                    thumbnails = new[] { "https://picsum.photos/280/280" },
                     name = $"Community {i + 1}",
                     description = $"Test description for Community {i + 1}",
                     ownerId = string.Empty,
-                    privacy = CommunityPrivacy.@public,
+                    privacy = i is 3 or 5 ? CommunityPrivacy.@private : CommunityPrivacy.@public,
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
+                    memberCount = UnityEngine.Random.Range(1, 200000),
                 });
             }
 
