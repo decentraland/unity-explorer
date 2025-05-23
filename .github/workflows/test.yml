@@ -88,11 +88,15 @@ jobs:
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' |
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' |
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' |
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
+                
                 Set-Content $jsonFilePath
             
             Get-ChildItem
             Get-Content $jsonFilePath
+
 
 
       # Configure test runner
