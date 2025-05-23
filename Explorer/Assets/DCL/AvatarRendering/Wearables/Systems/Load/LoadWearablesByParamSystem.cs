@@ -23,7 +23,6 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
     {
         private readonly URLSubdirectory lambdaSubdirectory;
         private readonly URLSubdirectory wearablesSubdirectory;
-        private readonly IRealmData realmData;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
@@ -33,7 +32,6 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IWearableStorage wearableStorage, string? builderContentURL = null
         ) : base(world, cache, wearableStorage, webRequestController, realmData, builderContentURL)
         {
-            this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearablesSubdirectory = wearablesSubdirectory;
         }
@@ -69,10 +67,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
 
-        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter)
-        {
-            var result = await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
-            return result;
-        }
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+            await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
     }
 }

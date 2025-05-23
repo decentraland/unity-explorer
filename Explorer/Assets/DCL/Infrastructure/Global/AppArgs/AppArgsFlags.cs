@@ -23,6 +23,7 @@
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
+        public const string SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS = "self-preview-builder-emote-collections";
 
         public const string PROFILE_NAME_EDITOR = "profile-name-editor";
 

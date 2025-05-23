@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private EmotesWheelController? emotesWheelController;
         private bool localSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly bool builderCollectionsPreview;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -81,7 +82,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             string builderContentURL,
             bool localSceneDevelopment,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            bool builderCollectionsPreview)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -102,6 +104,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.localSceneDevelopment = localSceneDevelopment;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.builderCollectionsPreview = builderCollectionsPreview;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -134,15 +137,19 @@ namespace DCL.PluginSystem.Global
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
 
-            if (localSceneDevelopment)
+            if (localSceneDevelopment || builderCollectionsPreview)
             {
+                IGltFastDownloadStrategy downloadStrategy = localSceneDevelopment ?
+                    new GltFastRealmDataDownloadStrategy(realmData)
+                    : new GltFastGlobalDownloadStrategy(builderContentURL);
+
                 LoadGLTFSystem.InjectToWorld(
                     ref builder,
                     NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
                     webRequestController,
                     false,
                     true,
-                    new GltFastRealmDataDownloadStrategy(realmData));
+                    downloadStrategy);
             }
         }
 

@@ -140,6 +140,7 @@ namespace DCL.Backpack
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
             bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS)
                                         && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
             var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChange, ct);

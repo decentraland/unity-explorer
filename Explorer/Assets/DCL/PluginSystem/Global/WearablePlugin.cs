@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly string builderContentURL;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
-        private readonly bool builderWearablesPreview;
+        private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
 
@@ -51,7 +51,7 @@ namespace DCL.AvatarRendering.Wearables
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
             string builderContentURL,
-            bool builderWearablesPreview)
+            bool builderCollectionsPreview)
         {
             this.wearableStorage = wearableStorage;
             this.assetsProvisioner = assetsProvisioner;
@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.Wearables
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
             this.builderContentURL = builderContentURL;
-            this.builderWearablesPreview = builderWearablesPreview;
+            this.builderCollectionsPreview = builderCollectionsPreview;
 
             cacheCleaner.Register(this.wearableStorage);
         }
@@ -90,15 +90,18 @@ namespace DCL.AvatarRendering.Wearables
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
-            if (builderWearablesPreview)
+            if (builderCollectionsPreview)
             {
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
-                LoadGLTFSystem.InjectToWorld(ref builder,
+
+                // TODO: Isolate only 1 LoadGLTFSystem instance in a dedicated global plugin...
+
+                /*LoadGLTFSystem.InjectToWorld(ref builder,
                     NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
                     webRequestController,
                     true,
                     true,
-                    new GltFastGlobalDownloadStrategy(builderContentURL));
+                    new GltFastGlobalDownloadStrategy(builderContentURL));*/
             }
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);

@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -24,8 +23,9 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
     {
         private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
         private readonly IWebRequestController webRequestController;
-        private readonly IRealmData realmData;
         private readonly string? builderContentURL;
+
+        protected readonly IRealmData realmData;
 
         protected LoadElementsByIntentionSystem(
             World world,
@@ -124,12 +124,14 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             if (string.IsNullOrEmpty(builderContentURL)) return;
 
-            intention.SetTotal(lambdaResponse.WearablesCollection.Count);
-
-            foreach (var element in lambdaResponse.WearablesCollection)
+            if (lambdaResponse.CollectionElements is { Count: > 0 })
             {
-                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO(builderContentURL), false);
-                intention.AppendToResult(wearable);
+                intention.SetTotal(lambdaResponse.CollectionElements.Count);
+                foreach (var element in lambdaResponse.CollectionElements)
+                {
+                    var avatarElement = avatarElementStorage.GetOrAddByDTO(element.BuildElementDTO(builderContentURL), false);
+                    intention.AppendToResult(avatarElement);
+                }
             }
         }
 

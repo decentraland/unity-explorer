@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             count = new ElementBinding<string>(string.Empty);
 
             widgetBuilder
-               .AddCustomMarker("Remote Metadata Count", count);
+               .AddCustomMarker("Remote EmoteMetadataDto Count", count);
         }
 
         public void Update()
