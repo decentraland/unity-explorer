@@ -78,5 +78,22 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetResultsLoadingMoreActive(bool isActive) =>
             resultsLoadingMoreSpinner.SetActive(isActive);
+
+        public void SetSearchBarClearButtonActive(bool isActive) =>
+            searchBar.clearSearchButton.gameObject.SetActive(isActive);
+
+        public void CleanSearchBar(bool raiseOnChangeEvent = true)
+        {
+            TMP_InputField.OnChangeEvent originalEvent = searchBar.inputField.onValueChanged;
+
+            if (!raiseOnChangeEvent)
+                searchBar.inputField.onValueChanged = new TMP_InputField.OnChangeEvent();
+
+            searchBar.inputField.text = string.Empty;
+            SetSearchBarClearButtonActive(false);
+
+            if (!raiseOnChangeEvent)
+                searchBar.inputField.onValueChanged = originalEvent;
+        }
     }
 }

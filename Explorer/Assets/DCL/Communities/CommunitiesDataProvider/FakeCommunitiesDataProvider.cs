@@ -23,7 +23,7 @@ namespace DCL.Communities
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, bool isOwner, bool isMember, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 2, communitiesAsMember: 13)
-                                                                                .Where(x => ((isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member) || !isOwner || !isMember) && x.name.Contains(name))
+                                                                                .Where(x => ((isOwner && x.role == CommunityMemberRole.Owner) || (isMember && x.role == CommunityMemberRole.Member) || !isOwner || !isMember) && x.name.ToLower().Contains(name.ToLower()))
                                                                                 .ToList();
 
             List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();
