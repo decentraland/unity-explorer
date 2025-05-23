@@ -165,7 +165,11 @@ namespace DCL.Multiplayer.Movement.Systems
             }
             else
             {
-                playerMovement.LastSentMessage.syncedPlatform = null;
+                playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
+                {
+                    EntityId = 0,
+                    NetworkId = 0,
+                };
             }
 
             messageBus.Send(playerMovement.LastSentMessage);
