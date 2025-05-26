@@ -28,7 +28,7 @@ namespace DCL.Communities
                     description = "This is a fake community for testing purposes.",
                     ownerId = "0x31d4f4dd8615ec45bbb6330da69f60032aca219e",
                     privacy = CommunityPrivacy.@public,
-                    role = CommunityMemberRole.Owner,
+                    role = CommunityMemberRole.owner,
                     places = new string[] { "land1", "land2" },
                     membersCount = Random.Range(1, 1_000_000_000),
                 }
@@ -60,12 +60,9 @@ namespace DCL.Communities
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
                 {
-                    totalPages = membersToReturn / elementsPerPage,
+                    totalAmount = membersToReturn,
                     members = members,
                 };
-
-            if (result.totalPages == 0)
-                result.totalPages = 1;
 
             return result;
         }

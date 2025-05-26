@@ -254,7 +254,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, currentSection == MembersListView.MemberListSections.BANNED, sectionsFetchData[currentSection].pageNumber, PAGE_SIZE, ct);
             sectionsFetchData[currentSection].members.AddRange(response.members);
-            sectionsFetchData[currentSection].totalToFetch = response.totalPages * PAGE_SIZE;
+            sectionsFetchData[currentSection].totalToFetch = response.totalAmount;
         }
 
         public void ShowMembersListAsync(string communityId, bool communityOwner, CancellationToken cancellationToken)
@@ -299,8 +299,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 profile.profilePicture);
             elementView.CanUnHover = false;
 
-            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.Moderator;
-            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.Member;
+            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator;
+            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member;
             blockUserContextMenuElement.Enabled = profile.friendshipStatus != FriendshipStatus.blocked && profile.friendshipStatus != FriendshipStatus.blocked_by;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,

@@ -130,9 +130,9 @@ namespace DCL.Communities.CommunitiesCard
             CommunityDescription.text = communityData.description;
             imageController.RequestImage(communityData.thumbnails[0], true, true);
 
-            JoinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.Member or CommunityMemberRole.Moderator);
-            OpenWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.Owner);
-            JoinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.None);
+            JoinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member or CommunityMemberRole.moderator);
+            OpenWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner);
+            JoinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none);
 
         }
     }

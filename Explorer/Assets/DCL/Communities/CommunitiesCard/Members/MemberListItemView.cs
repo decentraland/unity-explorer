@@ -100,7 +100,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             MutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
             MutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
             RoleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
-            RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.Owner or CommunityMemberRole.Moderator);
+            RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.profilePicture, memberProfile.id);
 
             currentSection = section;
