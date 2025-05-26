@@ -395,6 +395,7 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 8765912401497571406}
   <BackgroundCloseButton>k__BackingField: {fileID: 6113321632732672044}
   <LoadingObject>k__BackingField: {fileID: 5749406410202981772}
+  <BackgroundImage>k__BackingField: {fileID: 7299820048526774152}
   <OpenWizardButton>k__BackingField: {fileID: 1634923376034701604}
   <JoinedButton>k__BackingField: {fileID: 8865448273156285983}
   <JoinButton>k__BackingField: {fileID: 1251281582169058030}
