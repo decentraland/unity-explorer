@@ -14,6 +14,7 @@ namespace DCL.SDKComponents.Tween.Components
         private bool finished;
         private TweenerCore<T, T, TU> core;
         private ITweener customTweenerImplementation;
+        private Ease ease;
 
         public T CurrentValue { get; set; }
 
@@ -52,7 +53,32 @@ namespace DCL.SDKComponents.Tween.Components
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
             Debug.Log($"VVV DoTween start current time: {tweenModelCurrentTime}");
+
+            this.ease = ease;
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
+        }
+
+        public Vector3? GetOffset() =>
+            core is TweenerCore<Vector3, Vector3, VectorOptions> tw ? GetOffset(tw, 0, tw.Elapsed(false), ease) : null;
+
+        public static Vector3 GetOffset(
+            TweenerCore<Vector3,Vector3,VectorOptions> tw,
+            float t0, float t1, Ease ease,
+            float overshootOrAmplitude = 1.70158f, float period = 0f)
+        {
+            if (t1 < t0) (t0, t1) = (t1, t0);
+
+            float dur = tw.Duration(false);
+            Vector3 seg = tw.endValue - tw.startValue;
+
+            float p0 = Mathf.Clamp01(t0 / dur);
+            float p1 = Mathf.Clamp01(t1 / dur);
+
+            // evaluate the same curve DOTween uses
+            p0 = DOVirtual.EasedValue(0,1,p0,ease,overshootOrAmplitude,period);
+            p1 = DOVirtual.EasedValue(0,1,p1,ease,overshootOrAmplitude,period);
+
+            return seg * (p1 - p0);
         }
 
         private void OnTweenComplete()

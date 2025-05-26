@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
@@ -17,5 +18,7 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsFinished();
 
         bool IsActive();
+
+        public Vector3? GetOffset();
     }
 }

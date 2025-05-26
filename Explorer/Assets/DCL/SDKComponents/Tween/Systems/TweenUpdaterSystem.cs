@@ -82,7 +82,6 @@ namespace DCL.SDKComponents.Tween.Systems
                 platformComponent.ColliderNetworkId = null;
             }
 
-
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
@@ -149,6 +148,7 @@ namespace DCL.SDKComponents.Tween.Systems
             else
             {
                 TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+                Debug.Log($"VVV {e.Id} tween offset {sdkTweenComponent.CustomTweener.GetOffset().ToString()}");
 
                 if (newState != sdkTweenComponent.TweenStateStatus)
                 {

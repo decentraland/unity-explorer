@@ -32,6 +32,7 @@ namespace DCL.Multiplayer.Movement
         {
             var hashCode = new HashCode();
             hashCode.Add(timestamp);
+            hashCode.Add(syncTimestamp);
             hashCode.Add(position);
             hashCode.Add(velocity);
             hashCode.Add(velocitySqrMagnitude);
@@ -47,6 +48,7 @@ namespace DCL.Multiplayer.Movement
 
         public bool Equals(NetworkMovementMessage other) =>
             timestamp.Equals(other.timestamp)
+            && syncTimestamp.Equals(other.syncTimestamp)
             && position.Equals(other.position)
             && velocity.Equals(other.velocity)
             && velocitySqrMagnitude.Equals(other.velocitySqrMagnitude)

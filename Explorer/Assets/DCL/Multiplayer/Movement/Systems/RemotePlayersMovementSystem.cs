@@ -118,7 +118,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out Collider coll))
             {
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
-                remote.position += coll.transform.position;
+                // calculate offset in time;
+                Vector3 offset = Vector3.zero;
+                remote.position += offset;
             }
 
             var isBlend = false;
