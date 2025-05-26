@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
@@ -25,8 +26,11 @@ namespace DCL.Backpack
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
+        private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ICollection<string> forceRender;
+        private readonly List<string> forceRender;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
         private readonly World world;
         private readonly Entity playerEntity;
@@ -37,7 +41,10 @@ namespace DCL.Backpack
             IEquippedEmotes equippedEmotes,
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
-            ICollection<string> forceRender,
+            IProfileCache profileCache,
+            List<string> forceRender,
+            IEmoteStorage emoteStorage,
+            IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
             World world,
             Entity playerEntity,
@@ -48,7 +55,10 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
+            this.profileCache = profileCache;
             this.forceRender = forceRender;
+            this.emoteStorage = emoteStorage;
+            this.wearableStorage = wearableStorage;
 
             backpackEventBus.EquipWearableEvent += EquipWearable;
             backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
@@ -142,9 +152,41 @@ namespace DCL.Backpack
             bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                                         && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
-            var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChange, ct);
-            MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
-            UpdateAvatarInWorld(profile!);
+            Profile? oldProfile = await selfProfile.ProfileAsync(ct);
+
+            if (oldProfile == null)
+            {
+                // TODO: print error message
+                return;
+            }
+
+            Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
+                forceRender, emoteStorage, wearableStorage);
+
+            // Skip publishing the same profile
+            if (newProfile.Avatar.IsSameAvatar(oldProfile.Avatar))
+                return;
+
+            profileCache.Set(newProfile.UserId, newProfile);
+            UpdateAvatarInWorld(newProfile);
+
+            if (!publishProfileChange) return;
+
+            try
+            {
+                var updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+                UpdateAvatarInWorld(updatedProfile!);
+            }
+            catch (Exception e)
+            {
+                // TODO: print error message
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+
+                // Revert to the old profile so we are aligned to the catalyst's version
+                profileCache.Set(oldProfile.UserId, oldProfile);
+                UpdateAvatarInWorld(oldProfile);
+            }
         }
 
         private void UpdateAvatarInWorld(Profile profile)

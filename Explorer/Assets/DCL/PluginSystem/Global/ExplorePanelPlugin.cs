@@ -95,8 +95,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly ICollection<string> forceRender;
-        private ExplorePanelInputHandler? inputHandler;
+        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
@@ -114,9 +113,9 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly IProfileChangesBus profileChangesBus;
-
         private readonly bool includeCameraReel;
 
+        private ExplorePanelInputHandler? inputHandler;
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -149,7 +148,7 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            ICollection<string> forceRender,
+            List<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
@@ -255,6 +254,7 @@ namespace DCL.PluginSystem.Global
                 characterPreviewFactory,
                 wearableStorage,
                 selfProfile,
+                profileCache,
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
