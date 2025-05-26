@@ -48,7 +48,6 @@ namespace DCL.Chat.History
                     senderWalletAddress,
                     true,
                     ownProfile?.WalletId,
-                    communityId,
                     isMention: false
                 );
             }
@@ -70,7 +69,6 @@ namespace DCL.Chat.History
                     senderWalletAddress,
                     false,
                     profile?.WalletId,
-                    communityId,
                     isMention,
                     false
                 );
