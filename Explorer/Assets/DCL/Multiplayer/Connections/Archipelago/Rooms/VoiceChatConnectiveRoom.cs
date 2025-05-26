@@ -16,7 +16,6 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
@@ -29,10 +28,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
     public class VoiceChatConnectiveRoom : IActivatableConnectiveRoom
     {
+        private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
@@ -44,9 +43,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private string connectionString = string.Empty;
         public bool Activated { get; private set; }
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
-        public IConnectiveRoom.State CurrentState() => roomState.Value();
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-        public IRoom Room() => room;
 
         public VoiceChatConnectiveRoom(ObjectProxy<VoiceChatSettingsAsset> settings)
         {
@@ -72,11 +69,23 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 new MemoryRoomInfo(),
                 videoStreams,
                 audioStreams,
-                null
+                null!
             );
 
             roomInstance = new LogRoom(room);
         }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+            cts = null;
+        }
+
+        public IConnectiveRoom.State CurrentState() =>
+            roomState.Value();
+
+        public IRoom Room() =>
+            room;
 
         public async UniTask SetConnectionStringAndActivateAsync(string connectionString)
         {
@@ -87,31 +96,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public async UniTask ActivateAsync()
         {
-            if (Activated)
-            {
-                return;
-            }
+            if (Activated) { return; }
 
             Activated = true;
-            connectionString = settings.StrictObject.ConnectionString;
+            connectionString = string.Concat("livekit:wss://dcl.livekit.cloud?access_token=", settings.StrictObject.ConnectionString);
             await this.StartIfNotAsync();
         }
 
         public async UniTask DeactivateAsync()
         {
-            if (!Activated)
-            {
-                return;
-            }
+            if (!Activated) { return; }
 
             Activated = false;
             await this.StopIfNotAsync();
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
-            cts = null;
         }
 
         public async UniTask<bool> StartAsync()

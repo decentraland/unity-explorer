@@ -7,10 +7,8 @@ namespace DCL.Settings.Settings
     //    [CreateAssetMenu(fileName = "VoiceChatSettings", menuName = "DCL/Settings/Voice Chat Settings")]
     public class VoiceChatSettingsAsset : ScriptableObject
     {
-        public int SelectedMicrophoneIndex = 0;
-
         public delegate void MicrophoneChangedDelegate(int newMicrophoneIndex);
-        public event MicrophoneChangedDelegate? MicrophoneChanged;
+        public int SelectedMicrophoneIndex;
 
         [Header("Voice detection configurations")]
         [Tooltip("Defines the window of analysis of the input voice to determine the loudness of the microphone")]
@@ -28,11 +26,11 @@ namespace DCL.Settings.Settings
 
         [Tooltip("Noise gate threshold - audio below this level will be completely muted")]
         [Range(0f, 1f)]
-        public float NoiseGateThreshold = 0.01f;
+        public float NoiseGateThreshold = 0.005f;
 
         [Tooltip("Time in seconds to keep the gate open after speech ends (prevents cutting off word endings)")]
         [Range(0.1f, 2f)]
-        public float NoiseGateHoldTime = 0.3f;
+        public float NoiseGateHoldTime = 2f;
 
         [Tooltip("How quickly the gate opens when speech is detected (lower = faster)")]
         [Range(0.01f, 0.5f)]
@@ -47,7 +45,7 @@ namespace DCL.Settings.Settings
 
         [Tooltip("High-pass filter cutoff frequency in Hz")]
         [Range(50f, 500f)]
-        public float HighPassCutoffFreq = 80f;
+        public float HighPassCutoffFreq = 250f;
 
         [Tooltip("Enable automatic gain control to normalize volume")]
         public bool EnableAutoGainControl = true;
@@ -65,10 +63,11 @@ namespace DCL.Settings.Settings
 
         [Tooltip("Noise reduction strength (0 = no reduction, 1 = maximum reduction)")]
         [Range(0f, 1f)]
-        public float NoiseReductionStrength = 0.3f;
+        public float NoiseReductionStrength = 0.5f;
 
         [Tooltip("Used for Debug Purposes")]
         public string ConnectionString;
+        public event MicrophoneChangedDelegate? MicrophoneChanged;
 
         public void OnMicrophoneChanged(int newMicrophoneIndex)
         {
