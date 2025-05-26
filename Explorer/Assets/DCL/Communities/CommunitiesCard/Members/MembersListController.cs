@@ -264,7 +264,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ct = cancellationToken;
             lastCommunityId = communityId;
             isCommunityOwner = communityOwner;
-            // view.SetSectionButtonsActive(isCommunityOwner);
+            view.SetSectionButtonsActive(isCommunityOwner);
             panelLifecycleTask = new UniTaskCompletionSource();
 
             FetchNewDataAsync().Forget();

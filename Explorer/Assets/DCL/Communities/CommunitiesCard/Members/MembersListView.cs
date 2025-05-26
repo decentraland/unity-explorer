@@ -22,10 +22,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         private float scrollViewHeight;
         private MemberListSections currentSection;
 
-        private void Start()
+        private void Awake()
         {
             LoopListScrollRect.SetScrollSensitivityBasedOnPlatform();
-            scrollViewHeight = SectionButtons.sizeDelta.y;
+            scrollViewHeight = ScrollViewRect.sizeDelta.y;
             scrollViewMaxHeight = scrollViewHeight + SectionButtons.sizeDelta.y;
 
             foreach (var sectionMapping in MemberListSectionsElements)
