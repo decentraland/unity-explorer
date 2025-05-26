@@ -27,6 +27,7 @@ namespace DCL.PluginSystem.World
             PrimaryPointerInfoSystem.InjectToWorld(
                 ref builder,
                 globalWorld,
+                sharedDependencies.SceneStateProvider,
                 sharedDependencies.EcsToCRDTWriter
             );
         }
