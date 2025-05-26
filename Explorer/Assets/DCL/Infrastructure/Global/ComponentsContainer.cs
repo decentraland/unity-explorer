@@ -135,7 +135,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBMainCamera>.Create(ComponentID.MAIN_CAMERA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVirtualCamera>.Create(ComponentID.VIRTUAL_CAMERA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBLightSource>.Create(ComponentID.LIGHT_SOURCE).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBPrimaryPointerInfo>.Create(ComponentID.PRIMARY_POINTER_INFO).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBPrimaryPointerInfo>.Create(ComponentID.PRIMARY_POINTER_INFO).AsProtobufResult());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

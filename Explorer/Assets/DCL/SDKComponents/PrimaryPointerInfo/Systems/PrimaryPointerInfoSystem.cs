@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
@@ -7,13 +6,13 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using UnityEngine.InputSystem;
 using Vector2 = UnityEngine.Vector2;
 
 namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
     public partial class PrimaryPointerInfoSystem : BaseUnityLoopSystem
     {
@@ -36,19 +35,23 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             this.exposedCameraData = exposedCameraData;
         }
 
-        protected override void Update(float t)
+        public override void Initialize()
         {
-            UpdatePointerInfoQuery(World);
+            base.Initialize();
+
+            UpdatePointerInfo();
         }
 
-        [Query]
-        [All(typeof(PBPrimaryPointerInfo))]
+        protected override void Update(float t)
+        {
+            UpdatePointerInfo();
+        }
+
         private void UpdatePointerInfo()
         {
             mousePos = Mouse.current.position.value;
             deltaPos = mousePos - previousPosition;
             previousPosition = mousePos;
-
             ref CameraComponent cameraComponent = ref globalWorld.Get<CameraComponent>(exposedCameraData.CameraEntityProxy.Object);
 
             var ray = cameraComponent.Camera.ScreenPointToRay(mousePos);
