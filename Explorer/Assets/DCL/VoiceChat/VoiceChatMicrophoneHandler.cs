@@ -50,6 +50,7 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
+                audioSource.volume = 0f;
                 audioSource.Stop();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
