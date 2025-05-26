@@ -107,6 +107,18 @@ namespace DCL.Communities
 
             for (var i = 0; i < 100; i++)
             {
+                List<GetUserCommunitiesResponse.FriendInCommunity> mutualFriends = new ();
+                int amountMutualFriends = UnityEngine.Random.Range(0, 4);
+                for (var j = 0; j < amountMutualFriends; j++)
+                {
+                    mutualFriends.Add(new GetUserCommunitiesResponse.FriendInCommunity
+                    {
+                        id = $"test{i + 1}",
+                        name = $"testUser{i + 1}",
+                        profilePictureUrl = "https://picsum.photos/20/20",
+                    });
+                }
+
                 communities.Add(new GetUserCommunitiesResponse.CommunityData
                 {
                     id = (i + 1).ToString(),
@@ -120,6 +132,7 @@ namespace DCL.Communities
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
                     memberCount = UnityEngine.Random.Range(1, 101),
                     isLive = UnityEngine.Random.Range(0, 5) == 0,
+                    friends = mutualFriends.ToArray(),
                 });
             }
 

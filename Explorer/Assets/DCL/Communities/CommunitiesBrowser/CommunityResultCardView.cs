@@ -1,5 +1,8 @@
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using DCL.WebRequests;
+using MVC;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,6 +28,20 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal Button viewCommunityButton { get; private set; }
         [field: SerializeField] internal Button joinCommunityButton { get; private set; }
         [field: SerializeField] internal GameObject joiningLoading { get; private set; }
+        [field: SerializeField] internal MutualFriendsConfig mutualFriends { get; private set; }
+
+        [Serializable]
+        internal struct MutualFriendsConfig
+        {
+            public MutualThumbnail[] thumbnails;
+
+            [Serializable]
+            public struct MutualThumbnail
+            {
+                public GameObject root;
+                public ProfilePictureView picture;
+            }
+        }
 
         private ImageController imageController;
 
@@ -81,6 +98,12 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             joiningLoading.SetActive(isActive);
             buttonsContainer.SetActive(!isActive);
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            foreach (MutualFriendsConfig.MutualThumbnail thumbnail in mutualFriends.thumbnails)
+                thumbnail.picture.InjectDependencies(dependencies);
         }
     }
 }

@@ -3,8 +3,10 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -30,6 +32,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
+        private readonly ViewDependencies viewDependencies;
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
@@ -53,7 +56,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ICommunitiesDataProvider dataProvider,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ViewDependencies viewDependencies)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -62,6 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
+            this.viewDependencies = viewDependencies;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -174,6 +179,16 @@ namespace DCL.Communities.CommunitiesBrowser
                 joinCommunityCts = joinCommunityCts.SafeRestart();
                 JoinCommunityAsync(index, cardView, joinCommunityCts.Token).Forget();
             });
+
+            cardView.InjectDependencies(viewDependencies);
+            for (var i = 0; i < cardView.mutualFriends.thumbnails.Length; i++)
+            {
+                bool friendExists = i < currentResults[index].friends.Length;
+                cardView.mutualFriends.thumbnails[i].root.SetActive(friendExists);
+                if (!friendExists) continue;
+                GetUserCommunitiesResponse.FriendInCommunity mutualFriend = currentResults[index].friends[i];
+                cardView.mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.id);
+            }
 
             return gridItem;
         }
