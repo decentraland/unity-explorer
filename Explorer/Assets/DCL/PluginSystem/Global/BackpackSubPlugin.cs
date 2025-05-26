@@ -16,16 +16,16 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Profiles;
-using DCL.Utilities.Extensions;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.WebRequests;
-using Global.AppArgs;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IAppArgs appArgs;
         private readonly IWebBrowser webBrowser;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -88,7 +89,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             IAppArgs appArgs,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -115,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
             this.webBrowser = webBrowser;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -210,7 +213,8 @@ namespace DCL.PluginSystem.Global
                 web3Identity,
                 world,
                 playerEntity,
-                appArgs
+                appArgs,
+                inWorldWarningNotificationView
             );
 
             backpackController = new BackpackController(

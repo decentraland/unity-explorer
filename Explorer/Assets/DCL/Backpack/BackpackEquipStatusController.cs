@@ -9,6 +9,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using System;
@@ -32,8 +33,10 @@ namespace DCL.Backpack
         private readonly IEmoteStorage emoteStorage;
         private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly ProfileBuilder profileBuilder = new ();
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(
@@ -48,7 +51,8 @@ namespace DCL.Backpack
             IWeb3IdentityCache web3IdentityCache,
             World world,
             Entity playerEntity,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -72,6 +76,7 @@ namespace DCL.Backpack
             this.world = world;
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
         }
 
         public void Dispose()
@@ -156,7 +161,7 @@ namespace DCL.Backpack
 
             if (oldProfile == null)
             {
-                // TODO: print error message
+                ShowErrorNotificationAsync(ct).Forget();
                 return;
             }
 
@@ -168,6 +173,9 @@ namespace DCL.Backpack
             // Skip publishing the same profile
             if (newProfile.Avatar.IsSameAvatar(oldProfile.Avatar))
                 return;
+
+            // Clone the old profile since the original will be disposed when its replaced in the cache
+            oldProfile = profileBuilder.From(oldProfile).Build();
 
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
@@ -183,14 +191,16 @@ namespace DCL.Backpack
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
                 UpdateAvatarInWorld(updatedProfile!);
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                // TODO: print error message
                 ReportHub.LogException(e, ReportCategory.PROFILE);
 
                 // Revert to the old profile so we are aligned to the catalyst's version
                 profileCache.Set(oldProfile.UserId, oldProfile);
                 UpdateAvatarInWorld(oldProfile);
+
+                ShowErrorNotificationAsync(ct).Forget();
             }
         }
 
@@ -204,6 +214,16 @@ namespace DCL.Backpack
                 world.Set(playerEntity, profile);
             else
                 world.Add(playerEntity, profile);
+        }
+
+        private async UniTask ShowErrorNotificationAsync(CancellationToken ct)
+        {
+            inWorldWarningNotificationView.SetText("There was an error updating your avatar profile. Please try again.");
+            inWorldWarningNotificationView.Show(ct);
+
+            await UniTask.Delay(3000, cancellationToken: ct);
+
+            inWorldWarningNotificationView.Hide(ct: ct);
         }
     }
 }

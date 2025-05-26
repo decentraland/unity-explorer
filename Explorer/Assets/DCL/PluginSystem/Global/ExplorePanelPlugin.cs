@@ -49,6 +49,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
@@ -112,6 +113,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IProfileChangesBus profileChangesBus;
         private readonly bool includeCameraReel;
 
@@ -176,7 +178,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
-            SceneLoadingLimit sceneLoadingLimit)
+            SceneLoadingLimit sceneLoadingLimit,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -228,6 +231,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
         }
 
         public void Dispose()
@@ -273,7 +277,8 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 appArgs,
-                webBrowser
+                webBrowser,
+                inWorldWarningNotificationView
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
