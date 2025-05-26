@@ -15,10 +15,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             this.origin = origin;
         }
 
-        public ITrack CreateAudioTrack(string name, RtcAudioSource source, IRoom room)
+        public ITrack CreateAudioTrack(string name, RtcAudioSource source)
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{PREFIX}: create Audio Track with name {name}");
-            var audioTrack = origin.CreateAudioTrack(name, source, room);
+            var audioTrack = origin.CreateAudioTrack(name, source);
             ReportHub.Log(ReportCategory.LIVEKIT, $"{PREFIX}: created Audio Track with name {name} with SID: {audioTrack.Sid}");
             return audioTrack;
         }

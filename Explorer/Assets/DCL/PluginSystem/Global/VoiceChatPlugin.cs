@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            ProvidedInstance<AudioFilter> microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(settings.MicrophoneAudioFilter, ct: ct);
+            ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(settings.MicrophoneAudioFilter, ct: ct);
             var microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
 
             ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct: ct);
@@ -73,7 +73,7 @@ namespace DCL.PluginSystem.Global
             }
 
             [Serializable]
-            public class MicrophoneAudioFilterReference : ComponentReference<AudioFilter>
+            public class MicrophoneAudioFilterReference : ComponentReference<VoiceChatMicrophoneAudioFilter>
             {
                 public MicrophoneAudioFilterReference(string guid) : base(guid) { }
             }

@@ -9,8 +9,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
     {
         private IAudioTracks assigned = NullAudioTracks.INSTANCE;
 
-        public ITrack CreateAudioTrack(string name, RtcAudioSource source, IRoom room) =>
-            assigned.EnsureAssigned().CreateAudioTrack(name, source, room);
+        public ITrack CreateAudioTrack(string name, RtcAudioSource source) =>
+            assigned.EnsureAssigned().CreateAudioTrack(name, source);
 
         public void Assign(IAudioTracks value, out IAudioTracks? previous)
         {

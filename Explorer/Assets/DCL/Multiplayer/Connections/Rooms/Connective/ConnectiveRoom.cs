@@ -66,24 +66,24 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 var audioRemixConveyor = new ThreadedAudioRemixConveyor();
                 var audioStreams = new AudioStreams(hub, audioRemixConveyor);
                 var tracksFactory = new TracksFactory();
-                var audioTracks = new AudioTracks(tracksFactory);
 
-                return new LogRoom(
-                    new Room(
-                        new ArrayMemoryPool(),
-                        new DefaultActiveSpeakers(),
-                        hub,
-                        tracksFactory,
-                        new FfiHandleFactory(),
-                        new ParticipantFactory(),
-                        new TrackPublicationFactory(),
-                        new DataPipe(),
-                        new MemoryRoomInfo(),
-                        videoStreams,
-                        audioStreams,
-                        audioTracks
-                    )
+                // Pass null for AudioTracks - Room constructor will create it automatically
+                var room = new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    hub,
+                    tracksFactory,
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo(),
+                    videoStreams,
+                    audioStreams,
+                    null
                 );
+
+                return new LogRoom(room);
             });
 
         private CancellationTokenSource? cancellationTokenSource;

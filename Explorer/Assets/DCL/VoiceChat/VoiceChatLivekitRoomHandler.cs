@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
     public class VoiceChatLivekitRoomHandler : IDisposable
     {
         private readonly VoiceChatCombinedAudioSource combinedAudioSource;
-        private readonly AudioFilter microphoneAudioFilter;
+        private readonly VoiceChatMicrophoneAudioFilter microphoneAudioFilter;
         private readonly AudioSource microphoneAudioSource;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
@@ -27,7 +27,7 @@ namespace DCL.VoiceChat
         private bool isMediaOpen;
         private RtcAudioSource rtcAudioSource;
 
-        public VoiceChatLivekitRoomHandler(VoiceChatCombinedAudioSource combinedAudioSource, AudioFilter microphoneAudioFilter, AudioSource microphoneAudioSource, IRoom voiceChatRoom)
+        public VoiceChatLivekitRoomHandler(VoiceChatCombinedAudioSource combinedAudioSource, VoiceChatMicrophoneAudioFilter microphoneAudioFilter, AudioSource microphoneAudioSource, IRoom voiceChatRoom)
         {
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
         {
             rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
             rtcAudioSource.Start();
-            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource, voiceChatRoom);
+            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
 
             var options = new TrackPublishOptions
             {

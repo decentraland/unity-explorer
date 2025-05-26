@@ -60,8 +60,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             var audioRemixConveyor = new ThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
             var tracksFactory = new TracksFactory();
-            var audioTracks = new AudioTracks(tracksFactory);
 
+            // Pass null for AudioTracks - Room constructor will create it automatically
             roomInstance = new LogRoom(
                 new Room(
                     new ArrayMemoryPool(),
@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     new MemoryRoomInfo(),
                     videoStreams,
                     audioStreams,
-                    audioTracks
+                    null
                 )
             );
         }
