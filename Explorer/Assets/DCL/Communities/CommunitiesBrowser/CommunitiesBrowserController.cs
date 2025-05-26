@@ -155,6 +155,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetPrivacy(currentResults[index].privacy);
             cardView.SetMembersCount(currentResults[index].memberCount);
             cardView.SetOwnership(currentResults[index].role != CommunityMemberRole.none);
+            cardView.SetLiveMarkAsActive(currentResults[index].isLive);
             cardView.ConfigureImageController(webRequestController);
             cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
 

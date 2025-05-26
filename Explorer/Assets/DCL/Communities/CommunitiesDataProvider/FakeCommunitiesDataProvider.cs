@@ -104,6 +104,7 @@ namespace DCL.Communities
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
                     memberCount = UnityEngine.Random.Range(1, 200000),
+                    isLive = UnityEngine.Random.Range(0, 5) == 0,
                 });
             }
 
