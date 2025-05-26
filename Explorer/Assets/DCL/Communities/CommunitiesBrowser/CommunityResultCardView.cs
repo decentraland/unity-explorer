@@ -21,8 +21,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal TMP_Text communityMembersCountText { get; private set; }
         [field: SerializeField] internal GameObject communityLiveMark { get; private set; }
         [field: SerializeField] internal Button mainButton { get; private set; }
-        [field: SerializeField] internal Button joinCommunityButton { get; private set; }
+        [field: SerializeField] internal GameObject buttonsContainer { get; private set; }
         [field: SerializeField] internal Button viewCommunityButton { get; private set; }
+        [field: SerializeField] internal Button joinCommunityButton { get; private set; }
+        [field: SerializeField] internal GameObject joiningLoading { get; private set; }
 
         private ImageController imageController;
 
@@ -74,5 +76,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetLiveMarkAsActive(bool isLiveMark) =>
             communityLiveMark.SetActive(isLiveMark);
+
+        public void SetJoiningLoadingActive(bool isActive)
+        {
+            joiningLoading.SetActive(isActive);
+            buttonsContainer.SetActive(!isActive);
+        }
     }
 }

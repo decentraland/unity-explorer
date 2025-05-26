@@ -15,7 +15,7 @@ namespace DCL.Communities
         }
 
         [Serializable]
-        public struct CommunityData
+        public class CommunityData
         {
             public string id;
             public string[] thumbnails;

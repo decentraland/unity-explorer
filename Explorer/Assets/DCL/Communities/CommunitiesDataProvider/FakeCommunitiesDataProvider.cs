@@ -12,9 +12,11 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
+        private readonly List<GetUserCommunitiesResponse.CommunityData> currentCommunities;
+
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource)
         {
-
+            currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 0, communitiesAsModerator: 0, communitiesAsMember: 0);
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
@@ -22,12 +24,12 @@ namespace DCL.Communities
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 13)
+            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = currentCommunities
                                                                                 .Where(x => (
-                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.owner) && x.role == CommunityMemberRole.owner) ||
-                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
-                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
-                                                                                     (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
+                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.owner) && x.role == CommunityMemberRole.owner) ||
+                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
+                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
+                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
                                                                                             x.name.ToLower().Contains(name.ToLower()))
                                                                                 .ToList();
 
@@ -44,7 +46,7 @@ namespace DCL.Communities
                 totalAmount = filteredCommunities.Count,
             };
 
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 3000), cancellationToken: ct);
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
             return result;
         }
@@ -77,8 +79,21 @@ namespace DCL.Communities
         public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct)
+        {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
+            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            {
+                if (community.id == communityId)
+                {
+                    community.role = CommunityMemberRole.member;
+                    break;
+                }
+            }
+
+            return true;
+        }
 
         public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
@@ -103,7 +118,7 @@ namespace DCL.Communities
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
-                    memberCount = UnityEngine.Random.Range(1, 200000),
+                    memberCount = UnityEngine.Random.Range(1, 101),
                     isLive = UnityEngine.Random.Range(0, 5) == 0,
                 });
             }

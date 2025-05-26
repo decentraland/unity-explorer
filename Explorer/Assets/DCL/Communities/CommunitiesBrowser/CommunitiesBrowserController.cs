@@ -32,15 +32,16 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IInputBlock inputBlock;
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
+        private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
-        private CancellationTokenSource searchCancellationToken;
+        private CancellationTokenSource searchCancellationCts;
+        private CancellationTokenSource joinCommunityCts;
 
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
         private bool currentIsMemberFilter;
-        private List<CommunityMemberRole> currentMemberRolesIncluded = new ();
         private int currentPageNumberFilter = 1;
         private int currentResultsTotalAmount;
         private string currentSearchText = string.Empty;
@@ -88,7 +89,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.gameObject.SetActive(false);
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
-            searchCancellationToken?.SafeCancelAndDispose();
+            searchCancellationCts?.SafeCancelAndDispose();
+            joinCommunityCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId)
@@ -119,7 +121,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.searchBar.clearSearchButton.onClick.RemoveListener(OnSearchBarCleared);
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
-            searchCancellationToken?.SafeCancelAndDispose();
+            searchCancellationCts?.SafeCancelAndDispose();
+            joinCommunityCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList()
@@ -160,12 +163,17 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetLiveMarkAsActive(currentResults[index].isLive);
             cardView.ConfigureImageController(webRequestController);
             cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
+            cardView.SetJoiningLoadingActive(false);
             cardView.mainButton.onClick.RemoveAllListeners();
             cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(currentResults[index].id); });
             cardView.viewCommunityButton.onClick.RemoveAllListeners();
             cardView.viewCommunityButton.onClick.AddListener(() => { OpenCommunityProfile(currentResults[index].id); });
             cardView.joinCommunityButton.onClick.RemoveAllListeners();
-            cardView.joinCommunityButton.onClick.AddListener(() => { JoinCommunity(currentResults[index].id); });
+            cardView.joinCommunityButton.onClick.AddListener(() =>
+            {
+                joinCommunityCts = joinCommunityCts.SafeRestart();
+                JoinCommunityAsync(index, cardView, joinCommunityCts.Token).Forget();
+            });
 
             return gridItem;
         }
@@ -192,7 +200,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 currentMyCommunities.Add(community);
 
             view.SetMyCommunitiesAsLoading(false);
-            view.myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, true);
+            view.myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count);
             view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
@@ -213,6 +221,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadAllCommunitiesResults()
         {
+            joinCommunityCts?.SafeCancelAndDispose();
             currentSearchText = string.Empty;
             view.CleanSearchBar(raiseOnChangeEvent: false);
             loadResultsCts = loadResultsCts.SafeRestart();
@@ -301,8 +310,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnSearchBarValueChanged(string searchText)
         {
-            searchCancellationToken = searchCancellationToken.SafeRestart();
-            AwaitAndSendSearchAsync(searchText, searchCancellationToken.Token).Forget();
+            searchCancellationCts = searchCancellationCts.SafeRestart();
+            AwaitAndSendSearchAsync(searchText, searchCancellationCts.Token).Forget();
 
             view.SetSearchBarClearButtonActive(!string.IsNullOrEmpty(searchText));
         }
@@ -340,14 +349,25 @@ namespace DCL.Communities.CommunitiesBrowser
             LoadAllCommunitiesResults();
         }
 
-        private void OpenCommunityProfile(string communityId)
+        private async UniTask JoinCommunityAsync(int index, CommunityResultCardView cardView, CancellationToken ct)
         {
-            // TODO: Open Community profile...
+            cardView.SetJoiningLoadingActive(true);
+            bool joinedSuccess = await dataProvider.JoinCommunityAsync(currentResults[index].id, ct);
+            if (joinedSuccess)
+            {
+                currentResults[index].role = CommunityMemberRole.member;
+                currentResults[index].memberCount++;
+                currentMyCommunities.Add(currentResults[index]);
+
+                view.resultLoopGrid.RefreshItemByItemIndex(index);
+                view.myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
+                view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+            }
         }
 
-        private void JoinCommunity(string communityId)
+        private void OpenCommunityProfile(string communityId)
         {
-            // TODO: Join a Community...
+            // TODO: Open community profile...
         }
     }
 }
