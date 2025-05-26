@@ -112,16 +112,15 @@ namespace DCL.VoiceChat
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            Debug.LogWarning("VOICE CHAT - Track Subscribed Event " + track.Name);
             if (publication.Kind == TrackKind.KindAudio)
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                 if (stream != null)
                 {
-                    Debug.LogWarning("VOICE CHAT - Added Stream on Subscribe " + publication.Name + " from participant " + participant.Identity);
                     combinedAudioSource.AddStream(stream);
-                }            }
+                }
+            }
         }
 
 

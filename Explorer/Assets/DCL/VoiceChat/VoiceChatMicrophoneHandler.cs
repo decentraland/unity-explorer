@@ -16,7 +16,11 @@ namespace DCL.VoiceChat
 
         private bool isTalking;
         private string microphoneName;
+
+        public bool IsTalking => isTalking;
+        public string MicrophoneName => microphoneName;
         private float buttonPressStartTime;
+        private int frameCounter;
 
         public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource)
         {
@@ -27,12 +31,12 @@ namespace DCL.VoiceChat
 
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
+            voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
         }
 
         private void OnPressed(InputAction.CallbackContext obj)
         {
             buttonPressStartTime = Time.time;
-Debug.Log($"is talking {isTalking}");
             // Start the microphone immediately when button is pressed
             // If it's a quick press, we'll handle it in OnReleased
             if (!isTalking)
@@ -51,7 +55,6 @@ Debug.Log($"is talking {isTalking}");
             }
             else
             {
-                // Handle microphone toggle behaviour
                 if (isTalking)
                     DisableMicrophone();
 
@@ -78,6 +81,55 @@ Debug.Log($"is talking {isTalking}");
             Debug.Log("Disable microphone");
         }
 
+        private void OnMicrophoneChanged(int newMicrophoneIndex)
+        {
+            // If we're currently talking, restart the microphone with the new device
+            if (isTalking)
+            {
+                DisableMicrophone();
+                EnableMicrophone();
+                Debug.Log($"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
+            }
+        }
+
+        public void CheckLoudnessAndControlAudio()
+        {
+            // Only check loudness if we're talking
+            if (!isTalking)
+                return;
+
+            frameCounter++;
+
+            // Check loudness every X frames as defined in settings
+            if (frameCounter >= voiceChatSettings.LoudnessCheckFrameInterval)
+            {
+                frameCounter = 0;
+                CheckMicrophoneLoudnessAndControlAudio();
+            }
+        }
+
+        private void CheckMicrophoneLoudnessAndControlAudio()
+        {
+            float currentLoudness = GetLoudnessFromMicrophone();
+
+            if (currentLoudness >= voiceChatSettings.MicrophoneLoudnessMinimumThreshold)
+            {
+                // Loudness is above threshold, ensure audio is playing
+                if (!audioSource.isPlaying)
+                {
+                    audioSource.Play();
+                }
+            }
+            else
+            {
+                // Loudness is below threshold, ensure audio is stopped
+                if (audioSource.isPlaying)
+                {
+                    audioSource.Stop();
+                }
+            }
+        }
+
         private float GetLoudnessFromMicrophone()
         {
             int startPosition = Microphone.GetPosition(microphoneName) - voiceChatSettings.SampleWindow;
@@ -98,6 +150,7 @@ Debug.Log($"is talking {isTalking}");
         {
             dclInput.VoiceChat.Talk.performed -= OnPressed;
             dclInput.VoiceChat.Talk.canceled -= OnReleased;
+            voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
             DisableMicrophone();
         }
     }

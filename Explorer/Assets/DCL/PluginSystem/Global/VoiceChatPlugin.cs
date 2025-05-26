@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.VoiceChat.Systems;
 using LiveKit;
 using System;
 using System.Threading;
@@ -20,6 +21,8 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IRoomHub roomHub;
 
+        private VoiceChatMicrophoneHandler voiceChatHandler;
+
         public VoiceChatPlugin(ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy, IAssetsProvisioner assetsProvisioner, DCLInput dclInput, IRoomHub roomHub)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
@@ -30,16 +33,23 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            if (voiceChatHandler != null)
+            {
+                VoiceChatLoudnessMonitoringSystem.InjectToWorld(ref builder, voiceChatHandler);
+            }
+        }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             ProvidedInstance<AudioFilter> microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(settings.MicrophoneAudioFilter, ct: ct);
             var microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
 
-            ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct: ct);
-            voiceChatSettingsProxy.SetObject(voiceChatSettings.Value);
-            var voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings.Value, microphoneAudioSource);
+            ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct: ct);
+            var voiceChatSettings = voiceChatSettingsAsset.Value;
+            voiceChatSettingsProxy.SetObject(voiceChatSettings);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, microphoneAudioSource);
 
             ProvidedInstance<VoiceChatCombinedAudioSource> audioSource = await assetsProvisioner.ProvideInstanceAsync(settings.CombinedAudioSource, ct: ct);
 
