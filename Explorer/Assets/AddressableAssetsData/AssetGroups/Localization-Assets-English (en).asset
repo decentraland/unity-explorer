@@ -14,7 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Localization-Assets-English (en)
   m_GUID: bbf196456d6041d4e9cb25f216e21f0c
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 88fa6c198b6da4e3680d88682eaad9d0
+    m_Address: DCL Game Night
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 1
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:
