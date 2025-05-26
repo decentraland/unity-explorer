@@ -15,6 +15,7 @@ namespace DCL.VoiceChat
         public AudioClip MicrophoneAudioClip;
 
         private bool isTalking;
+        private bool isMicrophoneInitialized;
         private string microphoneName;
 
         public bool IsTalking => isTalking;
@@ -32,6 +33,9 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+            
+            // Pre-initialize microphone for faster response
+            InitializeMicrophone();
         }
 
         private void OnPressed(InputAction.CallbackContext obj)
@@ -62,34 +66,59 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void EnableMicrophone()
+        private void InitializeMicrophone()
         {
+            if (isMicrophoneInitialized)
+                return;
+                
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            MicrophoneAudioClip = Microphone.Start(microphoneName, true, 5, AudioSettings.outputSampleRate);
+            MicrophoneAudioClip = Microphone.Start(microphoneName, true, 1, AudioSettings.outputSampleRate);
             audioSource.clip = MicrophoneAudioClip;
             audioSource.loop = true;
+            isMicrophoneInitialized = true;
+            Debug.Log("Microphone initialized");
+        }
+
+        private void EnableMicrophone()
+        {
+            if (!isMicrophoneInitialized)
+                InitializeMicrophone();
+                
             audioSource.Play();
+            
+            // Reset frame counter to ensure immediate loudness checking
+            frameCounter = 0;
+            
             Debug.Log("Enable microphone");
         }
 
         private void DisableMicrophone()
         {
             audioSource.Stop();
-            audioSource.clip = null;
-            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            Microphone.End(microphoneName);
             Debug.Log("Disable microphone");
         }
 
         private void OnMicrophoneChanged(int newMicrophoneIndex)
         {
-            // If we're currently talking, restart the microphone with the new device
+            // Stop current microphone
+            if (isMicrophoneInitialized)
+            {
+                audioSource.Stop();
+                audioSource.clip = null;
+                Microphone.End(microphoneName);
+                isMicrophoneInitialized = false;
+            }
+            
+            // Initialize with new microphone
+            InitializeMicrophone();
+            
+            // If we were talking, resume
             if (isTalking)
             {
-                DisableMicrophone();
-                EnableMicrophone();
-                Debug.Log($"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
+                audioSource.Play();
             }
+            
+            Debug.Log($"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
         }
 
         public void CheckLoudnessAndControlAudio()
@@ -132,15 +161,24 @@ namespace DCL.VoiceChat
 
         private float GetLoudnessFromMicrophone()
         {
-            int startPosition = Microphone.GetPosition(microphoneName) - voiceChatSettings.SampleWindow;
+            int micPosition = Microphone.GetPosition(microphoneName);
+            
+            // Ensure we have enough data recorded before trying to analyze
+            if (micPosition < voiceChatSettings.SampleWindow)
+                return 0;
 
-            if (startPosition < 0) return 0;
+            int startPosition = micPosition - voiceChatSettings.SampleWindow;
+            
+            // Handle wrap-around for circular buffer
+            if (startPosition < 0)
+                startPosition = 0;
 
             float totalLoudness = 0;
 
             MicrophoneAudioClip.GetData(waveData, startPosition);
 
-            for (var i = 0; i < waveData.Length; i++)
+            // Optimized loop - avoid repeated array access
+            for (int i = 0; i < waveData.Length; i++)
                 totalLoudness += Mathf.Abs(waveData[i]);
 
             return totalLoudness / voiceChatSettings.SampleWindow;
@@ -151,7 +189,13 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.performed -= OnPressed;
             dclInput.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
-            DisableMicrophone();
+            
+            if (isMicrophoneInitialized)
+            {
+                audioSource.Stop();
+                audioSource.clip = null;
+                Microphone.End(microphoneName);
+            }
         }
     }
 }
