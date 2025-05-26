@@ -23,6 +23,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -58,6 +59,7 @@ namespace DCL.Chat
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
@@ -110,7 +112,8 @@ namespace DCL.Chat
             RPCChatPrivacyService chatPrivacyService,
             IFriendsEventBus friendsEventBus,
             ChatHistoryStorage chatStorage,
-            ObjectProxy<IFriendsService> friendsService) : base(viewFactory)
+            ObjectProxy<IFriendsService> friendsService,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -128,6 +131,7 @@ namespace DCL.Chat
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -321,6 +325,12 @@ namespace DCL.Chat
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
+        }
+
+        private void OnStartCall()
+        {
+            //This is a placeholder, need to provide the wallet id of the chat context
+            voiceChatCallStatusService.StartCall("");
         }
 
         public void OnSelectConversation(ChatChannel.ChannelId channelId)
@@ -676,6 +686,7 @@ namespace DCL.Chat
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
                 view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
+                view.StartCall += OnStartCall;
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
@@ -726,6 +737,7 @@ namespace DCL.Chat
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.ConversationSelected -= OnSelectConversation;
                 viewInstance.DeleteChatHistoryRequested -= OnViewDeleteChatHistoryRequested;
+                viewInstance.StartCall -= OnStartCall;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }

@@ -20,6 +20,7 @@ namespace DCL.Chat
         public event Action? CloseMemberListButtonClicked;
         public event Action? HideMemberListButtonClicked;
         public event Action? ShowMemberListButtonClicked;
+        public event Action? StartCall;
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
@@ -83,6 +84,7 @@ namespace DCL.Chat
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
+            callButton.onClick.AddListener(OnStartCall);
             isInitialized = true;
         }
 
@@ -173,6 +175,11 @@ namespace DCL.Chat
         private void OnProfileContextMenuOpened()
         {
             ContextMenuVisibilityChanged?.Invoke(true);
+        }
+
+        private void OnStartCall()
+        {
+            StartCall?.Invoke();
         }
 
         private void OnDisable()

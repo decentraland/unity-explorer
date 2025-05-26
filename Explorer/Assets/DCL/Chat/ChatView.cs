@@ -179,6 +179,8 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
+        public event Action StartCall;
+
         private ViewDependencies viewDependencies;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
 
@@ -459,6 +461,7 @@ namespace DCL.Chat
             chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
+            chatTitleBar.StartCall += OnStartCall;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
@@ -490,6 +493,11 @@ namespace DCL.Chat
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
                 AddConversation(channelPair.Value);
+        }
+
+        private void OnStartCall()
+        {
+            StartCall?.Invoke();
         }
 
         private void OnDeleteChatHistoryRequested()

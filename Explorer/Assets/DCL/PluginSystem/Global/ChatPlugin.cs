@@ -24,6 +24,7 @@ using DCL.UI.MainUI;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -60,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private ChatController chatController;
 
@@ -88,7 +90,8 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -113,6 +116,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -162,7 +166,8 @@ namespace DCL.PluginSystem.Global
                 privacySettings,
                 friendsEventBus,
                 chatStorage,
-                friendsServiceProxy
+                friendsServiceProxy,
+                voiceChatCallStatusService
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

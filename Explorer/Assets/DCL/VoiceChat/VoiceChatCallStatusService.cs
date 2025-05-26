@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
             //We can stop a call only if we are starting a call or inside a call
             if (Status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDED_CALL or VoiceChatStatus.VOICE_CHAT_ENDING_CALL) return;
 
-            UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
+            UpdateStatus(VoiceChatStatus.DISCONNECTED);
         }
 
         private void UpdateStatus(VoiceChatStatus newStatus)

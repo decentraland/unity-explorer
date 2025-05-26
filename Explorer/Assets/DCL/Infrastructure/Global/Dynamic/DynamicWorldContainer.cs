@@ -712,7 +712,8 @@ namespace Global.Dynamic
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
-                    friendServiceProxy),
+                    friendServiceProxy,
+                    voiceChatCallStatusService),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
