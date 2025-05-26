@@ -30,6 +30,11 @@ namespace DCL.VoiceChat
         
         public bool IsNoiseGateOpen => audioProcessor?.IsGateOpen ?? false;
         public float CurrentGain => audioProcessor?.CurrentGain ?? 1f;
+        public float NoiseFloor => audioProcessor?.NoiseFloor ?? 0f;
+        public float SpeechFloor => audioProcessor?.SpeechFloor ?? 0f;
+        public bool IsLearningNoise => audioProcessor?.IsLearningNoise ?? false;
+        public float AdaptiveThreshold => audioProcessor?.AdaptiveThreshold ?? 0f;
+        public float GateSmoothing => audioProcessor?.GateSmoothing ?? 0f;
         
         private void Awake()
         {

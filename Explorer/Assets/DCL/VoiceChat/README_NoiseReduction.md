@@ -36,13 +36,23 @@ This system provides comprehensive noise reduction and audio processing capabili
   - `AGCResponseSpeed`: How quickly AGC responds (0.1-5.0)
 - **Recommended**: `AGCTargetLevel = 0.7`, `AGCResponseSpeed = 1.0`
 
-### 4. **Noise Reduction**
-- **Purpose**: Reduces constant background noise
-- **How it works**: Learns noise profile and subtracts it from audio
+### 4. **Enhanced Noise Reduction**
+- **Purpose**: Intelligently reduces background noise while preserving speech quality
+- **How it works**: 
+  - Adaptive learning of both noise and speech patterns
+  - Multi-stage frequency-aware noise reduction
+  - Speech-aware processing to prevent voice distortion
+  - Continuous adaptation to changing noise environments
 - **Settings**:
   - `EnableNoiseReduction`: Enable/disable noise reduction
   - `NoiseReductionStrength`: Reduction strength (0-1)
-- **Recommended**: `NoiseReductionStrength = 0.3` for balanced results
+- **Recommended**: `NoiseReductionStrength = 0.8` for effective fan noise reduction (now artifact-resistant)
+- **Key Improvements**:
+  - Learns separate profiles for noise and speech
+  - Frequency-domain analysis for better noise characterization
+  - Adaptive thresholds that adjust to environment
+  - Multi-stage reduction prevents artifacts
+  - Speech-aware AGC prevents noise amplification
 
 ## Implementation
 
@@ -99,10 +109,12 @@ public float NoiseReductionStrength = 0.3f;
 - Reduce `NoiseReductionStrength`
 - Lower `HighPassCutoffFreq`
 
-**Background noise still audible:**
-- Increase `NoiseGateThreshold`
-- Increase `NoiseReductionStrength`
+**Background noise still audible (especially fan noise):**
+- Increase `NoiseReductionStrength` to 0.7-0.8
+- Increase `NoiseGateThreshold` to 0.015-0.02
 - Ensure `EnableNoiseGate` is true
+- Lower `AGCResponseSpeed` to 0.5-0.8 to prevent noise amplification
+- Increase `HighPassCutoffFreq` to 120-150Hz for fan noise
 
 **Volume inconsistent:**
 - Enable `EnableAutoGainControl`
@@ -123,14 +135,17 @@ public float NoiseReductionStrength = 0.3f;
 
 ### Processing Order
 1. High-pass filter (removes low frequencies)
-2. Noise reduction (subtracts learned noise profile)
-3. Noise gate (mutes quiet audio)
-4. Automatic gain control (normalizes volume)
+2. Noise gate (mutes quiet audio before amplification)
+3. Automatic gain control (normalizes volume)
+4. Enhanced noise reduction (removes remaining noise without amplifying artifacts)
 
-### Noise Learning
-- The system automatically learns the noise profile during the first 30 frames
-- Learning only occurs during quiet periods (below 50% of voice threshold)
-- Noise profile is reset when microphone changes
+### Adaptive Learning System
+- **Noise Learning**: Continuously learns noise patterns during silence periods (>0.5s quiet)
+- **Speech Learning**: Learns speech characteristics during active speech periods (>0.2s talking)
+- **Frequency Analysis**: Analyzes 32 frequency bins for better noise characterization
+- **Adaptive Thresholds**: Automatically adjusts detection thresholds based on environment
+- **Continuous Adaptation**: Profiles update throughout the session, not just at startup
+- **Profile Reset**: All profiles reset when microphone changes
 
 ### Performance Impact
 - Minimal CPU usage (~1-2% on modern systems)
