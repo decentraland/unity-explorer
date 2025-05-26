@@ -75,6 +75,8 @@ namespace DCL.VoiceChat
             MicrophoneAudioClip = Microphone.Start(microphoneName, true, 1, AudioSettings.outputSampleRate);
             audioSource.clip = MicrophoneAudioClip;
             audioSource.loop = true;
+            audioSource.volume = 0f; // Start muted
+            audioSource.Play(); // Start playing immediately but muted
             isMicrophoneInitialized = true;
             Debug.Log("Microphone initialized");
         }
@@ -84,7 +86,7 @@ namespace DCL.VoiceChat
             if (!isMicrophoneInitialized)
                 InitializeMicrophone();
                 
-            audioSource.Play();
+            audioSource.volume = 1f; // Unmute instead of starting playback
             
             // Reset frame counter to ensure immediate loudness checking
             frameCounter = 0;
@@ -94,12 +96,14 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
-            audioSource.Stop();
+            audioSource.volume = 0f; // Mute instead of stopping playback
             Debug.Log("Disable microphone");
         }
 
         private void OnMicrophoneChanged(int newMicrophoneIndex)
         {
+            bool wasTalking = isTalking;
+            
             // Stop current microphone
             if (isMicrophoneInitialized)
             {
@@ -112,10 +116,10 @@ namespace DCL.VoiceChat
             // Initialize with new microphone
             InitializeMicrophone();
             
-            // If we were talking, resume
-            if (isTalking)
+            // Restore talking state
+            if (wasTalking)
             {
-                audioSource.Play();
+                audioSource.volume = 1f;
             }
             
             Debug.Log($"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
@@ -143,18 +147,18 @@ namespace DCL.VoiceChat
 
             if (currentLoudness >= voiceChatSettings.MicrophoneLoudnessMinimumThreshold)
             {
-                // Loudness is above threshold, ensure audio is playing
-                if (!audioSource.isPlaying)
+                // Loudness is above threshold, ensure audio is audible
+                if (audioSource.volume == 0f)
                 {
-                    audioSource.Play();
+                    audioSource.volume = 1f;
                 }
             }
             else
             {
-                // Loudness is below threshold, ensure audio is stopped
-                if (audioSource.isPlaying)
+                // Loudness is below threshold, ensure audio is muted
+                if (audioSource.volume > 0f)
                 {
-                    audioSource.Stop();
+                    audioSource.volume = 0f;
                 }
             }
         }
