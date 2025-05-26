@@ -3516,7 +3516,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3552,7 +3552,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 0, g: 0, b: 0, a: 0.39215687}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.5019608}
@@ -3605,7 +3605,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Background>k__BackingField: {fileID: 8349685385414429856}
-  <NormalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
+  <NormalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.43137255}
   <HoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.05490196}
   <MainButton>k__BackingField: {fileID: 4917909146555496661}
   <ContextMenuButton>k__BackingField: {fileID: 5858251751813836860}
