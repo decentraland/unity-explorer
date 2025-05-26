@@ -35,10 +35,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            if (voiceChatHandler != null)
-            {
-                VoiceChatLoudnessMonitoringSystem.InjectToWorld(ref builder, voiceChatHandler);
-            }
+                VoiceChatStatusMonitoringSystem.InjectToWorld(ref builder, voiceChatHandler);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
