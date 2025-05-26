@@ -14,7 +14,7 @@ namespace DCL.Communities
         }
 
         public LandCoords[] lands;
-        public int totalPages;
+        public int totalAmount;
     }
 }
 

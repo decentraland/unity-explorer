@@ -13,6 +13,7 @@ namespace DCL.Communities
             public string smallThumbnail;
             public string name;
             public string ownerId;
+            public int memberCount;
             public CommunityMemberRole role;
         }
 

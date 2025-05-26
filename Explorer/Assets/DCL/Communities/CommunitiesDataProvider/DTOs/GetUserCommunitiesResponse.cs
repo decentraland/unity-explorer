@@ -22,13 +22,14 @@ namespace DCL.Communities
             public string name;
             public string description;
             public string ownerId;
+            public int memberCount;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
         }
 
         public CommunityData[] communities;
-        public int totalPages;
+        public int totalAmount;
     }
 }
 
