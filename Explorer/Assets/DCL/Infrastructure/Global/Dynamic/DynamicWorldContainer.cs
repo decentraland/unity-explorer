@@ -82,6 +82,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
@@ -540,6 +541,8 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServicesRPCProxy = new ObjectProxy<IRPCSocialServices>();
 
+            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService();
+
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
@@ -924,7 +927,8 @@ namespace Global.Dynamic
                         socialServiceEventBus,
                         socialServicesRPCProxy,
                         friendsCacheProxy,
-                        friendsEventBus
+                        friendsEventBus,
+                        voiceChatCallStatusService
                     )
                 );
             }

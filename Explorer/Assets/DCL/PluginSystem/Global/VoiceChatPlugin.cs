@@ -48,7 +48,8 @@ namespace DCL.PluginSystem.Global
 
             var livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
 
-            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView);
+            VoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService();
+            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService);
         }
 
         [Serializable]
