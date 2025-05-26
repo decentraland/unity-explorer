@@ -143,6 +143,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetUserRole(currentMyCommunities[index].role);
             cardView.ConfigureImageController(webRequestController);
             cardView.SetCommunityThumbnail(currentMyCommunities[index].thumbnails[0]);
+            cardView.mainButton.onClick.RemoveAllListeners();
+            cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(currentMyCommunities[index].id); });
 
             return listItem;
         }
@@ -158,6 +160,12 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetLiveMarkAsActive(currentResults[index].isLive);
             cardView.ConfigureImageController(webRequestController);
             cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
+            cardView.mainButton.onClick.RemoveAllListeners();
+            cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(currentResults[index].id); });
+            cardView.viewCommunityButton.onClick.RemoveAllListeners();
+            cardView.viewCommunityButton.onClick.AddListener(() => { OpenCommunityProfile(currentResults[index].id); });
+            cardView.joinCommunityButton.onClick.RemoveAllListeners();
+            cardView.joinCommunityButton.onClick.AddListener(() => { JoinCommunity(currentResults[index].id); });
 
             return gridItem;
         }
@@ -330,6 +338,16 @@ namespace DCL.Communities.CommunitiesBrowser
             currentSearchText = string.Empty;
             view.CleanSearchBar(false);
             LoadAllCommunitiesResults();
+        }
+
+        private void OpenCommunityProfile(string communityId)
+        {
+            // TODO: Open Community profile...
+        }
+
+        private void JoinCommunity(string communityId)
+        {
+            // TODO: Join a Community...
         }
     }
 }

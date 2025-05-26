@@ -2,6 +2,7 @@ using DCL.UI;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -12,6 +13,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal TMP_Text userRole { get; private set; }
         [field: SerializeField] internal ImageView communityThumbnail { get; private set; }
         [field: SerializeField] internal Sprite defaultCommunitySprite { get; private set; }
+        [field: SerializeField] internal Button mainButton { get; private set; }
 
         private ImageController imageController;
 

@@ -19,9 +19,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal Sprite privatePrivacySprite { get; private set; }
         [field: SerializeField] internal TMP_Text communityPrivacyText { get; private set; }
         [field: SerializeField] internal TMP_Text communityMembersCountText { get; private set; }
+        [field: SerializeField] internal GameObject communityLiveMark { get; private set; }
+        [field: SerializeField] internal Button mainButton { get; private set; }
         [field: SerializeField] internal Button joinCommunityButton { get; private set; }
         [field: SerializeField] internal Button viewCommunityButton { get; private set; }
-        [field: SerializeField] internal GameObject communityLiveMark { get; private set; }
 
         private ImageController imageController;
 

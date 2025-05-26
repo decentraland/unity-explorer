@@ -1070,6 +1070,8 @@ GameObject:
   - component: {fileID: 642764471525080873}
   - component: {fileID: 4542865955056992188}
   - component: {fileID: 6086974742904382613}
+  - component: {fileID: 7446897494615956440}
+  - component: {fileID: 1878155915622983914}
   - component: {fileID: 3029749034696696981}
   m_Layer: 5
   m_Name: CommunityResultCard
@@ -1120,7 +1122,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.4}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1137,6 +1139,65 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &7446897494615956440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8215373150881848067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 0, g: 0, b: 0, a: 0.4}
+    m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0.6}
+    m_PressedColor: {r: 0, g: 0, b: 0, a: 0.4}
+    m_SelectedColor: {r: 0, g: 0, b: 0, a: 0.4}
+    m_DisabledColor: {r: 0, g: 0, b: 0, a: 0.4}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 6086974742904382613}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1878155915622983914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8215373150881848067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 7446897494615956440}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!114 &3029749034696696981
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1160,6 +1221,7 @@ MonoBehaviour:
   <joinCommunityButton>k__BackingField: {fileID: 7317564665967695302}
   <viewCommunityButton>k__BackingField: {fileID: 6861950670929796314}
   <communityLiveMark>k__BackingField: {fileID: 7783451404242258191}
+  <mainButton>k__BackingField: {fileID: 7446897494615956440}
 --- !u!1 &8345438408242346082
 GameObject:
   m_ObjectHideFlags: 0
