@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsLooping() =>
             //as the Asset is nullable the loop property might be retrieved in situations in which the Asset has not been yet loaded
             //to avoid a breaking null reference we provide safe access to the loop property by using the is pattern
-            Model.Asset is { metadata: { emoteDataADR74: { loop: true } } };
+            Model.Asset is { metadata: { data: { loop: true } } };
 
         public bool HasSameClipForAllGenders()
         {

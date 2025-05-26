@@ -147,7 +147,7 @@ namespace DCL.PluginSystem.Global
                     ref builder,
                     NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
                     webRequestController,
-                    false,
+                    true,
                     true,
                     downloadStrategy);
             }

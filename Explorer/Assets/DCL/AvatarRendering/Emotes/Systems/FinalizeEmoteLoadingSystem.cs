@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
+using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
@@ -128,12 +129,15 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.IsCancellationRequested(World))
             {
                 ResetEmoteResultOnCancellation(emote, bodyShape);
+                promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
             }
 
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<TAsset> result))
             {
+                Debug.Log($"PRAVS - FinalizeEmoteLoadingSystem.FinalizeAssetLoading() - 1 - emote id: {emote.DTO.id}");
+                Debug.Log($"PRAVS - FinalizeEmoteLoadingSystem.FinalizeAssetLoading() - 2 - succeeded? {result.Succeeded}");
                 if (result.Succeeded)
                 {
                     var asset = new StreamableLoadingResult<AttachmentRegularAsset>(toRegularAsset.Invoke(result));
@@ -146,6 +150,7 @@ namespace DCL.AvatarRendering.Emotes
                     else
                         emote.AssetResults[bodyShape] = asset;
                 }
+                Debug.Log($"PRAVS - FinalizeEmoteLoadingSystem.FinalizeAssetLoading() - 3");
 
                 emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);

@@ -2,17 +2,21 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.Web3;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetOwnedEmotesFromRealmIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -76,9 +80,7 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             var intention = new GetOwnedEmotesFromRealmIntention(loadingArguments.Value, needsBuilderAPISigning);
-
-            OwnedEmotesPromise promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY)
-                                                                 .ToUniTaskAsync(world, cancellationToken: ct);
+            var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
                 return 0;
@@ -87,7 +89,78 @@ namespace DCL.AvatarRendering.Emotes
                 throw promise.Result.Value.Exception!;
 
             using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
+
             results?.AddRange(emotes.Value);
+
+            if (needsBuilderAPISigning && results is { Count: > 0 })
+            {
+                Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results? {results.Count}");
+
+                // int assetsAmount = 0;
+                for (var i = 0; i < results.Count; i++)
+                {
+                    /*Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.id: {results[i].DTO.id}");
+                    Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.ContentDownloadUrl: {results[i].DTO.ContentDownloadUrl}");
+                    Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.type: {results[i].DTO.type}");
+                    Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - 3 - {results[i].DTO.Metadata.AbstractData}");
+                    Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - 4 - {results[i].DTO.Metadata.AbstractData.representations}");
+
+                    var representations = results[i].DTO.Metadata.AbstractData.representations;
+                    string mainFile = null;
+                    for (var j = 0; j < representations.Length; j++)
+                    {
+                        Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.Metadata.AbstractData.representations[{j}].mainFile: {representations[j].mainFile}");
+                        Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.Metadata.AbstractData.representations[{j}].bodyShapes[0]: {representations[j].bodyShapes[0]}");
+                        AvatarAttachmentDTO.Content? glbContent = null;
+                        bool sameMainFile = !string.IsNullOrEmpty(mainFile) && mainFile.Equals(representations[j].mainFile);
+
+                        if (sameMainFile)
+                            continue;
+
+                        mainFile = representations[j].mainFile;
+
+                        foreach (AvatarAttachmentDTO.Content content in results[i].DTO.content)
+                        {
+                            Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.content.file: {content.file}");
+                            Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.content.hash: {content.hash}");
+
+                            if (content.file.EndsWith(".glb") && content.file == mainFile)
+                            {
+                                glbContent = content;
+                                break;
+                            }
+                        }
+
+                        if (!glbContent.HasValue) continue;
+                        // assetsAmount++;
+
+                        var gltfPromise = GltfPromise.Create(world, GetGLTFIntention.Create(glbContent.Value.file, glbContent.Value.hash), PartitionComponent.TOP_PRIORITY);
+                        world.Create(gltfPromise, results[i], BodyShape.MALE, i);
+                        // world.Create(gltfPromise, results[i], BodyShape.FEMALE, i);
+                    }*/
+
+                    AvatarAttachmentDTO.Content? glbContent = null;
+                    foreach (AvatarAttachmentDTO.Content content in results[i].DTO.content)
+                    {
+                        Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.content.file: {content.file}");
+                        Debug.Log($"PRAVS - ECSEmoteProvider.GetAsync() - Results[{i}].DTO.content.hash: {content.hash}");
+                        if (content.file.EndsWith(".glb"))
+                        {
+                            glbContent = content;
+                            break;
+                        }
+                    }
+                    if (!glbContent.HasValue) continue;
+                    // assetsAmount++;
+
+                    var gltfPromise = GltfPromise.Create(world, GetGLTFIntention.Create(glbContent.Value.file, glbContent.Value.hash), PartitionComponent.TOP_PRIORITY);
+                    world.Create(gltfPromise, results[i], BodyShape.MALE, i);
+                    // world.Create(gltfPromise, results[i], BodyShape.FEMALE, i);
+                }
+
+                // return assetsAmount;
+            }
+
             return promise.Result.Value.Asset.TotalAmount;
         }
 

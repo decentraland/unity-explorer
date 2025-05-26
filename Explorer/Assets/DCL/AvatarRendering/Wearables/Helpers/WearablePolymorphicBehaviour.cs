@@ -338,6 +338,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
         {
+            Debug.Log($"PRAVS - WearablePolymorphicBehaviour.ToRegularAsset() - assetGOName: {result.Asset?.containerGameObject.name}", result.Asset?.containerGameObject);
+
             GameObject go = result.Asset!.containerGameObject;
 
             // collect all renderers

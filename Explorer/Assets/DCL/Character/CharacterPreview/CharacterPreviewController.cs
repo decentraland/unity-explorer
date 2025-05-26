@@ -104,8 +104,20 @@ namespace DCL.CharacterPreview
             World world = globalWorld;
             Entity avatarEntity = characterPreviewEntity;
 
+            /*bool hasEmotePromise = world.Has<EmotePromise>(emotePromiseEntity);
+            EmotePromise? debugPromise = null;
+            if (hasEmotePromise)
+                debugPromise = world.Get<EmotePromise>(emotePromiseEntity);*/
+
             while (!IsAvatarLoaded() || !IsEmoteLoaded())
                 await UniTask.Yield(ct);
+
+            /*if (world.IsAlive(emotePromiseEntity))
+            {
+                hasEmotePromise = world.Has<EmotePromise>(emotePromiseEntity);
+                if (hasEmotePromise)
+                    debugPromise = world.Get<EmotePromise>(emotePromiseEntity);
+            }*/
 
             ct.ThrowIfCancellationRequested();
 
