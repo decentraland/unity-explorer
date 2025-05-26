@@ -202,6 +202,8 @@ namespace DCL.VoiceChat
             nativeSharedState[2] = GateSmoothing;
             nativeSharedState[3] = highPassPrevInput;
             nativeSharedState[4] = highPassPrevOutput;
+            nativeSharedState[5] = lastSpeechTime;
+            nativeSharedState[6] = gateIsOpen ? 1f : 0f;
 
             // Schedule audio analysis job
             var analysisJob = new AudioAnalysisJob
@@ -229,6 +231,9 @@ namespace DCL.VoiceChat
                     enableAutoGainControl = settings.EnableAutoGainControl,
                     highPassCutoffFreq = settings.HighPassCutoffFreq,
                     noiseGateThreshold = settings.NoiseGateThreshold,
+                    noiseGateHoldTime = settings.NoiseGateHoldTime,
+                    noiseGateAttackTime = settings.NoiseGateAttackTime,
+                    noiseGateReleaseTime = settings.NoiseGateReleaseTime,
                     agcTargetLevel = settings.AGCTargetLevel,
                     agcResponseSpeed = settings.AGCResponseSpeed,
                     sampleRate = sampleRate,
@@ -255,6 +260,8 @@ namespace DCL.VoiceChat
             GateSmoothing = nativeSharedState[2];
             highPassPrevInput = nativeSharedState[3];
             highPassPrevOutput = nativeSharedState[4];
+            lastSpeechTime = nativeSharedState[5];
+            gateIsOpen = nativeSharedState[6] > 0.5f;
         }
 
         /// <summary>
@@ -380,11 +387,14 @@ namespace DCL.VoiceChat
         [ReadOnly] public bool enableAutoGainControl;
         [ReadOnly] public float highPassCutoffFreq;
         [ReadOnly] public float noiseGateThreshold;
+        [ReadOnly] public float noiseGateHoldTime;
+        [ReadOnly] public float noiseGateAttackTime;
+        [ReadOnly] public float noiseGateReleaseTime;
         [ReadOnly] public float agcTargetLevel;
         [ReadOnly] public float agcResponseSpeed;
         [ReadOnly] public int sampleRate;
 
-        // Shared state - [0]=currentGain, [1]=peakLevel, [2]=gateSmoothing, [3]=highPassPrevInput, [4]=highPassPrevOutput
+        // Shared state - [0]=currentGain, [1]=peakLevel, [2]=gateSmoothing, [3]=highPassPrevInput, [4]=highPassPrevOutput, [5]=lastSpeechTime, [6]=gateIsOpen
         public NativeArray<float> sharedState;
 
         [ReadOnly] public float adaptiveThreshold;
@@ -397,6 +407,11 @@ namespace DCL.VoiceChat
             float gateSmoothing = sharedState[2];
             float highPassPrevInput = sharedState[3];
             float highPassPrevOutput = sharedState[4];
+            float lastSpeechTime = sharedState[5];
+            bool gateIsOpen = sharedState[6] > 0.5f;
+
+            // Calculate delta time for this block
+            float deltaTime = (float)audioData.Length / sampleRate;
 
             // Process each sample sequentially to maintain filter state
             for (var i = 0; i < audioData.Length; i++)
@@ -405,8 +420,7 @@ namespace DCL.VoiceChat
 
                 if (enableHighPassFilter) { sample = ApplyHighPassFilterBurst(sample, ref highPassPrevInput, ref highPassPrevOutput); }
 
-                // Apply noise gate (simplified for burst)
-                if (enableNoiseGate) { sample = ApplyNoiseGateBurst(sample, ref gateSmoothing); }
+                if (enableNoiseGate) { sample = ApplyNoiseGateBurst(sample, ref gateSmoothing, ref lastSpeechTime, ref gateIsOpen, deltaTime); }
 
                 if (enableAutoGainControl) { sample = ApplyAGCBurst(sample, ref currentGain, ref peakLevel); }
 
@@ -419,6 +433,8 @@ namespace DCL.VoiceChat
             sharedState[2] = gateSmoothing;
             sharedState[3] = highPassPrevInput;
             sharedState[4] = highPassPrevOutput;
+            sharedState[5] = lastSpeechTime;
+            sharedState[6] = gateIsOpen ? 1f : 0f;
         }
 
         private float ApplyHighPassFilterBurst(float input, ref float prevInput, ref float prevOutput)
@@ -436,17 +452,49 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyNoiseGateBurst(float sample, ref float gateSmoothing)
+        private float ApplyNoiseGateBurst(float sample, ref float gateSmoothing, ref float lastSpeechTime, ref bool gateIsOpen, float deltaTime)
         {
             float sampleAbs = math.abs(sample);
-
+            
+            // Use the same adaptive threshold logic as fallback
             float effectiveThreshold = math.max(noiseGateThreshold * 0.5f,
-                math.min(noiseGateThreshold, adaptiveThreshold * 0.3f));
+                                              math.min(noiseGateThreshold, adaptiveThreshold * 0.3f));
 
             bool speechDetected = sampleAbs > effectiveThreshold;
-            float targetGate = speechDetected ? 1f : 0f;
 
-            float gateSpeed = speechDetected ? 0.1f : 0.01f; // Fast attack, slow release
+            // Update speech detection state with proper timing
+            if (speechDetected)
+            {
+                lastSpeechTime = 0f; // Reset timer when speech is detected
+                gateIsOpen = true;
+            }
+            else
+            {
+                lastSpeechTime += deltaTime; // Increment timer when no speech
+            }
+
+            // Determine if gate should be open based on speech detection and hold time
+            bool shouldGateBeOpen = speechDetected || (gateIsOpen && lastSpeechTime < noiseGateHoldTime);
+
+            // Update gate state
+            gateIsOpen = shouldGateBeOpen;
+
+            // Calculate target gate value
+            float targetGate = gateIsOpen ? 1f : 0f;
+
+            // Apply proper attack/release timing from settings
+            float gateSpeed;
+            if (targetGate > gateSmoothing)
+            {
+                // Opening gate (attack) - convert from settings to per-sample rate
+                gateSpeed = 1f / (noiseGateAttackTime * 100f);
+            }
+            else
+            {
+                // Closing gate (release) - convert from settings to per-sample rate  
+                gateSpeed = 1f / (noiseGateReleaseTime * 100f);
+            }
+
             gateSmoothing = math.lerp(gateSmoothing, targetGate, gateSpeed);
 
             return sample * gateSmoothing;
