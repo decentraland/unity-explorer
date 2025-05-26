@@ -6,6 +6,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.SDKComponents.Tween.Playground;
 using ECS.Abstract;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -24,15 +25,17 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
+        private readonly INtpTimeService ntpTimeService;
 
         private float sendRate;
 
         public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings,
-            MultiplayerDebugSettings debugSettings) : base(world)
+            MultiplayerDebugSettings debugSettings, INtpTimeService ntpTimeService) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
+            this.ntpTimeService = ntpTimeService;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -119,6 +122,7 @@ namespace DCL.Multiplayer.Movement.Systems
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
+                syncTimestamp = ntpTimeService.ServerTimeMs,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
                 velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,

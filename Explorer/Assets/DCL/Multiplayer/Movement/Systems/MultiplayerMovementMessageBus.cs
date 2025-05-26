@@ -113,6 +113,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return new NetworkMovementMessage
             {
                 timestamp = proto.Timestamp,
+                syncTimestamp = proto.SyncedTimestamp,
                 position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
                 rotationY = proto.RotationY,
 
@@ -169,6 +170,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
             movement.Timestamp = message.timestamp;
+            movement.SyncedTimestamp = message.syncTimestamp;
 
             movement.PositionX = message.position.x;
             movement.PositionY = message.position.y;

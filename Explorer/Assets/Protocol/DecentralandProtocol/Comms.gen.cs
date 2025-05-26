@@ -47,7 +47,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "cG9zaXRpb25feBgDIAEoAhISCgpwb3NpdGlvbl95GAQgASgCEhIKCnBvc2l0",
             "aW9uX3oYBSABKAISEgoKcm90YXRpb25feBgGIAEoAhISCgpyb3RhdGlvbl95",
             "GAcgASgCEhIKCnJvdGF0aW9uX3oYCCABKAISEgoKcm90YXRpb25fdxgJIAEo",
-            "AiL/AwoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
+            "AiKZBAoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
             "X3gYAiABKAISEgoKcG9zaXRpb25feRgDIAEoAhISCgpwb3NpdGlvbl96GAQg",
             "ASgCEhIKCnZlbG9jaXR5X3gYBSABKAISEgoKdmVsb2NpdHlfeRgGIAEoAhIS",
             "Cgp2ZWxvY2l0eV96GAcgASgCEhwKFG1vdmVtZW50X2JsZW5kX3ZhbHVlGAgg",
@@ -56,28 +56,29 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "ASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5nGA4gASgI",
             "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhJTCg5u",
             "ZXR3b3JrX2VudGl0eRgRIAEoCzI2LmRlY2VudHJhbGFuZC5rZXJuZWwuY29t",
-            "bXMucmZjNC5Nb3ZlbWVudC5OZXR3b3JrRW50aXR5SACIAQEaNgoNTmV0d29y",
-            "a0VudGl0eRIRCgllbnRpdHlfaWQYASABKA0SEgoKbmV0d29ya19pZBgCIAEo",
-            "BEIRCg9fbmV0d29ya19lbnRpdHkiQgoSTW92ZW1lbnRDb21wcmVzc2VkEhUK",
-            "DXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1lbnRfZGF0YRgCIAEoAyIy",
-            "CgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgBIAEoDRILCgN1cm4Y",
-            "AiABKAkiNQoKU2NlbmVFbW90ZRIXCg9zY2VuZV9lbnRpdHlfaWQYASABKAkS",
-            "DgoGc291cmNlGAIgASgJIjEKFkFubm91bmNlUHJvZmlsZVZlcnNpb24SFwoP",
-            "cHJvZmlsZV92ZXJzaW9uGAEgASgNIjoKDlByb2ZpbGVSZXF1ZXN0Eg8KB2Fk",
-            "ZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92ZXJzaW9uGAMgASgNIj8KD1Byb2Zp",
-            "bGVSZXNwb25zZRIaChJzZXJpYWxpemVkX3Byb2ZpbGUYASABKAkSEAoIYmFz",
-            "ZV91cmwYAiABKAkiKgoEQ2hhdBIPCgdtZXNzYWdlGAEgASgJEhEKCXRpbWVz",
-            "dGFtcBgCIAEoASInCgVTY2VuZRIQCghzY2VuZV9pZBgBIAEoCRIMCgRkYXRh",
-            "GAIgASgMIosBCgVWb2ljZRIXCg9lbmNvZGVkX3NhbXBsZXMYASABKAwSDQoF",
-            "aW5kZXgYAiABKA0SPwoFY29kZWMYAyABKA4yMC5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmNvbW1zLnJmYzQuVm9pY2UuVm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVj",
-            "EgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
+            "bXMucmZjNC5Nb3ZlbWVudC5OZXR3b3JrRW50aXR5SACIAQESGAoQc3luY2Vk",
+            "X3RpbWVzdGFtcBgSIAEoBBo2Cg1OZXR3b3JrRW50aXR5EhEKCWVudGl0eV9p",
+            "ZBgBIAEoDRISCgpuZXR3b3JrX2lkGAIgASgEQhEKD19uZXR3b3JrX2VudGl0",
+            "eSJCChJNb3ZlbWVudENvbXByZXNzZWQSFQoNdGVtcG9yYWxfZGF0YRgBIAEo",
+            "BRIVCg1tb3ZlbWVudF9kYXRhGAIgASgDIjIKC1BsYXllckVtb3RlEhYKDmlu",
+            "Y3JlbWVudGFsX2lkGAEgASgNEgsKA3VybhgCIAEoCSI1CgpTY2VuZUVtb3Rl",
+            "EhcKD3NjZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UYAiABKAkiMQoW",
+            "QW5ub3VuY2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24YASAB",
+            "KA0iOgoOUHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9wcm9m",
+            "aWxlX3ZlcnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNlcmlh",
+            "bGl6ZWRfcHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSIqCgRDaGF0",
+            "Eg8KB21lc3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBIicKBVNjZW5l",
+            "EhAKCHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcK",
+            "D2VuY29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2Rl",
+            "YxgDIAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2lj",
+            "ZS5Wb2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZwcm90",
+            "bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "NetworkEntity" }, new[]{ "NetworkEntity" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity), global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity.Parser, new[]{ "EntityId", "NetworkId" }, null, null, null, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "NetworkEntity", "SyncedTimestamp" }, new[]{ "NetworkEntity" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity), global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity.Parser, new[]{ "EntityId", "NetworkId" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
@@ -1400,6 +1401,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       isStunned_ = other.isStunned_;
       rotationY_ = other.rotationY_;
       networkEntity_ = other.networkEntity_ != null ? other.networkEntity_.Clone() : null;
+      syncedTimestamp_ = other.syncedTimestamp_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1625,6 +1627,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "synced_timestamp" field.</summary>
+    public const int SyncedTimestampFieldNumber = 18;
+    private ulong syncedTimestamp_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong SyncedTimestamp {
+      get { return syncedTimestamp_; }
+      set {
+        syncedTimestamp_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1657,6 +1671,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsStunned != other.IsStunned) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RotationY, other.RotationY)) return false;
       if (!object.Equals(NetworkEntity, other.NetworkEntity)) return false;
+      if (SyncedTimestamp != other.SyncedTimestamp) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1681,6 +1696,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsStunned != false) hash ^= IsStunned.GetHashCode();
       if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
       if (networkEntity_ != null) hash ^= NetworkEntity.GetHashCode();
+      if (SyncedTimestamp != 0UL) hash ^= SyncedTimestamp.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1767,6 +1783,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(138, 1);
         output.WriteMessage(NetworkEntity);
       }
+      if (SyncedTimestamp != 0UL) {
+        output.WriteRawTag(144, 1);
+        output.WriteUInt64(SyncedTimestamp);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1845,6 +1865,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(138, 1);
         output.WriteMessage(NetworkEntity);
       }
+      if (SyncedTimestamp != 0UL) {
+        output.WriteRawTag(144, 1);
+        output.WriteUInt64(SyncedTimestamp);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1905,6 +1929,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (networkEntity_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(NetworkEntity);
+      }
+      if (SyncedTimestamp != 0UL) {
+        size += 2 + pb::CodedOutputStream.ComputeUInt64Size(SyncedTimestamp);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1971,6 +1998,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           NetworkEntity = new global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity();
         }
         NetworkEntity.MergeFrom(other.NetworkEntity);
+      }
+      if (other.SyncedTimestamp != 0UL) {
+        SyncedTimestamp = other.SyncedTimestamp;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2058,6 +2088,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             input.ReadMessage(NetworkEntity);
             break;
           }
+          case 144: {
+            SyncedTimestamp = input.ReadUInt64();
+            break;
+          }
         }
       }
     #endif
@@ -2142,6 +2176,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
               NetworkEntity = new global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity();
             }
             input.ReadMessage(NetworkEntity);
+            break;
+          }
+          case 144: {
+            SyncedTimestamp = input.ReadUInt64();
             break;
           }
         }

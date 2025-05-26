@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Movement
     public struct NetworkMovementMessage : IEquatable<NetworkMovementMessage>
     {
         public float timestamp;
+        public ulong syncTimestamp;
         public Vector3 position;
         public Vector3 velocity;
         public float velocitySqrMagnitude;
