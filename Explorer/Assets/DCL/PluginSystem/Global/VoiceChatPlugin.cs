@@ -21,14 +21,22 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
-        public VoiceChatPlugin(ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy, IAssetsProvisioner assetsProvisioner, DCLInput dclInput, IRoomHub roomHub, MainUIView mainUIView)
+        public VoiceChatPlugin(
+            ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
+            IAssetsProvisioner assetsProvisioner,
+            DCLInput dclInput,
+            IRoomHub roomHub,
+            MainUIView mainUIView,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
             this.dclInput = dclInput;
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose() { }
@@ -48,7 +56,6 @@ namespace DCL.PluginSystem.Global
 
             var livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
 
-            VoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService();
             VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService);
         }
 

@@ -5,9 +5,9 @@ namespace DCL.VoiceChat
     public class VoiceChatController : IDisposable
     {
         private readonly VoiceChatView view;
-        private readonly VoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
-        public VoiceChatController(VoiceChatView view, VoiceChatCallStatusService voiceChatCallStatusService)
+        public VoiceChatController(VoiceChatView view, IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
@@ -26,7 +26,7 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
-            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDED_CALL)
+            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
                 Hide();
             else
                 Show();
