@@ -12,12 +12,15 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.CommunitiesCard
 {
     public class CommunityCardController : ControllerBase<CommunityCardView, CommunityCardParameter>
     {
+        private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly IMVCManager mvcManager;
@@ -86,6 +89,9 @@ namespace DCL.Communities.CommunitiesCard
             membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies, mvcManager, friendServiceProxy, communitiesDataProvider);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
+
+            Color.RGBToHSV(viewInstance.BackgroundColor, out float h, out float s, out float v);
+            viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
         protected override void OnViewShow()

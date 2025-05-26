@@ -76,7 +76,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => BanUser(lastClickedProfileCtx!)))
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!))));
 
-            this.view.LoopList.InitListView(0, GetLoopListItemByIndex);
+            this.view.LoopGrid.InitGridView(0, GetLoopGridItemByIndex);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
         }
 
@@ -215,20 +215,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
+        private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
-            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            MemberListRowItemView elementView = listItem.GetComponent<MemberListRowItemView>();
+            LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
+            MemberListSingleItemView elementView = listItem.GetComponent<MemberListSingleItemView>();
 
-            elementView.ResetElements();
-
-            int leftIndex = index * 2;
-            int rightIndex = leftIndex + 1;
-
-            if (rightIndex < sectionsFetchData[currentSection].members.Count)
-                elementView.ConfigureRight(sectionsFetchData[currentSection].members[rightIndex], viewDependencies);
-
-            elementView.ConfigureLeft(sectionsFetchData[currentSection].members[leftIndex], viewDependencies);
+            elementView.InjectDependencies(viewDependencies);
+            elementView.Configure(sectionsFetchData[currentSection].members[index]);
 
             elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked);
 
@@ -253,8 +246,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void RefreshLoopList()
         {
-            view.LoopList.SetListItemCount(Mathf.CeilToInt(sectionsFetchData[currentSection].members.Count * 1f / 2), false);
-            view.LoopList.RefreshAllShownItem();
+            view.LoopGrid.SetListItemCount(sectionsFetchData[currentSection].members.Count, false);
+            view.LoopGrid.RefreshAllShownItem();
         }
 
         private async UniTask FetchDataAsync()

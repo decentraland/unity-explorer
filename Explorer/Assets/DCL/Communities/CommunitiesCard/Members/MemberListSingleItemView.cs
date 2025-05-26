@@ -104,6 +104,17 @@ namespace DCL.Communities.CommunitiesCard.Members
             UnblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked);
         }
 
+        public void SubscribeToInteractions(Action<GetCommunityMembersResponse.MemberData> mainButton,
+            Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListSingleItemView> contextMenuButton,
+            Action<GetCommunityMembersResponse.MemberData> friendButton)
+        {
+            RemoveAllListeners();
+
+            MainButtonClicked += mainButton;
+            ContextMenuButtonClicked += contextMenuButton;
+            FriendButtonClicked += friendButton;
+        }
+
         private void UnHover()
         {
             ContextMenuButton.gameObject.SetActive(false);

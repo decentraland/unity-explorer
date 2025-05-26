@@ -9,7 +9,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 {
     public class MembersListView : MonoBehaviour
     {
-        [field: SerializeField] public LoopListView2 LoopList { get; private set; }
+        [field: SerializeField] public LoopGridView LoopGrid { get; private set; }
         [field: SerializeField] public ScrollRect LoopListScrollRect { get; private set; }
         [field: SerializeField] public CommunityMemberListContextMenuConfiguration ContextMenuSettings { get; private set; }
         [field: SerializeField] public RectTransform SectionButtons { get; private set; }

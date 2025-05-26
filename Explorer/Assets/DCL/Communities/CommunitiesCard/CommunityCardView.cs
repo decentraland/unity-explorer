@@ -38,6 +38,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
         [field: SerializeField] public SectionLoadingView LoadingObject { get; private set; }
         [field: SerializeField] public Image BackgroundImage { get; private set; }
+        [field: SerializeField] public Color BackgroundColor { get; private set; }
 
         [field: Header("Community interactions")]
         [field: SerializeField] public Button OpenWizardButton { get; private set; }

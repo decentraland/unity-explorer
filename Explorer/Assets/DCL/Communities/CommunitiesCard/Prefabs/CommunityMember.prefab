@@ -1579,7 +1579,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4315229027600130937
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3554,7 +3554,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
+    m_NormalColor: {r: 0, g: 0, b: 0, a: 0.39215687}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.5019608}
     m_PressedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 0}
@@ -3605,7 +3605,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Background>k__BackingField: {fileID: 8349685385414429856}
-  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0}
+  <NormalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
   <HoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.05490196}
   <MainButton>k__BackingField: {fileID: 4917909146555496661}
   <ContextMenuButton>k__BackingField: {fileID: 5858251751813836860}
