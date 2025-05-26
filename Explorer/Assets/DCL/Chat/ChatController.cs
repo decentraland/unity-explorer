@@ -80,11 +80,7 @@ namespace DCL.Chat
         public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public bool TryGetView(out ChatView view)
-        {
-            view = viewInstance!;
-            return viewInstanceCreated && view != null;
-        }
+        public bool IsViewReady => viewInstanceCreated && viewInstance != null;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -304,7 +300,7 @@ namespace DCL.Chat
 
 #region Conversation Events
 
-        private void OnOpenConversation(string userId)
+        private void OnOpenPrivateConversation(string userId)
         {
             ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
 
@@ -313,27 +309,27 @@ namespace DCL.Chat
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
 
-            if (TryGetView(out var view))
-                view.CurrentChannelId = channel.Id;
+            viewInstance!.CurrentChannelId = channel.Id;
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
 
-            viewInstance!.Focus();
+            viewInstance.Focus();
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
-            chatUserStateUpdater.CurrentConversation = channelId.Id;
-            if (TryGetView(out var view))
-            {
-                view.CurrentChannelId = channelId;
+            if(!IsViewReady)
+                return;
 
-                if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                {
-                    view.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
-                    return;
-                }
+            chatUserStateUpdater.CurrentConversation = channelId.Id;
+
+            viewInstance!.CurrentChannelId = channelId;
+
+            if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+            {
+                viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                return;
             }
 
             chatUserStateUpdater.AddConversation(channelId.Id);
@@ -343,18 +339,19 @@ namespace DCL.Chat
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
+            if(!IsViewReady)
+                return;
+
             var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
-            if (TryGetView(out var view))
-            {
-                view.SetInputWithUserState(userState);
 
-                if (!updateToolbar) return;
+            viewInstance!.SetInputWithUserState(userState);
 
-                bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
-                             || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            if (!updateToolbar) return;
 
-                view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
-            }
+            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
+                         || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+
+            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
 #endregion
@@ -370,20 +367,22 @@ namespace DCL.Chat
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();
-                if (TryGetView(out var view))
+
+                if (IsViewReady)
                 {
-                    view.RefreshMessages();
-                    view.ShowLastMessage();
+                    viewInstance!.RefreshMessages();
+                    viewInstance.ShowLastMessage();
                 }
+
                 return;
             }
 
             HandleMessageAudioFeedback(addedMessage);
 
-            if (TryGetView(out var currentView))
+            if (IsViewReady)
             {
-                bool shouldMarkChannelAsRead = currentView is { IsMessageListVisible: true, IsScrollAtBottom: true };
-                bool isCurrentChannel = destinationChannel.Id.Equals(currentView.CurrentChannelId);
+                bool shouldMarkChannelAsRead = viewInstance is { IsMessageListVisible: true, IsScrollAtBottom: true };
+                bool isCurrentChannel = destinationChannel.Id.Equals(viewInstance!.CurrentChannelId);
 
                 if (isCurrentChannel)
                 {
@@ -391,18 +390,18 @@ namespace DCL.Chat
                         MarkCurrentChannelAsRead();
 
                     HandleUnreadMessagesSeparator(destinationChannel);
-                    currentView.RefreshMessages();
+                    viewInstance.RefreshMessages();
                 }
                 else
                 {
-                    currentView.RefreshUnreadMessages(destinationChannel.Id);
+                    viewInstance.RefreshUnreadMessages(destinationChannel.Id);
                 }
             }
         }
 
         private void HandleMessageAudioFeedback(ChatMessage message)
         {
-            if (!TryGetView(out var view))
+            if (IsViewReady)
                 return;
 
             switch (chatSettings.chatAudioSettings)
@@ -412,8 +411,8 @@ namespace DCL.Chat
                 case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
                 case ChatAudioSettings.ALL:
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ?
-                        view.ChatReceiveMentionMessageAudio :
-                        view.ChatReceiveMessageAudio);
+                        viewInstance!.ChatReceiveMentionMessageAudio :
+                        viewInstance!.ChatReceiveMessageAudio);
                     break;
             }
         }
@@ -662,25 +661,22 @@ namespace DCL.Chat
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
 
             chatEventBus.InsertTextInChat += OnTextInserted;
-            chatEventBus.OpenConversation += OnOpenConversation;
+            chatEventBus.OpenConversation += OnOpenPrivateConversation;
 
-            if (TryGetView(out var view))
-            {
-                view.PointerEnter += OnViewPointerEnter;
-                view.PointerExit += OnViewPointerExit;
+            viewInstance!.PointerEnter += OnViewPointerEnter;
+            viewInstance.PointerExit += OnViewPointerExit;
 
-                view.FocusChanged += OnViewFocusChanged;
-                view.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
-                view.InputSubmitted += OnViewInputSubmitted;
-                view.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
-                view.ScrollBottomReached += OnViewScrollBottomReached;
-                view.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
-                view.FoldingChanged += OnViewFoldingChanged;
-                view.ChannelRemovalRequested += OnViewChannelRemovalRequested;
-                view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
-                view.ConversationSelected += OnSelectConversation;
-                view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
-            }
+            viewInstance.FocusChanged += OnViewFocusChanged;
+            viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
+            viewInstance.InputSubmitted += OnViewInputSubmitted;
+            viewInstance.MemberListVisibilityChanged += OnViewMemberListVisibilityChanged;
+            viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
+            viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
+            viewInstance.FoldingChanged += OnViewFoldingChanged;
+            viewInstance.ChannelRemovalRequested += OnViewChannelRemovalRequested;
+            viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
+            viewInstance.ConversationSelected += OnSelectConversation;
+            viewInstance.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
