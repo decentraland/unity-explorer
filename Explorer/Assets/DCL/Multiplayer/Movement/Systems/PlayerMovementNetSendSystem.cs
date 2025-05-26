@@ -159,6 +159,7 @@ namespace DCL.Multiplayer.Movement.Systems
                  && platform.ColliderNetworkEntityId != null
                  && platform.ColliderNetworkId != null)
             {
+                Debug.Log("VVV sending platform");
                 playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
                 {
                     EntityId = platform.ColliderNetworkEntityId.Value,

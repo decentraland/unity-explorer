@@ -115,9 +115,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
-            if (remote.syncedPlatform.HasValue
-                && remote.syncedPlatform != null
-                && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
+            if (remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
                 && remote.syncedPlatform!.Value.NetworkId != null
                 && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out var tweener)
                 && tweener != null)
