@@ -93,7 +93,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, debugSettings.Value, ntpTimeService);
-            RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings, collidersGlobalCache);
+            RemotePlayersMovementSystem.InjectToWorld(ref builder, settings.Value, settings.Value.CharacterControllerSettings, collidersGlobalCache, ntpTimeService);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings, settings.Value);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings.Value, settings.Value, entityParticipantTable, remoteMetadata);

@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.SDKComponents.Tween.Playground;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -26,13 +27,16 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IMultiplayerMovementSettings settings;
         private readonly ICharacterControllerSettings characterControllerSettings;
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+        private readonly INtpTimeService ntpTimeService;
 
         internal RemotePlayersMovementSystem(World world, IMultiplayerMovementSettings settings
-          , ICharacterControllerSettings characterControllerSettings, IEntityCollidersGlobalCache collidersGlobalCache) : base(world)
+          , ICharacterControllerSettings characterControllerSettings, IEntityCollidersGlobalCache collidersGlobalCache,
+          INtpTimeService ntpTimeService) : base(world)
         {
             this.settings = settings;
             this.characterControllerSettings = characterControllerSettings;
             this.collidersGlobalCache = collidersGlobalCache;
+            this.ntpTimeService = ntpTimeService;
         }
 
         protected override void Update(float t)
@@ -115,12 +119,19 @@ namespace DCL.Multiplayer.Movement.Systems
                 && remote.syncedPlatform != null
                 && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
                 && remote.syncedPlatform!.Value.NetworkId != null
-                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out Collider coll))
+                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out var tweener)
+                && tweener != null)
             {
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
-                // calculate offset in time;
-                Vector3 offset = Vector3.zero;
-                remote.position += offset;
+
+                float delay = (ntpTimeService.ServerTimeMs - remote.syncTimestamp) / 1000f;
+                Vector3? offset = tweener.GetOffset(delay);
+
+                if (offset.HasValue)
+                {
+                    Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
+                    remote.position += offset.Value;
+                }
             }
 
             var isBlend = false;

@@ -58,8 +58,16 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 
-        public Vector3? GetOffset() =>
-            core is TweenerCore<Vector3, Vector3, VectorOptions> tw ? GetOffset(tw, 0, tw.Elapsed(false), ease) : null;
+        public Vector3? GetOffset(float delay)
+        {
+            if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw)
+                return null;
+
+            float t1 = tw.Elapsed(false);
+            float t0 = Mathf.Clamp(t1 - delay, 0f, tw.Duration(false));
+
+            return GetOffset(tw, t0, t1, ease);
+        }
 
         public static Vector3 GetOffset(
             TweenerCore<Vector3,Vector3,VectorOptions> tw,

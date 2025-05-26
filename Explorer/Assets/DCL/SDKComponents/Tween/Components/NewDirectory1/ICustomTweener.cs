@@ -19,6 +19,6 @@ namespace DCL.SDKComponents.Tween.Components
 
         bool IsActive();
 
-        public Vector3? GetOffset();
+        public Vector3? GetOffset(float delay);
     }
 }
