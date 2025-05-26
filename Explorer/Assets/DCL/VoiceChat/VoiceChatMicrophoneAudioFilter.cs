@@ -19,7 +19,7 @@ namespace DCL.VoiceChat
         private const int LIVEKIT_SAMPLE_RATE = 48000;
 
         [SerializeField] private VoiceChatSettingsAsset voiceChatSettings;
-        private readonly bool isProcessingEnabled = true;
+        private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur
 
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
@@ -144,7 +144,7 @@ namespace DCL.VoiceChat
             // Always invoke the AudioRead event for LiveKit compatibility
             // This sends the processed audio data to LiveKit
             // Send even empty buffers to maintain audio stream continuity
-            AudioRead?.Invoke(data, channels, cachedSampleRate);
+            AudioRead.Invoke(data, channels, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility

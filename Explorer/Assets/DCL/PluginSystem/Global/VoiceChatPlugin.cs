@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.VoiceChat;
-using DCL.VoiceChat.Systems;
 using LiveKit;
 using System;
 using System.Threading;
@@ -35,7 +34,6 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-                VoiceChatStatusMonitoringSystem.InjectToWorld(ref builder, voiceChatHandler);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -47,7 +45,6 @@ namespace DCL.PluginSystem.Global
             var voiceChatSettings = voiceChatSettingsAsset.Value;
             voiceChatSettingsProxy.SetObject(voiceChatSettings);
             
-            // Initialize the audio filter with the loaded settings
             microphoneAudioFilter.Value.Initialize(voiceChatSettings);
             
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, microphoneAudioSource, microphoneAudioFilter.Value);
