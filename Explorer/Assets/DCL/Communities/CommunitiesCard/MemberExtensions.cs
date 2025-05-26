@@ -1,0 +1,34 @@
+using CommunicationData.URLHelpers;
+using DCL.Friends;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Web3;
+
+namespace DCL.Communities.CommunitiesCard
+{
+    public static class MemberExtensions
+    {
+        public static UserProfileContextMenuControlSettings.UserData ToUserData(this GetCommunityMembersResponse.MemberData profile) =>
+            new ()
+            {
+                hasClaimedName = profile.hasClaimedName,
+                userAddress = profile.id,
+                userColor = profile.UserNameColor,
+                userName = profile.name,
+                userThumbnailAddress = profile.profilePicture
+            };
+
+        public static GetCommunityMembersResponse.MemberData ToMemberData(this UserProfileContextMenuControlSettings.UserData user) =>
+            new ()
+            {
+                hasClaimedName = user.hasClaimedName,
+                id = user.userAddress,
+                UserNameColor = user.userColor,
+                name = user.userName,
+                profilePicture = user.userThumbnailAddress
+            };
+
+        public static FriendProfile ToFriendProfile(this UserProfileContextMenuControlSettings.UserData user) =>
+            new (new Web3Address(user.userAddress), user.userName, user.hasClaimedName, URLAddress.FromString(user.userThumbnailAddress), user.userColor);
+
+    }
+}

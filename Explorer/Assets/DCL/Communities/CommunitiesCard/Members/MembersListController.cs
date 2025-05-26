@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends;
+using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
@@ -190,15 +191,37 @@ namespace DCL.Communities.CommunitiesCard.Members
             panelLifecycleTask?.TrySetResult();
         }
 
-        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
-            if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT)
-                CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
-            else if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED)
-                //TODO: create friendship request
-                mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams { OneShotFriendAccepted = null }), ct: friendshipOperationCts.Token).Forget();
+            switch (friendshipStatus)
+            {
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                    CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                    {
+                        OneShotFriendAccepted = userData.ToFriendProfile()
+                    }), ct: friendshipOperationCts.Token).Forget();
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
+                    mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct).Forget();
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
+                    mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                    {
+                        UserId = new Web3Address(userData.userAddress),
+                    }), friendshipOperationCts.Token);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
+                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                    {
+                        DestinationUser = new Web3Address(userData.userAddress),
+                    }), friendshipOperationCts.Token);
+                    break;
+            }
 
             return;
 
@@ -206,7 +229,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    await friendServiceProxy.StrictObject.CancelFriendshipAsync(userId, ct);
+                    await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct);
                 }
                 catch(Exception e) when (e is not OperationCanceledException)
                 {
@@ -293,10 +316,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void ContextMenuButtonClicked(GetCommunityMembersResponse.MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
-            userProfileContextMenuControlSettings.SetInitialData(profile.name, profile.id, profile.hasClaimedName,
-                profile.UserNameColor,
-                ConvertFriendshipStatus(profile.friendshipStatus),
-                profile.profilePicture);
+            userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
             elementView.CanUnHover = false;
 
             removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator;
@@ -310,7 +330,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
-            HandleContextMenuUserProfileButton(profile.id, ConvertFriendshipStatus(profile.friendshipStatus));
+            HandleContextMenuUserProfileButton(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
 
         private void UnbanButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
             throw new NotImplementedException();
