@@ -193,9 +193,4 @@ namespace DCL.ECSComponents
         public static bool IsNotDirty(this IDirtyMarker dirtyMarker) =>
             dirtyMarker.IsDirty == false;
     }
-
-    public partial class PBPrimaryPointerInfo : IDirtyMarker
-    {
-        public bool IsDirty { get; set; }
-    }
 }

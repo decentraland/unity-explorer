@@ -1,12 +1,9 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
-using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.PrimaryPointerInfo.Systems;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Systems;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -36,8 +33,6 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.EcsToCRDTWriter,
                 exposedCameraData
             );
-
-            ResetDirtyFlagSystem<PBPrimaryPointerInfo>.InjectToWorld(ref builder);
         }
 
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
