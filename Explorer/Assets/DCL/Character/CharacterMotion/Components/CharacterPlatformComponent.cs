@@ -10,7 +10,9 @@ namespace DCL.CharacterMotion.Components
 
         public Vector3? LastPlatformDelta;
         public Vector3? LastPlatformPosition;
+        public Quaternion? LastPlatformRotation;
         public bool IsMovingPlatform;
+        public bool IsRotatingPlatform;
         public int FramesUngrounded;
 
         // Position and Rotation is local relative to the current platform, so if next frame the platform moves but the player doesn't, we can calculate what's the next world position for the character.

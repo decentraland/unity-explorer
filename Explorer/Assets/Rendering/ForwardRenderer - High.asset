@@ -187,7 +187,7 @@ MonoBehaviour:
   - {fileID: -4991993260910906933}
   m_RendererFeatureMap: 41ef42dbdb93651851016c145f871f4499542062310ed9ba4b6fec4d7d18d447c8ff0f1fff8b519acbf142f293e0b8ba
   m_UseNativeRenderPass: 0
-  xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
+  xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   m_AssetVersion: 2
   m_OpaqueLayerMask:
@@ -195,7 +195,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   m_TransparentLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 3423011575
   m_DefaultStencilState:
     overrideStencilState: 0
     stencilReference: 0
@@ -226,12 +226,12 @@ MonoBehaviour:
   m_Active: 1
   settings:
     passTag: RenderNameTags
-    Event: 500
+    Event: 600
     filterSettings:
       RenderQueueType: 1
       LayerMask:
         serializedVersion: 2
-        m_Bits: 32
+        m_Bits: 536870912
       PassNames: []
     overrideMaterial: {fileID: 0}
     overrideMaterialPassIndex: 0
