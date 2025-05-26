@@ -62,8 +62,6 @@ namespace ECS.StreamableLoading.GLTF
                 AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy
             };
 
-            Debug.Log($"PRAVS - LoadGLTFSystem - intention Name: {intention.Name} / Hash: {intention.Hash}");
-
             bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);
             gltFastDownloadProvider.Dispose();
 

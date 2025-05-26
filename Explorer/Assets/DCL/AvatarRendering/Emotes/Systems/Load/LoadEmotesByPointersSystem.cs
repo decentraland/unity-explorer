@@ -186,6 +186,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                     continue;
                 }
 
+                // Debug.Log($"PRAVS - LoadEmotesByPointersSystem.ExtractMissingPointersAndResolvedEmotes() - pointer: {loadingIntentionPointer}");
+
                 URN shortenedPointer = loadingIntentionPointer.Shorten();
 
                 if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))

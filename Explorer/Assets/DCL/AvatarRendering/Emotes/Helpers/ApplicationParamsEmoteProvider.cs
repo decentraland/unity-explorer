@@ -50,10 +50,8 @@ namespace DCL.AvatarRendering.Emotes
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                       .ToArray();
 
-                // NeedsBuilderAPISigning gets used at EcsEmoteProvider
                 results ??= new List<IEmote>();
                 var localBuffer = ListPool<IEmote>.Get();
-
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded emotes
