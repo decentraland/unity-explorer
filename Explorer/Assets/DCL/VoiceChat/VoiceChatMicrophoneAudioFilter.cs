@@ -82,6 +82,7 @@ namespace DCL.VoiceChat
         private void OnDestroy()
         {
             AudioRead = null;
+            audioProcessor?.Dispose();
             audioProcessor = null;
             tempBuffer = null;
         }
@@ -92,6 +93,11 @@ namespace DCL.VoiceChat
         public void Initialize(VoiceChatSettingsAsset settings)
         {
             voiceChatSettings = settings;
+            
+            // Dispose existing processor if any
+            audioProcessor?.Dispose();
+            
+            // Create new processor with the provided settings
             audioProcessor = new VoiceChatAudioProcessor(settings);
         }
 

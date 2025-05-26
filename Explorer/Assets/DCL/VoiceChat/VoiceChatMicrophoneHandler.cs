@@ -10,8 +10,8 @@ namespace DCL.VoiceChat
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly AudioSource audioSource;
+        private readonly VoiceChatMicrophoneAudioFilter audioFilter;
         private readonly float[] waveData;
-        private readonly VoiceChatAudioProcessor audioProcessor;
 
         public AudioClip MicrophoneAudioClip;
 
@@ -19,25 +19,18 @@ namespace DCL.VoiceChat
         private bool isMicrophoneInitialized;
         private string microphoneName;
 
-                public bool IsTalking => isTalking;
+        public bool IsTalking => isTalking;
         public string MicrophoneName => microphoneName;
-        public bool IsNoiseGateOpen => audioProcessor?.IsGateOpen ?? false;
-        public float CurrentGain => audioProcessor?.CurrentGain ?? 1f;
-        public float NoiseFloor => audioProcessor?.NoiseFloor ?? 0f;
-        public float SpeechFloor => audioProcessor?.SpeechFloor ?? 0f;
-        public bool IsLearningNoise => audioProcessor?.IsLearningNoise ?? false;
-        public float AdaptiveThreshold => audioProcessor?.AdaptiveThreshold ?? 0f;
-        public float GateSmoothing => audioProcessor?.GateSmoothing ?? 0f;
         
         private float buttonPressStartTime;
 
-        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource)
+        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter = null)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
             this.audioSource = audioSource;
+            this.audioFilter = audioFilter;
             waveData = new float[voiceChatSettings.SampleWindow];
-            audioProcessor = new VoiceChatAudioProcessor(voiceChatSettings);
 
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
@@ -119,8 +112,9 @@ namespace DCL.VoiceChat
                 isMicrophoneInitialized = false;
             }
 
-            // Reset audio processor for new microphone
-            audioProcessor.Reset();
+            // Reset the audio processor for the new microphone
+            // This clears learned noise/speech profiles since different mics have different characteristics
+            audioFilter?.ResetProcessor();
 
             // Initialize with new microphone
             InitializeMicrophone();
@@ -134,12 +128,9 @@ namespace DCL.VoiceChat
             Debug.Log($"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
         }
 
-        // Note: Loudness checking and audio control is now handled by VoiceChatAudioProcessor
-        // The noise gate in the audio processor provides superior control with timing and smooth transitions
-
         /// <summary>
         /// Get current microphone loudness for monitoring purposes
-        /// Note: Audio processing and noise gating is handled by VoiceChatAudioProcessor
+        /// Note: Audio processing and noise gating is handled by VoiceChatMicrophoneAudioFilter
         /// </summary>
         public float GetCurrentLoudness()
         {
