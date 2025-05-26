@@ -12,6 +12,10 @@ namespace DCL.VoiceChat
     [RequireComponent(typeof(AudioSource))]
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
+        // LiveKit constraints
+        private const int LIVEKIT_CHANNELS = 2;
+        private const int LIVEKIT_SAMPLE_RATE = 48000;
+        
         // Event is called from the Unity audio thread - LiveKit compatibility
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
@@ -26,6 +30,10 @@ namespace DCL.VoiceChat
 
         // Cache sample rate to avoid main thread calls in audio thread
         private int cachedSampleRate;
+        
+        // LiveKit constraints
+        private const int LIVEKIT_CHANNELS = 2;
+        private const int LIVEKIT_SAMPLE_RATE = 48000;
 
         public bool IsProcessingEnabled
         {
@@ -35,9 +43,6 @@ namespace DCL.VoiceChat
 
         public bool IsNoiseGateOpen => audioProcessor?.IsGateOpen ?? false;
         public float CurrentGain => audioProcessor?.CurrentGain ?? 1f;
-        public float NoiseFloor => audioProcessor?.NoiseFloor ?? 0f;
-        public float SpeechFloor => audioProcessor?.SpeechFloor ?? 0f;
-        public bool IsLearningNoise => audioProcessor?.IsLearningNoise ?? false;
         public float AdaptiveThreshold => audioProcessor?.AdaptiveThreshold ?? 0f;
         public float GateSmoothing => audioProcessor?.GateSmoothing ?? 0f;
 
@@ -72,11 +77,26 @@ namespace DCL.VoiceChat
                 audioSource.playOnAwake = false;
                 audioSource.loop = true;
             }
+            
+            // Pre-allocate buffer on macOS to avoid allocations in audio thread
+            #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            if (tempBuffer == null)
+            {
+                tempBuffer = new float[8192]; // Pre-allocate large buffer for macOS Core Audio compatibility
+                Debug.Log("[VoiceChat] Pre-allocated audio buffer for macOS Core Audio compatibility");
+            }
+            #endif
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
             cachedSampleRate = AudioSettings.outputSampleRate;
+            
+            // Verify LiveKit constraints
+            if (cachedSampleRate != LIVEKIT_SAMPLE_RATE)
+            {
+                Debug.LogWarning($"[VoiceChat] Audio sample rate is {cachedSampleRate}Hz, but LiveKit expects {LIVEKIT_SAMPLE_RATE}Hz. Audio processing may not be optimal.");
+            }
         }
 
         private void OnDestroy()
@@ -118,33 +138,63 @@ namespace DCL.VoiceChat
             if (isProcessingEnabled && audioProcessor != null && voiceChatSettings != null && data != null && data.Length > 0)
             {
                 // Ensure temp buffer is the right size
+                // On macOS, avoid allocations in audio thread due to Core Audio sensitivity
+                #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+                if (tempBuffer == null)
+                {
+                    // Pre-allocate a reasonably large buffer to avoid reallocations
+                    tempBuffer = new float[8192]; // Large enough for most audio buffers
+                }
+                
+                if (tempBuffer.Length < data.Length)
+                {
+                    // If we absolutely must reallocate, do it but log a warning
+                    Debug.LogWarning($"[VoiceChat] Audio buffer reallocation on macOS (from {tempBuffer.Length} to {data.Length}). This may cause audio glitches.");
+                    tempBuffer = new float[Mathf.Max(data.Length, 8192)];
+                }
+                #else
                 if (tempBuffer == null || tempBuffer.Length != data.Length)
                 {
                     tempBuffer = new float[data.Length];
                 }
+                #endif
 
                 // Copy data to temp buffer for processing
                 System.Array.Copy(data, tempBuffer, data.Length);
 
-                // Process audio based on channel configuration using cached sample rate
-                if (channels == 1)
+                try
                 {
-                    // Mono audio - process directly
-                    audioProcessor.ProcessAudio(tempBuffer, cachedSampleRate);
-                }
-                else if (channels == 2)
-                {
-                    // Stereo audio - process each channel separately
-                    ProcessStereoAudio(tempBuffer, cachedSampleRate);
-                }
-                else
-                {
-                    // Multi-channel audio - process as interleaved
-                    ProcessMultiChannelAudio(tempBuffer, channels, cachedSampleRate);
-                }
+                    // Process audio based on channel configuration using cached sample rate
+                    // LiveKit always uses stereo (2 channels) at 48kHz
+                    if (channels == LIVEKIT_CHANNELS)
+                    {
+                        // Stereo audio - process each channel separately (LiveKit standard)
+                        ProcessStereoAudio(tempBuffer, cachedSampleRate);
+                    }
+                    else if (channels == 1)
+                    {
+                        // Mono audio - process directly (fallback)
+                        audioProcessor.ProcessAudio(tempBuffer, cachedSampleRate);
+                    }
+                    else
+                    {
+                        // Multi-channel audio - process as interleaved (fallback)
+                        ProcessMultiChannelAudio(tempBuffer, channels, cachedSampleRate);
+                    }
 
-                // Copy processed data back
-                System.Array.Copy(tempBuffer, data, data.Length);
+                    // Copy processed data back
+                    System.Array.Copy(tempBuffer, data, data.Length);
+                }
+                catch (System.Exception ex)
+                {
+                    // On macOS, Core Audio is very sensitive to exceptions in audio callbacks
+                    #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+                    Debug.LogError($"[VoiceChat] Audio processing error on macOS: {ex.Message}. Disabling processing to prevent audio system instability.");
+                    isProcessingEnabled = false; // Disable processing to prevent further issues
+                    #else
+                    Debug.LogError($"[VoiceChat] Audio processing error: {ex.Message}");
+                    #endif
+                }
             }
 
             // Always invoke the AudioRead event for LiveKit compatibility
@@ -154,6 +204,7 @@ namespace DCL.VoiceChat
 
         private void ProcessStereoAudio(float[] data, int sampleRate)
         {
+            // Optimized stereo processing for LiveKit's 2-channel 48kHz format
             // Process left and right channels separately
             for (int i = 0; i < data.Length; i += 2)
             {

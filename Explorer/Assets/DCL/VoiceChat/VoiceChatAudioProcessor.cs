@@ -23,7 +23,6 @@ namespace DCL.VoiceChat
         // AGC state
         private float currentGain = 1f;
         private float peakLevel;
-        private float speechLevel; // Track speech-specific levels for AGC
 
         // Noise gate state
         private float gateSmoothing;
@@ -31,51 +30,23 @@ namespace DCL.VoiceChat
         private bool gateIsOpen;
         private float lastSpeechTime;
 
-        // Enhanced noise reduction state
-        private readonly float[] noiseProfile;
-        private readonly float[] speechProfile;
-        private readonly float[] previousSamples;
-        private int noiseProfileSamples;
-        private int speechProfileSamples;
-        private float noiseFloor;
-        private float speechFloor;
+        // Simplified audio analysis
         private float adaptiveThreshold;
-        private bool isLearningNoise = true;
-        private float silenceTimer;
-        private float speechTimer;
-
-        // Frequency analysis for better noise reduction
-        private readonly float[] frequencyBins;
-        private readonly float[] noiseFrequencyProfile;
-        private readonly float[] speechFrequencyProfile;
-        private int frequencyAnalysisCounter;
 
         // Native arrays for Burst compilation (allocated once, reused)
         private NativeArray<float> nativeAudioBuffer;
-        private NativeArray<float> nativeNoiseProfile;
-        private NativeArray<float> nativeSpeechProfile;
         private NativeArray<float> nativeSharedState;
         private NativeArray<float> nativeAnalysisResults;
-        private NativeArray<float> nativeFrequencyBins;
         private JobHandle lastJobHandle;
         private bool useJobSystem = true; // Can be toggled for debugging
 
-        private const int NOISE_PROFILE_SIZE = 1024;
-        private const int FREQUENCY_BINS = 32; // Simplified frequency analysis
-        private const int NOISE_LEARNING_FRAMES = 60; // Extended learning period
-        private const int SPEECH_LEARNING_FRAMES = 30;
-        private const float SILENCE_THRESHOLD_TIME = 0.5f; // Time to consider as silence for noise learning
-        private const float SPEECH_THRESHOLD_TIME = 0.2f; // Time to consider as speech for speech learning
+        // LiveKit constraints
+        private const int DEFAULT_NUM_CHANNELS = 2;
+        private const int DEFAULT_SAMPLE_RATE = 48000;
 
         public VoiceChatAudioProcessor(VoiceChatSettingsAsset settings)
         {
             this.settings = settings;
-            noiseProfile = new float[NOISE_PROFILE_SIZE];
-            speechProfile = new float[NOISE_PROFILE_SIZE];
-            previousSamples = new float[NOISE_PROFILE_SIZE];
-            frequencyBins = new float[FREQUENCY_BINS];
-            noiseFrequencyProfile = new float[FREQUENCY_BINS];
-            speechFrequencyProfile = new float[FREQUENCY_BINS];
 
             // Initialize native arrays for Burst compilation
             InitializeNativeArrays();
@@ -86,14 +57,11 @@ namespace DCL.VoiceChat
         {
             // Initialize with reasonable default sizes - will be resized as needed
             nativeAudioBuffer = new NativeArray<float>(4096, Allocator.Persistent);
-            nativeNoiseProfile = new NativeArray<float>(NOISE_PROFILE_SIZE, Allocator.Persistent);
-            nativeSpeechProfile = new NativeArray<float>(NOISE_PROFILE_SIZE, Allocator.Persistent);
             nativeSharedState = new NativeArray<float>(8, Allocator.Persistent); // [0]=currentGain, [1]=peakLevel, [2]=gateSmoothing, etc.
             nativeAnalysisResults = new NativeArray<float>(8, Allocator.Persistent); // [0]=rms, [1]=peak, [2]=avgAmplitude, etc.
-            nativeFrequencyBins = new NativeArray<float>(FREQUENCY_BINS, Allocator.Persistent);
         }
 
-                public void Dispose()
+                        public void Dispose()
         {
             // Complete any pending jobs before disposing
             if (!lastJobHandle.Equals(default(JobHandle)))
@@ -104,14 +72,11 @@ namespace DCL.VoiceChat
                 
             // Dispose native arrays
             if (nativeAudioBuffer.IsCreated) nativeAudioBuffer.Dispose();
-            if (nativeNoiseProfile.IsCreated) nativeNoiseProfile.Dispose();
-            if (nativeSpeechProfile.IsCreated) nativeSpeechProfile.Dispose();
             if (nativeSharedState.IsCreated) nativeSharedState.Dispose();
             if (nativeAnalysisResults.IsCreated) nativeAnalysisResults.Dispose();
-            if (nativeFrequencyBins.IsCreated) nativeFrequencyBins.Dispose();
         }
 
-                public void Reset()
+                        public void Reset()
         {
             // Complete any pending jobs before resetting
             if (!lastJobHandle.Equals(default(JobHandle)))
@@ -124,34 +89,11 @@ namespace DCL.VoiceChat
             highPassPrevOutput = 0f;
             currentGain = 1f;
             peakLevel = 0f;
-            speechLevel = 0f;
             gateSmoothing = 0f;
-            noiseProfileSamples = 0;
-            speechProfileSamples = 0;
-            noiseFloor = 0f;
-            speechFloor = 0f;
             adaptiveThreshold = settings.MicrophoneLoudnessMinimumThreshold;
-            isLearningNoise = true;
-            silenceTimer = 0f;
-            speechTimer = 0f;
             gateHoldTimer = 0f;
             gateIsOpen = false;
             lastSpeechTime = 0f;
-            frequencyAnalysisCounter = 0;
-
-            for (int i = 0; i < noiseProfile.Length; i++)
-            {
-                noiseProfile[i] = 0f;
-                speechProfile[i] = 0f;
-                previousSamples[i] = 0f;
-            }
-
-            for (int i = 0; i < FREQUENCY_BINS; i++)
-            {
-                frequencyBins[i] = 0f;
-                noiseFrequencyProfile[i] = 0f;
-                speechFrequencyProfile[i] = 0f;
-            }
 
             // Reset native arrays
             if (nativeSharedState.IsCreated)
@@ -165,7 +107,7 @@ namespace DCL.VoiceChat
         /// <summary>
         /// Enable or disable the Burst-compiled job system for audio processing
         /// </summary>
-                public void SetUseJobSystem(bool enabled)
+        public void SetUseJobSystem(bool enabled)
         {
             // Complete any pending jobs before changing mode
             if (!lastJobHandle.Equals(default(JobHandle)))
@@ -208,15 +150,24 @@ namespace DCL.VoiceChat
             // Check if Burst is actually available and enabled
             if (!Unity.Burst.BurstCompiler.IsEnabled) return false;
 
+            // macOS-specific compatibility checks
+            #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // On macOS, be more conservative with Burst usage due to Core Audio sensitivity
+            // Disable Burst for very small buffers to avoid Core Audio timing issues
+            if (audioLength < 256) return false; // Increased from 128 for macOS
+            if (audioLength > 4096) return false; // Reduced from 8192 for macOS stability
+            
+            // Additional check for Apple Silicon compatibility
+            if (SystemInfo.processorType.Contains("Apple")) 
+            {
+                // Even more conservative on Apple Silicon due to potential Rosetta issues
+                if (audioLength < 512) return false;
+            }
+            #else
             // Size efficiency thresholds - Burst overhead isn't worth it for tiny buffers
             if (audioLength < 128) return false; // Increased minimum for better efficiency
             if (audioLength > 8192) return false; // Reduced maximum for memory constraints
-
-            // Need sufficient learning data for noise reduction to be effective
-            if (noiseProfileSamples < NOISE_LEARNING_FRAMES) return false;
-
-            // Avoid Burst during initial learning phase when state changes rapidly
-            if (isLearningNoise && silenceTimer < SILENCE_THRESHOLD_TIME * 2) return false;
+            #endif
 
             return true;
         }
@@ -238,9 +189,6 @@ namespace DCL.VoiceChat
             // Copy audio data to native array
             NativeArray<float>.Copy(audioData, nativeAudioBuffer, audioLength);
 
-            // Update native profiles from managed arrays
-            UpdateNativeProfiles();
-
             // Update shared state
             nativeSharedState[0] = currentGain;
             nativeSharedState[1] = peakLevel;
@@ -259,41 +207,23 @@ namespace DCL.VoiceChat
             {
                 audioData = nativeAudioBuffer.GetSubArray(0, audioLength),
                 enableHighPassFilter = settings.EnableHighPassFilter,
-                enableNoiseReduction = settings.EnableNoiseReduction,
                 enableNoiseGate = settings.EnableNoiseGate,
                 enableAutoGainControl = settings.EnableAutoGainControl,
                 highPassCutoffFreq = settings.HighPassCutoffFreq,
-                noiseReductionStrength = settings.NoiseReductionStrength,
                 noiseGateThreshold = settings.NoiseGateThreshold,
                 agcTargetLevel = settings.AGCTargetLevel,
                 agcResponseSpeed = settings.AGCResponseSpeed,
                 sampleRate = sampleRate,
                 sharedState = nativeSharedState,
-                noiseProfile = nativeNoiseProfile,
-                speechProfile = nativeSpeechProfile,
-                noiseProfileSamples = noiseProfileSamples,
-                speechProfileSamples = speechProfileSamples,
                 adaptiveThreshold = adaptiveThreshold
             };
 
-            // Use parallel processing for larger buffers
+                        // Use parallel processing for larger buffers
             int batchSize = math.max(32, audioLength / 8);
             JobHandle processingHandle = processingJob.Schedule(audioLength, batchSize, analysisHandle);
 
-            // Schedule frequency analysis if needed
-            JobHandle frequencyHandle = default;
-            if (settings.EnableNoiseReduction)
-            {
-                var frequencyJob = new FrequencyAnalysisJob
-                {
-                    audioData = nativeAudioBuffer.GetSubArray(0, audioLength),
-                    frequencyBins = nativeFrequencyBins
-                };
-                frequencyHandle = frequencyJob.Schedule(processingHandle);
-            }
-
-                        // Combine all job handles
-            lastJobHandle = JobHandle.CombineDependencies(processingHandle, frequencyHandle);
+            // Set the processing handle as the last job handle
+            lastJobHandle = processingHandle;
             
             // Complete jobs and copy results back
             lastJobHandle.Complete();
@@ -307,76 +237,6 @@ namespace DCL.VoiceChat
             peakLevel = nativeSharedState[1];
             gateSmoothing = nativeSharedState[2];
 
-            // Update analysis results for adaptive processing
-            float rms = nativeAnalysisResults[0];
-            float peak = nativeAnalysisResults[1];
-            float avgAmplitude = nativeAnalysisResults[2];
-
-            // Calculate time increment for this audio buffer
-            float deltaTime = (float)audioLength / sampleRate;
-
-            // Update adaptive thresholds and learning
-            UpdateAdaptiveProcessing(rms, peak, avgAmplitude, deltaTime);
-        }
-
-        private void UpdateNativeProfiles()
-        {
-            // Copy managed noise profile to native array
-            for (int i = 0; i < math.min(noiseProfile.Length, nativeNoiseProfile.Length); i++)
-            {
-                nativeNoiseProfile[i] = noiseProfile[i];
-            }
-
-            // Copy managed speech profile to native array
-            for (int i = 0; i < math.min(speechProfile.Length, nativeSpeechProfile.Length); i++)
-            {
-                nativeSpeechProfile[i] = speechProfile[i];
-            }
-        }
-
-        private void UpdateAdaptiveProcessing(float rms, float peak, float avgAmplitude, float deltaTime)
-        {
-            // Determine if this is likely speech or noise
-            bool likelySpeech = rms > adaptiveThreshold && peak > adaptiveThreshold * 1.5f;
-
-            // Update timers
-            if (likelySpeech)
-            {
-                speechTimer += deltaTime;
-                silenceTimer = 0f;
-            }
-            else
-            {
-                silenceTimer += deltaTime;
-                speechTimer = 0f;
-            }
-
-            // Update adaptive threshold based on recent activity
-            if (silenceTimer > SILENCE_THRESHOLD_TIME)
-            {
-                noiseFloor = Mathf.Lerp(noiseFloor, rms, 0.1f);
-                adaptiveThreshold = Mathf.Max(noiseFloor * 2f, settings.MicrophoneLoudnessMinimumThreshold);
-
-                // Learn noise profile during silence
-                if (noiseProfileSamples < NOISE_LEARNING_FRAMES * 2)
-                {
-                    int profileIndex = noiseProfileSamples % NOISE_PROFILE_SIZE;
-                    noiseProfile[profileIndex] = avgAmplitude;
-                    noiseProfileSamples++;
-                }
-            }
-            else if (speechTimer > SPEECH_THRESHOLD_TIME)
-            {
-                speechFloor = Mathf.Lerp(speechFloor, rms, 0.05f);
-
-                // Learn speech profile during speech
-                if (speechProfileSamples < SPEECH_LEARNING_FRAMES && avgAmplitude > adaptiveThreshold)
-                {
-                    int profileIndex = speechProfileSamples % NOISE_PROFILE_SIZE;
-                    speechProfile[profileIndex] = avgAmplitude;
-                    speechProfileSamples++;
-                }
-            }
         }
 
         /// <summary>
@@ -386,15 +246,6 @@ namespace DCL.VoiceChat
         {
             // Calculate time increment for this audio buffer
             float deltaTime = (float)audioData.Length / sampleRate;
-
-            // Analyze audio characteristics for adaptive processing
-            AnalyzeAudioCharacteristics(audioData, deltaTime);
-
-            // Learn noise and speech profiles adaptively
-            if (settings.EnableNoiseReduction)
-            {
-                AdaptiveProfileLearning(audioData);
-            }
 
             for (int i = 0; i < audioData.Length; i++)
             {
@@ -406,134 +257,29 @@ namespace DCL.VoiceChat
                     sample = ApplyHighPassFilter(sample, sampleRate);
                 }
 
-                // Apply pre-AGC noise reduction (lighter, focused on obvious noise)
-                if (settings.EnableNoiseReduction && noiseProfileSamples >= NOISE_LEARNING_FRAMES)
-                {
-                    sample = ApplyPreAGCNoiseReduction(sample, i);
-                }
-
                 // Apply noise gate with hold time
                 if (settings.EnableNoiseGate)
                 {
                     sample = ApplyNoiseGateWithHold(sample, deltaTime);
                 }
 
-                // Apply automatic gain control with speech-aware processing
+                // Apply automatic gain control
                 if (settings.EnableAutoGainControl)
                 {
-                    sample = ApplySpeechAwareAGC(sample);
-                }
-
-                // Apply post-AGC noise reduction (gentler, artifact-resistant)
-                if (settings.EnableNoiseReduction && noiseProfileSamples >= NOISE_LEARNING_FRAMES)
-                {
-                    sample = ApplyPostAGCNoiseReduction(sample, i);
+                    sample = ApplyAGC(sample);
                 }
 
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
             }
         }
 
-        private void AnalyzeAudioCharacteristics(float[] audioData, float deltaTime)
-        {
-            // Calculate RMS and peak levels
-            float rms = 0f;
-            float peak = 0f;
 
-            for (int i = 0; i < audioData.Length; i++)
-            {
-                float abs = Mathf.Abs(audioData[i]);
-                rms += abs * abs;
-                peak = Mathf.Max(peak, abs);
-            }
-            rms = Mathf.Sqrt(rms / audioData.Length);
-
-            // Determine if this is likely speech or noise
-            bool likelySpeech = rms > adaptiveThreshold && peak > adaptiveThreshold * 1.5f;
-
-            // Update timers
-            if (likelySpeech)
-            {
-                speechTimer += deltaTime;
-                silenceTimer = 0f;
-            }
-            else
-            {
-                silenceTimer += deltaTime;
-                speechTimer = 0f;
-            }
-
-            // Update adaptive threshold based on recent activity
-            if (silenceTimer > SILENCE_THRESHOLD_TIME)
-            {
-                noiseFloor = Mathf.Lerp(noiseFloor, rms, 0.1f);
-                adaptiveThreshold = Mathf.Max(noiseFloor * 2f, settings.MicrophoneLoudnessMinimumThreshold);
-            }
-            else if (speechTimer > SPEECH_THRESHOLD_TIME)
-            {
-                speechFloor = Mathf.Lerp(speechFloor, rms, 0.05f);
-            }
-        }
-
-        private void AdaptiveProfileLearning(float[] audioData)
-        {
-            // Calculate current audio characteristics
-            float avgAmplitude = 0f;
-            for (int i = 0; i < audioData.Length; i++)
-            {
-                avgAmplitude += Mathf.Abs(audioData[i]);
-            }
-            avgAmplitude /= audioData.Length;
-
-            // Learn noise profile during silence
-            if (silenceTimer > SILENCE_THRESHOLD_TIME && noiseProfileSamples < NOISE_LEARNING_FRAMES * 2)
-            {
-                int profileIndex = noiseProfileSamples % NOISE_PROFILE_SIZE;
-                noiseProfile[profileIndex] = avgAmplitude;
-                noiseProfileSamples++;
-
-                // Update frequency-based noise profile
-                UpdateFrequencyProfile(audioData, noiseFrequencyProfile, 0.1f);
-            }
-
-            // Learn speech profile during speech
-            if (speechTimer > SPEECH_THRESHOLD_TIME && speechProfileSamples < SPEECH_LEARNING_FRAMES && avgAmplitude > adaptiveThreshold)
-            {
-                int profileIndex = speechProfileSamples % NOISE_PROFILE_SIZE;
-                speechProfile[profileIndex] = avgAmplitude;
-                speechProfileSamples++;
-
-                // Update frequency-based speech profile
-                UpdateFrequencyProfile(audioData, speechFrequencyProfile, 0.05f);
-            }
-        }
-
-        private void UpdateFrequencyProfile(float[] audioData, float[] profile, float learningRate)
-        {
-            // Simple frequency analysis using overlapping windows
-            int windowSize = audioData.Length / FREQUENCY_BINS;
-
-            for (int bin = 0; bin < FREQUENCY_BINS; bin++)
-            {
-                float binEnergy = 0f;
-                int startIdx = bin * windowSize;
-                int endIdx = Mathf.Min(startIdx + windowSize, audioData.Length);
-
-                for (int i = startIdx; i < endIdx; i++)
-                {
-                    binEnergy += audioData[i] * audioData[i];
-                }
-
-                binEnergy = Mathf.Sqrt(binEnergy / (endIdx - startIdx));
-                profile[bin] = Mathf.Lerp(profile[bin], binEnergy, learningRate);
-            }
-        }
 
         private float ApplyHighPassFilter(float input, int sampleRate)
         {
-            // Simple first-order high-pass filter
+            // Simple first-order high-pass filter optimized for 48kHz
             float rc = 1f / (2f * Mathf.PI * settings.HighPassCutoffFreq);
-            float dt = 1f / sampleRate;
+            float dt = 1f / sampleRate; // Will typically be 1/48000
             float alpha = rc / (rc + dt);
 
             float output = alpha * (highPassPrevOutput + input - highPassPrevInput);
@@ -544,121 +290,7 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyPreAGCNoiseReduction(float sample, int sampleIndex)
-        {
-            if (noiseProfileSamples == 0) return sample;
 
-            // Calculate noise floor from profile
-            float avgNoise = 0f;
-            int profileSamples = Mathf.Min(noiseProfileSamples, NOISE_PROFILE_SIZE);
-
-            for (int i = 0; i < profileSamples; i++)
-            {
-                avgNoise += noiseProfile[i];
-            }
-            avgNoise /= profileSamples;
-
-            float sampleAbs = Mathf.Abs(sample);
-
-            // Pre-AGC: Aggressive noise floor reduction for obvious noise
-            float noiseThreshold = avgNoise * (1f + settings.NoiseReductionStrength * 0.5f);
-
-            if (sampleAbs < noiseThreshold)
-            {
-                // More aggressive reduction since we're before AGC
-                float reductionFactor = 1f - settings.NoiseReductionStrength * 0.7f;
-                sample *= reductionFactor;
-            }
-
-            // Update frequency analysis
-            if (frequencyAnalysisCounter % 8 == 0)
-            {
-                UpdateFrequencyBins(sample, sampleIndex);
-            }
-
-            frequencyAnalysisCounter++;
-            return sample;
-        }
-
-        private void UpdateFrequencyBins(float sample, int sampleIndex)
-        {
-            // Simple frequency bin update for real-time processing
-            int binIndex = (sampleIndex / 8) % FREQUENCY_BINS;
-            frequencyBins[binIndex] = Mathf.Lerp(frequencyBins[binIndex], Mathf.Abs(sample), 0.1f);
-        }
-
-        private float ApplyPostAGCNoiseReduction(float sample, int sampleIndex)
-        {
-            if (noiseProfileSamples == 0) return sample;
-
-            // Calculate noise floor from profile
-            float avgNoise = 0f;
-            int profileSamples = Mathf.Min(noiseProfileSamples, NOISE_PROFILE_SIZE);
-
-            for (int i = 0; i < profileSamples; i++)
-            {
-                avgNoise += noiseProfile[i];
-            }
-            avgNoise /= profileSamples;
-
-            // Calculate speech floor if available
-            float avgSpeech = avgNoise * 2f;
-            if (speechProfileSamples > 0)
-            {
-                avgSpeech = 0f;
-                int speechSamples = Mathf.Min(speechProfileSamples, NOISE_PROFILE_SIZE);
-                for (int i = 0; i < speechSamples; i++)
-                {
-                    avgSpeech += speechProfile[i];
-                }
-                avgSpeech /= speechSamples;
-            }
-
-            float sampleAbs = Mathf.Abs(sample);
-            float originalSample = sample;
-
-            // Post-AGC: Gentle artifact-resistant reduction
-            // Since AGC has amplified everything, we need to be more careful
-
-            // Estimate what the noise level would be after AGC
-            float estimatedNoiseAfterAGC = avgNoise * currentGain;
-            float noiseThreshold = estimatedNoiseAfterAGC * (1f + settings.NoiseReductionStrength * 0.3f);
-
-            if (sampleAbs < noiseThreshold)
-            {
-                // Gentle reduction to avoid artifacts on amplified signal
-                float reductionFactor = 1f - settings.NoiseReductionStrength * 0.4f;
-                sample *= reductionFactor;
-            }
-
-            // Speech preservation - if we have learned speech patterns
-            if (speechProfileSamples > 0 && avgSpeech > avgNoise * 1.2f)
-            {
-                float estimatedSpeechAfterAGC = avgSpeech * currentGain;
-                float speechRatio = sampleAbs / estimatedSpeechAfterAGC;
-
-                // If this looks like speech, reduce noise reduction strength
-                if (speechRatio > 0.4f)
-                {
-                    float speechProtection = Mathf.Clamp01(speechRatio - 0.4f);
-                    sample = Mathf.Lerp(sample, originalSample, speechProtection * 0.6f);
-                }
-            }
-
-            // Simple artifact prevention without delay
-            // Limit extreme changes to prevent artifacts
-            if (sampleAbs < noiseThreshold * 1.5f)
-            {
-                float maxChange = originalSample * 0.3f;
-                float change = sample - originalSample;
-                if (Mathf.Abs(change) > maxChange)
-                {
-                    sample = originalSample + Mathf.Sign(change) * maxChange;
-                }
-            }
-
-            return sample;
-        }
 
         private float ApplyNoiseGateWithHold(float sample, float deltaTime)
         {
@@ -713,7 +345,7 @@ namespace DCL.VoiceChat
             return sample * gateSmoothing;
         }
 
-        private float ApplySpeechAwareAGC(float sample)
+        private float ApplyAGC(float sample)
         {
             float sampleAbs = Mathf.Abs(sample);
 
@@ -721,29 +353,13 @@ namespace DCL.VoiceChat
             float peakDecay = 0.999f;
             peakLevel = Mathf.Max(sampleAbs, peakLevel * peakDecay);
 
-            // Track speech-specific levels separately to avoid amplifying noise
-            if (speechTimer > SPEECH_THRESHOLD_TIME || sampleAbs > adaptiveThreshold)
+            if (peakLevel > 0.001f) // Avoid division by zero
             {
-                speechLevel = Mathf.Max(sampleAbs, speechLevel * 0.995f);
-            }
-            else
-            {
-                speechLevel *= 0.998f; // Faster decay when not speaking
-            }
+                float targetGain = settings.AGCTargetLevel / peakLevel;
+                targetGain = Mathf.Clamp(targetGain, 0.1f, 5f);
 
-            // Use speech level for AGC calculation when available, otherwise fall back to peak level
-            float referenceLevel = speechLevel > 0.001f ? speechLevel : peakLevel;
-
-            if (referenceLevel > 0.001f) // Avoid division by zero
-            {
-                float targetGain = settings.AGCTargetLevel / referenceLevel;
-
-                // More conservative gain limiting to prevent noise amplification
-                float maxGain = speechLevel > 0.001f ? 5f : 2f; // Lower max gain when no clear speech
-                targetGain = Mathf.Clamp(targetGain, 0.1f, maxGain);
-
-                // Slower gain adjustment to prevent pumping artifacts
-                float gainSpeed = settings.AGCResponseSpeed * 0.005f; // Reduced from 0.01f
+                // Smooth gain adjustment to prevent pumping artifacts
+                float gainSpeed = settings.AGCResponseSpeed * 0.005f;
                 currentGain = Mathf.Lerp(currentGain, targetGain, gainSpeed);
             }
 
@@ -759,21 +375,6 @@ namespace DCL.VoiceChat
         /// Get the current gain level for UI feedback
         /// </summary>
         public float CurrentGain => currentGain;
-
-        /// <summary>
-        /// Get the current noise floor level for debugging
-        /// </summary>
-        public float NoiseFloor => noiseFloor;
-
-        /// <summary>
-        /// Get the current speech floor level for debugging
-        /// </summary>
-        public float SpeechFloor => speechFloor;
-
-        /// <summary>
-        /// Get whether the system is currently learning noise patterns
-        /// </summary>
-        public bool IsLearningNoise => isLearningNoise && noiseProfileSamples < NOISE_LEARNING_FRAMES;
 
         /// <summary>
         /// Get the current adaptive threshold for debugging
@@ -797,11 +398,9 @@ namespace DCL.VoiceChat
 
         // Settings (read-only)
         [ReadOnly] public bool enableHighPassFilter;
-        [ReadOnly] public bool enableNoiseReduction;
         [ReadOnly] public bool enableNoiseGate;
         [ReadOnly] public bool enableAutoGainControl;
         [ReadOnly] public float highPassCutoffFreq;
-        [ReadOnly] public float noiseReductionStrength;
         [ReadOnly] public float noiseGateThreshold;
         [ReadOnly] public float agcTargetLevel;
         [ReadOnly] public float agcResponseSpeed;
@@ -810,11 +409,6 @@ namespace DCL.VoiceChat
         // Shared state (atomic operations where needed)
         public NativeArray<float> sharedState; // [0]=currentGain, [1]=peakLevel, [2]=gateSmoothing
 
-        // Noise profiles
-        [ReadOnly] public NativeArray<float> noiseProfile;
-        [ReadOnly] public NativeArray<float> speechProfile;
-        [ReadOnly] public int noiseProfileSamples;
-        [ReadOnly] public int speechProfileSamples;
         [ReadOnly] public float adaptiveThreshold;
 
         public void Execute(int index)
@@ -825,12 +419,6 @@ namespace DCL.VoiceChat
             if (enableHighPassFilter)
             {
                 sample = ApplyHighPassFilterBurst(sample);
-            }
-
-            // Noise reduction (vectorized)
-            if (enableNoiseReduction && noiseProfileSamples > 0)
-            {
-                sample = ApplyNoiseReductionBurst(sample);
             }
 
             // Noise gate (optimized)
@@ -850,45 +438,16 @@ namespace DCL.VoiceChat
 
         private float ApplyHighPassFilterBurst(float input)
         {
-            // Simplified high-pass filter for burst compilation
+            // Simplified high-pass filter for burst compilation, optimized for 48kHz
             float rc = 1f / (2f * math.PI * highPassCutoffFreq);
-            float dt = 1f / sampleRate;
+            float dt = 1f / sampleRate; // Typically 1/48000
             float alpha = rc / (rc + dt);
 
             // Note: This is a simplified version - full state would need to be managed differently
             return input * alpha;
         }
 
-        private float ApplyNoiseReductionBurst(float sample)
-        {
-            if (noiseProfileSamples == 0) return sample;
 
-            // Fast noise floor calculation using vectorized operations
-            float avgNoise = 0f;
-            int profileSamples = math.min(noiseProfileSamples, noiseProfile.Length);
-
-            // Unrolled loop for better performance
-            for (int i = 0; i < profileSamples; i += 4)
-            {
-                int remaining = math.min(4, profileSamples - i);
-                for (int j = 0; j < remaining; j++)
-                {
-                    avgNoise += noiseProfile[i + j];
-                }
-            }
-            avgNoise /= profileSamples;
-
-            float sampleAbs = math.abs(sample);
-            float noiseThreshold = avgNoise * (1f + noiseReductionStrength * 0.5f);
-
-            if (sampleAbs < noiseThreshold)
-            {
-                float reductionFactor = 1f - noiseReductionStrength * 0.7f;
-                sample *= reductionFactor;
-            }
-
-            return sample;
-        }
 
         private float ApplyNoiseGateBurst(float sample)
         {
@@ -963,36 +522,5 @@ namespace DCL.VoiceChat
         }
     }
 
-    /// <summary>
-    /// Burst-compiled job for frequency analysis using simplified FFT
-    /// </summary>
-    [BurstCompile]
-    public struct FrequencyAnalysisJob : IJob
-    {
-        [ReadOnly] public NativeArray<float> audioData;
-        public NativeArray<float> frequencyBins;
 
-        public void Execute()
-        {
-            int binCount = frequencyBins.Length;
-            int windowSize = audioData.Length / binCount;
-
-            // Simple frequency analysis using overlapping windows
-            for (int bin = 0; bin < binCount; bin++)
-            {
-                float binEnergy = 0f;
-                int startIdx = bin * windowSize;
-                int endIdx = math.min(startIdx + windowSize, audioData.Length);
-
-                for (int i = startIdx; i < endIdx; i++)
-                {
-                    float sample = audioData[i];
-                    binEnergy += sample * sample;
-                }
-
-                binEnergy = math.sqrt(binEnergy / (endIdx - startIdx));
-                frequencyBins[bin] = binEnergy;
-            }
-        }
-    }
 }

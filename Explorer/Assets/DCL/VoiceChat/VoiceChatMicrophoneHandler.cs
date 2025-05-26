@@ -73,8 +73,46 @@ namespace DCL.VoiceChat
             if (isMicrophoneInitialized)
                 return;
 
+            #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // On macOS, check if we have microphone permission
+            if (Microphone.devices.Length == 0)
+            {
+                Debug.LogWarning("[VoiceChat] No microphone devices found on macOS. This may indicate missing microphone permissions.");
+                return;
+            }
+            
+            // Validate microphone index for macOS
+            if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
+            {
+                Debug.LogWarning($"[VoiceChat] Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range on macOS. Using default microphone.");
+                // Use first available microphone as fallback
+                microphoneName = Microphone.devices[0];
+            }
+            else
+            {
+                microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+            }
+            
+            // On macOS, be more conservative with microphone settings
+            try
+            {
+                MicrophoneAudioClip = Microphone.Start(microphoneName, true, 1, 48000);
+                if (MicrophoneAudioClip == null)
+                {
+                    Debug.LogError("[VoiceChat] Failed to start microphone on macOS. This may indicate permission issues or device conflicts.");
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[VoiceChat] Microphone initialization failed on macOS: {ex.Message}");
+                return;
+            }
+            #else
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             MicrophoneAudioClip = Microphone.Start(microphoneName, true, 1, 48000);
+            #endif
+            
             audioSource.clip = MicrophoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = 0f; // Start muted
