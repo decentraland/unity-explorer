@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Vector2 = UnityEngine.Vector2;
 
@@ -18,26 +19,26 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     {
         private readonly World globalWorld;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ExposedCameraData exposedCameraData;
         private Vector2 previousPosition = Vector2.zero;
         private Vector2 mousePos;
         private Vector2 deltaPos;
+        private Camera cachedCamera;
 
         internal PrimaryPointerInfoSystem(
             World world,
             World globalWorld,
-            IECSToCRDTWriter ecsToCRDTWriter,
-            ExposedCameraData exposedCameraData
+            IECSToCRDTWriter ecsToCRDTWriter
         ) : base(world)
         {
             this.globalWorld = globalWorld;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.exposedCameraData = exposedCameraData;
         }
 
         public override void Initialize()
         {
             base.Initialize();
+
+            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
             UpdatePointerInfo();
         }
@@ -52,9 +53,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             mousePos = Mouse.current.position.value;
             deltaPos = mousePos - previousPosition;
             previousPosition = mousePos;
-            ref CameraComponent cameraComponent = ref globalWorld.Get<CameraComponent>(exposedCameraData.CameraEntityProxy.Object);
 
-            var ray = cameraComponent.Camera.ScreenPointToRay(mousePos);
+            var ray = cachedCamera.ScreenPointToRay(mousePos);
 
             var worldRayDirection = new Decentraland.Common.Vector3
             {

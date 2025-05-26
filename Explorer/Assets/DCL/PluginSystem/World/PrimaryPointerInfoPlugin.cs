@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.CharacterCamera;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.PrimaryPointerInfo.Systems;
 using ECS.LifeCycle;
@@ -12,12 +11,10 @@ namespace DCL.PluginSystem.World
     public class PrimaryPointerInfoPlugin : IDCLWorldPlugin<NoExposedPluginSettings>
     {
         private readonly Arch.Core.World globalWorld;
-        private readonly ExposedCameraData exposedCameraData;
 
-        public PrimaryPointerInfoPlugin(Arch.Core.World globalWorld, ExposedCameraData exposedCameraData)
+        public PrimaryPointerInfoPlugin(Arch.Core.World globalWorld)
         {
             this.globalWorld = globalWorld;
-            this.exposedCameraData = exposedCameraData;
         }
 
         public void Dispose()
@@ -30,8 +27,7 @@ namespace DCL.PluginSystem.World
             PrimaryPointerInfoSystem.InjectToWorld(
                 ref builder,
                 globalWorld,
-                sharedDependencies.EcsToCRDTWriter,
-                exposedCameraData
+                sharedDependencies.EcsToCRDTWriter
             );
         }
 
