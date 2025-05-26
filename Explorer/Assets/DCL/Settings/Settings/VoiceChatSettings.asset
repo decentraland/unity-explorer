@@ -12,20 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 200926c5751ad489592b54681c28c43e, type: 3}
   m_Name: VoiceChatSettings
   m_EditorClassIdentifier: 
-  SelectedMicrophoneIndex: 0
+  SelectedMicrophoneIndex: 1
   SampleWindow: 64
   MicrophoneLoudnessMinimumThreshold: 0.2
   HoldThresholdInSeconds: 0.5
   EnableNoiseGate: 1
-  NoiseGateThreshold: 0.01
-  NoiseGateHoldTime: 0.3
+  NoiseGateThreshold: 0.005
+  NoiseGateHoldTime: 0.5
   NoiseGateAttackTime: 0.05
   NoiseGateReleaseTime: 0.1
   EnableHighPassFilter: 1
-  HighPassCutoffFreq: 80
+  HighPassCutoffFreq: 250
   EnableAutoGainControl: 1
   AGCTargetLevel: 0.7
   AGCResponseSpeed: 1
   EnableNoiseReduction: 1
-  NoiseReductionStrength: 0.3
+  NoiseReductionStrength: 0.5
   ConnectionString: livekit:wss://dcl.livekit.cloud?access_token=eyJhbGciOiJIUzI1NiJ9.eyJtZXRhZGF0YSI6IntcInByaXZhdGVfbWVzc2FnZXNfcHJpdmFjeVwiOlwiYWxsXCJ9IiwidmlkZW8iOnsicm9vbUpvaW4iOnRydWUsInJvb20iOiJteS1yb29tIiwiY2FuU3Vic2NyaWJlIjp0cnVlLCJjYW5QdWJsaXNoIjp0cnVlfSwiaXNzIjoiQVBJSjRZdHdwbVQ3ckdZIiwiZXhwIjoxNzQ4Mjc1NjU5LCJuYmYiOjAsInN1YiI6IjB4MSJ9.AtnqlwmE3MU0KvDqyaCvk-jtdz0HiiIrvWAcSfxJ-R4
