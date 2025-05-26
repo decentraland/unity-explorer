@@ -218,12 +218,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            MemberListSingleItemView elementView = listItem.GetComponent<MemberListSingleItemView>();
+            MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
             elementView.InjectDependencies(viewDependencies);
-            elementView.Configure(sectionsFetchData[currentSection].members[index]);
+            elementView.Configure(sectionsFetchData[currentSection].members[index], currentSection);
 
-            elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked);
+            elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked, UnbanButtonClicked);
 
             if (index >= sectionsFetchData[currentSection].totalFetched - ELEMENT_MISSING_THRESHOLD && sectionsFetchData[currentSection].totalFetched < sectionsFetchData[currentSection].totalToFetch && !isFetching)
                 FetchNewDataAsync().Forget();
@@ -290,7 +290,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             };
         }
 
-        private void ContextMenuButtonClicked(GetCommunityMembersResponse.MemberData profile, Vector2 buttonPosition, MemberListSingleItemView elementView)
+        private void ContextMenuButtonClicked(GetCommunityMembersResponse.MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
             userProfileContextMenuControlSettings.SetInitialData(profile.name, profile.id, profile.hasClaimedName,
@@ -311,5 +311,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
             HandleContextMenuUserProfileButton(profile.id, ConvertFriendshipStatus(profile.friendshipStatus));
+
+        private void UnbanButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
+            throw new NotImplementedException();
     }
 }

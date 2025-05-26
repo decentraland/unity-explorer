@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MemberListSingleItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
+    public class MemberListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
     {
         private const string MUTUAL_FRIENDS_FORMAT = "{0} Mutual Friends";
 
@@ -18,6 +18,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public Color HoveredColor { get; private set; }
         [field: SerializeField] public Button MainButton { get; private set; }
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
+        [field: SerializeField] public Button UnbanButton { get; private set; }
 
         [field: Header("User")]
         [field: SerializeField] public TMP_Text UserName { get; private set; }
@@ -35,17 +36,21 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public Button UnblockFriendButton { get; private set; }
 
         private bool canUnHover = true;
+        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
+
         public GetCommunityMembersResponse.MemberData UserProfile { get; protected set; }
 
         public event Action<GetCommunityMembersResponse.MemberData>? MainButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListSingleItemView>? ContextMenuButtonClicked;
+        public event Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListItemView>? ContextMenuButtonClicked;
         public event Action<GetCommunityMembersResponse.MemberData>? FriendButtonClicked;
+        public event Action<GetCommunityMembersResponse.MemberData>? UnbanButtonClicked;
 
-        public void RemoveAllListeners()
+        private void RemoveAllListeners()
         {
             MainButtonClicked = null;
             ContextMenuButtonClicked = null;
             FriendButtonClicked = null;
+            UnbanButtonClicked = null;
         }
 
         internal bool CanUnHover
@@ -65,6 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void Awake()
         {
             MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
+            UnbanButton.onClick.AddListener(() => UnbanButtonClicked?.Invoke(UserProfile));
             ContextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile, ContextMenuButton.transform.position, this));
 
             AddFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
@@ -79,7 +85,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             Background.color = NormalColor;
         }
 
-        public void Configure(GetCommunityMembersResponse.MemberData memberProfile)
+        public void Configure(GetCommunityMembersResponse.MemberData memberProfile, MembersListView.MemberListSections section)
         {
             UnHover();
             UserProfile = memberProfile;
@@ -97,33 +103,39 @@ namespace DCL.Communities.CommunitiesCard.Members
             RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.Owner or CommunityMemberRole.Moderator);
             ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.profilePicture, memberProfile.id);
 
-            AddFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.none);
-            AcceptFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_received);
-            RemoveFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.friend);
-            CancelFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_sent);
-            UnblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked);
+            currentSection = section;
+
+            AddFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
+            AcceptFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
+            RemoveFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL);
+            CancelFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
+            UnblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
         }
 
         public void SubscribeToInteractions(Action<GetCommunityMembersResponse.MemberData> mainButton,
-            Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListSingleItemView> contextMenuButton,
-            Action<GetCommunityMembersResponse.MemberData> friendButton)
+            Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListItemView> contextMenuButton,
+            Action<GetCommunityMembersResponse.MemberData> friendButton,
+            Action<GetCommunityMembersResponse.MemberData> unbanButton)
         {
             RemoveAllListeners();
 
             MainButtonClicked += mainButton;
             ContextMenuButtonClicked += contextMenuButton;
             FriendButtonClicked += friendButton;
+            UnbanButtonClicked += unbanButton;
         }
 
         private void UnHover()
         {
             ContextMenuButton.gameObject.SetActive(false);
+            UnbanButton.gameObject.SetActive(false);
             Background.color = NormalColor;
         }
 
         private void Hover()
         {
             ContextMenuButton.gameObject.SetActive(true);
+            UnbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
             Background.color = HoveredColor;
         }
 
