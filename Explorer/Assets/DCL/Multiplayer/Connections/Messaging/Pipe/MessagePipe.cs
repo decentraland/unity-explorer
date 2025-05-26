@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             memoryPool,
             new MessageParser<Packet>(() =>
             {
-                var packet = receivingMultiPool.Get<Packet>();
+                Packet packet = receivingMultiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
             }),
@@ -71,12 +71,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             isDisposed = true;
         }
 
-        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
         {
             try
             {
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
-                var name = packet.MessageCase;
+                Packet.MessageOneofCase name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, cts.Token).Forget();
             }
             catch (Exception e)
@@ -92,12 +92,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             try
             {
-                var receiver = SubscribersListOrNull(name);
+                (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict)? receiver = SubscribersListOrNull(name);
 
                 if (receiver.HasValue == false)
                     return;
 
-                var r = receiver.Value;
+                (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) r = receiver.Value;
 
                 if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
                     await UniTask.SwitchToMainThread();
@@ -117,52 +117,52 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()
         {
-            var item = SubscribersList(ofCase, threadStrict);
+            (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) item = SubscribersList(ofCase, threadStrict);
 
             if (item.list.Count > 0)
                 throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {ofCase}");
 
             item.list
-               .Add(tuple =>
-                    {
-                        Packet packet = tuple.Item1!;
-                        Participant participant = tuple.Item2!;
+                .Add(tuple =>
+                     {
+                         Packet packet = tuple.Item1!;
+                         Participant participant = tuple.Item2!;
 
-                        uint version = packet.ProtocolVersion;
+                         uint version = packet.ProtocolVersion;
 
-                        if (version != supportedVersion)
-                        {
-                            ReportHub.LogWarning(
-                                ReportCategory.LIVEKIT,
-                                $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
-                            );
+                         if (version != supportedVersion)
+                         {
+                             ReportHub.LogWarning(
+                                 ReportCategory.LIVEKIT,
+                                 $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
+                             );
 
-                            return;
-                        }
+                             return;
+                         }
 
-                        var payload = Payload<T>(packet);
+                         T? payload = Payload<T>(packet);
 
-                        if (payload == null)
-                        {
-                            ReportHub.LogError(
-                                ReportCategory.LIVEKIT,
-                                $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
-                            );
+                         if (payload == null)
+                         {
+                             ReportHub.LogError(
+                                 ReportCategory.LIVEKIT,
+                                 $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
+                             );
 
-                            return;
-                        }
+                             return;
+                         }
 
-                        var receivedMessage = new ReceivedMessage<T>(
-                            payload,
-                            packet,
-                            participant.Identity,
-                            sendingMultiPool,
-                            roomId
-                        );
+                         var receivedMessage = new ReceivedMessage<T>(
+                             payload,
+                             packet,
+                             participant.Identity,
+                             sendingMultiPool,
+                             roomId
+                         );
 
-                        onMessageReceived(receivedMessage);
-                    }
-                );
+                         onMessageReceived(receivedMessage);
+                     }
+                 );
         }
 
         private (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
