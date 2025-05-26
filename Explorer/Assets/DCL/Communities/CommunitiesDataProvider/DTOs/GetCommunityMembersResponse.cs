@@ -88,7 +88,7 @@ namespace DCL.Communities
         }
 
         public MemberData[] members;
-        public int totalPages;
+        public int totalAmount;
     }
 }
 

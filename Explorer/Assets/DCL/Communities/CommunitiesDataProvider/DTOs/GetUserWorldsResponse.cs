@@ -13,7 +13,7 @@ namespace DCL.Communities
         }
 
         public World[] worlds;
-        public int totalPages;
+        public int totalAmount;
     }
 }
 
