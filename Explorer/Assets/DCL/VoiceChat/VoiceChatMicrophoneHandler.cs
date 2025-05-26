@@ -14,6 +14,7 @@ namespace DCL.VoiceChat
 
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
+        private readonly VoiceChatConfiguration voiceChatConfiguration;
         private readonly AudioSource audioSource;
         private readonly VoiceChatMicrophoneAudioFilter audioFilter;
 
@@ -26,10 +27,11 @@ namespace DCL.VoiceChat
         public bool IsTalking { get; private set; }
         public string MicrophoneName { get; private set; }
 
-        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter = null)
+        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, VoiceChatConfiguration voiceChatConfiguration, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter = null)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
+            this.voiceChatConfiguration = voiceChatConfiguration;
             this.audioSource = audioSource;
             this.audioFilter = audioFilter;
 
@@ -69,7 +71,7 @@ namespace DCL.VoiceChat
             float pressDuration = Time.time - buttonPressStartTime;
 
             // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
-            if (pressDuration >= voiceChatSettings.HoldThresholdInSeconds)
+            if (pressDuration >= voiceChatConfiguration.HoldThresholdInSeconds)
             {
                 IsTalking = false;
                 DisableMicrophone();
@@ -99,18 +101,18 @@ namespace DCL.VoiceChat
             if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range on macOS. Using default microphone.");
-                microphoneName = Microphone.devices[0];
+                MicrophoneName = Microphone.devices[0];
             }
             else
             {
-                microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+                MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             }
 
             // On macOS, be more conservative with microphone settings
             try
             {
-                MicrophoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, MICROPHONE_SAMPLE_RATE);
-                if (MicrophoneAudioClip == null)
+                microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, MICROPHONE_SAMPLE_RATE);
+                if (microphoneAudioClip == null)
                 {
                     ReportHub.LogError(ReportCategory.VOICE_CHAT, "Failed to start microphone on macOS. This may indicate permission issues or device conflicts.");
                     return;

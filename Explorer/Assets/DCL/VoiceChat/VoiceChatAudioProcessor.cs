@@ -1,4 +1,3 @@
-using DCL.Settings.Settings;
 using UnityEngine;
 using Unity.Burst;
 using Unity.Collections;
@@ -13,7 +12,7 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatAudioProcessor
     {
-        private readonly VoiceChatSettingsAsset settings;
+        private readonly VoiceChatConfiguration configuration;
 
         private float highPassPrevInput;
         private float highPassPrevOutput;
@@ -54,9 +53,9 @@ namespace DCL.VoiceChat
         /// </summary>
         public float GateSmoothing { get; private set; }
 
-        public VoiceChatAudioProcessor(VoiceChatSettingsAsset settings)
+        public VoiceChatAudioProcessor(VoiceChatConfiguration configuration)
         {
-            this.settings = settings;
+            this.configuration = configuration;
 
             // Initialize native arrays for Burst compilation
             InitializeNativeArrays();
@@ -100,7 +99,7 @@ namespace DCL.VoiceChat
             CurrentGain = 1f;
             peakLevel = 0f;
             GateSmoothing = 0f;
-            AdaptiveThreshold = settings.MicrophoneLoudnessMinimumThreshold;
+            AdaptiveThreshold = configuration.MicrophoneLoudnessMinimumThreshold;
             gateIsOpen = false;
             lastSpeechTime = 0f;
 
@@ -211,16 +210,16 @@ namespace DCL.VoiceChat
                 var blockProcessingJob = new AudioBlockProcessingJob
                 {
                     audioData = nativeAudioBuffer.GetSubArray(blockStart, currentBlockSize),
-                    enableHighPassFilter = settings.EnableHighPassFilter,
-                    enableNoiseGate = settings.EnableNoiseGate,
-                    enableAutoGainControl = settings.EnableAutoGainControl,
-                    highPassCutoffFreq = settings.HighPassCutoffFreq,
-                    noiseGateThreshold = settings.NoiseGateThreshold,
-                    noiseGateHoldTime = settings.NoiseGateHoldTime,
-                    noiseGateAttackTime = settings.NoiseGateAttackTime,
-                    noiseGateReleaseTime = settings.NoiseGateReleaseTime,
-                    agcTargetLevel = settings.AGCTargetLevel,
-                    agcResponseSpeed = settings.AGCResponseSpeed,
+                    enableHighPassFilter = configuration.EnableHighPassFilter,
+                    enableNoiseGate = configuration.EnableNoiseGate,
+                    enableAutoGainControl = configuration.EnableAutoGainControl,
+                    highPassCutoffFreq = configuration.HighPassCutoffFreq,
+                    noiseGateThreshold = configuration.NoiseGateThreshold,
+                    noiseGateHoldTime = configuration.NoiseGateHoldTime,
+                    noiseGateAttackTime = configuration.NoiseGateAttackTime,
+                    noiseGateReleaseTime = configuration.NoiseGateReleaseTime,
+                    agcTargetLevel = configuration.AGCTargetLevel,
+                    agcResponseSpeed = configuration.AGCResponseSpeed,
                     sampleRate = sampleRate,
                     sharedState = nativeSharedState,
                     adaptiveThreshold = AdaptiveThreshold,
@@ -262,13 +261,13 @@ namespace DCL.VoiceChat
                 float sample = audioData[i];
 
                 // Apply high-pass filter to remove low-frequency noise
-                if (settings.EnableHighPassFilter) { sample = ApplyHighPassFilter(sample, sampleRate); }
+                if (configuration.EnableHighPassFilter) { sample = ApplyHighPassFilter(sample, sampleRate); }
 
                 // Apply noise gate with hold time
-                if (settings.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime); }
+                if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime); }
 
                 // Apply automatic gain control
-                if (settings.EnableAutoGainControl) { sample = ApplyAGC(sample); }
+                if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
             }
@@ -277,7 +276,7 @@ namespace DCL.VoiceChat
         private float ApplyHighPassFilter(float input, int sampleRate)
         {
             // Simple first-order high-pass filter optimized for 48kHz
-            float rc = 1f / (2f * Mathf.PI * settings.HighPassCutoffFreq);
+            float rc = 1f / (2f * Mathf.PI * configuration.HighPassCutoffFreq);
             float dt = 1f / sampleRate; // Will typically be 1/48000
             float alpha = rc / (rc + dt);
 
@@ -294,10 +293,10 @@ namespace DCL.VoiceChat
             float sampleAbs = Mathf.Abs(sample);
 
             // Use the lower of the two thresholds to be more permissive for speech
-            float effectiveThreshold = Mathf.Min(settings.NoiseGateThreshold, AdaptiveThreshold * 0.3f);
+            float effectiveThreshold = Mathf.Min(configuration.NoiseGateThreshold, AdaptiveThreshold * 0.3f);
 
             // But ensure we don't go below the configured threshold
-            effectiveThreshold = Mathf.Max(effectiveThreshold, settings.NoiseGateThreshold * 0.5f);
+            effectiveThreshold = Mathf.Max(effectiveThreshold, configuration.NoiseGateThreshold * 0.5f);
 
             bool speechDetected = sampleAbs > effectiveThreshold;
 
@@ -309,7 +308,7 @@ namespace DCL.VoiceChat
             else
                 lastSpeechTime += deltaTime;
 
-            bool shouldGateBeOpen = speechDetected || (gateIsOpen && lastSpeechTime < settings.NoiseGateHoldTime);
+            bool shouldGateBeOpen = speechDetected || (gateIsOpen && lastSpeechTime < configuration.NoiseGateHoldTime);
 
             gateIsOpen = shouldGateBeOpen;
 
@@ -322,12 +321,12 @@ namespace DCL.VoiceChat
             if (targetGate > GateSmoothing)
             {
                 // Opening gate (attack)
-                gateSpeed = 1f / (settings.NoiseGateAttackTime * 100f); // Convert to per-sample rate
+                gateSpeed = 1f / (configuration.NoiseGateAttackTime * 100f); // Convert to per-sample rate
             }
             else
             {
                 // Closing gate (release)
-                gateSpeed = 1f / (settings.NoiseGateReleaseTime * 100f); // Convert to per-sample rate
+                gateSpeed = 1f / (configuration.NoiseGateReleaseTime * 100f); // Convert to per-sample rate
             }
 
             GateSmoothing = Mathf.Lerp(GateSmoothing, targetGate, gateSpeed);
@@ -345,11 +344,11 @@ namespace DCL.VoiceChat
 
             if (peakLevel > 0.001f) // Avoid division by zero
             {
-                float targetGain = settings.AGCTargetLevel / peakLevel;
+                float targetGain = configuration.AGCTargetLevel / peakLevel;
                 targetGain = Mathf.Clamp(targetGain, 0.1f, 5f);
 
                 // Smooth gain adjustment to prevent pumping artifacts
-                float gainSpeed = settings.AGCResponseSpeed * 0.005f;
+                float gainSpeed = configuration.AGCResponseSpeed * 0.005f;
                 CurrentGain = Mathf.Lerp(CurrentGain, targetGain, gainSpeed);
             }
 

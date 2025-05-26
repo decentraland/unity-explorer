@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.Settings.Settings;
 using UnityEngine;
 using LiveKit;
 using System;
@@ -18,7 +17,7 @@ namespace DCL.VoiceChat
         private const int LIVEKIT_CHANNELS = 2;
         private const int LIVEKIT_SAMPLE_RATE = 48000;
 
-        [SerializeField] private VoiceChatSettingsAsset voiceChatSettings;
+        private VoiceChatConfiguration voiceChatConfiguration;
         private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur
 
         private VoiceChatAudioProcessor audioProcessor;
@@ -31,7 +30,7 @@ namespace DCL.VoiceChat
         {
             audioSource = GetComponent<AudioSource>();
 
-            if (voiceChatSettings != null) { audioProcessor = new VoiceChatAudioProcessor(voiceChatSettings); }
+            if (voiceChatConfiguration != null) audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
         }
 
         private void Start()
@@ -81,7 +80,7 @@ namespace DCL.VoiceChat
                 return;
 
             // Always process the audio first (if enabled)
-            if (isProcessingEnabled && audioProcessor != null && voiceChatSettings != null && data.Length > 0)
+            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && data.Length > 0)
             {
                 // Ensure temp buffer is the right size
                 // On macOS, avoid allocations in audio thread due to Core Audio sensitivity
@@ -150,7 +149,7 @@ namespace DCL.VoiceChat
         // Event is called from the Unity audio thread - LiveKit compatibility
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
-        public bool IsValid => audioSource != null && audioProcessor != null && voiceChatSettings != null;
+        public bool IsValid => audioSource != null && audioProcessor != null && voiceChatConfiguration != null;
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
@@ -160,11 +159,11 @@ namespace DCL.VoiceChat
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio sample rate is {cachedSampleRate}Hz, but LiveKit expects {LIVEKIT_SAMPLE_RATE}Hz. Audio processing may not be optimal.");
         }
 
-        public void Initialize(VoiceChatSettingsAsset settings)
+        public void Initialize(VoiceChatConfiguration configuration)
         {
-            voiceChatSettings = settings;
+            voiceChatConfiguration = configuration;
             audioProcessor?.Dispose();
-            audioProcessor = new VoiceChatAudioProcessor(settings);
+            audioProcessor = new VoiceChatAudioProcessor(configuration);
         }
 
         public void ResetProcessor()
