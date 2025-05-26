@@ -17,27 +17,29 @@ namespace DCL.Diagnostics
             ICategorySeverityMatrix matrix,
             bool debounceEnabled) : base(matrix, debounceEnabled)
         {
+            
             zLogger = LoggerFactory.Create(logging =>
             {
                 logging.SetMinimumLevel(LogLevel.Debug);
+                
+#if !STANDALONE
                 logging.AddZLoggerUnityDebug(options =>
                 {
                     options.PrettyStacktrace = false;
-                    // options.UsePlainTextFormatter(formatter =>
-                    // {
-                    //     formatter.SetExceptionFormatter((writer, ex) => Utf8StringInterpolation.Utf8String.Format(writer, $"yo {ex.Message}"));
-                    // });
                 });
+#else
+                logging.AddZLoggerFile("player2.log", options =>
+                {
+                    options.UseJsonFormatter();
+                });
+
+#endif
             }).CreateLogger("ZLoggerConsoleReportHandler");
         }
 
         [HideInCallstack]
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            // var prefix = GetReportDataPrefix(in reportData);
-            // var msg    = message as string ?? message?.ToString() ?? "";
-
-            // NOTE: can be improved by using extension methods
             zLogger.ZLog(MapLogTypeToZLogLevel(logType), 
                 $"{GetReportDataPrefix(in category)}{message}",
                 context);
@@ -46,11 +48,6 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
-            // var prefix = GetReportDataPrefix(in reportData);
-            // var fmt    = message?.ToString() ?? "";
-            // var text   = string.Format(fmt, args);
-
-            // NOTE: can be improved by using extension methods
             zLogger.ZLog(MapLogTypeToZLogLevel(logType),
                 $"{GetReportDataPrefix(in category)}{message}", context);
         }
@@ -59,8 +56,13 @@ namespace DCL.Diagnostics
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
             ecsSystemException.MessagePrefix = GetReportDataPrefix(in ecsSystemException.ReportData);
-            //zLogger.ZLogError(ecsSystemException, $"", null);
+            
+#if !STANDALONE
             Debug.LogException(ecsSystemException, null);
+#else
+            // In standalone builds, we log the exception to the file logger
+            zLogger.LogError(exception, $"{GetReportDataPrefix(in reportData)}", context);
+#endif
             ecsSystemException.MessagePrefix = null;
         }
 
@@ -73,9 +75,12 @@ namespace DCL.Diagnostics
                 return;
             }
             
-            //zLogger.ZLogError(exception, $"",context);
-            // zLogger.LogError(exception, null, context);
+#if !STANDALONE
             Debug.LogException(exception, context);
+#else
+            // In standalone builds, we log the exception to the file logger
+            zLogger.LogError(exception, $"{GetReportDataPrefix(in reportData)}", context);
+#endif
         }
 
         [HideInCallstack]
