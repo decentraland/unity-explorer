@@ -48,11 +48,12 @@ This system provides comprehensive noise reduction and audio processing capabili
   - `NoiseReductionStrength`: Reduction strength (0-1)
 - **Recommended**: `NoiseReductionStrength = 0.8` for effective fan noise reduction (now artifact-resistant)
 - **Key Improvements**:
+  - **Dual-stage processing**: Pre-AGC aggressive reduction + Post-AGC gentle cleanup
   - Learns separate profiles for noise and speech
   - Frequency-domain analysis for better noise characterization
   - Adaptive thresholds that adjust to environment
-  - Multi-stage reduction prevents artifacts
-  - Speech-aware AGC prevents noise amplification
+  - AGC-aware noise reduction that accounts for amplification levels
+  - Speech-aware processing prevents voice distortion
 
 ## Implementation
 
@@ -135,9 +136,10 @@ public float NoiseReductionStrength = 0.3f;
 
 ### Processing Order
 1. High-pass filter (removes low frequencies)
-2. Noise gate (mutes quiet audio before amplification)
-3. Automatic gain control (normalizes volume)
-4. Enhanced noise reduction (removes remaining noise without amplifying artifacts)
+2. Pre-AGC noise reduction (aggressive reduction of obvious noise)
+3. Noise gate (mutes quiet audio)
+4. Automatic gain control (normalizes volume)
+5. Post-AGC noise reduction (gentle artifact-resistant cleanup)
 
 ### Adaptive Learning System
 - **Noise Learning**: Continuously learns noise patterns during silence periods (>0.5s quiet)

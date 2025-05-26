@@ -17,8 +17,8 @@ MonoBehaviour:
   MicrophoneLoudnessMinimumThreshold: 0.15
   HoldThresholdInSeconds: 0.5
   EnableNoiseGate: 1
-  NoiseGateThreshold: 0.01
-  NoiseGateHoldTime: 0.4
+  NoiseGateThreshold: 0.014
+  NoiseGateHoldTime: 2
   NoiseGateAttackTime: 0.03
   NoiseGateReleaseTime: 0.15
   EnableHighPassFilter: 1
@@ -27,5 +27,5 @@ MonoBehaviour:
   AGCTargetLevel: 0.6
   AGCResponseSpeed: 0.8
   EnableNoiseReduction: 1
-  NoiseReductionStrength: 0.8
+  NoiseReductionStrength: 1
   ConnectionString: livekit:wss://dcl.livekit.cloud?access_token=eyJhbGciOiJIUzI1NiJ9.eyJtZXRhZGF0YSI6IntcInByaXZhdGVfbWVzc2FnZXNfcHJpdmFjeVwiOlwiYWxsXCJ9IiwidmlkZW8iOnsicm9vbUpvaW4iOnRydWUsInJvb20iOiJteS1yb29tIiwiY2FuU3Vic2NyaWJlIjp0cnVlLCJjYW5QdWJsaXNoIjp0cnVlfSwiaXNzIjoiQVBJSjRZdHdwbVQ3ckdZIiwiZXhwIjoxNzQ4Mjc1NjU5LCJuYmYiOjAsInN1YiI6IjB4MSJ9.AtnqlwmE3MU0KvDqyaCvk-jtdz0HiiIrvWAcSfxJ-R4

@@ -31,7 +31,6 @@ namespace DCL.VoiceChat
         private readonly float[] noiseProfile;
         private readonly float[] speechProfile;
         private readonly float[] previousSamples;
-        private readonly float[] smoothingBuffer;
         private int noiseProfileSamples;
         private int speechProfileSamples;
         private float noiseFloor;
@@ -60,7 +59,6 @@ namespace DCL.VoiceChat
             noiseProfile = new float[NOISE_PROFILE_SIZE];
             speechProfile = new float[NOISE_PROFILE_SIZE];
             previousSamples = new float[NOISE_PROFILE_SIZE];
-            smoothingBuffer = new float[NOISE_PROFILE_SIZE];
             frequencyBins = new float[FREQUENCY_BINS];
             noiseFrequencyProfile = new float[FREQUENCY_BINS];
             speechFrequencyProfile = new float[FREQUENCY_BINS];
@@ -93,7 +91,6 @@ namespace DCL.VoiceChat
                 noiseProfile[i] = 0f;
                 speechProfile[i] = 0f;
                 previousSamples[i] = 0f;
-                smoothingBuffer[i] = 0f;
             }
             
             for (int i = 0; i < FREQUENCY_BINS; i++)
@@ -133,7 +130,13 @@ namespace DCL.VoiceChat
                     sample = ApplyHighPassFilter(sample, sampleRate);
                 }
                 
-                // Apply noise gate with hold time (early in chain to cut noise before amplification)
+                // Apply pre-AGC noise reduction (lighter, focused on obvious noise)
+                if (settings.EnableNoiseReduction && noiseProfileSamples >= NOISE_LEARNING_FRAMES)
+                {
+                    sample = ApplyPreAGCNoiseReduction(sample, i);
+                }
+                
+                // Apply noise gate with hold time
                 if (settings.EnableNoiseGate)
                 {
                     sample = ApplyNoiseGateWithHold(sample, deltaTime);
@@ -145,10 +148,10 @@ namespace DCL.VoiceChat
                     sample = ApplySpeechAwareAGC(sample);
                 }
                 
-                // Apply enhanced noise reduction AFTER AGC to avoid amplifying artifacts
+                // Apply post-AGC noise reduction (gentler, artifact-resistant)
                 if (settings.EnableNoiseReduction && noiseProfileSamples >= NOISE_LEARNING_FRAMES)
                 {
-                    sample = ApplyEnhancedNoiseReduction(sample, i);
+                    sample = ApplyPostAGCNoiseReduction(sample, i);
                 }
                 
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
@@ -265,7 +268,50 @@ namespace DCL.VoiceChat
             return output;
         }
         
-        private float ApplyEnhancedNoiseReduction(float sample, int sampleIndex)
+        private float ApplyPreAGCNoiseReduction(float sample, int sampleIndex)
+        {
+            if (noiseProfileSamples == 0) return sample;
+            
+            // Calculate noise floor from profile
+            float avgNoise = 0f;
+            int profileSamples = Mathf.Min(noiseProfileSamples, NOISE_PROFILE_SIZE);
+            
+            for (int i = 0; i < profileSamples; i++)
+            {
+                avgNoise += noiseProfile[i];
+            }
+            avgNoise /= profileSamples;
+            
+            float sampleAbs = Mathf.Abs(sample);
+            
+            // Pre-AGC: Aggressive noise floor reduction for obvious noise
+            float noiseThreshold = avgNoise * (1f + settings.NoiseReductionStrength * 0.5f);
+            
+            if (sampleAbs < noiseThreshold)
+            {
+                // More aggressive reduction since we're before AGC
+                float reductionFactor = 1f - settings.NoiseReductionStrength * 0.7f;
+                sample *= reductionFactor;
+            }
+            
+            // Update frequency analysis
+            if (frequencyAnalysisCounter % 8 == 0)
+            {
+                UpdateFrequencyBins(sample, sampleIndex);
+            }
+            
+            frequencyAnalysisCounter++;
+            return sample;
+        }
+        
+        private void UpdateFrequencyBins(float sample, int sampleIndex)
+        {
+            // Simple frequency bin update for real-time processing
+            int binIndex = (sampleIndex / 8) % FREQUENCY_BINS;
+            frequencyBins[binIndex] = Mathf.Lerp(frequencyBins[binIndex], Mathf.Abs(sample), 0.1f);
+        }
+        
+        private float ApplyPostAGCNoiseReduction(float sample, int sampleIndex)
         {
             if (noiseProfileSamples == 0) return sample;
             
@@ -280,7 +326,7 @@ namespace DCL.VoiceChat
             avgNoise /= profileSamples;
             
             // Calculate speech floor if available
-            float avgSpeech = avgNoise * 3f; // More conservative default fallback
+            float avgSpeech = avgNoise * 2f;
             if (speechProfileSamples > 0)
             {
                 avgSpeech = 0f;
@@ -295,68 +341,47 @@ namespace DCL.VoiceChat
             float sampleAbs = Mathf.Abs(sample);
             float originalSample = sample;
             
-            // Gentler, artifact-resistant noise reduction
+            // Post-AGC: Gentle artifact-resistant reduction
+            // Since AGC has amplified everything, we need to be more careful
             
-            // Stage 1: Conservative noise floor reduction (much gentler)
-            float noiseThreshold = avgNoise * (1f + settings.NoiseReductionStrength * 0.2f); // Reduced multiplier
+            // Estimate what the noise level would be after AGC
+            float estimatedNoiseAfterAGC = avgNoise * currentGain;
+            float noiseThreshold = estimatedNoiseAfterAGC * (1f + settings.NoiseReductionStrength * 0.3f);
+            
             if (sampleAbs < noiseThreshold)
             {
-                // Much gentler reduction to avoid artifacts
-                float reductionFactor = 1f - settings.NoiseReductionStrength * 0.3f; // Reduced from 0.8f
+                // Gentle reduction to avoid artifacts on amplified signal
+                float reductionFactor = 1f - settings.NoiseReductionStrength * 0.4f;
                 sample *= reductionFactor;
-                sampleAbs *= reductionFactor;
             }
             
-            // Stage 2: Speech preservation check
-            if (avgSpeech > avgNoise * 1.5f) // We have learned speech patterns
+            // Speech preservation - if we have learned speech patterns
+            if (speechProfileSamples > 0 && avgSpeech > avgNoise * 1.2f)
             {
-                float speechRatio = sampleAbs / avgSpeech;
+                float estimatedSpeechAfterAGC = avgSpeech * currentGain;
+                float speechRatio = sampleAbs / estimatedSpeechAfterAGC;
                 
                 // If this looks like speech, reduce noise reduction strength
-                if (speechRatio > 0.3f) // This might be speech
+                if (speechRatio > 0.4f)
                 {
-                    float speechProtection = Mathf.Clamp01(speechRatio);
-                    sample = Mathf.Lerp(sample, originalSample, speechProtection * 0.5f);
+                    float speechProtection = Mathf.Clamp01(speechRatio - 0.4f);
+                    sample = Mathf.Lerp(sample, originalSample, speechProtection * 0.6f);
                 }
             }
             
-            // Stage 3: Frequency-aware reduction (simplified)
-            if (frequencyAnalysisCounter % 16 == 0) // Update less frequently for stability
+            // Simple artifact prevention without delay
+            // Limit extreme changes to prevent artifacts
+            if (sampleAbs < noiseThreshold * 1.5f)
             {
-                UpdateFrequencyBins(sample, sampleIndex);
+                float maxChange = originalSample * 0.3f;
+                float change = sample - originalSample;
+                if (Mathf.Abs(change) > maxChange)
+                {
+                    sample = originalSample + Mathf.Sign(change) * maxChange;
+                }
             }
             
-            // Stage 4: Gentle smoothing only for very quiet samples
-            int bufferIndex = sampleIndex % NOISE_PROFILE_SIZE;
-            smoothingBuffer[bufferIndex] = sample;
-            
-            if (sampleIndex > 4 && sampleAbs < avgNoise * 1.5f) // Only smooth very quiet samples
-            {
-                int prevIndex1 = (sampleIndex - 1) % NOISE_PROFILE_SIZE;
-                int prevIndex2 = (sampleIndex - 2) % NOISE_PROFILE_SIZE;
-                
-                // Very gentle 3-point smoothing
-                float smoothed = (sample * 0.6f + smoothingBuffer[prevIndex1] * 0.3f + smoothingBuffer[prevIndex2] * 0.1f);
-                sample = smoothed;
-            }
-            
-            // Stage 5: Artifact prevention - limit how much we can change the signal
-            float maxChange = originalSample * 0.5f; // Don't change signal by more than 50%
-            float change = sample - originalSample;
-            if (Mathf.Abs(change) > maxChange)
-            {
-                sample = originalSample + Mathf.Sign(change) * maxChange;
-            }
-            
-            frequencyAnalysisCounter++;
             return sample;
-        }
-        
-        private void UpdateFrequencyBins(float sample, int sampleIndex)
-        {
-            // Simple frequency bin update for real-time processing
-            int binIndex = (sampleIndex / 8) % FREQUENCY_BINS;
-            frequencyBins[binIndex] = Mathf.Lerp(frequencyBins[binIndex], Mathf.Abs(sample), 0.1f);
         }
         
         private float ApplyNoiseGateWithHold(float sample, float deltaTime)
