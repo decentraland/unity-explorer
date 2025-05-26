@@ -161,12 +161,17 @@ namespace DCL.Backpack
             }
 
             Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
-                forceRender, emoteStorage, wearableStorage);
+                forceRender, emoteStorage, wearableStorage,
+                // Don't increment the version as it will be incremented later on selfProfile.UpdateProfileAsync
+                !publishProfileChange);
 
             // Skip publishing the same profile
             if (newProfile.Avatar.IsSameAvatar(oldProfile.Avatar))
                 return;
 
+            // Update profile immediately to prevent UI inconsistencies
+            // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
+            // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
             profileCache.Set(newProfile.UserId, newProfile);
             UpdateAvatarInWorld(newProfile);
 

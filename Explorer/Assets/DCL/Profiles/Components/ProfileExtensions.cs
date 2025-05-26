@@ -22,7 +22,8 @@ namespace DCL.Profiles
             IEquippedWearables equippedWearables,
             IReadOnlyList<string> forceRender,
             IEmoteStorage emoteStorage,
-            IWearableStorage wearableStorage)
+            IWearableStorage wearableStorage,
+            bool incrementVersion = true)
         {
             using PooledObject<HashSet<URN>> _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
 
@@ -34,14 +35,17 @@ namespace DCL.Profiles
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
-            Profile newProfile = PROFILE_BUILDER.From(profile)
-                                               .WithBodyShape(bodyShape)
-                                               .WithWearables(uniqueWearables)
-                                               .WithColors(equippedWearables.GetColors())
-                                               .WithEmotes(uniqueEmotes)
-                                               .WithForceRender(forceRender)
-                                               .WithVersion(profile.Version + 1)
-                                               .Build();
+            ProfileBuilder builder = PROFILE_BUILDER.From(profile)
+                                                           .WithBodyShape(bodyShape)
+                                                           .WithWearables(uniqueWearables)
+                                                           .WithColors(equippedWearables.GetColors())
+                                                           .WithEmotes(uniqueEmotes)
+                                                           .WithForceRender(forceRender);
+
+            if (incrementVersion)
+                builder = builder.WithVersion(profile.Version + 1);
+
+            Profile newProfile = builder.Build();
 
             return newProfile;
 
