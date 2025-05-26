@@ -114,21 +114,6 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        ///     Enable or disable the Burst-compiled job system for audio processing
-        /// </summary>
-        public void SetUseJobSystem(bool enabled)
-        {
-            // Complete any pending jobs before changing mode
-            if (!lastJobHandle.Equals(default(JobHandle)))
-            {
-                lastJobHandle.Complete();
-                lastJobHandle = default(JobHandle);
-            }
-
-            useJobSystem = enabled;
-        }
-
-        /// <summary>
         ///     Process audio samples with noise reduction and other effects
         /// </summary>
         public void ProcessAudio(float[] audioData, int sampleRate)
@@ -381,7 +366,6 @@ namespace DCL.VoiceChat
         // Input/Output
         public NativeArray<float> audioData;
 
-        // Settings (read-only)
         [ReadOnly] public bool enableHighPassFilter;
         [ReadOnly] public bool enableNoiseGate;
         [ReadOnly] public bool enableAutoGainControl;
@@ -455,7 +439,7 @@ namespace DCL.VoiceChat
         private float ApplyNoiseGateBurst(float sample, ref float gateSmoothing, ref float lastSpeechTime, ref bool gateIsOpen, float deltaTime)
         {
             float sampleAbs = math.abs(sample);
-            
+
             float effectiveThreshold = math.max(noiseGateThreshold * 0.5f,
                                               math.min(noiseGateThreshold, adaptiveThreshold * 0.3f));
 

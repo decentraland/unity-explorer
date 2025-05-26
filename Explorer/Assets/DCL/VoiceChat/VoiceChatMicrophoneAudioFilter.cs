@@ -147,14 +147,6 @@ namespace DCL.VoiceChat
             AudioRead?.Invoke(data, channels, cachedSampleRate);
         }
 
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            // Reinitialize processor if settings change in editor
-            if (Application.isPlaying && voiceChatSettings != null) { audioProcessor = new VoiceChatAudioProcessor(voiceChatSettings); }
-        }
-#endif
-
         // Event is called from the Unity audio thread - LiveKit compatibility
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
