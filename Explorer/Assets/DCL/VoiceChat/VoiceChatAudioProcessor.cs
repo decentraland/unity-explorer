@@ -456,42 +456,35 @@ namespace DCL.VoiceChat
         {
             float sampleAbs = math.abs(sample);
             
-            // Use the same adaptive threshold logic as fallback
             float effectiveThreshold = math.max(noiseGateThreshold * 0.5f,
                                               math.min(noiseGateThreshold, adaptiveThreshold * 0.3f));
 
             bool speechDetected = sampleAbs > effectiveThreshold;
 
-            // Update speech detection state with proper timing
             if (speechDetected)
             {
-                lastSpeechTime = 0f; // Reset timer when speech is detected
+                lastSpeechTime = 0f;
                 gateIsOpen = true;
             }
             else
             {
-                lastSpeechTime += deltaTime; // Increment timer when no speech
+                lastSpeechTime += deltaTime;
             }
 
-            // Determine if gate should be open based on speech detection and hold time
             bool shouldGateBeOpen = speechDetected || (gateIsOpen && lastSpeechTime < noiseGateHoldTime);
 
-            // Update gate state
             gateIsOpen = shouldGateBeOpen;
 
-            // Calculate target gate value
             float targetGate = gateIsOpen ? 1f : 0f;
 
             // Apply proper attack/release timing from settings
             float gateSpeed;
             if (targetGate > gateSmoothing)
             {
-                // Opening gate (attack) - convert from settings to per-sample rate
                 gateSpeed = 1f / (noiseGateAttackTime * 100f);
             }
             else
             {
-                // Closing gate (release) - convert from settings to per-sample rate  
                 gateSpeed = 1f / (noiseGateReleaseTime * 100f);
             }
 
