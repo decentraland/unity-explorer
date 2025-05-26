@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using System;
 using UnityEngine;
@@ -7,22 +8,23 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
+        private const bool MICROPHONE_LOOP = true;
+        private const int MICROPHONE_LENGTH_SECONDS = 1;
+        private const int MICROPHONE_SAMPLE_RATE = 48000;
+
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly AudioSource audioSource;
         private readonly VoiceChatMicrophoneAudioFilter audioFilter;
-        private readonly float[] waveData;
 
-        public AudioClip MicrophoneAudioClip;
+        private AudioClip microphoneAudioClip;
 
-        private bool isTalking;
         private bool isMicrophoneInitialized;
-        private string microphoneName;
 
-        public bool IsTalking => isTalking;
-        public string MicrophoneName => microphoneName;
-        
         private float buttonPressStartTime;
+
+        public bool IsTalking { get; private set; }
+        public string MicrophoneName { get; private set; }
 
         public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter = null)
         {
@@ -30,172 +32,12 @@ namespace DCL.VoiceChat
             this.voiceChatSettings = voiceChatSettings;
             this.audioSource = audioSource;
             this.audioFilter = audioFilter;
-            waveData = new float[voiceChatSettings.SampleWindow];
 
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
 
-            // Pre-initialize microphone for faster response
             InitializeMicrophone();
-        }
-
-        private void OnPressed(InputAction.CallbackContext obj)
-        {
-            buttonPressStartTime = Time.time;
-            // Start the microphone immediately when button is pressed
-            // If it's a quick press, we'll handle it in OnReleased
-            if (!isTalking)
-                EnableMicrophone();
-        }
-
-        private void OnReleased(InputAction.CallbackContext obj)
-        {
-            float pressDuration = Time.time - buttonPressStartTime;
-
-            // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
-            if (pressDuration >= voiceChatSettings.HoldThresholdInSeconds)
-            {
-                isTalking = false;
-                DisableMicrophone();
-            }
-            else
-            {
-                if (isTalking)
-                    DisableMicrophone();
-
-                isTalking = !isTalking;
-            }
-        }
-
-        private void InitializeMicrophone()
-        {
-            if (isMicrophoneInitialized)
-                return;
-
-            #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            // On macOS, check if we have microphone permission
-            if (Microphone.devices.Length == 0)
-            {
-                Debug.LogWarning("[VoiceChat] No microphone devices found on macOS. This may indicate missing microphone permissions.");
-                return;
-            }
-            
-            // Validate microphone index for macOS
-            if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
-            {
-                Debug.LogWarning($"[VoiceChat] Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range on macOS. Using default microphone.");
-                // Use first available microphone as fallback
-                microphoneName = Microphone.devices[0];
-            }
-            else
-            {
-                microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            }
-            
-            // On macOS, be more conservative with microphone settings
-            try
-            {
-                MicrophoneAudioClip = Microphone.Start(microphoneName, true, 1, 48000);
-                if (MicrophoneAudioClip == null)
-                {
-                    Debug.LogError("[VoiceChat] Failed to start microphone on macOS. This may indicate permission issues or device conflicts.");
-                    return;
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[VoiceChat] Microphone initialization failed on macOS: {ex.Message}");
-                return;
-            }
-            #else
-            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            MicrophoneAudioClip = Microphone.Start(microphoneName, true, 1, 48000);
-            #endif
-            
-            audioSource.clip = MicrophoneAudioClip;
-            audioSource.loop = true;
-            audioSource.volume = 0f; // Start muted
-            audioSource.Play(); // Start playing immediately but muted
-            isMicrophoneInitialized = true;
-            Debug.Log("Microphone initialized");
-        }
-
-        private void EnableMicrophone()
-        {
-            if (!isMicrophoneInitialized)
-                InitializeMicrophone();
-
-            audioSource.volume = 1f; // Unmute instead of starting playback
-
-            Debug.Log("Enable microphone");
-        }
-
-        private void DisableMicrophone()
-        {
-            audioSource.volume = 0f; // Mute instead of stopping playback
-            Debug.Log("Disable microphone");
-        }
-
-        private void OnMicrophoneChanged(int newMicrophoneIndex)
-        {
-            bool wasTalking = isTalking;
-
-            // Stop current microphone
-            if (isMicrophoneInitialized)
-            {
-                audioSource.Stop();
-                audioSource.clip = null;
-                Microphone.End(microphoneName);
-                isMicrophoneInitialized = false;
-            }
-
-            // Reset the audio processor for the new microphone
-            // This clears learned noise/speech profiles since different mics have different characteristics
-            audioFilter?.ResetProcessor();
-
-            // Initialize with new microphone
-            InitializeMicrophone();
-
-            // Restore talking state
-            if (wasTalking)
-            {
-                audioSource.volume = 1f;
-            }
-
-            Debug.Log($"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
-        }
-
-        /// <summary>
-        /// Get current microphone loudness for monitoring purposes
-        /// Note: Audio processing and noise gating is handled by VoiceChatMicrophoneAudioFilter
-        /// </summary>
-        public float GetCurrentLoudness()
-        {
-            if (!isMicrophoneInitialized || string.IsNullOrEmpty(microphoneName))
-                return 0f;
-
-            int micPosition = Microphone.GetPosition(microphoneName);
-            
-            // Ensure we have enough data recorded before trying to analyze
-            if (micPosition < voiceChatSettings.SampleWindow)
-                return 0;
-
-            int startPosition = micPosition - voiceChatSettings.SampleWindow;
-            
-            // Handle wrap-around for circular buffer
-            if (startPosition < 0)
-                startPosition = 0;
-
-            MicrophoneAudioClip.GetData(waveData, startPosition);
-
-            float totalLoudness = 0;
-
-            // Calculate raw loudness (without processing for monitoring purposes)
-            for (int i = 0; i < waveData.Length; i++)
-                totalLoudness += Mathf.Abs(waveData[i]);
-
-            return totalLoudness / voiceChatSettings.SampleWindow;
         }
 
         public void Dispose()
@@ -208,8 +50,126 @@ namespace DCL.VoiceChat
             {
                 audioSource.Stop();
                 audioSource.clip = null;
-                Microphone.End(microphoneName);
+                Microphone.End(MicrophoneName);
             }
+        }
+
+        private void OnPressed(InputAction.CallbackContext obj)
+        {
+            buttonPressStartTime = Time.time;
+
+            // Start the microphone immediately when button is pressed
+            // If it's a quick press, we'll handle it in OnReleased
+            if (!IsTalking)
+                EnableMicrophone();
+        }
+
+        private void OnReleased(InputAction.CallbackContext obj)
+        {
+            float pressDuration = Time.time - buttonPressStartTime;
+
+            // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
+            if (pressDuration >= voiceChatSettings.HoldThresholdInSeconds)
+            {
+                IsTalking = false;
+                DisableMicrophone();
+            }
+            else
+            {
+                if (IsTalking)
+                    DisableMicrophone();
+
+                IsTalking = !IsTalking;
+            }
+        }
+
+        private void InitializeMicrophone()
+        {
+            if (isMicrophoneInitialized)
+                return;
+
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // On macOS, check if we have microphone permission
+            if (Microphone.devices.Length == 0)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "No microphone devices found on macOS. This may indicate missing microphone permissions.");
+                return;
+            }
+
+            if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range on macOS. Using default microphone.");
+                microphoneName = Microphone.devices[0];
+            }
+            else
+            {
+                microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+            }
+
+            // On macOS, be more conservative with microphone settings
+            try
+            {
+                MicrophoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, MICROPHONE_SAMPLE_RATE);
+                if (MicrophoneAudioClip == null)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, "Failed to start microphone on macOS. This may indicate permission issues or device conflicts.");
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Microphone initialization failed on macOS: {ex.Message}");
+                return;
+            }
+#else
+            MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+            microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, MICROPHONE_SAMPLE_RATE);
+#endif
+
+            audioSource.clip = microphoneAudioClip;
+            audioSource.loop = true;
+            audioSource.volume = 0f;
+            audioSource.Play();
+            isMicrophoneInitialized = true;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
+        }
+
+        private void EnableMicrophone()
+        {
+            if (!isMicrophoneInitialized)
+                InitializeMicrophone();
+
+            audioSource.volume = 1f;
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone");
+        }
+
+        private void DisableMicrophone()
+        {
+            audioSource.volume = 0f;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
+        }
+
+        private void OnMicrophoneChanged(int newMicrophoneIndex)
+        {
+            bool wasTalking = IsTalking;
+
+            if (isMicrophoneInitialized)
+            {
+                audioSource.Stop();
+                audioSource.clip = null;
+                Microphone.End(MicrophoneName);
+                isMicrophoneInitialized = false;
+            }
+
+            audioFilter?.ResetProcessor();
+
+            InitializeMicrophone();
+
+            if (wasTalking)
+                audioSource.volume = 1f;
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
         }
     }
 }
