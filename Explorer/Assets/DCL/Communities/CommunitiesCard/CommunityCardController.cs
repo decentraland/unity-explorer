@@ -129,13 +129,11 @@ namespace DCL.Communities.CommunitiesCard
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
 
-        private void OnSectionChanged(CommunityCardView.Sections section, bool wasManual)
+        private void OnSectionChanged(CommunityCardView.Sections section)
         {
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    if (wasManual) return;
-
                     photosSectionCancellationTokenSource = photosSectionCancellationTokenSource.SafeRestart();
                     cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityData.places, photosSectionCancellationTokenSource.Token).Forget();
                     break;

@@ -30,7 +30,7 @@ namespace DCL.Communities.CommunitiesCard
             public int ThumbnailWidth;
         }
 
-        public event Action<Sections, bool>? SectionChanged;
+        public event Action<Sections>? SectionChanged;
         public event Action? OpenWizard;
 
         [field: Header("References")]
@@ -92,7 +92,7 @@ namespace DCL.Communities.CommunitiesCard
                 MembersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
                 PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
 
-                ToggleSection(Sections.PHOTOS, false);
+                ToggleSection(Sections.PHOTOS);
             }
             else
             {
@@ -111,7 +111,7 @@ namespace DCL.Communities.CommunitiesCard
                 LoadingObject?.Hide();
         }
 
-        private void ToggleSection(Sections section, bool wasManual = true)
+        private void ToggleSection(Sections section)
         {
             PhotosSectionSelection.SetActive(section == Sections.PHOTOS);
             MembersSectionSelection.SetActive(section == Sections.MEMBERS);
@@ -120,7 +120,7 @@ namespace DCL.Communities.CommunitiesCard
             CameraReelGalleryConfigs.CameraReelGalleryView.transform.parent.gameObject.SetActive(section == Sections.PHOTOS);
             MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
 
-            SectionChanged?.Invoke(section, wasManual);
+            SectionChanged?.Invoke(section);
         }
 
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, ImageController imageController)

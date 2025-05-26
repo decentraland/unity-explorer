@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -127,16 +128,32 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotsAsync(string[] placeIds, int limit, int offset, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(communityDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
-                                       .Build();
-            //TODO: Add placeIds to the request body
+            // URLAddress url = urlBuilder.AppendDomain(communityDomain)
+            //                            .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
+            //                            .Build();
+            // //TODO: Add placeIds to the request body
+            //
+            // urlBuilder.Clear();
+            //
+            // CameraReelResponsesCompact responseData = await webRequestController
+            //                                                .SignedFetchPostAsync(url,  string.Empty, ct)
+            //                                                .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
 
-            urlBuilder.Clear();
+            CameraReelResponsesCompact responseData = new CameraReelResponsesCompact
+                {
+                    currentImages = 15,
+                    maxImages = 15,
+                    images = new List<CameraReelResponseCompact>()
+                };
 
-            CameraReelResponsesCompact responseData = await webRequestController
-                                                           .SignedFetchPostAsync(url,  string.Empty, ct)
-                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+            for (int i = 0; i < limit; i++)
+                responseData.images.Add(new CameraReelResponseCompact()
+                {
+                    id = Guid.NewGuid().ToString(),
+                    thumbnailUrl = "https://cdn.britannica.com/07/183407-050-C35648B5/Chicken.jpg",
+                    isPublic = true,
+                    dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()
+                });
 
             return responseData;
         }
