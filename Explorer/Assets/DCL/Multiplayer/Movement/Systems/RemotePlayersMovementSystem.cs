@@ -129,7 +129,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (offset.HasValue)
                 {
                     Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
-                    // remote.position += offset.Value;
+                    remote.position += offset.Value;
                 }
             }
 

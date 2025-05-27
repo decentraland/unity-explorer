@@ -64,11 +64,6 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
-            DateTimeOffset Epoch2024 = new DateTimeOffset(2024,1,1,0,0,0,TimeSpan.Zero);
-            var a = DateTimeOffset.UtcNow;
-            int b = (Epoch2024 - a).Milliseconds;
-            double c = (Epoch2024 - a).TotalMilliseconds;
-
             platformComponent.ColliderSceneEntityInfo = null;
             platformComponent.ColliderNetworkEntityId = null;
             platformComponent.ColliderNetworkId = null;
@@ -99,6 +94,8 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void CheckNE(in Entity e, ref PBNetworkEntity ne, ref SDKTweenComponent sdkTweenComponent)
         {
+            if(hasCollider) return;
+
             Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
 
             if (platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
@@ -113,9 +110,11 @@ namespace DCL.SDKComponents.Tween.Systems
 
             foreach (var sceneInfo in collidersGlobalCache.colliderSceneEntityInfos)
             {
-                if (sceneInfo.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id && sdkTweenComponent.CustomTweener != null)
+                if (sceneInfo.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
+                    // && sdkTweenComponent.CustomTweener != null)
                 {
-                    collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkTweenComponent.CustomTweener);
+                    // collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkTweenComponent.CustomTweener);
+                    collidersGlobalCache.NetworkEntityToSceneEntity[(ne.EntityId, ne.NetworkId)] = sdkTweenComponent.CustomTweener;
                 }
             }
 
