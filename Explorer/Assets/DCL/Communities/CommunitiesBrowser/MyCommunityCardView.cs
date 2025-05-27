@@ -12,6 +12,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] internal GameObject userRoleContainer { get; private set; }
         [field: SerializeField] internal TMP_Text userRole { get; private set; }
         [field: SerializeField] internal ImageView communityThumbnail { get; private set; }
+        [field: SerializeField] internal GameObject communityLiveMark { get; private set; }
         [field: SerializeField] internal Button mainButton { get; private set; }
 
         private ImageController imageController;
@@ -38,5 +39,8 @@ namespace DCL.Communities.CommunitiesBrowser
             userRoleContainer.SetActive(role != CommunityMemberRole.member);
             userRole.text = role.ToString();
         }
+
+        public void SetLiveMarkAsActive(bool isLiveMark) =>
+            communityLiveMark.SetActive(isLiveMark);
     }
 }

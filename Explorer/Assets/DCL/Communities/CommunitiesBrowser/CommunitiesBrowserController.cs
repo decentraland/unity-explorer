@@ -146,6 +146,7 @@ namespace DCL.Communities.CommunitiesBrowser
             MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
             cardView.SetTitle(currentMyCommunities[index].name);
             cardView.SetUserRole(currentMyCommunities[index].role);
+            cardView.SetLiveMarkAsActive(currentMyCommunities[index].isLive);
             cardView.ConfigureImageController(webRequestController);
             cardView.SetCommunityThumbnail(currentMyCommunities[index].thumbnails[0]);
             cardView.mainButton.onClick.RemoveAllListeners();
