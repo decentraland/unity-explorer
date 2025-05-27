@@ -69,12 +69,14 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Button PhotosButton { get; private set; }
         [field: SerializeField] public Button MembersButton { get; private set; }
         [field: SerializeField] public Button PlacesButton { get; private set; }
+        [field: SerializeField] public Button PlacesWithSignButton { get; private set; }
         [field: SerializeField] public Button MembersTextButton { get; private set; }
 
         [field: Header("Selections")]
         [field: SerializeField] public GameObject PhotosSectionSelection { get; private set; }
         [field: SerializeField] public GameObject MembersSectionSelection { get; private set; }
         [field: SerializeField] public GameObject PlacesSectionSelection { get; private set; }
+        [field: SerializeField] public GameObject PlacesWithSignSectionSelection { get; private set; }
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
@@ -104,6 +106,7 @@ namespace DCL.Communities.CommunitiesCard
             LeaveCancelButton.onClick.AddListener(() => ToggleLeavePopup(false));
             LeaveBackgroundButton.onClick.AddListener(() => ToggleLeavePopup(false));
 
+            LeaveCanvasGroup.gameObject.SetActive(true);
             ToggleLeavePopup(false);
         }
 
@@ -130,6 +133,7 @@ namespace DCL.Communities.CommunitiesCard
                 MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
                 MembersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
                 PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+                PlacesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
 
                 ToggleSection(Sections.PHOTOS);
             }
@@ -139,6 +143,7 @@ namespace DCL.Communities.CommunitiesCard
                 MembersButton.onClick.RemoveAllListeners();
                 MembersTextButton.onClick.RemoveAllListeners();
                 PlacesButton.onClick.RemoveAllListeners();
+                PlacesWithSignButton.onClick.RemoveAllListeners();
             }
         }
 
@@ -155,6 +160,7 @@ namespace DCL.Communities.CommunitiesCard
             PhotosSectionSelection.SetActive(section == Sections.PHOTOS);
             MembersSectionSelection.SetActive(section == Sections.MEMBERS);
             PlacesSectionSelection.SetActive(section == Sections.PLACES);
+            PlacesWithSignSectionSelection.SetActive(section == Sections.PLACES);
 
             CameraReelGalleryConfigs.CameraReelGalleryView.transform.parent.gameObject.SetActive(section == Sections.PHOTOS);
             MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
@@ -173,6 +179,8 @@ namespace DCL.Communities.CommunitiesCard
             OpenWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner);
             JoinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none);
 
+            PlacesWithSignButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            PlacesButton.gameObject.SetActive(!PlacesWithSignButton.gameObject.activeSelf);
         }
     }
 }

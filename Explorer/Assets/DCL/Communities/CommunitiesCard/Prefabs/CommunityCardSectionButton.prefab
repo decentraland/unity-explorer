@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 135834583385290558}
   - component: {fileID: 3387838614422526442}
   - component: {fileID: 3611624377299411893}
-  - component: {fileID: 2493808214620614259}
   m_Layer: 5
   m_Name: ButtonSelected
   m_TagString: Untagged
@@ -36,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 1.5}
-  m_SizeDelta: {x: -20, y: 3}
+  m_SizeDelta: {x: 0, y: 3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3387838614422526442
 CanvasRenderer:
@@ -76,18 +75,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2493808214620614259
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7319720619427533125}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7339194061191939688
 GameObject:
   m_ObjectHideFlags: 0
@@ -101,7 +88,6 @@ GameObject:
   - component: {fileID: 9202249917982809089}
   - component: {fileID: 5026200771788130882}
   - component: {fileID: 1924888604430692748}
-  - component: {fileID: 3405302478106216978}
   m_Layer: 5
   m_Name: CommunityCardSectionButton
   m_TagString: Untagged
@@ -228,18 +214,6 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 5026200771788130882}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
---- !u!114 &3405302478106216978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7339194061191939688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7868212292592047081
 GameObject:
   m_ObjectHideFlags: 0
@@ -251,7 +225,6 @@ GameObject:
   - component: {fileID: 5010026781386330830}
   - component: {fileID: 5489246259530368103}
   - component: {fileID: 3260988652126502289}
-  - component: {fileID: 2466206466779746502}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -379,18 +352,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &2466206466779746502
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7868212292592047081}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &9150287639767739503
 GameObject:
   m_ObjectHideFlags: 0
@@ -402,7 +363,6 @@ GameObject:
   - component: {fileID: 1518668128817630258}
   - component: {fileID: 7466775678042314064}
   - component: {fileID: 4308638869779593629}
-  - component: {fileID: 4304796482579334965}
   m_Layer: 5
   m_Name: Selected
   m_TagString: Untagged
@@ -427,7 +387,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 2}
-  m_SizeDelta: {x: -8, y: 4}
+  m_SizeDelta: {x: 0, y: 4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7466775678042314064
 CanvasRenderer:
@@ -467,15 +427,3 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4304796482579334965
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9150287639767739503}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
