@@ -27,7 +27,7 @@ namespace DCL.Communities
         {
             CommunityMemberRole roleToReturn = CommunityMemberRole.member;
 
-            if (appArgs.TryGetValue(AppArgsFlags.COMMUNITIES_CARD_SIMULATE_ROLE, out string role) && role != null)
+            if (appArgs.TryGetValue(AppArgsFlags.COMMUNITIES_CARD_SIMULATE_ROLE, out string? role) && role != null)
                 if (Enum.TryParse(role, out CommunityMemberRole converted))
                     roleToReturn = converted;
 
