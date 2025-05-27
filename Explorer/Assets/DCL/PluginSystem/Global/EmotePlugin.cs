@@ -23,6 +23,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
+using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private bool localSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
+        private readonly IAppArgs appArgs;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -83,7 +85,8 @@ namespace DCL.PluginSystem.Global
             string builderContentURL,
             bool localSceneDevelopment,
             ISharedSpaceManager sharedSpaceManager,
-            bool builderCollectionsPreview)
+            bool builderCollectionsPreview,
+            IAppArgs appArgs)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -105,6 +108,7 @@ namespace DCL.PluginSystem.Global
             this.localSceneDevelopment = localSceneDevelopment;
             this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
+            this.appArgs = appArgs;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -129,7 +133,7 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteStorage, builderContentURL);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 

@@ -26,7 +26,8 @@ namespace DCL.AvatarRendering.Emotes
                 if (!emote.IsNullOrEmpty())
                     pointers.Add(emote);
 
-            return new GetEmotesByPointersIntention(pointers, bodyShape);
+            // TODO: Remove timeout override
+            return new GetEmotesByPointersIntention(pointers, bodyShape, timeout: 10);
         }
     }
 }

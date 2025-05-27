@@ -21,6 +21,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -53,12 +54,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             IEmotesMessageBus messageBus,
             AudioSource audioSource,
             IDebugContainerBuilder debugContainerBuilder,
-            bool localSceneDevelopment) : base(world)
+            bool localSceneDevelopment,
+            IAppArgs appArgs) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
-            emotePlayer = new EmotePlayer(audioSource, localSceneDevelopment);
+            emotePlayer = new EmotePlayer(audioSource, localSceneDevelopment, appArgs);
         }
 
         protected override void Update(float t)
@@ -177,6 +179,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
+                    Debug.Log($"PRAVS - CharacterEmoteSystem.ConsumeEmoteIntent({emoteComponent.EmoteUrn}) - 1");
+
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
@@ -184,6 +188,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
+                    Debug.Log($"PRAVS - CharacterEmoteSystem.ConsumeEmoteIntent({emoteComponent.EmoteUrn}) - 2");
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
                     StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
@@ -191,6 +196,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // the emote is still loading? don't remove the intent yet, wait for it
                     if (streamableAsset == null)
                         return;
+
+                    Debug.Log($"PRAVS - CharacterEmoteSystem.ConsumeEmoteIntent({emoteComponent.EmoteUrn}) - 3");
 
                     StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
@@ -201,6 +208,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
+
+                    Debug.Log($"PRAVS - CharacterEmoteSystem.ConsumeEmoteIntent({emoteComponent.EmoteUrn}) - 4");
 
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;

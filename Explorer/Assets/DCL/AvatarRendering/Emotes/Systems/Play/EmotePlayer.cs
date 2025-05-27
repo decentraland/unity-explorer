@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Optimization.Pools;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,11 +20,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
-        private readonly bool localSceneDevelopment;
+        private readonly bool legacyAnimationsEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, bool localSceneDevelopment)
+        public EmotePlayer(AudioSource audioSourcePrefab, bool localSceneDevelopment, IAppArgs appArgs)
         {
-            this.localSceneDevelopment = localSceneDevelopment;
+            legacyAnimationsEnabled = localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS);
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
@@ -40,6 +41,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
+            Debug.Log($"PRAVS - EmotePlayer.Play({emoteComponent.EmoteUrn})", mainAsset);
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
             if (emoteInUse != null)
@@ -79,7 +81,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // For consistency with processed scene assets in the AB converter (and performance), we only
                 // play legacy animations in Local Scene Dev mode (and only if they follow the naming requirements
                 // but that is checked higher up in the execution flow)
-                if (!localSceneDevelopment)
+                if (!legacyAnimationsEnabled)
                     return false;
 
                 // Animator gets re-enabled later when its properties get manipulated in AvatarBase
@@ -109,8 +111,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
-        private bool IsValid(GameObject mainAsset) =>
-            mainAsset.GetComponent<Animator>() || (localSceneDevelopment && mainAsset.GetComponent<Animation>());
+        private bool IsValid(GameObject mainAsset) => mainAsset.GetComponent<Animator>()
+            || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
@@ -125,7 +127,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
             else
             {
-                Animation animation = mainGameObject.GetComponent<Animation>();
+                // Some emotes may have the Animation in its child instead of the root...
+                Animation animation = mainGameObject.GetComponentInChildren<Animation>(true);
                 LEGACY_ANIMATION_CLIPS[0] = animation.clip;
                 animationClips = LEGACY_ANIMATION_CLIPS;
             }

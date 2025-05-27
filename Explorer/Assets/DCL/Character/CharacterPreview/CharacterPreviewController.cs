@@ -135,6 +135,7 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
+            Debug.Log($"PRAVS - CharacterPreviewController.PlayEmote({emoteId})");
             var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW };
 
             if (globalWorld.Has<CharacterEmoteIntent>(characterPreviewEntity))

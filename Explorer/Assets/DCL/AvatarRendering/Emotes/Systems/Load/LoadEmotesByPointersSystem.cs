@@ -16,6 +16,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,7 @@ using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadi
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -124,17 +126,56 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
+                var urn = emote.GetUrn();
+                bool debug = urn.Equals("0b9d4454-8c03-4be5-acb3-df48baa94ad3")
+                             || urn.Equals("946e0c52-7406-432f-93fd-e7d9f0b329b8")
+                             || urn.Equals("9cee1007-1f7a-4ee2-ac9b-8c50cbbf6193");
+
+                if (debug)
+                {
+                    Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - Checking emote: {emote.GetUrn()}");
+                    Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - IsLoading: {emote.IsLoading}");
+                    Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - AssetResults[{intention.BodyShape}]: {emote.AssetResults[intention.BodyShape]}");
+                }
+
                 if (emote.ManifestResult is { Exception: not null })
                     emotesWithResponse++;
 
-                if (emote.IsLoading) continue;
-                if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
+                if (emote.IsLoading)
+                {
+                    if (debug)
+                        Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - Emote {emote.GetUrn()} is loading, continuing");
+                    continue;
+                }
+
+                if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent))
+                {
+                    if (debug)
+                        Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - Created asset bundle promise for {emote.GetUrn()}");
+                    continue;
+                }
+
+                // Check if this emote is currently loading via GLTF promise (for builder emotes)
+                if (IsEmoteLoadingViaGltfPromise(emote, intention.BodyShape))
+                {
+                    if (debug)
+                        Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - Emote {emote.GetUrn()} is loading via GLTF promise, continuing");
+                    continue;
+                }
 
                 if (emote.AssetResults[intention.BodyShape] != null)
-
+                {
+                    if (debug)
+                        Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - Emote {emote.GetUrn()} has asset result, counting as resolved");
                     // TODO: it may occur that the requested emote does not support the body shape
                     // If that is the case, the promise will never be resolved
                     emotesWithResponse++;
+                }
+                else
+                {
+                    if (debug)
+                        Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - Emote {emote.GetUrn()} has no asset result and no promise created");
+                }
 
                 if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
 
@@ -148,7 +189,37 @@ namespace DCL.AvatarRendering.Emotes.Load
                     }
             }
 
+            Debug.Log($"PRAVS - GetAssetBundlesUntilAllAreResolved() - emotesWithResponse: {emotesWithResponse}, total: {intention.Pointers.Count}");
             return emotesWithResponse == intention.Pointers.Count;
+        }
+
+        /// <summary>
+        /// Checks if an emote is currently loading via GLTF promise (for builder emotes)
+        /// </summary>
+        private bool IsEmoteLoadingViaGltfPromise(IEmote emote, BodyShape bodyShape)
+        {
+            bool isLoading = false;
+
+            // Query all entities with GltfPromise and IEmote components
+            World.Query(in new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>(),
+                (Entity entity, ref GltfPromise promise, ref IEmote promiseEmote) =>
+                {
+                    // Query() doesn't accept more than 3 parameters in its forEach delegate...
+                    var promiseBodyShape = World.Get<BodyShape>(entity);
+
+                    // Check if this promise is for the same emote and body shape
+                    if (promiseEmote.GetUrn().Equals(emote.GetUrn()) && promiseBodyShape.Equals(bodyShape))
+                    {
+                        // Check if the promise is still active (not consumed and not cancelled)
+                        if (!promise.IsConsumed && !promise.IsCancellationRequested(World))
+                        {
+                            Debug.Log($"PRAVS - IsEmoteLoadingViaGltfPromise() - Found active GLTF promise for emote: {emote.GetUrn()}");
+                            isLoading = true;
+                        }
+                    }
+                });
+
+            return isLoading;
         }
 
         private bool RequestMissingPointers(ICollection<URN> missingPointers, IPartitionComponent partitionComponent, BodyShape forBodyShape)

@@ -12,6 +12,8 @@ using DCL.Browser;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.Web3;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,6 +48,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IReadOnlyCollection<URN> embeddedEmoteIds;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
+        private readonly IAppArgs appArgs;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -69,7 +72,8 @@ namespace DCL.Backpack.EmotesSection
             IEmoteProvider emoteProvider,
             IReadOnlyCollection<URN> embeddedEmoteIds,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IAppArgs appArgs)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -85,6 +89,7 @@ namespace DCL.Backpack.EmotesSection
             this.embeddedEmoteIds = embeddedEmoteIds;
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
+            this.appArgs = appArgs;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
@@ -161,7 +166,7 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
-                if (onChainEmotesOnly)
+                if (onChainEmotesOnly || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS))
                     emotes = customOwnedEmotes;
                 else
                 {

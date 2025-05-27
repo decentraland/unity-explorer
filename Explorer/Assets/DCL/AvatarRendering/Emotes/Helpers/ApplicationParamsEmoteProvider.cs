@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Emotes
                         needsBuilderAPISigning: true);
                 }
 
-                if (requestOptions.pageNum.HasValue && requestOptions.pageSize.HasValue)
+                if (requestOptions is { pageNum: not null, pageSize: not null })
                 {
                     int pageIndex = requestOptions.pageNum.Value - 1;
                     results.AddRange(localBuffer.Skip(pageIndex * requestOptions.pageSize.Value).Take(requestOptions.pageSize.Value));
