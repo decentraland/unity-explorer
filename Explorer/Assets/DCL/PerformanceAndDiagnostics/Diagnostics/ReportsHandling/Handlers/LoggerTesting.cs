@@ -1,10 +1,13 @@
 using System;
 using System.Diagnostics;
+using System.Text;
+using Cysharp.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using UnityEngine.Profiling;
 
 namespace DCL.Diagnostics
 {
@@ -14,7 +17,17 @@ namespace DCL.Diagnostics
         private Object _testContextObject;
 
         [Header("Benchmark Settings")]
-        public int benchmarkIterations = 10000;
+        public int benchmarkIterations = 100000;
+        public int warmupIterations = 100;
+        
+        [Header("String Operation Benchmark Data")]
+        public string string1 = "Hello";
+        public string string2 = "World";
+        public string string3 = "from";
+        public string string4 = "DCL!";
+        public int intVal1 = 123;
+        public float floatVal2 = 456.789f;
+        public string formatString = "The quick {0} fox {1} over the lazy {2}. Values: {3}, {4:F2}";
         
         public void Initialize(ReportHubLogger logger)
         {
@@ -23,9 +36,9 @@ namespace DCL.Diagnostics
 
         void Update()
         {
-            Keyboard keyboard = Keyboard.current; // Get the current keyboard
+            var keyboard = Keyboard.current;
 
-            if (keyboard == null) // Important: Check if a keyboard is connected/available
+            if (keyboard == null)
                 return;
 
             // Key presses with the new Input System
@@ -52,6 +65,191 @@ namespace DCL.Diagnostics
 
             if (keyboard.aKey.wasPressedThisFrame) // Assuming 'A' key for this
                 BenchmarkLogDCLException();
+            
+            // New key presses for string benchmarks
+            if (keyboard.digit1Key.wasPressedThisFrame) BenchmarkStringConcatenation();
+            if (keyboard.digit2Key.wasPressedThisFrame) BenchmarkStringFormatting();
+            if (keyboard.digit3Key.wasPressedThisFrame) BenchmarkStringBuilderOperations();
+        }
+        
+        [ContextMenu("Benchmark String Concatenation (Std vs ZString)")]
+        public void BenchmarkStringConcatenation()
+        {
+            Debug.LogWarning("--- Starting String Concatenation Benchmark ---");
+            
+            int checksum = 0;
+            for (int i = 0; i < warmupIterations; i++)
+            {
+                string temp1 = string1 + " " + string2 + " " + string3 + " " + string4;
+                checksum += temp1.GetHashCode();
+                
+                using (var zsb = ZString.CreateStringBuilder())
+                {
+                    zsb.Append(string1);
+                    zsb.Append(" ");
+                    zsb.Append(string2);
+                    zsb.Append(" ");
+                    zsb.Append(string3);
+                    zsb.Append(" ");
+                    zsb.Append(string4);
+                    string temp2 = zsb.ToString();
+                    checksum += temp2.GetHashCode();
+                }
+            }
+
+            Profiler.BeginSample("String Concatenation (+)");
+            var swStdConcat = Stopwatch.StartNew();
+            for (var i = 0; i < benchmarkIterations; i++)
+            {
+                string result = string1 + " " + string2 + " " + string3 + " " + string4;
+                checksum += result.GetHashCode();
+            }
+            swStdConcat.Stop();
+            Profiler.EndSample();
+            
+            LogBenchmarkResult("String Concat (+)", swStdConcat.ElapsedMilliseconds);
+
+            Profiler.BeginSample("ZString.Concat");
+            var swZStringConcat = Stopwatch.StartNew();
+            for (var i = 0; i < benchmarkIterations; i++)
+            {
+                string result = ZString.Concat(string1, " ", string2, " ", string3, " ", string4);
+                checksum += result.GetHashCode();
+                if (result.Length == -1) Debug.Log("Never happens");
+            }
+            swZStringConcat.Stop();
+            Profiler.EndSample();
+            LogBenchmarkResult("ZString.Concat", swZStringConcat.ElapsedMilliseconds);
+            Debug.LogWarning("--- Finished String Concatenation Benchmark ---" + checksum);
+        }
+
+        [ContextMenu("Benchmark String Formatting (Std vs ZString)")]
+        public void BenchmarkStringFormatting()
+        {
+            var checksum = 0;
+            Debug.LogWarning("--- Starting String Formatting Benchmark ---");
+            string[] args = { "brown", "jumps", "dog"};
+            
+            for (var i = 0; i < warmupIterations; i++)
+            {
+                var t1 = args[0] + " " + args[1] + " " + args[2];
+                var t1_1 = ZString.Concat(args[0], " ", args[1], " ", args[2]);
+                var t2 = $"x:{args[0]} y:{args[1]} z:{args[2]}";
+                var t2_1 = ZString.Format("x:{0} y:{1} z:{2}", args[0], args[1], args[2]);
+                
+                checksum += t1_1.GetHashCode();
+                checksum += t1.GetHashCode();
+                checksum += t2.GetHashCode();
+                checksum += t2_1.GetHashCode();
+            }
+
+            Profiler.BeginSample("String Formatting");
+            var swStdFormat = Stopwatch.StartNew();
+            for (int i = 0; i < benchmarkIterations; i++)
+            {
+                string result = $"x:{args[0]} y:{args[1]} z:{args[2]}";
+                checksum += result.GetHashCode();
+                if (result.Length == -1) Debug.Log("Never happens");
+            }
+            swStdFormat.Stop();
+            Profiler.EndSample();
+            LogBenchmarkResult("String.Format", swStdFormat.ElapsedMilliseconds);
+
+            Profiler.BeginSample("ZString.Format");
+            var swZStringFormat = Stopwatch.StartNew();
+            for (int i = 0; i < benchmarkIterations; i++)
+            {
+                string result = ZString.Format("x:{0} y:{1} z:{2}", args[0], args[1], args[2]);
+                checksum += result.GetHashCode();
+                if (result.Length == -1) Debug.Log("Never happens");
+            }
+            swZStringFormat.Stop();
+            Profiler.EndSample();
+            LogBenchmarkResult("ZString.Format", swZStringFormat.ElapsedMilliseconds);
+            Debug.LogWarning("--- Finished String Formatting Benchmark ---" + checksum);
+        }
+
+        [ContextMenu("Benchmark StringBuilder (Std vs ZString)")]
+        public void BenchmarkStringBuilderOperations()
+        {
+            int checksum = 0;
+            Debug.LogWarning("--- Starting StringBuilder Benchmark ---");
+
+            // Warm-up
+            for (int i = 0; i < warmupIterations; i++)
+            {
+                var sb1 = new StringBuilder();
+                sb1.Append(string1)
+                    .Append(" ")
+                    .Append(string2)
+                    .Append(intVal1)
+                    .Append(string3)
+                    .AppendFormat("{0:F2}", floatVal2)
+                    .Append(string4);
+                
+                
+                string temp1 = sb1.ToString();
+                checksum += temp1.GetHashCode();
+
+                using (var zsb1 = ZString.CreateStringBuilder())
+                {
+                    zsb1.Append(string1);
+                    zsb1.Append(" ");
+                    zsb1.Append(string2);
+                    zsb1.Append(intVal1);
+                    zsb1.Append(string3);
+                    zsb1.Append(floatVal2, "F2");
+                    zsb1.Append(string4);
+                    string temp2 = zsb1.ToString();
+                    
+                    checksum += temp2.GetHashCode();
+                }
+            }
+
+            Profiler.BeginSample("String Builder");
+            var swStdBuilder = Stopwatch.StartNew();
+            for (int i = 0; i < benchmarkIterations; i++)
+            {
+                var sb = new StringBuilder();
+                sb.Append(string1);
+                sb.Append(" ");
+                sb.Append(string2);
+                sb.Append(intVal1);
+                sb.Append(string3);
+                sb.AppendFormat("{0:F2}", floatVal2);
+                sb.Append(string4);
+                
+                string result = sb.ToString();
+                checksum += result.GetHashCode();
+            }
+            
+            swStdBuilder.Stop();
+            Profiler.EndSample();
+            LogBenchmarkResult("System.Text.StringBuilder", swStdBuilder.ElapsedMilliseconds);
+
+            // ZString.CreateStringBuilder
+            UnityEngine.Profiling.Profiler.BeginSample("ZString.Builder");
+            Stopwatch swZStringBuilder = Stopwatch.StartNew();
+            for (int i = 0; i < benchmarkIterations; i++)
+            {
+                using (var zsb = ZString.CreateStringBuilder()) // Using statement handles pooling
+                {
+                    zsb.Append(string1);
+                    zsb.Append(" ");
+                    zsb.Append(string2);
+                    zsb.Append(intVal1);
+                    zsb.Append(string3);
+                    zsb.Append(floatVal2, "F2");
+                    zsb.Append(string4);
+                    
+                    string result = zsb.ToString();
+                    checksum += result.GetHashCode();
+                }
+            }
+            swZStringBuilder.Stop();
+            Profiler.EndSample();
+            LogBenchmarkResult("ZString.CreateStringBuilder", swZStringBuilder.ElapsedMilliseconds);
+            Debug.LogWarning("--- Finished StringBuilder Benchmark ---" + checksum);
         }
         
         // --- BASIC LOG TESTS ---
@@ -109,13 +307,13 @@ namespace DCL.Diagnostics
             catch (ArgumentNullException ex)
             {
                 _logger.LogException(ex, errorData); // Default: ReportHandler.All
-                _logger.LogException(ex, errorData, ReportHandler.All);
+                _logger.LogException(ex, errorData);
             }
 
             // IDecentralandException
             var dclEx = new DebugTraceListener.DiagnosticsException("diagnostics exception");
             _logger.LogException(dclEx); // Default: ReportHandler.All
-            _logger.LogException(dclEx, ReportHandler.All);
+            _logger.LogException(dclEx);
 
             // Test with an inner exception
              try
@@ -163,14 +361,16 @@ namespace DCL.Diagnostics
 
             // Warm-up
             for(int i = 0; i < 100; i++)
-                _logger.Log(LogType.Log, benchData, message, _testContextObject, ReportHandler.All);
+                _logger.Log(LogType.Log, benchData, message, _testContextObject);
 
+            Profiler.BeginSample("Log (All Handlers)");
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < benchmarkIterations; i++)
             {
-                _logger.Log(LogType.Log, benchData, message, _testContextObject, ReportHandler.All);
+                _logger.Log(LogType.Log, benchData, message, _testContextObject);
             }
             sw.Stop();
+            Profiler.EndSample();
             LogBenchmarkResult("Log (All Handlers)", sw.ElapsedMilliseconds);
         }
 
@@ -186,12 +386,14 @@ namespace DCL.Diagnostics
             for(int i = 0; i < 100; i++)
                  _logger.LogFormat(LogType.Log, benchData, format, ReportHandler.All, args);
 
+            Profiler.BeginSample("LogFormat (Single Handler - Console)");
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < benchmarkIterations; i++)
             {
                 _logger.LogFormat(LogType.Log, benchData, format, ReportHandler.All, args);
             }
             sw.Stop();
+            Profiler.EndSample();
             LogBenchmarkResult("LogFormat (Single Handler - Console)", sw.ElapsedMilliseconds);
         }
 
@@ -206,6 +408,7 @@ namespace DCL.Diagnostics
             for(int i = 0; i < 100; i++)
                 _logger.LogException(ex, benchData);
 
+            Profiler.BeginSample("LogException (Standard, All Handlers)");
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < benchmarkIterations; i++)
             {
@@ -216,6 +419,7 @@ namespace DCL.Diagnostics
                 _logger.LogException(ex, benchData);
             }
             sw.Stop();
+            Profiler.EndSample();
             LogBenchmarkResult("LogException (Standard, All Handlers)", sw.ElapsedMilliseconds);
         }
         
@@ -229,12 +433,14 @@ namespace DCL.Diagnostics
             for(int i = 0; i < 100; i++)
                  _logger.LogException(dclEx);
 
+            Profiler.BeginSample("LogException (DCL, All Handlers)");
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < benchmarkIterations; i++)
             {
                 _logger.LogException(dclEx);
             }
             sw.Stop();
+            Profiler.EndSample();
             LogBenchmarkResult("LogException (DCL, All Handlers)", sw.ElapsedMilliseconds);
         }
         

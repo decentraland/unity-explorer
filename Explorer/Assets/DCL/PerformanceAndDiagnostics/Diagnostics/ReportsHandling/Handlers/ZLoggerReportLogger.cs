@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
 using Cysharp.Text;
 using UnityEngine;
 using ZLogger;
@@ -20,17 +21,19 @@ namespace DCL.Diagnostics
             
             zLogger = LoggerFactory.Create(logging =>
             {
-                logging.SetMinimumLevel(LogLevel.Debug);
                 
 #if !STANDALONE
+                logging.SetMinimumLevel(LogLevel.Debug);
                 logging.AddZLoggerUnityDebug(options =>
                 {
                     options.PrettyStacktrace = false;
                 });
 #else
-                logging.AddZLoggerFile("player2.log", options =>
+                logging.SetMinimumLevel(LogLevel.Debug);
+                logging.AddZLoggerFile(Path.Combine(Application.persistentDataPath,"player2.log"), options =>
                 {
-                    options.UseJsonFormatter();
+                    options.UsePlainTextFormatter();
+                    //options.InternalErrorLogger = exception => { };
                 });
 
 #endif
@@ -61,7 +64,7 @@ namespace DCL.Diagnostics
             Debug.LogException(ecsSystemException, null);
 #else
             // In standalone builds, we log the exception to the file logger
-            zLogger.LogError(exception, $"{GetReportDataPrefix(in reportData)}", context);
+            zLogger.LogError(ecsSystemException, $"{GetReportDataPrefix(in ecsSystemException.ReportData)}");
 #endif
             ecsSystemException.MessagePrefix = null;
         }
@@ -79,7 +82,7 @@ namespace DCL.Diagnostics
             Debug.LogException(exception, context);
 #else
             // In standalone builds, we log the exception to the file logger
-            zLogger.LogError(exception, $"{GetReportDataPrefix(in reportData)}", context);
+            zLogger.ZLogError(exception, $"{GetReportDataPrefix(in reportData)}", context);
 #endif
         }
 
