@@ -128,17 +128,19 @@ namespace DCL.Multiplayer.Movement.Systems
                 && remote.syncedPlatform != null
                 && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
                 && remote.syncedPlatform!.Value.NetworkId != null
-                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out ITweener? tweener)
-                && tweener != null)
+                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue(
+                    (remote.syncedPlatform.Value.EntityId, remote.syncedPlatform.Value.NetworkId), out (ITweener tween, Transform trsnsf) platform)
+                && platform.tween != null && platform.trsnsf != null)
             {
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
-                Vector3? offset = tweener.GetOffset(0, remote.syncTimestamp, ntpTimeService.ServerTimeMs);
+                // Vector3? offset = tweener.GetOffset(0, remote.syncTimestamp, ntpTimeService.ServerTimeMs);
+                // if (offset.HasValue)
+                // {
+                //     Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
+                //     remote.position += offset.Value;
+                // }
 
-                if (offset.HasValue)
-                {
-                    Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
-                    remote.position += offset.Value;
-                }
+                remote.position += platform.trsnsf.position;
             }
 
             var isBlend = false;

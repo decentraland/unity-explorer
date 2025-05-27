@@ -42,6 +42,6 @@ namespace DCL.Interaction.Utility
         void RemoveGlobalEntityAssociation(Collider collider);
 
         Dictionary<Collider, GlobalColliderSceneEntityInfo> colliderSceneEntityInfos { get; }
-        Dictionary<(uint entityId, ulong networkId), ITweener> NetworkEntityToSceneEntity { get; }
+        Dictionary<(uint entityId, ulong networkId), (ITweener, Transform)> NetworkEntityToSceneEntity { get; }
     }
 }

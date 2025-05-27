@@ -167,7 +167,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     NetworkId = platform.ColliderNetworkId!.Value,
                 };
 
-                // playerMovement.LastSentMessage.position -= platform.PlatformCollider.transform.position;
+                playerMovement.LastSentMessage.position -= platform.CurrentPlatform.position;
             }
             else
             {

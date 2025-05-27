@@ -92,7 +92,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private bool hasCollider;
 
         [Query]
-        private void CheckNE(in Entity e, ref PBNetworkEntity ne, ref SDKTweenComponent sdkTweenComponent)
+        private void CheckNE(in Entity e, ref PBNetworkEntity ne, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
         {
             if(hasCollider) return;
 
@@ -114,7 +114,7 @@ namespace DCL.SDKComponents.Tween.Systems
                     // && sdkTweenComponent.CustomTweener != null)
                 {
                     // collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkTweenComponent.CustomTweener);
-                    collidersGlobalCache.NetworkEntityToSceneEntity[(ne.EntityId, ne.NetworkId)] = sdkTweenComponent.CustomTweener;
+                    collidersGlobalCache.NetworkEntityToSceneEntity[(ne.EntityId, ne.NetworkId)] = (sdkTweenComponent.CustomTweener, transformComponent.Transform);
                 }
             }
 
