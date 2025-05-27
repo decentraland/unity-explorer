@@ -78,6 +78,7 @@ namespace DCL.SDKComponents.Tween.Components
             Vector3 future = DOVirtual.EasedValue(tw.startValue, tw.endValue, Mathf.Clamp01((currentTweenTime + deltaTime ) / dur), ease, 1.70158f,0f);
 
             // return vector3Tweener.CurrentValue - past;
+            // return vector3Tweener.CurrentValue;
             return future - past;
         }
 

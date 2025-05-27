@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
             }
 
-            bool isMoving = IsMoving(playerMovement);
+            bool isMoving = IsMoving(playerMovement, platform);
 
             if (isMoving && sendRate > settings.MoveSendRate)
                 sendRate = settings.MoveSendRate;
@@ -91,7 +91,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
             return;
 
-            bool IsMoving(PlayerMovementNetworkComponent playerMovement) =>
+            bool IsMoving(PlayerMovementNetworkComponent playerMovement, CharacterPlatformComponent platform) =>
+                (platform.PlatformCollider != null &&
+                 (platform.IsMovingPlatform || platform.IsRotatingPlatform)) ||
                 Mathf.Abs(playerMovement.LastSentMessage.rotationY - playerMovement.Character.transform.eulerAngles.y) > 0.1f ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON;
@@ -150,7 +152,7 @@ namespace DCL.Multiplayer.Movement.Systems
             };
 
             if (platform.PlatformCollider != null &&
-                 platform.IsMovingPlatform && animation.States.IsGrounded
+                 (platform.IsMovingPlatform || platform.IsRotatingPlatform) && animation.States.IsGrounded
                  && !animation.States.IsJumping
                  && !animation.States.IsLongJump
                  && !animation.States.IsFalling

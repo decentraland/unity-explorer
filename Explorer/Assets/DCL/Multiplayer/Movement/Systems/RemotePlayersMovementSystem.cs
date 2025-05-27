@@ -53,6 +53,8 @@ namespace DCL.Multiplayer.Movement.Systems
             remotePlayerMovement.Initialized = true;
         }
 
+        float sumTime = 0f;
+
         [Query]
         [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
@@ -60,8 +62,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
-
-            settings.InboxCount = playerInbox.Count;
 
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)
@@ -106,7 +106,15 @@ namespace DCL.Multiplayer.Movement.Systems
                 }
 
                 if (playerInbox.Count > 0)
+                {
+                    sumTime = 0f;
+                    foreach (NetworkMovementMessage message in playerInbox)
+                        sumTime += message.timestamp;
+
+                    settings.InboxCount = playerInbox.Count;
+
                     deltaTime = HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
+                }
                 else deltaTime = 0;
             }
         }
@@ -264,7 +272,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void SpeedUpForCatchingUp(ref InterpolationComponent intComp, int inboxMessages)
         {
-            if (inboxMessages > settings.InterpolationSettings.CatchUpMessagesMin)
+            if (sumTime > 0.35f)// inboxMessages > settings.InterpolationSettings.CatchUpMessagesMin)
             {
                 float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
                 intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);

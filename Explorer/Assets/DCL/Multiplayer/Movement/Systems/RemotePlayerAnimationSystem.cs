@@ -99,8 +99,11 @@ namespace DCL.Multiplayer.Movement.Systems
             bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
                         && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
 
-            if (bothPointBlendsAreZero && (intComp.Start.syncedPlatform.Value.EntityId == uint.MaxValue
-                || intComp.End.syncedPlatform.Value.EntityId == uint.MaxValue)
+            bool isNotOnPlatform = intComp.Start.syncedPlatform == null
+                                   || intComp.Start.syncedPlatform.Value.EntityId == uint.MaxValue
+                                   ||intComp.End.syncedPlatform == null || intComp.End.syncedPlatform.Value.EntityId == uint.MaxValue;
+
+            if (bothPointBlendsAreZero && isNotOnPlatform
                 && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON)
                 BlendBetweenTwoZeroMovementPoints(ref anim, intComp);
             else
