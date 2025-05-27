@@ -85,14 +85,12 @@ namespace DCL.PluginSystem.Global
 
             microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
 
-            var livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
+            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
 
             VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
 
             audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
-
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
         }
 
         [Serializable]

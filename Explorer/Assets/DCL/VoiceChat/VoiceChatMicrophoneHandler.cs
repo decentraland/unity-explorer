@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using System;
 using UnityEngine;
@@ -29,7 +30,7 @@ namespace DCL.VoiceChat
         public bool IsTalking { get; private set; }
         public string MicrophoneName { get; private set; }
 
-        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, VoiceChatConfiguration voiceChatConfiguration, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter = null)
+        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, VoiceChatConfiguration voiceChatConfiguration, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
@@ -88,6 +89,14 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void ToggleMicrophone()
+        {
+            if(IsTalking)
+                EnableMicrophone();
+            else
+                DisableMicrophone();
+        }
+        
         private void InitializeMicrophone()
         {
             if (isMicrophoneInitialized)
@@ -107,24 +116,8 @@ namespace DCL.VoiceChat
                 MicrophoneName = Microphone.devices[0];
             }
             else
-            {
                 MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            }
 
-        public void ToggleMicrophone()
-        {
-            if(isTalking)
-                EnableMicrophone();
-            else
-                DisableMicrophone();
-        }
-
-        private void EnableMicrophone()
-        {
-            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-
-            MicrophoneAudioClip = Microphone.Start(microphoneName, true, 5, AudioSettings.outputSampleRate);
-            audioSource.clip = MicrophoneAudioClip;
             // On macOS, be more conservative with microphone settings
             try
             {
@@ -150,7 +143,6 @@ namespace DCL.VoiceChat
             audioSource.volume = 0f;
             audioSource.Play();
             EnabledMicrophone?.Invoke();
-            Debug.Log("Enable microphone");
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
         }
@@ -161,20 +153,14 @@ namespace DCL.VoiceChat
                 InitializeMicrophone();
 
             audioSource.volume = 1f;
-
+            EnabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone");
         }
 
         private void DisableMicrophone()
         {
-            audioSource.Stop();
-            audioSource.clip = null;
-            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            Microphone.End(microphoneName);
-            DisabledMicrophone?.Invoke();
-            Debug.Log("Disable microphone");
-        }
             audioSource.volume = 0f;
+            DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
         }
 
