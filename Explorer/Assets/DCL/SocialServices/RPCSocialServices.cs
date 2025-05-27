@@ -40,7 +40,15 @@ namespace DCL.SocialService
 
         private const double RETRY_BACKOFF_MULTIPLIER = 2.0;
 
+        /// <summary>
+        ///     Used to ensure that only one connection establishment process is running at a time.
+        /// </summary>
         private readonly SemaphoreSlim connectionEstablishingMutex = new (1, 1);
+
+        /// <summary>
+        ///     Used to ensure that handshake and disconnection processes do not overlap.
+        /// </summary>
+        private readonly SemaphoreSlim handshakeMutex = new (1, 1);
 
         private readonly URLAddress apiUrl;
         private readonly IWeb3IdentityCache identityCache;
@@ -84,7 +92,7 @@ namespace DCL.SocialService
         {
             try
             {
-                await connectionEstablishingMutex.WaitAsync(ct);
+                await handshakeMutex.WaitAsync(ct);
 
                 port?.Close();
                 port = null;
@@ -101,7 +109,7 @@ namespace DCL.SocialService
                 client?.Dispose();
                 client = null;
             }
-            finally { connectionEstablishingMutex.Release(); }
+            finally { handshakeMutex.Release(); }
         }
 
         public async UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct)
@@ -167,8 +175,13 @@ namespace DCL.SocialService
 
         private async UniTask StartHandshakeAsync(CancellationToken ct)
         {
+            var acquired = false;
+
             try
             {
+                await handshakeMutex.WaitAsync(ct);
+                acquired = true;
+
                 if (!isConnectionReady)
                     await InitializeConnectionAsync(ct);
             }
@@ -185,6 +198,11 @@ namespace DCL.SocialService
                 client = null;
 
                 throw;
+            }
+            finally
+            {
+                if (acquired)
+                    handshakeMutex.Release();
             }
         }
 
