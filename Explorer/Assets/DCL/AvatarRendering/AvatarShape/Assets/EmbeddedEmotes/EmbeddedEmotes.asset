@@ -556,7 +556,7 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       outlineCompatible: 1
-      loop: 0
+      loop: 1
   - id: sittingChair2
     name: sittingChair2
     audioClip: {fileID: 0}
@@ -572,7 +572,7 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       outlineCompatible: 1
-      loop: 0
+      loop: 1
   - id: sittingGround1
     name: sittingGround1
     audioClip: {fileID: 0}
@@ -588,7 +588,7 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       outlineCompatible: 1
-      loop: 0
+      loop: 1
   - id: sittingGround2
     name: sittingGround2
     audioClip: {fileID: 0}
@@ -604,7 +604,7 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       outlineCompatible: 1
-      loop: 0
+      loop: 1
   - id: swingWeaponOneHand
     name: swingWeaponOneHand
     audioClip: {fileID: 0}

@@ -83,7 +83,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Swing_Hammer
+  m_Name: Throw
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -96,7 +96,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 1024652202593850954, guid: 927caefea0f99434b8b610592c6921b7, type: 3}
+  m_Motion: {fileID: -7868079182848644373, guid: c3bd2a0d1cadf4fc293116fc9b33224e, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
