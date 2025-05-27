@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using System;
 using UnityEngine;
@@ -11,6 +10,9 @@ namespace DCL.VoiceChat
         private const bool MICROPHONE_LOOP = true;
         private const int MICROPHONE_LENGTH_SECONDS = 1;
         private const int MICROPHONE_SAMPLE_RATE = 48000;
+
+        public event Action EnabledMicrophone;
+        public event Action DisabledMicrophone;
 
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
@@ -109,6 +111,20 @@ namespace DCL.VoiceChat
                 MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             }
 
+        public void ToggleMicrophone()
+        {
+            if(isTalking)
+                EnableMicrophone();
+            else
+                DisableMicrophone();
+        }
+
+        private void EnableMicrophone()
+        {
+            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+
+            MicrophoneAudioClip = Microphone.Start(microphoneName, true, 5, AudioSettings.outputSampleRate);
+            audioSource.clip = MicrophoneAudioClip;
             // On macOS, be more conservative with microphone settings
             try
             {
@@ -133,6 +149,8 @@ namespace DCL.VoiceChat
             audioSource.loop = true;
             audioSource.volume = 0f;
             audioSource.Play();
+            EnabledMicrophone?.Invoke();
+            Debug.Log("Enable microphone");
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
         }
@@ -149,6 +167,13 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
+            audioSource.Stop();
+            audioSource.clip = null;
+            microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+            Microphone.End(microphoneName);
+            DisabledMicrophone?.Invoke();
+            Debug.Log("Disable microphone");
+        }
             audioSource.volume = 0f;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
         }

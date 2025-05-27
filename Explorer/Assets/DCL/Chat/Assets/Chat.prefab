@@ -1602,6 +1602,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: VoiceChatTitleBarsContainer
       objectReference: {fileID: 0}
+    - target: {fileID: 5220831835979811257, guid: d863791227c6640739243f8c4cf57b56, type: 3}
+      propertyPath: VoiceChatContainer
+      value: 
+      objectReference: {fileID: 7363346495720809904}
     - target: {fileID: 5575090747823428928, guid: d863791227c6640739243f8c4cf57b56, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2211,7 +2215,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1624684265765288882, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 134.91
       objectReference: {fileID: 0}
     - target: {fileID: 1624684265765288882, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2397,6 +2401,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8900561152139656757, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2407,7 +2427,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8900561152139656757, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 8.76
       objectReference: {fileID: 0}
     - target: {fileID: 8900561152139656757, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_AnchoredPosition.x

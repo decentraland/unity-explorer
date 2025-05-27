@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -18,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly GenericContextMenu contextMenu;
 
@@ -30,17 +32,20 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking) : base(view, requestManager)
+            bool includeUserBlocking,
+            bool includeCall,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
             contextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
-                userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, null, BlockUserCtx).Item1;
+                userProfileContextMenuControlSettings, includeUserBlocking, includeCall, OpenProfilePassportCtx, null, CallFriendCtx, BlockUserCtx).Item1;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -56,6 +61,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OpenProfilePassportCtx() =>
             FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
+
+        private void CallFriendCtx() =>
+            FriendListSectionUtilities.CallFriend(contextMenuFriendProfile.Address, contextMenuFriendProfile.Name, voiceChatCallStatusService);
 
         private void BlockUserCtx() =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);

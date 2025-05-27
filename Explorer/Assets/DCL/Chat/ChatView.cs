@@ -179,6 +179,8 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
+        public event Action StartCall;
+
         private ViewDependencies viewDependencies;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
 
@@ -263,7 +265,7 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
@@ -459,6 +461,7 @@ namespace DCL.Chat
             chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
+            chatTitleBar.StartCall += OnStartCall;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
@@ -490,6 +493,11 @@ namespace DCL.Chat
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
                 AddConversation(channelPair.Value);
+        }
+
+        private void OnStartCall()
+        {
+            StartCall?.Invoke();
         }
 
         private void OnDeleteChatHistoryRequested()
@@ -743,14 +751,16 @@ namespace DCL.Chat
         }
 #endregion
 
-        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
-            SetInputWithUserStateAsync(userState, isOtherUserConnected).Forget();
+
+            chatTitleBar.SetCallButtonStatus(isOtherUserConnected && currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
         }
 
-        private async UniTaskVoid SetInputWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
+        private async UniTaskVoid SetupViewWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
         {
             await UniTask.SwitchToMainThread();
 

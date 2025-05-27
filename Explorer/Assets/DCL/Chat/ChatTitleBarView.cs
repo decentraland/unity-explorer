@@ -20,6 +20,7 @@ namespace DCL.Chat
         public event Action? CloseMemberListButtonClicked;
         public event Action? HideMemberListButtonClicked;
         public event Action? ShowMemberListButtonClicked;
+        public event Action? StartCall;
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
@@ -29,6 +30,7 @@ namespace DCL.Chat
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
+        [SerializeField] private Button callButton;
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
@@ -82,6 +84,7 @@ namespace DCL.Chat
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
+            callButton.onClick.AddListener(OnStartCall);
             isInitialized = true;
         }
 
@@ -101,6 +104,11 @@ namespace DCL.Chat
         {
             chatChannelNameNameText.text = channelName;
             memberListChannelNameText.text = channelName;
+        }
+
+        public void SetCallButtonStatus(bool isActive)
+        {
+            callButton.gameObject.SetActive(isActive);
         }
 
         public void SetNearbyChannelImage()
@@ -167,6 +175,11 @@ namespace DCL.Chat
         private void OnProfileContextMenuOpened()
         {
             ContextMenuVisibilityChanged?.Invoke(true);
+        }
+
+        private void OnStartCall()
+        {
+            StartCall?.Invoke();
         }
 
         private void OnDisable()
