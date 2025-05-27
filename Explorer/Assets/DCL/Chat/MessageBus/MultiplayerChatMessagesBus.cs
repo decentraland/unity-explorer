@@ -99,7 +99,7 @@ namespace DCL.Chat.MessageBus
 
                 try
                 {
-                    newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, cancellationTokenSource.Token);
+                    newMessage = messageFactory.CreateChatMessage(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null);
 
                     ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"BUS FIRING MessageResolved: From={receivedMessage.FromWalletId}, TS={receivedMessage.Payload.Timestamp}");
 
