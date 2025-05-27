@@ -21,6 +21,7 @@ using DCL.SocialService;
 using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -52,6 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
         private readonly bool includeUserBlocking;
+        private readonly bool includeCall;
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IAnalyticsController? analyticsController;
@@ -62,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -89,6 +92,7 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
+            bool includeCall,
             IAppArgs appArgs,
             FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
@@ -98,7 +102,9 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
-            ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus)
+            ObjectProxy<FriendsCache> friendCacheProxy,
+            IFriendsEventBus friendsEventBus,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -117,6 +123,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
             this.includeUserBlocking = includeUserBlocking;
+            this.includeCall = includeCall;
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
             this.useAnalytics = useAnalytics;
@@ -128,6 +135,7 @@ namespace DCL.PluginSystem.Global
             this.socialServicesRPCProxy = socialServicesRPCProxy;
             this.friendCacheProxy = friendCacheProxy;
             this.friendsEventBus = friendsEventBus;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -185,8 +193,10 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 viewDependencies,
                 includeUserBlocking,
+                includeCall,
                 isConnectivityStatusEnabled,
-                sharedSpaceManager
+                sharedSpaceManager,
+                voiceChatCallStatusService
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

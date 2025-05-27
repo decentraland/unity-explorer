@@ -7,6 +7,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -67,8 +68,10 @@ namespace DCL.Friends.UI.FriendPanel
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             bool includeUserBlocking,
+            bool includeCall,
             bool isConnectivityStatusEnabled,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
@@ -87,7 +90,9 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    includeUserBlocking);
+                    voiceChatCallStatusService,
+                    includeUserBlocking,
+                    includeCall);
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
                 friendSectionControllerConnectivity.OpenConversationClicked += OnOpenConversationClicked;
@@ -99,7 +104,9 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking);
+                    includeUserBlocking,
+                    includeCall,
+                    voiceChatCallStatusService);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,

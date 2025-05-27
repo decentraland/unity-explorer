@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Settings.Settings;
+using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using LiveKit;
@@ -19,13 +20,23 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly DCLInput dclInput;
         private readonly IRoomHub roomHub;
+        private readonly MainUIView mainUIView;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
-        public VoiceChatPlugin(ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy, IAssetsProvisioner assetsProvisioner, DCLInput dclInput, IRoomHub roomHub)
+        public VoiceChatPlugin(
+            ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
+            IAssetsProvisioner assetsProvisioner,
+            DCLInput dclInput,
+            IRoomHub roomHub,
+            MainUIView mainUIView,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
             this.dclInput = dclInput;
             this.roomHub = roomHub;
+            this.mainUIView = mainUIView;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose() { }
@@ -44,6 +55,8 @@ namespace DCL.PluginSystem.Global
             ProvidedInstance<VoiceChatCombinedAudioSource> audioSource = await assetsProvisioner.ProvideInstanceAsync(settings.CombinedAudioSource, ct: ct);
 
             var livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
+
+            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
         }
 
         [Serializable]

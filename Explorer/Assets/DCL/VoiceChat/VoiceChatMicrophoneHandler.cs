@@ -7,6 +7,9 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
+        public event Action EnabledMicrophone;
+        public event Action DisabledMicrophone;
+
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly AudioSource audioSource;
@@ -17,6 +20,7 @@ namespace DCL.VoiceChat
         private bool isTalking;
         private string microphoneName;
         private float buttonPressStartTime;
+
 
         public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, AudioSource audioSource)
         {
@@ -32,7 +36,7 @@ namespace DCL.VoiceChat
         private void OnPressed(InputAction.CallbackContext obj)
         {
             buttonPressStartTime = Time.time;
-Debug.Log($"is talking {isTalking}");
+
             // Start the microphone immediately when button is pressed
             // If it's a quick press, we'll handle it in OnReleased
             if (!isTalking)
@@ -59,13 +63,23 @@ Debug.Log($"is talking {isTalking}");
             }
         }
 
+        public void ToggleMicrophone()
+        {
+            if(isTalking)
+                EnableMicrophone();
+            else
+                DisableMicrophone();
+        }
+
         private void EnableMicrophone()
         {
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+
             MicrophoneAudioClip = Microphone.Start(microphoneName, true, 5, AudioSettings.outputSampleRate);
             audioSource.clip = MicrophoneAudioClip;
             audioSource.loop = true;
             audioSource.Play();
+            EnabledMicrophone?.Invoke();
             Debug.Log("Enable microphone");
         }
 
@@ -75,6 +89,7 @@ Debug.Log($"is talking {isTalking}");
             audioSource.clip = null;
             microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             Microphone.End(microphoneName);
+            DisabledMicrophone?.Invoke();
             Debug.Log("Disable microphone");
         }
 

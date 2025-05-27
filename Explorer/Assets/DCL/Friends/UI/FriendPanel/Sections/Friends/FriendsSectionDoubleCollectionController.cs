@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -22,9 +23,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly GenericContextMenu contextMenu;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly GenericContextMenuElement contextMenuCallButton;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private FriendProfile contextMenuFriendProfile;
@@ -44,21 +47,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            bool includeUserBlocking)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            bool includeUserBlocking,
+            bool includeCall)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
             var buildContextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
-                userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, JumpToFriendLocationCtx, BlockUserCtx);
+                userProfileContextMenuControlSettings, includeUserBlocking, includeCall, OpenProfilePassportCtx, JumpToFriendLocationCtx, CallFriendCtx, BlockUserCtx);
 
             contextMenu = buildContextMenu.Item1;
             contextMenuJumpInButton = buildContextMenu.Item2;
+            contextMenuCallButton = buildContextMenu.Item3;
 
             doubleCollectionRequestManager.JumpInClicked += JumpInClick;
             doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;
@@ -81,6 +88,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OpenProfilePassportCtx() =>
             FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
+
+        private void CallFriendCtx() =>
+            FriendListSectionUtilities.CallFriend(contextMenuFriendProfile.Address, contextMenuFriendProfile.Name, voiceChatCallStatusService);
 
         private void BlockUserCtx() =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);
@@ -150,6 +160,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.Address) != OnlineStatus.OFFLINE;
 
             contextMenuJumpInButton.Enabled = isFriendOnline;
+            contextMenuCallButton.Enabled = isFriendOnline;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(
