@@ -37,6 +37,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly GenericContextMenuElement removeModeratorContextMenuElement;
         private readonly GenericContextMenuElement addModeratorContextMenuElement;
         private readonly GenericContextMenuElement blockUserContextMenuElement;
+        private readonly GenericContextMenuElement kickUserContextMenuElement;
+        private readonly GenericContextMenuElement banUserContextMenuElement;
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData> sectionsFetchData = new ()
         {
             { MembersListView.MemberListSections.ALL, new SectionFetchData(PAGE_SIZE) },
@@ -46,7 +48,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         private string lastCommunityId = string.Empty;
         private CancellationToken ct;
         private bool isFetching;
-        private bool isCommunityOwner;
+        private CommunityMemberRole viewerRole;
+        private bool viewerCanEdit => viewerRole is CommunityMemberRole.moderator or CommunityMemberRole.owner;
+
         private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
@@ -73,8 +77,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.CallText, view.ContextMenuSettings.CallSprite, () => CallUser(lastClickedProfileCtx!)))
                          .AddControl(removeModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.RemoveModeratorText, view.ContextMenuSettings.RemoveModeratorSprite, () => RemoveModerator(lastClickedProfileCtx!))))
                          .AddControl(addModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.AddModeratorText, view.ContextMenuSettings.AddModeratorSprite, () => AddModerator(lastClickedProfileCtx!))))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => KickUser(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => BanUser(lastClickedProfileCtx!)))
+                         .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => KickUser(lastClickedProfileCtx!))))
+                         .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => BanUser(lastClickedProfileCtx!))))
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!))));
 
             this.view.LoopGrid.InitGridView(0, GetLoopGridItemByIndex);
@@ -280,14 +284,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             sectionsFetchData[currentSection].totalToFetch = response.totalAmount;
         }
 
-        public void ShowMembersListAsync(string communityId, bool communityOwner, CancellationToken cancellationToken)
+        public void ShowMembersListAsync(string communityId, CommunityMemberRole userRole, CancellationToken cancellationToken)
         {
             if (lastCommunityId == null || lastCommunityId.Equals(communityId)) return;
 
             ct = cancellationToken;
             lastCommunityId = communityId;
-            isCommunityOwner = communityOwner;
-            view.SetSectionButtonsActive(isCommunityOwner);
+            viewerRole = userRole;
+            view.SetSectionButtonsActive(viewerRole is CommunityMemberRole.moderator or CommunityMemberRole.owner);
             panelLifecycleTask = new UniTaskCompletionSource();
 
             FetchNewDataAsync().Forget();
@@ -319,9 +323,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
             elementView.CanUnHover = false;
 
-            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator;
-            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member;
+            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator && viewerCanEdit;
+            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member && viewerCanEdit;
             blockUserContextMenuElement.Enabled = profile.friendshipStatus != FriendshipStatus.blocked && profile.friendshipStatus != FriendshipStatus.blocked_by;
+            kickUserContextMenuElement.Enabled = viewerCanEdit && currentSection == MembersListView.MemberListSections.ALL;
+            banUserContextMenuElement.Enabled = viewerCanEdit && currentSection == MembersListView.MemberListSections.ALL;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,

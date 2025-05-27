@@ -139,7 +139,7 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersListAsync(communityData.id, communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator, membersSectionCancellationTokenSource.Token);
+                    membersListController!.ShowMembersListAsync(communityData.id, communityData.role, membersSectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
