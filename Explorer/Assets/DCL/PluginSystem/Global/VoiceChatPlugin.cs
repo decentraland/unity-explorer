@@ -29,6 +29,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<VoiceChatCombinedAudioSource> audioSource;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
+        private VoiceChatController controller;
 
         public VoiceChatPlugin(
             ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
@@ -62,6 +63,7 @@ namespace DCL.PluginSystem.Global
             voiceChatSettingsAsset.Dispose();
             microphoneAudioFilter.Dispose();
             voiceChatConfigurations.Dispose();
+            controller.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -87,8 +89,8 @@ namespace DCL.PluginSystem.Global
 
             livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
 
-            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
+            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
 
             audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
         }

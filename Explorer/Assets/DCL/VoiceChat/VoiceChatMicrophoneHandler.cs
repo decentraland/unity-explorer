@@ -96,7 +96,7 @@ namespace DCL.VoiceChat
             else
                 DisableMicrophone();
         }
-        
+
         private void InitializeMicrophone()
         {
             if (isMicrophoneInitialized)
