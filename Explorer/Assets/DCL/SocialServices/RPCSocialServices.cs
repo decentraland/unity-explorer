@@ -19,8 +19,6 @@ namespace DCL.SocialService
 
         RpcClientModule Module();
 
-        UniTask DisconnectAsync(CancellationToken ct);
-
         /// <summary>
         ///     Try to establish connection to the RPC server until the cancellation token is triggered or the retries count is exhausted.
         /// </summary>

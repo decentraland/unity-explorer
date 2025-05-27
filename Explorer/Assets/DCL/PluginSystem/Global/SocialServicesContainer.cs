@@ -1,9 +1,11 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SocialService;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using System;
@@ -19,7 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
 
-        internal readonly RPCSocialServices? socialServicesRPC;
+        internal readonly RPCSocialServices socialServicesRPC;
 
         private CancellationTokenSource cts = new ();
 
@@ -56,14 +58,13 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid ReconnectRpcClientAsync(CancellationToken ct)
             {
-                if (socialServicesRPC == null) return;
-
                 try
                 {
                     await socialServicesRPC.DisconnectAsync(ct);
                     await socialServicesRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
                 }
-                catch (Exception e) when (e is not OperationCanceledException) { }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
                 socialServiceEventBus.SendTransportReconnectedNotification();
             }
@@ -77,10 +78,7 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid DisconnectRpcClientAsync(CancellationToken ct)
             {
-                if (socialServicesRPC == null) return;
-
-                try { await socialServicesRPC.DisconnectAsync(ct); }
-                catch (Exception e) when (e is not OperationCanceledException) { }
+                await socialServicesRPC.DisconnectAsync(ct).SuppressToResultAsync(ReportCategory.ENGINE);
             }
         }
 
