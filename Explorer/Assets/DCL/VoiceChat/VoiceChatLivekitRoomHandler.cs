@@ -36,8 +36,8 @@ namespace DCL.VoiceChat
             AudioSource microphoneAudioSource,
             IRoomHub roomHub,
             IRoom voiceChatRoom,
-            IVoiceChatCallStatusService voiceChatCallStatusService
-            )
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IRoomHub roomHub)
         {
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
@@ -45,6 +45,7 @@ namespace DCL.VoiceChat
             this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.roomHub = roomHub;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
         }
