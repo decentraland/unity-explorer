@@ -41,8 +41,6 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
-
-            InitializeMicrophone();
         }
 
         public void Dispose()
@@ -53,12 +51,14 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                audioSource.volume = 0f;
-                audioSource.Stop();
-                audioSource.clip = null;
+                if (audioSource != null)
+                {
+                    audioSource.volume = 0f;
+                    audioSource.Stop();
+                    audioSource.clip = null;
+                }
                 Microphone.End(MicrophoneName);
-                
-                // Disable audio filter during cleanup
+
                 if (audioFilter != null)
                     audioFilter.enabled = false;
             }
@@ -146,10 +146,10 @@ namespace DCL.VoiceChat
             audioSource.loop = true;
             audioSource.volume = 0f;
             audioSource.Play();
-            
+
             if (audioFilter != null)
                 audioFilter.enabled = false;
-                
+
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
