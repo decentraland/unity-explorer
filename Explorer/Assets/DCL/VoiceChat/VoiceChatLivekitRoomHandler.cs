@@ -34,7 +34,6 @@ namespace DCL.VoiceChat
             VoiceChatCombinedAudioSource combinedAudioSource,
             VoiceChatMicrophoneAudioFilter microphoneAudioFilter,
             AudioSource microphoneAudioSource,
-            IRoomHub roomHub,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             IRoomHub roomHub)
@@ -42,7 +41,6 @@ namespace DCL.VoiceChat
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
             this.microphoneAudioSource = microphoneAudioSource;
-            this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.roomHub = roomHub;
@@ -188,7 +186,7 @@ namespace DCL.VoiceChat
         private async UniTaskVoid CloseMediaAsync()
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
-            
+
             if (combinedAudioSource != null)
             {
                 combinedAudioSource.Stop();
