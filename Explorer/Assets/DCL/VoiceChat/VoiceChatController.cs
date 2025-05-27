@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
 
         private void AcceptCall()
         {
-
+            voiceChatCallStatusService.StartCall("");
         }
 
         public void Dispose()
