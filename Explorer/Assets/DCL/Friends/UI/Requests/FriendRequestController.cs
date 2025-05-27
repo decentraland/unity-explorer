@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
@@ -10,11 +12,23 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Friends.UI.Requests
 {
     public class FriendRequestController : ControllerBase<FriendRequestView, FriendRequestParams>
     {
+        private enum ViewState
+        {
+            SEND_NEW,
+            CANCEL,
+            RECEIVED,
+            CONFIRMED_ACCEPTED,
+            CONFIRMED_CANCELLED,
+            CONFIRMED_REJECTED,
+            CONFIRMED_SENT,
+        }
+
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
         private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
         private const string DATE_FORMAT = "MMM dd";
@@ -142,6 +156,7 @@ namespace DCL.Friends.UI.Requests
                         LoadUserAsync(viewInstance.send.UserAndMutualFriendsConfig,
                             inputData.DestinationUser!.Value,
                             fetchUserCancellationToken.Token))
+                   .SuppressToResultAsync(ReportCategory.FRIENDS)
                    .Forget();
 
             return;
@@ -158,13 +173,13 @@ namespace DCL.Friends.UI.Requests
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
                 config.UserNameHash.text = $"#{user.ToString()[^4..]}";
 
-                await config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor,profile.Avatar.FaceSnapshotUrl,user, ct);
+                await config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, user, ct);
             }
         }
 
         private void SetUpAsCancel()
         {
-            var fr = inputData.Request!;
+            FriendRequest fr = inputData.Request!;
             FriendRequestView.CancelConfig viewConfig = viewInstance!.cancel;
             viewConfig.PreCancelToastContainer.SetActive(false);
             viewConfig.PreCancelButton.gameObject.SetActive(true);
@@ -182,7 +197,7 @@ namespace DCL.Friends.UI.Requests
 
         private void SetUpAsReceived()
         {
-            var fr = inputData.Request!;
+            FriendRequest fr = inputData.Request!;
             FriendRequestView.ReceivedConfig viewConfig = viewInstance!.received;
 
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
@@ -213,7 +228,7 @@ namespace DCL.Friends.UI.Requests
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
 
-            await UniTask.WhenAll(config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, user.UserNameColor, user.FacePictureUrl,user.Address, ct),
+            await UniTask.WhenAll(config.UserThumbnail.SetupWithDependenciesAsync(viewDependencies, user.UserNameColor, user.FacePictureUrl, user.Address, ct),
                 LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
@@ -255,17 +270,21 @@ namespace DCL.Friends.UI.Requests
 
                 try
                 {
-                    FriendRequest request = await friendsService.RequestFriendshipAsync(inputData.DestinationUser!.Value,
+                    var result = await friendsService.RequestFriendshipAsync(inputData.DestinationUser!.Value,
                         viewInstance.send.MessageInput.text,
-                        ct);
+                        ct)
+                                                     .SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                    await ShowOperationConfirmationAsync(
-                        ViewState.CONFIRMED_SENT,
-                        viewInstance.sentConfirmed, request.To,
-                        FRIEND_REQUEST_SENT_FORMAT,
-                        ct);
+                    if (result.Success)
+                    {
+                        await ShowOperationConfirmationAsync(
+                            ViewState.CONFIRMED_SENT,
+                            viewInstance.sentConfirmed, result.Value.To,
+                            FRIEND_REQUEST_SENT_FORMAT,
+                            ct);
 
-                    Close();
+                        Close();
+                    }
                 }
                 finally { viewInstance.send.SendButton.interactable = true; }
             }
@@ -279,7 +298,7 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid RejectThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.RejectFriendshipAsync(inputData.Request!.From.Address, ct);
+                await friendsService.RejectFriendshipAsync(inputData.Request!.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 // Dont show confirmation on negative actions
                 // await ShowOperationConfirmationAsync(
@@ -300,15 +319,18 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.AcceptFriendshipAsync(target.Address, ct);
+                EnumResult<TaskError> result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                await ShowOperationConfirmationAsync(
-                    ViewState.CONFIRMED_ACCEPTED,
-                    viewInstance!.acceptedConfirmed, target,
-                    FRIEND_REQUEST_ACCEPTED_FORMAT,
-                    ct);
+                if (result.Success)
+                {
+                    await ShowOperationConfirmationAsync(
+                        ViewState.CONFIRMED_ACCEPTED,
+                        viewInstance!.acceptedConfirmed, target,
+                        FRIEND_REQUEST_ACCEPTED_FORMAT,
+                        ct);
 
-                Close();
+                    Close();
+                }
             }
         }
 
@@ -320,7 +342,7 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid CancelThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.CancelFriendshipAsync(inputData.Request!.To.Address, ct);
+                await friendsService.CancelFriendshipAsync(inputData.Request!.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 // Dont show confirmation on negative actions
                 // await ShowOperationConfirmationAsync(
@@ -365,7 +387,7 @@ namespace DCL.Friends.UI.Requests
             FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
             config.Label.text = string.Format(textWithUserNameParam, ToHexStr(profile.UserNameColor), profile.Name);
-            config.FriendThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.FacePictureUrl,  profile.Address, ct).Forget();
+            config.FriendThumbnail.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.FacePictureUrl, profile.Address, ct).Forget();
 
             if (config.MyThumbnail != null)
             {
@@ -382,18 +404,8 @@ namespace DCL.Friends.UI.Requests
             await viewInstance!.PlayHideAnimationAsync(config, ct);
             return;
 
-            string ToHexStr(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
-        }
-
-        private enum ViewState
-        {
-            SEND_NEW,
-            CANCEL,
-            RECEIVED,
-            CONFIRMED_ACCEPTED,
-            CONFIRMED_CANCELLED,
-            CONFIRMED_REJECTED,
-            CONFIRMED_SENT,
+            string ToHexStr(Color color) =>
+                $"#{ColorUtility.ToHtmlStringRGB(color)}";
         }
     }
 }

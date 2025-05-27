@@ -5,6 +5,7 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -13,13 +14,13 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Chat
 {
     public class ChatUserStateUpdater : IDisposable
     {
         private const string PRIVACY_SETTING_ALL = "all";
-        private static readonly TimeSpan TIMEOUT_TIME_SPAN = new TimeSpan(0, 0, 5);
         //private readonly IChatUsersStateCache chatUsersStateCache;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IParticipantsHub participantsHub;
@@ -254,8 +255,10 @@ namespace DCL.Chat
 
         private async UniTaskVoid CheckFriendStatusAsync(string userId)
         {
-            var friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token);
-            if (friendshipStatus == FriendshipStatus.FRIEND)
+            Result<FriendshipStatus> result = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            if (!result.Success) return;
+
+            if (result.Value == FriendshipStatus.FRIEND)
                 chatUserStateEventBus.OnFriendConnected(userId);
             else
                 chatUserStateEventBus.OnNonFriendConnected(userId);
@@ -273,8 +276,8 @@ namespace DCL.Chat
                 return;
             }
 
-            var status = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).TimeoutWithoutException(TIMEOUT_TIME_SPAN);
-            if (!status.IsTimeout && status.Result == FriendshipStatus.FRIEND) return;
+            Result<FriendshipStatus> status = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            if (status is { Success: true, Value: FriendshipStatus.FRIEND }) return;
 
             chatUserStateEventBus.OnCurrentConversationUserUnavailable();
         }

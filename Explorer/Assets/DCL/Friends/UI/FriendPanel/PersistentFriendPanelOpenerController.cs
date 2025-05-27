@@ -1,14 +1,17 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel
 {
@@ -76,7 +79,12 @@ namespace DCL.Friends.UI.FriendPanel
 
             async UniTaskVoid ManageFriendRequestReceivedNotificationAsync(FriendRequestReceivedNotification notification, CancellationToken ct)
             {
-                FriendshipStatus friendshipStatus = await friendsService.GetFriendshipStatusAsync(notification.Metadata.Sender.Address, ct);
+                Result<FriendshipStatus> result = await friendsService.GetFriendshipStatusAsync(notification.Metadata.Sender.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+
+                if (!result.Success)
+                    return;
+
+                FriendshipStatus friendshipStatus = result.Value;
 
                 switch (friendshipStatus)
                 {
@@ -84,7 +92,7 @@ namespace DCL.Friends.UI.FriendPanel
                         if (friendsPanelController!.State != ControllerState.ViewHidden)
                             friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
                         else
-                            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
+                            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)).Forget();
 
                         break;
                     case FriendshipStatus.REQUEST_RECEIVED:

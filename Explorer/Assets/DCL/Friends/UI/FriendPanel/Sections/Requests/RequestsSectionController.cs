@@ -138,14 +138,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.RejectFriendshipAsync(request.From.Address, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.RejectFriendshipAsync(request.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -157,14 +150,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.CancelFriendshipAsync(request.To.Address, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.CancelFriendshipAsync(request.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 

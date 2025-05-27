@@ -619,7 +619,6 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -861,6 +860,43 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
+            if (includeFriends)
+            {
+                // TODO many circular dependencies - adjust the flow and get rid of ObjectProxy
+                var friendsContainer = new FriendsContainer(
+                    mainUIView,
+                    mvcManager,
+                    assetsProvisioner,
+                    identityCache,
+                    profileRepository,
+                    staticContainer.LoadingStatus,
+                    staticContainer.InputBlock,
+                    dclInput,
+                    selfProfile,
+                    new MVCPassportBridge(mvcManager),
+                    notificationsBusController,
+                    onlineUsersProvider,
+                    realmNavigator,
+                    includeUserBlocking,
+                    appArgs,
+                    staticContainer.FeatureFlagsCache,
+                    dynamicWorldParams.EnableAnalytics,
+                    bootstrapContainer.Analytics,
+                    chatEventBus,
+                    viewDependencies,
+                    sharedSpaceManager,
+                    socialServiceEventBus,
+                    socialServiceContainer.socialServicesRPC,
+                    friendsEventBus,
+                    friendServiceProxy,
+                    friendOnlineStatusCacheProxy,
+                    friendsCacheProxy,
+                    userBlockingCacheProxy
+                );
+
+                globalPlugins.Add(friendsContainer);
+            }
+
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(
                     dclInput,
@@ -891,41 +927,6 @@ namespace Global.Dynamic
                     viewDependencies,
                     sharedSpaceManager,
                     identityCache));
-
-            if (includeFriends)
-            {
-                globalPlugins.Add(new FriendsPlugin(
-                        mainUIView,
-                        mvcManager,
-                        assetsProvisioner,
-                        identityCache,
-                        profileRepository,
-                        staticContainer.LoadingStatus,
-                        staticContainer.InputBlock,
-                        dclInput,
-                        selfProfile,
-                        new MVCPassportBridge(mvcManager),
-                        friendServiceProxy,
-                        friendOnlineStatusCacheProxy,
-                        userBlockingCacheProxy,
-                        notificationsBusController,
-                        onlineUsersProvider,
-                        realmNavigator,
-                        includeUserBlocking,
-                        appArgs,
-                        staticContainer.FeatureFlagsCache,
-                        dynamicWorldParams.EnableAnalytics,
-                        bootstrapContainer.Analytics,
-                        chatEventBus,
-                        viewDependencies,
-                        sharedSpaceManager,
-                        socialServiceEventBus,
-                        socialServiceContainer.socialServicesRPC,
-                        friendsCacheProxy,
-                        friendsEventBus
-                    )
-                );
-            }
 
             if (includeMarketplaceCredits)
             {

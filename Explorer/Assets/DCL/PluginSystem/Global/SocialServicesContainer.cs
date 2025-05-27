@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
                 try
                 {
                     await socialServicesRPC.DisconnectAsync(ct);
-                    await socialServicesRPC.EnsureRpcConnectionAsync(ct);
+                    await socialServicesRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
                 }
                 catch (Exception e) when (e is not OperationCanceledException) { }
 
