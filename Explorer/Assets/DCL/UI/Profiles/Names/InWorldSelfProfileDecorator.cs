@@ -27,9 +27,9 @@ namespace DCL.UI.ProfileNames
         public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
             origin.ProfileAsync(ct);
 
-        public async UniTask<Profile?> UpdateProfileAsync(bool publish, CancellationToken ct)
+        public async UniTask<Profile?> UpdateProfileAsync(CancellationToken ct)
         {
-            Profile? profile = await origin.UpdateProfileAsync(publish, ct);
+            Profile? profile = await origin.UpdateProfileAsync(ct);
 
             if (profile != null)
                 UpdateAvatarInWorld(profile);
