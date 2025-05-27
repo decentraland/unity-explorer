@@ -21,6 +21,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Systems;
 using NBitcoin;
 using SceneRunner.Scene;
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using static DG.Tweening.Ease;
@@ -63,6 +64,11 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
+            DateTimeOffset Epoch2024 = new DateTimeOffset(2024,1,1,0,0,0,TimeSpan.Zero);
+            var a = DateTimeOffset.UtcNow;
+            int b = (Epoch2024 - a).Milliseconds;
+            double c = (Epoch2024 - a).TotalMilliseconds;
+
             platformComponent.ColliderSceneEntityInfo = null;
             platformComponent.ColliderNetworkEntityId = null;
             platformComponent.ColliderNetworkId = null;

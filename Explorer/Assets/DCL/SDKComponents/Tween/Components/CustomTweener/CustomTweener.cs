@@ -50,6 +50,8 @@ namespace DCL.SDKComponents.Tween.Components
         public bool IsActive() =>
             !core.IsPlaying() && !finished;
 
+        public ulong StartSyncServerTimeMs { private get; set; }
+
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
             Debug.Log($"VVV DoTween start current time: {tweenModelCurrentTime}");
@@ -58,35 +60,49 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 
-        public Vector3? GetOffset(float delay)
+        // public Vector3? GetOffset(float tPast, float tCurrent)
+        public Vector3? GetOffset(ulong syncTimePast, ulong syncTimeServer)
         {
-            if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw)
-                return null;
+            if (this is not Vector3Tweener vector3Tweener) return null;
+            if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw) return null;
 
-            float t1 = tw.Elapsed(false);
-            float t0 = Mathf.Clamp(t1 - delay, 0f, tw.Duration(false));
+            var current = vector3Tweener.CurrentValue;
 
-            return GetOffset(tw, t0, t1, ease);
+            var pastTime = Mathf.Clamp((syncTimeServer - syncTimePast) / 1000f, 0f, tw.Duration(false));
+            core.Goto(pastTime);
+            var past = vector3Tweener.CurrentValue;
+
+            var currentTime = Mathf.Clamp((syncTimeServer - StartSyncServerTimeMs) / 1000f, 0f, tw.Duration(false));
+            core.Goto(currentTime);
+
+            Debug.Log($"VVV [TWEEN] {current} {past}");
+
+            return current - past;
+
+            // float t1 = tw.Elapsed(false);
+            // float t0 = Mathf.Clamp(t1 - delay, 0f, tw.Duration(false));
+            // if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw) return null;
+            return GetOffset(tw, syncTimeServer - syncTimePast, syncTimeServer - StartSyncServerTimeMs, ease);
         }
 
         public static Vector3 GetOffset(
             TweenerCore<Vector3,Vector3,VectorOptions> tw,
-            float t0, float t1, Ease ease,
+            ulong tPast, ulong tCurrent, Ease ease,
             float overshootOrAmplitude = 1.70158f, float period = 0f)
         {
-            if (t1 < t0) (t0, t1) = (t1, t0);
+            // if (tCurrent < tPast) (tPast, tCurrent) = (tCurrent, tPast);
 
-            float dur = tw.Duration(false);
             Vector3 seg = tw.endValue - tw.startValue;
 
-            float p0 = Mathf.Clamp01(t0 / dur);
-            float p1 = Mathf.Clamp01(t1 / dur);
+            float dur = tw.Duration(false);
+            float pPast = Mathf.Clamp01(tPast / dur);
+            float pCurrent = Mathf.Clamp01(tCurrent / dur);
 
             // evaluate the same curve DOTween uses
-            p0 = DOVirtual.EasedValue(0,1,p0,ease,overshootOrAmplitude,period);
-            p1 = DOVirtual.EasedValue(0,1,p1,ease,overshootOrAmplitude,period);
+            pPast = DOVirtual.EasedValue(0,1,pPast,ease,overshootOrAmplitude,period);
+            pCurrent = DOVirtual.EasedValue(0,1,pCurrent,ease,overshootOrAmplitude,period);
 
-            return seg * (p1 - p0);
+            return seg * (pCurrent - pPast);
         }
 
         private void OnTweenComplete()

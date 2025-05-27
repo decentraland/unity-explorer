@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.SDKComponents.Tween.Components;
 using DCL.SDKComponents.Tween.Playground;
 using DCL.Utilities;
 using ECS.Abstract;
@@ -119,13 +120,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 && remote.syncedPlatform != null
                 && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
                 && remote.syncedPlatform!.Value.NetworkId != null
-                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out var tweener)
+                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue((remote.syncedPlatform.Value.EntityId,remote.syncedPlatform.Value.NetworkId), out ITweener? tweener)
                 && tweener != null)
             {
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
 
-                float delay = (ntpTimeService.ServerTimeMs - remote.syncTimestamp) / 1000f;
-                Vector3? offset = tweener.GetOffset(delay);
+                // float tPast = (ntpTimeService.ServerTimeMs - remote.syncTimestamp) / 1000f;
+                Vector3? offset = tweener.GetOffset(remote.syncTimestamp, ntpTimeService.ServerTimeMs);
 
                 if (offset.HasValue)
                 {
