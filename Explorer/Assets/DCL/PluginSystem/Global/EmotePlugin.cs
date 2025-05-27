@@ -127,7 +127,7 @@ namespace DCL.PluginSystem.Global
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, realmData, customStreamingSubdirectory);
+                emoteStorage, realmData, customStreamingSubdirectory, appArgs);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
