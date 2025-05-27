@@ -142,6 +142,8 @@ AudioMixerController:
     name: Chat_Volume
   - guid: 856382ba013d5eb468afa9f4a06fb492
     name: Master_Volume
+  - guid: 0b354bdbe2d8f244ebde89156a204529
+    name: Microphone_Volume
   - guid: 70d912e79d514f746817b3c23579aa6b
     name: Music_Volume
   - guid: aa94afff7f3a3c547b715ba6b1477eeb
