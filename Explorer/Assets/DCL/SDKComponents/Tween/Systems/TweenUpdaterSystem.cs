@@ -91,7 +91,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private bool hasCollider;
 
         [Query]
-        private void CheckNE(in Entity e, ref PBNetworkEntity ne)
+        private void CheckNE(in Entity e, ref PBNetworkEntity ne, ref SDKTweenComponent sdkTweenComponent)
         {
             Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
 
@@ -107,10 +107,10 @@ namespace DCL.SDKComponents.Tween.Systems
 
             foreach (var sceneInfo in collidersGlobalCache.colliderSceneEntityInfos)
             {
-                // if (sceneInfo.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id && sdkTweenComponent.CustomTweener != null)
-                // {
-                //     collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkTweenComponent.CustomTweener);
-                // }
+                if (sceneInfo.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id && sdkTweenComponent.CustomTweener != null)
+                {
+                    collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkTweenComponent.CustomTweener);
+                }
             }
 
             // collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkCollider.Collider);

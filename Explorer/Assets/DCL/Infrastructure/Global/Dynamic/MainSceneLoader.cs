@@ -40,7 +40,6 @@ using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Threading;
 using TMPro;
 #if UNITY_EDITOR
@@ -90,34 +89,9 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
 
-        private long lastBytesSent;
-        private long lastBytesReceived;
         private void Awake()
         {
             InitializeFlowAsync(destroyCancellationToken).Forget();
-
-            var stats = NetworkInterface
-                       .GetAllNetworkInterfaces()
-                       .First(n => n.OperationalStatus == OperationalStatus.Up)
-                       .GetIPv4Statistics();
-
-            lastBytesSent = stats.BytesSent;
-            lastBytesReceived  = stats.BytesReceived;
-
-            Debug.Log($"VVV [Prof] {lastBytesSent} {lastBytesReceived}");
-        }
-
-        private void LateUpdate()
-        {
-            // var stats = NetworkInterface
-            //            .GetAllNetworkInterfaces()
-            //            .First(n => n.OperationalStatus == OperationalStatus.Up)
-            //            .GetIPv4Statistics();
-            //
-            // Debug.Log($"VVV [Prof] {stats.BytesSent - lastBytesSent} {stats.BytesReceived - lastBytesReceived}");
-            //
-            // lastBytesSent = stats.BytesSent;
-            // lastBytesReceived = stats.BytesReceived;
         }
 
         private void OnDestroy()
