@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using System;
 using System.Threading;
 
 namespace DCL.Profiles
@@ -15,12 +14,12 @@ namespace DCL.Profiles
             this.origin = origin;
         }
 
-        public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
+        public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: set requested for profile: {profile}");
-            await origin.SetAsync(profile, publish: publish, ct);
+            await origin.SetAsync(profile, ct);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: set finished for profile: {profile}");

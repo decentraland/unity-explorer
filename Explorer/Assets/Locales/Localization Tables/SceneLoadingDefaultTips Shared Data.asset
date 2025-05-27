@@ -79,14 +79,6 @@ MonoBehaviour:
     m_Key: BODY-7
     m_Metadata:
       m_Items: []
-  - m_Id: 176474066603114496
-    m_Key: TITLE-8
-    m_Metadata:
-      m_Items: []
-  - m_Id: 176474088031813632
-    m_Key: BODY-8
-    m_Metadata:
-      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
