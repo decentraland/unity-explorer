@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit;
 using LiveKit.Proto;
@@ -20,6 +21,7 @@ namespace DCL.VoiceChat
         private readonly AudioSource microphoneAudioSource;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private bool disposed;
         private ITrack microphoneTrack;
@@ -27,13 +29,40 @@ namespace DCL.VoiceChat
         private bool isMediaOpen;
         private RtcAudioSource rtcAudioSource;
 
-        public VoiceChatLivekitRoomHandler(VoiceChatCombinedAudioSource combinedAudioSource, VoiceChatMicrophoneAudioFilter microphoneAudioFilter, AudioSource microphoneAudioSource, IRoom voiceChatRoom)
+        public VoiceChatLivekitRoomHandler(
+            VoiceChatCombinedAudioSource combinedAudioSource,
+            VoiceChatMicrophoneAudioFilter microphoneAudioFilter,
+            AudioSource microphoneAudioSource,
+            IRoom voiceChatRoom,
+            IVoiceChatCallStatusService voiceChatCallStatusService
+            )
         {
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
             this.microphoneAudioSource = microphoneAudioSource;
             this.voiceChatRoom = voiceChatRoom;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
+            voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
+        }
+
+        private void OnCallStatusChanged(VoiceChatStatus newStatus)
+        {
+            switch (newStatus)
+            {
+                case VoiceChatStatus.DISCONNECTED:
+                    DisconnectFromRoom().Forget();
+                    break;
+                case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
+                    ConnectToRoom().Forget();
+                    break;
+                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_ENDED_CALL: break;
+                default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
+            }
         }
 
         public void Dispose()
@@ -41,7 +70,18 @@ namespace DCL.VoiceChat
             if (disposed) return;
             disposed = true;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
             CloseMedia();
+        }
+
+        private async UniTaskVoid ConnectToRoom()
+        {
+            await roomHub.VoiceChatRoom().ActivateAsync();
+        }
+
+        private async UniTaskVoid DisconnectFromRoom()
+        {
+            await roomHub.VoiceChatRoom().DeactivateAsync();
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)

@@ -99,6 +99,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (Activated) { return; }
 
             Activated = true;
+            //TODO FRAN: Replace this with proper connection string when we have BE working.
             connectionString = string.Concat("livekit:wss://dcl.livekit.cloud?access_token=", settings.StrictObject.ConnectionString);
             await this.StartIfNotAsync();
         }
