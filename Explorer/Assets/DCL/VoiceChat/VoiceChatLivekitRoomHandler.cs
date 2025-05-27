@@ -53,11 +53,11 @@ namespace DCL.VoiceChat
             switch (newStatus)
             {
                 case VoiceChatStatus.DISCONNECTED:
-                    DisconnectFromRoom().Forget();
+                    DisconnectFromRoomAsync().Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;
                 case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
-                    ConnectToRoom().Forget();
+                    ConnectToRoomAsync().Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL: break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL: break;
@@ -76,12 +76,12 @@ namespace DCL.VoiceChat
             CloseMedia();
         }
 
-        private async UniTaskVoid ConnectToRoom()
+        private async UniTaskVoid ConnectToRoomAsync()
         {
             await roomHub.VoiceChatRoom().ActivateAsync();
         }
 
-        private async UniTaskVoid DisconnectFromRoom()
+        private async UniTaskVoid DisconnectFromRoomAsync()
         {
             await roomHub.VoiceChatRoom().DeactivateAsync();
         }
