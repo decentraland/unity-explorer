@@ -288,9 +288,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void ShowMembersListAsync(string communityId, CommunityMemberRole userRole, CancellationToken cancellationToken)
         {
+            ct = cancellationToken;
+
             if (lastCommunityId == null || lastCommunityId.Equals(communityId)) return;
 
-            ct = cancellationToken;
             lastCommunityId = communityId;
             viewerRole = userRole;
             view.SetSectionButtonsActive(viewerRole is CommunityMemberRole.moderator or CommunityMemberRole.owner);

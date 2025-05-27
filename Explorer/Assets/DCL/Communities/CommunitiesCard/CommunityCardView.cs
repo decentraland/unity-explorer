@@ -1,4 +1,5 @@
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesCard.Places;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.UI;
@@ -81,6 +82,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
+        [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
 
         private static string NumberToCompactString(long number)
         {
@@ -164,6 +166,7 @@ namespace DCL.Communities.CommunitiesCard
 
             CameraReelGalleryConfigs.CameraReelGalleryView.transform.parent.gameObject.SetActive(section == Sections.PHOTOS);
             MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
+            PlacesSectionView.gameObject.SetActive(section == Sections.PLACES);
 
             SectionChanged?.Invoke(section);
         }

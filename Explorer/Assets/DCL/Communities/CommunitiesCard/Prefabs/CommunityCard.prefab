@@ -563,6 +563,7 @@ MonoBehaviour:
     ThumbnailHeight: 201
     ThumbnailWidth: 272
   <MembersListView>k__BackingField: {fileID: 4230793288233944100}
+  <PlacesSectionView>k__BackingField: {fileID: 3484876337616357202}
 --- !u!1 &671784498007643745
 GameObject:
   m_ObjectHideFlags: 0
@@ -4904,6 +4905,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7596744029912012324}
   - component: {fileID: 8951220052514131458}
+  - component: {fileID: 3484876337616357202}
   m_Layer: 5
   m_Name: Places
   m_TagString: Untagged
@@ -4940,6 +4942,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3484876337616357202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5877391601391916685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb368430d5f84d0aa0c006fb09340e15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5959253719871175359
