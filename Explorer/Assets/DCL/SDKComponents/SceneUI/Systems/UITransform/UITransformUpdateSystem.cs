@@ -63,7 +63,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             switch (isCurrent)
             {
                 case false when !uiTransformComponent.IsHidden:
-                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
+                    if(canvas.rootVisualElement.Contains(uiTransformComponent.Transform))
+                        canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
                     uiTransformComponent.IsHidden = true;
                     break;
                 case true when uiTransformComponent.IsHidden:
