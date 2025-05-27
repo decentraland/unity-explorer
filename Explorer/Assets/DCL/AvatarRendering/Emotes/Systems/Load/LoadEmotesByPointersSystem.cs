@@ -16,6 +16,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using Global.AppArgs;
 using SceneRunner.Scene;
 using System;
@@ -254,6 +255,56 @@ namespace DCL.AvatarRendering.Emotes.Load
             return false;
         }
 
+        private bool CreateGltfPromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
+        {
+            // Only create GLTF promises for builder emotes that have a content download URL
+            if (string.IsNullOrEmpty(component.DTO.ContentDownloadUrl))
+                return false;
+
+            // Check if emote already has assets loaded or is loading
+            if (component.AssetResults[intention.BodyShape] != null || component.IsLoading)
+                return false;
+
+            // Look for GLB file in content
+            foreach (var content in component.DTO.content)
+            {
+                if (content.file.EndsWith(".glb"))
+                {
+                    // Create GLTF promise
+                    var gltfPromise = GltfPromise.Create(World!, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
+                    World!.Create(gltfPromise, component, intention.BodyShape);
+
+                    // Create audio clip promises for any audio files in the emote
+                    TryCreateBuilderAudioClipPromises(component, intention.BodyShape, partitionComponent);
+
+                    component.UpdateLoadingStatus(true);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void TryCreateBuilderAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
+        {
+            /*AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
+
+            foreach (AvatarAttachmentDTO.Content item in content ?? Array.Empty<AvatarAttachmentDTO.Content>())
+            {
+                var audioType = item.file.ToAudioType();
+
+                if (audioType == AudioType.UNKNOWN)
+                    continue;
+
+                // For builder emotes, use the content download URL + hash
+                string audioUrl = component.DTO.ContentDownloadUrl + item.hash;
+
+                // The resolution of the audio promise will be finalized by FinalizeEmoteLoadingSystem
+                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, audioUrl, audioType, partitionComponent);
+                World!.Create(promise, component, bodyShape);
+            }*/
+        }
+
         private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
             AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
@@ -294,6 +345,10 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 // If emote is still loading (either via IsLoading flag or GLTF promise), continue waiting
                 if (emote.IsLoading || IsEmoteLoadingViaGltfPromise(emote, intention.BodyShape))
+                    continue;
+
+                // Try to create GLTF promise if needed (for builder emotes)
+                if (CreateGltfPromiseIfRequired(emote, in intention, partitionComponent))
                     continue;
 
                 if (emote.AssetResults[intention.BodyShape] != null)
