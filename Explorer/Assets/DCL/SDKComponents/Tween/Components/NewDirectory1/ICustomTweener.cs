@@ -5,8 +5,6 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public interface ITweener
     {
-        ulong StartSyncServerTimeMs { set; }
-
         void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
 
         void Play();
@@ -21,6 +19,6 @@ namespace DCL.SDKComponents.Tween.Components
 
         bool IsActive();
 
-        public Vector3? GetOffset(ulong syncTimePast, ulong syncTimeServer);
+        public Vector3? GetOffset(float deltaTime, ulong syncTimePast, ulong syncTimeServer);
     }
 }

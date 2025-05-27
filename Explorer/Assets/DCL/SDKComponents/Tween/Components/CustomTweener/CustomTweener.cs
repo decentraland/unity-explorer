@@ -60,49 +60,25 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 
-        // public Vector3? GetOffset(float tPast, float tCurrent)
-        public Vector3? GetOffset(ulong syncTimePast, ulong syncTimeServer)
+        public Vector3? GetOffset(float deltaTime, ulong syncTimePast, ulong syncTimeServer)
         {
             if (this is not Vector3Tweener vector3Tweener) return null;
             if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw) return null;
 
-            var current = vector3Tweener.CurrentValue;
-
-            var pastTime = Mathf.Clamp((syncTimeServer - syncTimePast) / 1000f, 0f, tw.Duration(false));
-            core.Goto(pastTime);
-            var past = vector3Tweener.CurrentValue;
-
-            var currentTime = Mathf.Clamp((syncTimeServer - StartSyncServerTimeMs) / 1000f, 0f, tw.Duration(false));
-            core.Goto(currentTime);
-
-            Debug.Log($"VVV [TWEEN] {current} {past}");
-
-            return current - past;
-
-            // float t1 = tw.Elapsed(false);
-            // float t0 = Mathf.Clamp(t1 - delay, 0f, tw.Duration(false));
-            // if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw) return null;
-            return GetOffset(tw, syncTimeServer - syncTimePast, syncTimeServer - StartSyncServerTimeMs, ease);
-        }
-
-        public static Vector3 GetOffset(
-            TweenerCore<Vector3,Vector3,VectorOptions> tw,
-            ulong tPast, ulong tCurrent, Ease ease,
-            float overshootOrAmplitude = 1.70158f, float period = 0f)
-        {
-            // if (tCurrent < tPast) (tPast, tCurrent) = (tCurrent, tPast);
-
-            Vector3 seg = tw.endValue - tw.startValue;
-
+            float currentTweenTime = tw.Elapsed(false);
             float dur = tw.Duration(false);
-            float pPast = Mathf.Clamp01(tPast / dur);
-            float pCurrent = Mathf.Clamp01(tCurrent / dur);
 
-            // evaluate the same curve DOTween uses
-            pPast = DOVirtual.EasedValue(0,1,pPast,ease,overshootOrAmplitude,period);
-            pCurrent = DOVirtual.EasedValue(0,1,pCurrent,ease,overshootOrAmplitude,period);
+            if (syncTimeServer < syncTimePast)
+                Debug.LogError("VVV [TWEEN] Server time is less then Past message time");
 
-            return seg * (pCurrent - pPast);
+            float timeDiff = (syncTimeServer - syncTimePast) / 1000f;
+            float pastTweenTime = Mathf.Clamp(currentTweenTime - timeDiff, 0f, dur);
+
+            Vector3 past = DOVirtual.EasedValue(tw.startValue, tw.endValue, Mathf.Clamp01(pastTweenTime / dur), ease, 1.70158f,0f);
+            Vector3 future = DOVirtual.EasedValue(tw.startValue, tw.endValue, Mathf.Clamp01((currentTweenTime + deltaTime ) / dur), ease, 1.70158f,0f);
+
+            // return vector3Tweener.CurrentValue - past;
+            return future - past;
         }
 
         private void OnTweenComplete()

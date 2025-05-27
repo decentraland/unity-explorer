@@ -12,6 +12,7 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System;
 using UnityEngine;
 using Utility.Animations;
 using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
@@ -98,7 +99,9 @@ namespace DCL.Multiplayer.Movement.Systems
             bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
                         && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
 
-            if (bothPointBlendsAreZero && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON)
+            if (bothPointBlendsAreZero && (intComp.Start.syncedPlatform.Value.EntityId == uint.MaxValue
+                || intComp.End.syncedPlatform.Value.EntityId == uint.MaxValue)
+                && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON)
                 BlendBetweenTwoZeroMovementPoints(ref anim, intComp);
             else
             {

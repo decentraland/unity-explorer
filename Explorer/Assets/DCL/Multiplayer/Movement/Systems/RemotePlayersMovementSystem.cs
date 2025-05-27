@@ -124,14 +124,12 @@ namespace DCL.Multiplayer.Movement.Systems
                 && tweener != null)
             {
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
-
-                // float tPast = (ntpTimeService.ServerTimeMs - remote.syncTimestamp) / 1000f;
-                Vector3? offset = tweener.GetOffset(remote.syncTimestamp, ntpTimeService.ServerTimeMs);
+                Vector3? offset = tweener.GetOffset(0, remote.syncTimestamp, ntpTimeService.ServerTimeMs);
 
                 if (offset.HasValue)
                 {
                     Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
-                    remote.position += offset.Value;
+                    // remote.position += offset.Value;
                 }
             }
 
