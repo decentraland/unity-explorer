@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DCL.VoiceChat
 {
@@ -6,20 +7,31 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatView view;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly MicrophoneButtonController micController;
 
-        public VoiceChatController(VoiceChatView view, IVoiceChatCallStatusService voiceChatCallStatusService)
+        public VoiceChatController(VoiceChatView view, IVoiceChatCallStatusService voiceChatCallStatusService, VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.microphoneHandler = microphoneHandler;
 
             view.IncomingCallView.AcceptCallButton.onClick.AddListener(AcceptCall);
             view.IncomingCallView.RefuseCallButton.onClick.AddListener(RefuseCall);
 
-            view.OutgoingCallView.MicrophoneButton.onClick.AddListener(ToggleMicrophone);
+            view.OutgoingCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.OutgoingCallView.HangUpButton.onClick.AddListener(HangUp);
 
-            view.InCallView.MicrophoneButton.onClick.AddListener(ToggleMicrophone);
+            view.InCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
+
+            var list = new List<MicrophoneButton>
+            {
+                view.OutgoingCallView.MicrophoneButton,
+                view.InCallView.MicrophoneButton,
+            };
+
+            micController = new MicrophoneButtonController(list, microphoneHandler);
 
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
         }
@@ -67,6 +79,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             this.voiceChatCallStatusService.StatusChanged -= OnVoiceChatStatusChanged;
+            micController.Dispose();
         }
     }
 }

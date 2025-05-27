@@ -6,7 +6,7 @@ namespace DCL.VoiceChat
     public class VoiceChatInCallView : MonoBehaviour
     {
         [field: SerializeField]
-        public Button MicrophoneButton;
+        public MicrophoneButton MicrophoneButton;
 
         [field: SerializeField]
         public Button HangUpButton;

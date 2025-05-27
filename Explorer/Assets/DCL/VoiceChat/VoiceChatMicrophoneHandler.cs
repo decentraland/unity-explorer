@@ -79,6 +79,7 @@ namespace DCL.VoiceChat
             audioSource.clip = MicrophoneAudioClip;
             audioSource.loop = true;
             audioSource.Play();
+            EnabledMicrophone?.Invoke();
             Debug.Log("Enable microphone");
         }
 

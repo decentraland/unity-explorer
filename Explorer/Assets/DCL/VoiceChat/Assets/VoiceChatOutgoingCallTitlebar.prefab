@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdbd6fbb60b9410da8ee0f12360000ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MicrophoneButton: {fileID: 1963021865538590273}
+  MicrophoneButton: {fileID: 3929499160641976689}
   HangUpButton: {fileID: 4463312493248403165}
 --- !u!1 &5370889611850479804
 GameObject:
@@ -676,15 +676,15 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3acf6ad0ecdff4baebc835eba56bbc86, type: 3}
---- !u!114 &1963021865538590273 stripped
+--- !u!114 &3929499160641976689 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4534926856105991233, guid: 3acf6ad0ecdff4baebc835eba56bbc86, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1394185848287769457, guid: 3acf6ad0ecdff4baebc835eba56bbc86, type: 3}
   m_PrefabInstance: {fileID: 2725036278185921024}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 211960b58de54d9699b10b25e2ba4395, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &7571338493289951017 stripped

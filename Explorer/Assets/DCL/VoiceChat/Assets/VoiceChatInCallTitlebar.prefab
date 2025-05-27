@@ -261,7 +261,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6459b0fdfef741ecaf542c085bdbc3f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MicrophoneButton: {fileID: 6952613049906106923}
+  MicrophoneButton: {fileID: 5605516908320537883}
   HangUpButton: {fileID: 5500487178702161467}
 --- !u!1 &5370889611850479804
 GameObject:
@@ -904,14 +904,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5531416706500191529, guid: 3acf6ad0ecdff4baebc835eba56bbc86, type: 3}
   m_PrefabInstance: {fileID: 6815053760788008554}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6952613049906106923 stripped
+--- !u!114 &5605516908320537883 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4534926856105991233, guid: 3acf6ad0ecdff4baebc835eba56bbc86, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1394185848287769457, guid: 3acf6ad0ecdff4baebc835eba56bbc86, type: 3}
   m_PrefabInstance: {fileID: 6815053760788008554}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 211960b58de54d9699b10b25e2ba4395, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
