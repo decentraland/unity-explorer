@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -104,20 +103,8 @@ namespace DCL.CharacterPreview
             World world = globalWorld;
             Entity avatarEntity = characterPreviewEntity;
 
-            /*bool hasEmotePromise = world.Has<EmotePromise>(emotePromiseEntity);
-            EmotePromise? debugPromise = null;
-            if (hasEmotePromise)
-                debugPromise = world.Get<EmotePromise>(emotePromiseEntity);*/
-
             while (!IsAvatarLoaded() || !IsEmoteLoaded())
                 await UniTask.Yield(ct);
-
-            /*if (world.IsAlive(emotePromiseEntity))
-            {
-                hasEmotePromise = world.Has<EmotePromise>(emotePromiseEntity);
-                if (hasEmotePromise)
-                    debugPromise = world.Get<EmotePromise>(emotePromiseEntity);
-            }*/
 
             ct.ThrowIfCancellationRequested();
 
@@ -135,7 +122,6 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
-            Debug.Log($"PRAVS - CharacterPreviewController.PlayEmote({emoteId})");
             var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW };
 
             if (globalWorld.Has<CharacterEmoteIntent>(characterPreviewEntity))

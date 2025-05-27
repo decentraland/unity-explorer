@@ -158,138 +158,6 @@ namespace DCL.AvatarRendering.Emotes.Load
             return emotesWithResponse == intention.Pointers.Count;
         }
 
-        private bool GetGltfsUntilAllAreResolved(
-            in GetEmotesByPointersIntention intention,
-            IPartitionComponent partitionComponent,
-            IEnumerable<IEmote> emotes
-        )
-        {
-            var emotesWithResponse = 0;
-
-            foreach (IEmote emote in emotes)
-            {
-                var urn = emote.GetUrn();
-                bool debug = urn.Equals("0b9d4454-8c03-4be5-acb3-df48baa94ad3")
-                             || urn.Equals("946e0c52-7406-432f-93fd-e7d9f0b329b8")
-                             || urn.Equals("9cee1007-1f7a-4ee2-ac9b-8c50cbbf6193");
-
-                if (debug)
-                {
-                    Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - Checking emote: {emote.GetUrn()}");
-                    Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - IsLoading: {emote.IsLoading}");
-                    Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - AssetResults[{intention.BodyShape}]: {emote.AssetResults[intention.BodyShape]}");
-                }
-
-                // In builder emote collections mode, skip non-builder emotes that can't be resolved
-                if (IsNonBuilderEmoteThatCantBeResolved(emote, intention.BodyShape))
-                {
-                    if (debug)
-                        Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - Skipping non-builder emote {emote.GetUrn()} in builder collections mode");
-                    emotesWithResponse++;
-                    continue;
-                }
-
-                if (emote.IsLoading)
-                {
-                    if (debug)
-                        Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - Emote {emote.GetUrn()} is loading, continuing");
-                    continue;
-                }
-
-                // Check if this emote is currently loading via GLTF promise (for builder emotes)
-                if (IsEmoteLoadingViaGltfPromise(emote, intention.BodyShape))
-                {
-                    if (debug)
-                        Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - Emote {emote.GetUrn()} is loading via GLTF promise, continuing");
-                    continue;
-                }
-
-                if (emote.AssetResults[intention.BodyShape] != null)
-                {
-                    if (debug)
-                        Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - Emote {emote.GetUrn()} has asset result, counting as resolved");
-                    emotesWithResponse++;
-                }
-                else
-                {
-                    if (debug)
-                        Debug.Log($"PRAVS - GetGltfsUntilAllAreResolved() - Emote {emote.GetUrn()} has no asset result and no promise created");
-                }
-
-                if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
-
-                    // Reference must be added only once when the wearable is resolved
-                    if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
-                    {
-                        intention.SuccessfulPointers.Add(emote.GetUrn());
-
-                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                        emote.AssetResults[intention.BodyShape]?.Asset?.AddReference();
-                    }
-            }
-
-            return emotesWithResponse == intention.Pointers.Count;
-        }
-
-        /// <summary>
-        /// Checks if an emote is currently loading via GLTF promise (for builder emotes)
-        /// </summary>
-        private bool IsEmoteLoadingViaGltfPromise(IEmote emote, BodyShape bodyShape)
-        {
-            bool isLoading = false;
-
-            // Query all entities with GltfPromise and IEmote components
-            World.Query(in new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>(),
-                (Entity entity, ref GltfPromise promise, ref IEmote promiseEmote) =>
-                {
-                    // Query() doesn't accept more than 3 parameters in its forEach delegate...
-                    var promiseBodyShape = World.Get<BodyShape>(entity);
-
-                    // Check if this promise is for the same emote and body shape
-                    if (promiseEmote.GetUrn().Equals(emote.GetUrn()) && promiseBodyShape.Equals(bodyShape))
-                    {
-                        // Check if the promise is still active (not consumed and not cancelled)
-                        if (!promise.IsConsumed && !promise.IsCancellationRequested(World))
-                        {
-                            Debug.Log($"PRAVS - IsEmoteLoadingViaGltfPromise() - Found active GLTF promise for emote: {emote.GetUrn()}");
-                            isLoading = true;
-                        }
-                    }
-                });
-
-            return isLoading;
-        }
-
-        /// <summary>
-        /// Checks if an emote is a non-builder emote that can't be resolved in builder collections mode
-        /// </summary>
-        private bool IsNonBuilderEmoteThatCantBeResolved(IEmote emote, BodyShape bodyShape)
-        {
-            // If the emote already has an asset result, it's resolved
-            if (emote.AssetResults[bodyShape] != null)
-                return false;
-
-            // If the emote is currently loading via GLTF (builder emote), don't skip it
-            if (IsEmoteLoadingViaGltfPromise(emote, bodyShape))
-                return false;
-
-            // If the emote is currently loading via other means, don't skip it
-            if (emote.IsLoading)
-                return false;
-
-            // If we can't get the main file hash, it's likely a non-builder emote that can't be resolved
-            if (!emote.TryGetMainFileHash(bodyShape, out string? hash))
-                return true;
-
-            // If the emote has a manifest result with an exception, it failed to load
-            if (emote.ManifestResult is { Exception: not null })
-                return false; // Don't skip, let it count as resolved with error
-
-            // If we reach here, it's likely a regular emote that would normally be loaded via AssetBundle
-            // In builder collections mode, we want to skip these to avoid timeout
-            return true;
-        }
-
         private bool RequestMissingPointers(ICollection<URN> missingPointers, IPartitionComponent partitionComponent, BodyShape forBodyShape)
         {
             if (missingPointers.Count <= 0) return false;
@@ -324,8 +192,6 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                     continue;
                 }
-
-                // Debug.Log($"PRAVS - LoadEmotesByPointersSystem.ExtractMissingPointersAndResolvedEmotes() - pointer: {loadingIntentionPointer}");
 
                 URN shortenedPointer = loadingIntentionPointer.Shorten();
 
@@ -407,6 +273,80 @@ namespace DCL.AvatarRendering.Emotes.Load
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
                 World!.Create(promise, component, bodyShape);
             }
+        }
+
+        private bool GetGltfsUntilAllAreResolved(
+            in GetEmotesByPointersIntention intention,
+            IPartitionComponent partitionComponent,
+            IEnumerable<IEmote> emotes
+        )
+        {
+            var emotesWithResponse = 0;
+
+            foreach (IEmote emote in emotes)
+            {
+                // In builder emote collections mode, skip non-builder emotes that can't be resolved
+                if (ShouldSkipNonBuilderEmote(emote, intention.BodyShape))
+                {
+                    emotesWithResponse++;
+                    continue;
+                }
+
+                // If emote is still loading (either via IsLoading flag or GLTF promise), continue waiting
+                if (emote.IsLoading || IsEmoteLoadingViaGltfPromise(emote, intention.BodyShape))
+                    continue;
+
+                if (emote.AssetResults[intention.BodyShape] != null)
+                {
+                    emotesWithResponse++;
+
+                    // Reference must be added only once when the emote is resolved
+                    if (emote.AssetResults[intention.BodyShape] is { Succeeded: true } &&
+                        !intention.SuccessfulPointers.Contains(emote.GetUrn()))
+                    {
+                        intention.SuccessfulPointers.Add(emote.GetUrn());
+                        emote.AssetResults[intention.BodyShape]?.Asset?.AddReference();
+                    }
+                }
+            }
+
+            return emotesWithResponse == intention.Pointers.Count;
+        }
+
+        private bool IsEmoteLoadingViaGltfPromise(IEmote emote, BodyShape bodyShape)
+        {
+            bool isLoading = false;
+
+            World.Query(in new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>(),
+                (ref GltfPromise promise, ref IEmote promiseEmote, ref BodyShape promiseBodyShape) =>
+                {
+                    // Check if this promise is for the same emote and body shape
+                    if (promiseEmote.GetUrn().Equals(emote.GetUrn()) && promiseBodyShape.Equals(bodyShape))
+                    {
+                        // Check if the promise is still active (not consumed and not cancelled)
+                        if (!promise.IsConsumed && !promise.IsCancellationRequested(World))
+                            isLoading = true;
+                    }
+                });
+
+            return isLoading;
+        }
+
+        private bool ShouldSkipNonBuilderEmote(IEmote emote, BodyShape bodyShape)
+        {
+            // If the emote already has an asset result, don't skip it
+            if (emote.AssetResults[bodyShape] != null)
+                return false;
+
+            // If the emote is currently loading (either via IsLoading flag or GLTF promise), don't skip it
+            if (emote.IsLoading || IsEmoteLoadingViaGltfPromise(emote, bodyShape))
+                return false;
+
+            // If we can't get the main file hash, it's likely a non-builder emote that can't be resolved via GLTF
+            if (!emote.TryGetMainFileHash(bodyShape, out string? hash))
+                return true;
+
+            return true;
         }
     }
 }

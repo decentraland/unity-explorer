@@ -225,8 +225,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (!string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl))
             {
-                Debug.Log($"PRAVS - WearablePolymorphicBehaviour.CreatePromise() - wearable.DTO.ContentDownloadUrl: {wearable.DTO.ContentDownloadUrl}");
-
                 foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
                 {
                     if (content.hash == hash)
@@ -272,13 +270,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             IPartitionComponent partitionComponent,
             World world) where T: IAvatarAttachment
         {
-            Debug.Log($"PRAVS - WearablePolymorphicBehaviour.CreateRawWearablePromise() - 1 - content.file: {content.file}");
-
             // An index is added to the promises to know to which slot of the WearableAssets it belongs to
 
             if (content.file.EndsWith(".glb")) // Wearables cannot be ".gltf"
             {
-                Debug.Log($"PRAVS - WearablePolymorphicBehaviour.CreateRawWearablePromise() - 2");
                 var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
@@ -343,8 +338,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
         {
-            Debug.Log($"PRAVS - WearablePolymorphicBehaviour.ToRegularAsset() - assetGOName: {result.Asset?.containerGameObject.name}", result.Asset?.containerGameObject);
-
             GameObject go = result.Asset!.containerGameObject;
 
             // collect all renderers
