@@ -143,7 +143,7 @@ namespace DCL.VoiceChat
             // Always invoke the AudioRead event for LiveKit compatibility
             // This sends the processed audio data to LiveKit
             // Send even empty buffers to maintain audio stream continuity
-            AudioRead.Invoke(data, channels, cachedSampleRate);
+            AudioRead?.Invoke(data, channels, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
