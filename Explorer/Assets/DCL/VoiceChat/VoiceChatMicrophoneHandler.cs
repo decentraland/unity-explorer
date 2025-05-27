@@ -20,27 +20,39 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration voiceChatConfiguration;
         private readonly AudioSource audioSource;
         private readonly VoiceChatMicrophoneAudioFilter audioFilter;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private AudioClip microphoneAudioClip;
 
         private bool isMicrophoneInitialized;
+        private bool isInCall;
 
         private float buttonPressStartTime;
 
         public bool IsTalking { get; private set; }
         public string MicrophoneName { get; private set; }
 
-        public VoiceChatMicrophoneHandler(DCLInput dclInput, VoiceChatSettingsAsset voiceChatSettings, VoiceChatConfiguration voiceChatConfiguration, AudioSource audioSource, VoiceChatMicrophoneAudioFilter audioFilter)
+        public VoiceChatMicrophoneHandler(
+            DCLInput dclInput,
+            VoiceChatSettingsAsset voiceChatSettings,
+            VoiceChatConfiguration voiceChatConfiguration,
+            AudioSource audioSource,
+            VoiceChatMicrophoneAudioFilter audioFilter,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
             this.voiceChatConfiguration = voiceChatConfiguration;
             this.audioSource = audioSource;
             this.audioFilter = audioFilter;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+            voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
+
+            isInCall = false;
         }
 
         public void Dispose()
@@ -48,6 +60,7 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.performed -= OnPressed;
             dclInput.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
+            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
 
             if (isMicrophoneInitialized)
             {
@@ -64,8 +77,31 @@ namespace DCL.VoiceChat
             }
         }
 
+        private void OnCallStatusChanged(VoiceChatStatus newStatus)
+        {
+            switch (newStatus)
+            {
+                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                case VoiceChatStatus.VOICE_CHAT_ENDED_CALL:
+                case VoiceChatStatus.DISCONNECTED:
+                    isInCall = false;
+                    DisableMicrophone();
+                    break;
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
+                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
+                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
+                    isInCall = true;
+                    break;
+                case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;
+                default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
+            }
+        }
+
+
         private void OnPressed(InputAction.CallbackContext obj)
         {
+            if (!isInCall) return;
+
             buttonPressStartTime = Time.time;
 
             // Start the microphone immediately when button is pressed
@@ -76,6 +112,8 @@ namespace DCL.VoiceChat
 
         private void OnReleased(InputAction.CallbackContext obj)
         {
+            if (!isInCall) return;
+
             float pressDuration = Time.time - buttonPressStartTime;
 
             // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
@@ -95,6 +133,8 @@ namespace DCL.VoiceChat
 
         public void ToggleMicrophone()
         {
+            if (!isInCall) return;
+
             if(IsTalking)
                 EnableMicrophone();
             else
@@ -190,18 +230,22 @@ namespace DCL.VoiceChat
 
             audioFilter?.ResetProcessor();
 
-            InitializeMicrophone();
+            if (isInCall)
+            {
+                InitializeMicrophone();
 
-            if (wasTalking)
-            {
-                audioSource.volume = 1f;
-                if (audioFilter != null)
-                    audioFilter.enabled = true;
-            }
-            else
-            {
-                if (audioFilter != null)
-                    audioFilter.enabled = false;
+                if (wasTalking)
+                {
+                    audioSource.volume = 1f;
+
+                    if (audioFilter != null)
+                        audioFilter.enabled = true;
+                }
+                else
+                {
+                    if (audioFilter != null)
+                        audioFilter.enabled = false;
+                }
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
