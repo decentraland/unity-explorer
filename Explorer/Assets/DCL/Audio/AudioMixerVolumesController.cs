@@ -12,7 +12,8 @@ namespace DCL.Audio
         Music_Volume,
         UI_Volume,
         World_Volume,
-        VoiceChat_Volume
+        VoiceChat_Volume,
+        Microphone_Volume
     }
 
     public class AudioMixerVolumesController
@@ -28,6 +29,8 @@ namespace DCL.Audio
         {
             this.audioMixer = audioMixer;
             allExposedParams = Enum.GetNames(typeof(AudioMixerExposedParam));
+            //We mute microphone by default as we don't want to hear ourselves
+            MuteGroup(AudioMixerExposedParam.Microphone_Volume);
         }
 
         public void MuteGroup(AudioMixerExposedParam groupParam)
@@ -66,7 +69,7 @@ namespace DCL.Audio
                     if (originalVolumes.TryGetValue(groupParamString, out float originalVolume))
                         audioMixer.SetFloat(groupParamString, originalVolume);
                     else
-                        ReportHub.LogError(ReportCategory.AUDIO, "Cannot unmute audio mixer group: missing original volume. Probably the group was not previously muted..");
+                        ReportHub.LogWarning(ReportCategory.AUDIO, "Cannot unmute audio mixer group: missing original volume. Probably the group was not previously muted.");
 
                     mutedGroups.Remove(groupParamString);
                 }
