@@ -21,6 +21,8 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -57,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private bool localSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         public EmotePlugin(IWebRequestController webRequestController,
@@ -77,6 +80,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             string builderContentURL,
+            bool localSceneDevelopment,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.messageBus = messageBus;
@@ -96,6 +100,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
+            this.localSceneDevelopment = localSceneDevelopment;
             this.sharedSpaceManager = sharedSpaceManager;
 
             audioClipsCache = new AudioClipsCache();
@@ -121,13 +126,24 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteStorage, builderContentURL);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
+
+            if (localSceneDevelopment)
+            {
+                LoadGLTFSystem.InjectToWorld(
+                    ref builder,
+                    NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
+                    webRequestController,
+                    false,
+                    true,
+                    new GltFastRealmDataDownloadStrategy(realmData));
+            }
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

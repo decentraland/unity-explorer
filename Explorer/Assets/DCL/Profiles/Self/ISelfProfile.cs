@@ -8,7 +8,7 @@ namespace DCL.Profiles.Self
     {
         UniTask<Profile?> ProfileAsync(CancellationToken ct);
 
-        UniTask<Profile?> UpdateProfileAsync(bool publish, CancellationToken ct);
+        UniTask<Profile?> UpdateProfileAsync(CancellationToken ct);
         UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct);
 
         /// <summary>
@@ -16,6 +16,7 @@ namespace DCL.Profiles.Self
         /// </summary>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>The published profile.</returns>
+        /// TODO: it is odd in the interface design. Why would you want to publish the profile without modifications? Consider redesign..
         UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct);
     }
 
@@ -32,7 +33,7 @@ namespace DCL.Profiles.Self
             bool isPublished = await selfProfile.IsProfilePublishedAsync(ct);
 
             if (isPublished == false)
-                await selfProfile.UpdateProfileAsync(true, ct);
+                await selfProfile.UpdateProfileAsync(ct);
 
             return (await selfProfile.ProfileAsync(ct)).EnsureNotNull();
         }

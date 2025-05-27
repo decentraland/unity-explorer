@@ -15,9 +15,11 @@ namespace DCL.SocialService
 {
     public interface IRPCSocialServices : IDisposable
     {
-        public RpcClientModule Module();
+        RpcClientModule Module();
 
-        public UniTask EnsureRpcConnectionAsync(CancellationToken ct);
+        UniTask DisconnectAsync(CancellationToken ct);
+
+        UniTask EnsureRpcConnectionAsync(CancellationToken ct);
     }
 
     public class RPCSocialServices : IRPCSocialServices

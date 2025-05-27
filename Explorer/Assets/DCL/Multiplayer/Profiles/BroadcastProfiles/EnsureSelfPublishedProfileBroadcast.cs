@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                 bool published = await selfProfile.IsProfilePublishedAsync(ct);
 
                 if (published == false)
-                    await selfProfile.UpdateProfileAsync(publish: true, ct);
+                    await selfProfile.UpdateProfileAsync(ct);
 
                 origin.NotifyRemotes();
             }
