@@ -3,6 +3,8 @@ using DCL.Settings.Settings;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utility.Multithreading;
+using Cysharp.Threading.Tasks;
 
 namespace DCL.VoiceChat
 {
@@ -67,7 +69,7 @@ namespace DCL.VoiceChat
                 if (audioSource != null)
                 {
                     audioSource.volume = 0f;
-                    audioSource.Stop();
+                    StopAudioSource();
                     audioSource.clip = null;
                 }
                 Microphone.End(MicrophoneName);
@@ -75,6 +77,25 @@ namespace DCL.VoiceChat
                 if (audioFilter != null)
                     audioFilter.enabled = false;
             }
+        }
+
+        private void StopAudioSource()
+        {
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                StopAudioSourceAsync().Forget();
+                return;
+            }
+
+            if (audioSource != null)
+                audioSource.Stop();
+        }
+
+        private async UniTaskVoid StopAudioSourceAsync()
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            if (audioSource != null)
+                audioSource.Stop();
         }
 
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
@@ -218,6 +239,49 @@ namespace DCL.VoiceChat
 
         private void OnMicrophoneChanged(int newMicrophoneIndex)
         {
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                OnMicrophoneChangedAsync(newMicrophoneIndex).Forget();
+                return;
+            }
+
+            bool wasTalking = IsTalking;
+
+            if (isMicrophoneInitialized)
+            {
+                audioSource.Stop();
+                audioSource.clip = null;
+                Microphone.End(MicrophoneName);
+                isMicrophoneInitialized = false;
+            }
+
+            audioFilter?.ResetProcessor();
+
+            if (isInCall)
+            {
+                InitializeMicrophone();
+
+                if (wasTalking)
+                {
+                    audioSource.volume = 1f;
+
+                    if (audioFilter != null)
+                        audioFilter.enabled = true;
+                }
+                else
+                {
+                    if (audioFilter != null)
+                        audioFilter.enabled = false;
+                }
+            }
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
+        }
+
+        private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            
             bool wasTalking = IsTalking;
 
             if (isMicrophoneInitialized)

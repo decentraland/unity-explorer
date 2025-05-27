@@ -11,6 +11,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.VoiceChat
 {
@@ -33,6 +34,7 @@ namespace DCL.VoiceChat
             VoiceChatCombinedAudioSource combinedAudioSource,
             VoiceChatMicrophoneAudioFilter microphoneAudioFilter,
             AudioSource microphoneAudioSource,
+            IRoomHub roomHub,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService
             )
@@ -40,6 +42,7 @@ namespace DCL.VoiceChat
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
             this.microphoneAudioSource = microphoneAudioSource;
+            this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
@@ -163,9 +166,28 @@ namespace DCL.VoiceChat
             }
         }
 
-
         private void CloseMedia()
         {
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                CloseMediaAsync().Forget();
+                return;
+            }
+
+            if (combinedAudioSource != null)
+            {
+                combinedAudioSource.Stop();
+                combinedAudioSource.Free();
+            }
+
+            rtcAudioSource?.Stop();
+            voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
+        }
+
+        private async UniTaskVoid CloseMediaAsync()
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            
             if (combinedAudioSource != null)
             {
                 combinedAudioSource.Stop();
