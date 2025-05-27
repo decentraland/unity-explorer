@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,13 +13,25 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
-        public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource)
-        {
+        private readonly IAppArgs appArgs;
 
+        public FakeCommunitiesDataProvider(IWebRequestController webRequestController,
+            IWeb3IdentityCache web3IdentityCache,
+            IDecentralandUrlsSource urlsSource,
+            IAppArgs appArgs)
+        {
+            this.appArgs = appArgs;
         }
 
-        public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
-            new ()
+        public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
+        {
+            CommunityMemberRole roleToReturn = CommunityMemberRole.member;
+
+            if (appArgs.TryGetValue(AppArgsFlags.COMMUNITIES_CARD_SIMULATE_ROLE, out string role) && role != null)
+                if (Enum.TryParse(role, out CommunityMemberRole converted))
+                    roleToReturn = converted;
+
+            return new ()
             {
                 community = new GetCommunityResponse.CommunityData
                 {
@@ -28,11 +41,12 @@ namespace DCL.Communities
                     description = "This is a fake community for testing purposes.",
                     ownerId = "0x31d4f4dd8615ec45bbb6330da69f60032aca219e",
                     privacy = CommunityPrivacy.@public,
-                    role = CommunityMemberRole.owner,
-                    places = new string[] { "land1", "land2" },
+                    role = roleToReturn,
+                    places = new [] { "land1", "land2" },
                     membersCount = Random.Range(1, 1_000_000_000),
                 }
             };
+        }
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
