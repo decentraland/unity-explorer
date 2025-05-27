@@ -57,6 +57,10 @@ namespace DCL.VoiceChat
                 audioSource.Stop();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
+                
+                // Disable audio filter during cleanup
+                if (audioFilter != null)
+                    audioFilter.enabled = false;
             }
         }
 
@@ -142,6 +146,10 @@ namespace DCL.VoiceChat
             audioSource.loop = true;
             audioSource.volume = 0f;
             audioSource.Play();
+            
+            if (audioFilter != null)
+                audioFilter.enabled = false;
+                
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
@@ -153,6 +161,8 @@ namespace DCL.VoiceChat
                 InitializeMicrophone();
 
             audioSource.volume = 1f;
+            if (audioFilter != null)
+                audioFilter.enabled = true;
             EnabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone");
         }
@@ -160,6 +170,8 @@ namespace DCL.VoiceChat
         private void DisableMicrophone()
         {
             audioSource.volume = 0f;
+            if (audioFilter != null)
+                audioFilter.enabled = false;
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
         }
@@ -181,7 +193,16 @@ namespace DCL.VoiceChat
             InitializeMicrophone();
 
             if (wasTalking)
+            {
                 audioSource.volume = 1f;
+                if (audioFilter != null)
+                    audioFilter.enabled = true;
+            }
+            else
+            {
+                if (audioFilter != null)
+                    audioFilter.enabled = false;
+            }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
         }
