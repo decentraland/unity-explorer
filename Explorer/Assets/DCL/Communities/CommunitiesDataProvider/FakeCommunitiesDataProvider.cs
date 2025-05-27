@@ -30,7 +30,7 @@ namespace DCL.Communities
                                                                                                 (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
                                                                                                 (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
                                                                                                 (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
-                                                                                            x.name.ToLower().Contains(name.ToLower()))
+                                                                                            (x.name.ToLower().Contains(name.ToLower()) || x.description.ToLower().Contains(name.ToLower())))
                                                                                 .ToList();
 
             List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();

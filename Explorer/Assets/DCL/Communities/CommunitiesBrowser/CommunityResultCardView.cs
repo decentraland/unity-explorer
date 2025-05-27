@@ -16,7 +16,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         [field: SerializeField] internal TMP_Text communityTitle { get; private set; }
         [field: SerializeField] internal ImageView communityThumbnail { get; private set; }
-        [field: SerializeField] internal Sprite defaultCommunitySprite { get; private set; }
         [field: SerializeField] internal Image communityPrivacyIcon { get; private set; }
         [field: SerializeField] internal Sprite publicPrivacySprite { get; private set; }
         [field: SerializeField] internal Sprite privatePrivacySprite { get; private set; }
@@ -55,8 +54,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunityThumbnail(string imageUrl)
         {
-            imageController?.SetImage(defaultCommunitySprite);
-
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
         }

@@ -1503,8 +1503,8 @@ MonoBehaviour:
   <communityThumbnail>k__BackingField: {fileID: 1563201233504633467}
   <defaultCommunitySprite>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <communityPrivacyIcon>k__BackingField: {fileID: 1803047306608073357}
-  <publicPrivacySprite>k__BackingField: {fileID: 21300000, guid: 71dca68b9c7f44a48b241202cab89eeb, type: 3}
-  <privatePrivacySprite>k__BackingField: {fileID: 21300000, guid: a7b66c6ad1a67486d875ea94903c3809, type: 3}
+  <publicPrivacySprite>k__BackingField: {fileID: 21300000, guid: ce952777a378746d48f3cb3b51815ed9, type: 3}
+  <privatePrivacySprite>k__BackingField: {fileID: 21300000, guid: cee9a3dbf9f6544da96abe48bb2550af, type: 3}
   <communityPrivacyText>k__BackingField: {fileID: 1598583829820689214}
   <communityMembersCountText>k__BackingField: {fileID: 5759947373287357163}
   <communityLiveMark>k__BackingField: {fileID: 7783451404242258191}
@@ -1587,7 +1587,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 71dca68b9c7f44a48b241202cab89eeb, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ce952777a378746d48f3cb3b51815ed9, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

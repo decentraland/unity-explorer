@@ -40,7 +40,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
         private CancellationTokenSource searchCancellationCts;
-        private CancellationTokenSource joinCommunityCts;
 
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
@@ -95,7 +94,6 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
-            joinCommunityCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId)
@@ -127,7 +125,6 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
-            joinCommunityCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList()
@@ -170,15 +167,11 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
             cardView.SetJoiningLoadingActive(false);
             cardView.mainButton.onClick.RemoveAllListeners();
-            cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(currentResults[index].id); });
+            cardView.mainButton.onClick.AddListener(() => OpenCommunityProfile(currentResults[index].id));
             cardView.viewCommunityButton.onClick.RemoveAllListeners();
-            cardView.viewCommunityButton.onClick.AddListener(() => { OpenCommunityProfile(currentResults[index].id); });
+            cardView.viewCommunityButton.onClick.AddListener(() => OpenCommunityProfile(currentResults[index].id));
             cardView.joinCommunityButton.onClick.RemoveAllListeners();
-            cardView.joinCommunityButton.onClick.AddListener(() =>
-            {
-                joinCommunityCts = joinCommunityCts.SafeRestart();
-                JoinCommunityAsync(index, cardView, joinCommunityCts.Token).Forget();
-            });
+            cardView.joinCommunityButton.onClick.AddListener(() => JoinCommunityAsync(index, cardView, CancellationToken.None).Forget());
 
             cardView.InjectDependencies(viewDependencies);
             for (var i = 0; i < cardView.mutualFriends.thumbnails.Length; i++)
@@ -236,7 +229,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadAllCommunitiesResults()
         {
-            joinCommunityCts?.SafeCancelAndDispose();
             currentSearchText = string.Empty;
             view.CleanSearchBar(raiseOnChangeEvent: false);
             loadResultsCts = loadResultsCts.SafeRestart();
