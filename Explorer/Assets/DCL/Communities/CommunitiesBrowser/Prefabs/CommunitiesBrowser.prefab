@@ -650,7 +650,7 @@ MonoBehaviour:
     m_Left: 30
     m_Right: 22
     m_Top: 0
-    m_Bottom: 30
+    m_Bottom: 50
   mItemPadding: {x: 15, y: 15}
   mItemSize: {x: 280, y: 404}
   mItemRecycleDistance: {x: 50, y: 50}
@@ -5135,11 +5135,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 50
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 50
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_LocalPosition.x

@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
         private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
+        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
@@ -83,6 +84,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.gameObject.SetActive(true);
             cursor.Unlock();
 
+            // Each time we open the Communities section, we load both my communities and Decentraland communities
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
             LoadAllCommunitiesResults();
@@ -142,45 +144,56 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
+            CommunityData communityData = currentMyCommunities[index];
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
-            cardView.SetTitle(currentMyCommunities[index].name);
-            cardView.SetUserRole(currentMyCommunities[index].role);
-            cardView.SetLiveMarkAsActive(currentMyCommunities[index].isLive);
+
+            // Setup card data
+            cardView.SetTitle(communityData.name);
+            cardView.SetUserRole(communityData.role);
+            cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(currentMyCommunities[index].thumbnails[0]);
+            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
+
+            // Setup card events
             cardView.mainButton.onClick.RemoveAllListeners();
-            cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(currentMyCommunities[index].id); });
+            cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(communityData.id); });
 
             return listItem;
         }
 
         private LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
+            CommunityData communityData = currentResults[index];
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
-            cardView.SetTitle(currentResults[index].name);
-            cardView.SetPrivacy(currentResults[index].privacy);
-            cardView.SetMembersCount(currentResults[index].memberCount);
-            cardView.SetOwnership(currentResults[index].role != CommunityMemberRole.none);
-            cardView.SetLiveMarkAsActive(currentResults[index].isLive);
+
+            // Setup card data
+            cardView.SetTitle(communityData.name);
+            cardView.SetPrivacy(communityData.privacy);
+            cardView.SetMembersCount(communityData.memberCount);
+            cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
+            cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(currentResults[index].thumbnails[0]);
+            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
             cardView.SetJoiningLoadingActive(false);
+
+            // Setup card events
             cardView.mainButton.onClick.RemoveAllListeners();
-            cardView.mainButton.onClick.AddListener(() => OpenCommunityProfile(currentResults[index].id));
+            cardView.mainButton.onClick.AddListener(() => OpenCommunityProfile(communityData.id));
             cardView.viewCommunityButton.onClick.RemoveAllListeners();
-            cardView.viewCommunityButton.onClick.AddListener(() => OpenCommunityProfile(currentResults[index].id));
+            cardView.viewCommunityButton.onClick.AddListener(() => OpenCommunityProfile(communityData.id));
             cardView.joinCommunityButton.onClick.RemoveAllListeners();
             cardView.joinCommunityButton.onClick.AddListener(() => JoinCommunityAsync(index, cardView, CancellationToken.None).Forget());
 
+            // Setup mutual friends
             cardView.InjectDependencies(viewDependencies);
             for (var i = 0; i < cardView.mutualFriends.thumbnails.Length; i++)
             {
-                bool friendExists = i < currentResults[index].friends.Length;
+                bool friendExists = i < communityData.friends.Length;
                 cardView.mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
-                GetUserCommunitiesResponse.FriendInCommunity mutualFriend = currentResults[index].friends[i];
+                GetUserCommunitiesResponse.FriendInCommunity mutualFriend = communityData.friends[i];
                 cardView.mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.id);
             }
 
@@ -215,6 +228,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ViewAllMyCommunitiesResults()
         {
+            ClearSearchBar();
             view.SetResultsBackButtonVisible(true);
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
 
@@ -230,8 +244,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadAllCommunitiesResults()
         {
-            currentSearchText = string.Empty;
-            view.CleanSearchBar(raiseOnChangeEvent: false);
+            ClearSearchBar();
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: string.Empty,
@@ -246,7 +259,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadMoreResults(Vector2 _)
         {
-            if (isGridResultsLoadingItems || currentResults.Count >= currentResultsTotalAmount || view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > 0.01f)
+            if (isGridResultsLoadingItems ||
+                currentResults.Count >= currentResultsTotalAmount ||
+                view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE)
                 return;
 
             loadResultsCts = loadResultsCts.SafeRestart();
@@ -352,9 +367,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnSearchBarCleared()
         {
-            currentSearchText = string.Empty;
-            view.CleanSearchBar(false);
+            ClearSearchBar();
             LoadAllCommunitiesResults();
+        }
+
+        private void ClearSearchBar()
+        {
+            currentSearchText = string.Empty;
+            view.CleanSearchBar(raiseOnChangeEvent: false);
         }
 
         private async UniTask JoinCommunityAsync(int index, CommunityResultCardView cardView, CancellationToken ct)
@@ -375,7 +395,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OpenCommunityProfile(string communityId)
         {
-            // TODO: Open community profile...
+            // TODO: Open community profile (currently implemented by Lorenzo)
         }
     }
 }

@@ -1,6 +1,5 @@
 using DCL.UI;
 using SuperScrollView;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
