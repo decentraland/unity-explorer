@@ -17,15 +17,17 @@ namespace DCL.SocialService
     {
         public const int FOREGROUND_CONNECTION_RETRIES = 3;
 
-        public RpcClientModule Module();
+        RpcClientModule Module();
+
+        UniTask DisconnectAsync(CancellationToken ct);
 
         /// <summary>
         ///     Try to establish connection to the RPC server until the cancellation token is triggered or the retries count is exhausted.
         /// </summary>
-        public UniTask EnsureRpcConnectionAsync(CancellationToken ct) =>
+        UniTask EnsureRpcConnectionAsync(CancellationToken ct) =>
             EnsureRpcConnectionAsync(FOREGROUND_CONNECTION_RETRIES, ct);
 
-        public UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct);
+        UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct);
     }
 
     public class RPCSocialServices : IRPCSocialServices

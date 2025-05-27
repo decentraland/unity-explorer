@@ -47,10 +47,4 @@ namespace DCL.InWorldCamera
         public float Target;
         public float Velocity;
     }
-
-    public struct CameraDampedAim
-    {
-        public Vector2 Current;
-        public Vector2 Velocity;
-    }
 }
