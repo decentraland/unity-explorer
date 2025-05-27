@@ -119,24 +119,25 @@ namespace DCL.AvatarRendering.Emotes.Play
             GameObject mainGameObject = Object.Instantiate(mainAsset);
 
             AnimationClip[] animationClips;
-            Animator? animator = null;
+            Animator? animatorComp = null;
+            Animation? animationComp = null;
 
             // Check for Animator first (Mecanim emotes)
-            animator = mainGameObject.GetComponent<Animator>();
-            if (animator)
+            animatorComp = mainGameObject.GetComponent<Animator>();
+            if (animatorComp)
             {
-                animationClips = animator.runtimeAnimatorController.animationClips;
+                animationClips = animatorComp.runtimeAnimatorController.animationClips;
             }
             else
             {
                 // Legacy emotes - there's always only one Animation component
-                Animation animation = mainGameObject.GetComponentInChildren<Animation>(true);
+                animationComp = mainGameObject.GetComponentInChildren<Animation>(true);
 
                 // Clear the pre-allocated array
                 Array.Clear(LEGACY_ANIMATION_CLIPS, 0, LEGACY_ANIMATION_CLIPS.Length);
 
                 int clipCount = 0;
-                foreach (AnimationState state in animation)
+                foreach (AnimationState state in animationComp)
                 {
                     if (state.clip != null && clipCount < LEGACY_ANIMATION_CLIPS.Length)
                         LEGACY_ANIMATION_CLIPS[clipCount++] = state.clip;
@@ -179,13 +180,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
-            references.Initialize(avatarClip, propClip, animator, propClipHash);
+            references.Initialize(avatarClip, propClip, animatorComp, animationComp, propClipHash);
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
-            if (animator != null)
-                animator.fireEvents = false;
+            if (animatorComp != null)
+                animatorComp.fireEvents = false;
 
             return references;
         }
@@ -205,19 +206,15 @@ namespace DCL.AvatarRendering.Emotes.Play
                 var avatarClipName = emoteReferences.avatarClip.name;
                 animationComp.AddClip(emoteReferences.avatarClip, avatarClipName);
                 animationComp[avatarClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
-                animationComp[avatarClipName].layer = 1;
-                animationComp[avatarClipName].blendMode = AnimationBlendMode.Blend;
                 animationComp.Play(avatarClipName);
             }
 
-            if (emoteReferences.propClip != null)
+            if (emoteReferences.propClip != null && emoteReferences.animationComp != null)
             {
+                var propAnimationComp = emoteReferences.animationComp;
                 var propClipName = emoteReferences.propClip.name;
-                animationComp.AddClip(emoteReferences.propClip, propClipName);
-                animationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
-                animationComp[propClipName].layer = 0;
-                animationComp[propClipName].blendMode = AnimationBlendMode.Blend;
-                animationComp.Play(propClipName);
+                propAnimationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
+                propAnimationComp.Play(propClipName);
             }
         }
 
@@ -245,10 +242,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
-            if (emoteReferences.propClip != null && emoteReferences.animator != null)
+            if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
             {
-                emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
-                emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+                emoteReferences.animatorComp.SetTrigger(emoteReferences.propClipHash);
+                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
             }
         }
 
