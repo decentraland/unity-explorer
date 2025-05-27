@@ -14,15 +14,17 @@
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:e0cd26848372d4e5c891c569017e11f1",
-        "GUID:04c3e7e2f3374472f84666dc489d6cd2",
         "GUID:ea8005fdf30f9c24dab04181c20b1310",
-        "GUID:e04e6c86a9f3947eb95fded39f9e60cc",
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:8322ea9340a544c59ddc56d4793eac74",
         "GUID:56e8195b069a4dca9c4c4f313c65f526",
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
         "GUID:166b65e6dfc848bb9fb075f53c293a38",
-        "GUID:c80c82a8f4e04453b85fbab973d6774a"
+        "GUID:c80c82a8f4e04453b85fbab973d6774a",
+        "GUID:3b7622431700fb240ae5afd170731645",
+        "GUID:4f64864a268dcca4291e747f5a335914",
+        "GUID:9e24947de15b9834991c9d8411ea37cf",
+        "GUID:831ede57aceda6240926fbc7ae2565b7"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -31,6 +33,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.dcl.gpui-assets",
+            "expression": "",
+            "define": "GPUIPRO_PRESENT"
+        }
+    ],
     "noEngineReferences": false
 }

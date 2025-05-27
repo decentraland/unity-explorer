@@ -622,7 +622,7 @@ namespace DCL.Chat.History
 
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
         {
-            ChannelFile channelFile = channelFiles[removedChannel];
+            if (!channelFiles.TryGetValue(removedChannel, out var channelFile)) return;
 
             lock (channelsLocker)
             {

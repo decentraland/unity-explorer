@@ -49,9 +49,11 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -94,8 +96,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly ICollection<string> forceRender;
-        private ExplorePanelInputHandler? inputHandler;
+        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
@@ -111,10 +112,12 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IProfileChangesBus profileChangesBus;
-
         private readonly bool includeCameraReel;
 
+        private ExplorePanelInputHandler? inputHandler;
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -147,7 +150,7 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            ICollection<string> forceRender,
+            List<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
@@ -174,7 +177,9 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs, ViewDependencies viewDependencies,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            IProfileChangesBus profileChangesBus)
+            IProfileChangesBus profileChangesBus,
+            SceneLoadingLimit sceneLoadingLimit,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -225,6 +230,8 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
+            this.sceneLoadingLimit = sceneLoadingLimit;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
         }
 
         public void Dispose()
@@ -251,6 +258,7 @@ namespace DCL.PluginSystem.Global
                 characterPreviewFactory,
                 wearableStorage,
                 selfProfile,
+                profileCache,
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
@@ -269,7 +277,8 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 appArgs,
-                webBrowser
+                webBrowser,
+                inWorldWarningNotificationView
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -330,7 +339,7 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, worldVolumeMacBus);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, sceneLoadingLimit, worldVolumeMacBus);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,

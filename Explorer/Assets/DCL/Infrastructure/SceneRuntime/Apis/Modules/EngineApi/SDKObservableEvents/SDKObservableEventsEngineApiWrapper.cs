@@ -1,9 +1,11 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript.V8.SplitProxy;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System;
+using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
@@ -15,7 +17,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly InvokeHostObject subscribeToSDKObservableEvent;
         private readonly InvokeHostObject unsubscribeFromSDKObservableEvent;
 
-        public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api, ISDKMessageBusCommsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
+        public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api,
+            ISDKMessageBusCommsControllerAPI commsApi,
+            IInstancePoolsProvider instancePoolsProvider,
+            ISceneExceptionsHandler exceptionsHandler,
+            CancellationTokenSource disposeCts)
+            : base(api, instancePoolsProvider, exceptionsHandler, disposeCts)
         {
             engineApi = api;
             this.commsApi = commsApi;

@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.ResetExtensions;
-using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
@@ -19,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using Component = UnityEngine.Component;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 using Vector3 = Decentraland.Common.Vector3;
 
@@ -37,12 +37,14 @@ namespace DCL.Interaction.Raycast.Tests
         private PartitionComponent partitionComponent;
         private Entity raycastEntity;
         private PBRaycastResult raycastResult;
+        private UnityEngine.Vector3 testScenePos;
 
         [SetUp]
         public void SetUp()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(UnityEngine.Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
+            testScenePos = new UnityEngine.Vector3(10f, 0f, 15f);
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(testScenePos, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
             budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
@@ -73,7 +75,7 @@ namespace DCL.Interaction.Raycast.Tests
 
             sceneStateProvider.TickNumber.Returns(5u);
             sceneStateProvider.IsCurrent.Returns(true);
-                
+
 
             pbRaycast = new PBRaycast
             {
@@ -115,9 +117,11 @@ namespace DCL.Interaction.Raycast.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
+            UnityEngine.Vector3 expectedSceneRelativeRayOrigin = UnityEngine.Vector3.zero - testScenePos;
+
             Assert.That(raycastResult.TickNumber, Is.EqualTo(5u));
             Assert.That((UnityEngine.Vector3)raycastResult.Direction, Is.EqualTo(UnityEngine.Vector3.forward));
-            Assert.That((UnityEngine.Vector3)raycastResult.GlobalOrigin, Is.EqualTo(UnityEngine.Vector3.zero));
+            Assert.That((UnityEngine.Vector3)raycastResult.GlobalOrigin, Is.EqualTo(expectedSceneRelativeRayOrigin));
             Assert.That(raycastResult.Timestamp, Is.EqualTo(5000u));
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
 
@@ -140,9 +144,11 @@ namespace DCL.Interaction.Raycast.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
+            UnityEngine.Vector3 expectedSceneRelativeRayOrigin = UnityEngine.Vector3.zero - testScenePos;
+
             Assert.That(raycastResult.TickNumber, Is.EqualTo(5u));
             Assert.That((UnityEngine.Vector3)raycastResult.Direction, Is.EqualTo(UnityEngine.Vector3.forward));
-            Assert.That((UnityEngine.Vector3)raycastResult.GlobalOrigin, Is.EqualTo(UnityEngine.Vector3.zero));
+            Assert.That((UnityEngine.Vector3)raycastResult.GlobalOrigin, Is.EqualTo(expectedSceneRelativeRayOrigin));
             Assert.That(raycastResult.Timestamp, Is.EqualTo(5000u));
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(3));
 
@@ -168,9 +174,11 @@ namespace DCL.Interaction.Raycast.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
+            UnityEngine.Vector3 expectedSceneRelativeRayOrigin = UnityEngine.Vector3.zero - testScenePos;
+
             Assert.That(raycastResult.TickNumber, Is.EqualTo(5u));
             Assert.That((UnityEngine.Vector3)raycastResult.Direction, Is.EqualTo(UnityEngine.Vector3.forward));
-            Assert.That((UnityEngine.Vector3)raycastResult.GlobalOrigin, Is.EqualTo(UnityEngine.Vector3.zero));
+            Assert.That((UnityEngine.Vector3)raycastResult.GlobalOrigin, Is.EqualTo(expectedSceneRelativeRayOrigin));
             Assert.That(raycastResult.Timestamp, Is.EqualTo(5000u));
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
         }
@@ -233,6 +241,14 @@ namespace DCL.Interaction.Raycast.Tests
             RaycastHit hit = sorted[index];
             Assert.That(hit.MeshName, Is.EqualTo(nameof(ExecuteRaycastSystemShould) + colliderIndex));
             Assert.That(hit.EntityId, Is.EqualTo((uint)colliderIndex));
+
+            UnityEngine.Vector3 globalHitPoint = new UnityEngine.Vector3(0, 0, ((colliderIndex + 1) * 5f) - 0.5f);
+            UnityEngine.Vector3 expectedSceneRelativeHitPosition = globalHitPoint - testScenePos;
+            Assert.That((UnityEngine.Vector3)hit.Position, Is.EqualTo(expectedSceneRelativeHitPosition));
+
+            UnityEngine.Vector3 rayEntityGlobalPos = UnityEngine.Vector3.zero;
+            UnityEngine.Vector3 expectedSceneRelativeRayOrigin = rayEntityGlobalPos - testScenePos;
+            Assert.That((UnityEngine.Vector3)hit.GlobalOrigin, Is.EqualTo(expectedSceneRelativeRayOrigin));
         }
 
         private void CreateColliders(params ColliderLayer[] sdkLayerMask)
@@ -254,7 +270,7 @@ namespace DCL.Interaction.Raycast.Tests
                 entityCollidersSceneCache.TryGetEntity(collider, out Arg.Any<ColliderSceneEntityInfo>())
                                          .Returns(x =>
                                           {
-                                              x[1] = new ColliderSceneEntityInfo(EntityReference.Null, entity, mask);
+                                              x[1] = new ColliderSceneEntityInfo(Entity.Null, entity, mask);
                                               return true;
                                           });
             }

@@ -10,6 +10,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ArchipelagoHotScenes,
 
         DiscordLink,
+        DiscordDirectLink,
         TwitterLink,
         NewsletterSubscriptionLink,
         MarketplaceLink,

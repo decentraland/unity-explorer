@@ -52,28 +52,24 @@ namespace DCL.SDKComponents.MediaStream
         {
             CloseCurrentStream();
 
-            switch (livekitAddress.StreamKind)
-            {
-                case LivekitAddress.Kind.CURRENT_STREAM:
-                    var videoTrack = FirstVideo();
-                    var audioTrack = FirstAudio();
-                    currentStream = (videoTrack, audioTrack);
+            currentStream = livekitAddress.Match(
+                this,
+                onUserStream: static (self, userStream) => //Audio via user stream are not supported yet
+                    (self.room.VideoStreams.ActiveStream(userStream.Identity, userStream.Sid), null),
+                onCurrentStream: static self =>
+                {
+                    var videoTrack = self.FirstVideo();
+                    var audioTrack = self.FirstAudio();
 
                     if (audioTrack != null)
                     {
-                        audioSource.Construct(audioTrack);
-                        audioSource.Play();
+                        self.audioSource.Construct(audioTrack);
+                        self.audioSource.Play();
                     }
 
-                    break;
-                case LivekitAddress.Kind.USER_STREAM:
-                    (string identity, string sid) = livekitAddress.UserStream;
-
-                    //Audio via user stream are not supported yet
-                    currentStream = (room.VideoStreams.ActiveStream(identity, sid), null);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+                    return (videoTrack, audioTrack);
+                }
+            );
 
             playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
@@ -125,6 +121,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (playerState is not PlayerState.PLAYING)
                 return null;
+
+            // retry to fetch the stream if it's not presented yet
+            if (playingAddress != null && currentStream?.video == null)
+                OpenMedia(playingAddress.Value);
 
             return currentStream?.video?.TryGetTarget(out var videoStream) ?? false
                 ? videoStream.DecodeLastFrame()

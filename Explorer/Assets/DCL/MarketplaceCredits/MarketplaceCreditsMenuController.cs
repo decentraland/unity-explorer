@@ -24,7 +24,7 @@ namespace DCL.MarketplaceCredits
 {
     public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
-        public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look";
+        public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -150,7 +150,7 @@ namespace DCL.MarketplaceCredits
             closeTaskCompletionSource = new UniTaskCompletionSource();
             OpenSection(MarketplaceCreditsSection.WELCOME);
             SetSidebarButtonAnimationAsPaused(true);
-            MarketplaceCreditsOpened?.Invoke(inputData.IsOpenedFromNotification);
+            MarketplaceCreditsOpened.Invoke(inputData.IsOpenedFromNotification);
         }
 
         protected override void OnViewClose()
@@ -164,7 +164,7 @@ namespace DCL.MarketplaceCredits
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
+            ViewShowingComplete.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
         }
 
@@ -191,6 +191,7 @@ namespace DCL.MarketplaceCredits
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsVerifyEmailSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(false);
                     break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
                     if (marketplaceCreditsGoalsOfTheWeekSubController != null)
@@ -198,20 +199,20 @@ namespace DCL.MarketplaceCredits
                         marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
                         marketplaceCreditsGoalsOfTheWeekSubController.OpenSection();
                     }
-
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
                 case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsWeekGoalsCompletedSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
                     haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
             }
-
-            viewInstance.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
         public async UniTaskVoid ShowCreditsUnlockedPanelAsync(float claimedCredits)
@@ -264,7 +265,7 @@ namespace DCL.MarketplaceCredits
         }
 
         private void OnAnyPlaceClicked() =>
-            OnAnyPlaceClick?.Invoke();
+            OnAnyPlaceClick.Invoke();
 
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
@@ -343,7 +344,8 @@ namespace DCL.MarketplaceCredits
 
         private void SetSidebarButtonState(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            if (creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds)
+            if (creditsProgramProgressResponse.IsProgramEnded())
+
             {
                 SetSidebarButtonAnimationAsAlert(false);
                 SetSidebarButtonAsClaimIndicator(false);
@@ -351,8 +353,8 @@ namespace DCL.MarketplaceCredits
             }
 
             bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
-            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
+            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || (thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
+            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
         }
     }
 }

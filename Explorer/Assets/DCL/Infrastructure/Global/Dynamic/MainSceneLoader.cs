@@ -12,6 +12,7 @@ using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -147,7 +148,12 @@ namespace Global.Dynamic
 
             const bool KTX_ENABLED = true;
 
-            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+            // Memory limit
+            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
+            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            ISystemMemoryCap memoryCap = hasSimulatedMemory
+                ? new SystemMemoryCap(systemMemory)
+                : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -167,7 +173,9 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
-             bootstrapContainer = await BootstrapContainer.CreateAsync(
+            var featureFlagsProxy = new ObjectProxy<FeatureFlagsCache>();
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
@@ -183,6 +191,7 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
+                featureFlagsProxy,
                 destroyCancellationToken
             );
 
@@ -194,7 +203,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsProxy, ct);
 
                 if (!isLoaded)
                 {
@@ -207,7 +216,9 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                //TODO: This is a hack. Feature flags should be the first thing to be initialized
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
+                staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
@@ -276,7 +287,6 @@ namespace Global.Dynamic
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
 
-                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)

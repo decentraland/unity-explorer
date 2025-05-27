@@ -1,11 +1,9 @@
-﻿using System;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine;
+using ECS.SceneLifeCycle.IncreasingRadius;
 
 namespace DCL.PluginSystem.Global
 {
@@ -14,20 +12,20 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMemoryUsageProvider memoryBudgetProvider;
         private readonly UnloadStrategyHandler unloadStrategyHandler;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
 
         internal ReleaseMemorySystem(Arch.Core.World world, IMemoryUsageProvider memoryBudgetProvider,
-            UnloadStrategyHandler unloadStrategyHandler) : base(world)
+            UnloadStrategyHandler unloadStrategyHandler, SceneLoadingLimit sceneLoadingLimit) : base(world)
         {
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.unloadStrategyHandler = unloadStrategyHandler;
+            this.sceneLoadingLimit = sceneLoadingLimit;
         }
 
         protected override void Update(float t)
         {
-            if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
-                unloadStrategyHandler.TryUnload();
-            else
-                unloadStrategyHandler.ResetToNormal();
+            sceneLoadingLimit.ReportMemoryState(memoryBudgetProvider.IsMemoryNormal(), memoryBudgetProvider.IsInAbundance());
+            unloadStrategyHandler.ReportMemoryState(memoryBudgetProvider.IsMemoryNormal(), memoryBudgetProvider.IsInAbundance());
         }
     }
 }

@@ -91,7 +91,8 @@ namespace DCL.SDKComponents.MediaStream
             // There is no way to set this from the scene code, at the moment
             // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
             if (component.MediaPlayer.TryGetAvProPlayer(out var player) && player!.TryGetComponent(out AudioSource mediaPlayerAudio))
-                mediaPlayerAudio!.spatialBlend = World!.Has<TransformComponent>(entity) ? 1.0f : 0.0f;
+                // At the moment we consider streams as global audio always, until there is a way to change it from the scene
+                mediaPlayerAudio!.spatialBlend = 0.0f;
 
             World.Add(entity, component);
         }
@@ -125,12 +126,11 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
-            MultiMediaPlayer player = address.MediaKind switch
-                                      {
-                                          MediaAddress.Kind.URL => MultiMediaPlayer.NewAvProMediaPlayer(url, mediaPlayerPool),
-                                          MediaAddress.Kind.LIVEKIT => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(roomHub.StrictObject)),
-                                          _ => throw new ArgumentOutOfRangeException()
-                                      };
+            MultiMediaPlayer player = address.Match(
+                (room: roomHub.StrictObject, mediaPlayerPool),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.room))
+            );
 
             var component = new MediaPlayerComponent
             {
