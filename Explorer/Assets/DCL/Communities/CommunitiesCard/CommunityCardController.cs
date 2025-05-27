@@ -66,6 +66,8 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizard -= OpenCommunityWizard;
+                viewInstance.JoinCommunity -= JoinCommunity;
+                viewInstance.LeaveCommunity -= LeaveCommunity;
             }
 
             photosSectionCancellationTokenSource.SafeCancelAndDispose();
@@ -80,6 +82,8 @@ namespace DCL.Communities.CommunitiesCard
         {
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizard += OpenCommunityWizard;
+            viewInstance.JoinCommunity += JoinCommunity;
+            viewInstance.LeaveCommunity += LeaveCommunity;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.CameraReelGalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -148,6 +152,16 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         private void OpenCommunityWizard()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void JoinCommunity()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void LeaveCommunity()
         {
             throw new NotImplementedException();
         }

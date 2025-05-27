@@ -2,6 +2,7 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.UI;
+using DG.Tweening;
 using MVC;
 using System;
 using TMPro;
@@ -13,6 +14,7 @@ namespace DCL.Communities.CommunitiesCard
     public class CommunityCardView : ViewBase, IView
     {
         private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> members";
+        private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
 
         public enum Sections
         {
@@ -32,6 +34,8 @@ namespace DCL.Communities.CommunitiesCard
 
         public event Action<Sections>? SectionChanged;
         public event Action? OpenWizard;
+        public event Action? JoinCommunity;
+        public event Action? LeaveCommunity;
 
         [field: Header("References")]
         [field: SerializeField] public Button CloseButton { get; private set; }
@@ -44,6 +48,15 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Button OpenWizardButton { get; private set; }
         [field: SerializeField] public Button JoinedButton { get; private set; }
         [field: SerializeField] public Button JoinButton { get; private set; }
+
+        [field: Header("-- Leave")]
+        [field: SerializeField] public CanvasGroup LeaveCanvasGroup { get; private set; }
+        [field: SerializeField] public Button LeaveBackgroundButton { get; private set; }
+        [field: SerializeField] public Button LeaveCancelButton { get; private set; }
+        [field: SerializeField] public Button LeaveConfirmButton { get; private set; }
+        [field: SerializeField] public float FadeDuration { get; private set; } = 0.3f;
+        [field: SerializeField] public TMP_Text LeaveCommunityText { get; private set; }
+        [field: SerializeField] public Image LeaveCommunityImage { get; private set; }
 
         [field: Header("Community data references")]
         [field: SerializeField] public TMP_Text CommunityName { get; private set; }
@@ -81,6 +94,32 @@ namespace DCL.Communities.CommunitiesCard
         private void Awake()
         {
             OpenWizardButton.onClick.AddListener(() => OpenWizard?.Invoke());
+            JoinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
+            JoinedButton.onClick.AddListener(() => ToggleLeavePopup(true));
+            LeaveConfirmButton.onClick.AddListener(() =>
+            {
+                ToggleLeavePopup(false);
+                LeaveCommunity?.Invoke();
+            });
+            LeaveCancelButton.onClick.AddListener(() => ToggleLeavePopup(false));
+            LeaveBackgroundButton.onClick.AddListener(() => ToggleLeavePopup(false));
+
+            ToggleLeavePopup(false);
+        }
+
+        private void ToggleLeavePopup(bool active)
+        {
+            if (active)
+            {
+                LeaveCommunityText.text = string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, CommunityName.text);
+                LeaveCommunityImage.sprite = CommunityThumbnail.ImageSprite;
+            }
+
+            LeaveCanvasGroup.DOFade(active ? 1f : 0f, FadeDuration).OnComplete(() =>
+            {
+                LeaveCanvasGroup.interactable = active;
+                LeaveCanvasGroup.blocksRaycasts = active;
+            });
         }
 
         public void ToggleUIListeners(bool active)
