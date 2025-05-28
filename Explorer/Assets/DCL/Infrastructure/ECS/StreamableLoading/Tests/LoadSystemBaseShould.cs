@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using Best.HTTP.Caching;
+using DCL.Diagnostics.Tests;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
@@ -10,7 +11,6 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene.Tests;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;

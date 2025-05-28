@@ -13,6 +13,7 @@ using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
 using DCL.FeatureFlags;
+using DCL.Utilities;
 using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
@@ -53,11 +54,12 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCache,
             CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsCache, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 

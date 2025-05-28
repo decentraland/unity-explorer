@@ -16,8 +16,8 @@ namespace DCL.UI.CustomInputField
         private bool isControlPressed;
         private readonly StringBuilder stringBuilder = new ();
 
-        public event Action? OnRightClickEvent;
-        public event Action? OnPasteShortcutPerformedEvent;
+        public event Action<PointerEventData.InputButton>? Clicked;
+        public event Action? PasteShortcutPerformed;
 
         public bool UpAndDownArrowsEnabled { get; set; }
 
@@ -28,10 +28,11 @@ namespace DCL.UI.CustomInputField
                 OnSelect(null);
                 int insertionIndex = TMP_TextUtilities.GetCursorIndexFromPosition(m_TextComponent, eventData.position, eventData.pressEventCamera);
                 caretPosition = insertionIndex;
-                OnRightClickEvent?.Invoke();
             }
             else
                 base.OnPointerClick(eventData);
+
+            Clicked?.Invoke(eventData.button);
         }
 
         public override void OnDeselect(BaseEventData eventData)
@@ -39,8 +40,6 @@ namespace DCL.UI.CustomInputField
             isControlPressed = false;
             base.OnDeselect(eventData);
         }
-
-        private readonly Event processingEvent = new ();
 
         public override void OnUpdateSelected(BaseEventData eventData)
         {
@@ -67,9 +66,12 @@ namespace DCL.UI.CustomInputField
             if (Keyboard.current.leftCommandKey.wasPressedThisFrame || Keyboard.current.leftCtrlKey.wasPressedThisFrame)
                 isControlPressed = true;
 
+            if (Keyboard.current.tabKey.wasPressedThisFrame)
+                return true;
+
             if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
             {
-                OnPasteShortcutPerformedEvent?.Invoke();
+                PasteShortcutPerformed?.Invoke();
                 return true;
             }
 
@@ -145,7 +147,8 @@ namespace DCL.UI.CustomInputField
                          .Append(" ")
                          .Append(text.AsSpan(replaceAt + replaceAmount));
 
-            if (notify) text = stringBuilder.ToString();
+            if (notify)
+                text = stringBuilder.ToString();
             else
                 SetTextWithoutNotify(stringBuilder.ToString());
 

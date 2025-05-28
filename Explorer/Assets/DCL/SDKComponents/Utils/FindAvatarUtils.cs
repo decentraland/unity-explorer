@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.Utils
     {
         private static readonly QueryDescription AVATAR_BASE_AND_SHAPE_QUERY = new QueryDescription().WithAll<AvatarBase, AvatarShapeComponent>();
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
-        
+
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]
         private static void AssertMainThread() =>
@@ -55,7 +55,18 @@ namespace DCL.SDKComponents.Utils
             globalWorld.Query(in AVATAR_BASE_QUERY, entity =>
             {
                 if (foundEntity != Entity.Null) return;
-                if (globalWorld.Get<AvatarBase>(entity).transform.parent != avatarTransform) return;
+
+                Transform t = globalWorld.Get<AvatarBase>(entity).transform;
+                // Support our own avatar, based on its hierarchy:
+                // - CharacterObject: CharacterController which affects the trigger event
+                // -    Avatar {userId}: AvatarBase
+                if (t.parent != avatarTransform
+                    // Support peer avatars, based on its hierarchy:
+                    // - REMOTE_ENTITY_{userId}
+                    // -    Collider {userId} which affects the trigger event
+                    // -    Avatar {userId}: AvatarBase
+                    && t.parent != avatarTransform.parent) return;
+
                 foundEntity = entity;
             });
 

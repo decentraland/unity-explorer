@@ -5,7 +5,6 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +13,7 @@ namespace DCL.UI.Sidebar
     public class SidebarView : ViewBase, IView
     {
         [field: Header("Notifications")]
-        [field: SerializeField] internal Button notificationsButton { get; private set; }
+        [field: SerializeField] public Button notificationsButton { get; private set; }
         [field: SerializeField] public NotificationsMenuView NotificationsMenuView { get; private set; }
         [field: SerializeField] internal GameObject backpackNotificationIndicator { get; private set; }
 
@@ -36,7 +35,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; }
 
         [field: Header("Skybox")]
-        [field: SerializeField] internal SimpleHoverableButton skyboxButton { get; private set; }
+        [field: SerializeField] internal Button skyboxButton { get; private set; }
         [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; }
 
         [field: Header("Sidebar Settings")]
@@ -59,6 +58,11 @@ namespace DCL.UI.Sidebar
         [field: Header("Chat")]
         [field: SerializeField] internal Button unreadMessagesButton { get; private set; }
         [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; }
+
+        [field: Header("Marketplace Credits")]
+        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator marketplaceCreditsButton { get; private set; }
+        [field: SerializeField] public Animator marketplaceCreditsButtonAnimator { get; private set; }
+        [field: SerializeField] public GameObject marketplaceCreditsButtonAlertMark { get; private set; }
 
         public delegate void BlockStatusChangedDelegate(bool status);
         public delegate void AutohideStatusChangedDelegate(bool status);

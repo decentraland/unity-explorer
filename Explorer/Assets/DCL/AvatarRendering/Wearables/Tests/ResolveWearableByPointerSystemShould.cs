@@ -102,7 +102,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 }, PartitionComponent.TOP_PRIORITY);
 
             world.Create(assetBundleManifestPromise, mockWearable, BodyShape.MALE);
-            EntityReference assetBundleManifestPromiseEntity = assetBundleManifestPromise.Entity;
+            Entity assetBundleManifestPromiseEntity = assetBundleManifestPromise.Entity;
             world.Add(assetBundleManifestPromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedABManifest);
             system!.Update(0);
         }
@@ -117,7 +117,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 }, PartitionComponent.TOP_PRIORITY);
 
             world.Create(assetBundlePromise, mockWearable, BodyShape.MALE);
-            EntityReference assetBundlePromiseEntity = assetBundlePromise.Entity;
+            Entity assetBundlePromiseEntity = assetBundlePromise.Entity;
             world.Add(assetBundlePromiseEntity, failed ? new StreamableLoadingResult<SceneAssetBundleManifest>(ReportData.UNSPECIFIED, new Exception("FAILED")) : mockedAB);
         }
 
@@ -244,7 +244,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             Assert.IsTrue(promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested);
-            Assert.IsFalse(promise.Entity.IsAlive(world));
+            Assert.IsFalse(world.IsAlive(promise.Entity));
 
             //No  Manifest promises should be left
             Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
@@ -278,7 +278,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             Assert.IsTrue(promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested);
-            Assert.IsFalse(promise.Entity.IsAlive(world));
+            Assert.IsFalse(world.IsAlive(promise.Entity));
 
             //No AB promises should be left
             Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundlePromise>()));

@@ -11,22 +11,34 @@ namespace DCL.SDKComponents.MediaStream
     {
         internal enum Status
         {
-            Pending, Resolved, Consumed,
+            Pending,
+            Resolved,
+            Consumed,
         }
 
         internal Status status;
 
         // TODO (Vit): add caching mechanism for resolved promises: <url, isReachable> (on some upper level)
-        internal string url;
+        internal MediaAddress mediaAddress;
         internal bool isReachable;
 
         public bool IsResolved => status == Status.Resolved;
 
-        public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, string url, ReportData reportData, CancellationToken ct)
+        public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct)
         {
             status = Status.Pending;
             isReachable = false;
-            this.url = url;
+            this.mediaAddress = newMediaAddress;
+
+            if (mediaAddress.IsLivekitAddress(out _))
+            {
+                isReachable = true;
+                status = Status.Resolved;
+                return;
+            }
+
+            mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
+            string url = urlMediaAddress!.Value.Url;
 
             Result result = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(this.url), ct);
             isReachable = result.Success;
@@ -43,15 +55,15 @@ namespace DCL.SDKComponents.MediaStream
         {
             status = Status.Consumed;
 
-            if (this.url != url)
+            if (this.mediaAddress != address)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{url}>, but was <{this.url}>");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{this.mediaAddress}>");
                 return false;
             }
 
             if (!isReachable)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.url}>");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.mediaAddress}>");
                 return false;
             }
 

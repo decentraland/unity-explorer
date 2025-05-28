@@ -32,11 +32,12 @@
         public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
 
-        public const string FORCE_TEXTURE_COMPRESSION = "force-texture-compression";
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
 
         public const string IDENTITY_EXPIRATION_DURATION = "identity-expiration-duration";
+
+        public const string SIMULATE_MEMORY = "simulateMemory";
 
         public const string PROXY_ADDRESS = "proxy";
 

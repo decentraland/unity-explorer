@@ -12,6 +12,7 @@ using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -144,7 +145,12 @@ namespace Global.Dynamic
 
             const bool KTX_ENABLED = true;
 
-            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+            // Memory limit
+            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
+            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            ISystemMemoryCap memoryCap = hasSimulatedMemory
+                ? new SystemMemoryCap(systemMemory)
+                : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -162,7 +168,9 @@ namespace Global.Dynamic
 
             IDiskCache diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings, webRequestsContainer.WebRequestsMode);
 
-             bootstrapContainer = await BootstrapContainer.CreateAsync(
+            var featureFlagsProxy = new ObjectProxy<FeatureFlagsCache>();
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
@@ -177,6 +185,7 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
+                featureFlagsProxy,
                 destroyCancellationToken
             );
 
@@ -188,7 +197,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsProxy, ct);
 
                 if (!isLoaded)
                 {
@@ -201,10 +210,22 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                //TODO: This is a hack. Feature flags should be the first thing to be initialized
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
+                staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
-                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
+                    bootstrapContainer,
+                    staticContainer!,
+                    scenePluginSettingsContainer,
+                    settings,
+                    dynamicSettings,
+                    uiToolkitRoot,
+                    scenesUIRoot,
+                    cursorRoot,
+                    backgroundMusic,
+                    worldInfoTool.EnsureNotNull(),
+                    playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,
@@ -260,7 +281,6 @@ namespace Global.Dynamic
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
 
-                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)
@@ -338,12 +358,15 @@ namespace Global.Dynamic
         {
             // We disable Inputs directly because otherwise before login (so before the Input component was created and the system that handles it is working)
             // all inputs will be valid, and it allows for weird behaviour, including opening menus that are not ready to be open yet.
-            staticContainer!.InputProxy.StrictObject.Shortcuts.Disable();
-            staticContainer.InputProxy.StrictObject.Player.Disable();
-            staticContainer.InputProxy.StrictObject.Emotes.Disable();
-            staticContainer.InputProxy.StrictObject.EmoteWheel.Disable();
-            staticContainer.InputProxy.StrictObject.FreeCamera.Disable();
-            staticContainer.InputProxy.StrictObject.Camera.Disable();
+            DCLInput dclInput = staticContainer!.InputProxy.StrictObject;
+
+            dclInput.Shortcuts.Disable();
+            dclInput.Player.Disable();
+            dclInput.Emotes.Disable();
+            dclInput.EmoteWheel.Disable();
+            dclInput.FreeCamera.Disable();
+            dclInput.Camera.Disable();
+            dclInput.UI.Disable();
         }
 
         private void RestoreInputs()
@@ -352,6 +375,8 @@ namespace Global.Dynamic
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
+
+            staticContainer.InputProxy.StrictObject.UI.Enable();
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings, WebRequestsMode webRequestsMode)

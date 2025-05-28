@@ -55,7 +55,8 @@ namespace DCL.Web3.Authenticators
                         "eth_getBlockByNumber",
                         "eth_getCode",
                     },
-                    decentralandUrlsSource.Environment
+                    decentralandUrlsSource.Environment,
+                    new InvalidAuthCodeVerificationFeatureFlag()
                 );
 
                 originApi = origin;
@@ -81,6 +82,11 @@ namespace DCL.Web3.Authenticators
 
             public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
                 originAuth.SetVerificationListener(callback);
+
+            private class InvalidAuthCodeVerificationFeatureFlag : DappWeb3Authenticator.ICodeVerificationFeatureFlag
+            {
+                public bool ShouldWaitForCodeVerificationFromServer => false;
+            }
         }
     }
 }

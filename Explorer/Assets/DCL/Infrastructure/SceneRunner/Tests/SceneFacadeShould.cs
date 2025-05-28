@@ -137,6 +137,8 @@ namespace SceneRunner.Tests
             sceneFacades.Clear();
         }
 
+        private V8EngineFactory engineFactory;
+
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
 
         private IECSWorldFactory ecsWorldFactory = null!;
@@ -273,12 +275,12 @@ namespace SceneRunner.Tests
                 new TestDeps(ecsWorldFactory)
             );
 
-            var apis = new List<IJsApiWrapper>();
+            var apis = new List<JsApiWrapper>();
 
             ISceneRuntime runtime = sceneFacade.deps.Runtime;
 
-            runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
-                   .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));
+            runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<JsApiWrapper>()))
+                   .Do(info => apis.Add(info.ArgAt<JsApiWrapper>(1)));
 
             runtime.When(r => r.Dispose())
                    .Do(_ => apis.ForEach(a => a.Dispose()));
@@ -288,6 +290,7 @@ namespace SceneRunner.Tests
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.WebSocketAipImplementation));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.EngineAPI));
 
             await UniTask.SwitchToThreadPool();
 
@@ -311,6 +314,7 @@ namespace SceneRunner.Tests
                     && field.FieldType != typeof(SceneInstanceDependencies))
                 {
                     var disposable = (IDisposable)field.GetValue(sceneFacade.deps);
+
                     disposable.Received(1).Dispose();
                 }
             }
@@ -385,7 +389,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ICRDTMemoryAllocator>(),
                     Substitute.For<IOutgoingCRDTMessagesProvider>(),
                     Substitute.For<IEntityCollidersSceneCache>(),
-                    Substitute.For<ISceneStateProvider>(),
+                    CreateSceneStateProvider(),
                     Substitute.For<ISceneExceptionsHandler>(),
                     worldFactory.CreateWorld(new ECSWorldFactoryArgs()),
                     Substitute.For<ICRDTWorldSynchronizer>(),
@@ -402,19 +406,16 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneRuntime>()) { }
         }
 
-        public class TestAPIWrapper : IJsApiWrapper
+        public class TestAPIWrapper : JsApiWrapper<IDisposable>
         {
-            private readonly IDisposable api;
+            public TestAPIWrapper(IDisposable api) : base(api, new CancellationTokenSource()) { }
+        }
 
-            public TestAPIWrapper(IDisposable api)
-            {
-                this.api = api;
-            }
-
-            public void Dispose()
-            {
-                api.Dispose();
-            }
+        private static ISceneStateProvider CreateSceneStateProvider()
+        {
+            ISceneStateProvider? sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.State = new Atomic<SceneState>();
+            return sceneStateProvider;
         }
     }
 }

@@ -19,6 +19,7 @@ using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using Unity.Profiling;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -35,12 +36,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly StringBuilder bodyBuilder = new ();
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
+        private readonly ProfilerMarker deserializationSampler;
+
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
             IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+
+            deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -76,23 +81,28 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
             var nativeData = new NativeArray<byte>(1, Allocator.None); // downloadHandler.nativeData;
 
-            var serializer = JsonSerializer.CreateDefault();
-            serializer.Converters.Add(SCENE_METADATA_CONVERTER);
+            await UniTask.SwitchToThreadPool();
 
-            unsafe
+            using (deserializationSampler.Auto())
             {
-                var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
+                var serializer = JsonSerializer.CreateDefault();
+                serializer.Converters.Add(SCENE_METADATA_CONVERTER);
 
-                serializer.Context = new StreamingContext(0,
-                    new SceneMetadataConverterContext(dataPtr));
+                unsafe
+                {
+                    var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
 
-                using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
-                    nativeData.Length, FileAccess.Read);
+                    serializer.Context = new StreamingContext(0,
+                        new SceneMetadataConverterContext(dataPtr));
 
-                using var textReader = new StreamReader(stream, Encoding.UTF8);
-                using var jsonReader = new JsonTextReader(textReader);
+                    using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
+                        nativeData.Length, FileAccess.Read);
 
-                serializer.Populate(jsonReader, intention.TargetCollection);
+                    using var textReader = new StreamReader(stream, Encoding.UTF8);
+                    using var jsonReader = new JsonTextReader(textReader);
+
+                    serializer.Populate(jsonReader, intention.TargetCollection);
+                }
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

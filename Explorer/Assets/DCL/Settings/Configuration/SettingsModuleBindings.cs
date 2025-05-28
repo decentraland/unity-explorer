@@ -8,6 +8,7 @@ using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -28,9 +29,11 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
-            ChatAudioSettingsAsset chatAudioSettingsAsset,
+            ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ISettingsModuleEventListener settingsEventListener,
             WorldVolumeMacBus worldVolumeMacBus);
     }
 

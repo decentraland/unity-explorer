@@ -32,6 +32,7 @@ MonoBehaviour:
             m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
             m_SubObjectName: 
             m_SubObjectType: 
+            m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <InputButtons>k__BackingField: []
     - rid: 1841402216112979968
@@ -41,6 +42,7 @@ MonoBehaviour:
           m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
@@ -52,21 +54,25 @@ MonoBehaviour:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <VideoPrioritizationSettings>k__BackingField:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3440223528247361541
       type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests, asm: DCL.Plugins}
@@ -83,6 +89,7 @@ MonoBehaviour:
           m_AssetGUID: cbb820cf51b7a714e88a7c873eb5de9c
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6784895265395441664
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -91,11 +98,13 @@ MonoBehaviour:
           m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
@@ -108,16 +117,19 @@ MonoBehaviour:
           m_AssetGUID: 654e496ed12f12e4f80243ab9f1d97c7
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <cinemachineCameraAudioSettingsReference>k__BackingField:
           m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <controlsSettingsAsset>k__BackingField:
           m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 6784895265412481025
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -126,4 +138,5 @@ MonoBehaviour:
           m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
           m_SubObjectName: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0

@@ -1,14 +1,20 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
-using DCL.Chat.InputBus;
+using DCL.Chat.EventBus;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
+using DCL.Multiplayer.Connectivity;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controllers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -16,28 +22,52 @@ using UnityEngine;
 namespace MVC
 {
     /// <summary>
-    /// Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
+    ///     Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
     /// </summary>
     public class MVCManagerMenusAccessFacade : IMVCManagerMenusAccessFacade
     {
         private readonly IMVCManager mvcManager;
         private readonly IProfileCache profileCache;
-        private readonly GenericUserProfileContextMenuController genericUserProfileContextMenuController;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IChatEventBus chatEventBus;
+        private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
+        private readonly bool includeUserBlocking;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly IProfileRepository profileRepository;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
-        private UniTaskCompletionSource closeContextMenuTask;
         private CancellationTokenSource cancellationTokenSource;
+        private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
+        private ChatOptionsContextMenuController chatOptionsContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatInputBus chatInputBus,
-            bool includeUserBlocking
-        )
+            IChatEventBus chatEventBus,
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            bool includeUserBlocking,
+            IAnalyticsController analytics,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator, ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IProfileRepository profileRepository,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
-            genericUserProfileContextMenuController = new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager, includeUserBlocking);
+            this.friendServiceProxy = friendServiceProxy;
+            this.chatEventBus = chatEventBus;
+            this.contextMenuSettings = contextMenuSettings;
+            this.includeUserBlocking = includeUserBlocking;
+            this.analytics = analytics;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.profileRepository = profileRepository;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -55,26 +85,58 @@ namespace MVC
         public async UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct) =>
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
+        public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
+            Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            closeContextMenuTask?.TrySetResult();
-            closeContextMenuTask = new UniTaskCompletionSource();
+            Profile profile = await profileRepository.GetAsync(walletId, ct);
 
-            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
+            if (profile == null)
+                return;
+
+            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint);
         }
 
-        public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, CancellationToken ct, Action onHide = null)
-        {
-            Profile profile = profileCache.Get(walletId);
-            if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
-        }
-
-        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct)
+        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
+            Action onHide = null)
         {
             Profile profile = profileCache.GetByUserName(userName);
             if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct);
+            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask);
+        }
+
+        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
+        {
+            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
+            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
+        }
+
+        private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        {
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
+        }
+
+        private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
+        {
+            switch (anchorPoint)
+            {
+                case MenuAnchorPoint.TOP_LEFT:
+                    return ContextMenuOpenDirection.TOP_LEFT;
+                case MenuAnchorPoint.TOP_RIGHT:
+                    return ContextMenuOpenDirection.TOP_RIGHT;
+                case MenuAnchorPoint.BOTTOM_LEFT:
+                    return ContextMenuOpenDirection.BOTTOM_LEFT;
+                case MenuAnchorPoint.BOTTOM_RIGHT:
+                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
+                case MenuAnchorPoint.CENTER_LEFT:
+                    return ContextMenuOpenDirection.CENTER_LEFT;
+                case MenuAnchorPoint.CENTER_RIGHT:
+                    return ContextMenuOpenDirection.CENTER_RIGHT;
+                default:
+                case MenuAnchorPoint.DEFAULT:
+                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
+            }
         }
     }
 }

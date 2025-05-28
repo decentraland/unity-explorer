@@ -1,8 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
-using DCL.Profiles;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -20,10 +21,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly GenericContextMenu contextMenu;
+        private readonly ViewDependencies viewDependencies;
+        private readonly IChatEventBus chatEventBus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
         private FriendProfile contextMenuFriendProfile;
+        private CancellationTokenSource popupCts;
+        private UniTaskCompletionSource contextMenuTask = new ();
 
         public FriendSectionController(FriendsSectionView view,
             IMVCManager mvcManager,
@@ -31,20 +36,23 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking) : base(view, requestManager)
+            ViewDependencies viewDependencies,
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.viewDependencies = viewDependencies;
+            this.chatEventBus = chatEventBus;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
-            contextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
-                userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, null, BlockUserCtx).Item1;
-
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
+            requestManager.ChatClicked += OnChatButtonClicked;
         }
 
         public override void Dispose()
@@ -52,41 +60,32 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             base.Dispose();
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.JumpInClicked -= JumpInClicked;
+            requestManager.ChatClicked -= OnChatButtonClicked;
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
-
-        private void OpenProfilePassportCtx() =>
-            FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
-
-        private void BlockUserCtx() =>
-            FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
-            {
-                UserId = new Web3Address(userId),
-            })).Forget();
+                       {
+                           UserId = new Web3Address(userId),
+                       }))
+                      .Forget();
         }
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             contextMenuFriendProfile = friendProfile;
 
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                friendProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                friendProfile.FacePictureUrl);
-
             elementView.CanUnHover = false;
 
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(
-                               config: contextMenu,
-                               anchorPosition: buttonPosition,
-                               actionOnHide: () => elementView.CanUnHover = true,
-                               closeTask: panelLifecycleTask?.Task))
-                       )
-                      .Forget();
+            popupCts = popupCts.SafeRestart();
+            contextMenuTask?.TrySetResult();
+
+            contextMenuTask = new UniTaskCompletionSource();
+            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(contextMenuFriendProfile.Address), buttonPosition, default(Vector2),
+                popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
         private void JumpInClicked(FriendProfile profile) =>
@@ -94,5 +93,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         protected override void ElementClicked(FriendProfile profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
+
+        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
+        {
+            OnOpenConversationAsync(elementViewUserProfile).Forget();
+        }
+
+        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            chatEventBus.OpenConversationUsingUserId(profile.Address);
+        }
     }
 }

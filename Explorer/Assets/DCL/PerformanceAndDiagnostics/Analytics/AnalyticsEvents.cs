@@ -32,6 +32,8 @@
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
+            public const string CHAT_CONVERSATION_OPENED = "chat_conversation_opened";
+            public const string CHAT_CONVERSATION_CLOSED = "chat_conversation_closed";
             public const string OPEN_SUPPORT = "open_support";
         }
 
@@ -99,6 +101,16 @@
 
             public const string BLOCK_USER = "block_user";
             public const string UNBLOCK_USER = "unblock_user";
+        }
+
+        public static class MarketplaceCredits
+        {
+            public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
+        }
+
+        public static class Settings
+        {
+            public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
         }
     }
 }

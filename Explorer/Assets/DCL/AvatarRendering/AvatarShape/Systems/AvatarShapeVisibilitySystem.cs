@@ -8,7 +8,7 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
-using DCL.Rendering.Avatar;
+using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
-        private readonly OutlineRendererFeature? outlineFeature;
+        private readonly RendererFeature_AvatarOutline? outlineFeature;
         private SingleInstanceEntity camera;
         private Plane[] planes;
 
@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering) : base(world)
         {
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
+            this.outlineFeature = outlineFeature.GetRendererFeature<RendererFeature_AvatarOutline>();
             planes = new Plane[6];
 
             this.startFadeDithering = startFadeDithering;
@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (outlineFeature != null && outlineFeature.isActive && IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
             {
-                OutlineRendererFeature.m_OutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
+                RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
             }
         }
 

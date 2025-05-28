@@ -56,12 +56,19 @@
       "dependencies": {},
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
+    "com.dcl.gpui-assets": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+    },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8c3fe3666739c0829c173e95e8e9d77234cde5a8"
+      "hash": "a3d04b4bba166375ba225b90256e57eea07febd5"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -69,6 +76,26 @@
       "source": "git",
       "dependencies": {},
       "hash": "f2621a8b09b68f3a7639eea40a7aba18571f3f28"
+    },
+    "com.gurbu.gpui-pro": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.burst": "1.6.0",
+        "com.unity.collections": "1.2.0",
+        "com.unity.mathematics": "1.2.0"
+      },
+      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+    },
+    "com.gurbu.gpui-pro.terrain": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.gurbu.gpui-pro": "0.9.19"
+      },
+      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
@@ -113,7 +140,7 @@
       "dependencies": {}
     },
     "com.unity.addressables": {
-      "version": "2.3.16",
+      "version": "2.4.6",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -123,7 +150,7 @@
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.scriptablebuildpipeline": "2.2.11",
+        "com.unity.scriptablebuildpipeline": "2.3.8",
         "com.unity.modules.unitywebrequestassetbundle": "1.0.0"
       },
       "url": "https://packages.unity.com"
@@ -139,7 +166,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.19",
+      "version": "1.8.21",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -195,9 +222,8 @@
     "com.unity.ext.nunit": {
       "version": "2.0.5",
       "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
+      "source": "builtin",
+      "dependencies": {}
     },
     "com.unity.ide.rider": {
       "version": "3.0.36",
@@ -208,8 +234,17 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.ide.visualstudio": {
+      "version": "2.0.23",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.test-framework": "1.1.9"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.inputsystem": {
-      "version": "1.13.1",
+      "version": "1.14.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -246,14 +281,6 @@
         "com.unity.editorcoroutines": "1.0.0"
       },
       "url": "https://packages.unity.com"
-    },
-    "com.unity.multiplayer.center": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.modules.uielements": "1.0.0"
-      }
     },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.4",
@@ -298,7 +325,7 @@
       "depth": 1,
       "source": "builtin",
       "dependencies": {
-        "com.unity.burst": "1.8.14",
+        "com.unity.burst": "1.8.20",
         "com.unity.mathematics": "1.3.2",
         "com.unity.ugui": "2.0.0",
         "com.unity.collections": "2.4.3",
@@ -337,7 +364,7 @@
       }
     },
     "com.unity.scriptablebuildpipeline": {
-      "version": "2.2.11",
+      "version": "2.3.8",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -362,39 +389,22 @@
         "com.unity.searcher": "4.9.3"
       }
     },
-    "com.unity.sysroot": {
-      "version": "2.0.10",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.sysroot.linux-x86_64": {
-      "version": "2.0.9",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.sysroot": "2.0.10"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.test-framework": {
-      "version": "1.4.6",
+      "version": "1.5.1",
       "depth": 0,
-      "source": "registry",
+      "source": "builtin",
       "dependencies": {
         "com.unity.ext.nunit": "2.0.3",
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.test-framework.performance": {
-      "version": "3.0.3",
+      "version": "3.1.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.test-framework": "1.1.31",
+        "com.unity.test-framework": "1.1.33",
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
@@ -408,26 +418,6 @@
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.toolchain.macos-arm64-linux-x86_64": {
-      "version": "2.0.4",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.sysroot": "2.0.10",
-        "com.unity.sysroot.linux-x86_64": "2.0.9"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.toolchain.win-x86_64-linux-x86_64": {
-      "version": "2.0.10",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.sysroot": "2.0.10",
-        "com.unity.sysroot.linux-x86_64": "2.0.9"
       },
       "url": "https://packages.unity.com"
     },
@@ -454,7 +444,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0c01b5df1448ac3c5f888a31303e5a247d4b795c"
+      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+    },
+    "decentraland.renderfeatures": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8f0363493c9da0e227f223c6774399b30384ad58"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
@@ -478,15 +475,6 @@
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
       "hash": "4d02af4b7063c3d20ccbda56e6ed7029cc3e1197"
-    },
-    "sc.stylizedwater2": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.render-pipelines.universal": "10.3.2"
-      },
-      "hash": "5726daa968873a05722b051a4637f55806feb5fd"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

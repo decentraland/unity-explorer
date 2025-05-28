@@ -1,5 +1,4 @@
-﻿using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+﻿using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -10,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using UnityEngine;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -28,7 +28,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             this.sceneRoom = sceneRoom;
             messagePipe = messagePipesHub.ScenePipe();
-            messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber);
+            messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
         }
 
         private void InvokeSubscriber(ReceivedMessage<Scene> message)

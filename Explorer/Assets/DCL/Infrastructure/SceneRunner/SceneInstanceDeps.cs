@@ -193,7 +193,7 @@ namespace SceneRunner
 
             public readonly SceneInstanceDependencies SyncDeps;
             public readonly ISceneRuntime Runtime;
-            public IEngineApi EngineAPI;
+            public readonly IEngineApi EngineAPI;
 
             /// <summary>
             ///     For Unit Tests only
@@ -237,7 +237,7 @@ namespace SceneRunner
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations),
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo)),
-                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator),
+                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations),
                     syncDeps,
                     sceneRuntime) { }
 

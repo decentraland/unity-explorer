@@ -5,6 +5,7 @@ using DCL.AssetsProvision.CodeResolver;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -77,13 +78,14 @@ namespace Global.Tests.PlayMode
                 useRemoteAssetBundles: false,
                 World.Create(),
                 new Entity(),
-                new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
+                new SystemMemoryCap(),
                 new WorldVolumeMacBus(),
                 enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 scenesUI,
                 new ObjectProxy<IProfileRepository>(),
+                new ObjectProxy<FeatureFlagsCache>(),
                 ct,
                 enableGPUInstancing: false
             );

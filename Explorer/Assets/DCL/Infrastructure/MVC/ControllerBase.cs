@@ -97,15 +97,14 @@ namespace MVC
         public async UniTask HideViewAsync(CancellationToken ct)
         {
             State = ControllerState.ViewHiding;
-            //Ideally this should never happen but as HideViewAsync can be called at any point it means the controller might not have instantiated the view yet
-            if (viewInstance == null) return;
 
             for (var i = 0; i < modules?.Count; i++)
                 modules[i].OnViewHide();
 
             OnViewClose();
 
-            await viewInstance.HideAsync(ct);
+            if (viewInstance != null)
+                await viewInstance.HideAsync(ct);
 
             State = ControllerState.ViewHidden;
         }

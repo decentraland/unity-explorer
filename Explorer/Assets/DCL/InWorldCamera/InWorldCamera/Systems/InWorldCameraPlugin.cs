@@ -76,8 +76,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
         private readonly ViewDependencies viewDependencies;
-        private readonly GPUInstancingService gpuInstancingBuffers;
-        private readonly ExposedCameraData exposedCameraData;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -103,8 +101,6 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
             ViewDependencies viewDependencies,
-            GPUInstancingService gpuInstancingBuffers,
-            ExposedCameraData exposedCameraData,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache)
         {
@@ -134,8 +130,6 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
             this.viewDependencies = viewDependencies;
-            this.gpuInstancingBuffers = gpuInstancingBuffers;
-            this.exposedCameraData = exposedCameraData;
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
 
@@ -155,7 +149,7 @@ namespace DCL.PluginSystem.Global
             hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
             followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
-            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>(), gpuInstancingBuffers);
+            recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
@@ -200,7 +194,7 @@ namespace DCL.PluginSystem.Global
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController, exposedCameraData);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
         }

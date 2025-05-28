@@ -10,6 +10,10 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ArchipelagoHotScenes,
 
         DiscordLink,
+        DiscordDirectLink,
+        TwitterLink,
+        NewsletterSubscriptionLink,
+        MarketplaceLink,
 
         PrivacyPolicy,
         TermsOfUse,
@@ -29,6 +33,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         GateKeeperSceneAdapter,
         LocalGateKeeperSceneAdapter,
+        ChatAdapter,
 
         OpenSea,
 
@@ -66,7 +71,14 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         Blocklist,
 
+        WorldContentServer,
+
         Servers,
+
         MediaConverter,
+
+        MarketplaceCredits,
+        GoShoppingWithMarketplaceCredits,
+        EmailSubscriptions,
     }
 }

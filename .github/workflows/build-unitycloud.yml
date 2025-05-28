@@ -40,6 +40,11 @@ on:
           - library
           - workspace
           - inherit
+      sentry_enabled:
+        description: 'Enable Sentry'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       profile:
@@ -195,7 +200,6 @@ jobs:
 
           if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
             options+=("Development")
-            options+=("AllowDebugging")
             options+=("ConnectWithProfiler")
           fi
 
@@ -235,6 +239,17 @@ jobs:
           pip install -r scripts/cloudbuild/requirements.txt
 
       - name: Execute Unity Cloud build
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 180  # matches your GLOBAL_TIMEOUT = 10800s
+          max_attempts: 3
+          retry_on: any
+          retry_wait_seconds: 30
+          on_retry_command: |
+            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"
+          command: |
+            echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
+            python -u scripts/cloudbuild/build.py
         env:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
@@ -263,7 +278,6 @@ jobs:
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
-        run: python -u scripts/cloudbuild/build.py
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'

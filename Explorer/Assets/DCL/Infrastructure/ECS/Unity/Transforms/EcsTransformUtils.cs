@@ -20,7 +20,7 @@ namespace ECS.Unity.Transforms
         /// <summary>
         ///     Assign parent directly without validation
         /// </summary>
-        public static void AssignParent(this ref TransformComponent child, EntityReference childEntity, EntityReference parentEntity, in TransformComponent parentComponent)
+        public static void AssignParent(this ref TransformComponent child, Entity childEntity, Entity parentEntity, in TransformComponent parentComponent)
         {
             child.Transform.SetParent(parentComponent.Transform, true);
             child.Parent = parentEntity;

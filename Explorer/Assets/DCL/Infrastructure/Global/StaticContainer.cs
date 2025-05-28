@@ -47,6 +47,7 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.Roads.GPUInstancing;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -90,6 +91,8 @@ namespace Global
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         public ISystemMemoryCap MemoryCap { get; private set; }
+
+        public SceneLoadingLimit SceneLoadingLimit { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -158,6 +161,7 @@ namespace Global
             IDiskCache diskCache,
             UIDocument scenesUIRoot,
             ObjectProxy<IProfileRepository> profileRepository,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct,
             bool enableGPUInstancing = true)
         {
@@ -213,6 +217,7 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
+            featureFlagsCacheProxy.SetObject(container.FeatureFlagsCache);
 
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
 
@@ -254,7 +259,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(globalWorld),
+                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
@@ -266,7 +271,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.FeatureFlagsCache),
+                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy, container.FeatureFlagsCache),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.FeatureFlagsCache, container.MapPinsEventBus),
@@ -281,11 +286,12 @@ namespace Global
 #endif
             };
 
+            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
+
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
-                    container.RealmPartitionSettings),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,

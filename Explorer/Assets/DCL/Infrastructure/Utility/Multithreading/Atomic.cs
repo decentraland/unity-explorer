@@ -45,5 +45,8 @@ namespace Utility.Multithreading
         {
             lock (locker) { return value; }
         }
+
+        public static implicit operator T(Atomic<T> atomic) =>
+            atomic.value;
     }
 }

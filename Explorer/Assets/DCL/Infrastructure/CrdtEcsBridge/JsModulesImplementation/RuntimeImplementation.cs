@@ -63,6 +63,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
                                                                           WRThreadFlags.SwitchToThreadPool);
 
 
+                // create script byte array
+                ITypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);
+
+                // transfer data to script byte array
+                array.Write(nativeBytes, (ulong)nativeBytes.Length, 0);
                 return new StreamableLoadingResult<ITypedArray<byte>>(array);
             }
 

@@ -39,7 +39,7 @@ namespace DCL.Profiles
             this.profileCache = profileCache;
         }
 
-        public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
+        public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(profile.UserId))
                 throw new ArgumentException("Can't set a profile with an empty UserId");
@@ -62,9 +62,7 @@ namespace DCL.Profiles
 
             try
             {
-                if (publish)
-                    await ipfs.PublishAsync(entity, ct, files);
-
+                await ipfs.PublishAsync(entity, ct, files);
                 profileCache.Set(profile.UserId, profile);
             }
             finally { files.Clear(); }
@@ -140,9 +138,7 @@ namespace DCL.Profiles
 
         private bool TryProfileFromCache(string id, int version, out Profile? profile)
         {
-            profile = profileCache.Get(id);
-
-            if (profile == null)
+            if (!profileCache.TryGet(id, out profile))
                 return false;
 
             return profile.Version >= version;
