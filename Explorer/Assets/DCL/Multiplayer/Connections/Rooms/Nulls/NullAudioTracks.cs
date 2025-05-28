@@ -24,7 +24,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         // Do nothing
         public ITrack CreateAudioTrack(string name, RtcAudioSource source) => null!;
-
-
     }
 }
