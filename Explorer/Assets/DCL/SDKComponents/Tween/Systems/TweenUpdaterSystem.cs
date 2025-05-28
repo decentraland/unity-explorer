@@ -141,7 +141,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 if (pbTween.HasStartSyncedTimestamp && sdkTweenComponent.StartSyncedTimestamp > 0 && sdkTweenComponent.StartSyncedTimestamp != pbTween.StartSyncedTimestamp)
                 {
                     // check state
-                    Debug.Log($"VVV synced changed for {e} from {sdkTweenComponent.StartSyncedTimestamp % 1000000} to {pbTween.StartSyncedTimestamp % 1000000}");
+                    // Debug.Log($"VVV synced changed for {e} from {sdkTweenComponent.StartSyncedTimestamp % 1000000} to {pbTween.StartSyncedTimestamp % 1000000}");
                 }
 
                 // else

@@ -21,7 +21,7 @@ using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
@@ -124,23 +124,27 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
-            if (remote.syncedPlatform.HasValue
-                && remote.syncedPlatform != null
-                && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
-                && remote.syncedPlatform!.Value.NetworkId != null
-                && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue(
-                    (remote.syncedPlatform.Value.EntityId, remote.syncedPlatform.Value.NetworkId), out (ITweener tween, Transform trsnsf) platform)
-                && platform.tween != null && platform.trsnsf != null)
+            var hasPlatform = remote.syncedPlatform.HasValue
+                              && remote.syncedPlatform != null
+                              && remote.syncedPlatform!.Value.EntityId != null && remote.syncedPlatform!.Value.EntityId != uint.MaxValue
+                              && remote.syncedPlatform!.Value.NetworkId != null;
+
+            if (hasPlatform && collidersGlobalCache.NetworkEntityToSceneEntity.TryGetValue(
+                               (remote.syncedPlatform.Value.EntityId, remote.syncedPlatform.Value.NetworkId), out (ITweener tweener, Transform trsnsf) platform)
+                           && platform.tweener != null && platform.trsnsf != null)
             {
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
-                // Vector3? offset = tweener.GetOffset(0, remote.syncTimestamp, ntpTimeService.ServerTimeMs);
-                // if (offset.HasValue)
-                // {
-                //     Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
-                //     remote.position += offset.Value;
-                // }
 
                 remote.position += platform.trsnsf.position;
+
+                var startTime = intComp.Enabled? intComp.Start.timestamp : remotePlayerMovement.PastMessage.timestamp;
+                var deltaFuture = remote.timestamp - startTime;
+                Vector3? offset = platform.tweener.GetFuture(deltaFuture);
+                if (offset.HasValue)
+                {
+                    // Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
+                    remote.position += offset.Value;
+                }
             }
 
             var isBlend = false;
@@ -152,7 +156,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 else return 0;
             }
 
-            if (CanTeleport(remotePlayerMovement, remote))
+            if (!hasPlatform && CanTeleport(remotePlayerMovement, remote))
             {
                 isBlend = false;
                 TeleportFiltered(ref remote, ref transComp, ref remotePlayerMovement, playerInbox);
@@ -245,6 +249,7 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (intSettings.UseSpeedUp)
                 SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
+            // HERE!! - shift also start position!
             transComp.Transform.position = intComp.Start.position;
 
             return Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);

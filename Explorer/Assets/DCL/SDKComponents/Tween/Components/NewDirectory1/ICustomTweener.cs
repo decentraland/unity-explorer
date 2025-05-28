@@ -20,5 +20,6 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsActive();
 
         public Vector3? GetOffset(float deltaTime, ulong syncTimePast, ulong syncTimeServer);
+        public Vector3? GetFuture(float futureDeltaTime);
     }
 }

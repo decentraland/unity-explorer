@@ -54,10 +54,22 @@ namespace DCL.SDKComponents.Tween.Components
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            Debug.Log($"VVV DoTween start current time: {tweenModelCurrentTime}");
+            // Debug.Log($"VVV DoTween start current time: {tweenModelCurrentTime}");
 
             this.ease = ease;
             core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
+        }
+
+        public Vector3? GetFuture(float futureDeltaTime)
+        {
+            if (this is not Vector3Tweener vector3Tweener) return null;
+            if (core is not TweenerCore<Vector3,Vector3,VectorOptions> tw) return null;
+
+            float currentTweenTime = tw.Elapsed(false);
+            float dur = tw.Duration(false);
+            Vector3 future = DOVirtual.EasedValue(tw.startValue, tw.endValue, Mathf.Clamp01((currentTweenTime + futureDeltaTime ) / dur), ease, 1.70158f,0f);
+
+            return future - vector3Tweener.CurrentValue;
         }
 
         public Vector3? GetOffset(float deltaTime, ulong syncTimePast, ulong syncTimeServer)
