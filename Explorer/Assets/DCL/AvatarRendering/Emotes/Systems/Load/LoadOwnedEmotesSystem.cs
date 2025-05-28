@@ -14,7 +14,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using System;
-using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
@@ -74,33 +73,52 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private bool TryCreateBuilderEmoteAssetPromises(IEmote emote)
         {
-            BodyShape bodyShape = BodyShape.MALE;
-
             if (string.IsNullOrEmpty(emote.DTO.ContentDownloadUrl))
                 return false;
 
             // Check if emote already has assets loaded or is loading
-            if (emote.AssetResults[bodyShape] != null || emote.IsLoading)
+            if (emote.IsLoading)
                 return false;
 
             // Check if we already have this emote in storage with assets
             if (emoteStorage.TryGetElement(emote.GetUrn(), out IEmote existingEmote))
             {
-                if (existingEmote.AssetResults[bodyShape] != null)
-                    return false;
+                // For unisex emotes with same clip, check if either bodyshape has assets
+                if (existingEmote.IsUnisex() && existingEmote.HasSameClipForAllGenders())
+                {
+                    if (existingEmote.AssetResults[BodyShape.MALE] != null || existingEmote.AssetResults[BodyShape.FEMALE] != null)
+                        return false;
+                }
+                else
+                {
+                    // For non-unisex emotes, check both bodyshapes
+                    if (existingEmote.AssetResults[BodyShape.MALE] != null && existingEmote.AssetResults[BodyShape.FEMALE] != null)
+                        return false;
+                }
             }
 
             bool foundGlb = false;
+
+            bool isUnisexWithSameClip = emote.IsUnisex() && emote.HasSameClipForAllGenders();
+            BodyShape[] bodyShapesToProcess = isUnisexWithSameClip ? new[] { BodyShape.MALE }
+                : new[] { BodyShape.MALE, BodyShape.FEMALE };
 
             // The resolution of these promises will be finalized by FinalizeEmoteLoadingSystem
             foreach (var content in emote.DTO.content)
             {
                 if (content.file.EndsWith(".glb"))
                 {
-                    var gltfPromise = GltfPromise.Create(World, GetGLTFIntention.Create(content.file, content.hash), PartitionComponent.TOP_PRIORITY);
-                    World.Create(gltfPromise, emote, bodyShape);
-                    emote.UpdateLoadingStatus(true);
-                    foundGlb = true;
+                    foreach (BodyShape bodyShape in bodyShapesToProcess)
+                    {
+                        // Skip if this bodyshape already has an asset result
+                        if (emote.AssetResults[bodyShape] != null)
+                            continue;
+
+                        var gltfPromise = GltfPromise.Create(World, GetGLTFIntention.Create(content.file, content.hash), PartitionComponent.TOP_PRIORITY);
+                        World.Create(gltfPromise, emote, bodyShape);
+                        emote.UpdateLoadingStatus(true);
+                        foundGlb = true;
+                    }
                     continue;
                 }
 
@@ -112,8 +130,11 @@ namespace DCL.AvatarRendering.Emotes.Load
                     urlBuilder.AppendDomain(URLDomain.FromString(emote.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
                     URLAddress url = urlBuilder.Build();
 
-                    var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
-                    World.Create(audioPromise, emote, bodyShape);
+                    foreach (BodyShape bodyShape in bodyShapesToProcess)
+                    {
+                        var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
+                        World.Create(audioPromise, emote, bodyShape);
+                    }
 
                     if (foundGlb) break;
                 }
