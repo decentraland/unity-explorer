@@ -15,6 +15,7 @@
         public const string STRING_VARIANT = "string-variant";
         public const string WALLETS_VARIANT = "wallet";
         public const string ONBOARDING = "onboarding";
+        public const string GREETING_ONBOARDING = "greeting-onboarding";
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
         public const string ONBOARDING_GREETINGS_VARIANT = "greetings";
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";

@@ -94,8 +94,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             if (ownProfile is { TutorialStep: > 0 })
                 return EnumResult<TaskError>.SuccessResult();
 
-            if (!TrySolveRealmFromFeatureFlags(out string? realm))
-                return EnumResult<TaskError>.SuccessResult();
+            // TODO: Remove the greeting-onboarding ff when it is finally moved to production. Keep onboarding only.
+            //.We use the greeting-onboarding FF so we are able to test it on dev environment.
+            if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.GREETING_ONBOARDING, out string? realm))
+                if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
+                    return EnumResult<TaskError>.SuccessResult();
 
             // If the onboarding feature flag is enabled, we set the realm to the onboarding realm
             // TODO the following flow is suspicious: realmNavigator itself is wrapped in the loading screen, and this operation is a part of the loading screen,
@@ -125,24 +128,24 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             return EnumResult<TaskError>.SuccessResult();
         }
 
-        private bool TrySolveRealmFromFeatureFlags(out string? realm)
+        private bool TrySolveRealmFromFeatureFlags(string featureFlag, out string? realm)
         {
             realm = null;
 
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ONBOARDING))
+            if (!featureFlagsCache.Configuration.IsEnabled(featureFlag))
                 return false;
 
-            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
+            if (featureFlagsCache.Configuration.IsEnabled(featureFlag, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
             {
-                if (!featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT, out realm))
+                if (!featureFlagsCache.Configuration.TryGetTextPayload(featureFlag, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT, out realm))
                     return false;
 
                 return !string.IsNullOrEmpty(realm);
             }
 
-            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT))
+            if (featureFlagsCache.Configuration.IsEnabled(featureFlag, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT))
             {
-                if (!featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT, out realm))
+                if (!featureFlagsCache.Configuration.TryGetTextPayload(featureFlag, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT, out realm))
                     return false;
 
                 return !string.IsNullOrEmpty(realm);
