@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
-            emotePlayer = new EmotePlayer(audioSource, localSceneDevelopment, appArgs);
+            emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS));
         }
 
         protected override void Update(float t)

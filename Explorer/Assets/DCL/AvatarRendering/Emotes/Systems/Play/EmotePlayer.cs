@@ -1,6 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Optimization.Pools;
-using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,9 +21,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Transform poolRoot;
         private readonly bool legacyAnimationsEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, bool localSceneDevelopment, IAppArgs appArgs)
+        public EmotePlayer(AudioSource audioSourcePrefab, bool legacyAnimationsEnabled)
         {
-            legacyAnimationsEnabled = localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS);
+            this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
