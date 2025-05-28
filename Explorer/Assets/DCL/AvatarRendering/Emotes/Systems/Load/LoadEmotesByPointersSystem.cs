@@ -221,7 +221,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
                 && component.GetUrn().IsValid())
 
-                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
+                // The resolution of the AB promise will be finalized by FinalizeEmoteLoadingSystem
                 return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
@@ -231,7 +231,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             {
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
-                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
+                // The resolution of the AB promise will be finalized by FinalizeEmoteLoadingSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
@@ -265,44 +265,36 @@ namespace DCL.AvatarRendering.Emotes.Load
             if (component.AssetResults[intention.BodyShape] != null || component.IsLoading)
                 return false;
 
-            // Look for GLB file in content
+            bool foundGlb = false;
+
+            // The resolution of these promises will be finalized by FinalizeEmoteLoadingSystem
             foreach (var content in component.DTO.content)
             {
                 if (content.file.EndsWith(".glb"))
                 {
-                    // Create GLTF promise
-                    var gltfPromise = GltfPromise.Create(World!, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
-                    World!.Create(gltfPromise, component, intention.BodyShape);
-
-                    // Create audio clip promises for any audio files in the emote
-                    TryCreateBuilderAudioClipPromises(component, intention.BodyShape, partitionComponent);
-
+                    var gltfPromise = GltfPromise.Create(World, GetGLTFIntention.Create(content.file, content.hash), PartitionComponent.TOP_PRIORITY);
+                    World.Create(gltfPromise, component, intention.BodyShape);
                     component.UpdateLoadingStatus(true);
-                    return true;
+                    foundGlb = true;
+                    continue;
+                }
+
+                // Supported audio format in emotes: https://docs.decentraland.org/creator/emotes/props-and-sounds/#add-audio-to-the-emotes
+                if (content.file.EndsWith(".mp3") || content.file.EndsWith(".ogg"))
+                {
+                    var audioType = content.file.ToAudioType();
+                    urlBuilder.Clear();
+                    urlBuilder.AppendDomain(URLDomain.FromString(component.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
+                    URLAddress url = urlBuilder.Build();
+
+                    var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
+                    World.Create(audioPromise, component, intention.BodyShape);
+
+                    if (foundGlb) break;
                 }
             }
 
-            return false;
-        }
-
-        private void TryCreateBuilderAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
-        {
-            /*AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
-
-            foreach (AvatarAttachmentDTO.Content item in content ?? Array.Empty<AvatarAttachmentDTO.Content>())
-            {
-                var audioType = item.file.ToAudioType();
-
-                if (audioType == AudioType.UNKNOWN)
-                    continue;
-
-                // For builder emotes, use the content download URL + hash
-                string audioUrl = component.DTO.ContentDownloadUrl + item.hash;
-
-                // The resolution of the audio promise will be finalized by FinalizeEmoteLoadingSystem
-                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, audioUrl, audioType, partitionComponent);
-                World!.Create(promise, component, bodyShape);
-            }*/
+            return foundGlb;
         }
 
         private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
@@ -320,7 +312,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
                 URLAddress url = urlBuilder.Build();
 
-                // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
+                // The resolution of the audio promise will be finalized by FinalizeEmoteLoadingSystem
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
                 World!.Create(promise, component, bodyShape);
             }
@@ -344,6 +336,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 }
 
                 // If emote is still loading (either via IsLoading flag or GLTF promise), continue waiting
+                // TODO: is the extra check needed?
                 if (emote.IsLoading || IsEmoteLoadingViaGltfPromise(emote, intention.BodyShape))
                     continue;
 

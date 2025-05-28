@@ -7,12 +7,14 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.Diagnostics;
+using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using System;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
@@ -61,32 +63,24 @@ namespace DCL.AvatarRendering.Emotes.Load
             // Create asset promises for builder collection emotes after DTO loading is complete
             if (intention.NeedsBuilderAPISigning)
             {
-                CreateAssetPromisesForBuilderEmotes(in intention);
+                foreach (IEmote emote in intention.Result.List)
+                {
+                    TryCreateBuilderEmoteAssetPromises(emote);
+                }
             }
 
             return new EmotesResolution(intention.Result, intention.TotalAmount);
         }
 
-        private void CreateAssetPromisesForBuilderEmotes(in GetOwnedEmotesFromRealmIntention intention)
-        {
-            foreach (IEmote emote in intention.Result.List)
-            {
-                TryCreateRawEmoteGltfPromise(emote);
-            }
-        }
-
-        private bool TryCreateRawEmoteGltfPromise(IEmote emote)
+        private bool TryCreateBuilderEmoteAssetPromises(IEmote emote)
         {
             BodyShape bodyShape = BodyShape.MALE;
 
-            // Check if emote already has assets loaded
-            if (emote.AssetResults[bodyShape] != null)
-                return false;
-
-            if (emote.IsLoading)
-                return false;
-
             if (string.IsNullOrEmpty(emote.DTO.ContentDownloadUrl))
+                return false;
+
+            // Check if emote already has assets loaded or is loading
+            if (emote.AssetResults[bodyShape] != null || emote.IsLoading)
                 return false;
 
             // Check if we already have this emote in storage with assets
@@ -96,18 +90,36 @@ namespace DCL.AvatarRendering.Emotes.Load
                     return false;
             }
 
+            bool foundGlb = false;
+
+            // The resolution of these promises will be finalized by FinalizeEmoteLoadingSystem
             foreach (var content in emote.DTO.content)
             {
                 if (content.file.EndsWith(".glb"))
                 {
-                    var promise = GltfPromise.Create(World, GetGLTFIntention.Create(content.file, content.hash), PartitionComponent.TOP_PRIORITY);
-                    World.Create(promise, emote, bodyShape, 0);
-
+                    var gltfPromise = GltfPromise.Create(World, GetGLTFIntention.Create(content.file, content.hash), PartitionComponent.TOP_PRIORITY);
+                    World.Create(gltfPromise, emote, bodyShape);
                     emote.UpdateLoadingStatus(true);
-                    return true;
+                    foundGlb = true;
+                    continue;
+                }
+
+                // Supported audio format in emotes: https://docs.decentraland.org/creator/emotes/props-and-sounds/#add-audio-to-the-emotes
+                if (content.file.EndsWith(".mp3") || content.file.EndsWith(".ogg"))
+                {
+                    var audioType = content.file.ToAudioType();
+                    urlBuilder.Clear();
+                    urlBuilder.AppendDomain(URLDomain.FromString(emote.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
+                    URLAddress url = urlBuilder.Build();
+
+                    var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
+                    World.Create(audioPromise, emote, bodyShape);
+
+                    if (foundGlb) break;
                 }
             }
-            return false;
+
+            return foundGlb;
         }
     }
 }

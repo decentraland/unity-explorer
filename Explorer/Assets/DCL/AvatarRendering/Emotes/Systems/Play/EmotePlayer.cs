@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 {
     public class EmotePlayer
     {
-        // Scene Emotes in Local Scene Development mode (legacy animations) can have up to 2 clips (avatar + prop)
+        // Emotes can have up to 2 clips (avatar + prop)
         private static readonly AnimationClip[] LEGACY_ANIMATION_CLIPS = new AnimationClip[2];
 
         private readonly GameObjectPool<AudioSource> audioSourcePool;
@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (audioAsset != null)
             {
-                AudioSource audioSource = audioSourcePool.Get()!;
+                AudioSource audioSource = audioSourcePool.Get();
                 audioSource.clip = audioAsset;
                 audioSource.spatialize = isSpatial;
                 audioSource.spatialBlend = isSpatial ? 1 : 0;

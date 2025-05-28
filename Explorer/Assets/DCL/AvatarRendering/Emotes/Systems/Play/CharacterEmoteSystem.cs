@@ -204,13 +204,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    emoteComponent.EmoteUrn = emoteId;
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
-                    emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
                 else
