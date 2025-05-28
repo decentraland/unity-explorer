@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool useAnalytics;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
+        private readonly IRPCSocialServices rpcSocialServices;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
 
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
-            ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
+            IRPCSocialServices rpcSocialServices,
             ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus)
         {
             this.mainUIView = mainUIView;
@@ -125,7 +125,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.socialServiceEventBus = socialServiceEventBus;
-            this.socialServicesRPCProxy = socialServicesRPCProxy;
+            this.rpcSocialServices = rpcSocialServices;
             this.friendCacheProxy = friendCacheProxy;
             this.friendsEventBus = friendsEventBus;
         }
@@ -146,7 +146,7 @@ namespace DCL.PluginSystem.Global
             var friendsCache = new FriendsCache();
             friendCacheProxy.SetObject(friendsCache);
 
-            friendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, socialServicesRPCProxy, socialServiceEventBus);
+            friendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, rpcSocialServices, socialServiceEventBus);
 
             IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
 
@@ -295,7 +295,7 @@ namespace DCL.PluginSystem.Global
 
             void ReconnectFriendServiceAsync(CancellationToken ct)
             {
-                if (!socialServicesRPCProxy.Configured || friendsService == null) return;
+                if (friendsService == null) return;
 
                 friendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
 

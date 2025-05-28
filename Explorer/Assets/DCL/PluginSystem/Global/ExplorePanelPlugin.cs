@@ -51,6 +51,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
@@ -97,8 +98,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly ICollection<string> forceRender;
-        private ExplorePanelInputHandler? inputHandler;
+        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
@@ -115,12 +115,14 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IProfileChangesBus profileChangesBus;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
 
         private readonly bool includeCameraReel;
         private readonly bool includeCommunities;
 
+        private ExplorePanelInputHandler? inputHandler;
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -154,7 +156,7 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            ICollection<string> forceRender,
+            List<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
@@ -184,6 +186,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
+            WarningNotificationView inWorldWarningNotificationView,
             ICommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -237,6 +240,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.communitiesDataProvider = communitiesDataProvider;
         }
 
@@ -265,6 +269,7 @@ namespace DCL.PluginSystem.Global
                 characterPreviewFactory,
                 wearableStorage,
                 selfProfile,
+                profileCache,
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
@@ -283,7 +288,8 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 appArgs,
-                webBrowser
+                webBrowser,
+                inWorldWarningNotificationView
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
