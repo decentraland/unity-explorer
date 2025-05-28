@@ -18,7 +18,7 @@ namespace DCL.VoiceChat
         private const int LIVEKIT_SAMPLE_RATE = 48000;
 
         private VoiceChatConfiguration voiceChatConfiguration;
-        private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur
+        private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur
 
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
@@ -190,7 +190,7 @@ namespace DCL.VoiceChat
         public string GetFilterDebugInfo()
         {
             if (voiceChatConfiguration == null) return "No configuration";
-            
+
             return $"BandPass: {voiceChatConfiguration.EnableBandPassFilter}, " +
                    $"HP: {voiceChatConfiguration.HighPassCutoffFreq}Hz, " +
                    $"LP: {voiceChatConfiguration.LowPassCutoffFreq}Hz, " +
