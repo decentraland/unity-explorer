@@ -1,3 +1,4 @@
+using DCL.Profiles.Helpers;
 using System;
 using UnityEngine;
 

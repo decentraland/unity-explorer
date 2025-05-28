@@ -4,7 +4,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Web3;
 using Decentraland.SocialService.V2;

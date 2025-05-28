@@ -1,5 +1,5 @@
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
-using MVC;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
-    public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
+    public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         protected readonly List<Button> buttons = new ();
 
@@ -103,9 +103,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 UnHover();
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            ProfilePicture.InjectDependencies(dependencies);
+            ProfilePicture.SetProfileDataProvider(profileDataProvider);
         }
     }
 }

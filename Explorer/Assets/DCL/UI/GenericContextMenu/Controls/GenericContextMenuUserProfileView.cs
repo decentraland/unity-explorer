@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles.Helpers;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.ProfileElements;
 using MVC;
@@ -76,7 +77,6 @@ namespace DCL.UI.GenericContextMenu.Controls
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
-            ProfilePictureView.InjectDependencies(dependencies);
         }
 
         public void Configure(UserProfileContextMenuControlSettings settings)

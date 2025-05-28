@@ -24,6 +24,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.Rendering.GPUInstancing;
 using DCL.UI.SharedSpaceManager;
@@ -75,9 +76,10 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -100,7 +102,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache)
         {
@@ -129,7 +131,7 @@ namespace DCL.PluginSystem.Global
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
 
@@ -175,7 +177,7 @@ namespace DCL.PluginSystem.Global
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
-                    viewDependencies
+                    profileRepositoryWrapper
                     ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
