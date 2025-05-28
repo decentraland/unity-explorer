@@ -96,7 +96,7 @@ namespace DCL.Nametags
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr))
                 return;
 
-            var nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true, profile);
+            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, profile.HasClaimedName, profile);
             UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
