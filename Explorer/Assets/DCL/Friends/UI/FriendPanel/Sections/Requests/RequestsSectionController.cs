@@ -181,6 +181,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             PropagateReceivedRequestsCountChanged();
         }
 
+        protected override bool ShouldShowScrollView() =>
+            true; // the request section should always present 2 lists (sent/received), even if it's empty
+
         protected override void ElementClicked(FriendProfile profile)
         {
         }

@@ -42,6 +42,28 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             friendListInitCts.SafeCancelAndDispose();
         }
 
+        public async UniTask InitAsync(CancellationToken ct)
+        {
+            view.SetLoadingState(true);
+            view.SetEmptyState(false);
+            view.SetScrollViewState(false);
+
+            EnumResult<TaskError> result = await requestManager.InitAsync(ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+
+            if (!result.Success)
+                return;
+
+            view.SetLoadingState(false);
+
+            bool showScrollView = ShouldShowScrollView();
+
+            view.SetEmptyState(!showScrollView);
+            view.SetScrollViewState(showScrollView);
+
+            if (showScrollView)
+                RefreshLoopList();
+        }
+
         public virtual void Reset() =>
             requestManager.Reset();
 
@@ -50,6 +72,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             if (!requestManager.WasInitialised)
                 InitAsync(friendListInitCts.Token).Forget();
         }
+
+        protected virtual bool ShouldShowScrollView() =>
+            requestManager.HasElements;
 
         protected abstract void RefreshLoopList();
 
@@ -66,25 +91,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             panelLifecycleTask?.TrySetResult();
             friendListInitCts = friendListInitCts.SafeRestart();
-        }
-
-        public async UniTask InitAsync(CancellationToken ct)
-        {
-            view.SetLoadingState(true);
-            view.SetEmptyState(false);
-            view.SetScrollViewState(false);
-
-            EnumResult<TaskError> result = await requestManager.InitAsync(ct).SuppressToResultAsync(ReportCategory.FRIENDS);
-
-            if (!result.Success)
-                return;
-
-            view.SetLoadingState(false);
-            view.SetEmptyState(!requestManager.HasElements);
-            view.SetScrollViewState(requestManager.HasElements);
-
-            if (requestManager.HasElements)
-                RefreshLoopList();
         }
     }
 }
