@@ -15,6 +15,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string> OnSearchBarSelected;
         public event Action<string> OnSearchBarDeselected;
         public event Action<string> OnSearchBarValueChanged;
+        public event Action<string> OnSearchBarSubmit;
         public event Action OnSearchBarClearButtonClicked;
         public event Action<Vector2> OnResultsLoopGridScrollChanged;
 
@@ -53,13 +54,12 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSelect.AddListener(text => OnSearchBarSelected?.Invoke(text));
             searchBar.inputField.onDeselect.AddListener(text => OnSearchBarDeselected?.Invoke(text));
             searchBar.inputField.onValueChanged.AddListener(text => OnSearchBarValueChanged?.Invoke(text));
+            searchBar.inputField.onSubmit.AddListener(text => OnSearchBarSubmit?.Invoke(text));
             searchBar.clearSearchButton.onClick.AddListener(() => OnSearchBarClearButtonClicked?.Invoke());
         }
 
-        private void Start()
-        {
+        private void Start() =>
             resultLoopGrid.ScrollRect.onValueChanged.AddListener(pos => OnResultsLoopGridScrollChanged?.Invoke(pos));
-        }
 
         private void OnDestroy()
         {
@@ -68,6 +68,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSelect.RemoveAllListeners();
             searchBar.inputField.onDeselect.RemoveAllListeners();
             searchBar.inputField.onValueChanged.RemoveAllListeners();
+            searchBar.inputField.onSubmit.RemoveAllListeners();
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
             resultLoopGrid.ScrollRect.onValueChanged.RemoveAllListeners();
         }
@@ -116,11 +117,8 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
-        public void SetResultsBackButtonVisible(bool isVisible)
-        {
+        public void SetResultsBackButtonVisible(bool isVisible) =>
             resultsBackButton.gameObject.SetActive(isVisible);
-            resultsCountText.gameObject.SetActive(isVisible);
-        }
 
         public void SetResultsTitleText(string text) =>
             resultsTitleText.text = text;

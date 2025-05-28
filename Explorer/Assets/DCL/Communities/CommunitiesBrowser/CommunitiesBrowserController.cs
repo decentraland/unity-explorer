@@ -76,6 +76,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.OnSearchBarSelected += DisableShortcutsInput;
             view.OnSearchBarDeselected += RestoreInput;
             view.OnSearchBarValueChanged += OnSearchBarValueChanged;
+            view.OnSearchBarSubmit += OnSearchBarSubmit;
             view.OnSearchBarClearButtonClicked += OnSearchBarCleared;
         }
 
@@ -115,6 +116,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.OnSearchBarSelected -= DisableShortcutsInput;
             view.OnSearchBarDeselected -= RestoreInput;
             view.OnSearchBarValueChanged -= OnSearchBarValueChanged;
+            view.OnSearchBarSubmit -= OnSearchBarSubmit;
             view.OnSearchBarClearButtonClicked -= OnSearchBarCleared;
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
@@ -319,9 +321,16 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetSearchBarClearButtonActive(!string.IsNullOrEmpty(searchText));
         }
 
-        private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct)
+        private void OnSearchBarSubmit(string searchText)
         {
-            await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: ct);
+            searchCancellationCts = searchCancellationCts.SafeRestart();
+            AwaitAndSendSearchAsync(searchText, searchCancellationCts.Token, skipAwait: true).Forget();
+        }
+
+        private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct, bool skipAwait = false)
+        {
+            if (!skipAwait)
+                await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: ct);
 
             if (currentSearchText == searchText)
                 return;
