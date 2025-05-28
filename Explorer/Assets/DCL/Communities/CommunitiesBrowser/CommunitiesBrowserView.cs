@@ -1,5 +1,7 @@
 using DCL.UI;
+using DCL.UI.Utilities;
 using SuperScrollView;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,33 +10,84 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserView : MonoBehaviour
     {
-        [field: Header("Animators")]
-        [field: SerializeField] internal Animator panelAnimator { get; private set; }
-        [field: SerializeField] internal Animator headerAnimator { get; private set; }
+        public event Action OnViewAllMyCommunitiesButtonClicked;
+        public event Action OnResultsBackButtonClicked;
+        public event Action<string> OnSearchBarSelected;
+        public event Action<string> OnSearchBarDeselected;
+        public event Action<string> OnSearchBarValueChanged;
+        public event Action OnSearchBarClearButtonClicked;
+        public event Action<Vector2> OnResultsLoopGridScrollChanged;
 
-        [field: Header("Search")]
-        [field: SerializeField] internal SearchBarView searchBar { get; private set; }
+        [Header("Animators")]
+        [SerializeField] private Animator panelAnimator;
+        [SerializeField] private Animator headerAnimator;
 
-        [field: Header("Creation Section")]
-        [field: SerializeField] internal Button createCommunityButton { get; private set; }
+        [Header("Search")]
+        [SerializeField] private SearchBarView searchBar;
 
-        [field: Header("My Communities Section")]
-        [field: SerializeField] internal GameObject myCommunitiesSection { get; private set; }
-        [field: SerializeField] internal GameObject myCommunitiesMainContainer { get; private set; }
-        [field: SerializeField] internal GameObject myCommunitiesEmptyContainer { get; private set; }
-        [field: SerializeField] internal GameObject myCommunitiesLoadingSpinner { get; private set; }
-        [field: SerializeField] internal LoopListView2 myCommunitiesLoopList { get; private set; }
-        [field: SerializeField] internal Button myCommunitiesViewAllButton { get; private set; }
+        [Header("Creation Section")]
+        [SerializeField] private Button createCommunityButton;
 
-        [field: Header("Results Section")]
-        [field: SerializeField] internal Button resultsBackButton { get; private set; }
-        [field: SerializeField] internal TMP_Text resultsTitleText { get; private set; }
-        [field: SerializeField] internal TMP_Text resultsCountText { get; private set; }
-        [field: SerializeField] internal GameObject resultsSection { get; private set; }
-        [field: SerializeField] internal LoopGridView resultLoopGrid { get; private set; }
-        [field: SerializeField] internal GameObject resultsEmptyContainer { get; private set; }
-        [field: SerializeField] internal GameObject resultsLoadingSpinner { get; private set; }
-        [field: SerializeField] internal GameObject resultsLoadingMoreSpinner { get; private set; }
+        [Header("My Communities Section")]
+        [SerializeField] private GameObject myCommunitiesSection;
+        [SerializeField] private GameObject myCommunitiesMainContainer;
+        [SerializeField] private GameObject myCommunitiesEmptyContainer;
+        [SerializeField] private GameObject myCommunitiesLoadingSpinner;
+        [SerializeField] private LoopListView2 myCommunitiesLoopList;
+        [SerializeField] private Button myCommunitiesViewAllButton;
+
+        [Header("Results Section")]
+        [SerializeField] private Button resultsBackButton;
+        [SerializeField] private TMP_Text resultsTitleText;
+        [SerializeField] private TMP_Text resultsCountText;
+        [SerializeField] private GameObject resultsSection;
+        [SerializeField] private LoopGridView resultLoopGrid;
+        [SerializeField] private GameObject resultsEmptyContainer;
+        [SerializeField] private GameObject resultsLoadingSpinner;
+        [SerializeField] private GameObject resultsLoadingMoreSpinner;
+
+        private void Awake()
+        {
+            myCommunitiesViewAllButton.onClick.AddListener(() => OnViewAllMyCommunitiesButtonClicked?.Invoke());
+            resultsBackButton.onClick.AddListener(() => OnResultsBackButtonClicked?.Invoke());
+            searchBar.inputField.onSelect.AddListener(text => OnSearchBarSelected?.Invoke(text));
+            searchBar.inputField.onDeselect.AddListener(text => OnSearchBarDeselected?.Invoke(text));
+            searchBar.inputField.onValueChanged.AddListener(text => OnSearchBarValueChanged?.Invoke(text));
+            searchBar.clearSearchButton.onClick.AddListener(() => OnSearchBarClearButtonClicked?.Invoke());
+        }
+
+        private void Start()
+        {
+            resultLoopGrid.ScrollRect.onValueChanged.AddListener(pos => OnResultsLoopGridScrollChanged?.Invoke(pos));
+        }
+
+        private void OnDestroy()
+        {
+            myCommunitiesViewAllButton.onClick.RemoveAllListeners();
+            resultsBackButton.onClick.RemoveAllListeners();
+            searchBar.inputField.onSelect.RemoveAllListeners();
+            searchBar.inputField.onDeselect.RemoveAllListeners();
+            searchBar.inputField.onValueChanged.RemoveAllListeners();
+            searchBar.clearSearchButton.onClick.RemoveAllListeners();
+            resultLoopGrid.ScrollRect.onValueChanged.RemoveAllListeners();
+        }
+
+        public void SetViewActive(bool isActive) =>
+            gameObject.SetActive(isActive);
+
+        public void PlayAnimator(int triggerId)
+        {
+            panelAnimator.SetTrigger(triggerId);
+            headerAnimator.SetTrigger(triggerId);
+        }
+
+        public void ResetAnimator()
+        {
+            panelAnimator.Rebind();
+            headerAnimator.Rebind();
+            panelAnimator.Update(0);
+            headerAnimator.Update(0);
+        }
 
         public void SetMyCommunitiesAsLoading(bool isLoading)
         {
@@ -94,5 +147,29 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!raiseOnChangeEvent)
                 searchBar.inputField.onValueChanged = originalEvent;
         }
+
+        public void InitializeMyCommunitiesList(int itemTotalCount, Func<LoopListView2, int, LoopListViewItem2> onGetItemByIndex)
+        {
+            myCommunitiesLoopList.InitListView(itemTotalCount, onGetItemByIndex);
+            myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void SetMyCommunitiesLoopListItemCount(int itemCount, bool resetPos = true) =>
+            myCommunitiesLoopList.SetListItemCount(itemCount, resetPos);
+
+        public void InitializeResultsGrid(int itemTotalCount, Func<LoopGridView,int,int,int, LoopGridViewItem> onGetItemByRowColumn)
+        {
+            resultLoopGrid.InitGridView(itemTotalCount, onGetItemByRowColumn);
+            resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void SetResultsLoopGridItemCount(int itemCount, bool resetPos = true) =>
+            resultLoopGrid.SetListItemCount(itemCount, resetPos);
+
+        public void RefreshResultsLoopGridItemByItemIndex(int itemIndex) =>
+            resultLoopGrid.RefreshItemByItemIndex(itemIndex);
+
+        public float GetResultsLoopGridVerticalNormalizedPosition() =>
+            resultLoopGrid.ScrollRect.verticalNormalizedPosition;
     }
 }

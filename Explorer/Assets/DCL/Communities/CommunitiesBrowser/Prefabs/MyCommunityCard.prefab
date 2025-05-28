@@ -306,12 +306,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0aac036264046e4ab2fc4d46f708de0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <communityTitle>k__BackingField: {fileID: 666783682751815830}
-  <userRoleContainer>k__BackingField: {fileID: 169621668090036100}
-  <userRole>k__BackingField: {fileID: 1619217265223932041}
-  <communityThumbnail>k__BackingField: {fileID: 5359017888257299776}
-  <communityLiveMark>k__BackingField: {fileID: 4697007145502245620}
-  <mainButton>k__BackingField: {fileID: 322440660326183502}
+  communityTitle: {fileID: 666783682751815830}
+  userRoleContainer: {fileID: 169621668090036100}
+  userRole: {fileID: 1619217265223932041}
+  communityThumbnail: {fileID: 5359017888257299776}
+  communityLiveMark: {fileID: 4697007145502245620}
+  mainButton: {fileID: 322440660326183502}
 --- !u!1 &3958030276339269872
 GameObject:
   m_ObjectHideFlags: 0

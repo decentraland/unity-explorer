@@ -3,8 +3,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
-using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;
 using SuperScrollView;
@@ -12,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
 
@@ -71,17 +68,17 @@ namespace DCL.Communities.CommunitiesBrowser
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
 
-            view.myCommunitiesViewAllButton.onClick.AddListener(ViewAllMyCommunitiesResults);
-            view.resultsBackButton.onClick.AddListener(LoadAllCommunitiesResults);
-            view.searchBar.inputField.onSelect.AddListener(DisableShortcutsInput);
-            view.searchBar.inputField.onDeselect.AddListener(RestoreInput);
-            view.searchBar.inputField.onValueChanged.AddListener(OnSearchBarValueChanged);
-            view.searchBar.clearSearchButton.onClick.AddListener(OnSearchBarCleared);
+            view.OnViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
+            view.OnResultsBackButtonClicked += LoadAllCommunitiesResults;
+            view.OnSearchBarSelected += DisableShortcutsInput;
+            view.OnSearchBarDeselected += RestoreInput;
+            view.OnSearchBarValueChanged += OnSearchBarValueChanged;
+            view.OnSearchBarClearButtonClicked += OnSearchBarCleared;
         }
 
         public void Activate()
         {
-            view.gameObject.SetActive(true);
+            view.SetViewActive(true);
             cursor.Unlock();
 
             // Each time we open the Communities section, we load both my communities and Decentraland communities
@@ -92,54 +89,42 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Deactivate()
         {
-            view.gameObject.SetActive(false);
+            view.SetViewActive(false);
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
         }
 
-        public void Animate(int triggerId)
-        {
-            view.panelAnimator.SetTrigger(triggerId);
-            view.headerAnimator.SetTrigger(triggerId);
-        }
+        public void Animate(int triggerId) =>
+            view.PlayAnimator(triggerId);
 
-        public void ResetAnimator()
-        {
-            view.panelAnimator.Rebind();
-            view.headerAnimator.Rebind();
-            view.panelAnimator.Update(0);
-            view.headerAnimator.Update(0);
-        }
+        public void ResetAnimator() =>
+            view.ResetAnimator();
 
         public RectTransform GetRectTransform() =>
             rectTransform;
 
         public void Dispose()
         {
-            view.resultLoopGrid.ScrollRect.onValueChanged.RemoveListener(LoadMoreResults);
-            view.myCommunitiesViewAllButton.onClick.RemoveListener(ViewAllMyCommunitiesResults);
-            view.resultsBackButton.onClick.RemoveListener(LoadAllCommunitiesResults);
-            view.searchBar.inputField.onSelect.RemoveListener(DisableShortcutsInput);
-            view.searchBar.inputField.onDeselect.RemoveListener(RestoreInput);
-            view.searchBar.inputField.onValueChanged.RemoveListener(OnSearchBarValueChanged);
-            view.searchBar.clearSearchButton.onClick.RemoveListener(OnSearchBarCleared);
+            view.OnResultsLoopGridScrollChanged -= LoadMoreResults;
+            view.OnViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
+            view.OnResultsBackButtonClicked -= LoadAllCommunitiesResults;
+            view.OnSearchBarSelected -= DisableShortcutsInput;
+            view.OnSearchBarDeselected -= RestoreInput;
+            view.OnSearchBarValueChanged -= OnSearchBarValueChanged;
+            view.OnSearchBarClearButtonClicked -= OnSearchBarCleared;
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
         }
 
-        private void ConfigureMyCommunitiesList()
-        {
-            view.myCommunitiesLoopList.InitListView(0, SetupMyCommunityCardByIndex);
-            view.myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-        }
+        private void ConfigureMyCommunitiesList() =>
+            view.InitializeMyCommunitiesList(0, SetupMyCommunityCardByIndex);
 
         private void ConfigureResultsGrid()
         {
-            view.resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
-            view.resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            view.resultLoopGrid.ScrollRect.onValueChanged.AddListener(LoadMoreResults);
+            view.InitializeResultsGrid(0, SetupCommunityResultCardByIndex);
+            view.OnResultsLoopGridScrollChanged += LoadMoreResults;
         }
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
@@ -149,6 +134,7 @@ namespace DCL.Communities.CommunitiesBrowser
             MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
 
             // Setup card data
+            cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
@@ -156,8 +142,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
 
             // Setup card events
-            cardView.mainButton.onClick.RemoveAllListeners();
-            cardView.mainButton.onClick.AddListener(() => { OpenCommunityProfile(communityData.id); });
+            cardView.OnMainButtonClicked -= OpenCommunityProfile;
+            cardView.OnMainButtonClicked += OpenCommunityProfile;
 
             return listItem;
         }
@@ -169,6 +155,8 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
 
             // Setup card data
+            cardView.SetCommunityId(communityData.id);
+            cardView.SetIndex(index);
             cardView.SetTitle(communityData.name);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.memberCount);
@@ -179,23 +167,15 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
-            cardView.mainButton.onClick.RemoveAllListeners();
-            cardView.mainButton.onClick.AddListener(() => OpenCommunityProfile(communityData.id));
-            cardView.viewCommunityButton.onClick.RemoveAllListeners();
-            cardView.viewCommunityButton.onClick.AddListener(() => OpenCommunityProfile(communityData.id));
-            cardView.joinCommunityButton.onClick.RemoveAllListeners();
-            cardView.joinCommunityButton.onClick.AddListener(() => JoinCommunityAsync(index, cardView, CancellationToken.None).Forget());
+            cardView.OnMainButtonClicked -= OpenCommunityProfile;
+            cardView.OnMainButtonClicked += OpenCommunityProfile;
+            cardView.OnViewCommunityButtonClicked -= OpenCommunityProfile;
+            cardView.OnViewCommunityButtonClicked += OpenCommunityProfile;
+            cardView.OnJoinCommunityButtonClicked -= JoinCommunity;
+            cardView.OnJoinCommunityButtonClicked += JoinCommunity;
 
             // Setup mutual friends
-            cardView.InjectDependencies(viewDependencies);
-            for (var i = 0; i < cardView.mutualFriends.thumbnails.Length; i++)
-            {
-                bool friendExists = i < communityData.friends.Length;
-                cardView.mutualFriends.thumbnails[i].root.SetActive(friendExists);
-                if (!friendExists) continue;
-                GetUserCommunitiesResponse.FriendInCommunity mutualFriend = communityData.friends[i];
-                cardView.mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.id);
-            }
+            cardView.SetupMutualFriends(viewDependencies, communityData);
 
             return gridItem;
         }
@@ -203,7 +183,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTask LoadMyCommunitiesAsync(CancellationToken ct)
         {
             currentMyCommunities.Clear();
-            view.myCommunitiesLoopList.SetListItemCount(0, false);
+            view.SetMyCommunitiesLoopListItemCount(0, false);
             view.SetMyCommunitiesAsLoading(true);
 
             var ownProfile = await selfProfile.ProfileAsync(ct);
@@ -222,7 +202,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 currentMyCommunities.Add(community);
 
             view.SetMyCommunitiesAsLoading(false);
-            view.myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count);
+            view.SetMyCommunitiesLoopListItemCount(currentMyCommunities.Count);
             view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
@@ -261,7 +241,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (isGridResultsLoadingItems ||
                 currentResults.Count >= currentResultsTotalAmount ||
-                view.resultLoopGrid.ScrollRect.verticalNormalizedPosition > NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE)
+                view.GetResultsLoopGridVerticalNormalizedPosition() > NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE)
                 return;
 
             loadResultsCts = loadResultsCts.SafeRestart();
@@ -280,7 +260,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (pageNumber == 1)
             {
                 currentResults.Clear();
-                view.resultLoopGrid.SetListItemCount(0, false);
+                view.SetResultsLoopGridItemCount(0, false);
                 view.SetResultsAsLoading(true);
             }
             else
@@ -316,7 +296,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.SetResultsLoadingMoreActive(false);
             view.SetResultsCountText(currentResultsTotalAmount);
-            view.resultLoopGrid.SetListItemCount(currentResults.Count, resetPos: pageNumber == 1);
+            view.SetResultsLoopGridItemCount(currentResults.Count, resetPos: pageNumber == 1);
 
             currentNameFilter = name;
             currentMemberRolesIncluded.Clear();
@@ -377,6 +357,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CleanSearchBar(raiseOnChangeEvent: false);
         }
 
+        private void JoinCommunity(int index, CommunityResultCardView cardView) =>
+            JoinCommunityAsync(index, cardView, CancellationToken.None).Forget();
+
         private async UniTask JoinCommunityAsync(int index, CommunityResultCardView cardView, CancellationToken ct)
         {
             cardView.SetJoiningLoadingActive(true);
@@ -387,8 +370,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 currentResults[index].memberCount++;
                 currentMyCommunities.Add(currentResults[index]);
 
-                view.resultLoopGrid.RefreshItemByItemIndex(index);
-                view.myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
+                view.RefreshResultsLoopGridItemByItemIndex(index);
+                view.SetMyCommunitiesLoopListItemCount(currentMyCommunities.Count, false);
                 view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
             }
         }

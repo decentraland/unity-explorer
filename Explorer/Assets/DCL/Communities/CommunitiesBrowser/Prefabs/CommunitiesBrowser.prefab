@@ -163,24 +163,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2105bf6b3b64444599f9883ff9285e8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <panelAnimator>k__BackingField: {fileID: 958989599405142599}
-  <headerAnimator>k__BackingField: {fileID: 6156547431616775082}
-  <searchBar>k__BackingField: {fileID: 2651875280876070496}
-  <createCommunityButton>k__BackingField: {fileID: 1424388568853016806}
-  <myCommunitiesSection>k__BackingField: {fileID: 5462420290943239597}
-  <myCommunitiesMainContainer>k__BackingField: {fileID: 4146935334989304273}
-  <myCommunitiesEmptyContainer>k__BackingField: {fileID: 103737796013032991}
-  <myCommunitiesLoadingSpinner>k__BackingField: {fileID: 2469477369309723608}
-  <myCommunitiesLoopList>k__BackingField: {fileID: 8673914969252130814}
-  <myCommunitiesViewAllButton>k__BackingField: {fileID: 2355491983493601957}
-  <resultsBackButton>k__BackingField: {fileID: 4786048208792907895}
-  <resultsTitleText>k__BackingField: {fileID: 6833303783689177860}
-  <resultsCountText>k__BackingField: {fileID: 4856304596177266866}
-  <resultsSection>k__BackingField: {fileID: 1092232677022061387}
-  <resultLoopGrid>k__BackingField: {fileID: 8437749328273987364}
-  <resultsEmptyContainer>k__BackingField: {fileID: 1393419606773334421}
-  <resultsLoadingSpinner>k__BackingField: {fileID: 7730056915344883293}
-  <resultsLoadingMoreSpinner>k__BackingField: {fileID: 1892764526884276851}
+  panelAnimator: {fileID: 958989599405142599}
+  headerAnimator: {fileID: 6156547431616775082}
+  searchBar: {fileID: 2651875280876070496}
+  createCommunityButton: {fileID: 1424388568853016806}
+  myCommunitiesSection: {fileID: 5462420290943239597}
+  myCommunitiesMainContainer: {fileID: 4146935334989304273}
+  myCommunitiesEmptyContainer: {fileID: 103737796013032991}
+  myCommunitiesLoadingSpinner: {fileID: 2469477369309723608}
+  myCommunitiesLoopList: {fileID: 8673914969252130814}
+  myCommunitiesViewAllButton: {fileID: 2355491983493601957}
+  resultsBackButton: {fileID: 4786048208792907895}
+  resultsTitleText: {fileID: 6833303783689177860}
+  resultsCountText: {fileID: 4856304596177266866}
+  resultsSection: {fileID: 1092232677022061387}
+  resultLoopGrid: {fileID: 8437749328273987364}
+  resultsEmptyContainer: {fileID: 1393419606773334421}
+  resultsLoadingSpinner: {fileID: 7730056915344883293}
+  resultsLoadingMoreSpinner: {fileID: 1892764526884276851}
 --- !u!1001 &213486784167413645
 PrefabInstance:
   m_ObjectHideFlags: 0

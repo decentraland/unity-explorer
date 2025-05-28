@@ -1499,21 +1499,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfb6a426e26f48abb0b26c0e2ba4cbcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <communityTitle>k__BackingField: {fileID: 9130300162100670150}
-  <communityThumbnail>k__BackingField: {fileID: 1563201233504633467}
-  <defaultCommunitySprite>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
-  <communityPrivacyIcon>k__BackingField: {fileID: 1803047306608073357}
-  <publicPrivacySprite>k__BackingField: {fileID: 21300000, guid: ce952777a378746d48f3cb3b51815ed9, type: 3}
-  <privatePrivacySprite>k__BackingField: {fileID: 21300000, guid: cee9a3dbf9f6544da96abe48bb2550af, type: 3}
-  <communityPrivacyText>k__BackingField: {fileID: 1598583829820689214}
-  <communityMembersCountText>k__BackingField: {fileID: 5759947373287357163}
-  <communityLiveMark>k__BackingField: {fileID: 7783451404242258191}
-  <mainButton>k__BackingField: {fileID: 7446897494615956440}
-  <buttonsContainer>k__BackingField: {fileID: 1830764517535669680}
-  <viewCommunityButton>k__BackingField: {fileID: 6861950670929796314}
-  <joinCommunityButton>k__BackingField: {fileID: 7317564665967695302}
-  <joiningLoading>k__BackingField: {fileID: 340140728143378828}
-  <mutualFriends>k__BackingField:
+  communityTitle: {fileID: 9130300162100670150}
+  communityThumbnail: {fileID: 1563201233504633467}
+  communityPrivacyIcon: {fileID: 1803047306608073357}
+  publicPrivacySprite: {fileID: 21300000, guid: ce952777a378746d48f3cb3b51815ed9, type: 3}
+  privatePrivacySprite: {fileID: 21300000, guid: cee9a3dbf9f6544da96abe48bb2550af, type: 3}
+  communityPrivacyText: {fileID: 1598583829820689214}
+  communityMembersCountText: {fileID: 5759947373287357163}
+  communityLiveMark: {fileID: 7783451404242258191}
+  mainButton: {fileID: 7446897494615956440}
+  buttonsContainer: {fileID: 1830764517535669680}
+  viewCommunityButton: {fileID: 6861950670929796314}
+  joinCommunityButton: {fileID: 7317564665967695302}
+  joiningLoading: {fileID: 340140728143378828}
+  mutualFriends:
     thumbnails:
     - root: {fileID: 731689965516973166}
       picture: {fileID: 1546392493957508366}
