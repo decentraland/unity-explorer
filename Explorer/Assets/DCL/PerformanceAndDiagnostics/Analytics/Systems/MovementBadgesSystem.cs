@@ -130,9 +130,9 @@ namespace DCL.Analytics.Systems
         private bool IsNotMovingByFoot()
         {
             AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
-            bool isMovingPlatform = World.Get<CharacterPlatformComponent>(playerEntity).IsMovingPlatform;
+            var currentPlatform = World.Get<CharacterPlatformComponent>(playerEntity);
 
-            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || isMovingPlatform)
+            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || currentPlatform.IsMovingPlatform || currentPlatform.IsRotatingPlatform)
                 return true;
 
             if (World.TryGet(playerEntity, out PlayerTeleportIntent _))

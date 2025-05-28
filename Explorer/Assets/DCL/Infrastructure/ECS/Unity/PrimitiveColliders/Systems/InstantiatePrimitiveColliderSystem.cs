@@ -97,7 +97,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         {
             ColliderLayer colliderLayer = sdkComponent.GetColliderLayer();
             sdkCollider.SetColliderLayer(colliderLayer, out bool enabled);
-            entityCollidersCache.Associate(sdkCollider.Collider, new ColliderSceneEntityInfo(World!.Reference(entity), sdkEntity, colliderLayer));
+            entityCollidersCache.Associate(sdkCollider.Collider, new ColliderSceneEntityInfo(entity, sdkEntity, colliderLayer));
             return enabled;
         }
 

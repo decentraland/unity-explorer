@@ -33,6 +33,8 @@ namespace SceneRunner
 
         private int intervalMS;
 
+        private readonly InterlockedFlag sceneCodeIsRunning = new ();
+
         public SceneFacade(
             ISceneData sceneData,
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps)
@@ -56,12 +58,12 @@ namespace SceneRunner
         {
             MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
 
-            SceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State.Set(SceneState.Disposing);
             runtimeInstance.SetIsDisposing();
 
             DisposeInternal();
 
-            SceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
         public void SetTargetFPS(int fps)
@@ -106,6 +108,7 @@ namespace SceneRunner
 
             SetTargetFPS(targetFPS);
 
+            sceneCodeIsRunning.Set();
             try
             {
                 // Start the scene
@@ -116,6 +119,7 @@ namespace SceneRunner
                 sceneExceptionsHandler.OnJavaScriptException(e);
                 return;
             }
+            finally { sceneCodeIsRunning.Reset(); }
 
             MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
 
@@ -135,12 +139,14 @@ namespace SceneRunner
 
                     stopWatch.Restart();
 
+                    sceneCodeIsRunning.Set();
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
                     catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
+                    finally { sceneCodeIsRunning.Reset(); }
 
                     SceneStateProvider.TickNumber++;
 
@@ -207,16 +213,22 @@ namespace SceneRunner
         {
             // Because of multithreading Disposing is not synced with the update loop
             // so just mark it as disposed and let the update loop handle the disposal
-            SceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State.Set(SceneState.Disposing);
 
-            // TODO do it better
             runtimeInstance.SetIsDisposing();
 
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
+            // Let the scene loop finish gracefully to prevent synchronous exceptions:
+            // Microsoft.ClearScript.ScriptEngineException
+            // Error: Cannot access a disposed object.
+
+            while (sceneCodeIsRunning)
+                await UniTask.Yield(PlayerLoopTiming.Initialization);
+
             DisposeInternal();
 
-            SceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
         private void DisposeInternal()

@@ -57,7 +57,7 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
-        private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
+        private readonly IRPCSocialServices rpcSocialService;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ObjectProxy<IRPCSocialServices> socialServiceProxy,
+            IRPCSocialServices rpcSocialService,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
@@ -114,7 +114,7 @@ namespace DCL.PluginSystem.Global
             this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.socialServiceProxy = socialServiceProxy;
+            this.rpcSocialService = rpcSocialService;
             this.friendsEventBus = friendsEventBus;
         }
 
@@ -128,7 +128,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
-            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
+            var privacySettings = new RPCChatPrivacyService(rpcSocialService, chatSettingsAsset.Value);
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
@@ -150,7 +150,6 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 inputBlock,
                 viewDependencies,
-                chatCommandsBus,
                 roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,

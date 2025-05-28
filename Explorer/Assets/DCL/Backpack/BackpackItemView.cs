@@ -107,6 +107,13 @@ namespace DCL.Backpack
             UnEquipButton.gameObject.SetActive(IsEquipped);
         }
 
+        private void OnDisable()
+        {
+            ContainerTransform.localScale = Vector3.one;
+            HoverBackgroundTransform.localScale = Vector3.zero;
+            HoverBackgroundTransform.gameObject.SetActive(false);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             AnimateHover();

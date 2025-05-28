@@ -22,7 +22,7 @@ namespace DCL.Chat.Commands
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IChatCommandsBus chatCommandsBus;
 
-        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder, IChatCommandsBus chatCommandsBus)//, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
+        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder, IChatCommandsBus chatCommandsBus)
         {
             this.debugContainerBuilder = debugContainerBuilder;
             this.chatCommandsBus = chatCommandsBus;

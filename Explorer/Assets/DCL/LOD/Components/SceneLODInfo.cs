@@ -105,6 +105,9 @@ namespace DCL.LOD.Components
             renderersToSetup.CopyTo(renderers);
             lods[lodToSetup].renderers = renderers;
 
+            if (lodToSetup == 1 && SceneLODInfoUtils.LODCount(metadata.SuccessfullLODs) == 1)
+                lods[0].renderers = renderers;
+
             CalculateLODBounds(lods[lodToSetup].renderers, renderersToSetup.Count);
         }
 

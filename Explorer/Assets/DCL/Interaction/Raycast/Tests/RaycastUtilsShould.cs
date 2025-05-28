@@ -123,5 +123,106 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That((Vector3)sdkHit.GlobalOrigin, Is.EqualTo(Vector3.zero));
             Assert.That((Vector3)sdkHit.Direction, Is.EqualTo(Vector3.forward));
         }
+
+        [Test]
+        public void CreateRayFromDynamicallyUpdatedPosition()
+        {
+            // Arrange: Set an initial transform state
+            var initialPosition = new Vector3(5, 5, 5);
+            var initialRotation = Quaternion.Euler(0, 90, 0);
+            ts.SetTransform(initialPosition, initialRotation, Vector3.one);
+
+            // Simulate a direct update to the Unity Transform's position and rotation after initial caching
+            // This is the scenario where Cached.WorldPosition/Rotation could be stale
+            var updatedPosition = new Vector3(50, 50, 50);
+            ts.Transform.position = updatedPosition;
+
+            var updatedRotation = Quaternion.Euler(0, 180, 0); // New rotation
+            ts.Transform.rotation = updatedRotation;
+            // Note: ts.Transform.lossyScale remains Vector3.one
+
+            var originOffset = new Decentraland.Common.Vector3 { X = 1, Y = 2, Z = 3 };
+            var localDirectionVec = new Decentraland.Common.Vector3 { X = 0, Y = 0, Z = 1 }; // Forward relative to entity
+
+            var pbRaycast = new PBRaycast
+            {
+                OriginOffset = originOffset,
+                LocalDirection = localDirectionVec
+            };
+
+            // Act: Create the ray
+            bool success = pbRaycast.TryCreateRay(world, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>(), Vector3.zero, in ts, out Ray ray);
+
+            // Assert
+            Assert.That(success, Is.True);
+
+            // The ray origin should be based on the *updated* Transform.position + offset
+            var expectedOrigin = updatedPosition + new Vector3(originOffset.X, originOffset.Y, originOffset.Z);
+            Assert.That(ray.origin, Is.EqualTo(expectedOrigin));
+
+            // The ray direction should respect the *updated* rotation
+            var expectedDirection = updatedRotation * new Vector3(localDirectionVec.X, localDirectionVec.Y, localDirectionVec.Z).normalized;
+            Assert.That(ray.direction, Is.EqualTo(expectedDirection));
+        }
+
+        [Test]
+        public void CreateTargetEntityRayWithDynamicUpdates()
+        {
+            // Arrange: Setup source and target entities
+            CRDTEntity sourceCrdtEntity = new CRDTEntity(10);
+            Entity sourceEntity = world.Create(new PBRaycast()); // PBRaycast is on source
+            TransformComponent sourceTs = AddTransformToEntity(sourceEntity);
+            world.Set(sourceEntity, sourceTs); // Ensure transform is in world
+
+            CRDTEntity targetCrdtEntity = new CRDTEntity(20);
+            Entity targetEntity = world.Create();
+            TransformComponent targetTs = AddTransformToEntity(targetEntity);
+            world.Set(targetEntity, targetTs); // Ensure transform is in world
+
+            // Initial positions and rotations (cached via SetTransform)
+            var initialSourcePos = new Vector3(1, 1, 1);
+            sourceTs.SetTransform(initialSourcePos, Quaternion.identity, Vector3.one);
+
+            var initialTargetPos = new Vector3(10, 1, 1);
+            targetTs.SetTransform(initialTargetPos, Quaternion.identity, Vector3.one);
+
+            // Dynamically update positions after SetTransform (simulating stale cache)
+            var updatedSourcePos = new Vector3(5, 5, 5);
+            sourceTs.Transform.position = updatedSourcePos;
+
+            var updatedTargetPos = new Vector3(15, 5, 5);
+            targetTs.Transform.position = updatedTargetPos;
+
+            // Setup entity map
+            var entitiesMap = Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>();
+            entitiesMap.TryGetValue(targetCrdtEntity, out Arg.Any<Entity>())
+                       .Returns(x =>
+                        {
+                            x[1] = targetEntity;
+                            return true;
+                        });
+            entitiesMap.TryGetValue(sourceCrdtEntity, out Arg.Any<Entity>()) // Not strictly needed for this raycast type, but good for completeness
+                       .Returns(x =>
+                        {
+                            x[1] = sourceEntity;
+                            return true;
+                        });
+
+
+            var pbRaycast = new PBRaycast { TargetEntity = (uint)targetCrdtEntity.Id };
+
+            // Act: Create the ray using the source entity's transform
+            bool success = pbRaycast.TryCreateRay(world, entitiesMap, Vector3.zero, in sourceTs, out Ray ray);
+
+            // Assert
+            Assert.That(success, Is.True);
+
+            // Ray origin should be the source's *updated* position
+            Assert.That(ray.origin, Is.EqualTo(updatedSourcePos));
+
+            // Ray direction should be from updated source to updated target
+            var expectedDirection = (updatedTargetPos - updatedSourcePos).normalized;
+            Assert.That(ray.direction, Is.EqualTo(expectedDirection));
+        }
     }
 }

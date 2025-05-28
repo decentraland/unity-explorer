@@ -14,7 +14,7 @@ namespace DCL.Profiles
         public const string GUEST_RANDOM_ID = "fakeUserId";
         public const string PLAYER_RANDOM_ID = "Player";
 
-        UniTask SetAsync(Profile profile, bool publish, CancellationToken ct);
+        UniTask SetAsync(Profile profile, CancellationToken ct);
 
         UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct);
 
@@ -22,7 +22,7 @@ namespace DCL.Profiles
         {
             private readonly Dictionary<Key, Profile> profiles = new ();
 
-            public UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
+            public UniTask SetAsync(Profile profile, CancellationToken ct)
             {
                 var key = new Key(profile);
 

@@ -9,11 +9,11 @@ namespace DCL.Interaction.Utility
     /// </summary>
     public readonly struct ColliderSceneEntityInfo
     {
-        public readonly EntityReference EntityReference;
+        public readonly Entity EntityReference;
         public readonly CRDTEntity SDKEntity;
         public readonly ColliderLayer SDKLayer;
 
-        public ColliderSceneEntityInfo(EntityReference entityReference, CRDTEntity sdkEntity, ColliderLayer sdkLayer)
+        public ColliderSceneEntityInfo(Entity entityReference, CRDTEntity sdkEntity, ColliderLayer sdkLayer)
         {
             SDKEntity = sdkEntity;
             SDKLayer = sdkLayer;

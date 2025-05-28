@@ -9,11 +9,20 @@ namespace DCL.LOD.Systems
     {
         public static int DEFAULT_LOD_AMOUT = 2;
         public static readonly ArrayPool<Renderer> RENDERER_ARRAY_POOL = ArrayPool<Renderer>.Create();
-        
+
         public static void ReleaseLODGroup(LODGroup lodGroup)
         {
-            foreach (var loD in lodGroup.GetLODs())
-                RENDERER_ARRAY_POOL.Return(loD.renderers, true);
+            UnityEngine.LOD[] lods = lodGroup.GetLODs();
+
+            // Renderers are shared
+            if (lods[0].renderers == lods[1].renderers)
+                RENDERER_ARRAY_POOL.Return(lods[0].renderers, clearArray: true);
+            else
+            {
+                foreach (UnityEngine.LOD lod in lods)
+                    RENDERER_ARRAY_POOL.Return(lod.renderers, clearArray: true);
+            }
+
             ResetToDefaultLOD(lodGroup);
         }
 

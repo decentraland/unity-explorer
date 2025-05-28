@@ -25,5 +25,7 @@ namespace DCL.PluginSystem.Global
         {
             public ParcelsRef(string guid) : base(guid) { }
         }
+        
+
     }
 }

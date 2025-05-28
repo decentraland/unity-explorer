@@ -48,7 +48,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
 
             system = new FinalizeGltfContainerLoadingSystem(
-                world, world.Reference(sceneRoot), releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData,
+                world, sceneRoot, releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData,
                 eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
