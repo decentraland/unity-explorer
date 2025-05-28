@@ -14,23 +14,22 @@ namespace DCL.PluginSystem.Global
 {
     public class SocialServicesPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly ObjectProxy<IRPCSocialServices> socialServicesRPCProxy;
+        private readonly IRPCSocialServices rpcSocialServices;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
 
-        private RPCSocialServices? socialServicesRPC;
         private CancellationTokenSource cts = new ();
 
         public SocialServicesPlugin(
-            ObjectProxy<IRPCSocialServices> socialServicesRPCProxy,
+            IRPCSocialServices rpcSocialServices,
             IDecentralandUrlsSource dclUrlSource,
             IWeb3IdentityCache web3IdentityCache,
             ISocialServiceEventBus socialServiceEventBus,
             IAppArgs appArgs)
         {
-            this.socialServicesRPCProxy = socialServicesRPCProxy;
+            this.rpcSocialServices = rpcSocialServices;
             this.dclUrlSource = dclUrlSource;
             this.web3IdentityCache = web3IdentityCache;
             this.socialServiceEventBus = socialServiceEventBus;
@@ -45,14 +44,11 @@ namespace DCL.PluginSystem.Global
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
-
-            socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
-            socialServicesRPCProxy.SetObject(socialServicesRPC);
         }
 
         public void Dispose()
         {
-            socialServicesRPC?.Dispose();
+            rpcSocialServices?.Dispose();
             web3IdentityCache.OnIdentityCleared -= DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged -= ReInitializeRpcClient;
         }
@@ -65,12 +61,12 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid ReconnectRpcClientAsync(CancellationToken ct)
             {
-                if (socialServicesRPC == null) return;
+                if (rpcSocialServices == null) return;
 
                 try
                 {
-                    await socialServicesRPC.DisconnectAsync(ct);
-                    await socialServicesRPC.EnsureRpcConnectionAsync(ct);
+                    await rpcSocialServices.DisconnectAsync(ct);
+                    await rpcSocialServices.EnsureRpcConnectionAsync(ct);
                 }
                 catch (Exception e) when (e is not OperationCanceledException) { }
 
@@ -87,9 +83,9 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid DisconnectRpcClientAsync(CancellationToken ct)
             {
-                if (socialServicesRPC == null) return;
+                if (rpcSocialServices == null) return;
 
-                try { await socialServicesRPC.DisconnectAsync(ct); }
+                try { await rpcSocialServices.DisconnectAsync(ct); }
                 catch (Exception e) when (e is not OperationCanceledException) { }
             }
         }

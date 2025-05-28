@@ -17,12 +17,11 @@ namespace DCL.CharacterMotion.Platforms
                 if (platformComponent.LastPlatformPosition != null)
                 {
                     platformComponent.LastPlatformDelta = platformComponent.LastPlatformPosition - currentPlatformPosition;
-
-                    if (platformComponent.LastPlatformDelta.Value.sqrMagnitude > Mathf.Epsilon)
-                        platformComponent.IsMovingPlatform = true;
+                    platformComponent.IsMovingPlatform = platformComponent.LastPlatformDelta.Value.sqrMagnitude > Mathf.Epsilon;
                 }
 
                 platformComponent.LastPlatformPosition = currentPlatformPosition;
+
                 platformComponent.LastAvatarRelativePosition = transform.InverseTransformPoint(characterPosition);
             }
             else
