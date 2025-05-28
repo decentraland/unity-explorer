@@ -3898,10 +3898,6 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4631154171231165118, guid: ce62870d41fed4cd7a4116ce6791c410, type: 3}
-      propertyPath: m_Alpha
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 4966924927682336045, guid: ce62870d41fed4cd7a4116ce6791c410, type: 3}
       propertyPath: m_Name
       value: SceneRestrictionsToast
