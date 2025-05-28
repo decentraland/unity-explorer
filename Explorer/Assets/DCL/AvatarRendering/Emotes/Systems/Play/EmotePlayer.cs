@@ -267,7 +267,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             propClipHash = 0;
 
             foreach (AnimationClip clip in animationClips)
-                if (!uniqueClips.Contains(clip))
+                if (clip != null && !uniqueClips.Contains(clip))
                     uniqueClips.Add(clip);
 
             if (uniqueClips.Count == 1)
@@ -282,6 +282,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // urn:decentraland:matic:collections-v2:0xfcc2c46c83a9faa5c639e81d0ad19e27b5517e57:0
                     // So they won't work because of the naming checks
                     // Creators need to either fix the emotes, or we need to apply a fallback based on sorting rule
+
                     if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
                         avatarClip = animationClip;
 
