@@ -19,6 +19,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
+        private const string MEMBERS_COUNTER_FORMAT = "{0} members";
 
         [SerializeField] private TMP_Text communityTitle;
         [SerializeField] private ImageView communityThumbnail;
@@ -107,7 +108,7 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 formattedCount = memberCount.ToString();
 
-            communityMembersCountText.text = $"{formattedCount} members";
+            communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, formattedCount);
         }
 
         public void SetOwnership(bool isMember)
