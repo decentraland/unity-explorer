@@ -37,10 +37,7 @@ namespace ECS.Unity.SceneBoundsChecker
         /// </summary>
         private int lastFixedFrameChecked;
 
-        internal CheckColliderBoundsSystem(World world,
-            IPartitionComponent scenePartition,
-            ParcelMathHelper.SceneGeometry sceneGeometry,
-            IPhysicsTickProvider physicsTickEntity) : base(world)
+        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry, IPhysicsTickProvider physicsTickEntity) : base(world)
         {
             this.scenePartition = scenePartition;
             this.sceneGeometry = sceneGeometry;

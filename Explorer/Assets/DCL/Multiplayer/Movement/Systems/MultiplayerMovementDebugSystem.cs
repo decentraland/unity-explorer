@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Movement.Systems
                    .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                    .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp)
                    .AddCustomMarker("Entity Id", entityId = new ElementBinding<string>(string.Empty))
-                   .AddCustomMarker("EmoteMetadataDto", metadata = new ElementBinding<string>(string.Empty));
+                   .AddCustomMarker("Metadata", metadata = new ElementBinding<string>(string.Empty));
 
             widget?.AddCustomMarker("MOVEMENT", new ElementBinding<string>(string.Empty))
                    .AddCustomMarker("Inbox Count", inboxCount = new ElementBinding<string>(string.Empty))

@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Emotes
         [Serializable]
         public class EmoteMetadataDto : MetadataBase
         {
-            [FormerlySerializedAs("emoteDataADR74")] public Data data = new();
+            public Data data = new();
 
             public override DataBase AbstractData => data;
 

@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
                .AddCustomMarker("Remote Participants", remoteParticipantsScene)
                .AddCustomMarker("Room Sid", roomSid)
                .AddCustomMarker("Self Sid", selfSid)
-               .AddCustomMarker("Self EmoteMetadataDto", selfMetadata)
+               .AddCustomMarker("Self Metadata", selfMetadata)
                .AddSingleButton(activateButtonText, ActivateOrDeactivate);
         }
 
