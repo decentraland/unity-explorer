@@ -13,7 +13,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
     {
         private const string PREFIX = "LogAudioTracks:";
         private const int LOG_INTERVAL_MS = 5000;
-        
+
         private readonly IAudioTracks origin;
         private readonly List<(RtcAudioSource source, string trackName)> trackedSources = new();
         private CancellationTokenSource? cancellationTokenSource;
@@ -29,29 +29,29 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             ReportHub.Log(ReportCategory.LIVEKIT_AUDIO, $"{PREFIX}: create Audio Track with name {name}");
             var audioTrack = origin.CreateAudioTrack(name, source);
             ReportHub.Log(ReportCategory.LIVEKIT_AUDIO, $"{PREFIX}: created Audio Track with name {name} and SID: {audioTrack.Sid}");
-            
-            //TODO: Add here logic to turn off periodic logging from appArgs or similar
+
+           /* //TODO: Add here logic to turn off periodic logging from appArgs or similar
             if (source != null)
             {
                 lock (trackedSources)
                 {
                     trackedSources.Add((source, name));
-                    
+
                     if (!isLoggingActive && trackedSources.Count == 1)
                     {
-                        StartPeriodicLogging();
+                //        StartPeriodicLogging();
                     }
                 }
-                LogAudioSourceStats(source, name);
-            }
-            
+                //LogAudioSourceStats(source, name);
+            }*/
+
             return audioTrack;
         }
 
-        private void StartPeriodicLogging()
+        /*private void StartPeriodicLogging()
         {
             if (isLoggingActive) return;
-            
+
             isLoggingActive = true;
             cancellationTokenSource = new CancellationTokenSource();
             StartPeriodicLoggingAsync(cancellationTokenSource.Token).Forget();
@@ -171,6 +171,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
                 ReportHub.Log(ReportCategory.LIVEKIT_AUDIO,
                     $"{PREFIX}: Audio Track '{trackName}' - RtcAudioSource is not running");
             }
-        }
+        }*/
     }
 }
