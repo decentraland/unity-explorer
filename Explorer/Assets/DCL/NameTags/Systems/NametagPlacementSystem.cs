@@ -141,7 +141,7 @@ namespace DCL.Nametags
             if (nametagView.IsSameName(profile.ValidatedName, profile.HasClaimedName)) return;
 
             nametagView.Id = avatarShape.ID;
-            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true, profile.UserNameColor);
+            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, profile.HasClaimedName, profile.UserNameColor);
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
