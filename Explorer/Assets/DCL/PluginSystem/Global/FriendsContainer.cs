@@ -209,11 +209,11 @@ namespace DCL.PluginSystem.Global
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
 
             if (includeUserBlocking)
-                await InitUserBlocking();
+                await InitUserBlockingAsync();
 
             return;
 
-            async UniTask InitUserBlocking()
+            async UniTask InitUserBlockingAsync()
             {
                 userBlockingCache = new UserBlockingCache(friendsEventBus);
                 userBlockingCacheProxy.SetObject(userBlockingCache);

@@ -65,7 +65,7 @@ namespace DCL.Friends
         {
         }
 
-        private async UniTask KeepServerStreamOpen(Func<UniTask> openStreamFunc, CancellationToken ct)
+        private async UniTask KeepServerStreamOpenAsync(Func<UniTask> openStreamFunc, CancellationToken ct)
         {
             // We try to keep the stream open until cancellation is requested
             // If for any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
@@ -84,7 +84,7 @@ namespace DCL.Friends
 
         public UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpen(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
@@ -142,7 +142,7 @@ namespace DCL.Friends
 
         public UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpen(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
@@ -176,7 +176,7 @@ namespace DCL.Friends
 
         public UniTask SubscribeToUserBlockUpdatersAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpen(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
