@@ -91,18 +91,7 @@ namespace DCL.AvatarRendering.Wearables
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
             if (builderCollectionsPreview)
-            {
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
-
-                // TODO: Isolate only 1 LoadGLTFSystem instance in a dedicated global plugin...
-
-                /*LoadGLTFSystem.InjectToWorld(ref builder,
-                    NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
-                    webRequestController,
-                    true,
-                    true,
-                    new GltFastGlobalDownloadStrategy(builderContentURL));*/
-            }
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
             ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);

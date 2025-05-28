@@ -843,16 +843,20 @@ namespace Global.Dynamic
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
 
-            if (!localSceneDevelopment)
+            if (localSceneDevelopment)
+            {
+                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
+            }
+            else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            globalPlugins.AddRange(staticContainer.SharedPlugins);
+            if (localSceneDevelopment || builderCollectionsPreview)
+                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, builderContentURL.Value, localSceneDevelopment));
 
-            if (localSceneDevelopment)
-                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
+            globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(

@@ -140,21 +140,6 @@ namespace DCL.PluginSystem.Global
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
-
-            if (localSceneDevelopment || builderCollectionsPreview)
-            {
-                IGltFastDownloadStrategy downloadStrategy = localSceneDevelopment ?
-                    new GltFastRealmDataDownloadStrategy(realmData)
-                    : new GltFastGlobalDownloadStrategy(builderContentURL);
-
-                LoadGLTFSystem.InjectToWorld(
-                    ref builder,
-                    NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
-                    webRequestController,
-                    true,
-                    true,
-                    downloadStrategy);
-            }
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
