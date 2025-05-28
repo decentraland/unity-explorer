@@ -198,8 +198,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 elementsPerPage: 1000,
                 ct: ct);
 
-            foreach (CommunityData community in userCommunitiesResponse.communities)
-                currentMyCommunities.Add(community);
+            currentMyCommunities.AddRange(userCommunitiesResponse.communities);
 
             view.SetMyCommunitiesAsLoading(false);
             view.SetMyCommunitiesLoopListItemCount(currentMyCommunities.Count);
@@ -281,9 +280,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (userCommunitiesResponse.communities.Length > 0)
             {
                 currentPageNumberFilter = pageNumber;
-
-                foreach (CommunityData community in userCommunitiesResponse.communities)
-                    currentResults.Add(community);
+                currentResults.AddRange(userCommunitiesResponse.communities);
             }
 
             currentResultsTotalAmount = userCommunitiesResponse.totalAmount;
