@@ -35,6 +35,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
+        private readonly CommunityMemberRole[] rolesIncludedForMyCommunities = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member };
+        private readonly CommunityMemberRole[] rolesIncludedForGenericSearch = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none };
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -194,7 +196,7 @@ namespace DCL.Communities.CommunitiesBrowser
             var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
                 userId: ownProfile.UserId,
                 name: string.Empty,
-                memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member },
+                memberRolesIncluded: rolesIncludedForMyCommunities,
                 pageNumber: 1,
                 elementsPerPage: 1000,
                 ct: ct);
@@ -215,7 +217,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: string.Empty,
-                memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member },
+                memberRolesIncluded: rolesIncludedForMyCommunities,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
@@ -228,7 +230,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: string.Empty,
-                memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none },
+                memberRolesIncluded: rolesIncludedForGenericSearch,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
@@ -334,7 +336,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 loadResultsCts = loadResultsCts.SafeRestart();
                 LoadResultsAsync(
                     name: searchText,
-                    memberRolesIncluded: new [] { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none },
+                    memberRolesIncluded: rolesIncludedForGenericSearch,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
                     ct: loadResultsCts.Token).Forget();
