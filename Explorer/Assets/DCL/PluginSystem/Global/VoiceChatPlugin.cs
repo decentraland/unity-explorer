@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
         {
             if (voiceChatHandler == null || livekitRoomHandler == null)
             {
-                Debug.LogWarning($"{nameof(VoiceChatPlugin)}: Attempted to dispose before initialization.");
+                // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
             }
 
