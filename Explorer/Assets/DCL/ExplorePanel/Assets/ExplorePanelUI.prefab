@@ -2501,7 +2501,7 @@ PrefabInstance:
     - target: {fileID: 782066126112996038, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: d9c6f1a768af74beda15ba3c1d781a1d, type: 3}
+      objectReference: {fileID: 21300000, guid: 20912859d85e44f3fa96775d828fabd7, type: 3}
     - target: {fileID: 1392556527029171851, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Name
       value: CommunitiesTab
@@ -2700,7 +2700,7 @@ PrefabInstance:
       objectReference: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_fontColor32.rgba
-      value: 16777215
+      value: 4294967295
       objectReference: {fileID: 0}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_VerticalAlignment
@@ -2741,7 +2741,7 @@ PrefabInstance:
     - target: {fileID: 7260612469130449532, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 8796a439d614f4fdf86af926190739d3, type: 3}
+      objectReference: {fileID: 21300000, guid: 0d7038b4e4bc24fd29febc2342495e20, type: 3}
     - target: {fileID: 8873916236923606513, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: section
       value: 1
@@ -2797,7 +2797,7 @@ Animator:
   m_GameObject: {fileID: 1357058925437281443}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 22100000, guid: 9b4457adfb7ee4f6988a253345e4c4d6, type: 2}
+  m_Controller: {fileID: 22100000, guid: 6f47d41a68a3456438afddb13ab448b6, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
