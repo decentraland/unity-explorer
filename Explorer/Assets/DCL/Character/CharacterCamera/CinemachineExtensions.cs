@@ -5,16 +5,30 @@ namespace DCL.CharacterCamera
 {
     public static class CinemachineExtensions
     {
+        public static void ForceThirdPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
+        {
+            (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
+            cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = horizontalAxis;
+            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = verticalAxis;
+        }
+
         public static void ForceFirstPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
             if (cinemachinePreset.FirstPersonCameraData.POV == null) return;
 
-            var axis = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
-            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value = axis.x;
-            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value = axis.y;
+            (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
+            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value = horizontalAxis;
+            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value = verticalAxis;
         }
 
-        public static Vector3 GetHorizontalAndVerticalAxisForIntent(CameraLookAtIntent lookAtIntent)
+        public static void ForceDroneCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
+        {
+            (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
+            cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.Value = horizontalAxis;
+            cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.Value = verticalAxis;
+        }
+
+        private static (float, float) GetHorizontalAndVerticalAxisForIntent(CameraLookAtIntent lookAtIntent)
         {
             var eulerDir = Vector3.zero;
             var cameraTarget = lookAtIntent.LookAtTarget;
@@ -30,7 +44,7 @@ namespace DCL.CharacterCamera
             //value range 0 to 1, being 0 the bottom orbit and 1 the top orbit
             float yValue = Mathf.InverseLerp(-90, 90, eulerDir.x);
 
-            return new Vector3(eulerDir.y, yValue, 0);
+            return (eulerDir.y, yValue);
         }
     }
 }

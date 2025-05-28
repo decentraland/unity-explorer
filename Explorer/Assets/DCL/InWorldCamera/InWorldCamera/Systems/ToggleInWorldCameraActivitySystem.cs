@@ -126,7 +126,7 @@ namespace DCL.InWorldCamera.Systems
         {
             if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
                 return;
-
+            
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
@@ -145,7 +145,7 @@ namespace DCL.InWorldCamera.Systems
 
             SwitchCameraInput(to: Kind.PLAYER);
 
-            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, InWorldCameraInput>(camera);
+            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
 
             hudController.Close();
         }
@@ -182,6 +182,7 @@ namespace DCL.InWorldCamera.Systems
                 new CameraTarget { Value = followTarget },
                 new CameraDampedFOV { Current = inWorldVirtualCamera.m_Lens.FieldOfView, Velocity = 0f, Target = inWorldVirtualCamera.m_Lens.FieldOfView },
                 new CameraDampedTilt { Current = 0f, Target = 0f, Velocity = 0f },
+                new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up },
                 new InWorldCameraInput());
         }
 
