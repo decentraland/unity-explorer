@@ -137,7 +137,10 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 remote.position += platform.trsnsf.position;
 
-                var startTime = intComp.Enabled? intComp.Start.timestamp : remotePlayerMovement.PastMessage.timestamp;
+                var startTime = intComp.Enabled
+                    ? intComp.Start.timestamp + intComp.Time
+                    : remotePlayerMovement.PastMessage.timestamp + deltaTime;
+
                 var deltaFuture = remote.timestamp - startTime;
                 Vector3? offset = platform.tweener.GetFuture(deltaFuture);
                 if (offset.HasValue)
