@@ -18,7 +18,7 @@ namespace DCL.VoiceChat
         private const int LIVEKIT_SAMPLE_RATE = 48000;
 
         private VoiceChatConfiguration voiceChatConfiguration;
-        private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur
+        private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
 
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
@@ -169,41 +169,6 @@ namespace DCL.VoiceChat
         public void ResetProcessor()
         {
             audioProcessor?.Reset();
-        }
-
-        /// <summary>
-        /// Force refresh configuration from the ScriptableObject (for testing runtime changes)
-        /// </summary>
-        public void RefreshConfiguration()
-        {
-            if (audioProcessor != null && voiceChatConfiguration != null)
-            {
-                // The processor will automatically pick up changes from the ScriptableObject
-                // since it reads values directly from the configuration each frame
-                audioProcessor.Reset(); // Reset filter states to apply new settings immediately
-            }
-        }
-
-        /// <summary>
-        /// Get current filter settings for debugging
-        /// </summary>
-        public string GetFilterDebugInfo()
-        {
-            if (voiceChatConfiguration == null) return "No configuration";
-
-            return $"BandPass: {voiceChatConfiguration.EnableBandPassFilter}, " +
-                   $"HP: {voiceChatConfiguration.HighPassCutoffFreq}Hz, " +
-                   $"LP: {voiceChatConfiguration.LowPassCutoffFreq}Hz, " +
-                   $"Order: 2nd (fixed)";
-        }
-
-        /// <summary>
-        /// Get fade-in debug information for troubleshooting
-        /// </summary>
-        public string GetFadeInDebugInfo()
-        {
-            if (audioProcessor == null) return "No processor";
-            return audioProcessor.GetFadeInDebugInfo();
         }
 
         private void ProcessStereoAudio(float[] data, int sampleRate)
