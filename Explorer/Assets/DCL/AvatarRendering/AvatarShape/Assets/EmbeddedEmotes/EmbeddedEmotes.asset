@@ -397,8 +397,8 @@ MonoBehaviour:
       removesDefaultHiding: []
       outlineCompatible: 1
       loop: 0
-  - id: button45
-    name: button45
+  - id: buttonDown
+    name: buttonDown
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
     prefab: {fileID: 8018143466885850673, guid: e982a29f178d5424a8282d4f1a5caa6a, type: 3}
