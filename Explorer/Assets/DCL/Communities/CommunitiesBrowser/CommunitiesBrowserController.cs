@@ -22,6 +22,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
+        private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
 
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
@@ -328,7 +329,7 @@ namespace DCL.Communities.CommunitiesBrowser
             else
             {
                 view.SetResultsBackButtonVisible(true);
-                view.SetResultsTitleText($"Results for '{searchText}'");
+                view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
 
                 loadResultsCts = loadResultsCts.SafeRestart();
                 LoadResultsAsync(
