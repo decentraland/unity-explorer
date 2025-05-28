@@ -90,7 +90,7 @@ namespace DCL.Backpack.EmotesSection
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
-            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS);
+            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
             eventBus.EquipEmoteEvent += OnEquip;

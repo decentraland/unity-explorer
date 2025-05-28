@@ -63,7 +63,6 @@ namespace DCL.Backpack
             this.playerEntity = playerEntity;
 
             publishProfileChanges = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS)
                                         && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
         }
 

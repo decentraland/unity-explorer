@@ -40,7 +40,7 @@ namespace DCL.CharacterPreview
             globalWorld = world;
             characterPreviewAvatarContainer = avatarContainer;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
-            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS);
+            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
             Transform? parent = transformPool.Get();

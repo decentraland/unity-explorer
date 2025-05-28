@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes
                 return results.Count;
             }
 
-            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS, out string? collectionsCsv))
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
             {
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                       .ToArray();

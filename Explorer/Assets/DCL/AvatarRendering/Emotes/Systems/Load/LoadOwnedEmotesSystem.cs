@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
             IEmoteStorage emoteStorage,
             string? builderContentURL = null
-        ) : base(world, cache, emoteStorage, webRequestController, realmData, builderContentURL)
+        ) : base(world, cache, emoteStorage, webRequestController, realmData, builderContentURL, "emote")
         {
             this.emoteStorage = emoteStorage;
         }

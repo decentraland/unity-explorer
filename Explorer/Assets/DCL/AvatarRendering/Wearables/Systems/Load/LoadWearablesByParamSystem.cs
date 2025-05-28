@@ -30,7 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
             IWearableStorage wearableStorage, string? builderContentURL = null
-        ) : base(world, cache, wearableStorage, webRequestController, realmData, builderContentURL)
+        ) : base(world, cache, wearableStorage, webRequestController, realmData, builderContentURL, "wearable")
         {
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearablesSubdirectory = wearablesSubdirectory;
