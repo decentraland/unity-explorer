@@ -16,8 +16,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.GLTF;
-using Global.AppArgs;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -29,7 +27,6 @@ using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadi
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
-using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -41,7 +38,6 @@ namespace DCL.AvatarRendering.Emotes.Load
         private readonly IRealmData realmData;
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly bool builderEmotesPreview;
 
         public LoadEmotesByPointersSystem(
             World world,
@@ -49,15 +45,13 @@ namespace DCL.AvatarRendering.Emotes.Load
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory,
-            IAppArgs appArgs
+            URLSubdirectory customStreamingSubdirectory
         )
             : base(world, cache, webRequestController)
         {
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
-            this.builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS);
         }
 
         protected override EmotesDTOList CreateAssetFromListOfDTOs(RepoolableList<EmoteDTO> list) =>
@@ -100,9 +94,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (RequestMissingPointers(pointersToRequest!, partitionComponent, intention.BodyShape)) return;
 
-            bool success = builderEmotesPreview
-                ? GetGltfsUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List)
-                : GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
+            bool success = GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
 
             if (success)
                 World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
@@ -221,7 +213,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
                 && component.GetUrn().IsValid())
 
-                // The resolution of the AB promise will be finalized by FinalizeEmoteLoadingSystem
+                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
@@ -231,7 +223,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             {
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
-                // The resolution of the AB promise will be finalized by FinalizeEmoteLoadingSystem
+                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
@@ -255,48 +247,6 @@ namespace DCL.AvatarRendering.Emotes.Load
             return false;
         }
 
-        private bool CreateGltfPromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
-        {
-            // Only create GLTF promises for builder emotes that have a content download URL
-            if (string.IsNullOrEmpty(component.DTO.ContentDownloadUrl))
-                return false;
-
-            // Check if emote already has assets loaded or is loading
-            if (component.AssetResults[intention.BodyShape] != null || component.IsLoading)
-                return false;
-
-            bool foundGlb = false;
-
-            // The resolution of these promises will be finalized by FinalizeEmoteLoadingSystem
-            foreach (var content in component.DTO.content)
-            {
-                if (content.file.EndsWith(".glb"))
-                {
-                    var gltfPromise = GltfPromise.Create(World, GetGLTFIntention.Create(content.file, content.hash), PartitionComponent.TOP_PRIORITY);
-                    World.Create(gltfPromise, component, intention.BodyShape);
-                    component.UpdateLoadingStatus(true);
-                    foundGlb = true;
-                    continue;
-                }
-
-                // Supported audio format in emotes: https://docs.decentraland.org/creator/emotes/props-and-sounds/#add-audio-to-the-emotes
-                if (content.file.EndsWith(".mp3") || content.file.EndsWith(".ogg"))
-                {
-                    var audioType = content.file.ToAudioType();
-                    urlBuilder.Clear();
-                    urlBuilder.AppendDomain(URLDomain.FromString(component.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
-                    URLAddress url = urlBuilder.Build();
-
-                    var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
-                    World.Create(audioPromise, component, intention.BodyShape);
-
-                    if (foundGlb) break;
-                }
-            }
-
-            return foundGlb;
-        }
-
         private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
             AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
@@ -312,89 +262,10 @@ namespace DCL.AvatarRendering.Emotes.Load
                 urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
                 URLAddress url = urlBuilder.Build();
 
-                // The resolution of the audio promise will be finalized by FinalizeEmoteLoadingSystem
+                // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
                 World!.Create(promise, component, bodyShape);
             }
-        }
-
-        private bool GetGltfsUntilAllAreResolved(
-            in GetEmotesByPointersIntention intention,
-            IPartitionComponent partitionComponent,
-            IEnumerable<IEmote> emotes
-        )
-        {
-            var emotesWithResponse = 0;
-
-            foreach (IEmote emote in emotes)
-            {
-                // In builder emote collections mode, skip non-builder emotes that can't be resolved
-                if (ShouldSkipNonBuilderEmote(emote, intention.BodyShape))
-                {
-                    emotesWithResponse++;
-                    continue;
-                }
-
-                // If emote is still loading (either via IsLoading flag or GLTF promise), continue waiting
-                // TODO: is the extra check needed?
-                if (emote.IsLoading || IsEmoteLoadingViaGltfPromise(emote, intention.BodyShape))
-                    continue;
-
-                // Try to create GLTF promise if needed (for builder emotes)
-                if (CreateGltfPromiseIfRequired(emote, in intention, partitionComponent))
-                    continue;
-
-                if (emote.AssetResults[intention.BodyShape] != null)
-                {
-                    emotesWithResponse++;
-
-                    // Reference must be added only once when the emote is resolved
-                    if (emote.AssetResults[intention.BodyShape] is { Succeeded: true } &&
-                        !intention.SuccessfulPointers.Contains(emote.GetUrn()))
-                    {
-                        intention.SuccessfulPointers.Add(emote.GetUrn());
-                        emote.AssetResults[intention.BodyShape]?.Asset?.AddReference();
-                    }
-                }
-            }
-
-            return emotesWithResponse == intention.Pointers.Count;
-        }
-
-        private bool IsEmoteLoadingViaGltfPromise(IEmote emote, BodyShape bodyShape)
-        {
-            bool isLoading = false;
-
-            World.Query(in new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>(),
-                (ref GltfPromise promise, ref IEmote promiseEmote, ref BodyShape promiseBodyShape) =>
-                {
-                    // Check if this promise is for the same emote and body shape
-                    if (promiseEmote.GetUrn().Equals(emote.GetUrn()) && promiseBodyShape.Equals(bodyShape))
-                    {
-                        // Check if the promise is still active (not consumed and not cancelled)
-                        if (!promise.IsConsumed && !promise.IsCancellationRequested(World))
-                            isLoading = true;
-                    }
-                });
-
-            return isLoading;
-        }
-
-        private bool ShouldSkipNonBuilderEmote(IEmote emote, BodyShape bodyShape)
-        {
-            // If the emote already has an asset result, don't skip it
-            if (emote.AssetResults[bodyShape] != null)
-                return false;
-
-            // If the emote is currently loading (either via IsLoading flag or GLTF promise), don't skip it
-            if (emote.IsLoading || IsEmoteLoadingViaGltfPromise(emote, bodyShape))
-                return false;
-
-            // If we can't get the main file hash, it's likely a non-builder emote that can't be resolved via GLTF
-            if (!emote.TryGetMainFileHash(bodyShape, out string? hash))
-                return true;
-
-            return true;
         }
     }
 }

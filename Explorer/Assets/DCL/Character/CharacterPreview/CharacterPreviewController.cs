@@ -13,6 +13,7 @@ using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -30,14 +31,16 @@ namespace DCL.CharacterPreview
         private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
         private readonly Entity characterPreviewEntity;
         private readonly World globalWorld;
+        private readonly bool builderEmotesPreview;
 
         public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
-            CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool)
+            CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool, IAppArgs appArgs)
         {
             globalWorld = world;
             characterPreviewAvatarContainer = avatarContainer;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
+            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
             Transform? parent = transformPool.Get();
@@ -88,7 +91,8 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            Entity emotePromiseEntity = globalWorld.Create(EmotePromise.Create(globalWorld,
+            Entity emotePromiseEntity = builderEmotesPreview ? Entity.Null
+                : globalWorld.Create(EmotePromise.Create(globalWorld,
                 EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
                     avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
                 PartitionComponent.TOP_PRIORITY));
@@ -116,7 +120,8 @@ namespace DCL.CharacterPreview
             }
 
             bool IsEmoteLoaded() =>
-                !world.IsAlive(emotePromiseEntity)
+                emotePromiseEntity == Entity.Null
+                || !world.IsAlive(emotePromiseEntity)
                 || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
         }
 

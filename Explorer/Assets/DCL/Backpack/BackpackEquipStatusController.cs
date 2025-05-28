@@ -27,9 +27,9 @@ namespace DCL.Backpack
         private readonly ISelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICollection<string> forceRender;
-        private readonly IAppArgs appArgs;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly bool publishProfileChanges;
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(
@@ -61,7 +61,10 @@ namespace DCL.Backpack
 
             this.world = world;
             this.playerEntity = playerEntity;
-            this.appArgs = appArgs;
+
+            publishProfileChanges = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS)
+                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
         }
 
         public void Dispose()
@@ -139,11 +142,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
-            bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_EMOTE_COLLECTIONS)
-                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
-
-            var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChange, ct);
+            var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChanges, ct);
             MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
             UpdateAvatarInWorld(profile!);
         }
