@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.Unity.Textures.Utils;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -27,6 +28,7 @@ namespace ECS.StreamableLoading.Textures
         private readonly IAvatarTextureUrlProvider avatarTextureUrlProvider;
 
         internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache,
+
             // A replacement of IProfileRepository to avoid cyclic dependencies
             IAvatarTextureUrlProvider avatarTextureUrlProvider)
             : base(
@@ -56,11 +58,11 @@ namespace ECS.StreamableLoading.Textures
             {
                 // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
                 result = await webRequestController.GetTextureAsync(
-                                                            intention.CommonArguments,
-                                                            new GetTextureArguments(intention.TextureType),
-                                                            GetReportData()
-                                                        )
-                                                       .CreateTextureAsync(intention.WrapMode, intention.FilterMode, ct);
+                                                        intention.CommonArguments,
+                                                        new GetTextureArguments(intention.TextureType),
+                                                        GetReportData()
+                                                    )
+                                                   .CreateTextureAsync(intention.WrapMode, intention.FilterMode, ct);
             }
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
@@ -68,38 +70,31 @@ namespace ECS.StreamableLoading.Textures
 
         private async UniTask<IOwnedTexture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
         {
-            CommonArguments newCommonArgs = new CommonArguments(url, AVATAR_TEXTURE_MAX_ATTEMPTS, StreamableLoadingDefaults.TIMEOUT, AVATAR_TEXTURE_REQUEST_DELAY_MS);
+            var newCommonArgs = new CommonArguments(url, AVATAR_TEXTURE_MAX_ATTEMPTS, StreamableLoadingDefaults.TIMEOUT, AVATAR_TEXTURE_REQUEST_DELAY_MS);
 
-            GetTextureWebRequest.CreateTextureOp textureOp = GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode);
-            GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType);
+            var textureArguments = new GetTextureArguments(intention.TextureType);
 
-            IOwnedTexture2D? result = null;
+            Result<IOwnedTexture2D> result = await webRequestController.GetTextureAsync(
+                                                                            newCommonArgs,
+                                                                            textureArguments,
+                                                                            GetReportData(),
+                                                                            suppressErrors: true
+                                                                        )
+                                                                       .CreateTextureAsync(intention.WrapMode, intention.FilterMode, ct)
+                                                                       .SuppressToResultAsync(GetReportCategory());
 
-            result = await webRequestController.GetTextureAsync(
-                newCommonArgs,
-                textureArguments,
-                textureOp,
-                ct,
-                GetReportData(),
-                suppressErrors: true,
-                ignoreIrrecoverableErrors: true
-            ).SuppressAnyExceptionWithFallback(null);
-
-            if (result != null) return result;
+            if (result.Success) return result.Value;
 
             CommonLoadingArguments newArgs = intention.CommonArguments;
             newArgs.URL = url;
             intention.CommonArguments = newArgs;
 
-            result = await webRequestController.GetTextureAsync(
-                intention.CommonArguments,
-                textureArguments,
-                textureOp,
-                ct,
-                GetReportData()
-            );
-
-            return result;
+            return await webRequestController.GetTextureAsync(
+                                                  intention.CommonArguments,
+                                                  textureArguments,
+                                                  GetReportData()
+                                              )
+                                             .CreateTextureAsync(intention.WrapMode, intention.FilterMode, ct);
         }
     }
 }

@@ -67,6 +67,24 @@ namespace DCL.WebRequests
             );
         }
 
+        public static GetTextureWebRequest SignedFetchTextureAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GetTextureArguments args,
+            string jsonMetaData,
+            ReportData reportData)
+        {
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            return controller.GetTextureAsync(
+                commonArguments,
+                args,
+                reportData,
+                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get")
+            );
+        }
+
         public static GenericPatchRequest SignedFetchPatchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
@@ -85,25 +103,21 @@ namespace DCL.WebRequests
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPutArguments> SignedFetchPutAsync(
+        public static GenericPutRequest SignedFetchPutAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericPutArguments putArguments,
+            GenericUploadArguments putArguments,
             string jsonMetaData,
-            CancellationToken ct
-        )
+            ReportData reportData)
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPutArguments>(
-                controller,
+            return controller.PutAsync(
                 commonArguments,
                 putArguments,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
+                reportData,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "put"),
-                null
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "put")
             );
         }
     }

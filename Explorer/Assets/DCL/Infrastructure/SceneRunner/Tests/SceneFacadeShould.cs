@@ -65,8 +65,6 @@ namespace SceneRunner.Tests
     [TestFixture(WebRequestsMode.HTTP2)]
     public class SceneFacadeShould
     {
-        private V8EngineFactory engineFactory;
-
         private readonly WebRequestsMode webRequestsMode;
 
         public SceneFacadeShould(WebRequestsMode webRequestsMode)
@@ -144,8 +142,6 @@ namespace SceneRunner.Tests
         private IECSWorldFactory ecsWorldFactory = null!;
 
         private ISharedPoolsProvider sharedPoolsProvider = null!;
-
-        private ICRDTDeserializer crdtDeserializer = null!;
 
         private ICRDTSerializer crdtSerializer = null!;
 

@@ -148,7 +148,7 @@ namespace ECS.StreamableLoading.Common.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose(EntityReference entity)
+        public void Dispose(Entity entity)
         {
             if (disposed) return;
 

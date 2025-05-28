@@ -21,7 +21,7 @@ namespace ECS.StreamableLoading.Common.Systems
         [Query]
         private void DisposeState(Entity entity, StreamableLoadingState state)
         {
-            state.Dispose(world.Reference(entity));
+            state.Dispose(entity);
         }
 
         public void FinalizeComponents(in Query query)

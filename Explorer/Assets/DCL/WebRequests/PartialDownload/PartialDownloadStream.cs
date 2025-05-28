@@ -37,11 +37,11 @@ namespace DCL.WebRequests
         ///     It's by design as we should not even try to read/write to the partial stream in parallel <br />
         ///     It's an easy way to prevent concurrency issues without complications
         /// </summary>
-        public EntityReference Entity { get; private set; }
+        public Entity Entity { get; private set; }
 
         public abstract bool IsFullyDownloaded { get; }
 
-        public void SetOwner(EntityReference entity)
+        public void SetOwner(Entity entity)
         {
             Entity = entity;
         }

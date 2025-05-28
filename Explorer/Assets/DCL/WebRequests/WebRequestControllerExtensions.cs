@@ -153,7 +153,7 @@ namespace DCL.WebRequests
         }
 
         /// <summary>
-        ///     Make a request that is optimized for texture creation
+        ///     Make a request optimized for texture creation
         /// </summary>
         public static GetTextureWebRequest GetTextureAsync(
             this IWebRequestController controller,
@@ -173,7 +173,7 @@ namespace DCL.WebRequests
             ), args);
 
         /// <summary>
-        ///     Make a request that is optimized for audio clip
+        ///     Make a request optimized for audio clip
         /// </summary>
         public static GetAudioClipWebRequest GetAudioClipAsync(
             this IWebRequestController controller,

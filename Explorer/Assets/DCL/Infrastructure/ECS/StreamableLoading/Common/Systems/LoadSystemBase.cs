@@ -197,7 +197,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
         /// </summary>
-        private static void SynchronizePartialData(EntityReference entity, StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
+        private static void SynchronizePartialData(Entity entity, StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
         {
             state.PartialDownloadingData = ongoingRequestResult.PartialDownloadingData;
 
