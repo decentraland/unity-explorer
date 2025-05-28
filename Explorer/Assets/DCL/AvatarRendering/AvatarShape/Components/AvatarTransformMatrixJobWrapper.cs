@@ -35,13 +35,18 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private int nextResizeValue;
         internal int currentAvatarAmountSupported;
 
+        //Helper transform for bone matrix calculation
+        private readonly Transform identityTransform;
+
         public AvatarTransformMatrixJobWrapper()
         {
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH);
 
             bonesCombined = new TransformAccessArray(BONES_PER_AVATAR_LENGTH);
+            identityTransform = new GameObject("Identity_Helper_Transform").transform;
+
             for (int i = 0; i < BONES_PER_AVATAR_LENGTH; i++)
-                bonesCombined.Add(null);
+                bonesCombined.Add(identityTransform);
 
             matrixFromAllAvatars
                 = new NativeArray<Matrix4x4>(AVATAR_ARRAY_SIZE, Allocator.Persistent);
@@ -80,7 +85,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                     transformMatrixComponent.IndexInGlobalJobArray = avatarIndex;
                     avatarIndex++;
                 }
-                
+
                 //Add all bones to the bonesCombined array with the current available index
                 for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
                     bonesCombined[transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH + i] =
@@ -104,7 +109,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 if (i < BONES_PER_AVATAR_LENGTH * (nextResizeValue - 1))
                     newBonesCombined.Add(bonesCombined[i]);
                 else
-                    newBonesCombined.Add(null);
+                    newBonesCombined.Add(identityTransform);
             }
 
             bonesCombined.Dispose();

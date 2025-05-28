@@ -526,7 +526,7 @@ namespace Global.Dynamic
             var coreBackpackEventBus = new BackpackEventBus();
 
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
-            var socialServicesRPCProxy = new ObjectProxy<IRPCSocialServices>();
+            IRPCSocialServices rpcSocialServices = new RPCSocialServices(GetFriendsApiUrl(bootstrapContainer.DecentralandUrlsSource, appArgs), identityCache, socialServiceEventBus);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -695,7 +695,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     sharedSpaceManager,
                     userBlockingCacheProxy,
-                    socialServicesRPCProxy,
+                    rpcSocialServices,
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
@@ -750,7 +750,8 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     sharedSpaceManager,
                     profileChangesBus,
-                    staticContainer.SceneLoadingLimit
+                    staticContainer.SceneLoadingLimit,
+                    mainUIView.WarningNotification
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -836,11 +837,11 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-                new SocialServicesPlugin(socialServicesRPCProxy, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),
+                new SocialServicesPlugin(rpcSocialServices, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
-                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
+                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
             if (localSceneDevelopment)
             {
@@ -916,7 +917,7 @@ namespace Global.Dynamic
                         viewDependencies,
                         sharedSpaceManager,
                         socialServiceEventBus,
-                        socialServicesRPCProxy,
+                        rpcSocialServices,
                         friendsCacheProxy,
                         friendsEventBus
                     )
@@ -999,6 +1000,16 @@ namespace Global.Dynamic
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
 
             return (container, true);
+        }
+
+        private static URLAddress GetFriendsApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
+        {
+            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
+
+            if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
+                url = urlFromArgs!;
+
+            return URLAddress.FromString(url);
         }
 
         private static void ParseDebugForcedEmotes(IReadOnlyCollection<string>? debugEmotes, ref List<URN> parsedEmotes)

@@ -35,7 +35,7 @@ TagManager:
   - SDKCustomLayer
   - Minimap
   - 
-  - 
+  - NameTag
   - OtherAvatars
   - CharacterPreview
   m_SortingLayers:
