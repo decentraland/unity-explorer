@@ -7,9 +7,6 @@ namespace DCL.VoiceChat
     {
         [Header("Voice Detection Configurations")]
 
-        [Tooltip("Defines the minimum loudness (wave form amplitude) to detect input to be sent via voice chat")]
-        public float MicrophoneLoudnessMinimumThreshold = 0.2f;
-
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
         public float HoldThresholdInSeconds = 0.5f;
 
@@ -75,5 +72,17 @@ namespace DCL.VoiceChat
         [Tooltip("De-esser compression ratio (higher = more aggressive)")]
         [Range(1f, 10f)]
         public float DeEsserRatio = 3f;
+
+        [Header("Gate Fade-In Settings")]
+        [Tooltip("Enable smooth fade-in when noise gate opens to eliminate pops")]
+        public bool EnableGateFadeIn = true;
+
+        [Tooltip("Fade-in buffer size in samples (larger = smoother but more latency)")]
+        [Range(32, 128)]
+        public int FadeInBufferSize = 64;
+
+        [Tooltip("Pre-gate audio attenuation factor during crossfade")]
+        [Range(0.01f, 0.5f)]
+        public float PreGateAttenuation = 0.1f;
     }
 }

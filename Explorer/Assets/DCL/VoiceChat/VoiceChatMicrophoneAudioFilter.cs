@@ -197,6 +197,15 @@ namespace DCL.VoiceChat
                    $"Order: 2nd (fixed)";
         }
 
+        /// <summary>
+        /// Get fade-in debug information for troubleshooting
+        /// </summary>
+        public string GetFadeInDebugInfo()
+        {
+            if (audioProcessor == null) return "No processor";
+            return audioProcessor.GetFadeInDebugInfo();
+        }
+
         private void ProcessStereoAudio(float[] data, int sampleRate)
         {
             // Optimized stereo processing for LiveKit's 2-channel 48kHz format

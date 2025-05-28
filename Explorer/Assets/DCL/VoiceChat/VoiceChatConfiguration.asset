@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
   m_Name: VoiceChatConfiguration
   m_EditorClassIdentifier: 
-  MicrophoneLoudnessMinimumThreshold: 0.2
   HoldThresholdInSeconds: 0.5
   EnableNoiseGate: 0
   NoiseGateThreshold: 0.0015
@@ -30,3 +29,6 @@ MonoBehaviour:
   EnableDeEsser: 1
   DeEsserThreshold: 0.3
   DeEsserRatio: 3
+  EnableGateFadeIn: 1
+  FadeInBufferSize: 64
+  PreGateAttenuation: 0.1
