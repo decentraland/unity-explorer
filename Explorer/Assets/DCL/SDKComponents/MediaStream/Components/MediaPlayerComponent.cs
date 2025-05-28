@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Dispose()
         {
             MediaPlayer.Dispose(MediaAddress);
-            MediaPlayer = MultiMediaPlayer.EMPTY;
+            MediaPlayer = default(MultiMediaPlayer);
             Cts.SafeCancelAndDispose();
         }
     }
