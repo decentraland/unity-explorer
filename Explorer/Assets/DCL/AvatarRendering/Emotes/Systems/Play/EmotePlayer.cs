@@ -40,7 +40,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
-            Debug.Log($"PRAVS - EmotePlayer.Play({emoteComponent.EmoteUrn})", mainAsset);
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
             if (emoteInUse != null)
