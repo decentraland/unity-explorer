@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Web3;
 using ECS.StreamableLoading.Common.Components;
@@ -14,8 +15,6 @@ namespace DCL.AvatarRendering.Emotes
 {
     public class ApplicationParamsEmoteProvider : IEmoteProvider
     {
-        private const string BUILDER_DTO_URL_COL_ID = "[COL-ID]";
-
         private readonly IAppArgs appArgs;
         private readonly IEmoteProvider source;
         private readonly string builderDTOsUrl;
@@ -57,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes
                     // localBuffer accumulates the loaded emotes
                     await source.GetAsync(userId, ct, requestOptions, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i]),
+                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);
