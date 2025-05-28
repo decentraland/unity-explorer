@@ -12,18 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
   m_Name: VoiceChatConfiguration
   m_EditorClassIdentifier: 
-  SampleWindow: 64
   MicrophoneLoudnessMinimumThreshold: 0.2
   HoldThresholdInSeconds: 0.5
-  EnableNoiseGate: 1
-  NoiseGateThreshold: 0.008
+  EnableNoiseGate: 0
+  NoiseGateThreshold: 0.0015
   NoiseGateHoldTime: 2
   NoiseGateAttackTime: 0.05
   NoiseGateReleaseTime: 0.1
-  EnableHighPassFilter: 1
-  HighPassCutoffFreq: 333
+  EnableBandPassFilter: 1
+  HighPassCutoffFreq: 100
+  LowPassCutoffFreq: 5000
   EnableAutoGainControl: 1
-  AGCTargetLevel: 0.7
+  AGCTargetLevel: 0.5
   AGCResponseSpeed: 1
-  EnableNoiseReduction: 1
-  NoiseReductionStrength: 1
+  EnableNoiseReduction: 0
+  NoiseReductionStrength: 0
+  EnableDeEsser: 1
+  DeEsserThreshold: 0.3
+  DeEsserRatio: 3

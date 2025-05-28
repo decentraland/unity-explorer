@@ -171,6 +171,32 @@ namespace DCL.VoiceChat
             audioProcessor?.Reset();
         }
 
+        /// <summary>
+        /// Force refresh configuration from the ScriptableObject (for testing runtime changes)
+        /// </summary>
+        public void RefreshConfiguration()
+        {
+            if (audioProcessor != null && voiceChatConfiguration != null)
+            {
+                // The processor will automatically pick up changes from the ScriptableObject
+                // since it reads values directly from the configuration each frame
+                audioProcessor.Reset(); // Reset filter states to apply new settings immediately
+            }
+        }
+
+        /// <summary>
+        /// Get current filter settings for debugging
+        /// </summary>
+        public string GetFilterDebugInfo()
+        {
+            if (voiceChatConfiguration == null) return "No configuration";
+            
+            return $"BandPass: {voiceChatConfiguration.EnableBandPassFilter}, " +
+                   $"HP: {voiceChatConfiguration.HighPassCutoffFreq}Hz, " +
+                   $"LP: {voiceChatConfiguration.LowPassCutoffFreq}Hz, " +
+                   $"Order: 2nd (fixed)";
+        }
+
         private void ProcessStereoAudio(float[] data, int sampleRate)
         {
             // Optimized stereo processing for LiveKit's 2-channel 48kHz format
