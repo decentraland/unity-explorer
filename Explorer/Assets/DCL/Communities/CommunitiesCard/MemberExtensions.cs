@@ -18,13 +18,9 @@ namespace DCL.Communities.CommunitiesCard
             };
 
         public static GetCommunityMembersResponse.MemberData ToMemberData(this UserProfileContextMenuControlSettings.UserData user) =>
-            new ()
+            new (user.userAddress, user.userThumbnailAddress, user.userName, user.hasClaimedName)
             {
-                hasClaimedName = user.hasClaimedName,
-                id = user.userAddress,
                 UserNameColor = user.userColor,
-                name = user.userName,
-                profilePicture = user.userThumbnailAddress
             };
 
         public static FriendProfile ToFriendProfile(this UserProfileContextMenuControlSettings.UserData user) =>

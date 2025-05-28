@@ -88,16 +88,19 @@ namespace DCL.Communities
             throw new NotImplementedException();
 
         public async UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            true;
 
         public async UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            true;
+
+        public async UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
+            true;
 
         public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            true;
 
         public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            true;
 
         public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();

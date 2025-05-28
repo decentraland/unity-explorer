@@ -18,6 +18,7 @@ namespace DCL.Communities
 
         UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
         UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
+        UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
         UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct);

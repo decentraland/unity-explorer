@@ -171,6 +171,13 @@ namespace DCL.Communities.CommunitiesCard
             SectionChanged?.Invoke(section);
         }
 
+        public void ConfigureInteractionButtons(CommunityMemberRole role)
+        {
+            JoinedButton.gameObject.SetActive(role is CommunityMemberRole.member or CommunityMemberRole.moderator);
+            OpenWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner);
+            JoinButton.gameObject.SetActive(role == CommunityMemberRole.none);
+        }
+
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, ImageController imageController)
         {
             CommunityName.text = communityData.name;
@@ -178,9 +185,7 @@ namespace DCL.Communities.CommunitiesCard
             CommunityDescription.text = communityData.description;
             imageController.RequestImage(communityData.thumbnails[0], true, true);
 
-            JoinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member or CommunityMemberRole.moderator);
-            OpenWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner);
-            JoinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none);
+            ConfigureInteractionButtons(communityData.role);
 
             PlacesWithSignButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             PlacesButton.gameObject.SetActive(!PlacesWithSignButton.gameObject.activeSelf);

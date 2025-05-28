@@ -135,7 +135,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, lastCommunityId, token);
+                    bool result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, lastCommunityId, token);
+
+                    if (result)
+                    {
+                        sectionsFetchData[MembersListView.MemberListSections.ALL].members.Remove(profile);
+                        sectionsFetchData[MembersListView.MemberListSections.BANNED].members.Add(profile);
+                        RefreshLoopList();
+                    }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -154,7 +161,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, lastCommunityId, token);
+                    bool result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, lastCommunityId, token);
+
+                    if (result)
+                    {
+                        sectionsFetchData[MembersListView.MemberListSections.ALL].members.Remove(profile);
+                        RefreshLoopList();
+                    }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -343,7 +356,29 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
             HandleContextMenuUserProfileButton(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
 
-        private void UnbanButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
-            throw new NotImplementedException();
+        private void UnbanButtonClicked(GetCommunityMembersResponse.MemberData profile)
+        {
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            UnbanUserAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid UnbanUserAsync(CancellationToken token)
+            {
+                try
+                {
+                    bool result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, lastCommunityId, token);
+
+                    if (result)
+                    {
+                        sectionsFetchData[MembersListView.MemberListSections.BANNED].members.Remove(profile);
+                        RefreshLoopList();
+                    }
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
+                }
+            }
+        }
     }
 }

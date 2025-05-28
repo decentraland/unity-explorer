@@ -38,6 +38,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource membersSectionCancellationTokenSource = new ();
         private CancellationTokenSource placesSectionCancellationTokenSource = new ();
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
+        private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
 
@@ -158,12 +159,32 @@ namespace DCL.Communities.CommunitiesCard
 
         private void JoinCommunity()
         {
-            throw new NotImplementedException();
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            JoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid JoinCommunityAsync(CancellationToken ct)
+            {
+                bool result = await communitiesDataProvider.JoinCommunityAsync(communityData.id, ct);
+
+                if (result)
+                    viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.member);
+            }
         }
 
         private void LeaveCommunity()
         {
-            throw new NotImplementedException();
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            LeaveCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid LeaveCommunityAsync(CancellationToken ct)
+            {
+                bool result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct);
+
+                if (result)
+                    viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
+            }
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

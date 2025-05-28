@@ -13,16 +13,24 @@ namespace DCL.Communities
     public class GetCommunityMembersResponse
     {
         [Serializable]
-        public struct MemberData
+        public class MemberData
         {
-            public string id;
-            public string profilePicture;
-            public string name;
-            public bool hasClaimedName;
+            public readonly string id;
+            public readonly string profilePicture;
+            public readonly string name;
+            public readonly bool hasClaimedName;
             public CommunityMemberRole role;
             public int mutualFriends;
             public FriendshipStatus friendshipStatus;
             public Color UserNameColor;
+
+            public MemberData(string id, string profilePicture, string name, bool hasClaimedName)
+            {
+                this.id = id;
+                this.profilePicture = profilePicture;
+                this.name = name;
+                this.hasClaimedName = hasClaimedName;
+            }
 
             public MemberData(string id, string profilePicture, string name, bool hasClaimedName, CommunityMemberRole role,
                 int mutualFriends, FriendshipStatus friendshipStatus)
@@ -84,6 +92,20 @@ namespace DCL.Communities
                     ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
                     UnityEngine.Random.Range(0, 10),
                     FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
+            }
+
+            public override int GetHashCode() =>
+                id.GetHashCode();
+
+            private bool Equals(MemberData other) =>
+                id.Equals(other.id);
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((MemberData) obj);
             }
         }
 
