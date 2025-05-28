@@ -71,6 +71,7 @@ namespace DCL.Friends.UI
 
                 viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Name}?";
                 viewInstance!.ProfilePicture.Setup(profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, inputData.UserId);
+                viewInstance!.ProfilePicture.SetProfileDataProvider(profileRepositoryWrapper);
             }
         }
 

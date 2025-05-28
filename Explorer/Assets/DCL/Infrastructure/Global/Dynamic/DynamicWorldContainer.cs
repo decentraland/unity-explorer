@@ -849,7 +849,7 @@ namespace Global.Dynamic
                     profileRepositoryWrapper
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
-                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new SocialServicesPlugin(socialServicesRPCProxy, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),

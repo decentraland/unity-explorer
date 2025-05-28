@@ -50,8 +50,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            view.SetProfileDataProvider(profileRepositoryWrapper);
-            view.Configure(GetCollectionElement(index));
+            view.Configure(GetCollectionElement(index), profileRepositoryWrapper);
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);

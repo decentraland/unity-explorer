@@ -61,7 +61,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButtonClicked = null;
         }
 
-        public virtual void Configure(FriendProfile friendProfile)
+        public virtual void Configure(FriendProfile friendProfile, ProfileRepositoryWrapper profileDataProvider)
         {
             UnHover();
             UserProfile = friendProfile;
@@ -74,6 +74,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             ProfilePicture.Setup(friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
+            ProfilePicture.SetProfileDataProvider(profileDataProvider);
         }
 
         protected virtual void ToggleButtonView(bool isActive)
@@ -102,10 +103,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             if (canUnHover)
                 UnHover();
         }
-
+/*
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
             ProfilePicture.SetProfileDataProvider(profileDataProvider);
-        }
+        }*/
     }
 }

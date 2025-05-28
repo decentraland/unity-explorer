@@ -663,6 +663,7 @@ namespace DCL.Passport
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
                     mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    mutualConfig[i].Picture.SetProfileDataProvider(profileRepositoryWrapper);
                 }
             }
         }
