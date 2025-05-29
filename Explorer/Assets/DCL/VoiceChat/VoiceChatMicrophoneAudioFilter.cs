@@ -13,18 +13,13 @@ namespace DCL.VoiceChat
     [RequireComponent(typeof(AudioSource))]
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
-        // LiveKit constraints
-        private const int LIVEKIT_CHANNELS = 2;
-        private const int LIVEKIT_SAMPLE_RATE = 48000;
-
-        private VoiceChatConfiguration voiceChatConfiguration;
-        private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
-
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
         private int cachedSampleRate;
+        private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
 
         private float[] tempBuffer;
+        private VoiceChatConfiguration voiceChatConfiguration;
 
         private void Awake()
         {
@@ -35,7 +30,6 @@ namespace DCL.VoiceChat
 
         private void Start()
         {
-            // Ensure the AudioSource is configured for microphone input
             if (audioSource != null)
             {
                 audioSource.playOnAwake = false;
@@ -62,7 +56,6 @@ namespace DCL.VoiceChat
 
         private void OnDestroy()
         {
-            // Clear all event subscribers to prevent memory leaks
             AudioRead = null!;
 
             audioProcessor?.Dispose();
@@ -75,20 +68,17 @@ namespace DCL.VoiceChat
         /// </summary>
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            // Early return if data is null - nothing to process or send
             if (data == null)
                 return;
 
-            // Always process the audio first (if enabled)
             if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && data.Length > 0)
             {
-                // Ensure temp buffer is the right size
                 // On macOS, avoid allocations in audio thread due to Core Audio sensitivity
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
                 if (tempBuffer == null)
                 {
                     // Pre-allocate a reasonably large buffer to avoid reallocations
-                    tempBuffer = new float[8192]; // Large enough for most audio buffers
+                    tempBuffer = new float[8192];
                 }
 
                 if (tempBuffer.Length < data.Length)
@@ -100,27 +90,23 @@ namespace DCL.VoiceChat
 #else
                 if (tempBuffer == null || tempBuffer.Length != data.Length) { tempBuffer = new float[data.Length]; }
 #endif
-
-                // Copy data to temp buffer for processing
                 Array.Copy(data, tempBuffer, data.Length);
 
                 try
                 {
-                    // Process audio based on channel configuration using cached sample rate
-                    // LiveKit always uses stereo (2 channels) at 48kHz
-                    if (channels == LIVEKIT_CHANNELS)
+                    if (channels == 2)
                     {
                         // Stereo audio - process each channel separately (LiveKit standard)
                         ProcessStereoAudio(tempBuffer, cachedSampleRate);
                     }
                     else if (channels == 1)
                     {
-                        // Mono audio - process directly (fallback)
+                        // Mono audio - process directly
                         audioProcessor.ProcessAudio(tempBuffer, cachedSampleRate);
                     }
                     else
                     {
-                        // Multi-channel audio - process as interleaved (fallback)
+                        // Multi-channel audio - process as interleaved
                         ProcessMultiChannelAudio(tempBuffer, channels, cachedSampleRate);
                     }
 
@@ -154,9 +140,6 @@ namespace DCL.VoiceChat
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
             cachedSampleRate = AudioSettings.outputSampleRate;
-
-            if (cachedSampleRate != LIVEKIT_SAMPLE_RATE)
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio sample rate is {cachedSampleRate}Hz, but LiveKit expects {LIVEKIT_SAMPLE_RATE}Hz. Audio processing may not be optimal.");
         }
 
         public void Initialize(VoiceChatConfiguration configuration)
