@@ -27,6 +27,9 @@ namespace DCL.VoiceChat
         private bool isGateOpening = false;
         private float gateOpenFadeProgress = 0f;
 
+        private float noiseFloor = 0f;
+        private float noiseFloorUpdateTime = 0f;
+
         /// <summary>
         ///     Get the current noise gate status for UI feedback
         /// </summary>
@@ -108,6 +111,9 @@ namespace DCL.VoiceChat
             fadeInBufferIndex = 0;
             isGateOpening = false;
             gateOpenFadeProgress = 0f;
+
+            noiseFloor = 0f;
+            noiseFloorUpdateTime = 0f;
         }
 
         /// <summary>
@@ -124,6 +130,7 @@ namespace DCL.VoiceChat
                 float sample = audioData[i];
 
                 if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
+                if (configuration.EnableNoiseReduction) { sample = ApplyNoiseReduction(sample, deltaTime); }
                 if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime); }
                 if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
@@ -337,8 +344,8 @@ namespace DCL.VoiceChat
         {
             float sampleAbs = Mathf.Abs(sample);
 
-            var peakDecay = 0.9995f;
-            var peakAttack = 0.1f;
+            var peakDecay = 0.999f;
+            var peakAttack = 0.3f;
             
             if (sampleAbs > peakLevel)
             {
@@ -352,16 +359,15 @@ namespace DCL.VoiceChat
             if (peakLevel > 0.001f)
             {
                 float targetGain = configuration.AGCTargetLevel / peakLevel;
-                targetGain = Mathf.Clamp(targetGain, 0.2f, 3f);
+                targetGain = Mathf.Clamp(targetGain, 0.1f, 5f);
 
                 float gainDifference = Mathf.Abs(targetGain - CurrentGain);
-                float baseSpeed = configuration.AGCResponseSpeed * 0.002f;
+                float baseSpeed = configuration.AGCResponseSpeed * 0.01f;
                 
-                float adaptiveSpeed = gainDifference > 0.5f ? baseSpeed * 0.3f : baseSpeed;
+                float adaptiveSpeed = gainDifference > 1f ? baseSpeed * 0.8f : baseSpeed;
                 
-                float smoothingWindow = 0.95f;
-                CurrentGain = CurrentGain * smoothingWindow + targetGain * (1f - smoothingWindow) * adaptiveSpeed;
-                CurrentGain = Mathf.Clamp(CurrentGain, 0.2f, 3f);
+                CurrentGain = Mathf.Lerp(CurrentGain, targetGain, adaptiveSpeed);
+                CurrentGain = Mathf.Clamp(CurrentGain, 0.1f, 5f);
             }
 
             float processedSample = sample * CurrentGain;
@@ -376,6 +382,36 @@ namespace DCL.VoiceChat
             }
 
             return processedSample;
+        }
+
+        private float ApplyNoiseReduction(float input, float deltaTime)
+        {
+            float inputAbs = Mathf.Abs(input);
+            
+            noiseFloorUpdateTime += deltaTime;
+            
+            if (inputAbs < configuration.NoiseGateThreshold)
+            {
+                if (noiseFloorUpdateTime > 0.1f)
+                {
+                    float targetNoiseFloor = inputAbs * 1.2f;
+                    noiseFloor = Mathf.Lerp(noiseFloor, targetNoiseFloor, 0.01f);
+                    noiseFloorUpdateTime = 0f;
+                }
+            }
+            
+            if (noiseFloor > 0.001f && inputAbs > noiseFloor)
+            {
+                float reductionStrength = configuration.NoiseReductionStrength;
+                float noiseComponent = noiseFloor * reductionStrength;
+                
+                float sign = Mathf.Sign(input);
+                float reducedMagnitude = Mathf.Max(0f, inputAbs - noiseComponent);
+                
+                return sign * reducedMagnitude;
+            }
+            
+            return input;
         }
     }
 }
