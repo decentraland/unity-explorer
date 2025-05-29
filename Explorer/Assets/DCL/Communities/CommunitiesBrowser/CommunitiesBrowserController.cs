@@ -21,7 +21,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
         private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
-        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
 
         private readonly CommunitiesBrowserView view;
