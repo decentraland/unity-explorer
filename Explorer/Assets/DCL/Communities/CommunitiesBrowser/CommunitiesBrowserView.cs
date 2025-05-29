@@ -10,6 +10,8 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserView : MonoBehaviour
     {
+        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
+
         public event Action ViewAllMyCommunitiesButtonClicked;
         public event Action ResultsBackButtonClicked;
         public event Action<string> SearchBarSelected;
@@ -18,6 +20,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string> SearchBarSubmit;
         public event Action SearchBarClearButtonClicked;
         public event Action<Vector2> ResultsLoopGridScrollChanged;
+
+        public bool IsResultsScrollPositionAtBottom =>
+            resultLoopGrid.ScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator;
@@ -167,9 +172,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void RefreshResultsLoopGridItemByItemIndex(int itemIndex) =>
             resultLoopGrid.RefreshItemByItemIndex(itemIndex);
-
-        public float GetResultsLoopGridVerticalNormalizedPosition() =>
-            resultLoopGrid.ScrollRect.verticalNormalizedPosition;
 
         private void SetSearchBarClearButtonActive(bool isActive) =>
             searchBar.clearSearchButton.gameObject.SetActive(isActive);

@@ -245,7 +245,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (isGridResultsLoadingItems ||
                 currentResults.Count >= currentResultsTotalAmount ||
-                view.GetResultsLoopGridVerticalNormalizedPosition() > NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE)
+                !view.IsResultsScrollPositionAtBottom)
                 return;
 
             loadResultsCts = loadResultsCts.SafeRestart();
