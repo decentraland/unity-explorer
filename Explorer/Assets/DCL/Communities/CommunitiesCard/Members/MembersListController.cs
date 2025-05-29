@@ -28,6 +28,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int ELEMENT_MISSING_THRESHOLD = 5;
 
         private readonly MembersListView view;
+        private readonly ConfirmationDialogView confirmationDialogView;
         private readonly ViewDependencies viewDependencies;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
@@ -46,11 +47,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             { MembersListView.MemberListSections.BANNED, new SectionFetchData(PAGE_SIZE) }
         };
 
-        private string lastCommunityId = string.Empty;
+        private GetCommunityResponse.CommunityData? communityData = null;
         private CancellationToken ct;
         private bool isFetching;
-        private CommunityMemberRole viewerRole;
-        private bool viewerCanEdit => viewerRole is CommunityMemberRole.moderator or CommunityMemberRole.owner;
+        private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
 
         private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
@@ -59,12 +59,14 @@ namespace DCL.Communities.CommunitiesCard.Members
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
         public MembersListController(MembersListView view,
+            ConfirmationDialogView confirmationDialogView,
             ViewDependencies viewDependencies,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
+            this.confirmationDialogView = confirmationDialogView;
             this.viewDependencies = viewDependencies;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
@@ -135,7 +137,12 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    bool result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, lastCommunityId, token);
+                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.BAN_USER,
+                        communityData?.name, profile.name, ct: ct);
+
+                    if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                    bool result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, communityData?.id, token);
 
                     if (result)
                     {
@@ -167,7 +174,12 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    bool result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, lastCommunityId, token);
+                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.KICK_USER,
+                        communityData?.name, profile.name, ct: ct);
+
+                    if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                    bool result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, communityData?.id, token);
 
                     if (result)
                     {
@@ -192,7 +204,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, lastCommunityId, CommunityMemberRole.moderator, token);
+                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.moderator, token);
 
                     if (result)
                     {
@@ -222,7 +234,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, lastCommunityId, CommunityMemberRole.member, token);
+                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.member, token);
 
                     if (result)
                     {
@@ -257,7 +269,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void Reset()
         {
-            lastCommunityId = string.Empty;
+            communityData = null;
 
             foreach (var element in sectionsFetchData)
                 element.Value.Reset();
@@ -356,7 +368,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             SectionFetchData membersData = sectionsFetchData[currentSection];
 
-            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct);
+            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct);
 
             foreach (var member in response.members)
                 if (!membersData.members.Contains(member))
@@ -367,15 +379,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             membersData.totalToFetch = response.totalAmount;
         }
 
-        public void ShowMembersListAsync(string communityId, CommunityMemberRole userRole, CancellationToken cancellationToken)
+        public void ShowMembersListAsync(GetCommunityResponse.CommunityData community, CancellationToken cancellationToken)
         {
             ct = cancellationToken;
 
-            if (lastCommunityId == null || lastCommunityId.Equals(communityId)) return;
+            if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
 
-            lastCommunityId = communityId;
-            viewerRole = userRole;
-            view.SetSectionButtonsActive(viewerRole is CommunityMemberRole.moderator or CommunityMemberRole.owner);
+            communityData = community;
+            view.SetSectionButtonsActive(communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
             panelLifecycleTask = new UniTaskCompletionSource();
 
             FetchNewDataAsync().Forget();
@@ -434,7 +445,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    bool result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, lastCommunityId, token);
+                    bool result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, communityData?.id, token);
 
                     if (result)
                     {

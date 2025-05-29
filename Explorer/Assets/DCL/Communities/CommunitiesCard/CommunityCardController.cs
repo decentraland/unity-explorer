@@ -68,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizard -= OpenCommunityWizard;
                 viewInstance.JoinCommunity -= JoinCommunity;
-                viewInstance.LeaveCommunity -= LeaveCommunity;
+                viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
             }
 
             photosSectionCancellationTokenSource.SafeCancelAndDispose();
@@ -84,14 +84,18 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizard += OpenCommunityWizard;
             viewInstance.JoinCommunity += JoinCommunity;
-            viewInstance.LeaveCommunity += LeaveCommunity;
+            viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.CameraReelGalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
 
-            membersListController = new MembersListController(viewInstance.MembersListView, viewDependencies, mvcManager, friendServiceProxy, communitiesDataProvider);
+            membersListController = new MembersListController(viewInstance.MembersListView,
+                viewInstance.ConfirmationDialogView,
+                viewDependencies,mvcManager,
+                friendServiceProxy,
+                communitiesDataProvider);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
@@ -144,7 +148,7 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersListAsync(communityData.id, communityData.role, membersSectionCancellationTokenSource.Token);
+                    membersListController!.ShowMembersListAsync(communityData, membersSectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
@@ -172,7 +176,7 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
-        private void LeaveCommunity()
+        private void LeaveCommunityRequested()
         {
             communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
             LeaveCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
@@ -180,6 +184,11 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid LeaveCommunityAsync(CancellationToken ct)
             {
+                ConfirmationDialogView.ConfirmationResult dialogResult = await viewInstance!.ConfirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.LEAVE_COMMUNITY,
+                    viewInstance.CommunityName.text, communitySprite: viewInstance.CommunityThumbnail.ImageSprite, ct: ct);
+
+                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
                 bool result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct);
 
                 if (result)

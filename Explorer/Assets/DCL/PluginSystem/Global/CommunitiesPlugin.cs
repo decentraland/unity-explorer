@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.Global
         private async UniTaskVoid Test()
         {
             await UniTask.Delay(20_000);
-            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter())).Forget();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter("test"))).Forget();
         }
     }
 
