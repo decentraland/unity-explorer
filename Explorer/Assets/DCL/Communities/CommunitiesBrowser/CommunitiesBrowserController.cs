@@ -71,13 +71,13 @@ namespace DCL.Communities.CommunitiesBrowser
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
 
-            view.OnViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
-            view.OnResultsBackButtonClicked += LoadAllCommunitiesResults;
-            view.OnSearchBarSelected += DisableShortcutsInput;
-            view.OnSearchBarDeselected += RestoreInput;
-            view.OnSearchBarValueChanged += OnSearchBarValueChanged;
-            view.OnSearchBarSubmit += OnSearchBarSubmit;
-            view.OnSearchBarClearButtonClicked += OnSearchBarCleared;
+            view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
+            view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
+            view.SearchBarSelected += DisableShortcutsInput;
+            view.SearchBarDeselected += RestoreInput;
+            view.SearchBarValueChanged += SearchBarValueChanged;
+            view.SearchBarSubmit += SearchBarSubmit;
+            view.SearchBarClearButtonClicked += SearchBarCleared;
         }
 
         public void Activate()
@@ -110,14 +110,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
-            view.OnResultsLoopGridScrollChanged -= LoadMoreResults;
-            view.OnViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
-            view.OnResultsBackButtonClicked -= LoadAllCommunitiesResults;
-            view.OnSearchBarSelected -= DisableShortcutsInput;
-            view.OnSearchBarDeselected -= RestoreInput;
-            view.OnSearchBarValueChanged -= OnSearchBarValueChanged;
-            view.OnSearchBarSubmit -= OnSearchBarSubmit;
-            view.OnSearchBarClearButtonClicked -= OnSearchBarCleared;
+            view.ResultsLoopGridScrollChanged -= LoadMoreResults;
+            view.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
+            view.ResultsBackButtonClicked -= LoadAllCommunitiesResults;
+            view.SearchBarSelected -= DisableShortcutsInput;
+            view.SearchBarDeselected -= RestoreInput;
+            view.SearchBarValueChanged -= SearchBarValueChanged;
+            view.SearchBarSubmit -= SearchBarSubmit;
+            view.SearchBarClearButtonClicked -= SearchBarCleared;
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
@@ -129,7 +129,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ConfigureResultsGrid()
         {
             view.InitializeResultsGrid(0, SetupCommunityResultCardByIndex);
-            view.OnResultsLoopGridScrollChanged += LoadMoreResults;
+            view.ResultsLoopGridScrollChanged += LoadMoreResults;
         }
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
@@ -147,8 +147,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
 
             // Setup card events
-            cardView.OnMainButtonClicked -= OpenCommunityProfile;
-            cardView.OnMainButtonClicked += OpenCommunityProfile;
+            cardView.MainButtonClicked -= OpenCommunityProfile;
+            cardView.MainButtonClicked += OpenCommunityProfile;
 
             return listItem;
         }
@@ -172,12 +172,12 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
-            cardView.OnMainButtonClicked -= OpenCommunityProfile;
-            cardView.OnMainButtonClicked += OpenCommunityProfile;
-            cardView.OnViewCommunityButtonClicked -= OpenCommunityProfile;
-            cardView.OnViewCommunityButtonClicked += OpenCommunityProfile;
-            cardView.OnJoinCommunityButtonClicked -= JoinCommunity;
-            cardView.OnJoinCommunityButtonClicked += JoinCommunity;
+            cardView.MainButtonClicked -= OpenCommunityProfile;
+            cardView.MainButtonClicked += OpenCommunityProfile;
+            cardView.ViewCommunityButtonClicked -= OpenCommunityProfile;
+            cardView.ViewCommunityButtonClicked += OpenCommunityProfile;
+            cardView.JoinCommunityButtonClicked -= JoinCommunity;
+            cardView.JoinCommunityButtonClicked += JoinCommunity;
 
             // Setup mutual friends
             cardView.SetupMutualFriends(viewDependencies, communityData);
@@ -313,7 +313,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void RestoreInput(string text) =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
-        private void OnSearchBarValueChanged(string searchText)
+        private void SearchBarValueChanged(string searchText)
         {
             searchCancellationCts = searchCancellationCts.SafeRestart();
             AwaitAndSendSearchAsync(searchText, searchCancellationCts.Token).Forget();
@@ -321,7 +321,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetSearchBarClearButtonActive(!string.IsNullOrEmpty(searchText));
         }
 
-        private void OnSearchBarSubmit(string searchText)
+        private void SearchBarSubmit(string searchText)
         {
             searchCancellationCts = searchCancellationCts.SafeRestart();
             AwaitAndSendSearchAsync(searchText, searchCancellationCts.Token, skipAwait: true).Forget();
@@ -354,7 +354,7 @@ namespace DCL.Communities.CommunitiesBrowser
             currentSearchText = searchText;
         }
 
-        private void OnSearchBarCleared()
+        private void SearchBarCleared()
         {
             ClearSearchBar();
             LoadAllCommunitiesResults();

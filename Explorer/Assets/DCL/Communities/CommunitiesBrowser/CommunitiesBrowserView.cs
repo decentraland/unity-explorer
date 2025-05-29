@@ -10,14 +10,14 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserView : MonoBehaviour
     {
-        public event Action OnViewAllMyCommunitiesButtonClicked;
-        public event Action OnResultsBackButtonClicked;
-        public event Action<string> OnSearchBarSelected;
-        public event Action<string> OnSearchBarDeselected;
-        public event Action<string> OnSearchBarValueChanged;
-        public event Action<string> OnSearchBarSubmit;
-        public event Action OnSearchBarClearButtonClicked;
-        public event Action<Vector2> OnResultsLoopGridScrollChanged;
+        public event Action ViewAllMyCommunitiesButtonClicked;
+        public event Action ResultsBackButtonClicked;
+        public event Action<string> SearchBarSelected;
+        public event Action<string> SearchBarDeselected;
+        public event Action<string> SearchBarValueChanged;
+        public event Action<string> SearchBarSubmit;
+        public event Action SearchBarClearButtonClicked;
+        public event Action<Vector2> ResultsLoopGridScrollChanged;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator;
@@ -49,17 +49,17 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            myCommunitiesViewAllButton.onClick.AddListener(() => OnViewAllMyCommunitiesButtonClicked?.Invoke());
-            resultsBackButton.onClick.AddListener(() => OnResultsBackButtonClicked?.Invoke());
-            searchBar.inputField.onSelect.AddListener(text => OnSearchBarSelected?.Invoke(text));
-            searchBar.inputField.onDeselect.AddListener(text => OnSearchBarDeselected?.Invoke(text));
-            searchBar.inputField.onValueChanged.AddListener(text => OnSearchBarValueChanged?.Invoke(text));
-            searchBar.inputField.onSubmit.AddListener(text => OnSearchBarSubmit?.Invoke(text));
-            searchBar.clearSearchButton.onClick.AddListener(() => OnSearchBarClearButtonClicked?.Invoke());
+            myCommunitiesViewAllButton.onClick.AddListener(() => ViewAllMyCommunitiesButtonClicked?.Invoke());
+            resultsBackButton.onClick.AddListener(() => ResultsBackButtonClicked?.Invoke());
+            searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke(text));
+            searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke(text));
+            searchBar.inputField.onValueChanged.AddListener(text => SearchBarValueChanged?.Invoke(text));
+            searchBar.inputField.onSubmit.AddListener(text => SearchBarSubmit?.Invoke(text));
+            searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
         }
 
         private void Start() =>
-            resultLoopGrid.ScrollRect.onValueChanged.AddListener(pos => OnResultsLoopGridScrollChanged?.Invoke(pos));
+            resultLoopGrid.ScrollRect.onValueChanged.AddListener(pos => ResultsLoopGridScrollChanged?.Invoke(pos));
 
         private void OnDestroy()
         {

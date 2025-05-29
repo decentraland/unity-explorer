@@ -13,9 +13,9 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunityResultCardView : MonoBehaviour
     {
-        public event Action<string> OnMainButtonClicked;
-        public event Action<string> OnViewCommunityButtonClicked;
-        public event Action<int, CommunityResultCardView> OnJoinCommunityButtonClicked;
+        public event Action<string> MainButtonClicked;
+        public event Action<string> ViewCommunityButtonClicked;
+        public event Action<int, CommunityResultCardView> JoinCommunityButtonClicked;
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
@@ -55,9 +55,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() => OnMainButtonClicked?.Invoke(currentCommunityId));
-            viewCommunityButton.onClick.AddListener(() => OnViewCommunityButtonClicked?.Invoke(currentCommunityId));
-            joinCommunityButton.onClick.AddListener(() => OnJoinCommunityButtonClicked?.Invoke(currentIndex, this));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
+            viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(currentCommunityId));
+            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(currentIndex, this));
         }
 
         private void OnDestroy()

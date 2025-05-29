@@ -9,7 +9,7 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class MyCommunityCardView : MonoBehaviour
     {
-        public event Action<string> OnMainButtonClicked;
+        public event Action<string> MainButtonClicked;
 
         [SerializeField] private TMP_Text communityTitle ;
         [SerializeField] private GameObject userRoleContainer ;
@@ -22,7 +22,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private string currentCommunityId;
 
         private void Awake() =>
-            mainButton.onClick.AddListener(() => OnMainButtonClicked?.Invoke(currentCommunityId));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
 
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();
