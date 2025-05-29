@@ -175,9 +175,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                       .Forget();
         }
 
-        protected override void RefreshLoopList()
+        protected override void OnLoopListInitialized()
         {
-            base.RefreshLoopList();
             PropagateReceivedRequestsCountChanged();
         }
 

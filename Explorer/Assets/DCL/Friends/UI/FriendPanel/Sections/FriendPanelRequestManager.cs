@@ -21,6 +21,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected abstract FriendProfile GetCollectionElement(int index);
 
+        protected override int GetListViewElementsCount() =>
+            GetCollectionsDataCount();
+
         protected virtual void CustomiseElement(T elementView, int index) { }
 
         public LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)

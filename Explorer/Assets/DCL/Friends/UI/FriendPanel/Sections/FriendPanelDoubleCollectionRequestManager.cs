@@ -24,8 +24,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private bool excludeSecondCollection;
 
         public event Action<FriendProfile>? ElementClicked;
-        public event Action? FirstFolderClicked;
-        public event Action? SecondFolderClicked;
 
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -58,6 +56,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected abstract FriendProfile GetFirstCollectionElement(int index);
         protected abstract FriendProfile GetSecondCollectionElement(int index);
 
+        protected override int GetListViewElementsCount()
+        {
+            var count = 2;
+
+            if (!excludeFirstCollection)
+                count += GetFirstCollectionCount();
+
+            if (!excludeSecondCollection)
+                count += GetSecondCollectionCount();
+
+            if (GetFirstCollectionCount() == 0 && !excludeFirstCollection)
+                count++;
+
+            if (GetSecondCollectionCount() == 0 && !excludeSecondCollection)
+                count++;
+
+            return count;
+        }
+
         protected virtual void CustomiseElement(T elementView, int index, FriendPanelStatus section) { }
 
         public LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
@@ -74,8 +91,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[statusElementIndex].mItemPrefab.name);
                 StatusWrapperView statusWrapperView = listItem.GetComponent<StatusWrapperView>();
                 statusWrapperView.SetStatusText(firstCollectionStatus, GetFirstCollectionCount());
-                statusWrapperView.ResetCallback();
-                statusWrapperView.FolderButtonClicked += FolderClick;
+                statusWrapperView.FolderButtonClicked = FolderClick;
             }
             else if (index > 0 && index <= onlineFriendMarker)
             {
@@ -98,8 +114,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[statusElementIndex].mItemPrefab.name);
                 StatusWrapperView statusWrapperView = listItem.GetComponent<StatusWrapperView>();
                 statusWrapperView.SetStatusText(secondCollectionStatus, GetSecondCollectionCount());
-                statusWrapperView.ResetCallback();
-                statusWrapperView.FolderButtonClicked += FolderClick;
+                statusWrapperView.FolderButtonClicked = FolderClick;
             }
             else if (index > onlineFriendMarker + 1 && index <= onlineFriendMarker + 1 + offlineFriendMarker + 1)
             {
@@ -124,40 +139,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             return listItem;
         }
 
-        public int GetElementsNumber()
-        {
-            int count = 2;
-
-            if (!excludeFirstCollection)
-                count += GetFirstCollectionCount();
-
-            if (!excludeSecondCollection)
-                count += GetSecondCollectionCount();
-
-            if (GetFirstCollectionCount() == 0 && !excludeFirstCollection)
-                count++;
-
-            if (GetSecondCollectionCount() == 0 && !excludeSecondCollection)
-                count++;
-
-            return count;
-        }
-
-        public override int GetCollectionCount() =>
+        protected override int GetCollectionsDataCount() =>
             GetFirstCollectionCount() + GetSecondCollectionCount();
 
         private void FolderClick(bool isFolded, FriendPanelStatus panelStatus)
         {
             if (panelStatus == firstCollectionStatus)
-            {
                 excludeFirstCollection = isFolded;
-                FirstFolderClicked?.Invoke();
-            }
             else if (panelStatus == secondCollectionStatus)
-            {
                 excludeSecondCollection = isFolded;
-                SecondFolderClicked?.Invoke();
-            }
+
+            RefreshLoopList();
         }
     }
 }

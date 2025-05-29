@@ -27,31 +27,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public override void Dispose()
         {
-            requestManager.FirstFolderClicked -= FolderClicked;
-            requestManager.SecondFolderClicked -= FolderClicked;
             requestManager.ElementClicked -= ElementClicked;
             base.Dispose();
-        }
-
-        public override void Reset()
-        {
-            requestManager.FirstFolderClicked -= FolderClicked;
-            requestManager.SecondFolderClicked -= FolderClicked;
-            base.Reset();
-        }
-
-        private void FolderClicked()
-        {
-            RefreshLoopList();
-        }
-
-        protected override void RefreshLoopList()
-        {
-            view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
-            view.LoopList.RefreshAllShownItem();
-
-            requestManager.FirstFolderClicked += FolderClicked;
-            requestManager.SecondFolderClicked += FolderClicked;
         }
 
         protected override LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>

@@ -22,11 +22,5 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             requestManager.GetLoopListItemByIndex(loopListView, index);
 
         protected abstract void ElementClicked(FriendProfile profile);
-
-        protected override void RefreshLoopList()
-        {
-            view.LoopList.SetListItemCount(requestManager.GetCollectionCount(), false);
-            view.LoopList.RefreshAllShownItem();
-        }
     }
 }

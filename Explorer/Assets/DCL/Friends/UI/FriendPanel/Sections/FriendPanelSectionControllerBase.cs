@@ -61,7 +61,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.SetScrollViewState(showScrollView);
 
             if (showScrollView)
-                RefreshLoopList();
+            {
+                requestManager.RefreshLoopList();
+                OnLoopListInitialized();
+            }
+
         }
 
         public virtual void Reset() =>
@@ -76,7 +80,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected virtual bool ShouldShowScrollView() =>
             requestManager.HasElements;
 
-        protected abstract void RefreshLoopList();
+        protected virtual void OnLoopListInitialized() { }
 
         protected abstract LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index);
 

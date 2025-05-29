@@ -16,18 +16,23 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private int pageNumber;
         private bool isInitializing;
 
-        protected FriendPanelRequestManagerBase(LoopListView2 loopListView, int pageSize)
-        {
-            this.loopListView = loopListView;
-            this.pageSize = pageSize;
-        }
-
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
 
         protected int totalToFetch { get; private set; }
         protected int totalFetched { get; private set; }
         protected bool isFetching { get; private set; }
+
+        protected FriendPanelRequestManagerBase(LoopListView2 loopListView, int pageSize)
+        {
+            this.loopListView = loopListView;
+            this.pageSize = pageSize;
+        }
+
+        public virtual void Dispose()
+        {
+            fetchNewDataCts.SafeCancelAndDispose();
+        }
 
         public void Reset()
         {
@@ -38,11 +43,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             totalFetched = 0;
             ResetCollection();
             RefreshLoopList();
-        }
-
-        public virtual void Dispose()
-        {
-            fetchNewDataCts.SafeCancelAndDispose();
         }
 
         protected abstract void ResetCollection();
@@ -60,17 +60,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             {
                 await FetchDataInternalAsync(ct);
 
-                HasElements = GetCollectionCount() > 0;
+                HasElements = GetCollectionsDataCount() > 0;
                 WasInitialised = true;
             }
             finally { isInitializing = false; }
         }
 
-        public abstract int GetCollectionCount();
+        /// <summary>
+        ///     Data count of the collection(-s)
+        /// </summary>
+        protected abstract int GetCollectionsDataCount();
 
-        protected void RefreshLoopList()
+        /// <summary>
+        ///     List View elements include foldable sections
+        /// </summary>
+        protected abstract int GetListViewElementsCount();
+
+        internal void RefreshLoopList()
         {
-            loopListView.SetListItemCount(GetCollectionCount(), false);
+            loopListView.SetListItemCount(GetListViewElementsCount(), false);
             loopListView.RefreshAllShownItem();
         }
 
@@ -83,7 +91,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 pageNumber++;
                 await FetchDataInternalAsync(fetchNewDataCts.Token);
 
-                loopListView.SetListItemCount(GetCollectionCount(), false);
+                loopListView.SetListItemCount(GetListViewElementsCount(), false);
                 loopListView.RefreshAllShownItem();
             }
             finally { isFetching = false; }
