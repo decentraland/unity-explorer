@@ -49,7 +49,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetUserRole(CommunityMemberRole role)
         {
-            userRoleContainer.SetActive(role != CommunityMemberRole.member);
+            userRoleContainer.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             userRole.text = role.ToString();
         }
 
