@@ -200,7 +200,6 @@ jobs:
 
           if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
             options+=("Development")
-            options+=("AllowDebugging")
             options+=("ConnectWithProfiler")
           fi
 

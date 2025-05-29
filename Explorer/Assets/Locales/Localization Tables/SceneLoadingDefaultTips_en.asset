@@ -92,23 +92,13 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 176473998802190336
-    m_Localized: Celebrate Pride in Your PJs!
+    m_Localized: Get Ready For Game Night!
     m_Metadata:
       m_Items: []
   - m_Id: 176474039361110016
-    m_Localized: "Slip into glowing PJs, a rainbow onesie, or whatever feels uniquely
-      you\u2014and show up on <b><size=26>May 21</size></b> to relax, express yourself,
-      and meet new friends. Expect cozy vibes, colorful fits, and film screenings."
-    m_Metadata:
-      m_Items: []
-  - m_Id: 176474066603114496
-    m_Localized: Get Your Outfits Ready!
-    m_Metadata:
-      m_Items: []
-  - m_Id: 176474088031813632
-    m_Localized: "Decentraland Prom is happening on <b><size=26>May 22</size></b>\u2014it\u2019s
-      a one-night celebration of style, music, and self-expression. From \u201Cpromposals\u201D
-      to glowing dancefloors, this is your night to show up and make memories."
+    m_Localized: "Decentraland Game Night kicks off June 19\u201424 hours of fast,
+      social, chaotic fun. Squad up or go solo in micro-games made for mayhem, from
+      high-speed races to logic puzzles."
     m_Metadata:
       m_Items: []
   references:

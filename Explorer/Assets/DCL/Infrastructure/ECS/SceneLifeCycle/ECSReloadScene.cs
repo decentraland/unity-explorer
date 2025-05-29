@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle
             world.Add<DeleteEntityIntention>(entity);
 
             //We wait until scene is fully disposed
-            await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Equals(SceneState.Disposed), cancellationToken: ct);
+            await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct);
 
             if (world.IsAlive(entity))
             {
@@ -110,17 +110,17 @@ namespace ECS.SceneLifeCycle
                     world.Query(in new QueryDescription().WithAll<ISceneFacade>().WithNone<DeleteEntityIntention>(),
                         (ref ISceneFacade newScene) =>
                         {
-                            if (newScene.SceneStateProvider.State is SceneState.JavaScriptError
+                            if (newScene.SceneStateProvider.State.Value() is SceneState.JavaScriptError
                                 or SceneState.EcsError)
                             {
                                 isLoadCompleted = true;
                                 return;
                             }
 
-                            isLoadCompleted = newScene.SceneStateProvider.State is SceneState.Running
-                                                // Consider GLTF models in the initial loading phase since they're not tracked by SceneStateProvider.State.
-                                                // This prevents the character from falling through unloaded colliders during scene reload.
-                                                && newScene.SceneData.SceneLoadingConcluded;
+                            isLoadCompleted = newScene.SceneStateProvider.State.Value() is SceneState.Running
+                                              // Consider GLTF models in the initial loading phase since they're not tracked by SceneStateProvider.State.
+                                              // This prevents the character from falling through unloaded colliders during scene reload.
+                                              && newScene.SceneData.SceneLoadingConcluded;
                         });
 
                     return isLoadCompleted;
