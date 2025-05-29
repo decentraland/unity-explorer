@@ -750,7 +750,8 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     sharedSpaceManager,
                     profileChangesBus,
-                    staticContainer.SceneLoadingLimit
+                    staticContainer.SceneLoadingLimit,
+                    mainUIView.WarningNotification
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -840,7 +841,7 @@ namespace Global.Dynamic
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
-                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
+                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
             if (!localSceneDevelopment)
             {

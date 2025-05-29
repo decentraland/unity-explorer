@@ -38,7 +38,7 @@ namespace DCL.Landscape
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
-        private readonly bool forceCacheRegen;
+        public bool forceCacheRegen;
         private readonly List<Terrain> terrains;
         private readonly List<Collider> terrainChunkColliders;
 
@@ -291,9 +291,8 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
-            
-            GenesisTerrainGenerated.Invoke(terrains);
 
+            GenesisTerrainGenerated?.Invoke(terrains);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
