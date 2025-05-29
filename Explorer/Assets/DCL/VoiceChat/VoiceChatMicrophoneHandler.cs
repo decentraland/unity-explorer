@@ -206,6 +206,12 @@ namespace DCL.VoiceChat
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = 0f;
+            
+            // Force mono audio for voice chat - this ensures we always get mono input to our filter
+            // This eliminates the need for channel mixing in the audio filter
+            audioSource.spatialBlend = 0f;  // 2D audio (not spatial)
+            audioSource.panStereo = 0f;     // Center pan (no stereo separation)
+            
             audioSource.Play();
 
             if (audioFilter != null)
@@ -213,7 +219,7 @@ namespace DCL.VoiceChat
 
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized with forced mono configuration");
         }
 
         private void EnableMicrophone()

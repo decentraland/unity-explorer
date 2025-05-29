@@ -76,10 +76,6 @@ namespace DCL.VoiceChat
             Reset();
         }
 
-        public void Dispose()
-        {
-        }
-
         public void Reset()
         {
             for (int i = 0; i < 2; i++)

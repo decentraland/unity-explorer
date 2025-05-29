@@ -10,32 +10,22 @@ namespace DCL.VoiceChat
     ///     to the microphone input using Unity's OnAudioFilterRead callback.
     ///     Compatible with LiveKit's AudioFilter interface.
     /// </summary>
-    [RequireComponent(typeof(AudioSource))]
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
         private VoiceChatAudioProcessor audioProcessor;
-        private AudioSource audioSource;
         private int cachedSampleRate;
-        private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
+        private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
 
         private float[] tempBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         private void Awake()
         {
-            audioSource = GetComponent<AudioSource>();
-
             if (voiceChatConfiguration != null) audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
         }
 
         private void Start()
         {
-            if (audioSource != null)
-            {
-                audioSource.playOnAwake = false;
-                audioSource.loop = true;
-            }
-
             // Pre-allocate buffer on macOS to avoid allocations in audio thread
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             if (tempBuffer == null)
@@ -57,8 +47,6 @@ namespace DCL.VoiceChat
         private void OnDestroy()
         {
             AudioRead = null!;
-
-            audioProcessor?.Dispose();
             audioProcessor = null;
             tempBuffer = null;
         }
@@ -94,24 +82,12 @@ namespace DCL.VoiceChat
 
                 try
                 {
-                    if (channels == 2)
-                    {
-                        // Stereo audio - process each channel separately (LiveKit standard)
-                        ProcessStereoAudio(tempBuffer, cachedSampleRate);
-                    }
-                    else if (channels == 1)
-                    {
-                        // Mono audio - process directly
-                        audioProcessor.ProcessAudio(tempBuffer, cachedSampleRate);
-                    }
-                    else
-                    {
-                        // Multi-channel audio - process as interleaved
-                        ProcessMultiChannelAudio(tempBuffer, channels, cachedSampleRate);
-                    }
+                    // Process audio and convert to mono for voice chat transmission
+                    float[] monoData = ProcessAudioToMono(tempBuffer, channels, cachedSampleRate);
 
-                    // Copy processed data back
-                    Array.Copy(tempBuffer, data, data.Length);
+                    // Send mono audio to LiveKit (more efficient for voice chat)
+                    AudioRead?.Invoke(monoData, 1, cachedSampleRate);
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -126,16 +102,14 @@ namespace DCL.VoiceChat
                 }
             }
 
-            // Always invoke the AudioRead event for LiveKit compatibility
-            // This sends the processed audio data to LiveKit
-            // Send even empty buffers to maintain audio stream continuity
+            // Fallback: send original data if processing failed or is disabled
             AudioRead?.Invoke(data, channels, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
-        public bool IsValid => audioSource != null && audioProcessor != null && voiceChatConfiguration != null;
+        public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
@@ -145,7 +119,6 @@ namespace DCL.VoiceChat
         public void Initialize(VoiceChatConfiguration configuration)
         {
             voiceChatConfiguration = configuration;
-            audioProcessor?.Dispose();
             audioProcessor = new VoiceChatAudioProcessor(configuration);
         }
 
@@ -154,39 +127,32 @@ namespace DCL.VoiceChat
             audioProcessor?.Reset();
         }
 
-        private void ProcessStereoAudio(float[] data, int sampleRate)
+        private float[] ProcessAudioToMono(float[] data, int channels, int sampleRate)
         {
-            // Optimized stereo processing for LiveKit's 2-channel 48kHz format
-            // Process left and right channels separately
-            for (var i = 0; i < data.Length; i += 2)
+            // Since we force mono at the AudioSource level, we should always get mono-like data
+            // But we'll handle any edge cases where multi-channel data still comes through
+
+            if (channels == 1)
             {
-                float[] leftSample = { data[i] };
-                float[] rightSample = { data[i + 1] };
-
-                audioProcessor.ProcessAudio(leftSample, sampleRate);
-                audioProcessor.ProcessAudio(rightSample, sampleRate);
-
-                data[i] = leftSample[0]; // Left channel
-                data[i + 1] = rightSample[0]; // Right channel
+                // True mono audio - process directly and return
+                audioProcessor.ProcessAudio(data, sampleRate);
+                return data;
             }
-        }
-
-        private void ProcessMultiChannelAudio(float[] data, int channels, int sampleRate)
-        {
-            // For multi-channel audio, process each channel separately
-            int samplesPerChannel = data.Length / channels;
-
-            for (var channel = 0; channel < channels; channel++)
+            else
             {
-                var channelData = new float[samplesPerChannel];
+                // Multi-channel input (shouldn't happen with our forced mono setup, but safety fallback)
+                // Convert to mono by taking only the first channel (most efficient for forced mono sources)
+                int samplesPerChannel = data.Length / channels;
+                float[] monoData = new float[samplesPerChannel];
 
-                for (var i = 0; i < samplesPerChannel; i++)
-                    channelData[i] = data[(i * channels) + channel];
+                // Extract first channel only (more efficient than averaging since source is forced mono)
+                for (var sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
+                {
+                    monoData[sampleIndex] = data[sampleIndex * channels];
+                }
 
-                audioProcessor.ProcessAudio(channelData, sampleRate);
-
-                for (var i = 0; i < samplesPerChannel; i++)
-                    data[(i * channels) + channel] = channelData[i];
+                audioProcessor.ProcessAudio(monoData, sampleRate);
+                return monoData;
             }
         }
     }
