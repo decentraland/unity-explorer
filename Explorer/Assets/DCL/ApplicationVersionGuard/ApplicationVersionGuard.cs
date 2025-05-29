@@ -59,7 +59,7 @@ namespace DCL.ApplicationVersionGuard
 
             if (string.IsNullOrEmpty(launcherPath))
             {
-                await DownloadLauncherAsync(ct);
+                DownloadLauncher();
                 Quit();
             }
             else
@@ -91,7 +91,7 @@ namespace DCL.ApplicationVersionGuard
 #endif
         }
 
-        private async UniTask DownloadLauncherAsync(CancellationToken ct)
+        private void DownloadLauncher()
         {
             string assetName = GetLauncherAssetName();
             string downloadUrl = $"{GetLauncherDownloadPath()}/{assetName}";
@@ -133,7 +133,7 @@ namespace DCL.ApplicationVersionGuard
                 case RuntimePlatform.WindowsPlayer:
                     possiblePaths = new[]
                     {
-                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LAUNCHER_EXECUTABLE_FILENAME, LAUNCHER_EXECUTABLE_FILENAME),
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LAUNCHER_EXECUTABLE_NAME, LAUNCHER_EXECUTABLE_FILENAME),
                     };
                     break;
 
