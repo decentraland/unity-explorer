@@ -483,7 +483,7 @@ MonoBehaviour:
           <SceneWebRequestsBudget>k__BackingField: 15
           <CacheSizeGB>k__BackingField: 2
           <CacheLifetimeDays>k__BackingField: 2
-          <PartialChunkSizeMB>k__BackingField: 14
+          <PartialChunkSizeMB>k__BackingField: 2
           <PingAckTimeoutSeconds>k__BackingField: 10
           <EnablePartialDownloading>k__BackingField: 1
     - rid: 3601421940623147010
