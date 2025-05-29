@@ -41,7 +41,7 @@ namespace DCL.WebRequests
                 [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 50;
                 [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 15;
 
-                [field: SerializeField] public ushort CacheSizeGB { get; private set; } = 2; // 2 GB by default
+                [field: SerializeField] public float CacheSizeGB { get; private set; } = 2; // 2 GB by default
                 [field: SerializeField] public ushort CacheLifetimeDays { get; private set; } = 2; // 2 days by default
                 [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
                 [field: SerializeField] public ushort PingAckTimeoutSeconds { get; private set; } = 10;
@@ -105,7 +105,10 @@ namespace DCL.WebRequests
             else if (appArgs.HasDebugFlag() && await IsLocalProxyRunningAsync(ct))
                 HTTPManager.Proxy = new HTTPProxy(new Uri("http://127.0.0.1:8888"));
 
-            ulong cacheSize = container.settings.Http2Settings.CacheSizeGB * 1024UL * 1024UL * 1024UL;
+            var cacheSize = (ulong)((double)container.settings.Http2Settings.CacheSizeGB * 1024UL * 1024UL * 1024UL);
+
+            // HTTPUpdateDelegator leaks to the scene and initializes internals so the cache actually could be already initialized, dispose of it in this case
+            HTTPManager.LocalCache?.Dispose();
 
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
             var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.Http2Settings.CacheLifetimeDays), cacheSize));
