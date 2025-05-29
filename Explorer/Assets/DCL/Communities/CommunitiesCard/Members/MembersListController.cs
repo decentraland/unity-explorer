@@ -132,7 +132,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 SectionFetchData sectionData = currentSectionFetchData;
 
-                if (sectionData.members.Count == 0 && sectionData.pageNumber == 0)
+                if (sectionData.pageNumber == 0)
                     FetchNewDataAsync().Forget();
                 else
                     view.RefreshGrid();
