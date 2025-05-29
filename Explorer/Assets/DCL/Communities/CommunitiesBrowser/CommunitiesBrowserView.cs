@@ -53,7 +53,11 @@ namespace DCL.Communities.CommunitiesBrowser
             resultsBackButton.onClick.AddListener(() => ResultsBackButtonClicked?.Invoke());
             searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke(text));
             searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke(text));
-            searchBar.inputField.onValueChanged.AddListener(text => SearchBarValueChanged?.Invoke(text));
+            searchBar.inputField.onValueChanged.AddListener(text =>
+            {
+                SearchBarValueChanged?.Invoke(text);
+                SetSearchBarClearButtonActive(!string.IsNullOrEmpty(text));
+            });
             searchBar.inputField.onSubmit.AddListener(text => SearchBarSubmit?.Invoke(text));
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
         }
@@ -129,9 +133,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetResultsLoadingMoreActive(bool isActive) =>
             resultsLoadingMoreSpinner.SetActive(isActive);
 
-        public void SetSearchBarClearButtonActive(bool isActive) =>
-            searchBar.clearSearchButton.gameObject.SetActive(isActive);
-
         public void CleanSearchBar(bool raiseOnChangeEvent = true)
         {
             TMP_InputField.OnChangeEvent originalEvent = searchBar.inputField.onValueChanged;
@@ -169,5 +170,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public float GetResultsLoopGridVerticalNormalizedPosition() =>
             resultLoopGrid.ScrollRect.verticalNormalizedPosition;
+
+        private void SetSearchBarClearButtonActive(bool isActive) =>
+            searchBar.clearSearchButton.gameObject.SetActive(isActive);
     }
 }

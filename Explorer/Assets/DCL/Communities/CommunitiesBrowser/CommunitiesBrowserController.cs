@@ -317,8 +317,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             searchCancellationCts = searchCancellationCts.SafeRestart();
             AwaitAndSendSearchAsync(searchText, searchCancellationCts.Token).Forget();
-
-            view.SetSearchBarClearButtonActive(!string.IsNullOrEmpty(searchText));
         }
 
         private void SearchBarSubmit(string searchText)
