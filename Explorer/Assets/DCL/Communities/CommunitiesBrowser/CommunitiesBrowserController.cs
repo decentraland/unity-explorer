@@ -185,7 +185,7 @@ namespace DCL.Communities.CommunitiesBrowser
             return gridItem;
         }
 
-        private async UniTask LoadMyCommunitiesAsync(CancellationToken ct)
+        private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
         {
             currentMyCommunities.Clear();
             view.SetMyCommunitiesLoopListItemCount(0, false);
@@ -257,7 +257,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct: loadResultsCts.Token).Forget();
         }
 
-        private async UniTask LoadResultsAsync(string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTaskVoid LoadResultsAsync(string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             isGridResultsLoadingItems = true;
 
@@ -369,7 +369,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void JoinCommunity(int index, CommunityResultCardView cardView) =>
             JoinCommunityAsync(index, cardView, CancellationToken.None).Forget();
 
-        private async UniTask JoinCommunityAsync(int index, CommunityResultCardView cardView, CancellationToken ct)
+        private async UniTaskVoid JoinCommunityAsync(int index, CommunityResultCardView cardView, CancellationToken ct)
         {
             cardView.SetJoiningLoadingActive(true);
             bool joinedSuccess = await dataProvider.JoinCommunityAsync(currentResults[index].id, ct);
