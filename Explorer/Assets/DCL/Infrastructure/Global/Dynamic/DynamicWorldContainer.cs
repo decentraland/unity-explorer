@@ -67,6 +67,7 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
@@ -571,6 +572,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
+            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, profileThumbnailCache, remoteMetadata);
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
@@ -599,9 +601,6 @@ namespace Global.Dynamic
                 menusAccessFacade,
                 clipboardManager,
                 dclCursor,
-                profileThumbnailCache,
-                profileRepository,
-                remoteMetadata,
                 userBlockingCacheProxy);
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
@@ -669,7 +668,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
-                    chatHistory, viewDependencies, sharedSpaceManager, profileChangesBus,
+                    chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
@@ -699,7 +698,8 @@ namespace Global.Dynamic
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
-                    friendServiceProxy),
+                    friendServiceProxy,
+                    profileRepositoryWrapper),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -751,7 +751,7 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     profileChangesBus,
                     staticContainer.SceneLoadingLimit,
-                    mainUIView.WarningNotification
+                    profileRepositoryWrapper
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -831,10 +831,11 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     isNameEditorEnabled,
                     chatEventBus,
-                    sharedSpaceManager
+                    sharedSpaceManager,
+                    profileRepositoryWrapper
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
-                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new SocialServicesPlugin(rpcSocialServices, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),
@@ -881,7 +882,7 @@ namespace Global.Dynamic
                     globalWorld,
                     debugBuilder,
                     nametagsData,
-                    viewDependencies,
+                    profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache));
 
@@ -915,7 +916,8 @@ namespace Global.Dynamic
                         socialServiceEventBus,
                         rpcSocialServices,
                         friendsCacheProxy,
-                        friendsEventBus
+                        friendsEventBus,
+                        profileRepositoryWrapper
                     )
                 );
             }

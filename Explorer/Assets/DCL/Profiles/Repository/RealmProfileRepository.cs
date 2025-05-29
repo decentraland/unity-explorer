@@ -2,7 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
@@ -38,7 +38,7 @@ namespace DCL.Profiles
             this.profileCache = profileCache;
         }
 
-        public async UniTask SetAsync(Profile profile, CancellationToken ct)
+        public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(profile.UserId))
                 throw new ArgumentException("Can't set a profile with an empty UserId");

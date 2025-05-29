@@ -27,6 +27,7 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
@@ -100,10 +101,10 @@ namespace DCL.Passport
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -176,7 +177,8 @@ namespace DCL.Passport
             bool includeUserBlocking,
             bool isNameEditorEnabled,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -202,7 +204,7 @@ namespace DCL.Passport
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -228,7 +230,7 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
 
-            viewInstance!.InjectDependencies(viewDependencies);
+            viewInstance!.SetProfileDataProvider(profileRepositoryWrapper);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, decentralandUrlsSource, isNameEditorEnabled);
@@ -661,6 +663,7 @@ namespace DCL.Passport
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
                     mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    mutualConfig[i].Picture.SetProfileDataProvider(profileRepositoryWrapper);
                 }
             }
         }
