@@ -9,6 +9,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
@@ -81,13 +82,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
             return serializationBufferPoolable;
         }
 
-        public override void SetIsDisposing()
+        public override void Dispose()
         {
             userIdEntitiesMap.Clear();
             sdkObservableEvents.Clear();
             sdkObservableEventSubscriptions.Clear();
-
-            base.SetIsDisposing();
         }
 
         protected override void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)

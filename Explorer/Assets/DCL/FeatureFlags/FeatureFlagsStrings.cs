@@ -35,5 +35,8 @@
         public const string COMMUNITIES = "alfa-communities";
 
         public const string AUTH_CODE_VALIDATION = "number-validation";
+
+        public const string GPUI_ENABLED = "alfa-gpui";
+
     }
 }

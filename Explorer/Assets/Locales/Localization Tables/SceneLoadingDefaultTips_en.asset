@@ -91,6 +91,16 @@ MonoBehaviour:
     m_Localized: Marketplace Credits
     m_Metadata:
       m_Items: []
+  - m_Id: 176473998802190336
+    m_Localized: Get Ready For Game Night!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 176474039361110016
+    m_Localized: "Decentraland Game Night kicks off June 19\u201424 hours of fast,
+      social, chaotic fun. Squad up or go solo in micro-games made for mayhem, from
+      high-speed races to logic puzzles."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

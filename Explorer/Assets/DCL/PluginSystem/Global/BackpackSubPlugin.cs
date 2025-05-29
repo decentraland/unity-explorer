@@ -15,16 +15,17 @@ using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Input;
-using DCL.Utilities.Extensions;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.WebRequests;
-using Global.AppArgs;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
@@ -34,11 +35,12 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableStorage wearableStorage;
         private readonly ISelfProfile selfProfile;
+        private readonly IProfileCache profileCache;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
-        private readonly ICollection<string> forceRender;
+        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -56,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IAppArgs appArgs;
         private readonly IWebBrowser webBrowser;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -67,11 +70,12 @@ namespace DCL.PluginSystem.Global
             ICharacterPreviewFactory characterPreviewFactory,
             IWearableStorage wearableStorage,
             ISelfProfile selfProfile,
+            IProfileCache profileCache,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage,
             IReadOnlyCollection<URN> embeddedEmotes,
-            ICollection<string> forceRender,
+            List<string> forceRender,
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
@@ -85,13 +89,15 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             IAppArgs appArgs,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableStorage = wearableStorage;
             this.selfProfile = selfProfile;
+            this.profileCache = profileCache;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteStorage = emoteStorage;
@@ -111,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
             this.webBrowser = webBrowser;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -199,11 +206,15 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 equippedWearables,
                 selfProfile,
+                profileCache,
                 forceRender,
+                emoteStorage,
+                wearableStorage,
                 web3Identity,
                 world,
                 playerEntity,
-                appArgs
+                appArgs,
+                inWorldWarningNotificationView
             );
 
             backpackController = new BackpackController(
