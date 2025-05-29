@@ -46,6 +46,8 @@ namespace DCL.Communities.CommunitiesCard
             CancellationToken ct = default)
         {
             gameObject.SetActive(true);
+            CancelButton.gameObject.SetActive(true);
+            ConfirmButton.gameObject.SetActive(true);
 
             switch (reason)
             {
@@ -75,6 +77,9 @@ namespace DCL.Communities.CommunitiesCard
             await ViewCanvasGroup.DOFade(0f, FadeDuration).ToUniTask(cancellationToken: ct);
             ViewCanvasGroup.interactable = false;
             ViewCanvasGroup.blocksRaycasts = false;
+
+            CancelButton.gameObject.SetActive(false);
+            ConfirmButton.gameObject.SetActive(false);
 
             return index > 1 ? ConfirmationResult.CONFIRM : ConfirmationResult.CANCEL;
         }
