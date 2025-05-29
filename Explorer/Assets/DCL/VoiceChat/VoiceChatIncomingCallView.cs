@@ -1,3 +1,4 @@
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
 using UnityEngine;
@@ -15,6 +16,9 @@ namespace DCL.VoiceChat
 
         [field: SerializeField]
         public Image AnimatingBackground;
+
+        [field: SerializeField]
+        public SimpleProfileView ProfileView;
 
         private const float END_SCALE_ANIMATION_VALUE = 1.3f;
         private const float END_FADE_ANIMATION_VALUE = 0.8f;

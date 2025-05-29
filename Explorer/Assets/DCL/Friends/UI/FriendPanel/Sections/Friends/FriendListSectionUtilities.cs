@@ -90,7 +90,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         internal static void CallFriend(Web3Address walletId, string username, IVoiceChatCallStatusService voiceChatCallStatusService)
         {
-            voiceChatCallStatusService.StartCall(walletId.ToString());
+            voiceChatCallStatusService.StartCall(walletId);
         }
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>

@@ -24,6 +24,7 @@ using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.Web3;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -330,7 +331,7 @@ namespace DCL.Chat
         private void OnStartCall()
         {
             //This is a placeholder, need to provide the wallet id of the chat context
-            voiceChatCallStatusService.StartCall("");
+            voiceChatCallStatusService.StartCall(new Web3Address());
         }
 
         public void OnSelectConversation(ChatChannel.ChannelId channelId)

@@ -7,6 +7,7 @@ using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using LiveKit;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly ViewDependencies dependencies;
 
         public VoiceChatPlugin(
             ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
@@ -29,7 +31,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IRoomHub roomHub,
             MainUIView mainUIView,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            ViewDependencies dependencies)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
@@ -37,6 +40,7 @@ namespace DCL.PluginSystem.Global
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.dependencies = dependencies;
         }
 
         public void Dispose() { }
@@ -56,7 +60,7 @@ namespace DCL.PluginSystem.Global
 
             var livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom());
 
-            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
+            VoiceChatController controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies);
         }
 
         [Serializable]

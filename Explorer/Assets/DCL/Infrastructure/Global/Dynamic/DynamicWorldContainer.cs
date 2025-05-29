@@ -852,7 +852,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new SocialServicesPlugin(socialServicesRPCProxy, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),
-                new VoiceChatPlugin(voiceChatSettingsAssetProxy, assetsProvisioner, dclInput, roomHub, mainUIView, voiceChatCallStatusService),
+                new VoiceChatPlugin(voiceChatSettingsAssetProxy, assetsProvisioner, dclInput, roomHub, mainUIView, voiceChatCallStatusService, viewDependencies),
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
