@@ -187,8 +187,9 @@ namespace DCL.Backpack
 
             try
             {
-                await selfProfile.UpdateProfileAsync(newProfile, ct);
+                Profile? savedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+                UpdateAvatarInWorld(savedProfile!);
                 oldProfile.Dispose();
             }
             catch (OperationCanceledException) { }
