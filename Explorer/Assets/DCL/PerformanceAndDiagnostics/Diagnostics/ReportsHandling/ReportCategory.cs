@@ -248,11 +248,6 @@ namespace DCL.Diagnostics
 
         public const string LIVEKIT = nameof(LIVEKIT);
 
-        /// <summary>
-        ///     LiveKit audio source statistics and performance monitoring
-        /// </summary>
-        public const string LIVEKIT_AUDIO = nameof(LIVEKIT_AUDIO);
-
         public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
         public const string MULTIPLAYER = nameof(MULTIPLAYER);
 
