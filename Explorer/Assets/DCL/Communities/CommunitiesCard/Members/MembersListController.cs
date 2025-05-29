@@ -142,6 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                         sectionsFetchData[MembersListView.MemberListSections.ALL].members.Remove(profile);
 
                         List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].members;
+                        profile.role = CommunityMemberRole.none;
                         memberList.Add(profile);
 
                         MembersSorter.SortMembersList(memberList);
