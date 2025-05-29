@@ -112,7 +112,6 @@ namespace DCL.Multiplayer.Movement.Systems
                         sumTime += message.timestamp;
 
                     settings.InboxCount = playerInbox.Count;
-
                     deltaTime = HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
                 }
                 else deltaTime = 0;
@@ -139,7 +138,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 var startTime = intComp.Enabled
                     ? intComp.Start.timestamp + intComp.Time
-                    : remotePlayerMovement.PastMessage.timestamp + deltaTime;
+                    : remotePlayerMovement.PastMessage.timestamp;// + deltaTime;
 
                 var deltaFuture = remote.timestamp - startTime;
                 Vector3? offset = platform.tweener.GetFuture(deltaFuture);
@@ -282,7 +281,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void SpeedUpForCatchingUp(ref InterpolationComponent intComp, int inboxMessages)
         {
-            if (sumTime > 0.35f)// inboxMessages > settings.InterpolationSettings.CatchUpMessagesMin)
+            if (inboxMessages > settings.InterpolationSettings.CatchUpMessagesMin)
             {
                 float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
                 intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
