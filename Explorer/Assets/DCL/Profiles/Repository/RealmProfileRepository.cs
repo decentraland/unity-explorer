@@ -38,7 +38,7 @@ namespace DCL.Profiles
             this.profileCache = profileCache;
         }
 
-        public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
+        public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(profile.UserId))
                 throw new ArgumentException("Can't set a profile with an empty UserId");

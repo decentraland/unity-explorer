@@ -15,6 +15,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SocialService;
@@ -62,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRPCSocialServices rpcSocialServices;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -98,7 +100,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices rpcSocialServices,
-            ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus)
+            ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus, ProfileRepositoryWrapper profileDataProvider)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -128,6 +130,7 @@ namespace DCL.PluginSystem.Global
             this.rpcSocialServices = rpcSocialServices;
             this.friendCacheProxy = friendCacheProxy;
             this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Dispose()
@@ -186,7 +189,8 @@ namespace DCL.PluginSystem.Global
                 viewDependencies,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
-                sharedSpaceManager
+                sharedSpaceManager,
+                profileRepositoryWrapper
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
@@ -208,12 +212,12 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, viewDependencies);
+                inputBlock, profileRepositoryWrapper);
 
             mvcManager.RegisterController(friendRequestController);
 
             var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
-                friendsConnectivityStatusTracker, viewDependencies, loadingStatus);
+                friendsConnectivityStatusTracker, profileRepositoryWrapper, loadingStatus);
 
             mvcManager.RegisterController(friendPushNotificationController);
 
@@ -221,7 +225,7 @@ namespace DCL.PluginSystem.Global
 
             unfriendConfirmationPopupController = new UnfriendConfirmationPopupController(
                 UnfriendConfirmationPopupController.CreateLazily(unfriendConfirmationPopupPrefab, null),
-                injectableFriendService, profileRepository, viewDependencies);
+                injectableFriendService, profileRepository, profileRepositoryWrapper);
 
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 

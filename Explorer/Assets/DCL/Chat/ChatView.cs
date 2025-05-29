@@ -456,7 +456,6 @@ namespace DCL.Chat
             chatMessageViewer.InjectDependencies(dependencies);
             memberListView.InjectDependencies(dependencies);
             chatTitleBar.InjectDependencies(dependencies);
-            conversationsToolbar.InjectDependencies(dependencies);
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,

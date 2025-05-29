@@ -751,6 +751,7 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     profileChangesBus,
                     staticContainer.SceneLoadingLimit,
+                    mainUIView.WarningNotification,
                     profileRepositoryWrapper
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
