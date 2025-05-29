@@ -25,6 +25,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private readonly string domain;
 
+        /// <summary>
+        /// Used for Avatar texture arrays
+        /// where texture array size is different for high-res textures
+        /// </summary>
         public TextureArrayHandler(
             string domain,
             int minArraySize,
@@ -37,25 +41,28 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             int? minArraySizeForHighRes = null)
         {
             this.minArraySize = minArraySize;
+            this.domain = domain;
             this.arrayID = arrayID;
             this.textureID = textureID;
             this.textureFormat = textureFormat;
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
             
-            this.effectiveMinArraySizeForLowRes = minArraySize;
-            this.effectiveMinArraySizeForHighRes = minArraySizeForHighRes ?? minArraySize;
+            // NOTE: texture array size is different (smaller) for high-resolution textures
+            effectiveMinArraySizeForLowRes = minArraySize;
+            effectiveMinArraySizeForHighRes = minArraySizeForHighRes ?? minArraySize;
             
-            this.domain = domain;
-
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(defaultResolutions.Count);
 
-            //Default resolutions are always squared
+            //NOTE: Default resolutions are always squared
             for (var i = 0; i < defaultResolutions.Count; i++)
                 CreateHandler(new Vector2Int(defaultResolutions[i], defaultResolutions[i]));
         }
 
 
+        /// <summary>
+        /// Used for Scene_LOD when we have texture array descriptors
+        /// </summary>
         public TextureArrayHandler(
             string domain,
             IReadOnlyList<TextureArrayResolutionDescriptor> textureArrayResolutionDescriptors,
@@ -73,7 +80,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.textureFormat = textureFormat;
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
-
+            
+            // NOTE: texture array size is always the same for all resolutions
+            effectiveMinArraySizeForLowRes = minArraySize;
+            effectiveMinArraySizeForHighRes = minArraySize;
+            
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
 
             for (int i = 0; i < textureArrayResolutionDescriptors.Count; i++)
@@ -104,14 +115,14 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         private TextureArraySlotHandler CreateHandler(Vector2Int resolution)
         {
             // NOTE: We are creating a considerably smaller array for resolutions over
-            // NOTE: the high resolution threshold. Shouldn't be a common case
+            // NOTE: the high-resolution threshold. Shouldn't be a common case
             int baseSizeToUse = resolution.x >= TextureArrayConstants.HIGH_RES_THRESHOLD || 
                                 resolution.y >= TextureArrayConstants.HIGH_RES_THRESHOLD
-                ? this.effectiveMinArraySizeForHighRes
-                : this.effectiveMinArraySizeForLowRes;
+                ? effectiveMinArraySizeForHighRes
+                : effectiveMinArraySizeForLowRes;
 
             // NOTE: We are creating a considerably smaller array for
-            // NOTE: non square resolutions. Shouldn't be a common case
+            // NOTE: non-square resolutions. Shouldn't be a common case
             int finalSizeForSlotHandler = resolution.x == resolution.y
                 ? baseSizeToUse
                 : baseSizeToUse / 10;
@@ -126,7 +137,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             
             handlersByResolution[resolution] = slotHandler;
 
-            // When the handler is created initialize the default texture
+            // When the handler is created, initialize the default texture
             if (defaultTextures != null)
             {
                 for (int i = 0; i < defaultTextures.Count; ++i)
