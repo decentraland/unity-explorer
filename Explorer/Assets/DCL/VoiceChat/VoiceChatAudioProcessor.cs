@@ -33,8 +33,6 @@ namespace DCL.VoiceChat
         private bool isGateOpening = false;
         private float gateOpenFadeProgress = 0f;
 
-        // Simplified audio analysis
-
         /// <summary>
         ///     Get the current noise gate status for UI feedback
         /// </summary>
@@ -88,7 +86,6 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
-            // Reset filter states
             for (int i = 0; i < 2; i++)
             {
                 highPassPrevInputs[i] = 0f;
@@ -107,13 +104,11 @@ namespace DCL.VoiceChat
             gateIsOpen = false;
             lastSpeechTime = 0f;
 
-            // Initialize fade-in buffer with configured size
             if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize)
             {
                 fadeInBuffer = new float[configuration.FadeInBufferSize];
             }
             
-            // Reset fade-in buffer state
             for (int i = 0; i < fadeInBuffer.Length; i++)
             {
                 fadeInBuffer[i] = 0f;
@@ -152,20 +147,9 @@ namespace DCL.VoiceChat
 
         private float ApplyBandPassFilter(float input, int sampleRate)
         {
-            // Apply DC blocking filter first to prevent offset accumulation
             float sample = ApplyDCBlockingFilter(input, sampleRate);
-            
-            // Apply 2nd order high-pass filter to remove low-frequency noise
             sample = ApplyHighPassFilter2ndOrder(sample, sampleRate);
-            
-            // Apply 2nd order low-pass filter to remove high-frequency noise
             sample = ApplyLowPassFilter2ndOrder(sample, sampleRate);
-            
-            // Apply de-esser to reduce harsh sibilants (configurable)
-            if (configuration.EnableDeEsser && configuration.LowPassCutoffFreq > 4000f) // Only apply if we're not already filtering out high frequencies
-            {
-                sample = ApplyDeEsser(sample, sampleRate);
-            }
             
             return sample;
         }
@@ -189,38 +173,6 @@ namespace DCL.VoiceChat
             dcBlockPrevOutput = output;
 
             return output;
-        }
-
-        /// <summary>
-        /// Simple de-esser to reduce harsh sibilant sounds (S, T, SH sounds)
-        /// </summary>
-        private float ApplyDeEsser(float input, int sampleRate)
-        {
-            // Simple high-frequency detection and compression
-            // This targets the 4-8kHz range where sibilants are most prominent
-            
-            // High-pass filter to isolate sibilant frequencies
-            float sibilantFreq = input; // Simplified - in practice would use a proper high-pass at ~4kHz
-            
-            // Detect sibilant energy
-            float sibilantLevel = Mathf.Abs(sibilantFreq);
-            
-            // Apply gentle compression if sibilant level is high
-            float threshold = configuration.DeEsserThreshold;
-            float ratio = configuration.DeEsserRatio;
-            
-            if (sibilantLevel > threshold)
-            {
-                float excess = sibilantLevel - threshold;
-                float compressedExcess = excess / ratio;
-                float reduction = excess - compressedExcess;
-                
-                // Apply reduction proportionally to the input
-                float reductionFactor = 1f - (reduction / sibilantLevel) * 0.5f; // 50% max reduction
-                return input * reductionFactor;
-            }
-            
-            return input;
         }
 
         private float ApplyHighPassFilter2ndOrder(float input, int sampleRate)
@@ -401,9 +353,8 @@ namespace DCL.VoiceChat
             float gateMultiplier = GateSmoothing;
             if (GateSmoothing > 0.1f && GateSmoothing < 0.9f)
             {
-                // Apply soft knee - smooth transition zone (0.3 width)
-                float ratio = (GateSmoothing - 0.1f) / 0.8f; // Normalize to 0-1
-                gateMultiplier = 0.1f + 0.8f * (ratio * ratio * (3f - 2f * ratio)); // Smooth step function
+                float ratio = (GateSmoothing - 0.1f) / 0.8f; 
+                gateMultiplier = 0.1f + 0.8f * (ratio * ratio * (3f - 2f * ratio));
             }
 
             return processedSample * gateMultiplier;
