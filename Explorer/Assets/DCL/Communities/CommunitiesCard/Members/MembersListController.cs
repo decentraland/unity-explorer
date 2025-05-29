@@ -209,8 +209,13 @@ namespace DCL.Communities.CommunitiesCard.Members
                     if (result)
                     {
                         List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.ALL].members;
-                        GetCommunityMembersResponse.MemberData member = memberList.Find(data => data.id.Equals(profile.id));
-                        member.role = CommunityMemberRole.moderator;
+
+                        foreach (GetCommunityMembersResponse.MemberData member in memberList)
+                            if (member.id.Equals(profile.id))
+                            {
+                                member.role = CommunityMemberRole.moderator;
+                                break;
+                            }
 
                         MembersSorter.SortMembersList(memberList);
 
@@ -239,8 +244,12 @@ namespace DCL.Communities.CommunitiesCard.Members
                     if (result)
                     {
                         List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.ALL].members;
-                        GetCommunityMembersResponse.MemberData member = memberList.Find(data => data.id.Equals(profile.id));
-                        member.role = CommunityMemberRole.member;
+                        foreach (GetCommunityMembersResponse.MemberData member in memberList)
+                            if (member.id.Equals(profile.id))
+                            {
+                                member.role = CommunityMemberRole.member;
+                                break;
+                            }
 
                         MembersSorter.SortMembersList(memberList);
 
