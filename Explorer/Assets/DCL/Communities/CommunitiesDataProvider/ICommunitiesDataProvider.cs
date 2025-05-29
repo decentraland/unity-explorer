@@ -22,6 +22,6 @@ namespace DCL.Communities
         UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct);
-        UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct);
+        UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct);
     }
 }

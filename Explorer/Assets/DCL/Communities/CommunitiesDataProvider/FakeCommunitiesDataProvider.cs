@@ -105,7 +105,7 @@ namespace DCL.Communities
         public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct) =>
+            true;
     }
 }

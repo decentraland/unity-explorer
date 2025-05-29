@@ -140,7 +140,12 @@ namespace DCL.Communities.CommunitiesCard.Members
                     if (result)
                     {
                         sectionsFetchData[MembersListView.MemberListSections.ALL].members.Remove(profile);
-                        sectionsFetchData[MembersListView.MemberListSections.BANNED].members.Add(profile);
+
+                        List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].members;
+                        memberList.Add(profile);
+
+                        MembersSorter.SortMembersList(memberList);
+
                         RefreshLoopList();
                     }
                 }
@@ -178,12 +183,62 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void AddModerator(GetCommunityMembersResponse.MemberData profile)
         {
-            throw new NotImplementedException();
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            AddModeratorAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid AddModeratorAsync(CancellationToken token)
+            {
+                try
+                {
+                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, lastCommunityId, CommunityMemberRole.moderator, token);
+
+                    if (result)
+                    {
+                        List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.ALL].members;
+                        GetCommunityMembersResponse.MemberData member = memberList.Find(data => data.id.Equals(profile.id));
+                        member.role = CommunityMemberRole.moderator;
+
+                        MembersSorter.SortMembersList(memberList);
+
+                        RefreshLoopList();
+                    }
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
+                }
+            }
         }
 
         private void RemoveModerator(GetCommunityMembersResponse.MemberData profile)
         {
-            throw new NotImplementedException();
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            RemoveModeratorAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid RemoveModeratorAsync(CancellationToken token)
+            {
+                try
+                {
+                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, lastCommunityId, CommunityMemberRole.member, token);
+
+                    if (result)
+                    {
+                        List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.ALL].members;
+                        GetCommunityMembersResponse.MemberData member = memberList.Find(data => data.id.Equals(profile.id));
+                        member.role = CommunityMemberRole.member;
+
+                        MembersSorter.SortMembersList(memberList);
+
+                        RefreshLoopList();
+                    }
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
+                }
+            }
         }
 
         private void CallUser(GetCommunityMembersResponse.MemberData profile)
@@ -262,12 +317,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
+            SectionFetchData membersData = sectionsFetchData[currentSection];
+
             elementView.InjectDependencies(viewDependencies);
-            elementView.Configure(sectionsFetchData[currentSection].members[index], currentSection);
+            elementView.Configure(membersData.members[index], currentSection);
 
             elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked, UnbanButtonClicked);
 
-            if (index >= sectionsFetchData[currentSection].totalFetched - ELEMENT_MISSING_THRESHOLD && sectionsFetchData[currentSection].totalFetched < sectionsFetchData[currentSection].totalToFetch && !isFetching)
+            if (index >= membersData.totalFetched - ELEMENT_MISSING_THRESHOLD && membersData.totalFetched < membersData.totalToFetch && !isFetching)
                 FetchNewDataAsync().Forget();
 
             return listItem;
@@ -277,9 +334,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             isFetching = true;
 
-            sectionsFetchData[currentSection].pageNumber++;
+            SectionFetchData membersData = sectionsFetchData[currentSection];
+
+            membersData.pageNumber++;
             await FetchDataAsync();
-            sectionsFetchData[currentSection].totalFetched = (sectionsFetchData[currentSection].pageNumber + 1) * PAGE_SIZE;
+            membersData.totalFetched = (membersData.pageNumber + 1) * PAGE_SIZE;
 
             RefreshLoopList();
 
@@ -294,9 +353,17 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private async UniTask FetchDataAsync()
         {
-            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, currentSection == MembersListView.MemberListSections.BANNED, sectionsFetchData[currentSection].pageNumber, PAGE_SIZE, ct);
-            sectionsFetchData[currentSection].members.AddRange(response.members);
-            sectionsFetchData[currentSection].totalToFetch = response.totalAmount;
+            SectionFetchData membersData = sectionsFetchData[currentSection];
+
+            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(lastCommunityId, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct);
+
+            foreach (var member in response.members)
+                if (!membersData.members.Contains(member))
+                    membersData.members.Add(member);
+
+            MembersSorter.SortMembersList(membersData.members);
+
+            membersData.totalToFetch = response.totalAmount;
         }
 
         public void ShowMembersListAsync(string communityId, CommunityMemberRole userRole, CancellationToken cancellationToken)

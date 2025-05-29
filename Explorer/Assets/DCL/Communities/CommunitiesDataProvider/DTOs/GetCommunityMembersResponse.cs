@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using Utility;
 using System;
+using System.Linq;
 
 namespace DCL.Communities
 {
@@ -75,7 +76,7 @@ namespace DCL.Communities
                 "blade", "shadow", "storm", "dragon", "raven"
             };
 
-            private static readonly CommunityMemberRole[] ROLES = EnumUtils.Values<CommunityMemberRole>();
+            private static readonly CommunityMemberRole[] ROLES = EnumUtils.Values<CommunityMemberRole>().Where(role => role != CommunityMemberRole.none).ToArray();
             private static readonly FriendshipStatus[] FRIENDSHIP_STATUSES = EnumUtils.Values<FriendshipStatus>();
 
             public static MemberData RandomMember()
