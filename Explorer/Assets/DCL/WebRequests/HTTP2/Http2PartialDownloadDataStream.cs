@@ -406,7 +406,7 @@ namespace DCL.WebRequests.HTTP2
             switch (opMode)
             {
                 case Mode.WRITING_TO_DISK_CACHE:
-                    // Make sure writer is open
+                    // Make sure the writer is open
 
                     if (cachedPartialData.writeHandler == null)
                     {
@@ -571,7 +571,7 @@ namespace DCL.WebRequests.HTTP2
         /// </summary>
         private bool TryReserveCacheSpace(HTTPCache cache, HTTPRequest request, int statusCode, Dictionary<string, List<string>> cacheHeaders, out CacheWriteHandler writeHandler)
         {
-            HTTPCacheContentWriter? writer = cache.BeginCache(request.MethodType, request.Uri, statusCode, cacheHeaders, request.Context, true);
+            HTTPCacheContentWriter? writer = cache.BeginCache(request.MethodType, request.Uri, statusCode, cacheHeaders, request.Context);
 
             // Writer will be null if an error occurred, the file is served from "file://" or there is not enough space on disk
             writeHandler = default(CacheWriteHandler);
