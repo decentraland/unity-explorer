@@ -397,3 +397,259 @@ MonoBehaviour:
       removesDefaultHiding: []
       outlineCompatible: 1
       loop: 0
+  - id: buttonDown
+    name: buttonDown
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: e982a29f178d5424a8282d4f1a5caa6a, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: buttonFront
+    name: buttonFront
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 08cba79c456014d3cb6c0a6a148d5951, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: getHit
+    name: getHit
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 1fec9d1abe94d4765ad558df8af5651d, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: knockOut
+    name: knockOut
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 11869768f93ae43ddac9db58c989d161, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: lever
+    name: lever
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 2f30cb19387224c5a97178b7431c085f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: openChest
+    name: openChest
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 910309eb34a6643b3b52f4a83ed233df, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: openDoor
+    name: openDoor
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: b6c7f4ecdea1d4c06b790a5b918ab049, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: punch
+    name: punch
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 3862f8d18e9df4b848c935c6481199ca, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: push
+    name: push
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: ef06206ba169242be86645c339444be4, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: sittingChair1
+    name: sittingChair1
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d16e61552f58642b68cefb7eef40e990, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: sittingChair2
+    name: sittingChair2
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d2e36af30cd8e4f30859c09b4117c755, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: sittingGround1
+    name: sittingGround1
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 8cf943739d65448238526f3792b73b48, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: sittingGround2
+    name: sittingGround2
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 12a124fece040428aa4cfb17819d37c7, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: swingWeaponOneHand
+    name: swingWeaponOneHand
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 70c3cc6a6898540deb71a4ca4f62a7c8, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: swingWeaponTwoHands
+    name: swingWeaponTwoHands
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: e5e24dbafc47a4b6eb2020547f215ab7, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: throw
+    name: throw
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 6a8ddbff0f641417487e913aa4b952e5, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
