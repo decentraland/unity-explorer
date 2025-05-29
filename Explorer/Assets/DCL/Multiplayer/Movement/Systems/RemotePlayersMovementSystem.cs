@@ -21,7 +21,7 @@ using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
+    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
