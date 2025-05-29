@@ -15,6 +15,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI;
@@ -61,6 +62,7 @@ namespace DCL.Chat
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -107,7 +109,8 @@ namespace DCL.Chat
             RPCChatPrivacyService chatPrivacyService,
             IFriendsEventBus friendsEventBus,
             ChatHistoryStorage chatStorage,
-            ObjectProxy<IFriendsService> friendsService) : base(viewFactory)
+            ObjectProxy<IFriendsService> friendsService,
+            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -124,6 +127,7 @@ namespace DCL.Chat
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
+            this.profileRepositoryWrapper = profileDataProvider;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -231,6 +235,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
+            viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 

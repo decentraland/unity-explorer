@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using MVC;
+using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -9,7 +9,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 {
     public abstract class FriendPanelRequestManager<T> : IDisposable where T : FriendPanelUserView
     {
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly LoopListView2 loopListView;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
@@ -26,11 +26,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public event Action<FriendProfile>? ElementClicked;
 
-        protected FriendPanelRequestManager(ViewDependencies viewDependencies,
+        protected FriendPanelRequestManager(ProfileRepositoryWrapper profileDataProvider,
             LoopListView2 loopListView,
             int pageSize, int elementsMissingThreshold)
         {
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.loopListView = loopListView;
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
@@ -50,8 +50,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            view.InjectDependencies(viewDependencies);
-            view.Configure(GetCollectionElement(index));
+            view.Configure(GetCollectionElement(index), profileRepositoryWrapper);
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
@@ -87,7 +86,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public async UniTask InitAsync(CancellationToken ct)
         {
-            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes 
+            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes
             if (isInitializing) return;
 
             isInitializing = true;

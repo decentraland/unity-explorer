@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.Web3;
@@ -180,6 +181,7 @@ namespace DCL.Chat
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
         private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
@@ -267,7 +269,7 @@ namespace DCL.Chat
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
-                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
+                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                     }
 
@@ -340,6 +342,15 @@ namespace DCL.Chat
                     OnlineStatus.ONLINE :
                     OnlineStatus.OFFLINE);
             }
+        }
+
+        public void SetProfileDataPovider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            conversationsToolbar.SetProfileDataProvider(profileDataProvider);
+            memberListView.SetProfileDataProvider(profileDataProvider);
+            chatMessageViewer.SetProfileDataProvider(profileDataProvider);
+            chatInputBox.SetProfileDataProvider(profileDataProvider);
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         private void Start()
