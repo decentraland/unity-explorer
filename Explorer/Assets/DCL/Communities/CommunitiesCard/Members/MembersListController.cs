@@ -25,11 +25,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int PAGE_SIZE = 20;
-        private const int ELEMENT_MISSING_THRESHOLD = 5;
 
         private readonly MembersListView view;
         private readonly ConfirmationDialogView confirmationDialogView;
-        private readonly ViewDependencies viewDependencies;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
@@ -66,7 +64,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             this.view = view;
             this.confirmationDialogView = confirmationDialogView;
-            this.viewDependencies = viewDependencies;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -84,8 +81,15 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => KickUser(lastClickedProfileCtx!))))
                          .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => BanUser(lastClickedProfileCtx!))));
 
-            this.view.LoopGrid.InitGridView(0, GetLoopGridItemByIndex);
+            this.view.InitGrid(() => currentSectionFetchData);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
+            this.view.NewDataRequested += OnNewDataRequested;
+            this.view.ElementMainButtonClicked += MainButtonClicked;
+            this.view.ElementContextMenuButtonClicked += ContextMenuButtonClicked;
+            this.view.ElementFriendButtonClicked += FriendButtonClicked;
+            this.view.ElementUnbanButtonClicked += UnbanButtonClicked;
+
+            this.view.InjectDependencies(viewDependencies);
         }
 
         public void Dispose()
@@ -93,6 +97,18 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenuOperationCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
+            view.NewDataRequested -= OnNewDataRequested;
+            view.ElementMainButtonClicked -= MainButtonClicked;
+            view.ElementContextMenuButtonClicked -= ContextMenuButtonClicked;
+            view.ElementFriendButtonClicked -= FriendButtonClicked;
+            view.ElementUnbanButtonClicked -= UnbanButtonClicked;
+        }
+
+        private void OnNewDataRequested()
+        {
+            if (isFetching) return;
+
+            FetchNewDataAsync().Forget();
         }
 
         private void OnMemberListSectionChanged(MembersListView.MemberListSections section)
@@ -119,7 +135,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (sectionData.members.Count == 0 && sectionData.pageNumber == 0)
                     FetchNewDataAsync().Forget();
                 else
-                    RefreshLoopList();
+                    view.RefreshGrid();
             }
         }
 
@@ -153,7 +169,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                         MembersSorter.SortMembersList(memberList);
 
-                        RefreshLoopList();
+                        view.RefreshGrid();
                     }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
@@ -183,7 +199,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     if (result)
                     {
                         allMembersFetchData.members.Remove(profile);
-                        RefreshLoopList();
+                        view.RefreshGrid();
                     }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
@@ -218,7 +234,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                         MembersSorter.SortMembersList(memberList);
 
-                        RefreshLoopList();
+                        view.RefreshGrid();
                     }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
@@ -252,7 +268,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                         MembersSorter.SortMembersList(memberList);
 
-                        RefreshLoopList();
+                        view.RefreshGrid();
                     }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
@@ -333,24 +349,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
-        {
-            LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
-
-            SectionFetchData membersData = currentSectionFetchData;
-
-            elementView.InjectDependencies(viewDependencies);
-            elementView.Configure(membersData.members[index], currentSection);
-
-            elementView.SubscribeToInteractions(MainButtonClicked, ContextMenuButtonClicked, FriendButtonClicked, UnbanButtonClicked);
-
-            if (index >= membersData.totalFetched - ELEMENT_MISSING_THRESHOLD && membersData.totalFetched < membersData.totalToFetch && !isFetching)
-                FetchNewDataAsync().Forget();
-
-            return listItem;
-        }
-
         private async UniTaskVoid FetchNewDataAsync()
         {
             isFetching = true;
@@ -361,15 +359,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             await FetchDataAsync();
             membersData.totalFetched = (membersData.pageNumber + 1) * PAGE_SIZE;
 
-            RefreshLoopList();
+            view.RefreshGrid();
 
             isFetching = false;
-        }
-
-        private void RefreshLoopList()
-        {
-            view.LoopGrid.SetListItemCount(currentSectionFetchData.members.Count, false);
-            view.LoopGrid.RefreshAllShownItem();
         }
 
         private async UniTask FetchDataAsync()
@@ -458,7 +450,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     if (result)
                     {
                         bannedMembersFetchData.members.Remove(profile);
-                        RefreshLoopList();
+                        view.RefreshGrid();
                     }
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
