@@ -41,16 +41,15 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly GenericContextMenuElement kickUserContextMenuElement;
         private readonly GenericContextMenuElement banUserContextMenuElement;
         private readonly GenericContextMenuElement communityOptionsSeparatorContextMenuElement;
-        private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData> sectionsFetchData = new ()
-        {
-            { MembersListView.MemberListSections.ALL, new SectionFetchData(PAGE_SIZE) },
-            { MembersListView.MemberListSections.BANNED, new SectionFetchData(PAGE_SIZE) }
-        };
+
+        private readonly SectionFetchData allMembersFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData bannedMembersFetchData = new (PAGE_SIZE);
 
         private GetCommunityResponse.CommunityData? communityData = null;
         private CancellationToken ct;
         private bool isFetching;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
+        private SectionFetchData currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
 
         private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
@@ -115,7 +114,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 currentSection = section;
 
-                SectionFetchData sectionData = sectionsFetchData[section];
+                SectionFetchData sectionData = currentSectionFetchData;
 
                 if (sectionData.members.Count == 0 && sectionData.pageNumber == 0)
                     FetchNewDataAsync().Forget();
@@ -146,9 +145,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        sectionsFetchData[MembersListView.MemberListSections.ALL].members.Remove(profile);
+                        allMembersFetchData.members.Remove(profile);
 
-                        List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].members;
+                        List<GetCommunityMembersResponse.MemberData> memberList = bannedMembersFetchData.members;
                         profile.role = CommunityMemberRole.none;
                         memberList.Add(profile);
 
@@ -183,7 +182,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        sectionsFetchData[MembersListView.MemberListSections.ALL].members.Remove(profile);
+                        allMembersFetchData.members.Remove(profile);
                         RefreshLoopList();
                     }
                 }
@@ -208,7 +207,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.ALL].members;
+                        List<GetCommunityMembersResponse.MemberData> memberList = allMembersFetchData.members;
 
                         foreach (GetCommunityMembersResponse.MemberData member in memberList)
                             if (member.id.Equals(profile.id))
@@ -243,7 +242,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        List<GetCommunityMembersResponse.MemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.ALL].members;
+                        List<GetCommunityMembersResponse.MemberData> memberList = allMembersFetchData.members;
                         foreach (GetCommunityMembersResponse.MemberData member in memberList)
                             if (member.id.Equals(profile.id))
                             {
@@ -280,8 +279,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             communityData = null;
 
-            foreach (var element in sectionsFetchData)
-                element.Value.Reset();
+            allMembersFetchData.Reset();
+            bannedMembersFetchData.Reset();
 
             isFetching = false;
             panelLifecycleTask?.TrySetResult();
@@ -339,7 +338,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
-            SectionFetchData membersData = sectionsFetchData[currentSection];
+            SectionFetchData membersData = currentSectionFetchData;
 
             elementView.InjectDependencies(viewDependencies);
             elementView.Configure(membersData.members[index], currentSection);
@@ -356,7 +355,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             isFetching = true;
 
-            SectionFetchData membersData = sectionsFetchData[currentSection];
+            SectionFetchData membersData = currentSectionFetchData;
 
             membersData.pageNumber++;
             await FetchDataAsync();
@@ -369,13 +368,13 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void RefreshLoopList()
         {
-            view.LoopGrid.SetListItemCount(sectionsFetchData[currentSection].members.Count, false);
+            view.LoopGrid.SetListItemCount(currentSectionFetchData.members.Count, false);
             view.LoopGrid.RefreshAllShownItem();
         }
 
         private async UniTask FetchDataAsync()
         {
-            SectionFetchData membersData = sectionsFetchData[currentSection];
+            SectionFetchData membersData = currentSectionFetchData;
 
             GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct);
 
@@ -458,7 +457,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        sectionsFetchData[MembersListView.MemberListSections.BANNED].members.Remove(profile);
+                        bannedMembersFetchData.members.Remove(profile);
                         RefreshLoopList();
                     }
                 }
