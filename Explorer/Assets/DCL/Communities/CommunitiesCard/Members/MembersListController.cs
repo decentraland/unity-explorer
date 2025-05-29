@@ -10,7 +10,6 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
 using MVC;
-using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -44,7 +43,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly SectionFetchData bannedMembersFetchData = new (PAGE_SIZE);
 
         private GetCommunityResponse.CommunityData? communityData = null;
-        private CancellationToken ct;
+        private CancellationToken cancellationToken;
         private bool isFetching;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
         private SectionFetchData currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
@@ -108,7 +107,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             if (isFetching) return;
 
-            FetchNewDataAsync().Forget();
+            FetchNewDataAsync(cancellationToken).Forget();
         }
 
         private void OnMemberListSectionChanged(MembersListView.MemberListSections section)
@@ -122,7 +121,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid WaitForFetchAsync()
             {
-                await UniTask.WaitUntil(() => isFetching == false, cancellationToken: ct);
+                await UniTask.WaitUntil(() => isFetching == false, cancellationToken: cancellationToken);
                 SwitchSection();
             }
 
@@ -133,14 +132,14 @@ namespace DCL.Communities.CommunitiesCard.Members
                 SectionFetchData sectionData = currentSectionFetchData;
 
                 if (sectionData.pageNumber == 0)
-                    FetchNewDataAsync().Forget();
+                    FetchNewDataAsync(cancellationToken).Forget();
                 else
                     view.RefreshGrid();
             }
         }
 
         private void BlockUserClicked(GetCommunityMembersResponse.MemberData profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.id), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.id), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), cancellationToken).Forget();
 
         private void BanUser(GetCommunityMembersResponse.MemberData profile)
         {
@@ -153,7 +152,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 try
                 {
                     ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.BAN_USER,
-                        communityData?.name, profile.name, ct: ct);
+                        communityData?.name, profile.name, ct: cancellationToken);
 
                     if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
@@ -190,7 +189,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 try
                 {
                     ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.KICK_USER,
-                        communityData?.name, profile.name, ct: ct);
+                        communityData?.name, profile.name, ct: cancellationToken);
 
                     if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
@@ -289,7 +288,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void OpenProfilePassport(GetCommunityMembersResponse.MemberData profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), ct).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), cancellationToken).Forget();
 
         public void Reset()
         {
@@ -318,7 +317,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     }), ct: friendshipOperationCts.Token).Forget();
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
-                    mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct).Forget();
+                    mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)), cancellationToken).Forget();
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
                     mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
@@ -349,14 +348,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private async UniTaskVoid FetchNewDataAsync()
+        private async UniTaskVoid FetchNewDataAsync(CancellationToken ct)
         {
             isFetching = true;
 
             SectionFetchData membersData = currentSectionFetchData;
 
             membersData.pageNumber++;
-            await FetchDataAsync();
+            await FetchDataAsync(ct);
             membersData.totalFetched = (membersData.pageNumber + 1) * PAGE_SIZE;
 
             view.RefreshGrid();
@@ -364,7 +363,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             isFetching = false;
         }
 
-        private async UniTask FetchDataAsync()
+        private async UniTask FetchDataAsync(CancellationToken ct)
         {
             SectionFetchData membersData = currentSectionFetchData;
 
@@ -379,9 +378,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             membersData.totalToFetch = response.totalAmount;
         }
 
-        public void ShowMembersListAsync(GetCommunityResponse.CommunityData community, CancellationToken cancellationToken)
+        public void ShowMembersListAsync(GetCommunityResponse.CommunityData community, CancellationToken ct)
         {
-            ct = cancellationToken;
+            cancellationToken = ct;
 
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
 
@@ -389,7 +388,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.SetSectionButtonsActive(communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
             panelLifecycleTask = new UniTaskCompletionSource();
 
-            FetchNewDataAsync().Forget();
+            FetchNewDataAsync(ct).Forget();
         }
 
         private void MainButtonClicked(GetCommunityMembersResponse.MemberData profile)
@@ -428,7 +427,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
-                           closeTask: panelLifecycleTask?.Task)), ct)
+                           closeTask: panelLifecycleTask?.Task)), cancellationToken)
                       .Forget();
         }
 
@@ -441,11 +440,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             UnbanUserAsync(contextMenuOperationCts.Token).Forget();
             return;
 
-            async UniTaskVoid UnbanUserAsync(CancellationToken token)
+            async UniTaskVoid UnbanUserAsync(CancellationToken ct)
             {
                 try
                 {
-                    bool result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, communityData?.id, token);
+                    bool result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, communityData?.id, ct);
 
                     if (result)
                     {
