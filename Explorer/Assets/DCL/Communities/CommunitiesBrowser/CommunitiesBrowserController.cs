@@ -5,13 +5,11 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using MVC;
-using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -31,8 +29,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
-        private readonly List<CommunityData> currentMyCommunities = new ();
-        private readonly List<CommunityData> currentResults = new ();
         private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
         private readonly CommunityMemberRole[] rolesIncludedForMyCommunities = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member };
         private readonly CommunityMemberRole[] rolesIncludedForGenericSearch = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none };
@@ -77,6 +73,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SearchBarValueChanged += SearchBarValueChanged;
             view.SearchBarSubmit += SearchBarSubmit;
             view.SearchBarClearButtonClicked += SearchBarCleared;
+            view.CommunityProfileOpened += OpenCommunityProfile;
+            view.CommunityJoined += JoinCommunity;
         }
 
         public void Activate()
@@ -117,77 +115,25 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SearchBarValueChanged -= SearchBarValueChanged;
             view.SearchBarSubmit -= SearchBarSubmit;
             view.SearchBarClearButtonClicked -= SearchBarCleared;
+            view.CommunityProfileOpened -= OpenCommunityProfile;
+            view.CommunityJoined -= JoinCommunity;
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList() =>
-            view.InitializeMyCommunitiesList(0, SetupMyCommunityCardByIndex);
+            view.InitializeMyCommunitiesList(0, webRequestController);
 
         private void ConfigureResultsGrid()
         {
-            view.InitializeResultsGrid(0, SetupCommunityResultCardByIndex);
+            view.InitializeResultsGrid(0, webRequestController, viewDependencies);
             view.ResultsLoopGridScrollChanged += LoadMoreResults;
-        }
-
-        private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
-        {
-            CommunityData communityData = currentMyCommunities[index];
-            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
-
-            // Setup card data
-            cardView.SetCommunityId(communityData.id);
-            cardView.SetTitle(communityData.name);
-            cardView.SetUserRole(communityData.role);
-            cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
-
-            // Setup card events
-            cardView.MainButtonClicked -= OpenCommunityProfile;
-            cardView.MainButtonClicked += OpenCommunityProfile;
-
-            return listItem;
-        }
-
-        private LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
-        {
-            CommunityData communityData = currentResults[index];
-            LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
-
-            // Setup card data
-            cardView.SetCommunityId(communityData.id);
-            cardView.SetIndex(index);
-            cardView.SetTitle(communityData.name);
-            cardView.SetPrivacy(communityData.privacy);
-            cardView.SetMembersCount(communityData.memberCount);
-            cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
-            cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
-            cardView.SetJoiningLoadingActive(false);
-
-            // Setup card events
-            cardView.MainButtonClicked -= OpenCommunityProfile;
-            cardView.MainButtonClicked += OpenCommunityProfile;
-            cardView.ViewCommunityButtonClicked -= OpenCommunityProfile;
-            cardView.ViewCommunityButtonClicked += OpenCommunityProfile;
-            cardView.JoinCommunityButtonClicked -= JoinCommunity;
-            cardView.JoinCommunityButtonClicked += JoinCommunity;
-
-            // Setup mutual friends
-            cardView.SetupMutualFriends(viewDependencies, communityData);
-
-            return gridItem;
         }
 
         private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
         {
-            currentMyCommunities.Clear();
-            view.SetMyCommunitiesLoopListItemCount(0, false);
+            view.ClearMyCommunitiesItems();
             view.SetMyCommunitiesAsLoading(true);
 
             var ownProfile = await selfProfile.ProfileAsync(ct);
@@ -202,11 +148,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 elementsPerPage: 1000,
                 ct: ct);
 
-            currentMyCommunities.AddRange(userCommunitiesResponse.communities);
-
+            view.AddMyCommunitiesItems(userCommunitiesResponse.communities, true);
             view.SetMyCommunitiesAsLoading(false);
-            view.SetMyCommunitiesLoopListItemCount(currentMyCommunities.Count);
-            view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
         private void ViewAllMyCommunitiesResults()
@@ -243,7 +186,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void LoadMoreResults(Vector2 _)
         {
             if (isGridResultsLoadingItems ||
-                currentResults.Count >= currentResultsTotalAmount ||
+                view.CurrentResultsCount >= currentResultsTotalAmount ||
                 !view.IsResultsScrollPositionAtBottom)
                 return;
 
@@ -262,8 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (pageNumber == 1)
             {
-                currentResults.Clear();
-                view.SetResultsLoopGridItemCount(0, false);
+                view.ClearResultsItems();
                 view.SetResultsAsLoading(true);
             }
             else
@@ -284,20 +226,16 @@ namespace DCL.Communities.CommunitiesBrowser
             if (userCommunitiesResponse.communities.Length > 0)
             {
                 currentPageNumberFilter = pageNumber;
-                currentResults.AddRange(userCommunitiesResponse.communities);
+                view.AddResultsItems(userCommunitiesResponse.communities, pageNumber == 1);
             }
 
             currentResultsTotalAmount = userCommunitiesResponse.totalAmount;
 
             if (pageNumber == 1)
-            {
                 view.SetResultsAsLoading(false);
-                view.SetResultsAsEmpty(currentResults.Count == 0);
-            }
 
             view.SetResultsLoadingMoreActive(false);
             view.SetResultsCountText(currentResultsTotalAmount);
-            view.SetResultsLoopGridItemCount(currentResults.Count, resetPos: pageNumber == 1);
 
             currentNameFilter = name;
             currentMemberRolesIncluded.Clear();
@@ -363,23 +301,14 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CleanSearchBar(raiseOnChangeEvent: false);
         }
 
-        private void JoinCommunity(int index, CommunityResultCardView cardView) =>
-            JoinCommunityAsync(index, cardView, CancellationToken.None).Forget();
+        private void JoinCommunity(int index, string communityId) =>
+            JoinCommunityAsync(index, communityId, CancellationToken.None).Forget();
 
-        private async UniTaskVoid JoinCommunityAsync(int index, CommunityResultCardView cardView, CancellationToken ct)
+        private async UniTaskVoid JoinCommunityAsync(int index, string communityId, CancellationToken ct)
         {
-            cardView.SetJoiningLoadingActive(true);
-            bool joinedSuccess = await dataProvider.JoinCommunityAsync(currentResults[index].id, ct);
+            bool joinedSuccess = await dataProvider.JoinCommunityAsync(communityId, ct);
             if (joinedSuccess)
-            {
-                currentResults[index].role = CommunityMemberRole.member;
-                currentResults[index].memberCount++;
-                currentMyCommunities.Add(currentResults[index]);
-
-                view.RefreshResultsLoopGridItemByItemIndex(index);
-                view.SetMyCommunitiesLoopListItemCount(currentMyCommunities.Count, false);
-                view.SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
-            }
+                view.SetResultCommunityAsJoined(index);
         }
 
         private void OpenCommunityProfile(string communityId)

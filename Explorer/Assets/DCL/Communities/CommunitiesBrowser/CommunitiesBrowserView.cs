@@ -1,10 +1,14 @@
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -20,9 +24,13 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string> SearchBarSubmit;
         public event Action SearchBarClearButtonClicked;
         public event Action<Vector2> ResultsLoopGridScrollChanged;
+        public event Action<string> CommunityProfileOpened;
+        public event Action<int, string> CommunityJoined;
 
         public bool IsResultsScrollPositionAtBottom =>
             resultLoopGrid.ScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
+
+        public int CurrentResultsCount => currentResults.Count;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator;
@@ -51,6 +59,11 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject resultsEmptyContainer;
         [SerializeField] private GameObject resultsLoadingSpinner;
         [SerializeField] private GameObject resultsLoadingMoreSpinner;
+
+        private readonly List<CommunityData> currentMyCommunities = new ();
+        private readonly List<CommunityData> currentResults = new ();
+        private IWebRequestController webRequestController;
+        private ViewDependencies viewDependencies;
 
         private void Awake()
         {
@@ -105,12 +118,6 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesSection.SetActive(!isLoading);
         }
 
-        public void SetMyCommunitiesAsEmpty(bool isEmpty)
-        {
-            myCommunitiesEmptyContainer.SetActive(isEmpty);
-            myCommunitiesMainContainer.SetActive(!isEmpty);
-        }
-
         public void SetResultsAsLoading(bool isLoading)
         {
             resultsLoadingSpinner.SetActive(isLoading);
@@ -118,12 +125,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (isLoading)
                 resultsCountText.text = string.Empty;
-        }
-
-        public void SetResultsAsEmpty(bool isEmpty)
-        {
-            resultsEmptyContainer.SetActive(isEmpty);
-            resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>
@@ -152,28 +153,134 @@ namespace DCL.Communities.CommunitiesBrowser
                 searchBar.inputField.onValueChanged = originalEvent;
         }
 
-        public void InitializeMyCommunitiesList(int itemTotalCount, Func<LoopListView2, int, LoopListViewItem2> onGetItemByIndex)
+        public void InitializeMyCommunitiesList(int itemTotalCount, IWebRequestController webRequestCtrl)
         {
-            myCommunitiesLoopList.InitListView(itemTotalCount, onGetItemByIndex);
+            myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            webRequestController ??= webRequestCtrl;
         }
 
-        public void SetMyCommunitiesLoopListItemCount(int itemCount, bool resetPos = true) =>
-            myCommunitiesLoopList.SetListItemCount(itemCount, resetPos);
-
-        public void InitializeResultsGrid(int itemTotalCount, Func<LoopGridView,int,int,int, LoopGridViewItem> onGetItemByRowColumn)
+        public void ClearMyCommunitiesItems()
         {
-            resultLoopGrid.InitGridView(itemTotalCount, onGetItemByRowColumn);
-            resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            currentMyCommunities.Clear();
+            myCommunitiesLoopList.SetListItemCount(0, false);
+            SetMyCommunitiesAsEmpty(true);
         }
 
-        public void SetResultsLoopGridItemCount(int itemCount, bool resetPos = true) =>
-            resultLoopGrid.SetListItemCount(itemCount, resetPos);
+        public void AddMyCommunitiesItems(CommunityData[] communities, bool resetPos)
+        {
+            currentMyCommunities.AddRange(communities);
+            myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, resetPos);
+            SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+        }
 
-        public void RefreshResultsLoopGridItemByItemIndex(int itemIndex) =>
-            resultLoopGrid.RefreshItemByItemIndex(itemIndex);
+        public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ViewDependencies viewDep)
+        {
+            resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
+            resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            webRequestController ??= webRequestCtrl;
+            viewDependencies ??= viewDep;
+        }
+
+        public void ClearResultsItems()
+        {
+            currentResults.Clear();
+            resultLoopGrid.SetListItemCount(0, false);
+            SetResultsAsEmpty(true);
+        }
+
+        public void AddResultsItems(CommunityData[] communities, bool resetPos)
+        {
+            currentResults.AddRange(communities);
+            resultLoopGrid.SetListItemCount(currentResults.Count, resetPos);
+            SetResultsAsEmpty(currentResults.Count == 0);
+        }
+
+        public void SetResultCommunityAsJoined(int index)
+        {
+            // Change the role and increment the members amount
+            currentResults[index].role = CommunityMemberRole.member;
+            currentResults[index].memberCount++;
+            resultLoopGrid.RefreshItemByItemIndex(index);
+
+            // Add the joined community to My Communities
+            currentMyCommunities.Add(currentResults[index]);
+            myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
+            SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+        }
 
         private void SetSearchBarClearButtonActive(bool isActive) =>
             searchBar.clearSearchButton.gameObject.SetActive(isActive);
+
+        private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
+        {
+            CommunityData communityData = currentMyCommunities[index];
+            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
+            MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
+
+            // Setup card data
+            cardView.SetCommunityId(communityData.id);
+            cardView.SetTitle(communityData.name);
+            cardView.SetUserRole(communityData.role);
+            cardView.SetLiveMarkAsActive(communityData.isLive);
+            cardView.ConfigureImageController(webRequestController);
+            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
+
+            // Setup card events
+            cardView.MainButtonClicked -= CommunityProfileOpened;
+            cardView.MainButtonClicked += CommunityProfileOpened;
+
+            return listItem;
+        }
+
+        private LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
+        {
+            CommunityData communityData = currentResults[index];
+            LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
+            CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+
+            // Setup card data
+            cardView.SetCommunityId(communityData.id);
+            cardView.SetIndex(index);
+            cardView.SetTitle(communityData.name);
+            cardView.SetPrivacy(communityData.privacy);
+            cardView.SetMembersCount(communityData.memberCount);
+            cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
+            cardView.SetLiveMarkAsActive(communityData.isLive);
+            cardView.ConfigureImageController(webRequestController);
+            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
+            cardView.SetJoiningLoadingActive(false);
+
+            // Setup card events
+            cardView.MainButtonClicked -= CommunityProfileOpened;
+            cardView.MainButtonClicked += CommunityProfileOpened;
+            cardView.ViewCommunityButtonClicked -= CommunityProfileOpened;
+            cardView.ViewCommunityButtonClicked += CommunityProfileOpened;
+            cardView.JoinCommunityButtonClicked -= OnCommunityJoined;
+            cardView.JoinCommunityButtonClicked += OnCommunityJoined;
+
+            // Setup mutual friends
+            cardView.SetupMutualFriends(viewDependencies, communityData);
+
+            return gridItem;
+        }
+
+        private void SetMyCommunitiesAsEmpty(bool isEmpty)
+        {
+            myCommunitiesEmptyContainer.SetActive(isEmpty);
+            myCommunitiesMainContainer.SetActive(!isEmpty);
+        }
+
+        private void SetResultsAsEmpty(bool isEmpty)
+        {
+            resultsEmptyContainer.SetActive(isEmpty);
+            resultLoopGrid.gameObject.SetActive(!isEmpty);
+        }
+
+        private void OnCommunityJoined(int index, CommunityResultCardView cardView)
+        {
+            cardView.SetJoiningLoadingActive(true);
+            CommunityJoined?.Invoke(index, currentResults[index].id);
+        }
     }
 }
