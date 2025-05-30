@@ -4,7 +4,8 @@ namespace DCL.VoiceChat
 {
     public interface IVoiceChatCallStatusService
     {
-        event Action<VoiceChatStatus> StatusChanged;
+        public delegate void VoiceChatStatusChangeDelegate(VoiceChatStatus newStatus);
+        event VoiceChatStatusChangeDelegate StatusChanged;
         VoiceChatStatus Status { get; }
 
         void StartCall(string walletId);

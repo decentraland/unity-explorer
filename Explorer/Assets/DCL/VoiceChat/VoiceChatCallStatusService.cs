@@ -4,7 +4,7 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatCallStatusService : IVoiceChatCallStatusService
     {
-        public event Action<VoiceChatStatus> StatusChanged;
+        public event IVoiceChatCallStatusService.VoiceChatStatusChangeDelegate StatusChanged;
         public VoiceChatStatus Status { get; private set; }
 
         public VoiceChatCallStatusService()

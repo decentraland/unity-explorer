@@ -10,7 +10,7 @@ namespace DCL.VoiceChat
         [field: SerializeField] private AudioSource audioSource;
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
-        private int sampleRate;
+        private int sampleRate = 48000; // Default to 48kHz for voice chat (LiveKit standard)
         private float[] tempBuffer;
 
         private void OnEnable()

@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             public State CurrentState() =>
                 State.Stopped;
 
-            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.None;
+            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.NONE;
 
             public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
 
@@ -94,10 +94,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public static string ToStringNonAlloc(this AttemptToConnectState state) =>
             state switch
             {
-                AttemptToConnectState.None => "None",
-                AttemptToConnectState.Success => "Success",
-                AttemptToConnectState.Error => "Error",
-                AttemptToConnectState.NoConnectionRequired => "NoConnectionRequired",
+                AttemptToConnectState.NONE => "None",
+                AttemptToConnectState.SUCCESS => "Success",
+                AttemptToConnectState.ERROR => "Error",
+                AttemptToConnectState.NO_CONNECTION_REQUIRED => "NoConnectionRequired",
                 _ => UNDEFINED,
             };
 

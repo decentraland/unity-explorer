@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
-using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -28,6 +27,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorDataPipe dataPipe = new ();
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
+        private readonly InteriorAudioTracks audioTracks = new ();
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
@@ -35,6 +35,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => assigned.Info;
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
+        public IAudioTracks AudioTracks => audioTracks;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
@@ -149,6 +150,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             dataPipe.Assign(room.DataPipe);
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
+            audioTracks.Assign(room.AudioTracks);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
@@ -258,8 +260,5 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public Task DisconnectAsync(CancellationToken token) =>
             assigned.EnsureAssigned().DisconnectAsync(token);
-
-        public ITrack CreateAudioTrack(string name, RtcAudioSource source) =>
-            assigned.CreateAudioTrack(name, source);
     }
 }
