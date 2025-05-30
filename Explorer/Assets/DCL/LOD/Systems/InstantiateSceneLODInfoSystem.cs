@@ -93,8 +93,9 @@ namespace DCL.LOD.Systems
         private TextureArraySlot?[] GetTextureSlot(byte lodLevel, SceneEntityDefinition sceneDefinitionComponent, GameObject instantiatedLOD)
         {
             var slots = Array.Empty<TextureArraySlot?>();
-            if (!lodLevel.Equals(0))
-                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.id, sceneDefinitionComponent.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
+
+            //if (!lodLevel.Equals(0))
+            //     slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.id, sceneDefinitionComponent.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
             return slots;
         }
 
