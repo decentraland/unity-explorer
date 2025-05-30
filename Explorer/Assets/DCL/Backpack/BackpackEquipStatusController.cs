@@ -189,6 +189,8 @@ namespace DCL.Backpack
             {
                 Profile? savedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+                // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
+                // breaking the avatar and the backpack
                 UpdateAvatarInWorld(savedProfile!);
                 oldProfile.Dispose();
             }
