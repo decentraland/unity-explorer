@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
+using Sentry;
 using System;
 using UnityEngine.Networking;
 using Utility.Multithreading;
@@ -76,6 +77,8 @@ namespace DCL.WebRequests
 
                     if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
                         await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
+
+                    SentrySdk.AddBreadcrumb($"Failed URL {envelope.CommonArguments.URL}");
 
                     if (exception.IsIrrecoverableError(attemptsLeft) && !envelope.IgnoreIrrecoverableErrors)
                         throw;
