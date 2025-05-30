@@ -8,6 +8,7 @@ using DCL.Passport;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
 using System;
@@ -15,6 +16,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -385,15 +387,23 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             SectionFetchData membersData = currentSectionFetchData;
 
-            GetCommunityMembersResponse response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct);
+            Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct)
+                                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            foreach (var member in response.members)
+            if (!response.Success)
+            {
+                //If the request fails, we restore the previous page number in order to retry the same request next time
+                membersData.pageNumber--;
+                return;
+            }
+
+            foreach (var member in response.Value.members)
                 if (!membersData.members.Contains(member))
                     membersData.members.Add(member);
 
             MembersSorter.SortMembersList(membersData.members);
 
-            membersData.totalToFetch = response.totalAmount;
+            membersData.totalToFetch = response.Value.totalAmount;
         }
 
         public void ShowMembersListAsync(GetCommunityResponse.CommunityData community, CancellationToken ct)
