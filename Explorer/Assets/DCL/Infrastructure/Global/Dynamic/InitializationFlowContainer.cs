@@ -50,8 +50,6 @@ namespace DCL.UserInAppInitializationFlow
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, decentralandUrlsSource, appArgs, realmNavigationContainer.RealmNavigator);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
-            var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmContainer.RealmController, bootstrapContainer.DiagnosticsContainer);
-
             var loadingOperations = new List<IStartupOperation>()
             {
                 blocklistCheckStartupOperation,
@@ -61,7 +59,6 @@ namespace DCL.UserInAppInitializationFlow
                 checkOnboardingStartupOperation,
                 teleportStartupOperation,
                 ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
-                sentryDiagnostics
             };
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
