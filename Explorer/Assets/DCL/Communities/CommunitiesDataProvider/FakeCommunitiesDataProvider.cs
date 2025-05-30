@@ -135,8 +135,21 @@ namespace DCL.Communities
         public async UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             true;
 
-        public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
-            true;
+        public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct)
+        {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
+            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            {
+                if (community.id == communityId)
+                {
+                    community.role = CommunityMemberRole.none;
+                    break;
+                }
+            }
+
+            return true;
+        }
 
         public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct)
         {
