@@ -4,6 +4,7 @@ using DCL.FeatureFlags;
 using PortableExperiences.Controller;
 using System;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -33,7 +34,7 @@ namespace DCL.Chat.Commands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 1;
 
-        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct)
         {
             if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
                 return "🔴 Error. Portable Experiences Chat Commands are disabled";

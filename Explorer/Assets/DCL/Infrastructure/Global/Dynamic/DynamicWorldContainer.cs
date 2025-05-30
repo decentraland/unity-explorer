@@ -103,6 +103,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Chat.Commands.SpamChat;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -497,7 +498,9 @@ namespace Global.Dynamic
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
 
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
-
+            
+            var chatMessagesBusProxy = new ObjectProxy<IChatMessagesBus>();
+            
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -511,8 +514,10 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new SpamChatCommand(chatMessagesBusProxy),
             };
 
+            
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
@@ -528,6 +533,8 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
+            chatMessagesBusProxy.SetObject(chatMessagesBus);
+            
             var coreBackpackEventBus = new BackpackEventBus();
 
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
@@ -999,7 +1006,7 @@ namespace Global.Dynamic
                 roomHub,
                 socialServiceContainer
             );
-
+            
             // Init itself
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
 

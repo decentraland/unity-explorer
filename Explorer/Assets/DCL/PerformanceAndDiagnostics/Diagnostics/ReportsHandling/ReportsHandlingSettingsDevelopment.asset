@@ -512,6 +512,16 @@ MonoBehaviour:
       Severity: 4
     - Category: MARKETPLACE_CREDITS
       Severity: 1
+    - Category: CHAT_MESSAGES
+      Severity: 3
+    - Category: CHAT_MESSAGES
+      Severity: 2
+    - Category: CHAT_MESSAGES
+      Severity: 0
+    - Category: CHAT_MESSAGES
+      Severity: 4
+    - Category: CHAT_MESSAGES
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1
