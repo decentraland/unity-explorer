@@ -14,6 +14,7 @@ using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -204,7 +205,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.CancelFriendshipAsync(userAddress, ct);
+                await friendService.CancelFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 

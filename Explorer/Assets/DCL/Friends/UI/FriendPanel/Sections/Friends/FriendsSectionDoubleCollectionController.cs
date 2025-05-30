@@ -3,7 +3,6 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI;
-using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
@@ -20,7 +19,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private const float DELAY_BETWEEN_CLICKS = 0.5f;
 
         private readonly IPassportBridge passportBridge;
-        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
@@ -30,10 +28,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
-        private FriendProfile contextMenuFriendProfile;
         private CancellationTokenSource openPassportCts = new ();
         private bool elementClicked;
-        private CancellationTokenSource popupCts;
+        private CancellationTokenSource? popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
 
         internal event Action<string>? OnlineFriendClicked;
@@ -80,15 +77,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
 
-        private void JumpToFriendLocationCtx() =>
-            FriendListSectionUtilities.JumpToFriendLocation(contextMenuFriendProfile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpInClicked?.Invoke(contextMenuFriendProfile.Address, parcel));
-
-        private void OpenProfilePassportCtx() =>
-            FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
-
-        private void BlockUserCtx() =>
-            FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);
-
         private void ShowEmptyState()
         {
             view.SetEmptyState(true);
@@ -99,15 +87,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             view.SetEmptyState(false);
             view.SetScrollViewState(true);
-        }
-
-        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
-        {
-            mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
-                       {
-                           UserId = new Web3Address(userId),
-                       }))
-                      .Forget();
         }
 
         protected override void ElementClicked(FriendProfile profile)
@@ -141,7 +120,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void OnContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
-            contextMenuFriendProfile = friendProfile;
             elementView.CanUnHover = false;
 
             bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.Address) != OnlineStatus.OFFLINE;
@@ -150,11 +128,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 OnlineFriendClicked?.Invoke(friendProfile.Address);
 
             popupCts = popupCts.SafeRestart();
-            contextMenuTask?.TrySetResult();
+            contextMenuTask.TrySetResult();
 
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(contextMenuFriendProfile.Address),
+
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
                 buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: menuTask, onHide: () => elementView.CanUnHover = true
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }

@@ -38,7 +38,7 @@ namespace DCL.PluginSystem
             this TContainer container,
             IPluginSettingsContainer pluginSettingsContainer,
             CancellationToken ct,
-            Func<TContainer, UniTask> createDependencies)
+            Func<TContainer, UniTask>? createDependencies = null)
             where TContainer: DCLContainer<TSettings>
             where TSettings: IDCLPluginSettings, new()
         {
@@ -47,7 +47,8 @@ namespace DCL.PluginSystem
             if (!result)
                 return (null, false);
 
-            await createDependencies(container);
+            if (createDependencies != null)
+                await createDependencies(container);
 
             return (container, true);
         }

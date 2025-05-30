@@ -14,7 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
