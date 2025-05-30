@@ -138,7 +138,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 var startTime = intComp.Enabled
                     ? intComp.Start.timestamp + intComp.Time
-                    : remotePlayerMovement.PastMessage.timestamp;// + deltaTime;
+                    : remotePlayerMovement.PastMessage.timestamp + deltaTime;
 
                 var deltaFuture = remote.timestamp - startTime;
                 Vector3? offset = platform.tweener.GetFuture(deltaFuture);
