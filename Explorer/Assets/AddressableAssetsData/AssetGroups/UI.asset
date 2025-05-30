@@ -20,11 +20,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 05ee6d06f194b41c89e83a5ce527a57a
-    m_Address: CommunitiesAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19167fed20773434b8bb06d4ca81f60c
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/GenericUserProfileContextMenuSettings.asset
     m_ReadOnly: 0
@@ -106,7 +101,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
-    m_Address: MapRenderer.spriteatlasv2
+    m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
