@@ -243,6 +243,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityId(communityData.id);
             cardView.SetIndex(index);
             cardView.SetTitle(communityData.name);
+            cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.memberCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
