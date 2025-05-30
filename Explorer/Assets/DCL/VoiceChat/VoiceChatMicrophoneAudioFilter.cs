@@ -2,7 +2,7 @@ using DCL.Diagnostics;
 using UnityEngine;
 using LiveKit;
 using LiveKit.Internal;
-using Livekit.Utils;
+using LiveKit.Rooms.Streaming.Audio;
 using System;
 
 namespace DCL.VoiceChat
@@ -20,19 +20,16 @@ namespace DCL.VoiceChat
         private int microphoneSampleRate; // Microphone's actual sample rate
         private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
         private float[] silenceBuffer;
-        private AudioResampler.ThreadSafe resampler;
 
         private float[] tempBuffer;
-        private float[] resampledBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         private void Awake()
         {
-            if (voiceChatConfiguration != null) 
+            if (voiceChatConfiguration != null)
             {
                 audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
             }
-            resampler = new AudioResampler.ThreadSafe();
         }
 
         private void Start()
@@ -61,9 +58,7 @@ namespace DCL.VoiceChat
         {
             AudioRead = null!;
             audioProcessor = null;
-            resampler?.Dispose();
             tempBuffer = null;
-            resampledBuffer = null;
             silenceBuffer = null;
         }
 
@@ -85,7 +80,7 @@ namespace DCL.VoiceChat
 
             // Always convert to mono first, regardless of processing state
             float[] monoData = ConvertToMono(data, channels);
-            
+
             // Resample from microphone rate to Unity's output rate if needed
             float[] processedData = ResampleToUnityRate(monoData);
 
@@ -124,7 +119,7 @@ namespace DCL.VoiceChat
         {
             // Always use Unity's output sample rate as target
             cachedSampleRate = AudioSettings.outputSampleRate;
-            
+
             ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"Audio configuration changed - DeviceChanged: {deviceWasChanged}, " +
                 $"Unity OutputSampleRate: {cachedSampleRate}Hz, Microphone SampleRate: {microphoneSampleRate}Hz");
@@ -166,18 +161,31 @@ namespace DCL.VoiceChat
 
             try
             {
-                // Convert float array to AudioFrame for resampling
-                var audioFrame = ConvertToAudioFrame(monoData, microphoneSampleRate);
+                // Simple linear interpolation resampling
+                float ratio = (float)cachedSampleRate / microphoneSampleRate;
+                int outputLength = Mathf.RoundToInt(monoData.Length * ratio);
+                float[] resampledData = new float[outputLength];
                 
-                // Resample from microphone rate TO Unity's configured rate
-                using var resampledFrame = resampler.RemixAndResample(
-                    audioFrame, 
-                    1, // mono
-                    (uint)cachedSampleRate
-                );
+                for (int i = 0; i < outputLength; i++)
+                {
+                    float sourceIndex = i / ratio;
+                    int sourceIndexInt = Mathf.FloorToInt(sourceIndex);
+                    float fraction = sourceIndex - sourceIndexInt;
+                    
+                    if (sourceIndexInt >= monoData.Length - 1)
+                    {
+                        resampledData[i] = monoData[monoData.Length - 1];
+                    }
+                    else
+                    {
+                        // Linear interpolation between samples
+                        float sample1 = monoData[sourceIndexInt];
+                        float sample2 = monoData[sourceIndexInt + 1];
+                        resampledData[i] = sample1 + (sample2 - sample1) * fraction;
+                    }
+                }
                 
-                // Convert back to float array
-                return ConvertFromAudioFrame(resampledFrame);
+                return resampledData;
             }
             catch (Exception ex)
             {
@@ -185,31 +193,6 @@ namespace DCL.VoiceChat
                     $"Resampling failed from {microphoneSampleRate}Hz to {cachedSampleRate}Hz: {ex.Message}. Using original data.");
                 return monoData;
             }
-        }
-
-        private OwnedAudioFrame ConvertToAudioFrame(float[] data, int sampleRate)
-        {
-            // Convert float samples to short for AudioFrame
-            short[] shortData = new short[data.Length];
-            for (int i = 0; i < data.Length; i++)
-            {
-                shortData[i] = (short)(data[i] * short.MaxValue);
-            }
-            
-            return new OwnedAudioFrame((uint)sampleRate, 1, shortData);
-        }
-
-        private float[] ConvertFromAudioFrame(OwnedAudioFrame frame)
-        {
-            var frameSpan = frame.AsSpan();
-            float[] result = new float[frameSpan.Length];
-            
-            for (int i = 0; i < frameSpan.Length; i++)
-            {
-                result[i] = frameSpan[i] / (float)short.MaxValue;
-            }
-            
-            return result;
         }
 
         private float[] ConvertToMono(float[] data, int channels)
