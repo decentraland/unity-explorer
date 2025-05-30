@@ -46,6 +46,8 @@ namespace DCL.ECS7
         public const int UI_INPUT_RESULT = 1095;
         public const int UI_DROPDOWN_RESULT = 1096;
         public const int MAP_PIN = 1097;
+        public const int NETWORK_ENTITY = 1098;
+        public const int SYNCED_CLOCK = 1099;
         public const int TWEEN = 1102;
         public const int TWEEN_STATE = 1103;
         public const int TWEEN_SEQUENCE = 1104;

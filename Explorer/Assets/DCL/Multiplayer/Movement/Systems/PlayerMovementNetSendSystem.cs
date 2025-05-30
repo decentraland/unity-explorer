@@ -6,6 +6,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.SDKComponents.Tween.Playground;
 using ECS.Abstract;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -24,15 +25,17 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
+        private readonly INtpTimeService ntpTimeService;
 
         private float sendRate;
 
         public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings,
-            MultiplayerDebugSettings debugSettings) : base(world)
+            MultiplayerDebugSettings debugSettings, INtpTimeService ntpTimeService) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
+            this.ntpTimeService = ntpTimeService;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -47,6 +50,7 @@ namespace DCL.Multiplayer.Movement.Systems
             [Data] float t,
             ref PlayerMovementNetworkComponent playerMovement,
             ref CharacterAnimationComponent anim,
+            ref CharacterPlatformComponent platform,
             ref StunComponent stun,
             ref MovementInputComponent move,
             ref JumpInputComponent jump
@@ -58,7 +62,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, platform);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -68,11 +72,11 @@ namespace DCL.Multiplayer.Movement.Systems
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, platform);
                 return;
             }
 
-            bool isMoving = IsMoving(playerMovement);
+            bool isMoving = IsMoving(playerMovement, platform);
 
             if (isMoving && sendRate > settings.MoveSendRate)
                 sendRate = settings.MoveSendRate;
@@ -82,12 +86,14 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!isMoving && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, platform);
             }
 
             return;
 
-            bool IsMoving(PlayerMovementNetworkComponent playerMovement) =>
+            bool IsMoving(PlayerMovementNetworkComponent playerMovement, CharacterPlatformComponent platform) =>
+                (platform.PlatformCollider != null &&
+                 (platform.IsMovingPlatform || platform.IsRotatingPlatform)) ||
                 Mathf.Abs(playerMovement.LastSentMessage.rotationY - playerMovement.Character.transform.eulerAngles.y) > 0.1f ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
                 Vector3.SqrMagnitude(playerMovement.LastSentMessage.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON;
@@ -104,7 +110,8 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent,
+            in MovementInputComponent movement, CharacterPlatformComponent platform)
         {
             playerMovement.MessagesSentInSec++;
 
@@ -117,6 +124,7 @@ namespace DCL.Multiplayer.Movement.Systems
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
+                syncTimestamp = ntpTimeService.ServerTimeMs,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
                 velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
@@ -142,6 +150,33 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 movementKind = movement.Kind,
             };
+
+            if (platform.PlatformCollider != null &&
+                 (platform.IsMovingPlatform || platform.IsRotatingPlatform) && animation.States.IsGrounded
+                 && !animation.States.IsJumping
+                 && !animation.States.IsLongJump
+                 && !animation.States.IsFalling
+                 && !animation.States.IsLongFall
+                 && platform.ColliderSceneEntityInfo != null
+                 && platform.ColliderNetworkEntityId != null
+                 && platform.ColliderNetworkId != null)
+            {
+                playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
+                {
+                    EntityId = platform.ColliderNetworkEntityId.Value,
+                    NetworkId = platform.ColliderNetworkId!.Value,
+                };
+
+                playerMovement.LastSentMessage.position -= platform.CurrentPlatform.position;
+            }
+            else
+            {
+                playerMovement.LastSentMessage.syncedPlatform = new NetworkMovementMessage.SyncedPlatform
+                {
+                    EntityId = uint.MaxValue,
+                    NetworkId = 0,
+                };
+            }
 
             messageBus.Send(playerMovement.LastSentMessage);
 

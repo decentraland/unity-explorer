@@ -12,12 +12,18 @@ using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Character;
+using DCL.CharacterMotion.Components;
+using DCL.Interaction.Utility;
+using DCL.SDKComponents.Tween.Playground;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Systems;
+using NBitcoin;
 using SceneRunner.Scene;
+using System;
 using System.Runtime.CompilerServices;
-using static DCL.ECSComponents.EasingFunction;
+using UnityEngine;
 using static DG.Tweening.Ease;
 
 namespace DCL.SDKComponents.Tween.Systems
@@ -29,75 +35,136 @@ namespace DCL.SDKComponents.Tween.Systems
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem
     {
-        private const int MILLISECONDS_CONVERSION_INT = 1000;
-
-        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
-        {
-            [EfLinear] = Linear,
-            [EfEaseinsine] = InSine,
-            [EfEaseoutsine] = OutSine,
-            [EfEasesine] = InOutSine,
-            [EfEaseinquad] = InQuad,
-            [EfEaseoutquad] = OutQuad,
-            [EfEasequad] = InOutQuad,
-            [EfEaseinexpo] = InExpo,
-            [EfEaseoutexpo] = OutExpo,
-            [EfEaseexpo] = InOutExpo,
-            [EfEaseinelastic] = InElastic,
-            [EfEaseoutelastic] = OutElastic,
-            [EfEaseelastic] = InOutElastic,
-            [EfEaseinbounce] = InBounce,
-            [EfEaseoutbounce] = OutBounce,
-            [EfEasebounce] = InOutBounce,
-            [EfEaseincubic] = InCubic,
-            [EfEaseoutcubic] = OutCubic,
-            [EfEasecubic] = InOutCubic,
-            [EfEaseinquart] = InQuart,
-            [EfEaseoutquart] = OutQuart,
-            [EfEasequart] = InOutQuart,
-            [EfEaseinquint] = InQuint,
-            [EfEaseoutquint] = OutQuint,
-            [EfEasequint] = InOutQuint,
-            [EfEaseincirc] = InCirc,
-            [EfEaseoutcirc] = OutCirc,
-            [EfEasecirc] = InOutCirc,
-            [EfEaseinback] = InBack,
-            [EfEaseoutback] = OutBack,
-            [EfEaseback] = InOutBack,
-        };
+        private const float MS_TO_SEC = 1f/1000f;
 
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ISceneStateProvider sceneStateProvider;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneStateProvider sceneStateProvider) : base(world)
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly INtpTimeService ntpTimeService;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+
+        private CharacterPlatformComponent platformComponent;
+        private CharacterRigidTransform characterRb;
+        private Collider currentPlatformCollider;
+
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool,
+            ISceneStateProvider sceneStateProvider, INtpTimeService ntpTimeService, IEntityCollidersGlobalCache collidersGlobalCache,
+            World globalWorld) : base(world)
         {
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
+            this.ntpTimeService = ntpTimeService;
+            this.collidersGlobalCache = collidersGlobalCache;
+
+            platformComponent =  globalWorld.Get<CharacterPlatformComponent>(globalWorld.CachePlayer());
+            characterRb = globalWorld.Get<CharacterRigidTransform>(globalWorld.CachePlayer());
         }
 
         protected override void Update(float t)
         {
+            platformComponent.ColliderSceneEntityInfo = null;
+            platformComponent.ColliderNetworkEntityId = null;
+            platformComponent.ColliderNetworkId = null;
+
+            if (platformComponent.PlatformCollider != null && platformComponent.IsMovingPlatform && characterRb.IsGrounded)
+            {
+                if(collidersGlobalCache.TryGetSceneEntity(platformComponent.PlatformCollider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
+                    platformComponent.ColliderSceneEntityInfo = sceneEntityInfo;
+            }
+
+            // if(platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
+            hasCollider = false;
+            CheckNEQuery(World);
+            if(!hasCollider)
+            {
+                platformComponent.ColliderSceneEntityInfo = null;
+                platformComponent.ColliderNetworkEntityId = null;
+                platformComponent.ColliderNetworkId = null;
+            }
+
             UpdatePBTweenQuery(World);
             UpdateTweenTransformSequenceQuery(World);
             UpdateTweenTextureSequenceQuery(World);
         }
 
+        private bool hasCollider;
+
         [Query]
-        private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        private void CheckNE(in Entity e, ref PBNetworkEntity ne, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
+        {
+            if(hasCollider) return;
+
+            Debug.Log($"VVV exist for entity {e.Id} : {ne.EntityId} {ne.NetworkId}");
+
+            if (platformComponent.ColliderSceneEntityInfo != null && platformComponent.ColliderSceneEntityInfo.Value.EcsExecutor.World == World)
+            if (platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
+            {
+                platformComponent.ColliderNetworkEntityId = ne.EntityId;
+                platformComponent.ColliderNetworkId = ne.NetworkId;
+                Debug.Log($"VVV Networking Platform:  {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.EntityReference.Id} {platformComponent.ColliderSceneEntityInfo!.Value.ColliderSceneEntityInfo.SDKEntity.Id}");
+                Debug.Log($"VVV Networking Entity: {platformComponent.ColliderNetworkEntityId} {platformComponent.ColliderNetworkId}");
+                hasCollider = true;
+            }
+
+            foreach (var sceneInfo in collidersGlobalCache.colliderSceneEntityInfos)
+            {
+                if (sceneInfo.Value.ColliderSceneEntityInfo.EntityReference.Id == e.Id)
+                    // && sdkTweenComponent.CustomTweener != null)
+                {
+                    // collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkTweenComponent.CustomTweener);
+                    collidersGlobalCache.NetworkEntityToSceneEntity[(ne.EntityId, ne.NetworkId)] = (sdkTweenComponent.CustomTweener, transformComponent.Transform);
+                }
+            }
+
+            // collidersGlobalCache.NetworkEntityToSceneEntity.TryAdd((ne.EntityId, ne.NetworkId), sdkCollider.Collider);
+            // collidersGlobalCache.NetworkEntityCollider.Add();
+        }
+
+        [Query]
+        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            if (pbTween.IsDirty)
+                sdkTweenComponent.IsDirty = true;
+        }
+
+        [Query]
+        private void UpdateTweenTransformSequence(Entity e, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove) return;
 
             if (sdkTweenComponent.IsDirty)
             {
-                LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
-                SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                if (pbTween.HasStartSyncedTimestamp && sdkTweenComponent.StartSyncedTimestamp > 0 && sdkTweenComponent.StartSyncedTimestamp != pbTween.StartSyncedTimestamp)
+                {
+                    // check state
+                    // Debug.Log($"VVV synced changed for {e} from {sdkTweenComponent.StartSyncedTimestamp % 1000000} to {pbTween.StartSyncedTimestamp % 1000000}");
+                }
+
+                // else
+                {
+                    LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
+                    SetupTween(ref sdkTweenComponent, in pbTween);
+                    UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                }
             }
             else
             {
-                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent);
+                TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+                // Debug.Log($"VVV {e.Id} tween offset {sdkTweenComponent.CustomTweener.GetOffset().ToString()}");
+
+                if (newState != sdkTweenComponent.TweenStateStatus)
+                {
+                    sdkTweenComponent.TweenStateStatus = newState;
+                    UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                }
+                else if (newState == TweenStateStatus.TsActive)
+                {
+                    UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
+                }
             }
         }
 
@@ -145,8 +212,12 @@ namespace DCL.SDKComponents.Tween.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
         {
+            // Don't start the tween that is in the "future"
+            if (pbTween.HasStartSyncedTimestamp && pbTween.StartSyncedTimestamp > ntpTimeService.ServerTimeMs)
+                return;
+
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
-            float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
+            float durationInSeconds = pbTween.Duration * MS_TO_SEC;
 
             SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying);
 
@@ -162,22 +233,6 @@ namespace DCL.SDKComponents.Tween.Systems
             }
 
             sdkTweenComponent.IsDirty = false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
-        {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
-
-            if (newState != sdkTweenComponent.TweenStateStatus)
-            {
-                sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
-            }
-            else if (newState == TweenStateStatus.TsActive)
-            {
-                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -199,11 +254,21 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
-            Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
+            Ease ease = EasingFunctionsMap.TO_EASING_FUNCTION.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds);
-            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
+
+            var startTime = tweenModel.CurrentTime * durationInSeconds;
+
+            if (tweenModel.HasStartSyncedTimestamp)
+            {
+                startTime += (ntpTimeService.ServerTimeMs - tweenModel.StartSyncedTimestamp) * MS_TO_SEC;
+                startTime = Mathf.Clamp(startTime, 0, durationInSeconds);
+                sdkTweenComponent.StartSyncedTimestamp = tweenModel.StartSyncedTimestamp;
+            }
+
+            sdkTweenComponent.CustomTweener.DoTween(ease, startTime, isPlaying);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -226,15 +291,6 @@ namespace DCL.SDKComponents.Tween.Systems
             if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
             if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
             return TweenStateStatus.TsActive;
-        }
-
-        [Query]
-        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
-        {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
-
-            if (pbTween.IsDirty)
-                sdkTweenComponent.IsDirty = true;
         }
     }
 }
