@@ -47,6 +47,11 @@ namespace DCL.Settings.Settings
         {
             ConnectionString = newConnectionString;
             ConnectionStringChanged?.Invoke(newConnectionString);
+#if UNITY_EDITOR
+    UnityEditor.EditorUtility.SetDirty(this);
+    UnityEditor.AssetDatabase.SaveAssets();
+#endif
+
         }
     }
 }

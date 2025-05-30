@@ -12,7 +12,7 @@ namespace DCL.VoiceChat
     {
         private const bool MICROPHONE_LOOP = true;
         private const int MICROPHONE_LENGTH_SECONDS = 1;
-        private const int MICROPHONE_SAMPLE_RATE = 48000;
+        private const int MAX_SAMPLE_RATE = 48000; // Cap sample rate for voice chat bandwidth efficiency
 
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
@@ -189,15 +189,35 @@ namespace DCL.VoiceChat
             else
                 MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
 
+            // Get device capabilities to determine appropriate sample rate
+            int minFreq, maxFreq;
+            Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
+            
+            // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
+            // If device reports specific range, use the minimum of (maxFreq, 48kHz)
+            // If device supports any frequency (0,0), default to 48kHz
+            int sampleRate;
+            if (minFreq == 0 && maxFreq == 0)
+            {
+                sampleRate = MAX_SAMPLE_RATE; // Device supports any rate, use our preferred max
+            }
+            else
+            {
+                sampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
+                // Ensure we don't go below the device minimum
+                sampleRate = Mathf.Max(sampleRate, minFreq);
+            }
+            
             // On macOS, be more conservative with microphone settings
             try
             {
-                microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, MICROPHONE_SAMPLE_RATE);
+                microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, sampleRate);
                 if (microphoneAudioClip == null)
                 {
                     ReportHub.LogError(ReportCategory.VOICE_CHAT, "Failed to start microphone on macOS. This may indicate permission issues or device conflicts.");
                     return;
                 }
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {sampleRate}Hz (device caps: {minFreq}-{maxFreq}Hz, capped at {MAX_SAMPLE_RATE}Hz)");
             }
             catch (System.Exception ex)
             {
@@ -206,13 +226,33 @@ namespace DCL.VoiceChat
             }
 #else
             MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, MICROPHONE_SAMPLE_RATE);
+            
+            // Get device capabilities to determine appropriate sample rate
+            int minFreq, maxFreq;
+            Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
+            
+            // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
+            // If device reports specific range, use the minimum of (maxFreq, 48kHz)
+            // If device supports any frequency (0,0), default to 48kHz
+            int sampleRate;
+            if (minFreq == 0 && maxFreq == 0)
+            {
+                sampleRate = MAX_SAMPLE_RATE; // Device supports any rate, use our preferred max
+            }
+            else
+            {
+                sampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
+                // Ensure we don't go below the device minimum
+                sampleRate = Mathf.Max(sampleRate, minFreq);
+            }
+            
+            microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, sampleRate);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {sampleRate}Hz (device caps: {minFreq}-{maxFreq}Hz, capped at {MAX_SAMPLE_RATE}Hz)");
 #endif
 
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = 1f;  // Keep volume at 1 so OnAudioFilterRead gets called
-            audioSource.mute = true;  // Mute local playback to prevent feedback
             
             // Force mono audio for voice chat - this ensures we always get mono input to our filter
             // This eliminates the need for channel mixing in the audio filter
