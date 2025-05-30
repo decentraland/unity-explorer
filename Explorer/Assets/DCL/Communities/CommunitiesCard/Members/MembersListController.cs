@@ -422,7 +422,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void MainButtonClicked(GetCommunityMembersResponse.MemberData profile)
         {
             // Handle main button click
-            Debug.Log("MainButtonClicked: " + profile.id);
+            // Debug.Log("MainButtonClicked: " + profile.id);
         }
 
         private static UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus status)

@@ -68,10 +68,10 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController));
 
-            Test().Forget();
+            TestAsync().Forget();
         }
 
-        private async UniTaskVoid Test()
+        private async UniTaskVoid TestAsync()
         {
             await UniTask.Delay(20_000);
             mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter("test"))).Forget();
