@@ -376,7 +376,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             membersData.pageNumber++;
             await FetchDataAsync(ct);
-            membersData.totalFetched = (membersData.pageNumber + 1) * PAGE_SIZE;
+            membersData.totalFetched = membersData.pageNumber * PAGE_SIZE;
 
             view.RefreshGrid();
 

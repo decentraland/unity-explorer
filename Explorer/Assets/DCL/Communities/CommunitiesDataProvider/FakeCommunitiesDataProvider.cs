@@ -24,30 +24,27 @@ namespace DCL.Communities
         {
             this.appArgs = appArgs;
 
-            currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 0, communitiesAsModerator: 0, communitiesAsMember: 0);
+            currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
-            CommunityMemberRole roleToReturn = CommunityMemberRole.member;
+            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            if (appArgs.TryGetValue(AppArgsFlags.COMMUNITIES_CARD_SIMULATE_ROLE, out string? role) && role != null)
-                if (Enum.TryParse(role, out CommunityMemberRole converted))
-                    roleToReturn = converted;
-
-            return new ()
+            return new GetCommunityResponse()
             {
-                community = new GetCommunityResponse.CommunityData
+                community = new GetCommunityResponse.CommunityData()
                 {
-                    id = communityId,
-                    thumbnails = new string[] { "https://uchi.imgix.net/properties/anime2.png?crop=focalpoint&domain=uchi.imgix.net&fit=crop&fm=pjpg&fp-x=0.5&fp-y=0.5&h=558&ixlib=php-3.3.1&q=82&usm=20&w=992" },
-                    name = "Fake Community",
-                    description = "This is a fake community for testing purposes.",
-                    ownerId = "0x31d4f4dd8615ec45bbb6330da69f60032aca219e",
-                    privacy = CommunityPrivacy.@public,
-                    role = roleToReturn,
+                    id = communityData.id,
+                    thumbnails = communityData.thumbnails,
+                    name = communityData.name,
+                    description = communityData.description,
+                    ownerId = communityData.ownerId,
+                    memberCount = communityData.memberCount,
+                    privacy = communityData.privacy,
+                    role = communityData.role,
                     places = new [] { "land1", "land2" },
-                    membersCount = Random.Range(1, 1_000_000_000),
+                    membersCount = communityData.memberCount,
                 }
             };
         }
@@ -93,24 +90,31 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            const int TOTAL_MEMBERS = 15, BANNED_MEMBERS = 5;
+            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            int membersToReturn = areBanned ? BANNED_MEMBERS : TOTAL_MEMBERS;
+            const int BANNED_MEMBERS = 5;
 
-            GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[membersToReturn];
+            int totalMembers = areBanned ? BANNED_MEMBERS : communityData.memberCount;
 
-            for (int i = 0; i < membersToReturn; i++)
+            List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
+
+            for (var i = 0; i < totalMembers; i++)
             {
-                members[i] = GetCommunityMembersResponse.MemberData.RandomMember();
+                if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
+                {
+                    GetCommunityMembersResponse.MemberData member = GetCommunityMembersResponse.MemberData.RandomMember();
 
-                if (areBanned)
-                    members[i].role = CommunityMemberRole.none;
+                    if (areBanned)
+                        member.role = CommunityMemberRole.none;
+
+                    paginatedData.Add(member);
+                }
             }
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
             {
-                totalAmount = membersToReturn,
-                members = members,
+                totalAmount = totalMembers,
+                members = paginatedData.ToArray(),
             };
 
             return result;

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles.Self;
@@ -29,6 +30,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
+        private readonly IMVCManager mvcManager;
         private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
         private readonly CommunityMemberRole[] rolesIncludedForMyCommunities = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member };
         private readonly CommunityMemberRole[] rolesIncludedForGenericSearch = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none };
@@ -52,7 +54,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            IMVCManager mvcManager)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -62,6 +65,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
+            this.mvcManager = mvcManager;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -311,9 +315,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.SetResultCommunityAsJoined(index);
         }
 
-        private void OpenCommunityProfile(string communityId)
-        {
-            // TODO: Open community profile (currently implemented by Lorenzo)
-        }
+        private void OpenCommunityProfile(string communityId) =>
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
     }
 }
