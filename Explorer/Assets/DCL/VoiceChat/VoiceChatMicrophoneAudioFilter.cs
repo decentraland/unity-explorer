@@ -15,6 +15,7 @@ namespace DCL.VoiceChat
         private VoiceChatAudioProcessor audioProcessor;
         private int cachedSampleRate;
         private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
+        private bool cachedEnabled = true; // Cache enabled state for audio thread access
 
         private float[] tempBuffer;
         private float[] silenceBuffer;
@@ -36,12 +37,14 @@ namespace DCL.VoiceChat
 
         private void OnEnable()
         {
+            cachedEnabled = true;
             OnAudioConfigurationChanged(false);
             AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
         }
 
         private void OnDisable()
         {
+            cachedEnabled = false;
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
         }
 
@@ -61,7 +64,7 @@ namespace DCL.VoiceChat
             if (data == null)
                 return;
 
-            if (!enabled)
+            if (!cachedEnabled)
             {
                 AudioRead?.Invoke(GetSilenceBuffer(data.Length / channels), 1, cachedSampleRate);
                 return;
