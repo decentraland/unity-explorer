@@ -1415,6 +1415,7 @@ MonoBehaviour:
   scrollToBottomCanvasGroup: {fileID: 1816663618216097524}
   conversationsToolbar: {fileID: 5507091777745029389}
   conversationsToolbarCanvasGroup: {fileID: 3898375867954426524}
+  voiceChatTransform: {fileID: 3617744132193179929}
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
   IsMaskActive: 0
@@ -1476,7 +1477,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3885756303957530851, guid: d863791227c6640739243f8c4cf57b56, type: 3}
       propertyPath: m_Pivot.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3885756303957530851, guid: d863791227c6640739243f8c4cf57b56, type: 3}
       propertyPath: m_Pivot.y

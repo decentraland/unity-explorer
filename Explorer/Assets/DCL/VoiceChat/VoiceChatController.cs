@@ -1,5 +1,11 @@
+
+using Cysharp.Threading.Tasks;
+using DCL.Web3;
+using MVC;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -10,7 +16,11 @@ namespace DCL.VoiceChat
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly MicrophoneButtonController micController;
 
-        public VoiceChatController(VoiceChatView view, IVoiceChatCallStatusService voiceChatCallStatusService, VoiceChatMicrophoneHandler microphoneHandler)
+        public VoiceChatController(
+            VoiceChatView view,
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            VoiceChatMicrophoneHandler microphoneHandler,
+            ViewDependencies dependencies)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
@@ -18,12 +28,16 @@ namespace DCL.VoiceChat
 
             view.IncomingCallView.AcceptCallButton.onClick.AddListener(AcceptCall);
             view.IncomingCallView.RefuseCallButton.onClick.AddListener(RefuseCall);
+            view.IncomingCallView.ProfileView.InjectDependencies(dependencies);
 
             view.OutgoingCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.OutgoingCallView.HangUpButton.onClick.AddListener(HangUp);
+            view.OutgoingCallView.ProfileView.InjectDependencies(dependencies);
 
             view.InCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
+            view.InCallView.ProfileView.InjectDependencies(dependencies);
+
 
             var list = new List<MicrophoneButton>
             {
@@ -36,14 +50,14 @@ namespace DCL.VoiceChat
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
         }
 
-        private void OnVoiceChatStatusChanged(VoiceChatStatus status)
+        private void OnVoiceChatStatusChanged(VoiceChatStatus status, Web3Address walletId)
         {
             if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
                 Hide();
             else
                 Show();
 
-            view.SetActiveSection(status);
+            view.SetActiveSection(status, walletId);
         }
 
         public void Show()

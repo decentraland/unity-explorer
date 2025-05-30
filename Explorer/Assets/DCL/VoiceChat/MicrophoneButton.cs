@@ -17,9 +17,16 @@ namespace DCL.VoiceChat
         [field: SerializeField]
         private Sprite MicOffImage;
 
+        [field: SerializeField]
+        private Color MicOnColor;
+
+        [field: SerializeField]
+        private Color MicOffColor;
+
         public void SetMicrophoneStatus(bool isOn)
         {
             MicImageField.sprite = isOn ? MicOnImage : MicOffImage;
+            MicImageField.color = isOn ? MicOnColor : MicOffColor;
         }
     }
 }

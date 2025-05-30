@@ -66,9 +66,11 @@ namespace DCL.VoiceChat
         public void ToggleMicrophone()
         {
             if(isTalking)
-                EnableMicrophone();
-            else
                 DisableMicrophone();
+            else
+                EnableMicrophone();
+
+            isTalking = !isTalking;
         }
 
         private void EnableMicrophone()

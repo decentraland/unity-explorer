@@ -1,3 +1,4 @@
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,5 +11,8 @@ namespace DCL.VoiceChat
 
         [field: SerializeField]
         public Button HangUpButton;
+
+        [field: SerializeField]
+        public SimpleProfileView ProfileView;
     }
 }
