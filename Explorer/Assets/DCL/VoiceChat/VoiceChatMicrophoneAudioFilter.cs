@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using UnityEngine;
 using LiveKit;
+using LiveKit.Internal;
 using System;
 
 namespace DCL.VoiceChat
@@ -14,16 +15,23 @@ namespace DCL.VoiceChat
     {
         private VoiceChatAudioProcessor audioProcessor;
         private bool cachedEnabled = true; // Cache enabled state for audio thread access
-        private int cachedSampleRate;
+        private int cachedSampleRate; // Unity's output sample rate
+        private int microphoneSampleRate; // Microphone's actual sample rate
         private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
         private float[] silenceBuffer;
+        private AudioResampler.ThreadSafe resampler;
 
         private float[] tempBuffer;
+        private float[] resampledBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         private void Awake()
         {
-            if (voiceChatConfiguration != null) audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
+            if (voiceChatConfiguration != null) 
+            {
+                audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
+            }
+            resampler = new AudioResampler.ThreadSafe();
         }
 
         private void Start()
@@ -52,7 +60,9 @@ namespace DCL.VoiceChat
         {
             AudioRead = null!;
             audioProcessor = null;
+            resampler?.Dispose();
             tempBuffer = null;
+            resampledBuffer = null;
             silenceBuffer = null;
         }
 
@@ -74,14 +84,17 @@ namespace DCL.VoiceChat
 
             // Always convert to mono first, regardless of processing state
             float[] monoData = ConvertToMono(data, channels);
+            
+            // Resample from microphone rate to Unity's output rate if needed
+            float[] processedData = ResampleToUnityRate(monoData);
 
-            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && monoData.Length > 0)
+            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && processedData.Length > 0)
             {
                 try
                 {
-                    // Process the mono audio
-                    audioProcessor.ProcessAudio(monoData, cachedSampleRate);
-                    AudioRead?.Invoke(monoData, 1, cachedSampleRate);
+                    // Process the mono audio at Unity's sample rate
+                    audioProcessor.ProcessAudio(processedData, cachedSampleRate);
+                    AudioRead?.Invoke(processedData, 1, cachedSampleRate);
                     return;
                 }
                 catch (Exception ex)
@@ -97,8 +110,8 @@ namespace DCL.VoiceChat
                 }
             }
 
-            // Send raw mono audio when processing is disabled or failed
-            AudioRead?.Invoke(monoData, 1, cachedSampleRate);
+            // Send resampled mono audio when processing is disabled or failed
+            AudioRead?.Invoke(processedData, 1, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
@@ -108,21 +121,12 @@ namespace DCL.VoiceChat
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
-            // Don't automatically change sample rate here - let the microphone handler set it explicitly
-            // Only update if we don't have a valid sample rate yet
-            if (cachedSampleRate <= 0)
-            {
-                cachedSampleRate = AudioSettings.outputSampleRate;
-
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
-                    $"Audio configuration changed but no microphone sample rate set - using Unity output rate: {cachedSampleRate}Hz");
-            }
-            else
-            {
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"Audio configuration changed - DeviceChanged: {deviceWasChanged}, " +
-                    $"Current Microphone SampleRate: {cachedSampleRate}Hz, Unity OutputSampleRate: {AudioSettings.outputSampleRate}Hz");
-            }
+            // Always use Unity's output sample rate as target
+            cachedSampleRate = AudioSettings.outputSampleRate;
+            
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"Audio configuration changed - DeviceChanged: {deviceWasChanged}, " +
+                $"Unity OutputSampleRate: {cachedSampleRate}Hz, Microphone SampleRate: {microphoneSampleRate}Hz");
         }
 
         public void Initialize(VoiceChatConfiguration configuration)
@@ -137,18 +141,74 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        ///     Updates the cached sample rate from the microphone AudioClip
+        ///     Updates the cached microphone sample rate
         ///     Call this when the microphone is initialized or changed
         /// </summary>
         public void UpdateSampleRate(int microphoneSampleRate)
         {
-            if (microphoneSampleRate != cachedSampleRate)
+            if (microphoneSampleRate != this.microphoneSampleRate)
             {
-                cachedSampleRate = microphoneSampleRate;
+                this.microphoneSampleRate = microphoneSampleRate;
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"Updated cached sample rate to microphone frequency: {cachedSampleRate}Hz");
+                    $"Updated microphone sample rate: {microphoneSampleRate}Hz, Unity target rate: {cachedSampleRate}Hz");
             }
+        }
+
+        private float[] ResampleToUnityRate(float[] monoData)
+        {
+            // If sample rates match, no resampling needed
+            if (microphoneSampleRate == cachedSampleRate || microphoneSampleRate <= 0 || cachedSampleRate <= 0)
+            {
+                return monoData;
+            }
+
+            try
+            {
+                // Convert float array to AudioFrame for resampling
+                var audioFrame = ConvertToAudioFrame(monoData, microphoneSampleRate);
+                
+                // Resample from microphone rate TO Unity's configured rate
+                using var resampledFrame = resampler.RemixAndResample(
+                    audioFrame, 
+                    1, // mono
+                    (uint)cachedSampleRate
+                );
+                
+                // Convert back to float array
+                return ConvertFromAudioFrame(resampledFrame);
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
+                    $"Resampling failed from {microphoneSampleRate}Hz to {cachedSampleRate}Hz: {ex.Message}. Using original data.");
+                return monoData;
+            }
+        }
+
+        private OwnedAudioFrame ConvertToAudioFrame(float[] data, int sampleRate)
+        {
+            // Convert float samples to short for AudioFrame
+            short[] shortData = new short[data.Length];
+            for (int i = 0; i < data.Length; i++)
+            {
+                shortData[i] = (short)(data[i] * short.MaxValue);
+            }
+            
+            return new OwnedAudioFrame((uint)sampleRate, 1, shortData);
+        }
+
+        private float[] ConvertFromAudioFrame(OwnedAudioFrame frame)
+        {
+            var frameSpan = frame.AsSpan();
+            float[] result = new float[frameSpan.Length];
+            
+            for (int i = 0; i < frameSpan.Length; i++)
+            {
+                result[i] = frameSpan[i] / (float)short.MaxValue;
+            }
+            
+            return result;
         }
 
         private float[] ConvertToMono(float[] data, int channels)
@@ -189,8 +249,8 @@ namespace DCL.VoiceChat
         {
             if (silenceBuffer == null || silenceBuffer.Length < length) { silenceBuffer = new float[Mathf.Max(length, 1024)]; }
 
-            // Always clear the buffer to ensure silence
-            Array.Clear(silenceBuffer, 0, Mathf.Min(length, silenceBuffer.Length));
+            for (var i = 0; i < length; i++) { silenceBuffer[i] = 0f; }
+
             return silenceBuffer;
         }
     }

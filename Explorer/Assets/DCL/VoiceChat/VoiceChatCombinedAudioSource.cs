@@ -10,7 +10,7 @@ namespace DCL.VoiceChat
         [field: SerializeField] private AudioSource audioSource;
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
-        private int sampleRate;
+        private int sampleRate; // Unity's configured output sample rate - incoming audio should already be at this rate
         private float[] tempBuffer;
 
         private void OnEnable()

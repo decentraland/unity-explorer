@@ -174,6 +174,15 @@ namespace DCL.VoiceChat
             if (isMicrophoneInitialized)
                 return;
 
+            // Configure Unity's audio system for LiveKit compatibility
+            var configuration = AudioSettings.GetConfiguration();
+            configuration.sampleRate = 48000;  // 48kHz - LiveKit standard
+            configuration.dspBufferSize = 512;  // Good balance of latency and performance
+            AudioSettings.Reset(configuration);
+            
+            ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                $"Configured Unity audio system - SampleRate: {configuration.sampleRate}Hz, BufferSize: {configuration.dspBufferSize}");
+
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             // On macOS, check if we have microphone permission
             if (Microphone.devices.Length == 0)

@@ -69,24 +69,22 @@ namespace DCL.PluginSystem.Global
             controller.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
-            var configurations = voiceChatConfigurations.Value;
+            VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
 
             microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(configurations.MicrophoneAudioFilter, ct: ct);
-            var microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
+            AudioSource? microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
 
             voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatSettings, ct: ct);
-            var voiceChatSettings = voiceChatSettingsAsset.Value;
+            VoiceChatSettingsAsset voiceChatSettings = voiceChatSettingsAsset.Value;
             voiceChatSettingsProxy.SetObject(voiceChatSettings);
 
             voiceChatConfigurationAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatConfiguration, ct: ct);
-            var voiceChatConfiguration = voiceChatConfigurationAsset.Value;
+            VoiceChatConfiguration voiceChatConfiguration = voiceChatConfigurationAsset.Value;
 
             microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
             audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
@@ -94,10 +92,10 @@ namespace DCL.PluginSystem.Global
             livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
-            
+
             // Connect microphone ready event to LiveKit room handler for deferred track publishing
             voiceChatHandler.MicrophoneReady += livekitRoomHandler.OnMicrophoneReady;
-            
+
             controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
         }
 
