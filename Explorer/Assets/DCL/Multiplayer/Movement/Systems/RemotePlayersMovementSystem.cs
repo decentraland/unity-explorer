@@ -21,7 +21,7 @@ using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
@@ -83,6 +83,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (intComp.Enabled)
                 {
                     deltaTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
+
                     if (deltaTime <= 0) return;
                 }
 
@@ -132,9 +133,10 @@ namespace DCL.Multiplayer.Movement.Systems
                                (remote.syncedPlatform.Value.EntityId, remote.syncedPlatform.Value.NetworkId), out (ITweener tweener, Transform trsnsf) platform)
                            && platform.tweener != null && platform.trsnsf != null)
             {
+                remote.platform = platform.trsnsf;
                 Debug.Log($"VVV [REMOTE] platform {remote.syncedPlatform!.Value.EntityId} {remote.syncedPlatform!.Value.NetworkId}");
 
-                remote.position += platform.trsnsf.position;
+                // remote.position += platform.trsnsf.position;
 
                 var startTime = intComp.Enabled
                     ? intComp.Start.timestamp + intComp.Time
@@ -145,8 +147,12 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (offset.HasValue)
                 {
                     // Debug.Log($"VVV [REMOTE] platform offset {offset.Value}");
-                    remote.position += offset.Value;
+                    // remote.position += offset.Value;
                 }
+            }
+            else
+            {
+                remote.platform = null;
             }
 
             var isBlend = false;
@@ -253,6 +259,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // HERE!! - shift also start position!
             transComp.Transform.position = intComp.Start.position;
+            if (intComp.Start.platform != null) transComp.Transform.position = intComp.Start.position + intComp.Start.platform.position;
 
             return Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
         }

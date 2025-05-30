@@ -24,6 +24,7 @@ namespace DCL.Multiplayer.Movement
         public byte velocityTier;
 
         public SyncedPlatform? syncedPlatform;
+        public Transform platform;
 
         public override string ToString() =>
             JsonUtility.ToJson(this)!;

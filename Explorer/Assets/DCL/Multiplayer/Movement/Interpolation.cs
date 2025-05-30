@@ -16,20 +16,31 @@ namespace DCL.Multiplayer.Movement
 
             bool isInstant = intComp.Time >= intComp.TotalDuration;
 
-            if (!isInstant)
-            {
-                transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
+            // if (!isInstant)
+            // {
+                // transComp.Transform.position
+                var offset = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
                 Vector3 nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
-                lookDirection = nextStep - transComp.Transform.position; // look into future step
-            }
+                lookDirection = nextStep - offset; // look into future step
+            // }
+            // else
+            // {
+            //     remainedDeltaTime = intComp.TotalDuration - intComp.Time;
+            //     intComp.Time = intComp.TotalDuration;
+            //
+            //     lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
+            //
+            //     // transComp.Transform.position
+            //     offset = intComp.End.position;
+            // }
+
+            // if (intComp.Start.platform != null) transComp.Transform.position = intComp.Start.position + intComp.Start.platform.position;
+            // else
+            if (intComp.Start.platform != null) transComp.Transform.position = offset + intComp.Start.platform.position;
+            else if (intComp.End.platform != null) transComp.Transform.position = offset + intComp.End.platform.position;
             else
             {
-                remainedDeltaTime = intComp.TotalDuration - intComp.Time;
-                intComp.Time = intComp.TotalDuration;
-
-                lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
-
-                transComp.Transform.position = intComp.End.position;
+                transComp.Transform.position = offset;
             }
 
             LookAt(deltaTime, ref transComp, lookDirection, rotationSpeed, intComp.End.rotationY, isInstant, intComp.UseMessageRotation);
