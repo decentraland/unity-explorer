@@ -81,7 +81,8 @@ namespace DCL.VoiceChat
                 }
                 Microphone.End(MicrophoneName);
 
-                audioFilter.enabled = false;
+                if (audioFilter != null)
+                    audioFilter.enabled = false;
             }
         }
 
