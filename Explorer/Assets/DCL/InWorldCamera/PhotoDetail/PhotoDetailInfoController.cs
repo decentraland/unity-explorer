@@ -9,6 +9,7 @@ using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -61,7 +62,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            ViewDependencies viewDependencies)
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -89,7 +90,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
                 EQUIPPED_WEARABLE_MAX_POOL_CAPACITY,
                 () => WearableMarketClicked?.Invoke(),
-                viewDependencies);
+                profileDataProvider);
 
             this.view.jumpInButton.onClick.AddListener(JumpInClicked);
             this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);

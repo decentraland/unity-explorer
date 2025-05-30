@@ -1,7 +1,7 @@
 using DCL.Audio;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using System;
 using TMPro;
 using UnityEngine;
