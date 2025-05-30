@@ -17,13 +17,11 @@ namespace DCL.WebRequests
     {
         private readonly string url;
         private readonly TextureType textureType;
-        private readonly bool ktxEnabled;
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url, TextureType textureType, bool ktxEnabled)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url, TextureType textureType)
         {
             this.url = url;
             this.textureType = textureType;
-            this.ktxEnabled = ktxEnabled;
             UnityWebRequest = unityWebRequest;
         }
 
@@ -38,12 +36,10 @@ namespace DCL.WebRequests
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
             bool useKtx = textureArguments.UseKtx && ktxEnabled;
-
-            // $"http://localhost:8000/convert?ktx2=true&fileUrl={{1}}";
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(commonArguments.URL)) : commonArguments.URL;
+            UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
-            UnityWebRequest wr = UnityWebRequest.Get(requestUrl);
-            return new GetTextureWebRequest(wr, requestUrl, textureArguments.TextureType, useKtx);
+            return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>
@@ -59,7 +55,9 @@ namespace DCL.WebRequests
 
             public UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                return webRequest.ktxEnabled ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
+                string? contentType = webRequest.UnityWebRequest.GetResponseHeader("Content-Type");
+
+                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
             }
 
             private UniTask<IOwnedTexture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
@@ -85,7 +83,7 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult((IOwnedTexture2D?)new IOwnedTexture2D.Const(texture));
+                return UniTask.FromResult<IOwnedTexture2D?>(new IOwnedTexture2D.Const(texture));
             }
 
             private async UniTask<IOwnedTexture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)

@@ -10,7 +10,6 @@ namespace ECS.StreamableLoading.Textures
 {
     public struct GetTextureIntention : ILoadingIntention, IEquatable<GetTextureIntention>
     {
-        public bool DisableDiskCache => true;
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public readonly TextureWrapMode WrapMode;
