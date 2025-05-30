@@ -2,25 +2,52 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
+        private readonly IAppArgs appArgs;
         private readonly List<GetUserCommunitiesResponse.CommunityData> currentCommunities;
 
-        public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource)
+        public FakeCommunitiesDataProvider(IWebRequestController webRequestController,
+            IWeb3IdentityCache web3IdentityCache,
+            IDecentralandUrlsSource urlsSource,
+            IAppArgs appArgs)
         {
-            currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 0, communitiesAsModerator: 0, communitiesAsMember: 0);
+            this.appArgs = appArgs;
+
+            currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);
         }
 
-        public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
+        {
+            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
+
+            return new GetCommunityResponse()
+            {
+                community = new GetCommunityResponse.CommunityData()
+                {
+                    id = communityData.id,
+                    thumbnails = communityData.thumbnails,
+                    name = communityData.name,
+                    description = communityData.description,
+                    ownerId = communityData.ownerId,
+                    memberCount = communityData.memberCount,
+                    privacy = communityData.privacy,
+                    role = communityData.role,
+                    places = new [] { "land1", "land2" },
+                    membersCount = communityData.memberCount,
+                }
+            };
+        }
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
@@ -61,8 +88,37 @@ namespace DCL.Communities
             List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
+
+            const int BANNED_MEMBERS = 5;
+
+            int totalMembers = areBanned ? BANNED_MEMBERS : communityData.memberCount;
+
+            List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
+
+            for (var i = 0; i < totalMembers; i++)
+            {
+                if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
+                {
+                    GetCommunityMembersResponse.MemberData member = GetCommunityMembersResponse.MemberData.RandomMember();
+
+                    if (areBanned)
+                        member.role = CommunityMemberRole.none;
+
+                    paginatedData.Add(member);
+                }
+            }
+
+            GetCommunityMembersResponse result = new GetCommunityMembersResponse
+            {
+                totalAmount = totalMembers,
+                members = paginatedData.ToArray(),
+            };
+
+            return result;
+        }
 
         public async UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
             throw new NotImplementedException();
@@ -71,13 +127,29 @@ namespace DCL.Communities
             throw new NotImplementedException();
 
         public async UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            true;
 
         public async UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+            true;
 
-        public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
+            true;
+
+        public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct)
+        {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
+            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            {
+                if (community.id == communityId)
+                {
+                    community.role = CommunityMemberRole.none;
+                    break;
+                }
+            }
+
+            return true;
+        }
 
         public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct)
         {
@@ -98,8 +170,8 @@ namespace DCL.Communities
         public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId,  CommunityMemberRole newRole, CancellationToken ct) =>
+            true;
 
         private List<GetUserCommunitiesResponse.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
         {

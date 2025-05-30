@@ -18,9 +18,10 @@ namespace DCL.Communities
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public string[] places;
+            public int membersCount;
         }
 
-        public CommunityData[] community;
+        public CommunityData community;
     }
 }
 

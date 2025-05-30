@@ -581,7 +581,7 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
-            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource, appArgs);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -944,7 +944,14 @@ namespace Global.Dynamic
             }
 
             if (includeCommunities)
-                globalPlugins.Add(new CommunitiesPlugin(mvcManager));
+                globalPlugins.Add(new CommunitiesPlugin(mvcManager,
+                    assetsProvisioner,
+                    cameraReelStorageService,
+                    cameraReelScreenshotsStorage,
+                    viewDependencies,
+                    friendServiceProxy,
+                    communitiesDataProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
