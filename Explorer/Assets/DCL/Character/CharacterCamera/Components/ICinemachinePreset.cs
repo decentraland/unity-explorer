@@ -12,9 +12,10 @@ namespace DCL.CharacterCamera.Components
 
         CinemachineBrain Brain { get; }
 
-        internal ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }
         internal ICinemachineThirdPersonCameraData ThirdPersonCameraData { get; }
         internal ICinemachineThirdPersonCameraData DroneViewCameraData { get; }
+        internal ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }
+
         internal ICinemachineFreeCameraData FreeCameraData { get; }
         internal ICinemachineFreeCameraData InWorldCameraData { get; }
 

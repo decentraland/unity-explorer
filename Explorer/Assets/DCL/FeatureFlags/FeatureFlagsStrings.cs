@@ -34,5 +34,8 @@
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
 
         public const string AUTH_CODE_VALIDATION = "number-validation";
+
+        public const string GPUI_ENABLED = "alfa-gpui";
+
     }
 }
