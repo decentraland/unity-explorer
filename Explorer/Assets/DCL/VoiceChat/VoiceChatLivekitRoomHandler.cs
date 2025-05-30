@@ -157,8 +157,26 @@ namespace DCL.VoiceChat
                 return false;
             }
 
+            // Log microphone and audio configuration details
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"Creating LiveKit audio track - Microphone: {microphoneAudioSource.clip.name}, " +
+                $"SampleRate: {microphoneAudioSource.clip.frequency}Hz, " +
+                $"Channels: {microphoneAudioSource.clip.channels}, " +
+                $"Length: {microphoneAudioSource.clip.length:F2}s, " +
+                $"Samples: {microphoneAudioSource.clip.samples}, " +
+                $"AudioSource Volume: {microphoneAudioSource.volume}, " +
+                $"AudioSource Pitch: {microphoneAudioSource.pitch}");
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"AudioFilter State - IsValid: {microphoneAudioFilter.IsValid}, " +
+                $"Component Enabled: {microphoneAudioFilter.enabled}, " +
+                $"GameObject Active: {microphoneAudioFilter.gameObject.activeInHierarchy}");
+
             rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
             rtcAudioSource.Start();
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource created and started");
+
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
 
             var options = new TrackPublishOptions
@@ -169,6 +187,10 @@ namespace DCL.VoiceChat
                 },
                 Source = TrackSource.SourceMicrophone,
             };
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"Publishing audio track with options - MaxBitrate: {options.AudioEncoding.MaxBitrate}, " +
+                $"Source: {options.Source}, TrackSID: {microphoneTrack?.Sid}");
 
             voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
             isMediaOpen = true;

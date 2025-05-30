@@ -209,6 +209,10 @@ namespace DCL.VoiceChat
                 sampleRate = Mathf.Max(sampleRate, minFreq);
             }
             
+            ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
+                $"Selected SampleRate: {sampleRate}Hz");
+            
             // On macOS, be more conservative with microphone settings
             try
             {
@@ -247,8 +251,20 @@ namespace DCL.VoiceChat
                 sampleRate = Mathf.Max(sampleRate, minFreq);
             }
             
+            ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
+                $"Selected SampleRate: {sampleRate}Hz");
+            
             microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, sampleRate);
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {sampleRate}Hz (device caps: {minFreq}-{maxFreq}Hz, capped at {MAX_SAMPLE_RATE}Hz)");
+            
+            // Verify the actual recording sample rate matches what we requested
+            if (microphoneAudioClip != null)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                    $"Microphone AudioClip created - Actual Frequency: {microphoneAudioClip.frequency}Hz, " +
+                    $"Channels: {microphoneAudioClip.channels}, Length: {microphoneAudioClip.length}s");
+            }
 #endif
 
             audioSource.clip = microphoneAudioClip;
@@ -267,6 +283,12 @@ namespace DCL.VoiceChat
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized with forced mono configuration");
+            
+            // Update the audio filter's cached sample rate to match the microphone
+            if (microphoneAudioClip != null)
+            {
+                audioFilter.UpdateSampleRate(microphoneAudioClip.frequency);
+            }
             
             MicrophoneReady?.Invoke();
         }

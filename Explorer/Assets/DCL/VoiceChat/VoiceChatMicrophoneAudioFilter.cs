@@ -13,12 +13,12 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
         private VoiceChatAudioProcessor audioProcessor;
-        private int cachedSampleRate;
-        private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
         private bool cachedEnabled = true; // Cache enabled state for audio thread access
+        private int cachedSampleRate;
+        private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
+        private float[] silenceBuffer;
 
         private float[] tempBuffer;
-        private float[] silenceBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         private void Awake()
@@ -66,7 +66,9 @@ namespace DCL.VoiceChat
 
             if (!cachedEnabled)
             {
-                AudioRead?.Invoke(GetSilenceBuffer(data.Length / channels), 1, cachedSampleRate);
+                float[] silenceBuffer = GetSilenceBuffer(data.Length / channels);
+                AudioRead?.Invoke(silenceBuffer, 1, cachedSampleRate);
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Sending silence to LiveKit - AudioFilter disabled");
                 return;
             }
 
@@ -106,7 +108,21 @@ namespace DCL.VoiceChat
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
-            cachedSampleRate = AudioSettings.outputSampleRate;
+            // Don't automatically change sample rate here - let the microphone handler set it explicitly
+            // Only update if we don't have a valid sample rate yet
+            if (cachedSampleRate <= 0)
+            {
+                cachedSampleRate = AudioSettings.outputSampleRate;
+
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
+                    $"Audio configuration changed but no microphone sample rate set - using Unity output rate: {cachedSampleRate}Hz");
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"Audio configuration changed - DeviceChanged: {deviceWasChanged}, " +
+                    $"Current Microphone SampleRate: {cachedSampleRate}Hz, Unity OutputSampleRate: {AudioSettings.outputSampleRate}Hz");
+            }
         }
 
         public void Initialize(VoiceChatConfiguration configuration)
@@ -120,6 +136,21 @@ namespace DCL.VoiceChat
             audioProcessor?.Reset();
         }
 
+        /// <summary>
+        ///     Updates the cached sample rate from the microphone AudioClip
+        ///     Call this when the microphone is initialized or changed
+        /// </summary>
+        public void UpdateSampleRate(int microphoneSampleRate)
+        {
+            if (microphoneSampleRate != cachedSampleRate)
+            {
+                cachedSampleRate = microphoneSampleRate;
+
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"Updated cached sample rate to microphone frequency: {cachedSampleRate}Hz");
+            }
+        }
+
         private float[] ConvertToMono(float[] data, int channels)
         {
             if (channels == 1)
@@ -130,7 +161,7 @@ namespace DCL.VoiceChat
 
             // Multi-channel input - convert to mono by averaging all channels
             int samplesPerChannel = data.Length / channels;
-            
+
             // Ensure we have a properly sized buffer
             if (tempBuffer == null || tempBuffer.Length < samplesPerChannel)
             {
@@ -142,13 +173,12 @@ namespace DCL.VoiceChat
             }
 
             // Average all channels - standard mono conversion
-            for (int sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
+            for (var sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
             {
-                float sum = 0f;
-                for (int ch = 0; ch < channels; ch++)
-                {
-                    sum += data[sampleIndex * channels + ch];
-                }
+                var sum = 0f;
+
+                for (var ch = 0; ch < channels; ch++) { sum += data[(sampleIndex * channels) + ch]; }
+
                 tempBuffer[sampleIndex] = sum / channels;
             }
 
@@ -157,11 +187,8 @@ namespace DCL.VoiceChat
 
         private float[] GetSilenceBuffer(int length)
         {
-            if (silenceBuffer == null || silenceBuffer.Length < length)
-            {
-                silenceBuffer = new float[Mathf.Max(length, 1024)];
-            }
-            
+            if (silenceBuffer == null || silenceBuffer.Length < length) { silenceBuffer = new float[Mathf.Max(length, 1024)]; }
+
             // Always clear the buffer to ensure silence
             Array.Clear(silenceBuffer, 0, Mathf.Min(length, silenceBuffer.Length));
             return silenceBuffer;
