@@ -185,7 +185,7 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LeaveCommunityAsync(CancellationToken ct)
             {
                 ConfirmationDialogView.ConfirmationResult dialogResult = await viewInstance!.ConfirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.LEAVE_COMMUNITY,
-                    viewInstance.CommunityName.text, communitySprite: viewInstance.CommunityThumbnail.ImageSprite, ct: ct);
+                    viewInstance.CommunityName.text, communitySprite: viewInstance.CommunityThumbnail.ImageSprite, showImageRim: true, ct: ct);
 
                 if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 

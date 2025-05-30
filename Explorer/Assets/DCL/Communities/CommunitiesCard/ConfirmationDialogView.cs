@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public TMP_Text MainText { get; private set; }
         [field: SerializeField] public Image MainImage { get; private set; }
         [field: SerializeField] public GameObject QuitImage { get; private set; }
+        [field: SerializeField] public Image RimImage { get; private set; }
 
         [field: Header("Assets")]
         [field: SerializeField] public Sprite KickSprite { get; private set; }
@@ -43,11 +44,14 @@ namespace DCL.Communities.CommunitiesCard
             string communityName,
             string? userName = null,
             Sprite? communitySprite = null,
+            bool showImageRim = false,
             CancellationToken ct = default)
         {
             gameObject.SetActive(true);
             CancelButton.gameObject.SetActive(true);
             ConfirmButton.gameObject.SetActive(true);
+
+            RimImage.enabled = showImageRim;
 
             switch (reason)
             {
