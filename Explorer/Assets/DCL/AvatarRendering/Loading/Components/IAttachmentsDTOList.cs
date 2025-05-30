@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Loading.Components
 
     /// <summary>
     ///     Allows internal repooling in readonly structs.
-    ///     It's created since ConsumedAttachmentsDTOList is needed in FinalizeEmoteAssetBundleSystem but StreamableLoadingResult is readonly.
+    ///     It's created since ConsumedAttachmentsDTOList is needed in FinalizeEmoteLoadingSystem but StreamableLoadingResult is readonly.
     /// </summary>
     public class RepoolableList<T> : IDisposable
     {

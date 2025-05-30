@@ -538,11 +538,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
             new ()
             {
                 id = urn.ToString(),
-                metadata = new EmoteDTO.Metadata
+                metadata = new EmoteDTO.EmoteMetadataDto
                 {
                     id = urn.ToString(), // System uses metadata.id as the URN key
                     name = name,
-                    emoteDataADR74 = new EmoteDTO.Metadata.Data
+                    data = new EmoteDTO.EmoteMetadataDto.Data
                     {
                         representations = isUnisex
                             ? new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation(), AvatarAttachmentDTO.Representation.NewFakeRepresentation() }
@@ -658,7 +658,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             }
 
             public bool IsLooping() =>
-                DTO?.metadata?.emoteDataADR74?.loop ?? false;
+                DTO?.metadata?.data?.loop ?? false;
 
             public void UpdateLoadingStatus(bool newStatus)
             {

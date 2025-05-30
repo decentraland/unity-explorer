@@ -37,6 +37,7 @@ namespace DCL.Backpack
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly ProfileBuilder profileBuilder = new ();
+        private readonly bool publishProfileChanges;
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(
@@ -77,6 +78,9 @@ namespace DCL.Backpack
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+
+            publishProfileChanges = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+                                    && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
         }
 
         public void Dispose()
@@ -154,9 +158,6 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
-            bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
-
             Profile? oldProfile = await selfProfile.ProfileAsync(ct);
 
             if (oldProfile == null)
@@ -168,7 +169,7 @@ namespace DCL.Backpack
             Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
                 forceRender, emoteStorage, wearableStorage,
                 // Don't increment the version as it will be incremented later on selfProfile.UpdateProfileAsync
-                !publishProfileChange);
+                !publishProfileChanges);
 
             // Skip publishing the same profile
             if (newProfile.Avatar.IsSameAvatar(oldProfile.Avatar))
@@ -183,7 +184,7 @@ namespace DCL.Backpack
             profileCache.Set(newProfile.UserId, newProfile);
             UpdateAvatarInWorld(newProfile);
 
-            if (!publishProfileChange) return;
+            if (!publishProfileChanges) return;
 
             try
             {

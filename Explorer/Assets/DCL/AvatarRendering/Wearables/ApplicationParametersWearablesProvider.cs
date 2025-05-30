@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -14,8 +15,6 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ApplicationParametersWearablesProvider : IWearablesProvider
     {
-        private const string BUILDER_DTO_URL_COL_ID = "[COL-ID]";
-
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
         private readonly List<IWearable> resultWearablesBuffer = new ();
@@ -78,7 +77,7 @@ namespace DCL.AvatarRendering.Wearables
                     // localBuffer accumulates the loaded wearables
                     await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i]),
+                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);

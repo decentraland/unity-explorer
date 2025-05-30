@@ -13,8 +13,9 @@ namespace DCL.AvatarRendering.Emotes
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public GetOwnedEmotesFromRealmIntention(CommonLoadingArguments commonArguments) : this()
+        public GetOwnedEmotesFromRealmIntention(CommonLoadingArguments commonArguments, bool needsBuilderAPISigning = false) : this()
         {
+            NeedsBuilderAPISigning = needsBuilderAPISigning;
             CommonArguments = commonArguments;
             CancellationTokenSource = new CancellationTokenSource();
             Result = RepoolableList<IEmote>.NewList();
