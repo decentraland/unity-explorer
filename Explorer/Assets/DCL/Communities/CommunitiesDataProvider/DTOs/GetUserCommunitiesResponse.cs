@@ -15,7 +15,7 @@ namespace DCL.Communities
         }
 
         [Serializable]
-        public struct CommunityData
+        public class CommunityData
         {
             public string id;
             public string[] thumbnails;
@@ -23,6 +23,7 @@ namespace DCL.Communities
             public string description;
             public string ownerId;
             public int memberCount;
+            public bool isLive;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
