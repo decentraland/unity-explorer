@@ -17,7 +17,7 @@ MonoBehaviour:
   <LookAtTimeDelta>k__BackingField: 0.001
   <UseSpeedUp>k__BackingField: 1
   <MaxSpeedUpTimeDivider>k__BackingField: 2
-  <CatchUpMessagesMin>k__BackingField: 3
+  <CatchUpMessagesMin>k__BackingField: 2
   <UseBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 5
