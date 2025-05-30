@@ -6,6 +6,8 @@ namespace DCL.Settings.Settings
     //    [CreateAssetMenu(fileName = "VoiceChatSettings", menuName = "DCL/Settings/Voice Chat Settings")]
     public class VoiceChatSettingsAsset : ScriptableObject
     {
+        private const string CONNECTION_STRING_DATA_STORE_KEY = "Settings_ConnectionString";
+        
         public delegate void MicrophoneChangedDelegate(int newMicrophoneIndex);
         public delegate void ConnectionStringChangedDelegate(string newConnectionString);
 
@@ -15,6 +17,25 @@ namespace DCL.Settings.Settings
         [Tooltip("Used for Debug Purposes")]
         public string ConnectionString;
         public event ConnectionStringChangedDelegate ConnectionStringChanged;
+
+        private void OnEnable()
+        {
+            // Load saved connection string from PlayerPrefs when the asset is loaded
+            LoadConnectionStringFromPlayerPrefs();
+        }
+
+        private void LoadConnectionStringFromPlayerPrefs()
+        {
+            if (PlayerPrefs.HasKey(CONNECTION_STRING_DATA_STORE_KEY))
+            {
+                string savedConnectionString = PlayerPrefs.GetString(CONNECTION_STRING_DATA_STORE_KEY);
+                if (!string.IsNullOrEmpty(savedConnectionString) && savedConnectionString != ConnectionString)
+                {
+                    ConnectionString = savedConnectionString;
+                    ConnectionStringChanged?.Invoke(savedConnectionString);
+                }
+            }
+        }
 
         public void OnMicrophoneChanged(int newMicrophoneIndex)
         {
