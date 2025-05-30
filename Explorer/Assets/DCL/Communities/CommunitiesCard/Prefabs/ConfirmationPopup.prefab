@@ -219,14 +219,14 @@ MonoBehaviour:
   <ViewCanvasGroup>k__BackingField: {fileID: 7148772016283282334}
   <BackgroundButton>k__BackingField: {fileID: 2573271936253177660}
   <CancelButton>k__BackingField: {fileID: 4703601987723925820}
+  <CancelButtonText>k__BackingField: {fileID: 5172961755820453843}
   <ConfirmButton>k__BackingField: {fileID: 177293625116832667}
+  <ConfirmButtonText>k__BackingField: {fileID: 219328096485043431}
   <FadeDuration>k__BackingField: 0.3
   <MainText>k__BackingField: {fileID: 5497906910841171124}
   <MainImage>k__BackingField: {fileID: 4769151607430399632}
   <QuitImage>k__BackingField: {fileID: 5140257922541452098}
   <RimImage>k__BackingField: {fileID: 6890867881214203102}
-  <KickSprite>k__BackingField: {fileID: 21300000, guid: 1c3a82503c07d4bc1b72831189ecac2c, type: 3}
-  <BanSprite>k__BackingField: {fileID: 21300000, guid: dfc1a44a069d347b0ba9bde7be300ec3, type: 3}
 --- !u!1 &852062044135285399
 GameObject:
   m_ObjectHideFlags: 0

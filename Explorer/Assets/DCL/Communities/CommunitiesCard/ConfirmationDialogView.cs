@@ -9,11 +9,24 @@ namespace DCL.Communities.CommunitiesCard
 {
     public class ConfirmationDialogView : MonoBehaviour
     {
-        public enum ConfirmationReason
+        public struct DialogData
         {
-            LEAVE_COMMUNITY,
-            KICK_USER,
-            BAN_USER,
+            public readonly string Text;
+            public readonly string CancelButtonText;
+            public readonly string ConfirmButtonText;
+            public readonly Sprite Image;
+            public readonly bool ShowImageRim;
+            public readonly bool ShowQuitImage;
+
+            public DialogData(string text, string cancelButtonText, string confirmButtonText, Sprite image, bool showImageRim, bool showQuitImage)
+            {
+                Text = text;
+                CancelButtonText = cancelButtonText;
+                ConfirmButtonText = confirmButtonText;
+                Image = image;
+                ShowImageRim = showImageRim;
+                ShowQuitImage = showQuitImage;
+            }
         }
 
         public enum ConfirmationResult
@@ -22,59 +35,35 @@ namespace DCL.Communities.CommunitiesCard
             CANCEL,
         }
 
-        private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
-        private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to kick '{0}' from {1}?";
-        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban '{0}' from {1}?";
-
         [field: SerializeField] public CanvasGroup ViewCanvasGroup { get; private set; }
         [field: SerializeField] public Button BackgroundButton { get; private set; }
         [field: SerializeField] public Button CancelButton { get; private set; }
+        [field: SerializeField] public TMP_Text CancelButtonText { get; private set; }
         [field: SerializeField] public Button ConfirmButton { get; private set; }
+        [field: SerializeField] public TMP_Text ConfirmButtonText { get; private set; }
         [field: SerializeField] public float FadeDuration { get; private set; } = 0.3f;
         [field: SerializeField] public TMP_Text MainText { get; private set; }
         [field: SerializeField] public Image MainImage { get; private set; }
         [field: SerializeField] public GameObject QuitImage { get; private set; }
         [field: SerializeField] public Image RimImage { get; private set; }
 
-        [field: Header("Assets")]
-        [field: SerializeField] public Sprite KickSprite { get; private set; }
-        [field: SerializeField] public Sprite BanSprite { get; private set; }
-
-        public async UniTask<ConfirmationResult> ShowConfirmationDialogAsync(ConfirmationReason reason,
-            string communityName,
-            string? userName = null,
-            Sprite? communitySprite = null,
-            bool showImageRim = false,
+        public async UniTask<ConfirmationResult> ShowConfirmationDialogAsync(DialogData dialogData,
             CancellationToken ct = default)
         {
             gameObject.SetActive(true);
             CancelButton.gameObject.SetActive(true);
             ConfirmButton.gameObject.SetActive(true);
 
-            RimImage.enabled = showImageRim;
-
-            switch (reason)
-            {
-                case ConfirmationReason.LEAVE_COMMUNITY:
-                    MainText.text = string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, communityName);
-                    MainImage.sprite = communitySprite;
-                    break;
-                case ConfirmationReason.KICK_USER:
-                    MainText.text = string.Format(KICK_MEMBER_TEXT_FORMAT, userName, communityName);
-                    MainImage.sprite = KickSprite;
-                    break;
-                case ConfirmationReason.BAN_USER:
-                    MainText.text = string.Format(BAN_MEMBER_TEXT_FORMAT, userName, communityName);
-                    MainImage.sprite = BanSprite;
-                    break;
-            }
-
-            QuitImage.SetActive(reason == ConfirmationReason.LEAVE_COMMUNITY);
+            MainText.text = dialogData.Text;
+            CancelButtonText.text = dialogData.CancelButtonText;
+            ConfirmButtonText.text = dialogData.ConfirmButtonText;
+            RimImage.enabled = dialogData.ShowImageRim;
+            QuitImage.SetActive(dialogData.ShowQuitImage);
+            MainImage.sprite = dialogData.Image;
 
             await ViewCanvasGroup.DOFade(1f, FadeDuration).ToUniTask(cancellationToken: ct);
             ViewCanvasGroup.interactable = true;
             ViewCanvasGroup.blocksRaycasts = true;
-
 
             int index = await UniTask.WhenAny(CancelButton.OnClickAsync(ct), BackgroundButton.OnClickAsync(ct), ConfirmButton.OnClickAsync(ct));
 

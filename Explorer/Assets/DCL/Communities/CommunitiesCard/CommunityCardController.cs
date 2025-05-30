@@ -21,6 +21,10 @@ namespace DCL.Communities.CommunitiesCard
     {
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
+        private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
+        private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
+        private const string LEAVE_COMMUNITY_CANCEL_TEXT = "NO";
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly IMVCManager mvcManager;
@@ -184,8 +188,13 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid LeaveCommunityAsync(CancellationToken ct)
             {
-                ConfirmationDialogView.ConfirmationResult dialogResult = await viewInstance!.ConfirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.LEAVE_COMMUNITY,
-                    viewInstance.CommunityName.text, communitySprite: viewInstance.CommunityThumbnail.ImageSprite, showImageRim: true, ct: ct);
+                ConfirmationDialogView.ConfirmationResult dialogResult = await viewInstance!.ConfirmationDialogView.ShowConfirmationDialogAsync(
+                   new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, viewInstance.CommunityName.text),
+                       LEAVE_COMMUNITY_CANCEL_TEXT,
+                       LEAVE_COMMUNITY_CONFIRM_TEXT,
+                       viewInstance.CommunityThumbnail.ImageSprite,
+                       true, true),
+                   ct);
 
                 if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 

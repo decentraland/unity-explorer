@@ -25,6 +25,14 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int PAGE_SIZE = 20;
 
+        private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to kick '{0}' from {1}?";
+        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban '{0}' from {1}?";
+
+        private const string KICK_MEMBER_CANCEL_TEXT = "CANCEL";
+        private const string KICK_MEMBER_CONFIRM_TEXT = "KICK";
+        private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
+        private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
+
         private readonly MembersListView view;
         private readonly ConfirmationDialogView confirmationDialogView;
         private readonly IMVCManager mvcManager;
@@ -151,8 +159,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.BAN_USER,
-                        communityData?.name, profile.name, ct: cancellationToken);
+                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                        new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
+                            BAN_MEMBER_CANCEL_TEXT,
+                            BAN_MEMBER_CONFIRM_TEXT,
+                            view.BanSprite,
+                            false, false),
+                        cancellationToken);
 
                     if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
@@ -188,8 +201,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 try
                 {
-                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(ConfirmationDialogView.ConfirmationReason.KICK_USER,
-                        communityData?.name, profile.name, ct: cancellationToken);
+                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                        new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
+                            KICK_MEMBER_CANCEL_TEXT,
+                            KICK_MEMBER_CONFIRM_TEXT,
+                            view.KickSprite,
+                            false, false),
+                        cancellationToken);
 
                     if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 

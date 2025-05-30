@@ -3074,6 +3074,8 @@ MonoBehaviour:
     <SelectedText>k__BackingField: {fileID: 1709972263754642214}
     <UnselectedBackground>k__BackingField: {fileID: 7471164044795517266}
     <UnselectedText>k__BackingField: {fileID: 5871703800674541385}
+  <KickSprite>k__BackingField: {fileID: 21300000, guid: 1c3a82503c07d4bc1b72831189ecac2c, type: 3}
+  <BanSprite>k__BackingField: {fileID: 21300000, guid: dfc1a44a069d347b0ba9bde7be300ec3, type: 3}
 --- !u!1 &5059185125724751890
 GameObject:
   m_ObjectHideFlags: 0

@@ -19,6 +19,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public RectTransform ScrollViewRect { get; private set; }
         [field: SerializeField] public MemberListSectionMapping[] MemberListSectionsElements { get; private set; }
 
+        [field: Header("Assets")]
+        [field: SerializeField] public Sprite KickSprite { get; private set; }
+        [field: SerializeField] public Sprite BanSprite { get; private set; }
+
         public event Action<MemberListSections> ActiveSectionChanged;
         public event Action? NewDataRequested;
         public event Action<GetCommunityMembersResponse.MemberData>? ElementMainButtonClicked;
