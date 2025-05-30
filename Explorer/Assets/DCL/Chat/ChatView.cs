@@ -210,6 +210,7 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
+        private Vector2 voiceChatSizeDelta;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -953,8 +954,6 @@ namespace DCL.Chat
 
             MemberListVisibilityChanged?.Invoke(isVisible);
         }
-
-        private Vector2 voiceChatSizeDelta;
 
         private void SetBackgroundVisibility(bool isVisible, bool useAnimation)
         {

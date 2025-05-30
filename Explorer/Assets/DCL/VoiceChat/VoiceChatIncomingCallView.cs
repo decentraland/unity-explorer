@@ -27,12 +27,22 @@ namespace DCL.VoiceChat
         private Sequence pulseAnimation;
         private Color initialColor;
 
-        private void OnEnable()
+        public void SetActive(bool isActive)
+        {
+            gameObject.SetActive(isActive);
+
+            if (isActive)
+                StartAnimation();
+            else
+                StopAnimation();
+        }
+
+        private void StartAnimation()
         {
             CreatePulseAnimation();
         }
 
-        private void OnDisable()
+        private void StopAnimation()
         {
             pulseAnimation?.Kill(true);
         }
