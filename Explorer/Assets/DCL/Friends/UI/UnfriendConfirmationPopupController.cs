@@ -1,9 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Friends.UI
 {
@@ -86,9 +89,10 @@ namespace DCL.Friends.UI
 
             async UniTaskVoid UnfriendAsync(CancellationToken ct)
             {
-                await friendsService.DeleteFriendshipAsync(inputData.UserId, ct);
+                EnumResult<TaskError> result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                Close();
+                if (result.Success)
+                    Close();
             }
         }
 

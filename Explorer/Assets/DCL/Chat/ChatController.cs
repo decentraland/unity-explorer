@@ -6,6 +6,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -22,6 +23,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -30,6 +32,7 @@ using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
+using Utility.Types;
 
 namespace DCL.Chat
 {
@@ -343,7 +346,11 @@ namespace DCL.Chat
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
-            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
+            Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            if (result.Success == false) return;
+
+            ChatUserStateUpdater.ChatUserState userState = result.Value;
+
             if (TryGetView(out var view))
             {
                 view.SetInputWithUserState(userState);

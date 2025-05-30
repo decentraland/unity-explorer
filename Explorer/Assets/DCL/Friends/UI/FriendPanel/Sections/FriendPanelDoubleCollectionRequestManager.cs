@@ -1,19 +1,14 @@
-using Cysharp.Threading.Tasks;
 using MVC;
 using SuperScrollView;
 using System;
-using System.Threading;
-using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
-    public abstract class FriendPanelDoubleCollectionRequestManager<T> : IDisposable where T : FriendPanelUserView
+    public abstract class FriendPanelDoubleCollectionRequestManager<T> : FriendPanelRequestManagerBase where T: FriendPanelUserView
     {
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
         private readonly ViewDependencies viewDependencies;
-        private readonly LoopListView2 loopListView;
-        private readonly int pageSize;
         private readonly int elementsMissingThreshold;
         private readonly bool disablePagination;
 
@@ -22,23 +17,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly int statusElementIndex;
         private readonly int emptyElementIndex;
         private readonly int userElementIndex;
-        private readonly CancellationTokenSource fetchNewDataCts = new ();
 
-        private int pageNumber;
-        private int totalFetched;
-        private int totalToFetch;
-        private bool isFetching;
         private bool isInitializing;
 
         private bool excludeFirstCollection;
         private bool excludeSecondCollection;
 
-        public bool HasElements { get; private set; }
-        public bool WasInitialised { get; private set; }
-
         public event Action<FriendProfile>? ElementClicked;
-        public event Action? FirstFolderClicked;
-        public event Action? SecondFolderClicked;
 
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -51,13 +36,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             int statusElementIndex,
             int emptyElementIndex,
             int userElementIndex,
-            bool disablePagination = false)
+            bool disablePagination = false) : base(loopListView, pageSize)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.viewDependencies = viewDependencies;
-            this.loopListView = loopListView;
-            this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
             this.firstCollectionStatus = firstCollectionStatus;
             this.secondCollectionStatus = secondCollectionStatus;
@@ -67,16 +50,30 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.disablePagination = disablePagination;
         }
 
-        public virtual void Dispose()
-        {
-            fetchNewDataCts.SafeCancelAndDispose();
-        }
-
         protected abstract int GetFirstCollectionCount();
         protected abstract int GetSecondCollectionCount();
 
         protected abstract FriendProfile GetFirstCollectionElement(int index);
         protected abstract FriendProfile GetSecondCollectionElement(int index);
+
+        protected override int GetListViewElementsCount()
+        {
+            var count = 2;
+
+            if (!excludeFirstCollection)
+                count += GetFirstCollectionCount();
+
+            if (!excludeSecondCollection)
+                count += GetSecondCollectionCount();
+
+            if (GetFirstCollectionCount() == 0 && !excludeFirstCollection)
+                count++;
+
+            if (GetSecondCollectionCount() == 0 && !excludeSecondCollection)
+                count++;
+
+            return count;
+        }
 
         protected virtual void CustomiseElement(T elementView, int index, FriendPanelStatus section) { }
 
@@ -94,8 +91,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[statusElementIndex].mItemPrefab.name);
                 StatusWrapperView statusWrapperView = listItem.GetComponent<StatusWrapperView>();
                 statusWrapperView.SetStatusText(firstCollectionStatus, GetFirstCollectionCount());
-                statusWrapperView.ResetCallback();
-                statusWrapperView.FolderButtonClicked += FolderClick;
+                statusWrapperView.FolderButtonClicked = FolderClick;
             }
             else if (index > 0 && index <= onlineFriendMarker)
             {
@@ -118,8 +114,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[statusElementIndex].mItemPrefab.name);
                 StatusWrapperView statusWrapperView = listItem.GetComponent<StatusWrapperView>();
                 statusWrapperView.SetStatusText(secondCollectionStatus, GetSecondCollectionCount());
-                statusWrapperView.ResetCallback();
-                statusWrapperView.FolderButtonClicked += FolderClick;
+                statusWrapperView.FolderButtonClicked = FolderClick;
             }
             else if (index > onlineFriendMarker + 1 && index <= onlineFriendMarker + 1 + offlineFriendMarker + 1)
             {
@@ -137,98 +132,24 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
                     if (!disablePagination && collectionIndex >= GetSecondCollectionCount() - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
-                        FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
+                        FetchNewDataAsync(loopListView).Forget();
                 }
             }
 
             return listItem;
         }
 
-        private async UniTaskVoid FetchNewDataAsync(LoopListView2 loopListView, CancellationToken ct)
-        {
-            isFetching = true;
-
-            pageNumber++;
-            await FetchDataInternalAsync(ct);
-
-            loopListView.SetListItemCount(GetElementsNumber(), false);
-            loopListView.RefreshAllShownItem();
-
-            isFetching = false;
-        }
-
-        private async UniTask FetchDataInternalAsync(CancellationToken ct)
-        {
-            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
-            totalFetched = (pageNumber + 1) * pageSize;
-        }
-
-        public int GetElementsNumber()
-        {
-            int count = 2;
-
-            if (!excludeFirstCollection)
-                count += GetFirstCollectionCount();
-
-            if (!excludeSecondCollection)
-                count += GetSecondCollectionCount();
-
-            if (GetFirstCollectionCount() == 0 && !excludeFirstCollection)
-                count++;
-
-            if (GetSecondCollectionCount() == 0 && !excludeSecondCollection)
-                count++;
-
-            return count;
-        }
-
-        public void Reset()
-        {
-            HasElements = false;
-            WasInitialised = false;
-            isInitializing = false;
-            pageNumber = 0;
-            totalFetched = 0;
-            ResetCollections();
-            RefreshLoopList();
-        }
-
-        protected void RefreshLoopList()
-        {
-            loopListView.SetListItemCount(GetElementsNumber(), false);
-            loopListView.RefreshAllShownItem();
-        }
-
-        protected abstract void ResetCollections();
-
-        protected abstract UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct);
-
-        public async UniTask InitAsync(CancellationToken ct)
-        {
-            //This could happen when there's a prewarm and the user navigates to this section before the prewarm finishes
-            if (isInitializing) return;
-
-            isInitializing = true;
-
-            await FetchDataInternalAsync(ct);
-
-            HasElements = GetFirstCollectionCount() + GetSecondCollectionCount() > 0;
-            WasInitialised = true;
-            isInitializing = false;
-        }
+        protected override int GetCollectionsDataCount() =>
+            GetFirstCollectionCount() + GetSecondCollectionCount();
 
         private void FolderClick(bool isFolded, FriendPanelStatus panelStatus)
         {
             if (panelStatus == firstCollectionStatus)
-            {
                 excludeFirstCollection = isFolded;
-                FirstFolderClicked?.Invoke();
-            }
             else if (panelStatus == secondCollectionStatus)
-            {
                 excludeSecondCollection = isFolded;
-                SecondFolderClicked?.Invoke();
-            }
+
+            RefreshLoopList();
         }
     }
 }

@@ -68,6 +68,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendBecameOnline;
             friendsConnectivityStatusTracker.OnFriendBecameAway -= FriendBecameAway;
             friendsConnectivityStatusTracker.OnFriendBecameOffline -= FriendBecameOffline;
+
+            base.Dispose();
         }
 
         private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
@@ -188,7 +190,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.SetOnlineStatus(friendsConnectivityStatusTracker.GetFriendStatus(elementView.UserProfile.Address));
         }
 
-        protected override void ResetCollections()
+        protected sealed override void ResetCollection()
         {
             onlineFriends.Clear();
             offlineFriends.Clear();
