@@ -67,7 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
                 NoUserInCollection?.Invoke();
         }
 
-        public override int GetCollectionCount() =>
+        protected override int GetCollectionsDataCount() =>
             blockedProfiles.Count;
 
         protected override FriendProfile GetCollectionElement(int index) =>

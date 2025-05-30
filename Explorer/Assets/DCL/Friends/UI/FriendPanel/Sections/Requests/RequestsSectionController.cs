@@ -4,6 +4,8 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -103,14 +105,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.CancelFriendshipAsync(userId, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.CancelFriendshipAsync(userId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -143,14 +138,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.RejectFriendshipAsync(request.From.Address, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.RejectFriendshipAsync(request.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -162,14 +150,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.CancelFriendshipAsync(request.To.Address, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.CancelFriendshipAsync(request.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -194,26 +175,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                       .Forget();
         }
 
-        public override async UniTask InitAsync(CancellationToken ct)
+        protected override void OnLoopListInitialized()
         {
-            view.SetLoadingState(true);
-            view.SetScrollViewState(false);
-
-            await requestManager.InitAsync(ct);
-
-            view.SetLoadingState(false);
-            view.SetScrollViewState(true);
-
-            RefreshLoopList();
-            requestManager.FirstFolderClicked += FolderClicked;
-            requestManager.SecondFolderClicked += FolderClicked;
-
             PropagateReceivedRequestsCountChanged();
         }
+
+        protected override bool ShouldShowScrollView() =>
+            true; // the request section should always present 2 lists (sent/received), even if it's empty
 
         protected override void ElementClicked(FriendProfile profile)
         {
         }
-
     }
 }

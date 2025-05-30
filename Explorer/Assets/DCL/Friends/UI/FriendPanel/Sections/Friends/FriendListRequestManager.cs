@@ -91,7 +91,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 RefreshLoopList();
         }
 
-        public override int GetCollectionCount() =>
+        protected override int GetCollectionsDataCount() =>
             friends.Count;
 
         protected override FriendProfile GetCollectionElement(int index) =>

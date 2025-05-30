@@ -58,7 +58,7 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
-        private readonly IRPCSocialServices rpcSocialService;
+        private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IRPCSocialServices rpcSocialService,
+            IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
@@ -117,7 +117,7 @@ namespace DCL.PluginSystem.Global
             this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.rpcSocialService = rpcSocialService;
+            this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
         }
@@ -132,7 +132,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
-            var privacySettings = new RPCChatPrivacyService(rpcSocialService, chatSettingsAsset.Value);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;

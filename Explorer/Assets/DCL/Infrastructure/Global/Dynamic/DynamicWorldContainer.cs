@@ -118,6 +118,7 @@ namespace Global.Dynamic
     {
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IProfileBroadcast profileBroadcast;
+        private readonly SocialServicesContainer socialServicesContainer;
 
         public IMVCManager MvcManager { get; }
 
@@ -148,7 +149,8 @@ namespace Global.Dynamic
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
             IProfileBroadcast profileBroadcast,
-            IRoomHub roomHub)
+            IRoomHub roomHub,
+            SocialServicesContainer socialServicesContainer)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -161,6 +163,7 @@ namespace Global.Dynamic
             RoomHub = roomHub;
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
+            this.socialServicesContainer = socialServicesContainer;
         }
 
         public override void Dispose()
@@ -168,6 +171,7 @@ namespace Global.Dynamic
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
+            socialServicesContainer.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -527,7 +531,7 @@ namespace Global.Dynamic
             var coreBackpackEventBus = new BackpackEventBus();
 
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
-            IRPCSocialServices rpcSocialServices = new RPCSocialServices(GetFriendsApiUrl(bootstrapContainer.DecentralandUrlsSource, appArgs), identityCache, socialServiceEventBus);
+            var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -605,7 +609,6 @@ namespace Global.Dynamic
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
-
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -694,7 +697,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     sharedSpaceManager,
                     userBlockingCacheProxy,
-                    rpcSocialServices,
+                    socialServiceContainer.socialServicesRPC,
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
@@ -839,7 +842,6 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-                new SocialServicesPlugin(rpcSocialServices, bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs),
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -855,6 +857,44 @@ namespace Global.Dynamic
 
             if (localSceneDevelopment)
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
+
+            if (includeFriends)
+            {
+                // TODO many circular dependencies - adjust the flow and get rid of ObjectProxy
+                var friendsContainer = new FriendsContainer(
+                    mainUIView,
+                    mvcManager,
+                    assetsProvisioner,
+                    identityCache,
+                    profileRepository,
+                    staticContainer.LoadingStatus,
+                    staticContainer.InputBlock,
+                    dclInput,
+                    selfProfile,
+                    new MVCPassportBridge(mvcManager),
+                    notificationsBusController,
+                    onlineUsersProvider,
+                    realmNavigator,
+                    includeUserBlocking,
+                    appArgs,
+                    staticContainer.FeatureFlagsCache,
+                    dynamicWorldParams.EnableAnalytics,
+                    bootstrapContainer.Analytics,
+                    chatEventBus,
+                    viewDependencies,
+                    sharedSpaceManager,
+                    socialServiceEventBus,
+                    socialServiceContainer.socialServicesRPC,
+                    friendsEventBus,
+                    friendServiceProxy,
+                    friendOnlineStatusCacheProxy,
+                    friendsCacheProxy,
+                    userBlockingCacheProxy,
+                    profileRepositoryWrapper
+                );
+
+                globalPlugins.Add(friendsContainer);
+            }
 
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(
@@ -886,42 +926,6 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache));
-
-            if (includeFriends)
-            {
-                globalPlugins.Add(new FriendsPlugin(
-                        mainUIView,
-                        mvcManager,
-                        assetsProvisioner,
-                        identityCache,
-                        profileRepository,
-                        staticContainer.LoadingStatus,
-                        staticContainer.InputBlock,
-                        dclInput,
-                        selfProfile,
-                        new MVCPassportBridge(mvcManager),
-                        friendServiceProxy,
-                        friendOnlineStatusCacheProxy,
-                        userBlockingCacheProxy,
-                        notificationsBusController,
-                        onlineUsersProvider,
-                        realmNavigator,
-                        includeUserBlocking,
-                        appArgs,
-                        staticContainer.FeatureFlagsCache,
-                        dynamicWorldParams.EnableAnalytics,
-                        bootstrapContainer.Analytics,
-                        chatEventBus,
-                        viewDependencies,
-                        sharedSpaceManager,
-                        socialServiceEventBus,
-                        rpcSocialServices,
-                        friendsCacheProxy,
-                        friendsEventBus,
-                        profileRepositoryWrapper
-                    )
-                );
-            }
 
             if (includeMarketplaceCredits)
             {
@@ -992,7 +996,8 @@ namespace Global.Dynamic
                 messagePipesHub,
                 remoteMetadata,
                 profileBroadcast,
-                roomHub
+                roomHub,
+                socialServiceContainer
             );
 
             // Init itself
