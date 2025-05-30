@@ -24,6 +24,7 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
+
         // Catalyst servers requires a face thumbnail texture of 256x256
         // Otherwise it will fail when the profile is published
         private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
@@ -52,8 +53,8 @@ namespace DCL.Profiles
             string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
             string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
 
-            using var profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
-            var entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
+            using GetProfileJsonRootDto profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
 
             files.Clear();
             files[bodyHash] = bodySnapshotTextureFile;
@@ -97,40 +98,32 @@ namespace DCL.Profiles
 
             Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
 
-            try
-            {
-                URLAddress url = Url(id, fromCatalyst);
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+            URLAddress url = Url(id, fromCatalyst);
+            GenericGetRequest response = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
 
-                using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
-                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
-                    serializerSettings: SERIALIZER_SETTINGS);
+            using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
+                                                                   ct,
+                                                                   createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
+                                                                   serializerSettings: SERIALIZER_SETTINGS)
+                                                              .SuppressExceptionWithFallbackAsync(null, ignoreTheseErrorCodesOnly: WebRequestUtils.IGNORE_NOT_FOUND);
 
-                var profileDto = root?.FirstProfileDto();
+            ProfileJsonDto? profileDto = root?.FirstProfileDto();
 
-                if (profileDto is null)
-                    return null;
+            if (profileDto is null)
+                return null;
 
-                // Reusing the profile in cache does not allow other systems to properly update.
-                // It impacts on the object state and does not allow to make comparisons on change.
-                // For example the multiplayer system, whenever a remote profile update comes in,
-                // it compares the version of the profile to check if it has changed. By overriding the version here,
-                // the check always fails. So its necessary to get a new instance each time
-                Profile profile = Profile.Create();
-                profileDto.CopyTo(profile);
-                profile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            // Reusing the profile in cache does not allow other systems to properly update.
+            // It impacts on the object state and does not allow to make comparisons on change.
+            // For example the multiplayer system, whenever a remote profile update comes in,
+            // it compares the version of the profile to check if it has changed. By overriding the version here,
+            // the check always fails. So its necessary to get a new instance each time
+            var profile = Profile.Create();
+            profileDto.CopyTo(profile);
+            profile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
 
-                profileCache.Set(id, profile);
+            profileCache.Set(id, profile);
 
-                return profile;
-            }
-            catch (UnityWebRequestException e)
-            {
-                if (e.ResponseCode == WebRequestUtils.NOT_FOUND)
-                    return null;
-
-                throw;
-            }
+            return profile;
         }
 
         private URLAddress Url(string id, URLDomain? fromCatalyst)

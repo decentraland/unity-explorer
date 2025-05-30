@@ -12,12 +12,12 @@ namespace DCL.Multiplayer.Connectivity
     public class WorldInfoOnlineUsersProviderDecorator : IOnlineUsersProvider
     {
         private const string USER_ID_FIELD = "[USER-ID]";
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new() { Converters = new JsonConverter[] { new OnlinePlayerInWorldJsonDtoConverter() } };
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new OnlinePlayerInWorldJsonDtoConverter() } };
 
         private readonly IOnlineUsersProvider baseProvider;
         private readonly IWebRequestController webRequestController;
         private readonly URLAddress baseUrlWorlds;
-        private readonly URLBuilder urlBuilder = new();
+        private readonly URLBuilder urlBuilder = new ();
 
         public WorldInfoOnlineUsersProviderDecorator(
             IOnlineUsersProvider baseProvider,
@@ -35,7 +35,8 @@ namespace DCL.Multiplayer.Connectivity
 
         public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(IEnumerable<string> userIds, CancellationToken ct)
         {
-            HashSet<string> alreadyReturnedIds = new HashSet<string>();
+            var alreadyReturnedIds = new HashSet<string>();
+
             // First get the basic online users data from archipelago
             var onlineUsers = (await baseProvider.GetAsync(userIds, ct)).ToList();
 
@@ -52,8 +53,9 @@ namespace DCL.Multiplayer.Connectivity
                 urlBuilder.Clear();
                 urlBuilder.AppendDomain(URLDomain.FromString(baseUrlWorlds.Value.Replace(USER_ID_FIELD, userId)));
 
-                OnlineUserData worldUserData = await webRequestController.GetAsync(urlBuilder.Build(), ct, ReportCategory.MULTIPLAYER, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND)
-                                                  .CreateFromNewtonsoftJsonAsync<OnlineUserData>(serializerSettings: SERIALIZER_SETTINGS);
+                OnlineUserData worldUserData = await webRequestController.GetAsync(urlBuilder.Build(), ReportCategory.MULTIPLAYER)
+                                                                         .CreateFromNewtonsoftJsonAsync<OnlineUserData>(ct, serializerSettings: SERIALIZER_SETTINGS)
+                                                                         .SuppressExceptionWithFallbackAsync(default(OnlineUserData), ignoreTheseErrorCodesOnly: WebRequestUtils.IGNORE_NOT_FOUND);
 
                 if (!string.IsNullOrEmpty(worldUserData.worldName))
                     onlineUsers.Add(worldUserData);

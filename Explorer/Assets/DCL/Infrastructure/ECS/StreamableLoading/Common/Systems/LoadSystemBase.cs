@@ -126,45 +126,51 @@ namespace ECS.StreamableLoading.Common.Systems
         )
         {
             StreamableLoadingResult<TAsset>? result = null;
+            var requestIsNotFulfilled = false;
 
             try
             {
-                var requestIsNotFulfilled = true;
+                disposalCt.ThrowIfCancellationRequested();
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget?.Release();
 
                     OngoingRequestResult<TAsset> ongoingRequestResult;
 
-                    // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    //Temporarly disabled as we don't have partial loading integrated
-                    //SynchronizePartialData(state, ongoingRequestResult);
+                    // The following scenarios are possible:
+                    // 1. The cached request was cancelled => relaunch the flow
+                    // 2. The cached request produced a non-null result => conclude
+                    // 3. The cached request produced a null result (re-evaluation needed) => conclude
 
-                    result = ongoingRequestResult.Result;
+                    ReportHub.Log(GetReportData(), $"{intention}({state.Value}) loading from {intention.CommonArguments.CurrentSource} continued from the ongoing request:"
+                                                   + $"\nNot Fulfilled: {requestIsNotFulfilled}, Has Result: {ongoingRequestResult.Result.HasValue}, Has Partial Data: {ongoingRequestResult.PartialDownloadingData.HasValue}");
 
                     if (requestIsNotFulfilled)
                     {
-                        await FlowAsync(entity, source, intention, state, partition, disposalCt);
+                        FlowAsync(entity, source, intention, state, partition, disposalCt).Forget();
                         return;
                     }
+
+                    SynchronizePartialData(entity, state, ongoingRequestResult);
+                    result = ongoingRequestResult.Result;
+                    return;
                 }
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out StreamableLoadingResult<TAsset> failure))
+                if (cache.IrrecoverableFailures.SyncTryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset>? failure))
                 {
                     result = failure;
                     return;
                 }
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
-                if (requestIsNotFulfilled)
-                    result = await CacheableFlowAsync(intention, state, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                result = await CacheableFlowAsync(intention, state, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 if (!result.HasValue)
 
@@ -175,25 +181,28 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (Exception e)
             {
+                ReportHub.Log(GetReportData(), $"{intention}({entity}) concluded with exception {e}");
+
                 // If we don't set an exception it will spin forever
                 result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
             }
-            finally { FinalizeLoading(entity, intention, result, source, state); }
+            finally
+            {
+                // If request was not fullfilled the new flow was started so we don't need to finalize the promise
+                if (!requestIsNotFulfilled)
+                    FinalizeLoading(entity, intention, result, source, state);
+            }
         }
 
         /// <summary>
         ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
-        ///     <para>
-        ///         Provokes Partial Data to be copied in order to keep both promises independent
-        ///     </para>
         /// </summary>
-        private static void SynchronizePartialData(StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
+        private static void SynchronizePartialData(Entity entity, StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
         {
-            state.PartialDownloadingData?.Dispose();
-            state.PartialDownloadingData = null;
+            state.PartialDownloadingData = ongoingRequestResult.PartialDownloadingData;
 
-            if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
-                state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
+            // As it's impossible to have the same requests in parallel, set the owner of the stream to the current entity
+            state.PartialDownloadingData?.PartialDownloadStream.SetOwner(entity);
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
@@ -207,14 +216,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
             state.DisposeBudgetIfExists();
 
-            //Temporarly disabled as we don't have partial loading integrated
             // Special path for partial downloading
-            /*if (state.PartialDownloadingData is { FullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
+            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: false } } && !cache.IrrecoverableFailures.SyncTryGetValue(intention.CommonArguments.URL, out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();
                 return;
-            }*/
+            }
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
@@ -231,7 +239,12 @@ namespace ECS.StreamableLoading.Common.Systems
                     World.Destroy(entity);
             }
             else
+            {
+                ReportHub.Log(GetReportData(), $"{intention}({state.Value}) {entity} will be re-evaluated from {intention.CommonArguments.PermittedSources}");
+
+                // There are more sources available
                 state.RequestReevaluate();
+            }
         }
 
         private void ApplyLoadedResult(Entity entity, StreamableLoadingState state, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
@@ -279,7 +292,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
-            cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
+            cache.OngoingRequests.SyncTryAdd(intention, source);
             var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
@@ -338,7 +351,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (!ongoingRequestRemoved)
                 {
                     // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.GetCacheableURL());
+                    cache.OngoingRequests.SyncRemove(intention);
                     ongoingRequestRemoved = true;
                 }
             }
@@ -359,17 +372,7 @@ namespace ECS.StreamableLoading.Common.Systems
             return null;
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
-        {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition, cachedInternalFlowDelegate, GetReportData(), ct);
-            return result is { Succeeded: false, IsInitialized: true } ? SetIrrecoverableFailure(intention, result.Value) : result;
-        }
-
-        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
-        {
-            bool result = cache.IrrecoverableFailures.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), failure);
-            if (result == false) ReportHub.LogError(GetReportData(), $"Irrecoverable failure for {intention} is already added");
-            return failure;
-        }
+        private UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct) =>
+            intention.RepeatLoopAsync(state, partition, cachedInternalFlowDelegate, cache.IrrecoverableFailures, GetReportData(), ct);
     }
 }

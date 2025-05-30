@@ -12,6 +12,7 @@ using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.Runtime;
+using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -42,6 +43,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public void Dispose() { }
 
+        private ITypedArray<byte> CreateUintArray(ulong length) =>
+            jsOperations.NewUint8Array((int)length);
+
         public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
             sceneData.TryGetContentUrl(fileName, out URLAddress url);
@@ -51,21 +55,18 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
-                using DownloadHandler? downloadHandler = await webRequestController.GetAsync(intention.CommonArguments.URL, ct, ReportCategory.JAVASCRIPT).ExposeDownloadHandlerAsync();
-                NativeArray<byte>.ReadOnly nativeBytes = downloadHandler.nativeData;
+                ITypedArray<byte>? array = await webRequestController.GetAsync(intention.CommonArguments.URL, ReportCategory.JAVASCRIPT)
+                                                                     .TransformDataAsync(
+                                                                          CreateUintArray,
+                                                                          (array, chunk, index) => array.Write(chunk, (ulong)chunk.Length, index),
+                                                                          ct,
+                                                                          WRThreadFlags.SwitchToThreadPool);
 
-                await UniTask.SwitchToThreadPool();
-
-                // create script byte array
-                ITypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);
-
-                // transfer data to script byte array
-                array.Write(nativeBytes, (ulong)nativeBytes.Length, 0);
                 return new StreamableLoadingResult<ITypedArray<byte>>(array);
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, null, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {

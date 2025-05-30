@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
@@ -29,16 +30,16 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users";
 
-            await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(string.Empty), string.Empty, ct)
-                                      .WithNoOpAsync();
+            await webRequestController.SignedFetchPostAsync(url, GenericUploadArguments.CreateJson(string.Empty), string.Empty, ReportCategory.MARKETPLACE_CREDITS)
+                                      .SendAndForgetAsync(ct);
         }
 
         public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
-            CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
+            CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ReportCategory.MARKETPLACE_CREDITS)
+                                                                                                      .CreateFromJsonAsync<CreditsProgramProgressResponse>(WRJsonParser.Unity, ct);
 
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
             creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
@@ -52,21 +53,12 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/captcha";
 
-            DownloadHandler downloadHandler = null;
+            IOwnedTexture2D ownedTexture = await webRequestController.SignedFetchTextureAsync(url, new GetTextureArguments(TextureType.Albedo), string.Empty, ReportCategory.MARKETPLACE_CREDITS)
+                                                                     .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);
 
-            try
-            {
-                downloadHandler = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                            .ExposeDownloadHandlerAsync();
+            Texture2D texture = ownedTexture.Texture;
 
-                Texture2D texture = new Texture2D(2, 2);
-                texture.LoadImage(downloadHandler.data);
-                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
-            }
-            finally
-            {
-                downloadHandler?.Dispose();
-            }
+            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
         }
 
         public async UniTask<ClaimCreditsResponse> ClaimCreditsAsync(float captchaValue, CancellationToken ct)
@@ -74,8 +66,8 @@ namespace DCL.MarketplaceCreditsAPIService
             var url = $"{marketplaceCreditsBaseUrl}/captcha";
             string jsonBody = JsonUtility.ToJson(new ClaimCreditsBody { x = captchaValue });
 
-            ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                                                      .CreateFromJson<ClaimCreditsResponse>(WRJsonParser.Unity);
+            ClaimCreditsResponse claimCreditsResponseData = await webRequestController.SignedFetchPostAsync(url, GenericUploadArguments.CreateJson(jsonBody), string.Empty, ReportCategory.MARKETPLACE_CREDITS)
+                                                                                      .CreateFromJsonAsync<ClaimCreditsResponse>(WRJsonParser.Unity, ct);
 
             return claimCreditsResponseData;
         }
@@ -89,16 +81,16 @@ namespace DCL.MarketplaceCreditsAPIService
                 isCreditsWorkflow = true,
             });
 
-            await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
-                                      .WithNoOpAsync();
+            await webRequestController.SignedFetchPutAsync(url, GenericUploadArguments.CreateJson(jsonBody), string.Empty, ReportCategory.MARKETPLACE_CREDITS)
+                                      .SendAndForgetAsync(ct);
         }
 
         private async UniTask<EmailSubscriptionResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/subscription";
 
-            EmailSubscriptionResponse emailSubscriptionResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                            .CreateFromJson<EmailSubscriptionResponse>(WRJsonParser.Unity);
+            EmailSubscriptionResponse emailSubscriptionResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ReportCategory.MARKETPLACE_CREDITS)
+                                                                                            .CreateFromJsonAsync<EmailSubscriptionResponse>(WRJsonParser.Unity, ct);
 
             return emailSubscriptionResponse;
         }

@@ -13,14 +13,11 @@ namespace DCL.ApplicationBlocklistGuard
     {
         public static async UniTask<bool> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, CancellationToken ct)
         {
-            FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+            var bd = await webRequestController.GetAsync(
                 urlsSource.Url(DecentralandUrl.Blocklist),
-                new FlatFetchResponse<GenericGetRequest>(),
-                ct,
                 ReportCategory.STARTUP,
-                new WebRequestHeadersInfo());
-
-            BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
+                new WebRequestHeadersInfo())
+                                               .CreateFromJsonAsync<BlocklistData>(WRJsonParser.Unity, ct);
 
             return bd.users.Any(u => u.wallet == userID);
         }

@@ -1,15 +1,14 @@
 ﻿using DCL.Optimization.Pools;
-using DCL.WebRequests.CustomDownloadHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static DCL.WebRequests.WebRequestHeaders;
 
 namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
-        private const string RANGE_HEADER = "Range";
         private const string EMPTY_HEADER = "";
 
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
@@ -113,6 +112,6 @@ namespace DCL.WebRequests
     public static class WebRequestHeadersInfoExtensions
     {
         public static string HeaderContentType(this WebRequestHeadersInfo webRequestHeadersInfo) =>
-            webRequestHeadersInfo.HeaderOrDefault("content-type", true);
+            webRequestHeadersInfo.HeaderOrDefault(CONTENT_TYPE_HEADER, true);
     }
 }

@@ -185,8 +185,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
         {
             string metadata = FixedMetadata.Default.ToJson();
-            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
-            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+
+            AdapterResponse response = await webRequests.SignedFetchGetAsync(adapterAddress, metadata, ReportCategory.LIVEKIT)
+                                                        .CreateFromJsonAsync<AdapterResponse>(WRJsonParser.Unity, ct);
             return response.adapter;
         }
 
