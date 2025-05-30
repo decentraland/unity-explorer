@@ -17,7 +17,6 @@ namespace DCL.VoiceChat
         private VoiceChatAudioProcessor audioProcessor;
         private bool cachedEnabled = true; // Cache enabled state for audio thread access
         private int cachedSampleRate; // Unity's output sample rate
-        private int microphoneSampleRate; // Microphone's actual sample rate
         private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
         private float[] silenceBuffer;
 
@@ -52,6 +51,10 @@ namespace DCL.VoiceChat
         {
             cachedEnabled = false;
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+            
+            // Clear all AudioRead subscribers to prevent duplicate streams when switching microphones
+            AudioRead = null;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "AudioFilter disabled - cleared AudioRead subscribers");
         }
 
         private void OnDestroy()
@@ -78,19 +81,32 @@ namespace DCL.VoiceChat
                 return;
             }
 
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // On macOS, periodically log buffer information to detect sample rate mismatches
+            // Only log occasionally to avoid spam
+            if (Time.frameCount % 480 == 0) // Log roughly every 10 seconds at 48fps
+            {
+                float bufferDurationMs = (float)data.Length / channels / cachedSampleRate * 1000f;
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"macOS Audio Buffer Debug - BufferSize: {data.Length}, Channels: {channels}, " +
+                    $"MonoSamples: {data.Length / channels}, Duration: {bufferDurationMs:F1}ms, " +
+                    $"CachedSampleRate: {cachedSampleRate}Hz");
+            }
+#endif
+
             // Always convert to mono first, regardless of processing state
             float[] monoData = ConvertToMono(data, channels);
 
-            // Resample from microphone rate to Unity's output rate if needed
-            float[] processedData = ResampleToUnityRate(monoData);
-
-            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && processedData.Length > 0)
+            // Note: No resampling needed here - Unity already provides audio at cachedSampleRate
+            // The data parameter already contains audio at Unity's output sample rate
+            
+            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && monoData.Length > 0)
             {
                 try
                 {
                     // Process the mono audio at Unity's sample rate
-                    audioProcessor.ProcessAudio(processedData, cachedSampleRate);
-                    AudioRead?.Invoke(processedData, 1, cachedSampleRate);
+                    audioProcessor.ProcessAudio(monoData, cachedSampleRate);
+                    AudioRead?.Invoke(monoData, 1, cachedSampleRate);
                     return;
                 }
                 catch (Exception ex)
@@ -106,12 +122,26 @@ namespace DCL.VoiceChat
                 }
             }
 
-            // Send resampled mono audio when processing is disabled or failed
-            AudioRead?.Invoke(processedData, 1, cachedSampleRate);
+            // Send mono audio when processing is disabled or failed
+            AudioRead?.Invoke(monoData, 1, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
-        public event IAudioFilter.OnAudioDelegate AudioRead;
+        public event IAudioFilter.OnAudioDelegate AudioRead
+        {
+            add
+            {
+                field += value;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                    $"AudioRead subscriber added - Total subscribers: {field?.GetInvocationList().Length ?? 0}");
+            }
+            remove
+            {
+                field -= value;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                    $"AudioRead subscriber removed - Total subscribers: {field?.GetInvocationList().Length ?? 0}");
+            }
+        }
 
         public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
 
@@ -122,7 +152,15 @@ namespace DCL.VoiceChat
 
             ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"Audio configuration changed - DeviceChanged: {deviceWasChanged}, " +
-                $"Unity OutputSampleRate: {cachedSampleRate}Hz, Microphone SampleRate: {microphoneSampleRate}Hz");
+                $"Unity OutputSampleRate: {cachedSampleRate}Hz");
+                
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // On macOS, log additional audio system information for debugging
+            var config = AudioSettings.GetConfiguration();
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"macOS Audio Debug - Unity Config SampleRate: {config.sampleRate}Hz, " +
+                $"DSPBufferSize: {config.dspBufferSize}, OutputSampleRate: {AudioSettings.outputSampleRate}Hz");
+#endif
         }
 
         public void Initialize(VoiceChatConfiguration configuration)
@@ -134,65 +172,10 @@ namespace DCL.VoiceChat
         public void ResetProcessor()
         {
             audioProcessor?.Reset();
-        }
-
-        /// <summary>
-        ///     Updates the cached microphone sample rate
-        ///     Call this when the microphone is initialized or changed
-        /// </summary>
-        public void UpdateSampleRate(int microphoneSampleRate)
-        {
-            if (microphoneSampleRate != this.microphoneSampleRate)
-            {
-                this.microphoneSampleRate = microphoneSampleRate;
-
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"Updated microphone sample rate: {microphoneSampleRate}Hz, Unity target rate: {cachedSampleRate}Hz");
-            }
-        }
-
-        private float[] ResampleToUnityRate(float[] monoData)
-        {
-            // If sample rates match, no resampling needed
-            if (microphoneSampleRate == cachedSampleRate || microphoneSampleRate <= 0 || cachedSampleRate <= 0)
-            {
-                return monoData;
-            }
-
-            try
-            {
-                // Simple linear interpolation resampling
-                float ratio = (float)cachedSampleRate / microphoneSampleRate;
-                int outputLength = Mathf.RoundToInt(monoData.Length * ratio);
-                float[] resampledData = new float[outputLength];
-                
-                for (int i = 0; i < outputLength; i++)
-                {
-                    float sourceIndex = i / ratio;
-                    int sourceIndexInt = Mathf.FloorToInt(sourceIndex);
-                    float fraction = sourceIndex - sourceIndexInt;
-                    
-                    if (sourceIndexInt >= monoData.Length - 1)
-                    {
-                        resampledData[i] = monoData[monoData.Length - 1];
-                    }
-                    else
-                    {
-                        // Linear interpolation between samples
-                        float sample1 = monoData[sourceIndexInt];
-                        float sample2 = monoData[sourceIndexInt + 1];
-                        resampledData[i] = sample1 + (sample2 - sample1) * fraction;
-                    }
-                }
-                
-                return resampledData;
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
-                    $"Resampling failed from {microphoneSampleRate}Hz to {cachedSampleRate}Hz: {ex.Message}. Using original data.");
-                return monoData;
-            }
+            
+            // Clear all AudioRead subscribers to prevent duplicate streams when resetting
+            AudioRead = null;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "AudioProcessor reset - cleared AudioRead subscribers");
         }
 
         private float[] ConvertToMono(float[] data, int channels)

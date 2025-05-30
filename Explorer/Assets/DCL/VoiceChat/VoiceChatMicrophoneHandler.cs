@@ -180,8 +180,19 @@ namespace DCL.VoiceChat
             configuration.dspBufferSize = 512;  // Good balance of latency and performance
             AudioSettings.Reset(configuration);
             
+            // Verify what Unity actually set after the reset
+            var actualConfig = AudioSettings.GetConfiguration();
             ReportHub.Log(ReportCategory.VOICE_CHAT, 
-                $"Configured Unity audio system - SampleRate: {configuration.sampleRate}Hz, BufferSize: {configuration.dspBufferSize}");
+                $"Configured Unity audio system - Requested: SampleRate {configuration.sampleRate}Hz, BufferSize {configuration.dspBufferSize}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"Actual Unity audio config - SampleRate: {actualConfig.sampleRate}Hz, BufferSize: {actualConfig.dspBufferSize}, " +
+                $"OutputSampleRate: {AudioSettings.outputSampleRate}Hz");
+                
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                $"macOS Audio System - Unity may be overridden by Core Audio. " +
+                $"Expected 48kHz, Actual Output: {AudioSettings.outputSampleRate}Hz");
+#endif
 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             // On macOS, check if we have microphone permission
@@ -293,12 +304,6 @@ namespace DCL.VoiceChat
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized with forced mono configuration");
             
-            // Update the audio filter's cached sample rate to match the microphone
-            if (microphoneAudioClip != null)
-            {
-                audioFilter.UpdateSampleRate(microphoneAudioClip.frequency);
-            }
-            
             MicrophoneReady?.Invoke();
         }
 
@@ -341,12 +346,19 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
+                // Disable the audio filter first to stop audio processing
+                audioFilter.enabled = false;
+                
+                // Then stop and clean up the audio source
                 audioSource.Stop();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
                 isMicrophoneInitialized = false;
+                
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone cleanup completed - filter disabled, audio source stopped");
             }
 
+            // Reset the processor and clear any remaining state
             audioFilter.ResetProcessor();
 
             // Always reinitialize microphone so it's ready when needed
@@ -357,6 +369,7 @@ namespace DCL.VoiceChat
             {
                 audioSource.mute = false;
                 audioFilter.enabled = true;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Restored talking state after microphone switch");
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
