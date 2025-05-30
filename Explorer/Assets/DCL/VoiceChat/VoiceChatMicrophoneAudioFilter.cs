@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using UnityEngine;
 using LiveKit;
 using LiveKit.Internal;
+using Livekit.Utils;
 using System;
 
 namespace DCL.VoiceChat
