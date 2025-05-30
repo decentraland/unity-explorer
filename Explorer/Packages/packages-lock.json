@@ -71,11 +71,11 @@
       "hash": "a3d04b4bba166375ba225b90256e57eea07febd5"
     },
     "com.decentraland.rpc-csharp": {
-      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src#chore/flow-improvements",
+      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6f9a3bc8357f0e33040831f2081a73909f1f448e"
+      "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -390,11 +390,11 @@
       }
     },
     "com.unity.test-framework.performance": {
-      "version": "3.1.0",
+      "version": "3.0.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.test-framework": "1.1.33",
+        "com.unity.test-framework": "1.1.31",
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
