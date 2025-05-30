@@ -172,7 +172,7 @@ namespace DCL.VoiceChat
                 $"Component Enabled: {microphoneAudioFilter.enabled}, " +
                 $"GameObject Active: {microphoneAudioFilter.gameObject.activeInHierarchy}");
 
-            rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
+            rtcAudioSource = RtcAudioSource.CreateForVoiceChat(microphoneAudioSource, microphoneAudioFilter);
             rtcAudioSource.Start();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource created and started");
