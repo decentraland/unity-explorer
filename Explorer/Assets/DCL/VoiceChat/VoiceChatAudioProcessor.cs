@@ -196,7 +196,7 @@ namespace DCL.VoiceChat
                 if (configuration.EnableNoiseGate)
                 {
                     float preGate = sample;
-                    sample = ApplyNoiseGateWithHold(sample, deltaTime);
+                    sample = ApplyNoiseGateWithHold(sample, deltaTime, sampleRate);
                     if (shouldLogDetails && i == 0)
                     {
                         UnityEngine.Debug.Log($"Noise Gate: {preGate:F6} -> {sample:F6}, Gate State: {GetDebugInfo()}");
@@ -326,21 +326,22 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyNoiseGateWithHold(float sample, float deltaTime)
+        private float ApplyNoiseGateWithHold(float sample, float deltaTime, int sampleRate)
         {
+            // Store the sample in fade-in buffer for gate opening fade
+            if (fadeInBuffer != null && fadeInBuffer.Length > 0)
+            {
+                fadeInBuffer[fadeInBufferIndex] = sample;
+                fadeInBufferIndex = (fadeInBufferIndex + 1) % fadeInBuffer.Length;
+            }
+
             float sampleAbs = Mathf.Abs(sample);
-
-            fadeInBuffer[fadeInBufferIndex] = sample;
-            fadeInBufferIndex = (fadeInBufferIndex + 1) % fadeInBuffer.Length;
-
-            float effectiveThreshold = configuration.NoiseGateThreshold;
-
-            bool speechDetected = sampleAbs > effectiveThreshold;
-            bool wasGateOpen = gateIsOpen;
+            bool speechDetected = sampleAbs > configuration.NoiseGateThreshold;
 
             if (speechDetected)
             {
                 lastSpeechTime = 0f;
+
                 if (!gateIsOpen)
                 {
                     gateIsOpen = true;
@@ -383,7 +384,7 @@ namespace DCL.VoiceChat
 
             if (configuration.EnableGateFadeIn && isGateOpening && gateOpenFadeProgress < 1f)
             {
-                float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * 48000f);
+                float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * sampleRate);
                 gateOpenFadeProgress += fadeInSpeed;
                 gateOpenFadeProgress = Mathf.Clamp01(gateOpenFadeProgress);
 
