@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit;
 using LiveKit.Proto;
