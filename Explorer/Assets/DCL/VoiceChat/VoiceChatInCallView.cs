@@ -13,6 +13,9 @@ namespace DCL.VoiceChat
         public Button HangUpButton;
 
         [field: SerializeField]
+        public Button ExpandButton;
+
+        [field: SerializeField]
         public SimpleProfileView ProfileView;
     }
 }
