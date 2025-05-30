@@ -118,7 +118,7 @@ namespace DCL.ApplicationVersionGuard
             return Application.platform switch
                    {
                        RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL,
-                       RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => SystemInfo.processorType.ToLower().Contains("arm") ? IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL : IDecentralandUrlsSource.LEGACY_LAUNCHER_DOWNLOAD_URL,
+                       RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => SystemInfo.processorType.Contains("arm", StringComparison.OrdinalIgnoreCase) ? IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL : IDecentralandUrlsSource.LEGACY_LAUNCHER_DOWNLOAD_URL,
                        _ => throw new NotSupportedException("Unsupported platform for launcher download."),
                    };
         }
@@ -139,7 +139,7 @@ namespace DCL.ApplicationVersionGuard
 
                 case RuntimePlatform.OSXEditor:
                 case RuntimePlatform.OSXPlayer:
-                    possiblePaths = SystemInfo.processorType.ToLower().Contains("arm")
+                    possiblePaths = SystemInfo.processorType.Contains("arm", StringComparison.OrdinalIgnoreCase)
                         ? new[]
                         {
                             LAUNCHER_PATH_MAC,
