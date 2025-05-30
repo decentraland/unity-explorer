@@ -126,7 +126,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             foreach (var itemsValue in items.Values)
-                UnityObjectUtils.SafeDestroy(itemsValue.gameObject);
+                UnityObjectUtils.SafeDestroyGameObject(itemsValue);
             items.Clear();
             UpdateScrollButtonsVisibility();
         }
