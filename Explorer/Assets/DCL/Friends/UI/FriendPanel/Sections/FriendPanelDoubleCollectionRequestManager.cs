@@ -1,4 +1,5 @@
-using MVC;
+using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
 
@@ -8,7 +9,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly int elementsMissingThreshold;
         private readonly bool disablePagination;
 
@@ -27,7 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold,
@@ -40,7 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.elementsMissingThreshold = elementsMissingThreshold;
             this.firstCollectionStatus = firstCollectionStatus;
             this.secondCollectionStatus = secondCollectionStatus;
@@ -101,9 +102,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
-                    friendListUserView.InjectDependencies(viewDependencies);
                     int collectionIndex = index - 1;
-                    friendListUserView.Configure(GetFirstCollectionElement(collectionIndex));
+                    friendListUserView.Configure(GetFirstCollectionElement(collectionIndex), profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
@@ -124,9 +124,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
-                    friendListUserView.InjectDependencies(viewDependencies);
                     int collectionIndex = index - onlineFriendMarker - 2;
-                    friendListUserView.Configure(GetSecondCollectionElement(collectionIndex));
+                    friendListUserView.Configure(GetSecondCollectionElement(collectionIndex), profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);

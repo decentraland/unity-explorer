@@ -16,6 +16,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
@@ -60,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ChatController chatController;
 
@@ -88,7 +90,8 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -116,6 +119,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Dispose()
@@ -161,7 +165,8 @@ namespace DCL.PluginSystem.Global
                 privacySettings,
                 friendsEventBus,
                 chatStorage,
-                friendsServiceProxy
+                friendsServiceProxy,
+                profileRepositoryWrapper
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

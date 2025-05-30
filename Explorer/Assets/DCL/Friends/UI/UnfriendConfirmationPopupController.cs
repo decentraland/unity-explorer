@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using MVC;
 using System.Threading;
@@ -14,7 +15,7 @@ namespace DCL.Friends.UI
     {
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? unfriendCancellationToken;
         private CancellationTokenSource? fetchProfileCancellationToken;
@@ -24,11 +25,11 @@ namespace DCL.Friends.UI
         public UnfriendConfirmationPopupController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService,
             IProfileRepository profileRepository,
-            ViewDependencies viewDependencies) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public override void Dispose()
@@ -49,7 +50,7 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
-            viewInstance!.InjectDependencies(viewDependencies);
+            viewInstance!.SetProfileDataProvider(profileRepositoryWrapper);
             viewInstance!.CancelButton.onClick.AddListener(Close);
             viewInstance.ConfirmButton.onClick.AddListener(Unfriend);
         }
@@ -73,6 +74,7 @@ namespace DCL.Friends.UI
 
                 viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Name}?";
                 viewInstance!.ProfilePicture.Setup(profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, inputData.UserId);
+                viewInstance!.ProfilePicture.SetProfileDataProvider(profileRepositoryWrapper);
             }
         }
 

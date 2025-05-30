@@ -1,10 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.UI.SharedSpaceManager;
-using MVC;
+using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -30,10 +27,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
             LoopListView2 loopListView,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             int pageSize,
             int elementsMissingThreshold) :
-            base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
+            base(profileDataProvider, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
