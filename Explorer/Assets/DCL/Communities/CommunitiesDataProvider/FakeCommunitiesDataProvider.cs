@@ -70,7 +70,12 @@ namespace DCL.Communities
             GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[membersToReturn];
 
             for (int i = 0; i < membersToReturn; i++)
+            {
                 members[i] = GetCommunityMembersResponse.MemberData.RandomMember();
+
+                if (areBanned)
+                    members[i].role = CommunityMemberRole.none;
+            }
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
                 {
